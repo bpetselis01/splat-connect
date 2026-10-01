@@ -36,6 +36,7 @@ export function linkFor(n: Notification): string {
   // Web's thanks branch: the published guide, not the editor.
   if (n.type === 'tutorial_thanked' && n.tutorial_id) return `/guides/${n.tutorial_id}`
   if (n.type === 'tutorial_noted' && n.tutorial_id) return `/guides/${n.tutorial_id}`
+  if (n.type === 'challenge_guide_published' && n.tutorial_id) return `/guides/${n.tutorial_id}`
   if (n.tutorial_id) return `/tutorials/${n.tutorial_id}`
   // A rejected idea has no public page — GET /api/public/challenges/:id filters
   // to challenge|graduated and 404s otherwise, whatever RLS would allow — so

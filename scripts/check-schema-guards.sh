@@ -509,7 +509,18 @@ select * from (values
         and coalesce(qual, '') || coalesce(with_check, '') like '%is_idea_author%')
    and not exists (select 1 from pg_policies
       where schemaname = 'public' and tablename <> 'toy_ideas'
-        and coalesce(qual, '') || coalesce(with_check, '') like '%i.author_id%'))
+        and coalesce(qual, '') || coalesce(with_check, '') like '%i.author_id%')),
+
+  -- 109. The 046 shape: a narrower constraint drops every follower notification silently.
+  ('109 notifications_type_check permits challenge_guide_published',
+   (select count(*) = 1 from pg_constraint
+      where conname = 'notifications_type_check'
+        and pg_get_constraintdef(oid) like '%challenge_guide_published%')),
+
+  -- 109. Without the trigger, "You will be told" is a promise nobody keeps.
+  ('109 tutorials_challenge_guide_published trigger exists',
+   (select count(*) = 1 from pg_trigger
+      where tgname = 'tutorials_challenge_guide_published' and tgrelid = 'public.tutorials'::regclass))
 ) as t(guard, ok)
 where not ok;
 EOSQL

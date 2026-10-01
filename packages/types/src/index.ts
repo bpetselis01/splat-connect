@@ -1651,6 +1651,7 @@ export type NotificationType =
   | 'challenge_left'
   | 'challenge_removed'
   | 'idea_graduated'
+  | 'challenge_guide_published'
   | 'tutorial_thanked'
   | 'tutorial_noted'
   | 'build_shot_posted'
@@ -1716,6 +1717,7 @@ const NOTIFICATION_BUCKET = {
   idea_approved: 'challenges',
   idea_rejected: 'challenges',
   idea_graduated: 'challenges',
+  challenge_guide_published: 'challenges',
   challenge_joined: 'challenges',
   challenge_left: 'challenges',
   challenge_removed: 'challenges',
@@ -1753,6 +1755,9 @@ export const COPY: Record<NotificationType, (n: Notification) => string> = {
   // Unnamed on purpose: who thanked a guide stays private (066).
   tutorial_thanked: (n) => `A family said thanks for "${n.tutorial_title}"`,
   tutorial_noted: (n) => `${n.actor_name} added a note to "${n.tutorial_title}"`,
+  // 109: to everyone who followed the write-up. The guide's own contributors
+  // get tutorial_approved instead.
+  challenge_guide_published: (n) => `The guide from a challenge you follow is published: "${n.tutorial_title}"`,
   toy_request: (n) => `${n.actor_name} requested ${n.toy_name}`,
   toy_accepted: (n) => `${n.actor_name} accepted your request for ${n.toy_name}`,
   toy_rejected: (n) => `${n.actor_name} declined your request for ${n.toy_name}`,

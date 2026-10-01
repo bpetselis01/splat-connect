@@ -228,15 +228,25 @@ describe('ChallengeDetailScreen', () => {
     expect(screen.queryByRole('button', { name: 'Join this challenge' })).toBeNull()
   })
 
-  it('closes joining on a graduated challenge and points at the guide it became', async () => {
-    mockGet.mockResolvedValue(detail({ status: 'graduated', tutorial_id: 'tut7' }))
+  it('offers to follow a graduated challenge’s write-up, and names who is writing it', async () => {
+    mockGet.mockResolvedValue(
+      detail({
+        status: 'graduated',
+        tutorial_id: 'tut7',
+        writing_up: { profile_id: 'p1', name: 'Tom Beattie', started_at: '2026-09-02T03:00:00Z' },
+      })
+    )
     render(<ChallengeDetailScreen id="c1" />)
-
+    expect(await screen.findByText('Somebody solved it')).toBeTruthy()
+    expect(screen.getByText('Tom Beattie is writing this up')).toBeTruthy()
+    // shortDate, not a literal: Node's ICU says "Sept", Hermes may say "Sep".
     expect(
-      await screen.findByText('This challenge has moved on to write-up, so joining is no longer open.')
+      screen.getByText(`Started ${shortDate('2026-09-02T03:00:00Z')}. The draft still goes through review before a family sees it.`)
     ).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Join this challenge' })).toBeNull()
-
+    fireEvent.press(screen.getByRole('button', { name: 'Follow the write-up' }))
+    await waitFor(() => expect(mockToggle).toHaveBeenCalledWith('challenges', 'c1'))
+    expect(await screen.findByText('You will be told when the guide is published')).toBeTruthy()
     fireEvent.press(screen.getByRole('button', { name: 'Read the guide' }))
     expect(mockPush).toHaveBeenCalledWith('/guides/tut7')
   })

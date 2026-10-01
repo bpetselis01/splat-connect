@@ -729,6 +729,7 @@ export const PENDING = {
     needs: "Decided 2026-09-30: a list of constraints (label + note) replaces intended use / primary user on the challenge. The idea's sender and any maker who has joined the challenge can add them. The old fields stay as a nullable fallback.",
   },
   'challenge-writeup-stage': {
+    shipped: true,
     title: "Being written up",
     blurb: "Following a challenge while it is written up is coming.",
     kind: "build",

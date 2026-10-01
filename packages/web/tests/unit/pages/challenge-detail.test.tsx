@@ -80,4 +80,11 @@ describe('ChallengeDetailPage', () => {
     expect(screen.getByText('You have joined')).toBeInTheDocument()
     expect(apiClient.get).toHaveBeenCalledWith('/api/ideas/mine/c1')
   })
+
+  it('names who is writing a graduated challenge up', async () => {
+    serve(brief({ status: 'graduated', writing_up: { profile_id: 'p1', name: 'Tom Beattie', started_at: '2026-09-02T03:00:00Z' } }))
+    await renderPage()
+    expect(screen.getByText('Tom Beattie is writing this up')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Follow the write-up' })).toBeInTheDocument()
+  })
 })

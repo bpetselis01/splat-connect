@@ -27,12 +27,13 @@ const saves = new Hono<{ Variables: AuthVariables }>()
  * The Supabase client here carries no generated Database types — the same as
  * every other route in this package — so inferring the builder's type from it
  * bottoms out in "type instantiation is excessively deep". Naming only the
- * three things SOURCE actually uses is shorter and more honest about what a
+ * methods SOURCE actually uses is shorter and more honest about what a
  * filter is allowed to do.
  */
 type EntityQuery = {
   eq(column: string, value: string): EntityQuery
   is(column: string, value: null): EntityQuery
+  in(column: string, values: string[]): EntityQuery
   then: PromiseLike<{ data: unknown; error: { message: string } | null }>['then']
 }
 
@@ -60,7 +61,8 @@ const SOURCE = {
     // GET /public/challenges' columns, never '*': review_note is an admin's
     // private rejection reasoning, and a saved list is no wider than its page.
     select: 'id, title, summary, contact_prefs, status, kind, answered_at, created_at',
-    filter: (q: EntityQuery) => q.eq('status', 'challenge'),
+    // Graduated too: "Follow the write-up" is a save on a graduated challenge.
+    filter: (q: EntityQuery) => q.in('status', ['challenge', 'graduated']),
   },
   organisations: {
     table: 'organizations',

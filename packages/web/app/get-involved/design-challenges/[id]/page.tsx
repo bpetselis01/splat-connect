@@ -47,6 +47,7 @@ import { getSavedIds } from '@/lib/saves'
 import { getCapabilities } from '@/lib/capabilities'
 import { apiClient } from '@/lib/api-client'
 import { ChallengeThread } from '@/components/challenge-thread'
+import { FollowWriteup } from '@/components/follow-writeup'
 import type { ToyIdeaDetail, ContactPref } from '@splat-connect/types'
 import { daysSince } from '@/lib/relative-time'
 import { safePhotoSrc } from '@/lib/photo-src'
@@ -165,7 +166,9 @@ export default async function ChallengeDetailPage({
             withLabel
             className="!flex !h-12 !w-auto items-center gap-2 border border-line px-[18px] text-[15px] font-extrabold shadow-none"
           />
-          {graduated ? null : joined ? (
+          {graduated ? (
+            <FollowWriteup id={challenge.id} signedIn={viewerId !== null} next={base} />
+          ) : joined ? (
             <span className="btn min-h-12 bg-[var(--tok)] px-[22px] text-[var(--tink)] shadow-[var(--e1)]">
               <CheckCircle weight="bold" aria-hidden="true" /> You have joined
             </span>
@@ -262,6 +265,25 @@ export default async function ChallengeDetailPage({
                   </p>
                 </div>
               </div>
+
+              {graduated && challenge.writing_up && (
+                <div className="flex items-start gap-3 rounded-[18px] border border-line bg-[var(--canvas)] p-4">
+                  <span
+                    aria-hidden="true"
+                    className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[var(--tcoral)] text-[15px] font-extrabold text-[var(--tink)]"
+                  >
+                    {initials(challenge.writing_up.name, '?')}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-[15px] font-extrabold">{challenge.writing_up.name} is writing this up</span>
+                    <span className="mt-1 block text-sm leading-[1.5] text-muted">
+                      Started {new Date(challenge.writing_up.started_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}.
+                      {' '}Graduating created a draft guide, not a published one — it goes through review like any other
+                      before a family sees it.
+                    </span>
+                  </span>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
                 {(

@@ -49,6 +49,10 @@ describe('COPY', () => {
 })
 
 describe('linkFor', () => {
+  it('opens the published guide for a followed challenge', () => {
+    expect(linkFor(notification({ type: 'challenge_guide_published', tutorial_id: 't9' }))).toBe('/guides/t9')
+  })
+
   it('sends anything about a transaction to that exchange', () => {
     expect(linkFor(notification({ type: 'toy_message', toy_transaction_id: 'tx1' }))).toBe('/exchanges/tx1')
   })

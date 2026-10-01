@@ -38,6 +38,7 @@ import { Screen } from '../ui/Screen'
 import { Card } from '../ui/Card'
 import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
+import { useFlash, FlashLine } from '../ui/Flash'
 import { Skeleton } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { SaveButton } from '../ui/SaveButton'
@@ -121,6 +122,7 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
   // message lands beside it that Task 5's thread will want anyway.
   const [reloadKey, setReloadKey] = useState(0)
   const [tab, setTab] = useState<Tab>('status')
+  const [flash, setFlash] = useFlash()
 
   const viewerId = caps?.profile.id ?? null
   const viewerName = caps?.profile.name ?? null
@@ -290,6 +292,13 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
     }
   }
 
+  // "Follow the write-up" is a save (challenge-writeup-stage): 109 tells every
+  // saver when the guide is published. Never unsaves — following twice is fine.
+  async function follow() {
+    if (!saves.isSaved('challenges', id)) await saves.toggle('challenges', id)
+    setFlash('You will be told when the guide is published')
+  }
+
   function confirmLeave() {
     confirmDestructive('Leave this challenge?', 'You will stop taking part in its conversation.', 'Leave', () => void leave())
   }
@@ -338,14 +347,13 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
   const listed = challenge.status === 'challenge' || challenge.status === 'graduated'
   const tabs = TABS.filter((t) => (listed || (t.id !== 'makers' && t.id !== 'thread')) && !(question && t.id === 'outcome'))
   const badge: Partial<Record<Tab, number>> = { makers, thread: challenge.answer_count ?? 0 }
-  // PENDING(challenge-writeup-stage): on the board "graduated" means being written up, with who and a follow link.
   const headline =
     challenge.status === 'pending'
       ? { title: 'An admin is reading it', body: 'Nothing is public yet. Most ideas are answered inside a week — approved, it opens as a challenge; if not, you get a reason.' }
       : challenge.status === 'rejected'
         ? { title: 'Not taken forward', body: 'An admin read it and decided it is not one for SPLAT. Nothing was published. The reason is below — a revised idea is welcome.' }
         : challenge.status === 'graduated'
-          ? { title: 'Solved — it became a guide', body: 'The write-up went through review and is in Guides now.' }
+          ? { title: 'Somebody solved it', body: 'A maker is turning the solution into a guide. The brief stays up, with the guide linked once it is approved.' }
           : question
             ? answerId
               ? { title: 'Answered', body: 'The asker marked the reply that helped. The thread stays open to read.' }
@@ -410,6 +418,8 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
                 loading={busy}
                 onPress={() => void join()}
               />
+            ) : challenge.status === 'graduated' ? (
+              <Button label="Follow the write-up" onPress={() => void follow()} />
             ) : (
               <Text style={styles.quiet}>
                 This challenge has moved on to write-up, so joining is no longer open.
@@ -418,6 +428,7 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
           </View>
           {listed ? <SaveButton slug="challenges" id={challenge.id} saves={saves} circled /> : null}
         </View>
+        <FlashLine message={flash} />
         {viewerId !== null && !joined && !isAuthor && open ? (
           <Text style={styles.gateHint}>Join this challenge to read and take part in the conversation.</Text>
         ) : null}
@@ -462,6 +473,14 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
               <Text style={styles.headlineTitle}>{headline.title}</Text>
               <Text style={styles.quiet}>{headline.body}</Text>
             </View>
+            {challenge.status === 'graduated' && challenge.writing_up ? (
+              <View style={styles.makerRow}>
+                <Text style={styles.makerName}>{`${challenge.writing_up.name} is writing this up`}</Text>
+                <Text style={styles.eventDate}>
+                  {`Started ${shortDate(challenge.writing_up.started_at)}. The draft still goes through review before a family sees it.`}
+                </Text>
+              </View>
+            ) : null}
             {challenge.status === 'rejected' && challenge.review_note ? (
               <View style={styles.note}>
                 <Text style={styles.noteLead}>Why it was not taken forward:</Text>

@@ -36,6 +36,7 @@ const ICON: Record<NotificationType, [Glyph, string]> = {
   tutorial_rejected: [Undo, 'var(--tbad)'],
   tutorial_thanked: [BookOpen, 'var(--tamber)'],
   tutorial_noted: [BookOpen, 'var(--tamber)'],
+  challenge_guide_published: [Check, 'var(--tok)'],
   toy_request: [Box, 'var(--tcoral)'],
   toy_accepted: [Handshake, 'var(--tmint)'],
   toy_rejected: [Undo, 'var(--tbad)'],
@@ -92,6 +93,7 @@ function linkFor(n: Notification, isAdmin: boolean): string {
   // page, where the count it added is visible, not the editor.
   if (n.type === 'tutorial_thanked' && n.tutorial_id) return `/tutorials/${n.tutorial_id}`
   if (n.type === 'tutorial_noted' && n.tutorial_id) return `/tutorials/${n.tutorial_id}`
+  if (n.type === 'challenge_guide_published' && n.tutorial_id) return `/tutorials/${n.tutorial_id}`
   if (n.tutorial_id) return `/tutorials/${n.tutorial_id}/edit`
   // A rejected idea has no public page. Not because of RLS — 037 also grants
   // "Authors see their own ideas at any status", so an author's own rejected
