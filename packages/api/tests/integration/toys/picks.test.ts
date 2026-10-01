@@ -169,3 +169,46 @@ describe('102 toy picks', () => {
     expect(count).toBe(0)
   })
 })
+
+describe('102 hand-picked toys stay the holder’s own, and requestable', () => {
+  let tx: string
+  beforeAll(async () => {
+    t.h = await insertToy(holder.id, 'Rattle', '2026-07-01T00:00:00Z')
+    t.p2 = await insertToy(holder.id, 'Chime', '2026-07-02T00:00:00Z')
+    t.p3 = await insertToy(holder.id, 'Spinner', '2026-07-03T00:00:00Z')
+    t.p4 = await insertToy(holder.id, 'Bell', '2026-07-04T00:00:00Z')
+    const put = await call(holder, `/api/toys/${t.h}/picks`, 'PUT', {
+      picks: [t.p2, t.p3, t.p4].map((id) => ({ entity_type: 'toy', entity_id: id })),
+    })
+    expect(put.status).toBe(200)
+    expect((await call(holder, `/api/toys/${t.h}`, 'PATCH', { picks_mode: 'picked' })).status).toBe(200)
+    expect((await publicPicks(t.h)).map((p) => p.id)).toEqual([t.p2, t.p3, t.p4])
+  })
+
+  it('drops a hand-picked toy already spoken for', async () => {
+    const { data } = await adminClient()
+      .from('toy_transactions')
+      .insert({ toy_id: t.p4, type: 'donation', status: 'accepted', requester_id: family.id, owner_id: holder.id, owner_code: '555555', requester_code: '666666' })
+      .select('id')
+      .single()
+    tx = data!.id
+    expect((await publicPicks(t.h)).map((p) => p.id)).toEqual([t.p2, t.p3])
+  })
+
+  it('drops a hand-picked toy that changed hands, even once its new holder lists it', async () => {
+    expect((await call(holder, `/api/toy-transactions/${tx}/confirm`, 'POST', { code: '666666' })).status).toBe(200)
+    const admin = adminClient()
+    await admin.from('toys').update({ status: 'published' }).eq('id', t.p4)
+    expect((await publicPicks(t.h)).map((p) => p.id)).toEqual([t.p2, t.p3])
+    const { count } = await admin.from('toy_picks').select('toy_id', { count: 'exact', head: true }).eq('entity_id', t.p4)
+    expect(count).toBe(0)
+  })
+
+  it("ignores a pick row naming a stranger's toy, however it was written", async () => {
+    const admin = adminClient()
+    await admin.from('toy_picks').delete().eq('toy_id', t.h).eq('position', 3)
+    const { error } = await admin.from('toy_picks').insert({ toy_id: t.h, position: 3, entity_type: 'toy', entity_id: t.x })
+    expect(error).toBeNull()
+    expect((await publicPicks(t.h)).map((p) => p.id)).toEqual([t.p2, t.p3])
+  })
+})

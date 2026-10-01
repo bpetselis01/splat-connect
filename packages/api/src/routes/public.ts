@@ -202,8 +202,9 @@ const LISTED_TOY = 'id, name, cover_photo_url, condition, created_at, owner_id, 
 /**
  * "Also worth a look" (102). Automatic: up to three of the holder's other
  * listed toys, newest first, skipping any already spoken for (`hidden`, the
- * same set the library hides). Hand-picked: the holder's choices in their
- * order. Through the anon client, so RLS drops anything not public — a draft
+ * same set the library hides — such a toy 404s, so its card would lead
+ * nowhere). Hand-picked: the holder's choices in their order, under the same
+ * filter. Through the anon client, so RLS drops anything not public — a draft
  * or retired toy, a guide not approved — behind the explicit filters, and a
  * pick that went private shows nothing.
  */
@@ -219,29 +220,32 @@ async function holderPicks(
     photo_url: t.cover_photo_url,
     meta: gradeOf(t.condition).label,
   })
-  if (toy.picks_mode !== 'picked') {
-    const { data } = await sb
+  // The holder's own listed toys, not spoken for. Hand-picked toys pass the
+  // same filter: a picked toy that changed hands, or a row written straight
+  // through PostgREST naming a stranger's toy, is not this holder's to show.
+  const holderToys = () =>
+    sb
       .from('toys')
       .select(LISTED_TOY)
       .eq('status', 'published')
       .is('retired_at', null)
       .eq(toy.owner_org_id ? 'owner_org_id' : 'owner_id', (toy.owner_org_id ?? toy.owner_id) as string)
-    const listed = ((data ?? []) as ListedToy[]).filter((t) => !hidden.has(t.id))
-    return autoPicks(toy, listed).map(toyPick)
+  const listed = (data: unknown) => ((data ?? []) as ListedToy[]).filter((t) => !hidden.has(t.id))
+  if (toy.picks_mode !== 'picked') {
+    const { data } = await holderToys()
+    return autoPicks(toy, listed(data)).map(toyPick)
   }
   const { data: rows } = await sb.from('toy_picks').select('entity_type, entity_id').eq('toy_id', toy.id).order('position')
   const picks = (rows ?? []) as { entity_type: 'toy' | 'tutorial'; entity_id: string }[]
   const ids = (type: 'toy' | 'tutorial') => picks.filter((p) => p.entity_type === type).map((p) => p.entity_id)
   const [toys, guides] = await Promise.all([
-    ids('toy').length
-      ? sb.from('toys').select(LISTED_TOY).in('id', ids('toy')).eq('status', 'published').is('retired_at', null)
-      : null,
+    ids('toy').length ? holderToys().in('id', ids('toy')) : null,
     ids('tutorial').length
       ? sb.from('tutorials').select('id, title, kind, toy_photo_url').in('id', ids('tutorial')).eq('status', 'approved')
       : null,
   ])
   const found = new Map<string, ToyPick>()
-  for (const t of (toys?.data ?? []) as ListedToy[]) found.set(`toy:${t.id}`, toyPick(t))
+  for (const t of listed(toys?.data)) found.set(`toy:${t.id}`, toyPick(t))
   for (const g of (guides?.data ?? []) as { id: string; title: string; kind: 'toy_adaptation' | 'assistive_tech'; toy_photo_url: string | null }[]) {
     found.set(`tutorial:${g.id}`, { kind: g.kind, id: g.id, title: g.title, photo_url: g.toy_photo_url, meta: null })
   }

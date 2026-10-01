@@ -1041,8 +1041,12 @@ toyTransactions.post('/:id/confirm', async (c) => {
       .eq('id', toyId)
     if (moved.error) return moved
     // The old holder's hand-picked "Also worth a look" points at their shelf,
-    // not the new one's (102).
-    return admin.from('toy_picks').delete().eq('toy_id', toyId)
+    // not the new one's, and their other toys' picks of this one no longer
+    // point at their own shelf (102).
+    return admin
+      .from('toy_picks')
+      .delete()
+      .or(`toy_id.eq.${toyId},and(entity_type.eq.toy,entity_id.eq.${toyId})`)
   }
 
   // An organisation gives ONE OF its units, so its row cannot move — it is the
