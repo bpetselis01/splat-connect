@@ -22,10 +22,10 @@ export { isApiError, apiErrorDetail, apiMessage, makeApiClient } from './api-cor
 export type { ApiError } from './api-core'
 export { dateBadge, shortDate, monthHeading, monthKey, longDate, formatTimeRange, isPast } from './dates'
 import { printRequestExpired } from './printing'
-import type { PrinterStats } from './printing'
+import type { PrinterStats, PrintFitNotes } from './printing'
 // Named, not only the `export *` below: the API runs under tsx, which loads
 // this package as CommonJS, and Node cannot see names behind `export *` there.
-export { printCostCents, costRange, PRINT_ANSWER_DAYS, answerBy, printRequestExpired } from './printing'
+export { printCostCents, costRange, PRINT_ANSWER_DAYS, answerBy, printRequestExpired, PRINT_FIT_QUESTIONS, fitNotesProblem, fitNotesLines } from './printing'
 export { getMissingToyFields, computeToyStepStatuses } from './toy-steps'
 export type { ToyStepId } from './toy-steps'
 
@@ -381,6 +381,8 @@ export interface ToyTransaction {
   print_colour: string | null
   /** 'collect' or 'post' (074). Null on jobs sent before it existed. */
   print_delivery: PrintDelivery | null
+  /** 096. The family's Customization answers. Optional: fixtures predate it. */
+  print_fit_notes?: PrintFitNotes | null
   printing_started_at: string | null
   /** Ready to collect. Never set without `ready_photo_url` — the constraint is
    *  in 058, and the point is that nobody travels for a part on somebody's

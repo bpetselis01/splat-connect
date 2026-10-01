@@ -15,7 +15,6 @@ import { ChildProfileHome } from './profile/child-profile-home'
 import { ListRow, ListSection } from './list/list-kit'
 import { Ionicons } from '@expo/vector-icons'
 import { OrgInvites } from './organisation/org-invites'
-import { PendingRow } from './ui/pending'
 
 /** "12 Aug 2026" — the terms row's date. */
 function acceptedDate(iso: string): string {
@@ -100,7 +99,6 @@ export function ProfileScreen() {
         <ChildProfileHome />
 
         <ListSection style={styles.sectionGap}>Profile detail</ListSection>
-        <PendingRow pending="customization-metrics" label="Customization" icon="resize-outline" />
         <View style={styles.detail}>
             <View style={styles.nameCard}>
               <TextField

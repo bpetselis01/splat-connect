@@ -13,8 +13,8 @@ describe('pending controls', () => {
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/not-built', params: { feature: 'org-visit-map' } })
   })
   it('a pending row does the same', () => {
-    render(<PendingRow pending="customization-metrics" label="Customization" />)
-    fireEvent.press(screen.getByText('Customization'))
-    expect(mockPush).toHaveBeenCalledWith({ pathname: '/not-built', params: { feature: 'customization-metrics' } })
+    render(<PendingRow pending="org-visit-map" label="Map and address" />)
+    fireEvent.press(screen.getByText('Map and address'))
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/not-built', params: { feature: 'org-visit-map' } })
   })
 })

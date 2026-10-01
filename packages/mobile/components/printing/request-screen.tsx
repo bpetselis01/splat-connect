@@ -14,8 +14,8 @@ import { useEffect, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import type { PrintDelivery, PrinterWithOwner, StlFile, Tutorial } from '@splat-connect/types'
-import { apiMessage, costRange, formatCents, PRINT_COLOURS, printCostCents, printSettingsLine } from '@splat-connect/types'
+import type { PrintDelivery, PrintFitNotes, PrinterWithOwner, StlFile, Tutorial } from '@splat-connect/types'
+import { apiMessage, costRange, formatCents, PRINT_COLOURS, PRINT_FIT_QUESTIONS, printCostCents, printSettingsLine } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { formatMinutes, partsMeta } from '../../lib/printing'
@@ -55,6 +55,7 @@ export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; p
   const [qty, setQty] = useState<Record<string, number>>({})
   const [colour, setColour] = useState<string>(PRINT_COLOURS[0])
   const [delivery, setDelivery] = useState<PrintDelivery>('collect')
+  const [fitNotes, setFitNotes] = useState<PrintFitNotes>({})
   const [note, setNote] = useState('')
   const [agree, setAgree] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -117,6 +118,7 @@ export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; p
         note: note.trim() || undefined,
         colour,
         delivery,
+        ...(Object.keys(fitNotes).length ? { fit_notes: fitNotes } : {}),
       })
       router.replace(`/printing/jobs/${created.id}`)
     } catch (err) {
@@ -230,6 +232,38 @@ export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; p
               </Pressable>
             ))}
           </View>
+        </View>
+
+        <View style={styles.group}>
+          <Eyebrow>Customization</Eyebrow>
+          <Text style={styles.meta}>
+            Physical dimensions we use to size printed mounts and brackets. Nothing here is required.
+          </Text>
+          {PRINT_FIT_QUESTIONS.map((q) => (
+            <View key={q.key} style={styles.group}>
+              <Text style={styles.partName}>{q.label}</Text>
+              <View accessibilityRole="radiogroup" accessibilityLabel={q.label} style={styles.row}>
+                {q.options.map((o) => (
+                  <Chip
+                    key={o}
+                    label={o}
+                    role="radio"
+                    variant="filter"
+                    active={fitNotes[q.key] === o}
+                    // A second tap clears it: every question is optional.
+                    onPress={() =>
+                      setFitNotes((cur) => {
+                        const next = { ...cur }
+                        if (next[q.key] === o) delete next[q.key]
+                        else next[q.key] = o
+                        return next
+                      })
+                    }
+                  />
+                ))}
+              </View>
+            </View>
+          ))}
         </View>
 
         <TextField

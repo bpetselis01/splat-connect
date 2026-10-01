@@ -92,3 +92,21 @@ it('multiplies by quantity', async () => {
   // (10 g × 2 + 4 g) × 10c
   expect(await screen.findByText(/about \$2\.40 at/)).toBeTruthy()
 })
+
+it('sends the customization answers that were picked', async () => {
+  mockPost.mockResolvedValue({ id: 'j1' })
+  render(<RequestPrintScreen guideId="g1" printerIds={['p1']} />)
+  expect(
+    await screen.findByText('Physical dimensions we use to size printed mounts and brackets. Nothing here is required.')
+  ).toBeTruthy()
+  fireEvent.press(screen.getByText('20–40 cm'))
+  fireEvent.press(screen.getByText('Floor stand'))
+  fireEvent.press(screen.getByRole('checkbox', { name: /I understand/ }))
+  fireEvent.press(screen.getByText('Send request'))
+  await waitFor(() =>
+    expect(mockPost).toHaveBeenCalledWith(
+      '/api/toy-transactions/print',
+      expect.objectContaining({ fit_notes: { reach: '20–40 cm', mount: 'Floor stand' } })
+    )
+  )
+})

@@ -1,7 +1,7 @@
 import { chunk } from '../chunk.js'
 import { Hono, type Context } from 'hono'
 import { randomInt, randomUUID } from 'node:crypto'
-import { needsAction, isOwnerSide, answerBy, printRequestExpired, shortDate } from '@splat-connect/types'
+import { needsAction, isOwnerSide, answerBy, printRequestExpired, shortDate, fitNotesProblem } from '@splat-connect/types'
 import type { PrintJobFile, PrintSettings } from '@splat-connect/types'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
@@ -1558,6 +1558,10 @@ toyTransactions.post('/print', async (c) => {
   if (delivery !== null && delivery !== 'collect' && delivery !== 'post') {
     return c.json({ error: 'Choose collect or post.' }, 400)
   }
+  // 096. Optional, and only the board's options (printing.ts).
+  const fitNotes = (body.fit_notes ?? null) as Record<string, string> | null
+  const fitProblem = fitNotes === null ? null : fitNotesProblem(fitNotes)
+  if (fitProblem) return c.json({ error: fitProblem }, 400)
 
   // `files` carries a quantity per part (058's print_job_files.quantity,
   // 1–20). `stl_file_ids` is the form every client sent before, and still
@@ -1672,6 +1676,7 @@ toyTransactions.post('/print', async (c) => {
         print_note: note || null,
         print_colour: colour,
         print_delivery: delivery,
+        print_fit_notes: fitNotes && Object.keys(fitNotes).length ? fitNotes : null,
         print_group_id: groupId,
         type: 'print',
         status: 'requested',

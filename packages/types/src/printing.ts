@@ -83,3 +83,31 @@ export function orgPrintFacts(s?: PrinterStats | null): Array<{ k: string; v: st
     s.fit_answers ? { k: 'Fit', v: `${s.fitted} of ${s.fit_answers} first time` } : null,
   ].filter((f): f is { k: string; v: string } => f !== null)
 }
+
+/** The board's Customization questions and options, asked per print request (096). */
+export const PRINT_FIT_QUESTIONS = [
+  { key: 'reach', label: 'Reach from seated', options: ['Under 20 cm', '20–40 cm', 'Over 40 cm'] },
+  { key: 'switch_size', label: 'Preferred switch size', options: ['Small (50 mm)', 'Large (100 mm)', 'Extra large'] },
+  { key: 'mount', label: 'Mount needed', options: ['Tray clamp', 'Floor stand', 'None'] },
+  { key: 'tray', label: 'Tray thickness', options: ['10 mm', '15 mm', '20 mm', 'Not sure'] },
+] as const
+
+export type PrintFitKey = (typeof PRINT_FIT_QUESTIONS)[number]['key']
+export type PrintFitNotes = Partial<Record<PrintFitKey, string>>
+
+/** Null when every answer is an option its question offers; otherwise the 400's sentence. */
+export function fitNotesProblem(v: unknown): string | null {
+  const bad = 'Customization answers must be one of the options offered.'
+  if (typeof v !== 'object' || v === null || Array.isArray(v)) return bad
+  for (const [key, answer] of Object.entries(v)) {
+    const q = PRINT_FIT_QUESTIONS.find((x) => x.key === key)
+    if (!q || !(q.options as readonly string[]).includes(answer as string)) return bad
+  }
+  return null
+}
+
+/** "Reach from seated: 20–40 cm", in the board's order, for the printer. */
+export function fitNotesLines(notes?: PrintFitNotes | null): string[] {
+  if (!notes) return []
+  return PRINT_FIT_QUESTIONS.filter((q) => notes[q.key]).map((q) => `${q.label}: ${notes[q.key]}`)
+}

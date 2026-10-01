@@ -41,7 +41,7 @@ import { TextField } from '../ui/TextField'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { ErrorRow } from '../ui/ErrorRow'
-import { apiMessage, machineStatsLines, pickupAddress, plural, printSettingsLine } from '@splat-connect/types'
+import { apiMessage, fitNotesLines, machineStatsLines, pickupAddress, plural, printSettingsLine } from '@splat-connect/types'
 
 type Tab = 'requests' | 'jobs' | 'printers'
 
@@ -366,6 +366,11 @@ function IncomingCard({
         </View>
       </View>
       {tx.print_note ? <Text style={styles.quote}>“{tx.print_note}”</Text> : null}
+      {fitNotesLines(tx.print_fit_notes).map((line) => (
+        <Text key={line} style={styles.meta}>
+          {line}
+        </Text>
+      ))}
       <View style={styles.row}>
         <Ionicons name="flash" size={16} color={theme.colors.honey} />
         <Text style={[styles.meta, styles.flex]}>

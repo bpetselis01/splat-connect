@@ -137,3 +137,15 @@ it('shows each machine’s record in the picker', async () => {
   expect(screen.getByText('20 of 21 fitted first time')).toBeTruthy()
   expect(screen.getByText('Colours: Black, White')).toBeTruthy()
 })
+
+it('shows the printer the family’s customization answers', async () => {
+  mockGet.mockImplementation((path: string) =>
+    Promise.resolve(
+      path === '/api/printers/mine'
+        ? [machine('Ender PLA', { materials: ['PLA'] })]
+        : [{ ...REQUEST, print_fit_notes: { reach: '20–40 cm' } }]
+    )
+  )
+  render(<PrintForOthersScreen />)
+  expect(await screen.findByText('Reach from seated: 20–40 cm')).toBeTruthy()
+})

@@ -92,3 +92,18 @@ describe('printer stats', () => {
     ])
   })
 })
+
+import { fitNotesLines, fitNotesProblem } from '@splat-connect/types'
+
+describe('customization', () => {
+  it('accepts the board’s options only', () => {
+    expect(fitNotesProblem({ reach: '20–40 cm', tray: 'Not sure' })).toBeNull()
+    expect(fitNotesProblem({ reach: '35 cm' })).toBe('Customization answers must be one of the options offered.')
+    expect(fitNotesProblem({ shoe_size: '4' })).toBe('Customization answers must be one of the options offered.')
+    expect(fitNotesProblem(['reach'])).toBe('Customization answers must be one of the options offered.')
+  })
+  it('reads back to the printer in the board’s order', () => {
+    expect(fitNotesLines({ tray: '15 mm', reach: 'Under 20 cm' })).toEqual(['Reach from seated: Under 20 cm', 'Tray thickness: 15 mm'])
+    expect(fitNotesLines(null)).toEqual([])
+  })
+})

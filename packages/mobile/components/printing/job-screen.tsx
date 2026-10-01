@@ -18,7 +18,7 @@ import { View, Text, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Ima
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { PrinterStats, PrinterWithOwner, ToyTransaction, ToyTransactionDetail, ToyTransactionMessage } from '@splat-connect/types'
-import { apiMessage, formatCents, isOwnerSide, plural, statsLine } from '@splat-connect/types'
+import { apiMessage, fitNotesLines, formatCents, isOwnerSide, plural, statsLine } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { supabase } from '../../lib/supabase'
 import { useCapabilities } from '../../lib/capabilities'
@@ -217,6 +217,17 @@ export function PrintJobScreen({ id }: { id: string }) {
             onMessage={openThread}
             onFit={(fit) => run(() => apiClient.post<ToyTransaction>(`/api/toy-transactions/${id}/print-fit`, { fit }))}
           />
+
+          {isPrinter && fitNotesLines(tx.print_fit_notes).length ? (
+            <Card style={styles.block}>
+              <Text style={styles.eyebrow}>Customization</Text>
+              {fitNotesLines(tx.print_fit_notes).map((line) => (
+                <Text key={line} style={styles.body}>
+                  {line}
+                </Text>
+              ))}
+            </Card>
+          ) : null}
 
           {!isPrinter && state !== 'declined' && state !== 'withdrawn' && state !== 'expired' ? (
             <Card style={styles.block}>

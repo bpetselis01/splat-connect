@@ -754,6 +754,7 @@ export const PENDING = {
     needs: "Decided 2026-09-30: the holder chooses the mode and can change it later: hand-picked (up to 3, like guide recommendations in 048) or automatic (e.g. their most recently published).",
   },
   'customization-metrics': {
+    shipped: true,
     title: "Customization",
     blurb: "Reach, switch size, mount and tray measurements are coming.",
     kind: "build",
