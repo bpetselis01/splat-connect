@@ -11,6 +11,7 @@ let owner: TestUser
 let tutorialId: string
 let printerId: string
 let staleId: string
+let stlId: string
 
 const as = (u: TestUser, method = 'GET', body?: unknown) => ({
   method,
@@ -44,10 +45,17 @@ beforeAll(async () => {
     .select('id')
     .single()
   staleId = stale!.id
+  const { data: f } = await admin
+    .from('stl_files')
+    .insert({ tutorial_id: tutorialId, filename: 'part.stl', file_url: `${tutorialId}/part.stl` })
+    .select('id')
+    .single()
+  stlId = f!.id
 })
 
 afterAll(async () => {
   await adminClient().from('toy_transactions').delete().eq('tutorial_id', tutorialId)
+  await adminClient().from('stl_files').delete().eq('tutorial_id', tutorialId)
   await adminClient().from('printers').delete().eq('id', printerId)
   await adminClient().from('tutorials').delete().eq('id', tutorialId)
   await deleteTestUser(family.id)
@@ -64,5 +72,18 @@ describe('an unanswered print request after seven days', () => {
   it('no longer counts on the printer’s badge', async () => {
     const res = await app.request('/api/toy-transactions/action-count', as(owner))
     expect(await res.json()).toEqual({ count: 0 })
+  })
+})
+
+describe('asking the same printer again', () => {
+  const ask = () =>
+    app.request(
+      '/api/toy-transactions/print',
+      as(family, 'POST', { printer_ids: [printerId], tutorial_id: tutorialId, stl_file_ids: [stlId] })
+    )
+
+  it('is not blocked by an expired request, but a fresh one still blocks', async () => {
+    expect((await ask()).status).toBe(201)
+    expect((await ask()).status).toBe(409)
   })
 })

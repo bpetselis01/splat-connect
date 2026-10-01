@@ -1662,14 +1662,14 @@ toyTransactions.post('/print', async (c) => {
 
   const { data: existing, error: existingError } = await admin
     .from('toy_transactions')
-    .select('id')
+    .select('id, status, type, created_at')
     .eq('requester_id', userId)
     .in('printer_id', printerIds as string[])
     .eq('tutorial_id', tutorial.id)
     .in('status', ['requested', 'accepted'])
-    .limit(1)
   if (existingError) return c.json({ error: existingError.message }, 500)
-  if ((existing ?? []).length) {
+  // An expired request is over ("ask again"), so it does not block a new one.
+  if ((existing ?? []).some((r) => !printRequestExpired(r))) {
     return c.json({ error: 'You already have an open job on one of those printers for this guide' }, 409)
   }
 
