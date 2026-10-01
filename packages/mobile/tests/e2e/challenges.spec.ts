@@ -54,8 +54,8 @@ test('joining unlocks the thread, and a message posted there comes back', async 
   await page.getByRole('button', { name: 'Join this challenge' }).click()
   await expect(page.getByText('✓ You joined')).toBeVisible()
 
-  // The API writes a system line for the join; the thread, under Makers, reads it back.
-  await page.getByRole('tab', { name: 'Makers' }).click()
+  // The API writes a system line for the join; the Thread tab reads it back.
+  await page.getByRole('tab', { name: 'Thread' }).click()
   await expect(page.getByText('joined this challenge', { exact: false })).toBeVisible()
 
   const message = uniqueTitle('Trying a proximity switch')
@@ -76,9 +76,7 @@ test('a submitted idea lands in My challenges, awaiting review', async ({ page }
   await page.goto('/explore/challenges/new')
   await page.getByLabel('Idea name').fill(title)
   await page.getByLabel('Summarise it in one sentence').fill('A switch she can actually hit.')
-  await page.getByLabel('Full description').fill('She swipes rather than presses.')
-  await page.getByLabel('Intended use').fill('A bubble machine during therapy.')
-  await page.getByLabel('Primary user').fill('A three-year-old with low muscle tone.')
+  await page.getByLabel('Why it matters').fill('She swipes rather than presses.')
   await page.getByRole('button', { name: 'Clarification' }).click()
   await page.getByRole('button', { name: 'Submit idea' }).click()
 
@@ -87,10 +85,10 @@ test('a submitted idea lands in My challenges, awaiting review', async ({ page }
 
   await page.waitForURL(/\/challenges$/)
   await expect(page.getByText(title)).toBeVisible()
-  // Pending is the only status an idea can have straight off the form, and a
-  // pending idea has no public page — so its row is not a link.
+  // Pending is the only status an idea can have straight off the form. Since
+  // 107 the author's own pending row opens their copy of it.
   await expect(page.getByText('PENDING REVIEW')).toBeVisible()
-  await expect(page.getByRole('button', { name: title })).toBeHidden()
+  await expect(page.getByRole('button', { name: title })).toBeVisible()
 })
 
 test('My challenges reaches the public brief, across the modal boundary', async ({ page }) => {
