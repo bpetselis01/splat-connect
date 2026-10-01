@@ -1250,9 +1250,11 @@ toyTransactions.post('/build', async (c) => {
   const userId = c.get('userId')
   const admin = createAdminClient()
 
+  // Optional since 104 — the board's note to the maker is "(optional)". When
+  // present it is still capped, here and by toy_transactions_subject.
   const brief = typeof body.build_brief === 'string' ? body.build_brief.trim() : ''
-  if (brief.length < 1 || brief.length > 2000) {
-    return c.json({ error: 'Say what you need built, in 2000 characters or fewer.' }, 400)
+  if (brief.length > 2000) {
+    return c.json({ error: 'Keep the note to the maker to 2000 characters or fewer.' }, 400)
   }
 
   const { data: tutorial, error: tutorialError } = await admin
@@ -1365,7 +1367,7 @@ toyTransactions.post('/build', async (c) => {
       toy_id: null,
       offered_toy_id: null,
       tutorial_id: tutorial.id,
-      build_brief: brief,
+      build_brief: brief || null,
       type: 'build',
       status: 'requested',
       requester_id: userId,

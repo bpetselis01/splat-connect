@@ -8,8 +8,6 @@
  * - "Your suburb" is a field the board does not draw. An open request needs a
  *   suburb and a travel range on its card or no maker can act on it, and the
  *   API refuses one without them. Seeded from the profile's pickup suburb.
- * - The note is required, not "(optional)": build_brief is the one field the
- *   API will not take empty.
  * - No parts price. Guides do not store one, so "roughly $30" would be made up.
  */
 import { useEffect, useState } from 'react'
@@ -17,7 +15,7 @@ import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { Tutorial } from '@splat-connect/types'
-import { apiMessage, formatBuildTime } from '@splat-connect/types'
+import { apiMessage, formatBuildTime, BUILD_URGENCIES } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { useCapabilities } from '../../lib/capabilities'
@@ -28,10 +26,6 @@ import { ErrorRow } from '../ui/ErrorRow'
 
 // The board's four ranges; the Makers wanted filter reads the same scale.
 const RANGES = [5, 10, 15, 25]
-// Web's list (ask-openly-form.tsx), so a request reads the same on both boards.
-// PENDING(build-request-options): the board's options are No rush / This month /
-// Before holidays, and its note to the maker is optional (build_brief is required today).
-const URGENCIES = ['No rush', 'Before school holidays', 'Within a month', 'As soon as someone can']
 
 const DIFF_LABEL = { easy: 'Easy', medium: 'Medium', hard: 'Hard' } as const
 
@@ -46,7 +40,7 @@ export function AskForBuildScreen() {
   const [suburb, setSuburb] = useState('')
   const [brief, setBrief] = useState('')
   const [travelKm, setTravelKm] = useState(10)
-  const [urgency, setUrgency] = useState(URGENCIES[0])
+  const [urgency, setUrgency] = useState<string>(BUILD_URGENCIES[0])
   const [covers, setCovers] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -77,14 +71,13 @@ export function AskForBuildScreen() {
     // Said in the order the form asks, one at a time — the board's toasts.
     if (!tutorialId) return setError('Pick the guide you want built.')
     if (!suburb.trim()) return setError('Say which suburb you are in — never your address.')
-    if (!brief.trim()) return setError('Add a note to the maker — why this toy, and the switch you have.')
     if (!covers) return setError('Tick that you will cover the parts.')
     setBusy(true)
     setError(null)
     try {
       await apiClient.post('/api/toy-transactions/build', {
         tutorial_id: tutorialId,
-        build_brief: brief.trim(),
+        build_brief: brief.trim() || null,
         child_label: childLabel.trim(),
         requester_suburb: suburb.trim(),
         travel_km: travelKm,
@@ -160,7 +153,7 @@ export function AskForBuildScreen() {
         hint="The suburb only — it goes on the card."
       />
       <TextField
-        label="A note to the maker"
+        label="A note to the maker (optional)"
         placeholder="Why this toy, the switch you have, what makes handover easy"
         maxLength={2000}
         multiline
@@ -181,7 +174,7 @@ export function AskForBuildScreen() {
       <View>
         <Text style={styles.label}>How soon?</Text>
         <View accessibilityRole="radiogroup" style={styles.chips}>
-          {URGENCIES.map((u) => (
+          {BUILD_URGENCIES.map((u) => (
             <Chip key={u} role="radio" label={u} active={urgency === u} onPress={() => setUrgency(u)} />
           ))}
         </View>

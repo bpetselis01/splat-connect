@@ -749,6 +749,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["mobile", "api"],
     needs: "Decided 2026-09-30: match the board. The note to the maker is optional (relax the 057 check) and How soon? is No rush / This month / Before holidays, on web and mobile.",
+    shipped: true,
   },
   'learn-ask-an-expert-mobile': {
     title: "Ask an expert",
