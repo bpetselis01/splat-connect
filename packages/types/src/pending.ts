@@ -302,6 +302,13 @@ export const PENDING = {
     platforms: ["web", "mobile", "api"],
     needs: "The guide author sees the fit answers for their guide [ui,api]",
   },
+  'web-print-customization': {
+    title: "Customization questions",
+    blurb: "Telling the printer about reach, switch size, mount and tray here is coming. The phone asks these now.",
+    kind: "build",
+    platforms: ["web"],
+    needs: "The web print request asks the four customization questions the phone asks",
+  },
   'message-printer': {
     title: "Message the printer",
     blurb: "Messaging the printer from here is coming. Use the job thread for now.",

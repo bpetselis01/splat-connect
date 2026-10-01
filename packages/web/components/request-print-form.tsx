@@ -261,6 +261,7 @@ export function RequestPrintForm({
               placeholder="e.g. It is for a round cot rail, about 25 mm across."
             />
           </label>
+          {/* PENDING(web-print-customization): the four customization questions (PRINT_FIT_QUESTIONS) go here, sent as fit_notes like the phone's request. */}
         </section>
 
         <section className="print-panel">
