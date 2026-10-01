@@ -470,6 +470,16 @@ async function seedOwnedTutorial(db, contributorId) {
   await swallow(
     db.from('tools').insert(['Soldering iron', 'Wire strippers'].map((name) => ({ tutorial_id: data.id, name })))
   )
+  // The author's own safety notes (090): the editor draws one title and one
+  // detail field per note, and none at all for a guide without.
+  await swallow(
+    db.from('tutorial_safety_notes').insert({
+      tutorial_id: data.id,
+      position: 1,
+      title: 'Battery door must be screwed shut',
+      detail: 'The base clips by default. Add the screw.',
+    })
+  )
   return data.id
 }
 
