@@ -71,7 +71,7 @@ it('keeps today’s line when no printer declared a rate', async () => {
   ).toBeTruthy()
 })
 
-it('names the one declared rate when another printer is free', async () => {
+it('keeps today’s line when one printer has a rate and another is free', async () => {
   mockGet.mockImplementation((path: string) =>
     Promise.resolve(
       path === '/api/printers'
@@ -80,7 +80,7 @@ it('names the one declared rate when another printer is free', async () => {
     )
   )
   render(<RequestPrintScreen guideId="g1" printerIds={['p1', 'p2']} />)
-  expect(await screen.findByText(/about \$1\.40 at the printer’s declared rate/)).toBeTruthy()
+  expect(await screen.findByText('I understand I cover the filament, and that I settle it with the printer, not through SPLAT.')).toBeTruthy()
 })
 
 it('multiplies by quantity', async () => {

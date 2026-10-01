@@ -11,14 +11,20 @@ describe('printCostCents', () => {
   it('is null when any part lacks grams, rather than a confident undercount', () => {
     expect(printCostCents([{ filament_grams: 10 }, { filament_grams: null }], 12)).toBeNull()
   })
+  it('is null at a rate of 0 — never "$0.00"', () => {
+    expect(printCostCents([{ filament_grams: 10 }], 0)).toBeNull()
+  })
   it('is null with nothing ticked', () => {
     expect(printCostCents([], 12)).toBeNull()
   })
 })
 
 describe('costRange', () => {
-  it('spans the printers that have an estimate', () => {
-    expect(costRange([300, null, 120])).toEqual([120, 300])
+  it('spans the printers when every one has an estimate', () => {
+    expect(costRange([300, 120])).toEqual([120, 300])
+  })
+  it('is null when any printer has none — no partial range', () => {
+    expect(costRange([300, null, 120])).toBeNull()
   })
   it('is null when none has one', () => {
     expect(costRange([null, null])).toBeNull()
