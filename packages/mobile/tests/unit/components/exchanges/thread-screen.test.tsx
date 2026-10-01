@@ -44,6 +44,9 @@ jest.mock('expo-router', () => {
   }
 })
 
+const mockCopy = jest.fn()
+jest.mock('expo-clipboard', () => ({ setStringAsync: (...a: unknown[]) => mockCopy(...a) }))
+
 const mockUseCapabilities = jest.fn()
 jest.mock('../../../../lib/capabilities', () => ({
   useCapabilities: () => mockUseCapabilities(),
@@ -718,5 +721,35 @@ describe('header photo', () => {
     render(<ExchangeThreadScreen id="tx1" />)
     await screen.findByText('Bubble machine → Jamie collects')
     expect(screen.queryByTestId('exchange-toy-photo')).toBeNull()
+  })
+})
+
+describe('handover code actions', () => {
+  // The requester on an accepted donation holds the code.
+  const accepted = (over: object = {}) =>
+    detail({ status: 'accepted', owner_id: 'owner1', requester_id: 'viewer1', requester_code: '123456', owner_name: 'Ash', ...over })
+
+  beforeEach(() => {
+    mockUseCapabilities.mockReturnValue(caps({}))
+    mockGet.mockImplementation((p: string) =>
+      p === '/api/toy-transactions/tx1' ? Promise.resolve(accepted()) : Promise.resolve({ lines: [], settlement: null })
+    )
+  })
+
+  it('copies the code and says so', async () => {
+    mockCopy.mockResolvedValue(true)
+    render(<ExchangeThreadScreen id="tx1" />)
+    fireEvent.press(await screen.findByText('Copy'))
+    await waitFor(() => expect(mockCopy).toHaveBeenCalledWith('123456'))
+    expect(await screen.findByText('Code 123456 copied')).toBeTruthy()
+  })
+
+  it('swaps in a new code from the API and says the old one is dead', async () => {
+    mockPost.mockResolvedValue(accepted({ requester_code: '654321' }))
+    render(<ExchangeThreadScreen id="tx1" />)
+    fireEvent.press(await screen.findByText('New code'))
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions/tx1/new-code', {}))
+    expect(await screen.findByText('New code — the old one no longer works')).toBeTruthy()
+    expect(screen.getByLabelText('6 5 4 3 2 1')).toBeTruthy()
   })
 })

@@ -455,6 +455,7 @@ export const PENDING = {
     needs: "Parts cost panel (exchange-costs exists) [ui]",
   },
   'handover-code-actions': {
+    shipped: true,
     title: "New code",
     blurb: "Getting a fresh handover code is coming.",
     kind: "build",

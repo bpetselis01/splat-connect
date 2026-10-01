@@ -1177,6 +1177,40 @@ toyTransactions.post('/:id/confirm', async (c) => {
 })
 
 /**
+ * POST /api/toy-transactions/:id/new-code
+ *
+ * A fresh code for the CALLER only, for when theirs was overheard or sent to
+ * the wrong person. Your code is the one the other side types in, so once they
+ * have confirmed it is spent and cannot be replaced. The counterparty's code is
+ * never touched, and sanitizeCodes keeps it out of the answer as everywhere else.
+ */
+toyTransactions.post('/:id/new-code', async (c) => {
+  const loaded = await loadForParty(c)
+  if ('status' in loaded) return c.json({ error: 'message' in loaded ? loaded.message : 'Not found' }, loaded.status)
+  const tx = loaded.data
+  const userId = c.get('userId')
+  const admin = createAdminClient()
+  const ledOrgs = await ledOrgIds(admin, userId)
+  const isOwner = isOwnerSide(tx as any, userId, ledOrgs)
+  if (!isOwner && userId !== tx.requester_id) return c.json({ error: 'Not found' }, 404)
+  if (tx.status !== 'accepted') return c.json({ error: 'A code is only given once the request is accepted.' }, 409)
+  const spent = isOwner ? tx.requester_confirmed_at : tx.owner_confirmed_at
+  if (spent) return c.json({ error: 'Your code has already been used, so it cannot be changed.' }, 409)
+
+  const field = isOwner ? 'owner_code' : 'requester_code'
+  const { data: updated, error } = await admin
+    .from('toy_transactions')
+    .update({ [field]: generateCode(), updated_at: new Date().toISOString() })
+    .eq('id', tx.id)
+    .eq('status', 'accepted')
+    .select()
+    .maybeSingle()
+  if (error) return c.json({ error: error.message }, 500)
+  if (!updated) return c.json({ error: 'This handover is no longer open.' }, 409)
+  return c.json(sanitizeCodes(updated, userId, ledOrgs))
+})
+
+/**
  * POST /api/toy-transactions/build
  *
  * A family asks somebody to build them an adapted toy from a published guide.

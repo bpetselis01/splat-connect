@@ -21,6 +21,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { View, Text, Image, ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
+import * as Clipboard from 'expo-clipboard'
 import type {
   ExchangeCost,
   ExchangeSettlement,
@@ -43,6 +44,7 @@ import { EmptyState } from '../ui/EmptyState'
 import { MessageBubble } from '../ui/MessageBubble'
 import { ErrorRow } from '../ui/ErrorRow'
 import { PendingButton } from '../ui/pending'
+import { FlashLine, useFlash } from '../ui/Flash'
 
 const POLL_MS = 10_000
 const LOAD_ERROR = "Couldn't load this exchange."
@@ -125,6 +127,7 @@ export function ExchangeThreadScreen({ id }: { id: string }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [flash, setFlash] = useFlash()
   const [draft, setDraft] = useState('')
   const [code, setCode] = useState('')
   const [pickup, setPickup] = useState<PickupDraft | null>(null)
@@ -437,7 +440,30 @@ export function ExchangeThreadScreen({ id }: { id: string }) {
                     ))}
                   </View>
                   <Text style={styles.codeHint}>Read this to {otherPartyName} at pickup.</Text>
-                  <PendingButton pending="handover-code-actions" label="New code" variant="ghost" />
+                  <View style={styles.buttonRow}>
+                    <Button
+                      label="Copy"
+                      variant="ghost"
+                      style={styles.rowButton}
+                      onPress={async () => {
+                        await Clipboard.setStringAsync(myCode)
+                        setFlash(`Code ${myCode} copied`)
+                      }}
+                    />
+                    <Button
+                      label="New code"
+                      variant="ghost"
+                      disabled={busy}
+                      style={styles.rowButton}
+                      onPress={async () => {
+                        const sent = await run(() =>
+                          apiClient.post<ToyTransaction>(`/api/toy-transactions/${id}/new-code`, {})
+                        )
+                        if (sent) setFlash('New code — the old one no longer works')
+                      }}
+                    />
+                  </View>
+                  <FlashLine message={flash} />
                 </View>
               ) : null}
 
