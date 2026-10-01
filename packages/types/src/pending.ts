@@ -600,7 +600,7 @@ export const PENDING = {
   'guide-draft-preview': {
     title: "Draft preview",
     blurb: "A summary of your draft before you submit it is coming.",
-    kind: "decision",
+    kind: "build",
     platforms: ["mobile"],
     needs: "Decided 2026-09-30: already done. Preview opens the reader view and the editor hub is the summary.",
     shipped: true,
