@@ -1,7 +1,49 @@
 {
- "at": "2026-10-01T05:42:38.095Z",
+ "at": "2026-10-01T08:24:26.418Z",
  "live": "http://localhost:3112",
  "screens": [
+  {
+   "id": "guides",
+   "name": "Guides",
+   "group": "tabs",
+   "route": "/guides",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/guides",
+   "explained": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"suits ollie\" has no counterpart",
+     "board": "suits ollie",
+     "live": null,
+     "why": "fixture",
+     "reason": "The board's child Ollie fits a guide, so a Suits Ollie heading draws; the parity child has no name or fit answers."
+    }
+   ],
+   "boardHeadings": 8,
+   "liveHeadings": 2
+  },
+  {
+   "id": "guide_detail",
+   "name": "Guide detail",
+   "group": "push",
+   "route": "/guides/[id]",
+   "findings": [],
+   "role": "parent",
+   "error": "no record for /guides/[id]",
+   "skipped": true
+  },
+  {
+   "id": "guide_preview",
+   "name": "Guide preview",
+   "group": "push",
+   "route": "/guides/[id]/preview",
+   "findings": [],
+   "role": "contributor",
+   "error": "no record for /guides/[id]/preview",
+   "skipped": true
+  },
   {
    "id": "guide_new",
    "name": "New guide",
@@ -43,155 +85,6 @@
    "liveHeadings": 0
   },
   {
-   "id": "ed_safety",
-   "name": "Editor · safety",
-   "group": "push",
-   "route": "/tutorials/63e1c6d5-5318-4b6b-9d3b-e63b3e57c41d/safety",
-   "findings": [],
-   "role": "contributor",
-   "finalUrl": "/tutorials/63e1c6d5-5318-4b6b-9d3b-e63b3e57c41d/safety",
-   "explained": [
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "input background",
-     "board": "rgb(250,249,247)",
-     "live": "rgb(255,255,255)",
-     "why": "intended",
-     "reason": "The board fills a field with canvas only inside its white section card; the app's fields sit on the page and take the surface."
-    }
-   ],
-   "boardHeadings": 0,
-   "liveHeadings": 0
-  },
-  {
-   "id": "org_review",
-   "name": "Review a guide",
-   "group": "push",
-   "route": "/organisation/c47d130c-bf41-4334-80d1-72352d729c3f",
-   "findings": [],
-   "role": "leader",
-   "finalUrl": "/organisation/c47d130c-bf41-4334-80d1-72352d729c3f",
-   "explained": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "vibrating cushion with a lever — sam mitchell, easy, # minutes. six se",
-     "live": "parity guide submitted for review",
-     "why": "intended",
-     "reason": "The board runs title, author, difficulty and minutes into one sentence; the app draws them as the title, badges and byline above the description, so no single paragraph matches."
-    }
-   ],
-   "boardHeadings": 0,
-   "liveHeadings": 1
-  },
-  {
-   "id": "challenges",
-   "name": "Challenges",
-   "group": "push",
-   "route": "/explore/challenges",
-   "findings": [
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "body font",
-     "board": "Nunito",
-     "live": "Baloo 2"
-    }
-   ],
-   "role": "parent",
-   "finalUrl": "/explore/challenges",
-   "explained": [],
-   "boardHeadings": 5,
-   "liveHeadings": 4
-  },
-  {
-   "id": "makers_wanted",
-   "name": "Makers wanted",
-   "group": "push",
-   "route": "/explore/makers-wanted",
-   "findings": [
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "set",
-     "live": "none"
-    }
-   ],
-   "role": "parent",
-   "finalUrl": "/explore/makers-wanted",
-   "explained": [],
-   "boardHeadings": 0,
-   "liveHeadings": 1
-  },
-  {
-   "id": "guides",
-   "name": "Guides",
-   "group": "tabs",
-   "route": "/guides",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/guides",
-   "explained": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"suits ollie\" has no counterpart",
-     "board": "suits ollie",
-     "live": null,
-     "why": "fixture",
-     "reason": "The board's child Ollie fits a guide, so a Suits Ollie heading draws; the parity child has no name or fit answers."
-    }
-   ],
-   "boardHeadings": 8,
-   "liveHeadings": 2
-  },
-  {
-   "id": "guide_detail",
-   "name": "Guide detail",
-   "group": "push",
-   "route": "/guides/c53eede5-80bd-4a9a-bfa8-078b1470dd56",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/guides/c53eede5-80bd-4a9a-bfa8-078b1470dd56",
-   "explained": [],
-   "boardHeadings": 6,
-   "liveHeadings": 7
-  },
-  {
-   "id": "guide_preview",
-   "name": "Guide preview",
-   "group": "push",
-   "route": "/guides/c53eede5-80bd-4a9a-bfa8-078b1470dd56/preview",
-   "findings": [],
-   "role": "contributor",
-   "finalUrl": "/guides/c53eede5-80bd-4a9a-bfa8-078b1470dd56/preview",
-   "explained": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board lists cards, live shows none",
-     "board": 4,
-     "live": 0,
-     "why": "intended",
-     "reason": "Decided 2026-09-30 (guide-draft-preview): Preview opens the reader view; the editor hub is the summary."
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board has cards, live has none",
-     "board": 4,
-     "live": 0,
-     "why": "intended",
-     "reason": "Decided 2026-09-30 (guide-draft-preview): Preview opens the reader view; the editor hub is the summary."
-    }
-   ],
-   "boardHeadings": 0,
-   "liveHeadings": 1
-  },
-  {
    "id": "contributor",
    "name": "Contributor",
    "group": "push",
@@ -207,10 +100,10 @@
    "id": "guide_org",
    "name": "Organisation",
    "group": "push",
-   "route": "/guides/organisation/8c038c12-2c21-4e22-ae27-4dd6393cf5cf",
+   "route": "/guides/organisation/1a2db95b-194d-4f4e-8b2a-ea3774f5bf8b",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/guides/organisation/8c038c12-2c21-4e22-ae27-4dd6393cf5cf",
+   "finalUrl": "/guides/organisation/1a2db95b-194d-4f4e-8b2a-ea3774f5bf8b",
    "explained": [],
    "boardHeadings": 8,
    "liveHeadings": 9
@@ -241,7 +134,7 @@
    "id": "print_request",
    "name": "Request a print",
    "group": "modal",
-   "route": "/printing/request?guide=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa&printers=271acf23-8caf-4cc6-9dd8-4f23715ea63e,e47f1b7f-9b92-45da-9d9f-c99d48a6f83b",
+   "route": "/printing/request?guide=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa&printers=42079194-1a7a-4aba-bb8c-5133d91feb32,ab32c1b9-6458-41cc-8154-f76d91bbf445",
    "findings": [],
    "role": "parent",
    "finalUrl": "/printing/request",
@@ -253,10 +146,10 @@
    "id": "print_job",
    "name": "Print job",
    "group": "push",
-   "route": "/printing/jobs/a7959de3-53af-4a42-870d-691b122a8db6",
+   "route": "/printing/jobs/11e739a8-baf9-4efd-85ac-0217d8cfe1f8",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/printing/jobs/a7959de3-53af-4a42-870d-691b122a8db6",
+   "finalUrl": "/printing/jobs/11e739a8-baf9-4efd-85ac-0217d8cfe1f8",
    "explained": [
     {
      "type": "shadow",
@@ -310,8 +203,8 @@
      "what": "h2 \"nearest first\" has no counterpart",
      "board": "nearest first",
      "live": null,
-     "why": "pending",
-     "pending": "locations-and-distance"
+     "why": "intended",
+     "reason": "Nearest first is a filter chip, off until tapped; the board draws it already switched on, so its heading shows only in that state."
     }
    ],
    "boardHeadings": 8,
@@ -321,10 +214,10 @@
    "id": "lib_toy",
    "name": "Toy detail",
    "group": "push",
-   "route": "/toy-library/e2d953c6-457b-4f05-9547-c0cea0294e14",
+   "route": "/toy-library/757a4228-bebf-4249-a9e5-fc298006b9a1",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/toy-library/e2d953c6-457b-4f05-9547-c0cea0294e14",
+   "finalUrl": "/toy-library/757a4228-bebf-4249-a9e5-fc298006b9a1",
    "explained": [
     {
      "type": "font",
@@ -374,10 +267,10 @@
    "id": "lib_org",
    "name": "Organisation",
    "group": "push",
-   "route": "/toy-library/organisation/8c038c12-2c21-4e22-ae27-4dd6393cf5cf",
+   "route": "/toy-library/organisation/1a2db95b-194d-4f4e-8b2a-ea3774f5bf8b",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/toy-library/organisation/8c038c12-2c21-4e22-ae27-4dd6393cf5cf",
+   "finalUrl": "/toy-library/organisation/1a2db95b-194d-4f4e-8b2a-ea3774f5bf8b",
    "explained": [],
    "boardHeadings": 8,
    "liveHeadings": 9
@@ -447,13 +340,41 @@
    "liveHeadings": 6
   },
   {
+   "id": "challenges",
+   "name": "Challenges",
+   "group": "push",
+   "route": "/explore/challenges",
+   "findings": [
+    {
+     "type": "font",
+     "severity": "high",
+     "what": "body font",
+     "board": "Nunito",
+     "live": "Baloo 2"
+    }
+   ],
+   "role": "parent",
+   "finalUrl": "/explore/challenges",
+   "explained": [],
+   "boardHeadings": 5,
+   "liveHeadings": 1
+  },
+  {
    "id": "challenge_detail",
    "name": "Challenge",
    "group": "push",
-   "route": "/explore/challenges/2107527e-8f5d-4609-9bf3-ab3c6a6f2880",
-   "findings": [],
+   "route": "/explore/challenges/794f67ad-4e20-44a0-a000-2e77373de151",
+   "findings": [
+    {
+     "type": "shadow",
+     "severity": "medium",
+     "what": "no button on live carries a shadow",
+     "board": "set",
+     "live": "none"
+    }
+   ],
    "role": "parent",
-   "finalUrl": "/explore/challenges/2107527e-8f5d-4609-9bf3-ab3c6a6f2880",
+   "finalUrl": "/explore/challenges/794f67ad-4e20-44a0-a000-2e77373de151",
    "explained": [
     {
      "type": "radius",
@@ -527,6 +448,26 @@
    "liveHeadings": 0
   },
   {
+   "id": "makers_wanted",
+   "name": "Makers wanted",
+   "group": "push",
+   "route": "/explore/makers-wanted",
+   "findings": [
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "set",
+     "live": "none"
+    }
+   ],
+   "role": "parent",
+   "finalUrl": "/explore/makers-wanted",
+   "explained": [],
+   "boardHeadings": 0,
+   "liveHeadings": 1
+  },
+  {
    "id": "mw_new",
    "name": "Ask for a build",
    "group": "modal",
@@ -542,10 +483,10 @@
    "id": "build_thread",
    "name": "Build thread",
    "group": "push",
-   "route": "/exchanges/build/59d4f4e7-bfbc-4dcb-af87-14494575e8d1",
+   "route": "/exchanges/build/1e639230-0a23-4037-aada-7c84e0004c44",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/exchanges/build/59d4f4e7-bfbc-4dcb-af87-14494575e8d1",
+   "finalUrl": "/exchanges/build/1e639230-0a23-4037-aada-7c84e0004c44",
    "explained": [
     {
      "type": "shadow",
@@ -632,32 +573,11 @@
    "id": "exchange",
    "name": "Exchange thread",
    "group": "push",
-   "route": "/exchanges/b0c7c204-3adf-473c-b1d5-b48c3701a38b",
+   "route": "/exchanges/[id]",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/exchanges/b0c7c204-3adf-473c-b1d5-b48c3701a38b",
-   "explained": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h3 \"thursday after three, newcastle clinic\" has no counterpart",
-     "board": "thursday after three, newcastle clinic",
-     "live": null,
-     "why": "harness",
-     "reason": "The board nests its cards (a bordered box inside the card), so its leaf cards are inner boxes without shadow; the app's are the outer cards. Counting every card fixes it here and breaks nine web screens. The pickup line is in the app's leaf card, so it is compared as a card title, not a heading."
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "none",
-     "live": "set",
-     "why": "harness",
-     "reason": "The board nests its cards (a bordered box inside the card), so its leaf cards are inner boxes without shadow; the app's are the outer cards. Counting every card fixes it here and breaks nine web screens."
-    }
-   ],
-   "boardHeadings": 2,
-   "liveHeadings": 1
+   "error": "no record for /exchanges/[id]",
+   "skipped": true
   },
   {
    "id": "my_splat",
@@ -687,10 +607,10 @@
    "id": "editor",
    "name": "Editor hub",
    "group": "push",
-   "route": "/tutorials/c3d6659b-7188-4413-933c-83fdb1115438",
+   "route": "/tutorials/f9d3d132-aa2d-41e6-b910-d0d8c2c0065f",
    "findings": [],
    "role": "contributor",
-   "finalUrl": "/tutorials/c3d6659b-7188-4413-933c-83fdb1115438",
+   "finalUrl": "/tutorials/f9d3d132-aa2d-41e6-b910-d0d8c2c0065f",
    "explained": [],
    "boardHeadings": 1,
    "liveHeadings": 1
@@ -699,10 +619,10 @@
    "id": "ed_details",
    "name": "Editor · details",
    "group": "push",
-   "route": "/tutorials/c3d6659b-7188-4413-933c-83fdb1115438/details",
+   "route": "/tutorials/f9d3d132-aa2d-41e6-b910-d0d8c2c0065f/details",
    "findings": [],
    "role": "contributor",
-   "finalUrl": "/tutorials/c3d6659b-7188-4413-933c-83fdb1115438/details",
+   "finalUrl": "/tutorials/f9d3d132-aa2d-41e6-b910-d0d8c2c0065f/details",
    "explained": [
     {
      "type": "colour",
@@ -721,10 +641,10 @@
    "id": "ed_steps",
    "name": "Editor · steps",
    "group": "push",
-   "route": "/tutorials/c3d6659b-7188-4413-933c-83fdb1115438/steps",
+   "route": "/tutorials/f9d3d132-aa2d-41e6-b910-d0d8c2c0065f/steps",
    "findings": [],
    "role": "contributor",
-   "finalUrl": "/tutorials/c3d6659b-7188-4413-933c-83fdb1115438/steps",
+   "finalUrl": "/tutorials/f9d3d132-aa2d-41e6-b910-d0d8c2c0065f/steps",
    "explained": [
     {
      "type": "colour",
@@ -743,10 +663,10 @@
    "id": "ed_parts",
    "name": "Editor · parts",
    "group": "push",
-   "route": "/tutorials/c3d6659b-7188-4413-933c-83fdb1115438/parts",
+   "route": "/tutorials/f9d3d132-aa2d-41e6-b910-d0d8c2c0065f/parts",
    "findings": [],
    "role": "contributor",
-   "finalUrl": "/tutorials/c3d6659b-7188-4413-933c-83fdb1115438/parts",
+   "finalUrl": "/tutorials/f9d3d132-aa2d-41e6-b910-d0d8c2c0065f/parts",
    "explained": [
     {
      "type": "colour",
@@ -765,10 +685,32 @@
    "id": "ed_tools",
    "name": "Editor · tools",
    "group": "push",
-   "route": "/tutorials/c3d6659b-7188-4413-933c-83fdb1115438/tools",
+   "route": "/tutorials/f9d3d132-aa2d-41e6-b910-d0d8c2c0065f/tools",
    "findings": [],
    "role": "contributor",
-   "finalUrl": "/tutorials/c3d6659b-7188-4413-933c-83fdb1115438/tools",
+   "finalUrl": "/tutorials/f9d3d132-aa2d-41e6-b910-d0d8c2c0065f/tools",
+   "explained": [
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "input background",
+     "board": "rgb(250,249,247)",
+     "live": "rgb(255,255,255)",
+     "why": "intended",
+     "reason": "The board fills a field with canvas only inside its white section card; the app's fields sit on the page and take the surface."
+    }
+   ],
+   "boardHeadings": 0,
+   "liveHeadings": 0
+  },
+  {
+   "id": "ed_safety",
+   "name": "Editor · safety",
+   "group": "push",
+   "route": "/tutorials/f9d3d132-aa2d-41e6-b910-d0d8c2c0065f/safety",
+   "findings": [],
+   "role": "contributor",
+   "finalUrl": "/tutorials/f9d3d132-aa2d-41e6-b910-d0d8c2c0065f/safety",
    "explained": [
     {
      "type": "colour",
@@ -787,10 +729,10 @@
    "id": "ed_stl",
    "name": "Editor · STL",
    "group": "push",
-   "route": "/tutorials/c3d6659b-7188-4413-933c-83fdb1115438/stl",
+   "route": "/tutorials/f9d3d132-aa2d-41e6-b910-d0d8c2c0065f/stl",
    "findings": [],
    "role": "contributor",
-   "finalUrl": "/tutorials/c3d6659b-7188-4413-933c-83fdb1115438/stl",
+   "finalUrl": "/tutorials/f9d3d132-aa2d-41e6-b910-d0d8c2c0065f/stl",
    "explained": [
     {
      "type": "missing-section",
@@ -861,10 +803,10 @@
    "id": "toy_detail",
    "name": "Toy detail",
    "group": "push",
-   "route": "/toys/c318f876-1c0b-4b57-b003-204f400cf98c",
+   "route": "/toys/20b4a593-bd51-4743-a87d-928265cafd6e",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/toys/c318f876-1c0b-4b57-b003-204f400cf98c",
+   "finalUrl": "/toys/20b4a593-bd51-4743-a87d-928265cafd6e",
    "explained": [
     {
      "type": "missing-section",
@@ -987,8 +929,8 @@
      "what": "h2 \"$#\" has no counterpart",
      "board": "$#",
      "live": null,
-     "why": "pending",
-     "pending": "add-printer-rates"
+     "why": "intended",
+     "reason": "The board's rates card lists per-item prices (small part, postage satchel); the model is one dollars-per-gram rate (070), so there is no price heading."
     },
     {
      "type": "radius",
@@ -996,8 +938,8 @@
      "what": "card radius",
      "board": "14px",
      "live": "18px",
-     "why": "pending",
-     "pending": "add-printer-rates"
+     "why": "intended",
+     "reason": "The rates card holds the dollars-per-gram field, not the board's per-item price rows."
     },
     {
      "type": "colour",
@@ -1005,8 +947,8 @@
      "what": "card background",
      "board": "rgb(243,241,237)",
      "live": "rgb(255,255,255)",
-     "why": "pending",
-     "pending": "add-printer-rates"
+     "why": "intended",
+     "reason": "The rates card holds the dollars-per-gram field, not the board's per-item price rows."
     }
    ],
    "boardHeadings": 1,
@@ -1028,10 +970,10 @@
    "id": "ability",
    "name": "Ability profile",
    "group": "push",
-   "route": "/account/child/6ee4857b-5a62-4bd3-b9bb-9eb3133ce459",
+   "route": "/account/child/67428694-64b4-42e5-93a7-4ccbca39ad49",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/account/child/6ee4857b-5a62-4bd3-b9bb-9eb3133ce459",
+   "finalUrl": "/account/child/67428694-64b4-42e5-93a7-4ccbca39ad49",
    "explained": [],
    "boardHeadings": 0,
    "liveHeadings": 3
@@ -1040,10 +982,10 @@
    "id": "needs",
    "name": "Everyday needs",
    "group": "push",
-   "route": "/account/child/6ee4857b-5a62-4bd3-b9bb-9eb3133ce459",
+   "route": "/account/child/67428694-64b4-42e5-93a7-4ccbca39ad49",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/account/child/6ee4857b-5a62-4bd3-b9bb-9eb3133ce459",
+   "finalUrl": "/account/child/67428694-64b4-42e5-93a7-4ccbca39ad49",
    "explained": [],
    "boardHeadings": 0,
    "liveHeadings": 3
@@ -1062,10 +1004,10 @@
    "id": "child",
    "name": "Child profile",
    "group": "push",
-   "route": "/account/child/6ee4857b-5a62-4bd3-b9bb-9eb3133ce459",
+   "route": "/account/child/67428694-64b4-42e5-93a7-4ccbca39ad49",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/account/child/6ee4857b-5a62-4bd3-b9bb-9eb3133ce459",
+   "finalUrl": "/account/child/67428694-64b4-42e5-93a7-4ccbca39ad49",
    "explained": [],
    "boardHeadings": 0,
    "liveHeadings": 3
@@ -1081,6 +1023,28 @@
    "explained": [],
    "boardHeadings": 0,
    "liveHeadings": 0
+  },
+  {
+   "id": "org_review",
+   "name": "Review a guide",
+   "group": "push",
+   "route": "/organisation/cfc08e2f-3cf1-4e5a-9422-0894810b4265",
+   "findings": [],
+   "role": "leader",
+   "finalUrl": "/organisation/cfc08e2f-3cf1-4e5a-9422-0894810b4265",
+   "explained": [
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "1/1 board paragraphs absent",
+     "board": "vibrating cushion with a lever — sam mitchell, easy, # minutes. six se",
+     "live": "parity guide submitted for review",
+     "why": "intended",
+     "reason": "The board runs title, author, difficulty and minutes into one sentence; the app draws them as the title, badges and byline above the description, so no single paragraph matches."
+    }
+   ],
+   "boardHeadings": 0,
+   "liveHeadings": 1
   },
   {
    "id": "org_toys",
@@ -1222,15 +1186,15 @@
  ],
  "summary": {
   "screens": 61,
-  "clean": 58,
-  "withFindings": 2,
+  "clean": 54,
+  "withFindings": 3,
   "errored": 0,
-  "skipped": 1,
-  "findings": 2,
-  "explained": 49,
+  "skipped": 4,
+  "findings": 3,
+  "explained": 45,
   "byType": {
    "font": 1,
-   "shadow": 1
+   "shadow": 2
   }
  }
 }
