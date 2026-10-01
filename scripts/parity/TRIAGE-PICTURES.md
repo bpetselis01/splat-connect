@@ -27,7 +27,6 @@ prompt:
 "fix": "<packages/mobile file:line and change, for styling>"}]`
 An empty array is a valid answer. Then reply with one line: the count.
 
-Registered calls: a centred iOS header title is `pending` `ios-header-title-align`; the
-app's search on Explore and Toys and its Continue card on Learn are `pending`
-`mobile-extra-affordances`. Give a `pending` finding its registry id in `fix`
+Decided calls (2026-10-01): a centred iOS header title and the app's search on
+Explore and Toys, Continue card on Learn and challenge filters are `intended`. Give a `pending` finding its registry id in `fix`
 (ids in `packages/types/src/pending.ts`).

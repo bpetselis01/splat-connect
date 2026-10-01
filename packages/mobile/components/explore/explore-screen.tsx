@@ -139,7 +139,6 @@ export function ExploreScreen() {
     <Screen>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
 
-        {/* PENDING(mobile-extra-affordances): a search the board does not draw. */}
         <TextField
           icon="search"
           placeholder="Search guides, toys, organisations"

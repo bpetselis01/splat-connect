@@ -198,8 +198,8 @@
    {
     "type": "picture",
     "match": "search field",
-    "why": "pending",
-    "pending": "mobile-extra-affordances"
+    "why": "intended",
+    "reason": "Decided 2026-10-01 (mobile-extra-affordances): the app keeps its search, Continue card and challenge filters."
    }
   ]
  },
@@ -308,8 +308,8 @@
    {
     "type": "picture",
     "match": "filter chips",
-    "why": "pending",
-    "pending": "mobile-extra-affordances"
+    "why": "intended",
+    "reason": "Decided 2026-10-01 (mobile-extra-affordances): the app keeps its search, Continue card and challenge filters."
    }
   ]
  },

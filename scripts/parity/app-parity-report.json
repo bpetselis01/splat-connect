@@ -97,8 +97,8 @@
      "what": "Extra search field between the Toys/Organisations toggle and the chips",
      "board": "no search; chips follow the toggle",
      "live": "'Search by toy name' field",
-     "why": "pending",
-     "pending": "mobile-extra-affordances"
+     "why": "intended",
+     "reason": "Decided 2026-10-01 (mobile-extra-affordances): the app keeps its search, Continue card and challenge filters."
     }
    ],
    "boardHeadings": 8,
@@ -119,8 +119,8 @@
      "what": "A row of filter chips (All, Build challenges, Questions, Has...) sits between the intro and the list",
      "board": "The intro runs straight into the challenge cards",
      "live": "A horizontally scrolling chip row, taken from web's shared CHALLENGE_FILTERS",
-     "why": "pending",
-     "pending": "mobile-extra-affordances"
+     "why": "intended",
+     "reason": "Decided 2026-10-01 (mobile-extra-affordances): the app keeps its search, Continue card and challenge filters."
     }
    ],
    "boardHeadings": 5,
