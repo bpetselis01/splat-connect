@@ -32,6 +32,7 @@ function StlEditor() {
   const [localError, setLocalError] = useState<string | null>(null)
   const [files, setFiles] = useState<StlFile[]>(() => tutorial?.stl_files ?? [])
   const [sizes, setSizes] = useState<Record<string, { x: string; y: string; z: string }>>({})
+  const [savingId, setSavingId] = useState<string | null>(null)
 
   if (!tutorial) return null
 
@@ -46,6 +47,7 @@ function StlEditor() {
   async function saveSizes(f: StlFile) {
     const s = sizeOf(f)
     setLocalError(null)
+    setSavingId(f.id)
     try {
       const updated = await apiClient.patch<StlFile>(`/api/tutorials/${id}/stl-files/${f.id}`, {
         print_minutes: f.print_minutes ?? null,
@@ -58,6 +60,8 @@ function StlEditor() {
       setFiles((cur) => cur.map((x) => (x.id === f.id ? { ...x, ...updated } : x)))
     } catch (err) {
       setLocalError(apiMessage(err, 'Could not save the sizes. Please try again.'))
+    } finally {
+      setSavingId(null)
     }
   }
 
@@ -138,7 +142,12 @@ function StlEditor() {
                   </View>
                 ))}
               </View>
-              <Button label="Save sizes" variant="secondary" onPress={() => void saveSizes(f)} />
+              <Button
+                label="Save sizes"
+                variant="secondary"
+                loading={savingId === f.id}
+                onPress={() => void saveSizes(f)}
+              />
             </View>
           ))
         ) : (

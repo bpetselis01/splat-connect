@@ -209,3 +209,16 @@ it('carries part sizes through the replace-set, and saves them per file', async 
     })
   )
 })
+
+it('holds Save sizes busy while the save is in flight', async () => {
+  const sized = { id: 's1', filename: 'old.stl', file_url: 'stl/old.stl', size_x_mm: 40, size_y_mm: 30, size_z_mm: 20 }
+  mockDraft.tutorial = { ...mockDraft.tutorial, stl_files: [sized] }
+  let resolve: (v: unknown) => void = () => {}
+  ;(apiClient.patch as jest.Mock).mockReturnValue(new Promise((r) => (resolve = r)))
+  render(<StlSection />)
+  fireEvent.press(screen.getByLabelText('Save sizes'))
+  fireEvent.press(screen.getByLabelText('Save sizes'))
+  expect(apiClient.patch).toHaveBeenCalledTimes(1)
+  resolve(sized)
+  await waitFor(() => expect(screen.getByText('Save sizes')).toBeTruthy())
+})
