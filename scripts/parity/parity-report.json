@@ -1,5 +1,5 @@
 {
- "at": "2026-09-30T18:19:27.268Z",
+ "at": "2026-10-01T03:17:45.078Z",
  "live": "http://localhost:3110",
  "screens": [
   {
@@ -30,10 +30,25 @@
    "id": "tutorial",
    "name": "Guide detail",
    "group": "Public site",
-   "route": "/tutorials/f677bc3d-1399-4c41-bd1b-1cfd43ae50c2",
-   "findings": [],
+   "route": "/tutorials/2b16bb70-8fdd-4faf-8b4f-4c61baf725d2",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"also worth a look\" has no counterpart",
+     "board": "also worth a look",
+     "live": null
+    },
+    {
+     "type": "extra-section",
+     "severity": "medium",
+     "what": "live has an extra h3: \"tools you'll need\"",
+     "board": null,
+     "live": "tools you'll need"
+    }
+   ],
    "role": "guest",
-   "finalUrl": "/tutorials/f677bc3d-1399-4c41-bd1b-1cfd43ae50c2",
+   "finalUrl": "/tutorials/2b16bb70-8fdd-4faf-8b4f-4c61baf725d2",
    "explained": [
     {
      "type": "size",
@@ -46,7 +61,7 @@
     }
    ],
    "boardHeadings": 12,
-   "liveHeadings": 5
+   "liveHeadings": 4
   },
   {
    "id": "toys_public",
@@ -58,16 +73,16 @@
    "finalUrl": "/toy-library",
    "explained": [],
    "boardHeadings": 8,
-   "liveHeadings": 16
+   "liveHeadings": 7
   },
   {
    "id": "toy_public",
    "name": "Toy detail",
    "group": "Public site",
-   "route": "/toy-library/8251f450-13ce-4cc4-a6de-d7aa4387d139",
+   "route": "/toy-library/1d74516c-8a1d-435e-851f-3fabafb4afdd",
    "findings": [],
    "role": "guest",
-   "finalUrl": "/toy-library/8251f450-13ce-4cc4-a6de-d7aa4387d139",
+   "finalUrl": "/toy-library/1d74516c-8a1d-435e-851f-3fabafb4afdd",
    "explained": [
     {
      "type": "size",
@@ -86,10 +101,10 @@
    "id": "toy_request",
    "name": "Request a toy",
    "group": "Public site",
-   "route": "/toy-library/8251f450-13ce-4cc4-a6de-d7aa4387d139/request",
+   "route": "/toy-library/1d74516c-8a1d-435e-851f-3fabafb4afdd/request",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/toy-library/8251f450-13ce-4cc4-a6de-d7aa4387d139/request",
+   "finalUrl": "/toy-library/1d74516c-8a1d-435e-851f-3fabafb4afdd/request",
    "explained": [],
    "boardHeadings": 4,
    "liveHeadings": 4
@@ -360,13 +375,28 @@
    "id": "print_request_new",
    "name": "Request a print",
    "group": "3D Printing",
-   "route": "/printing/requests?guide=37d5ef80-607b-4954-a84b-9d2d86b3bf87",
-   "findings": [],
+   "route": "/printing/requests?guide=2b16bb70-8fdd-4faf-8b4f-4c61baf725d2",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h3 \"# h # min\" has no counterpart",
+     "board": "# h # min",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h3 \"# g petg\" has no counterpart",
+     "board": "# g petg",
+     "live": null
+    }
+   ],
    "role": "parent",
    "finalUrl": "/printing/requests",
    "explained": [],
    "boardHeadings": 7,
-   "liveHeadings": 7
+   "liveHeadings": 5
   },
   {
    "id": "involved",
@@ -480,10 +510,10 @@
    "id": "build_thread",
    "name": "Build thread",
    "group": "My SPLAT",
-   "route": "/dashboard/exchanges/build/0202263b-7d05-4571-b3d3-798bfd1a166d",
+   "route": "/dashboard/exchanges/build/52e97531-bba1-49ba-affc-9b666f633db2",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/dashboard/exchanges/build/0202263b-7d05-4571-b3d3-798bfd1a166d",
+   "finalUrl": "/dashboard/exchanges/build/52e97531-bba1-49ba-affc-9b666f633db2",
    "explained": [],
    "boardHeadings": 3,
    "liveHeadings": 3
@@ -493,19 +523,18 @@
    "name": "Design challenges",
    "group": "Get involved",
    "route": "/get-involved/design-challenges",
-   "findings": [],
+   "findings": [
+    {
+     "type": "stale-exemption",
+     "severity": "medium",
+     "what": "missing-section \"page height\" no longer occurs",
+     "board": null,
+     "live": null
+    }
+   ],
    "role": "guest",
    "finalUrl": "/get-involved/design-challenges",
    "explained": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "page height differs grossly",
-     "board": "832px",
-     "live": "5100px",
-     "why": "intended",
-     "reason": "Guests see the open challenges listed below the explainer; the board shows only the explainer (an access decision, design-challenges/page.tsx)."
-    },
     {
      "type": "extra-section",
      "severity": "medium",
@@ -517,19 +546,17 @@
     }
    ],
    "boardHeadings": 6,
-   "liveHeadings": 15
+   "liveHeadings": 7
   },
   {
    "id": "challenge_detail",
    "name": "Challenge detail",
    "group": "Get involved",
-   "route": "/get-involved/design-challenges/541682c9-ea71-4084-a8b3-cb90702715db",
+   "route": "/get-involved/design-challenges/[id]",
    "findings": [],
    "role": "guest",
-   "finalUrl": "/get-involved/design-challenges/541682c9-ea71-4084-a8b3-cb90702715db",
-   "explained": [],
-   "boardHeadings": 4,
-   "liveHeadings": 4
+   "error": "no record for /get-involved/design-challenges/[id] (no link on /get-involved/design-challenges)",
+   "skipped": true
   },
   {
    "id": "impact",
@@ -541,7 +568,7 @@
    "finalUrl": "/impact",
    "explained": [],
    "boardHeadings": 22,
-   "liveHeadings": 13
+   "liveHeadings": 16
   },
   {
    "id": "orgs",
@@ -553,16 +580,16 @@
    "finalUrl": "/organizations",
    "explained": [],
    "boardHeadings": 13,
-   "liveHeadings": 7
+   "liveHeadings": 3
   },
   {
    "id": "org_public",
    "name": "Organisation profile",
    "group": "Impact",
-   "route": "/organizations/36b35bdf-cb9a-4685-8013-8adcc133cd13/public",
+   "route": "/organizations/7363aeb4-8921-431a-94f4-7a2e777af204/public",
    "findings": [],
    "role": "guest",
-   "finalUrl": "/organizations/36b35bdf-cb9a-4685-8013-8adcc133cd13/public",
+   "finalUrl": "/organizations/7363aeb4-8921-431a-94f4-7a2e777af204/public",
    "explained": [],
    "boardHeadings": 17,
    "liveHeadings": 14
@@ -572,12 +599,34 @@
    "name": "Contributor profile",
    "group": "Impact",
    "route": "/contributors/11111111-1111-1111-1111-111111111111",
-   "findings": [],
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"about\" has no counterpart",
+     "board": "about",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"featured\" has no counterpart",
+     "board": "featured",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"from families who built one\" has no counterpart",
+     "board": "from families who built one",
+     "live": null
+    }
+   ],
    "role": "guest",
    "finalUrl": "/contributors/11111111-1111-1111-1111-111111111111",
    "explained": [],
    "boardHeadings": 12,
-   "liveHeadings": 9
+   "liveHeadings": 5
   },
   {
    "id": "impact_events",
@@ -608,16 +657,16 @@
     }
    ],
    "boardHeadings": 12,
-   "liveHeadings": 7
+   "liveHeadings": 5
   },
   {
    "id": "event_detail",
    "name": "Event detail",
    "group": "Get involved",
-   "route": "/get-involved/events/5661121d-9b0a-40c6-97df-16594a1b2da6",
+   "route": "/get-involved/events/c12598b9-4cbd-49e2-82f5-90c4dfc0590a",
    "findings": [],
    "role": "guest",
-   "finalUrl": "/get-involved/events/5661121d-9b0a-40c6-97df-16594a1b2da6",
+   "finalUrl": "/get-involved/events/c12598b9-4cbd-49e2-82f5-90c4dfc0590a",
    "explained": [],
    "boardHeadings": 4,
    "liveHeadings": 4
@@ -626,10 +675,10 @@
    "id": "event_register",
    "name": "Register for an event",
    "group": "Get involved",
-   "route": "/get-involved/events/5661121d-9b0a-40c6-97df-16594a1b2da6/register",
+   "route": "/get-involved/events/c12598b9-4cbd-49e2-82f5-90c4dfc0590a/register",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/get-involved/events/5661121d-9b0a-40c6-97df-16594a1b2da6/register",
+   "finalUrl": "/get-involved/events/c12598b9-4cbd-49e2-82f5-90c4dfc0590a/register",
    "explained": [],
    "boardHeadings": 3,
    "liveHeadings": 3
@@ -651,7 +700,43 @@
    "name": "Book a drop-off",
    "group": "Get involved",
    "route": "/get-involved/recycling/drop-off",
-   "findings": [],
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "board lists cards, live shows none",
+     "board": 3,
+     "live": 0
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "page height differs grossly",
+     "board": "1733px",
+     "live": "389px"
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "board has cards, live has none",
+     "board": 3,
+     "live": 0
+    },
+    {
+     "type": "missing-section",
+     "severity": "medium",
+     "what": "no inputs on live",
+     "board": 8,
+     "live": 0
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "6/7 board paragraphs absent",
+     "board": "tuesday and thursday, #am–#pm · loading door on corella lane — ring th",
+     "live": "one contaminated bag can ruin a whole extruder run, so the declaration"
+    }
+   ],
    "role": "parent",
    "finalUrl": "/get-involved/recycling/drop-off",
    "explained": [],
@@ -675,24 +760,44 @@
    "name": "Stories",
    "group": "About",
    "route": "/about/stories",
-   "findings": [],
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "board lists cards, live shows none",
+     "board": 7,
+     "live": 0
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "page height differs grossly",
+     "board": "1758px",
+     "live": "580px"
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "board has cards, live has none",
+     "board": 7,
+     "live": 0
+    }
+   ],
    "role": "guest",
    "finalUrl": "/about/stories",
    "explained": [],
    "boardHeadings": 9,
-   "liveHeadings": 6
+   "liveHeadings": 2
   },
   {
    "id": "story_detail",
    "name": "Story",
    "group": "About",
-   "route": "/about/stories/2b8a6d88-711a-4d6e-bfb0-8d243d216b07",
+   "route": "/about/stories/[id]",
    "findings": [],
    "role": "guest",
-   "finalUrl": "/about/stories/2b8a6d88-711a-4d6e-bfb0-8d243d216b07",
-   "explained": [],
-   "boardHeadings": 6,
-   "liveHeadings": 6
+   "error": "no record for /about/stories/[id] (no link on /about/stories)",
+   "skipped": true
   },
   {
    "id": "impact_map",
@@ -791,7 +896,22 @@
    "name": "Inbox",
    "group": "Admin",
    "route": "/admin/inbox",
-   "findings": [],
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "board lists cards, live shows none",
+     "board": 4,
+     "live": 0
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "board has cards, live has none",
+     "board": 4,
+     "live": 0
+    }
+   ],
    "role": "admin",
    "finalUrl": "/admin/inbox",
    "explained": [],
@@ -814,10 +934,10 @@
    "id": "org_event_manage",
    "name": "Manage event",
    "group": "My SPLAT",
-   "route": "/dashboard/org/events/5661121d-9b0a-40c6-97df-16594a1b2da6",
+   "route": "/dashboard/org/events/c12598b9-4cbd-49e2-82f5-90c4dfc0590a",
    "findings": [],
    "role": "leader",
-   "finalUrl": "/dashboard/org/events/5661121d-9b0a-40c6-97df-16594a1b2da6",
+   "finalUrl": "/dashboard/org/events/c12598b9-4cbd-49e2-82f5-90c4dfc0590a",
    "explained": [],
    "boardHeadings": 3,
    "liveHeadings": 4
@@ -970,10 +1090,10 @@
    "id": "editor",
    "name": "Tutorial editor",
    "group": "My SPLAT",
-   "route": "/tutorials/6f789c5f-2812-40f0-a753-764e230056fd/edit",
+   "route": "/tutorials/f9b0790f-683a-461e-a5b2-e2019c6caec1/edit",
    "findings": [],
    "role": "contributor",
-   "finalUrl": "/tutorials/6f789c5f-2812-40f0-a753-764e230056fd/edit",
+   "finalUrl": "/tutorials/f9b0790f-683a-461e-a5b2-e2019c6caec1/edit",
    "explained": [],
    "boardHeadings": 5,
    "liveHeadings": 5
@@ -1006,10 +1126,10 @@
    "id": "toy_detail",
    "name": "Toy detail",
    "group": "My SPLAT",
-   "route": "/dashboard/toys/94932e32-0702-4237-ba9c-603955bd2f21",
+   "route": "/dashboard/toys/614532fd-c52e-4620-a541-69f22ca8694e",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/dashboard/toys/94932e32-0702-4237-ba9c-603955bd2f21",
+   "finalUrl": "/dashboard/toys/614532fd-c52e-4620-a541-69f22ca8694e",
    "explained": [],
    "boardHeadings": 7,
    "liveHeadings": 6
@@ -1024,16 +1144,16 @@
    "finalUrl": "/dashboard/exchanges",
    "explained": [],
    "boardHeadings": 14,
-   "liveHeadings": 10
+   "liveHeadings": 8
   },
   {
    "id": "thread",
    "name": "Exchange thread",
    "group": "My SPLAT",
-   "route": "/dashboard/exchanges/900bb5a3-a10d-42bf-a09c-b152c91ddf17",
+   "route": "/dashboard/exchanges/773cbe79-2a74-4ab8-adb6-ed676b9210c2",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/dashboard/exchanges/900bb5a3-a10d-42bf-a09c-b152c91ddf17",
+   "finalUrl": "/dashboard/exchanges/773cbe79-2a74-4ab8-adb6-ed676b9210c2",
    "explained": [],
    "boardHeadings": 4,
    "liveHeadings": 3
@@ -1048,7 +1168,7 @@
    "finalUrl": "/dashboard/challenges",
    "explained": [],
    "boardHeadings": 7,
-   "liveHeadings": 3
+   "liveHeadings": 2
   },
   {
    "id": "saved",
@@ -1091,12 +1211,27 @@
    "name": "Saved challenges",
    "group": "My SPLAT",
    "route": "/dashboard/saved/challenges",
-   "findings": [],
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "board lists cards, live shows none",
+     "board": 3,
+     "live": 0
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "board has cards, live has none",
+     "board": 3,
+     "live": 0
+    }
+   ],
    "role": "parent",
    "finalUrl": "/dashboard/saved/challenges",
    "explained": [],
    "boardHeadings": 4,
-   "liveHeadings": 2
+   "liveHeadings": 1
   },
   {
    "id": "saved_orgs",
@@ -1132,16 +1267,16 @@
    "finalUrl": "/dashboard/print-requests",
    "explained": [],
    "boardHeadings": 4,
-   "liveHeadings": 4
+   "liveHeadings": 2
   },
   {
    "id": "print_job",
    "name": "Print job",
    "group": "My SPLAT",
-   "route": "/dashboard/print-requests/8120c0a5-6e1c-42dc-8dd1-3e4dbb24077d",
+   "route": "/dashboard/print-requests/6e4eede4-7fd6-4f8c-a095-d1311acdef45",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/dashboard/print-requests/8120c0a5-6e1c-42dc-8dd1-3e4dbb24077d",
+   "finalUrl": "/dashboard/print-requests/6e4eede4-7fd6-4f8c-a095-d1311acdef45",
    "explained": [],
    "boardHeadings": 3,
    "liveHeadings": 3
@@ -1186,10 +1321,10 @@
    "id": "child",
    "name": "Child profile",
    "group": "My SPLAT",
-   "route": "/dashboard/child/16f8e583-bf08-4389-946e-ea12ccaccf45",
+   "route": "/dashboard/child/d46c5d20-3ce9-419e-ae1d-3ca538528f43",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/dashboard/child/16f8e583-bf08-4389-946e-ea12ccaccf45",
+   "finalUrl": "/dashboard/child/d46c5d20-3ce9-419e-ae1d-3ca538528f43",
    "explained": [],
    "boardHeadings": 4,
    "liveHeadings": 4
@@ -1348,7 +1483,7 @@
    "id": "admin_review",
    "name": "Review queue (live)",
    "group": "Admin",
-   "route": "/admin/review?selected=3babf3f0-908f-46cb-bf9c-b5a575c3bec8",
+   "route": "/admin/review?selected=bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
    "findings": [],
    "role": "admin",
    "finalUrl": "/admin/review",
@@ -1400,16 +1535,16 @@
    "finalUrl": "/admin/ideas",
    "explained": [],
    "boardHeadings": 6,
-   "liveHeadings": 11
+   "liveHeadings": 2
   },
   {
    "id": "admin_idea_detail",
    "name": "Review an idea",
    "group": "Admin",
-   "route": "/admin/ideas/7598792c-2f64-4b1c-81b7-afd73aa80e68",
+   "route": "/admin/ideas/6df3b9d1-4b0c-441d-b90d-439aaa4536d1",
    "findings": [],
    "role": "admin",
-   "finalUrl": "/admin/ideas/7598792c-2f64-4b1c-81b7-afd73aa80e68",
+   "finalUrl": "/admin/ideas/6df3b9d1-4b0c-441d-b90d-439aaa4536d1",
    "explained": [],
    "boardHeadings": 3,
    "liveHeadings": 3
@@ -1549,12 +1684,17 @@
  ],
  "summary": {
   "screens": 118,
-  "clean": 118,
-  "withFindings": 0,
+  "clean": 108,
+  "withFindings": 8,
   "errored": 0,
-  "skipped": 0,
-  "findings": 0,
-  "explained": 13,
-  "byType": {}
+  "skipped": 2,
+  "findings": 20,
+  "explained": 12,
+  "byType": {
+   "missing-section": 17,
+   "extra-section": 1,
+   "stale-exemption": 1,
+   "copy": 1
+  }
  }
 }

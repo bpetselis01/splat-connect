@@ -1,55 +1,112 @@
 {
- "at": "2026-09-30T18:20:58.897Z",
+ "at": "2026-10-01T03:11:16.336Z",
  "live": "http://localhost:3112",
  "screens": [
+  {
+   "id": "guides",
+   "name": "Guides",
+   "group": "tabs",
+   "route": "/guides",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/guides",
+   "explained": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"suits ollie\" has no counterpart",
+     "board": "suits ollie",
+     "live": null,
+     "why": "fixture",
+     "reason": "The board's child Ollie fits a guide, so a Suits Ollie heading draws; the parity child has no name or fit answers."
+    }
+   ],
+   "boardHeadings": 8,
+   "liveHeadings": 2
+  },
+  {
+   "id": "guide_detail",
+   "name": "Guide detail",
+   "group": "push",
+   "route": "/guides/[id]",
+   "findings": [],
+   "role": "parent",
+   "error": "no record for /guides/[id]",
+   "skipped": true
+  },
   {
    "id": "guide_new",
    "name": "New guide",
    "group": "push",
    "route": "/guides/new",
-   "findings": [],
+   "findings": [
+    {
+     "type": "radius",
+     "severity": "medium",
+     "what": "card radius",
+     "board": "20px",
+     "live": "14px"
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "set",
+     "live": "none"
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "card background",
+     "board": "rgb(255,255,255)",
+     "live": "rgba(0,0,0,0)"
+    }
+   ],
    "role": "parent",
    "finalUrl": "/guides/new",
-   "explained": [
+   "explained": [],
+   "boardHeadings": 0,
+   "liveHeadings": 0
+  },
+  {
+   "id": "ed_safety",
+   "name": "Editor · safety",
+   "group": "push",
+   "route": "/tutorials/009b6a59-ec93-41b6-9bc5-cdf4b49030b8/safety",
+   "findings": [
     {
      "type": "missing-section",
-     "severity": "high",
-     "what": "board lists cards, live shows none",
-     "board": 5,
-     "live": 0,
-     "why": "pending",
-     "pending": "new-guide-fields"
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board has cards, live has none",
-     "board": 5,
-     "live": 0,
-     "why": "pending",
-     "pending": "new-guide-fields"
-    },
+     "severity": "medium",
+     "what": "no inputs on live",
+     "board": 2,
+     "live": 0
+    }
+   ],
+   "role": "contributor",
+   "finalUrl": "/tutorials/009b6a59-ec93-41b6-9bc5-cdf4b49030b8/safety",
+   "explained": [],
+   "boardHeadings": 0,
+   "liveHeadings": 0
+  },
+  {
+   "id": "org_review",
+   "name": "Review a guide",
+   "group": "push",
+   "route": "/organisation/a467bab5-45fe-4be2-906d-19f0e38946fd",
+   "findings": [
     {
      "type": "copy",
      "severity": "medium",
      "what": "1/1 board paragraphs absent",
-     "board": "two things to start: what the toy is, and one photo. the rest can wait",
-     "live": "give it a title to start a draft — everything else comes next.",
-     "why": "pending",
-     "pending": "new-guide-fields"
-    },
-    {
-     "type": "picture",
-     "severity": "medium",
-     "what": "New guide is presented as a full-height form sheet with a grabber, an X and the title 'Add a guide'; the board pushes it",
-     "board": "push screen: back arrow, nav title 'New guide'",
-     "live": "formSheet with grabber, close X, title 'Add a guide'",
-     "why": "intended",
-     "reason": "Add a guide opens as a sheet you pull back down (guides/_layout.tsx): a one-shot form over the library, not a push."
+     "board": "vibrating cushion with a lever — sam mitchell, easy, # minutes. six se",
+     "live": "parity guide submitted for review"
     }
    ],
+   "role": "leader",
+   "finalUrl": "/organisation/a467bab5-45fe-4be2-906d-19f0e38946fd",
+   "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 0
+   "liveHeadings": 1
   },
   {
    "id": "loading",
@@ -468,59 +525,6 @@
    ],
    "boardHeadings": 1,
    "liveHeadings": 1
-  },
-  {
-   "id": "guides",
-   "name": "Guides",
-   "group": "tabs",
-   "route": "/guides",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/guides",
-   "explained": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"suits ollie\" has no counterpart",
-     "board": "suits ollie",
-     "live": null,
-     "why": "fixture",
-     "reason": "The board's child Ollie fits a guide, so a Suits Ollie heading draws; the parity child has no name or fit answers."
-    }
-   ],
-   "boardHeadings": 8,
-   "liveHeadings": 2
-  },
-  {
-   "id": "guide_detail",
-   "name": "Guide detail",
-   "group": "push",
-   "route": "/guides/f677bc3d-1399-4c41-bd1b-1cfd43ae50c2",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/guides/f677bc3d-1399-4c41-bd1b-1cfd43ae50c2",
-   "explained": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h3 \"community notes #\" has no counterpart",
-     "board": "community notes #",
-     "live": null,
-     "why": "pending",
-     "pending": "guide-community-notes"
-    },
-    {
-     "type": "missing-section",
-     "severity": "medium",
-     "what": "no inputs on live",
-     "board": 2,
-     "live": 0,
-     "why": "pending",
-     "pending": "guide-community-notes"
-    }
-   ],
-   "boardHeadings": 6,
-   "liveHeadings": 5
   },
   {
    "id": "guide_preview",
@@ -1012,28 +1016,6 @@
    "liveHeadings": 0
   },
   {
-   "id": "ed_safety",
-   "name": "Editor · safety",
-   "group": "push",
-   "route": "/tutorials/a21cd9a9-da86-49e5-8734-57d83aa0fb3e/safety",
-   "findings": [],
-   "role": "contributor",
-   "finalUrl": "/tutorials/a21cd9a9-da86-49e5-8734-57d83aa0fb3e/safety",
-   "explained": [
-    {
-     "type": "missing-section",
-     "severity": "medium",
-     "what": "no inputs on live",
-     "board": 2,
-     "live": 0,
-     "why": "pending",
-     "pending": "editor-safety-notes"
-    }
-   ],
-   "boardHeadings": 0,
-   "liveHeadings": 0
-  },
-  {
    "id": "ed_stl",
    "name": "Editor · STL",
    "group": "push",
@@ -1228,28 +1210,6 @@
    "liveHeadings": 0
   },
   {
-   "id": "org_review",
-   "name": "Review a guide",
-   "group": "push",
-   "route": "/organisation/c423b057-4f10-4e47-afa5-a00a4b88ee65",
-   "findings": [],
-   "role": "leader",
-   "finalUrl": "/organisation/c423b057-4f10-4e47-afa5-a00a4b88ee65",
-   "explained": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "vibrating cushion with a lever — sam mitchell, easy, # minutes. six se",
-     "live": "parity guide submitted for review",
-     "why": "pending",
-     "pending": "review-checklist"
-    }
-   ],
-   "boardHeadings": 0,
-   "liveHeadings": 1
-  },
-  {
    "id": "org_toys",
    "name": "Toy inventory",
    "group": "push",
@@ -1367,13 +1327,18 @@
  ],
  "summary": {
   "screens": 61,
-  "clean": 60,
-  "withFindings": 0,
+  "clean": 56,
+  "withFindings": 3,
   "errored": 0,
-  "skipped": 1,
-  "findings": 0,
-  "explained": 66,
-  "byType": {},
-  "picture": 0
+  "skipped": 2,
+  "findings": 5,
+  "explained": 58,
+  "byType": {
+   "radius": 1,
+   "shadow": 1,
+   "colour": 1,
+   "missing-section": 1,
+   "copy": 1
+  }
  }
 }
