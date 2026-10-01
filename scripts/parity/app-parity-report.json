@@ -1,7 +1,171 @@
 {
- "at": "2026-10-01T08:24:26.418Z",
+ "at": "2026-10-01T12:25:05.278Z",
  "live": "http://localhost:3112",
  "screens": [
+  {
+   "id": "toy_library",
+   "name": "Toy library",
+   "group": "tabs",
+   "route": "/toy-library",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/toy-library",
+   "explained": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"nearest first\" has no counterpart",
+     "board": "nearest first",
+     "live": null,
+     "why": "intended",
+     "reason": "Nearest first is a filter chip, off until tapped; the board draws it already switched on, so its heading shows only in that state."
+    }
+   ],
+   "boardHeadings": 8,
+   "liveHeadings": 2
+  },
+  {
+   "id": "lib_toy",
+   "name": "Toy detail",
+   "group": "push",
+   "route": "/toy-library/924ab7e0-336d-47df-b657-b45d8fd0e160",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/toy-library/924ab7e0-336d-47df-b657-b45d8fd0e160",
+   "explained": [
+    {
+     "type": "font",
+     "severity": "high",
+     "what": "card title font",
+     "board": "Nunito",
+     "live": "Baloo 2",
+     "why": "harness",
+     "reason": "The board's only card is Notes from the holder (a Nunito label); the app's card is the same panel plus its pickup tiles, whose titles are Baloo."
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h3 \"also worth a look\" has no counterpart",
+     "board": "also worth a look",
+     "live": null,
+     "why": "intended",
+     "reason": "Built (toy-holder-picks); the seed's swap-toy holder has nothing else listed and no picks, so the section rightly draws nothing."
+    }
+   ],
+   "boardHeadings": 3,
+   "liveHeadings": 1
+  },
+  {
+   "id": "build_thread",
+   "name": "Build thread",
+   "group": "push",
+   "route": "/exchanges/build/c51701d0-5f13-46f5-a8c0-12563918216b",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/exchanges/build/c51701d0-5f13-46f5-a8c0-12563918216b",
+   "explained": [
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "none",
+     "live": "set",
+     "why": "harness",
+     "reason": "The board nests its cards (a bordered box inside the card), so its leaf cards are inner boxes without shadow; the app's are the outer cards. Counting every card fixes it here and breaks nine web screens."
+    }
+   ],
+   "boardHeadings": 2,
+   "liveHeadings": 1
+  },
+  {
+   "id": "exchange",
+   "name": "Exchange thread",
+   "group": "push",
+   "route": "/exchanges/7e093682-1f58-4422-8092-91d59ac75aa5",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/exchanges/7e093682-1f58-4422-8092-91d59ac75aa5",
+   "explained": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h3 \"thursday after three, newcastle clinic\" has no counterpart",
+     "board": "thursday after three, newcastle clinic",
+     "live": null,
+     "why": "harness",
+     "reason": "The board nests its cards (a bordered box inside the card), so its leaf cards are inner boxes without shadow; the app's are the outer cards. Counting every card fixes it here and breaks nine web screens. The pickup line is in the app's leaf card, so it is compared as a card title, not a heading."
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "none",
+     "live": "set",
+     "why": "harness",
+     "reason": "The board nests its cards (a bordered box inside the card), so its leaf cards are inner boxes without shadow; the app's are the outer cards. Counting every card fixes it here and breaks nine web screens."
+    }
+   ],
+   "boardHeadings": 2,
+   "liveHeadings": 1
+  },
+  {
+   "id": "my_splat",
+   "name": "Me",
+   "group": "tabs",
+   "route": "/me",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/me",
+   "explained": [],
+   "boardHeadings": 2,
+   "liveHeadings": 2
+  },
+  {
+   "id": "my_toys",
+   "name": "My toys",
+   "group": "push",
+   "route": "/toys",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/toys",
+   "explained": [],
+   "boardHeadings": 0,
+   "liveHeadings": 0
+  },
+  {
+   "id": "toy_detail",
+   "name": "Toy detail",
+   "group": "push",
+   "route": "/toys/70a52040-3a77-4993-8e86-13e434f13a1f",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/toys/70a52040-3a77-4993-8e86-13e434f13a1f",
+   "explained": [],
+   "boardHeadings": 0,
+   "liveHeadings": 0
+  },
+  {
+   "id": "org_toys",
+   "name": "Toy inventory",
+   "group": "push",
+   "route": "/organisation/toys",
+   "findings": [],
+   "role": "leader",
+   "finalUrl": "/organisation/toys",
+   "explained": [
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "1/1 board paragraphs absent",
+     "board": "# on the shelf, # out with families, # need cleaning.",
+     "live": "# listing, # units on the shelf.",
+     "why": "intended",
+     "reason": "Decided 2026-09-30: no lending, so no 'out with families' or 'need cleaning'; the lead counts listings and units."
+    }
+   ],
+   "boardHeadings": 0,
+   "liveHeadings": 0
+  },
   {
    "id": "guides",
    "name": "Guides",
@@ -186,59 +350,6 @@
    "finalUrl": "/guides",
    "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 1
-  },
-  {
-   "id": "toy_library",
-   "name": "Toy library",
-   "group": "tabs",
-   "route": "/toy-library",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/toy-library",
-   "explained": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"nearest first\" has no counterpart",
-     "board": "nearest first",
-     "live": null,
-     "why": "intended",
-     "reason": "Nearest first is a filter chip, off until tapped; the board draws it already switched on, so its heading shows only in that state."
-    }
-   ],
-   "boardHeadings": 8,
-   "liveHeadings": 2
-  },
-  {
-   "id": "lib_toy",
-   "name": "Toy detail",
-   "group": "push",
-   "route": "/toy-library/757a4228-bebf-4249-a9e5-fc298006b9a1",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/toy-library/757a4228-bebf-4249-a9e5-fc298006b9a1",
-   "explained": [
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "card title font",
-     "board": "Nunito",
-     "live": "Baloo 2",
-     "why": "harness",
-     "reason": "The board's only card is Notes from the holder (a Nunito label); the app's card is the same panel plus its pickup tiles, whose titles are Baloo."
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h3 \"also worth a look\" has no counterpart",
-     "board": "also worth a look",
-     "live": null,
-     "why": "pending",
-     "pending": "toy-holder-picks"
-    }
-   ],
-   "boardHeadings": 3,
    "liveHeadings": 1
   },
   {
@@ -480,28 +591,6 @@
    "liveHeadings": 0
   },
   {
-   "id": "build_thread",
-   "name": "Build thread",
-   "group": "push",
-   "route": "/exchanges/build/1e639230-0a23-4037-aada-7c84e0004c44",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/exchanges/build/1e639230-0a23-4037-aada-7c84e0004c44",
-   "explained": [
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "none",
-     "live": "set",
-     "why": "harness",
-     "reason": "The board nests its cards (a bordered box inside the card), so its leaf cards are inner boxes without shadow; the app's are the outer cards. Counting every card fixes it here and breaks nine web screens."
-    }
-   ],
-   "boardHeadings": 2,
-   "liveHeadings": 1
-  },
-  {
    "id": "recycling",
    "name": "Recycling",
    "group": "push",
@@ -568,28 +657,6 @@
    "explained": [],
    "boardHeadings": 0,
    "liveHeadings": 1
-  },
-  {
-   "id": "exchange",
-   "name": "Exchange thread",
-   "group": "push",
-   "route": "/exchanges/[id]",
-   "findings": [],
-   "role": "parent",
-   "error": "no record for /exchanges/[id]",
-   "skipped": true
-  },
-  {
-   "id": "my_splat",
-   "name": "Me",
-   "group": "tabs",
-   "route": "/me",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/me",
-   "explained": [],
-   "boardHeadings": 2,
-   "liveHeadings": 2
   },
   {
    "id": "my_tutorials",
@@ -748,18 +815,6 @@
    "liveHeadings": 0
   },
   {
-   "id": "my_toys",
-   "name": "My toys",
-   "group": "push",
-   "route": "/toys",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/toys",
-   "explained": [],
-   "boardHeadings": 0,
-   "liveHeadings": 0
-  },
-  {
    "id": "toy_new",
    "name": "Add a toy",
    "group": "push",
@@ -798,37 +853,6 @@
    ],
    "boardHeadings": 0,
    "liveHeadings": 0
-  },
-  {
-   "id": "toy_detail",
-   "name": "Toy detail",
-   "group": "push",
-   "route": "/toys/20b4a593-bd51-4743-a87d-928265cafd6e",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/toys/20b4a593-bd51-4743-a87d-928265cafd6e",
-   "explained": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board lists cards, live shows none",
-     "board": 4,
-     "live": 0,
-     "why": "pending",
-     "pending": "my-toy-inline-requests"
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board has cards, live has none",
-     "board": 4,
-     "live": 0,
-     "why": "pending",
-     "pending": "my-toy-inline-requests"
-    }
-   ],
-   "boardHeadings": 0,
-   "liveHeadings": 1
   },
   {
    "id": "exchanges",
@@ -1047,28 +1071,6 @@
    "liveHeadings": 1
   },
   {
-   "id": "org_toys",
-   "name": "Toy inventory",
-   "group": "push",
-   "route": "/organisation/toys",
-   "findings": [],
-   "role": "leader",
-   "finalUrl": "/organisation/toys",
-   "explained": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "# on the shelf, # out with families, # need cleaning.",
-     "live": "# listing, # units on the shelf.",
-     "why": "intended",
-     "reason": "Decided 2026-09-30: no lending, so no 'out with families' or 'need cleaning'; the lead counts listings and units."
-    }
-   ],
-   "boardHeadings": 0,
-   "liveHeadings": 0
-  },
-  {
    "id": "org_orders",
    "name": "Print orders",
    "group": "push",
@@ -1186,10 +1188,10 @@
  ],
  "summary": {
   "screens": 61,
-  "clean": 54,
+  "clean": 55,
   "withFindings": 3,
   "errored": 0,
-  "skipped": 4,
+  "skipped": 3,
   "findings": 3,
   "explained": 45,
   "byType": {
