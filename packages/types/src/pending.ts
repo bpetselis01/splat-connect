@@ -202,6 +202,7 @@ export const PENDING = {
     needs: "Per-step tick, % bar, Reset, \"Pick up at step N\" (on device) [ui]",
   },
   'guide-community-notes': {
+    shipped: true,
     title: "Community notes",
     blurb: "Adding notes to a guide’s steps is coming. Use Report a problem if a step is wrong.",
     kind: "build",

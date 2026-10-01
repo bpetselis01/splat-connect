@@ -14,6 +14,8 @@ jest.mock('../../../../lib/supabase-storage', () => ({
 
 jest.mock('../../../../lib/api-client', () => ({ apiClient: { get: jest.fn(), post: jest.fn() } }))
 
+jest.mock('../../../../lib/capabilities', () => ({ useCapabilities: () => ({ caps: { profile: { id: 'me' } } }) }))
+
 const mockPush = jest.fn()
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }))
 
@@ -61,7 +63,7 @@ function mockEndpoints({
   children = Promise.resolve([]),
 }: { detail?: Promise<unknown>; saves?: Promise<unknown>; children?: Promise<unknown> } = {}) {
   ;(apiClient.get as jest.Mock).mockImplementation((p: string) =>
-    p === '/api/saves/ids' ? saves : p === '/api/child-profiles' ? children : detail
+    p === '/api/saves/ids' ? saves : p === '/api/child-profiles' ? children : p.endsWith('/notes') ? Promise.resolve([]) : detail
   )
 }
 
@@ -226,7 +228,7 @@ describe('DetailScreen thanks', () => {
         ? Promise.resolve(thanks)
         : p === '/api/saves/ids'
           ? Promise.resolve(NO_SAVES)
-          : p === '/api/child-profiles'
+          : p === '/api/child-profiles' || p.endsWith('/notes')
             ? Promise.resolve([])
             : Promise.resolve(DETAIL)
     )

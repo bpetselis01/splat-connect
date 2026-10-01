@@ -222,4 +222,27 @@ upload.post('/photo', photoRoute('toy-photos', 'tutorialId', 'tutorials', checkT
 upload.post('/step-photo', photoRoute('toy-photos', 'tutorialId', null, checkTutorialContributor, 'steps/'))
 upload.post('/toy-photo', photoRoute('toy-photos-library', 'toyId', 'toys', checkToyOwner))
 
+/**
+ * A photo on a community note (093). Anyone signed in may note a published
+ * guide, and toy-photos' storage policy (032) admits only its contributors,
+ * so the object is written with the service role after the guide is checked
+ * to be published — under <id>/notes/, which the notes route requires.
+ * ponytail: deleting a note leaves its photo; sweep <id>/notes/ against
+ * tutorial_notes if storage ever matters.
+ */
+upload.post('/note-photo', async (c) => {
+  const read = await readUpload(c, 'tutorialId')
+  if (read instanceof Response) return read
+  const [file, id] = read
+  if (!PHOTO_MIME.includes(file.type)) return c.json({ error: 'Photos need to be a JPEG, PNG, WebP, AVIF or HEIC image.' }, 400)
+  if (file.size > PHOTO_MAX_BYTES) return c.json({ error: 'Photos need to be under 10 MB.' }, 400)
+  const admin = createAdminClient()
+  const { data: guide } = await admin.from('tutorials').select('status').eq('id', id).maybeSingle()
+  if (guide?.status !== 'approved') return c.json({ error: 'Not found' }, 404)
+  const ext = file.name.split('.').pop() ?? 'jpg'
+  const { data, error } = await admin.storage.from('toy-photos').upload(`${id}/notes/${crypto.randomUUID()}.${ext}`, file, { upsert: false })
+  if (error) return c.json({ error: error.message }, 500)
+  return c.json({ url: admin.storage.from('toy-photos').getPublicUrl(data.path).data.publicUrl })
+})
+
 export default upload

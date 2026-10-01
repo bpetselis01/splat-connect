@@ -138,6 +138,34 @@ publicRoutes.get('/tutorials/:id', async (c) => {
   })
 })
 
+/**
+ * A published guide's community notes (093), oldest first, with names. The
+ * anon client reads (RLS: approved guides only); names come from the admin
+ * client, never a profiles embed (033/045 grants). A pinner who has since left
+ * is named the way 083's placeholder is.
+ */
+publicRoutes.get('/tutorials/:id/notes', async (c) => {
+  const { data, error } = await createAnonClient()
+    .from('tutorial_notes')
+    .select('id, step_position, author_id, body, photo_url, photo_caption, pinned_at, pinned_by, created_at')
+    .eq('tutorial_id', c.req.param('id'))
+    .order('created_at', { ascending: true })
+  if (error?.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
+  if (error) return c.json({ error: error.message }, 500)
+  const ids = [...new Set(data.flatMap((n) => [n.author_id, n.pinned_by]).filter((x): x is string => !!x))]
+  const { data: people } = ids.length
+    ? await createAdminClient().from('profiles').select('id, name').in('id', ids)
+    : { data: [] as { id: string; name: string }[] }
+  const name = new Map((people ?? []).map((p) => [p.id, p.name as string]))
+  return c.json(
+    data.map((n) => ({
+      ...n,
+      author_name: name.get(n.author_id) || 'A member',
+      pinned_by_name: n.pinned_at ? (n.pinned_by && name.get(n.pinned_by)) || 'Deleted member' : null,
+    }))
+  )
+})
+
 publicRoutes.get('/toys', async (c) => {
   const supabase = createAnonClient()
   const { data, error } = await supabase

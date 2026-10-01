@@ -18,11 +18,17 @@ export function GuideSteps({
   tutorialId,
   steps,
   completion,
+  noteLabels,
+  extras,
 }: {
   tutorialId: string
   steps: TutorialStep[]
   /** Drawn once every step is ticked; given how many there are. */
   completion: (total: number) => ReactNode
+  /** "1 pinned revision · 2 notes", by step position (lib/guide-notes.ts). */
+  noteLabels?: Map<number, string>
+  /** Pinned "Missing step" notes, drawn as steps after the last. */
+  extras?: { no: number; body: string; by: string; pinnedBy: string }[]
 }) {
   const { ticked, toggle, reset } = useDeviceTicks(ticksKey('steps', tutorialId), steps.map((s) => s.id))
   const progress = stepProgress(steps, ticked)
@@ -83,10 +89,24 @@ export function GuideSteps({
                   accessibilityLabel={st.title ? `Step ${st.position}: ${st.title}` : `Step ${st.position}`}
                 />
               ) : null}
+              {noteLabels?.get(st.position) ? <Text style={styles.noteLabel}>{noteLabels.get(st.position)}</Text> : null}
             </View>
           </Pressable>
         )
       })}
+
+      {(extras ?? []).map((x) => (
+        <View key={x.no} style={styles.extra}>
+          <View style={styles.extraHead}>
+            <View style={styles.stepNum}>
+              <Text style={styles.stepNumText}>{x.no}</Text>
+            </View>
+            <Text style={styles.stepTitle}>Added by the community</Text>
+          </View>
+          <Text style={styles.stepBody}>{x.body}</Text>
+          <Text style={styles.noteLabel}>{`Pinned by ${x.pinnedBy} · suggested by ${x.by}`}</Text>
+        </View>
+      ))}
 
       {progress.allDone ? completion(progress.total) : null}
     </Section>
@@ -109,4 +129,7 @@ const styles = StyleSheet.create({
   muted: { color: theme.colors.muted },
   stepBody: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.text, lineHeight: 21 },
   stepPhoto: { width: '100%', aspectRatio: 4 / 3, borderRadius: theme.radii.field, marginTop: theme.spacing(1), backgroundColor: theme.colors.surfaceSunken },
+  noteLabel: { fontFamily: theme.fonts.bold, fontSize: 12, color: theme.colors.primaryDark },
+  extra: { padding: theme.spacing(3), gap: theme.spacing(1), borderRadius: theme.radii.field, backgroundColor: theme.colors.honeySoft, marginVertical: theme.spacing(1) },
+  extraHead: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2) },
 })

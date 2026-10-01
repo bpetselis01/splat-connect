@@ -22,21 +22,7 @@
   "boardRoute": "guides/[id]",
   "route": "/guides/[id]",
   "idFrom": "tutorial",
-  "role": "parent",
-  "explained": [
-   {
-    "type": "missing-section",
-    "match": "community notes",
-    "why": "pending",
-    "pending": "guide-community-notes"
-   },
-   {
-    "type": "missing-section",
-    "match": "no inputs on live",
-    "why": "pending",
-    "pending": "guide-community-notes"
-   }
-  ]
+  "role": "parent"
  },
  {
   "id": "guide_preview",

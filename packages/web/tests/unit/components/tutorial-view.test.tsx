@@ -204,3 +204,14 @@ describe('safety notes', () => {
     expect(screen.getByText('Add the screw.')).toBeInTheDocument()
   })
 })
+
+describe('community notes', () => {
+  it('warns of pinned revisions and lists them, read only', () => {
+    const pinned = { id: 'n', step_position: 2, author_id: 'p', author_name: 'Priya', body: 'Use two zip ties.', photo_url: null, photo_caption: null, pinned_at: '2026-09-02T00:00:00Z', pinned_by: 'a', pinned_by_name: 'Sam', created_at: '2026-09-01T00:00:00Z' }
+    render(<TutorialView signedIn tutorial={tutorial()} notes={[pinned, { ...pinned, id: 'o', pinned_at: null }]} />)
+    expect(screen.getByText(/1 pinned revision/)).toBeInTheDocument()
+    expect(screen.getByText(/since this was written — read before you build\./)).toBeInTheDocument()
+    expect(screen.getByText('Use two zip ties.')).toBeInTheDocument()
+    expect(screen.getAllByText('Use two zip ties.')).toHaveLength(1)
+  })
+})

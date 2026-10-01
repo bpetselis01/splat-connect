@@ -1553,6 +1553,7 @@ export type NotificationType =
   | 'challenge_removed'
   | 'idea_graduated'
   | 'tutorial_thanked'
+  | 'tutorial_noted'
   | 'build_shot_posted'
   | 'build_approved'
   | 'print_started'
@@ -1603,6 +1604,7 @@ const NOTIFICATION_BUCKET = {
   tutorial_approved: 'tutorials',
   tutorial_rejected: 'tutorials',
   tutorial_thanked: 'tutorials',
+  tutorial_noted: 'tutorials',
   toy_request: 'exchanges',
   toy_accepted: 'exchanges',
   toy_rejected: 'exchanges',
@@ -1651,6 +1653,7 @@ export const COPY: Record<NotificationType, (n: Notification) => string> = {
   tutorial_rejected: (n) => `"${n.tutorial_title}" was rejected`,
   // Unnamed on purpose: who thanked a guide stays private (066).
   tutorial_thanked: (n) => `A family said thanks for "${n.tutorial_title}"`,
+  tutorial_noted: (n) => `${n.actor_name} added a note to "${n.tutorial_title}"`,
   toy_request: (n) => `${n.actor_name} requested ${n.toy_name}`,
   toy_accepted: (n) => `${n.actor_name} accepted your request for ${n.toy_name}`,
   toy_rejected: (n) => `${n.actor_name} declined your request for ${n.toy_name}`,
@@ -2153,6 +2156,22 @@ export interface TutorialStep {
   title: string | null
   body: string
   photo_url: string | null
+}
+
+/** 093. A community note on a published guide, as GET /api/public/tutorials/:id/notes serves it. */
+export interface GuideNote {
+  id: string
+  /** Null, or past the guide's last step, is "Missing step". */
+  step_position: number | null
+  author_id: string
+  author_name: string
+  body: string
+  photo_url: string | null
+  photo_caption: string | null
+  pinned_at: string | null
+  pinned_by: string | null
+  pinned_by_name: string | null
+  created_at: string
 }
 
 /** The switch tags' labels, as the board writes "big button, light press, short hold". */

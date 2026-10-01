@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { View, Text, ScrollView, Pressable, Image, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -8,11 +8,14 @@ import { apiClient } from '../../lib/api-client'
 import { supabase } from '../../lib/supabase'
 import { useSaves } from '../../lib/saves'
 import { useMyChildren } from '../../lib/my-children'
+import { useCapabilities } from '../../lib/capabilities'
+import { useGuideNotes, noteSummary, pinCountLabel } from '../../lib/guide-notes'
 import { theme } from '../../lib/theme'
 import { Provenance, type ProvenanceContributor, type ProvenanceOrg } from '../guides/provenance'
 import { PicksRow } from '../guides/picks-row'
 import { GuideSteps } from '../guides/guide-steps'
 import { GuideTools } from '../guides/guide-tools'
+import { CommunityNotes } from '../guides/community-notes'
 import { Badge } from '../ui/Badge'
 import { SaveButton } from '../ui/SaveButton'
 import { PhotoCarousel } from '../ui/PhotoCarousel'
@@ -22,7 +25,6 @@ import { Skeleton } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
 import { ReportProblem } from '../reports/report-problem'
-import { PendingButton } from '../ui/pending'
 import { useFlash, FlashLine } from '../ui/Flash'
 
 const SWITCH_TARGET_LABEL = { large: 'Big button', small: 'Small button' } as const
@@ -61,6 +63,10 @@ export function DetailScreen({ id }: { id: string }) {
   const [thanking, setThanking] = useState(false)
   const [built, setBuilt] = useState(false)
   const [flash, setFlash] = useFlash()
+  const { notes, reload } = useGuideNotes(id)
+  const { caps } = useCapabilities()
+  const scroller = useRef<ScrollView>(null)
+  const [notesY, setNotesY] = useState(0)
 
   useEffect(() => {
     apiClient
@@ -136,12 +142,13 @@ export function DetailScreen({ id }: { id: string }) {
   const total = partsTotalCents(tutorial.parts)
   const captionAt = (i: number) => tutorial.photo_captions?.[i] || tutorial.title
   const steps = tutorial.steps ?? []
+  const summary = noteSummary(notes, steps.length)
   const { lead, rest } = splitLead(tutorial.description ?? '')
 
   const primary = tutorial.tutorial_contributors.find((c) => c.role === 'primary') ?? tutorial.tutorial_contributors[0]
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView ref={scroller} style={styles.container} contentContainerStyle={styles.content}>
       {/* Bleeds to the screen's edges and up under the header, as the board's hero does. */}
       <View style={styles.hero}>
         <PhotoCarousel
@@ -234,10 +241,26 @@ export function DetailScreen({ id }: { id: string }) {
         <ReportProblem subjectKind="guide" subjectId={tutorial.id} subjectLabel={tutorial.title} />
       </View>
 
+      {summary.pinned.length ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => scroller.current?.scrollTo({ y: notesY, animated: true })}
+          style={styles.banner}
+        >
+          <Ionicons name="pin" size={20} color={theme.colors.ink} />
+          <Text style={styles.bannerText}>
+            <Text style={styles.bannerStrong}>{pinCountLabel(summary.pinned.length)}</Text> since this was written — read before you build.
+          </Text>
+          <Ionicons name="arrow-down" size={16} color={theme.colors.ink} />
+        </Pressable>
+      ) : null}
+
       {steps.length > 0 ? (
         <GuideSteps
           tutorialId={tutorial.id}
           steps={steps}
+          noteLabels={summary.labels}
+          extras={summary.extras}
           completion={(total) => (
             <View style={styles.doneCard}>
               <Text style={styles.doneTitle}>{`All ${total} steps done`}</Text>
@@ -268,7 +291,18 @@ export function DetailScreen({ id }: { id: string }) {
           )}
         />
       ) : null}
-      {steps.length > 0 ? <PendingButton pending="guide-community-notes" label="Add a note" variant="ghost" /> : null}
+      <View onLayout={(e) => setNotesY(e.nativeEvent.layout.y)}>
+        <CommunityNotes
+          tutorialId={tutorial.id}
+          guideTitle={tutorial.title}
+          authorName={primary?.profiles.name ?? 'The author'}
+          steps={steps}
+          notes={notes}
+          reload={reload}
+          canPin={!!thanks?.own || !!caps?.isAdmin}
+          viewerId={caps?.profile.id ?? null}
+        />
+      </View>
 
       {rest ? (
         <Section title="About this guide">
@@ -375,6 +409,9 @@ export function DetailScreen({ id }: { id: string }) {
 }
 
 const styles = StyleSheet.create({
+  banner: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2), padding: theme.spacing(3), borderRadius: theme.radii.field, backgroundColor: theme.colors.honeySoft, marginBottom: theme.spacing(3) },
+  bannerText: { flex: 1, fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.ink },
+  bannerStrong: { fontFamily: theme.fonts.black },
   safetyNote: { paddingVertical: theme.spacing(2), gap: theme.spacing(1) },
   safetyTitle: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.ink },
   settings: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2) },

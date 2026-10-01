@@ -9,7 +9,7 @@ import { apiClient } from '@/lib/api-client'
 import { getSavedIds } from '@/lib/saves'
 import { getMyChildren } from '@/lib/my-children'
 import { TutorialView } from '@/components/tutorial-view'
-import { fitLine, type TutorialWithDetails, type TutorialOrg } from '@splat-connect/types'
+import { fitLine, type GuideNote, type TutorialWithDetails, type TutorialOrg } from '@splat-connect/types'
 
 export default async function TutorialPage({
   params,
@@ -27,6 +27,11 @@ export default async function TutorialPage({
     reviewer?: { name: string } | null
     reviewed_for?: { name: string } | null
   }
+
+  // 093. Public, like the guide; a failed read shows no revisions rather than no guide.
+  const notes = await fetch(`${process.env.API_URL}/api/public/tutorials/${id}/notes`, { cache: 'no-store' })
+    .then((r) => (r.ok ? (r.json() as Promise<GuideNote[]>) : []))
+    .catch(() => [] as GuideNote[])
 
   const saved = await getSavedIds()
   // Only asked when signed in; a signed-out visitor has thanked nothing. A
@@ -56,6 +61,7 @@ export default async function TutorialPage({
         tutorial={tutorial}
         signedIn={signedIn}
         fit={fit}
+        notes={notes}
         actions={
           /* The board gives a guest Share alone: saving and thanking both need
              an account, and the rail already says so under the button. */

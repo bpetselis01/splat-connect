@@ -68,6 +68,10 @@ describe('linkFor', () => {
     }
   })
 
+  it('sends a note on a guide to the published guide', () => {
+    expect(linkFor(notification({ type: 'tutorial_noted', tutorial_id: 'g1' }))).toBe('/guides/g1')
+  })
+
   it('reads and routes the four organisation types (077)', () => {
     expect(COPY.org_message(notification({ type: 'org_message', actor_name: 'Priya', tutorial_title: 'Northbank' })))
       .toBe('Priya messaged Northbank')

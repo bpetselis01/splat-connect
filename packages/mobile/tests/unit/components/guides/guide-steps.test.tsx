@@ -25,3 +25,18 @@ it('ticks steps, shows progress and where to pick up, and resets', async () => {
   expect(screen.getByText('Step progress cleared')).toBeTruthy()
   await waitFor(() => expect(screen.getByText('0 of 2 steps done')).toBeTruthy())
 })
+
+it('labels steps with their notes and adds pinned missing steps at the end', async () => {
+  render(
+    <GuideSteps
+      tutorialId="g"
+      steps={steps}
+      completion={() => null}
+      noteLabels={new Map([[1, '1 pinned revision · 2 notes']])}
+      extras={[{ no: 3, body: 'Test the switch first.', by: 'Priya', pinnedBy: 'Sam' }]}
+    />
+  )
+  expect(await screen.findByText('1 pinned revision · 2 notes')).toBeTruthy()
+  expect(screen.getByText('Added by the community')).toBeTruthy()
+  expect(screen.getByText('Pinned by Sam · suggested by Priya')).toBeTruthy()
+})

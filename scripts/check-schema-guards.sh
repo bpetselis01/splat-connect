@@ -418,7 +418,17 @@ select * from (values
    (select count(*) = 1 from pg_proc p
       where p.proname = 'bump_tutorial_view' and p.pronamespace = 'public'::regnamespace
         and not has_function_privilege('authenticated', p.oid, 'execute')
-        and not has_function_privilege('anon', p.oid, 'execute')))
+        and not has_function_privilege('anon', p.oid, 'execute'))),
+
+  -- 093. Without RLS any client could pin, edit or delete anyone's note.
+  ('093 tutorial_notes has RLS on',
+   (select relrowsecurity from pg_class where oid = 'public.tutorial_notes'::regclass)),
+
+  -- 093. The 046 shape: a narrower constraint drops every note notification silently.
+  ('093 notifications_type_check permits tutorial_noted',
+   (select count(*) = 1 from pg_constraint
+      where conname = 'notifications_type_check'
+        and pg_get_constraintdef(oid) like '%tutorial_noted%'))
 ) as t(guard, ok)
 where not ok;
 EOSQL

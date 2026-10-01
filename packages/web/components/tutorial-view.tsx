@@ -22,7 +22,8 @@
  * since 080 (alongside the PDF, which stays the printable download), so the
  * tabs are the ones the data can fill: Steps (when the guide has any), Parts &
  * tools, Files (assistive tech only) and Safety (once the author has affirmed
- * the checklist). Community notes has no table.
+ * the checklist). Community notes' pinned revisions (093) show here, read
+ * only, with the banner above the tabs; notes are posted from the app.
  *
  * `fit` is the board's "Suits Ollie — big button, light press, short hold",
  * worked out by the caller (suitsChild) and drawn above the tabs: a parent
@@ -54,6 +55,7 @@ import {
   HandTap,
   Lifebuoy,
   Printer,
+  PushPin,
   SealCheck,
   ShoppingBag,
   ShieldCheck,
@@ -67,6 +69,7 @@ import {
   formatAgeRange,
   formatBuildTime,
   type BuyLink,
+  type GuideNote,
   type TutorialWithDetails,
   type TutorialOrg,
 } from '@splat-connect/types'
@@ -110,6 +113,7 @@ export function TutorialView({
   actions,
   signedIn,
   fit,
+  notes,
 }: {
   tutorial: Viewable
   /** The leader page fetches backing separately; everyone else has it embedded. */
@@ -124,6 +128,8 @@ export function TutorialView({
   signedIn: boolean
   /** "Suits Ollie — big button, …", or nothing. Never an assessment of the child. */
   fit?: string | null
+  /** 093. Pinned revisions show here; posting is on the app. */
+  notes?: GuideNote[]
 }) {
   const contributors = tutorial.tutorial_contributors ?? []
   const primaryContributor = contributors.find((c) => c.role === 'primary')
@@ -153,6 +159,7 @@ export function TutorialView({
 
   const diff = DIFFICULTY[tutorial.difficulty]
   const steps = tutorial.steps ?? []
+  const pinned = (notes ?? []).filter((n) => n.pinned_at)
   const total = partsTotalCents(tutorial.parts)
 
   /*
@@ -451,7 +458,35 @@ export function TutorialView({
           </p>
         )}
 
+        {pinned.length > 0 && (
+          <a href="#tut-revisions" className="flex items-center gap-2.5 rounded-[var(--radius-inset)] bg-honey-soft px-4 py-3 text-sm font-bold text-ink no-underline">
+            <PushPin size={20} weight="fill" aria-hidden="true" />
+            <span className="flex-1">
+              <strong>{pinned.length} pinned revision{pinned.length === 1 ? '' : 's'}</strong> since this was written — read before you build.
+            </span>
+          </a>
+        )}
+
         <SectionTabs label="Guide sections" tabs={tabs} />
+
+        {pinned.length > 0 && (
+          <section id="tut-revisions" aria-labelledby="tut-revisions-h" className="flex flex-col gap-3">
+            <h2 id="tut-revisions-h" className="m-0 font-display text-[22px] font-extrabold text-ink">
+              Revisions <span className="text-muted">{pinned.length} pinned</span>
+            </h2>
+            <ol className="m-0 flex list-none flex-col gap-2.5 p-0">
+              {pinned.map((n) => (
+                <li key={n.id} className="rounded-[var(--radius-inset)] border border-line bg-surface p-4">
+                  <p className="m-0 text-xs font-bold text-muted">
+                    {n.step_position && n.step_position <= steps.length ? `Step ${n.step_position}` : 'Missing step'} · {n.author_name}
+                  </p>
+                  <p className="m-0 mt-1 text-[15px] leading-[1.55] text-ink">{n.body}</p>
+                  <p className="m-0 mt-2 text-xs font-bold text-ink">Pinned by {n.pinned_by_name ?? 'Deleted member'}</p>
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
 
         {/* Where the creator points next. The public route has already dropped
             anything a parent could not open, so on the public page every card
