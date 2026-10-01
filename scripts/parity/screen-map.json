@@ -49,6 +49,12 @@
     "match": "h1",
     "why": "intended",
     "reason": "The page-title token is clamp(28px,3.2vw,40px), 40px at this width; the board's 44px is hand-drawn off-token."
+   },
+   {
+    "type": "missing-section",
+    "match": "also worth a look",
+    "why": "intended",
+    "reason": "Built (toy-holder-picks); the seed's swap-toy holder has nothing else listed and no picks, so the section rightly draws nothing."
    }
   ],
   "seedRole": "parent"
@@ -657,7 +663,15 @@
   "boardRoute": "/dashboard/toys/[id]",
   "route": "/dashboard/toys/[id]",
   "role": "parent",
-  "sampleFrom": "/dashboard/toys"
+  "sampleFrom": "/dashboard/toys",
+  "explained": [
+   {
+    "type": "extra-section",
+    "match": "also worth a look",
+    "why": "intended",
+    "reason": "Decided 2026-09-30 (toy-holder-picks): the holder chooses automatic or hand-picked; no board draws the chooser."
+   }
+  ]
  },
  {
   "id": "exchanges",
