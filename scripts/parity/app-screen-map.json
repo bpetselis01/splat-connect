@@ -774,24 +774,6 @@
   "role": "parent",
   "explained": [
    {
-    "type": "missing-section",
-    "match": "$#",
-    "why": "pending",
-    "pending": "add-printer-rates"
-   },
-   {
-    "type": "radius",
-    "match": "card radius",
-    "why": "pending",
-    "pending": "add-printer-rates"
-   },
-   {
-    "type": "colour",
-    "match": "card background",
-    "why": "pending",
-    "pending": "add-printer-rates"
-   },
-   {
     "type": "picture",
     "match": "sticky footer",
     "why": "intended",

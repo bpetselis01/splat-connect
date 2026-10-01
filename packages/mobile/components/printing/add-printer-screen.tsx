@@ -24,8 +24,7 @@ import { Button } from '../ui/Button'
 import { Chip } from '../ui/Chip'
 import { TextField } from '../ui/TextField'
 import { ErrorRow } from '../ui/ErrorRow'
-import { apiMessage } from '@splat-connect/types'
-import { PendingRow } from '../ui/pending'
+import { apiMessage, dollarsToCents } from '@splat-connect/types'
 
 // The board's four. PRINT_MATERIALS has six; ASA and Nylon are rare enough on
 // a home machine that offering them here would crowd the two that matter.
@@ -84,6 +83,8 @@ export function AddPrinterScreen() {
   const [bed, setBed] = useState(220)
   const [pickup, setPickup] = useState(0)
   const [ownerOrgId, setOwnerOrgId] = useState<string | null>(null)
+  const [rate, setRate] = useState('')
+  const [rateNote, setRateNote] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -91,6 +92,13 @@ export function AddPrinterScreen() {
   const valid = name.trim().length > 0 && materials.length > 0
 
   async function save() {
+    // Parsed from text, never multiplied (dollarsToCents explains the cent that
+    // 12.10 * 100 loses). Empty is the off state: free, parts only (070).
+    const cents = rate.trim() ? dollarsToCents(rate) : null
+    if (rate.trim() && cents === null) {
+      setError('Filament cost is dollars per gram, like 0.12.')
+      return
+    }
     setBusy(true)
     setError(null)
     try {
@@ -103,6 +111,8 @@ export function AddPrinterScreen() {
         suburb: caps?.profile.pickup_suburb ?? '',
         state: caps?.profile.pickup_state ?? '',
         notes: `${PICKUPS[pickup]![0]} — ${PICKUPS[pickup]![1]}`,
+        filament_cents_per_g: cents,
+        rate_note: rateNote.trim() || null,
         ...(ownerOrgId ? { owner_org_id: ownerOrgId } : {}),
       })
       router.back()
@@ -175,7 +185,32 @@ export function AddPrinterScreen() {
             ))}
           </View>
         </View>
-        <PendingRow pending="add-printer-rates" label="Your standard rates" icon="pricetag-outline" />
+        <View style={styles.rates}>
+          <Text style={styles.eyebrow}>Your standard rates</Text>
+          <Text style={styles.meta}>
+            What a family is asked to cover, shown on your card before they request. Your time and your machine stay free.
+          </Text>
+          <TextField
+            label="Dollars per gram"
+            accessibilityLabel="Dollars per gram"
+            placeholder="0.12"
+            inputMode="decimal"
+            value={rate}
+            onChangeText={setRate}
+          />
+          {rate.trim() ? null : (
+            <Text style={styles.meta}>Nothing listed — your card will say you cover everything yourself.</Text>
+          )}
+          <TextField
+            label="Why these costs"
+            accessibilityLabel="Why these costs"
+            placeholder="e.g. filament at what the spool cost me, nothing for time."
+            maxLength={500}
+            multiline
+            value={rateNote}
+            onChangeText={setRateNote}
+          />
+        </View>
         {/* Under the rates, as the board closes the form. */}
         <Text style={styles.meta}>
           Your street address is never shown. Requesters see a suburb until you accept, then whatever pickup you
@@ -217,6 +252,12 @@ const styles = StyleSheet.create({
     borderWidth: theme.border.hairline,
     borderColor: theme.colors.border,
     backgroundColor: theme.colors.surface,
+  },
+  rates: {
+    gap: theme.spacing(2),
+    padding: theme.spacing(4),
+    borderRadius: theme.radii.card,
+    backgroundColor: theme.colors.honeySoft,
   },
   optionOn: { borderColor: theme.colors.primaryDark, backgroundColor: theme.colors.accentLight },
   optionTitle: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.text },

@@ -504,6 +504,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["mobile"],
     needs: "\"Your standard rates\" panel (API accepts it) [ui]",
+    shipped: true,
   },
   'review-checklist': {
     shipped: true,
