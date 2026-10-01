@@ -9,6 +9,9 @@ import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../.
 let sam: TestUser
 let tom: TestUser
 let outsider: TestUser
+// Two people with money both ways on one exchange.
+let ana: TestUser
+let ben: TestUser
 let toyId: string
 let guideId: string
 const tx: Record<string, string> = {}
@@ -27,6 +30,8 @@ beforeAll(async () => {
   sam = await createTestUser('contributor')
   tom = await createTestUser('contributor')
   outsider = await createTestUser('contributor')
+  ana = await createTestUser('contributor')
+  ben = await createTestUser('contributor')
   const admin = adminClient()
   toyId = (
     await admin
@@ -46,6 +51,8 @@ beforeAll(async () => {
   tx.build = await insertTx({ type: 'build', status: 'accepted', requester_id: tom.id, owner_id: sam.id, tutorial_id: guideId, build_brief: 'A bubble machine' })
   // Only a covered line: $0 to everyone, so no row at all.
   tx.covered = await insertTx({ toy_id: toyId, type: 'donation', status: 'requested', requester_id: sam.id, owner_id: tom.id })
+  // Ana paid Ben back for postage (settled); Ben still owes Ana for a part.
+  tx.both = await insertTx({ toy_id: toyId, type: 'exchange', status: 'accepted', requester_id: ana.id, owner_id: ben.id })
   const line = (transaction_id: string, payer: TestUser, payee: TestUser, description: string, amount_cents: number, extra: object = {}) => ({
     transaction_id, payer_id: payer.id, payee_id: payee.id, created_by: payee.id, description, amount_cents, claiming: true, settled_at: null, settled_by: null, ...extra,
   })
@@ -54,6 +61,8 @@ beforeAll(async () => {
     line(tx.donation, sam, tom, 'Box', 0, { claiming: false }),
     line(tx.build, tom, sam, 'Parts for the bubble machine', 890, { settled_at: new Date().toISOString(), settled_by: sam.id }),
     line(tx.covered, sam, tom, 'Bubble wrap', 0, { claiming: false }),
+    line(tx.both, ana, ben, 'Postage', 500, { settled_at: new Date().toISOString(), settled_by: ben.id }),
+    line(tx.both, ben, ana, 'A spare switch', 300),
   ])
   expect(error).toBeNull()
 })
@@ -65,7 +74,7 @@ afterAll(async () => {
   await admin.from('toy_transactions').delete().in('id', ids)
   await admin.from('toys').delete().eq('id', toyId)
   await admin.from('tutorials').delete().eq('id', guideId)
-  for (const u of [sam, tom, outsider]) await deleteTestUser(u.id)
+  for (const u of [sam, tom, outsider, ana, ben]) await deleteTestUser(u.id)
 })
 
 describe('GET /api/exchange-costs/mine', () => {
@@ -79,6 +88,18 @@ describe('GET /api/exchange-costs/mine', () => {
     // Only what Sam still owes; what he is owed is never netted against it.
     expect(body.owed_cents).toBe(1060)
     expect(body.unsettled_count).toBe(1)
+  })
+
+  it('settles each direction on its own: paid back but still owed shows what is owed, to settle', async () => {
+    const ana_ = await mine(ana)
+    expect(ana_.threads).toHaveLength(1)
+    expect(ana_.threads[0]).toMatchObject({ transaction_id: tx.both, amount_cents: 300, you_pay: false, settled: false })
+    expect(ana_.owed_cents).toBe(0)
+    expect(ana_.unsettled_count).toBe(1)
+    const ben_ = await mine(ben)
+    expect(ben_.threads[0]).toMatchObject({ transaction_id: tx.both, amount_cents: 300, you_pay: true, settled: false })
+    expect(ben_.owed_cents).toBe(300)
+    expect(ben_.unsettled_count).toBe(1)
   })
 
   it('shows somebody outside every thread nothing', async () => {

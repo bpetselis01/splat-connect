@@ -29,6 +29,24 @@ describe('costSummary', () => {
     expect(s).toMatchObject({ amount_cents: 1000, you_pay: true, owed_cents: 0, settled: true })
   })
 
+  it('settles each direction on its own: paid back but still owed shows what is owed, to settle', () => {
+    const at = '2026-10-01T00:00:00Z'
+    const s = costSummary([line({ settled_at: at }), line({ amount_cents: 400, payer_id: 'them', payee_id: 'me' })], 'me')
+    expect(s).toMatchObject({ amount_cents: 400, you_pay: false, owed_cents: 0, settled: false, you_pay_cents: 1000, you_get_cents: 400 })
+  })
+
+  it('stays on what the caller pays while that is open, even when what they are owed is settled', () => {
+    const at = '2026-10-01T00:00:00Z'
+    const s = costSummary([line(), line({ amount_cents: 400, payer_id: 'them', payee_id: 'me', settled_at: at })], 'me')
+    expect(s).toMatchObject({ amount_cents: 1000, you_pay: true, owed_cents: 1000, settled: false })
+  })
+
+  it('is settled once both directions are, and shows what the caller paid', () => {
+    const at = '2026-10-01T00:00:00Z'
+    const s = costSummary([line({ settled_at: at }), line({ amount_cents: 400, payer_id: 'them', payee_id: 'me', settled_at: at })], 'me')
+    expect(s).toMatchObject({ amount_cents: 1000, you_pay: true, owed_cents: 0, settled: true })
+  })
+
   it('joins the descriptions in the words they were written in', () => {
     expect(costSummary([line(), line({ description: 'Box' })], 'me').what).toBe('Postage, Box')
   })
