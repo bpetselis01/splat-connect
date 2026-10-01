@@ -446,6 +446,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["mobile", "api"],
     needs: "Live and Done tabs on Makers wanted [ui,api]",
+    shipped: true,
   },
   'makers-row-meta': {
     shipped: true,

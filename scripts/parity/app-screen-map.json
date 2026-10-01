@@ -362,15 +362,7 @@
   "group": "push",
   "boardRoute": "explore/makers-wanted",
   "route": "/explore/makers-wanted",
-  "role": "parent",
-  "explained": [
-   {
-    "type": "picture",
-    "match": "status control",
-    "why": "pending",
-    "pending": "makers-live-done-tabs"
-   }
-  ]
+  "role": "parent"
  },
  {
   "id": "mw_new",

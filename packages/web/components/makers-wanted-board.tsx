@@ -15,6 +15,9 @@
  * worse than one honest one: a maker who pressed "Ask first" would find they
  * had committed. Add it when messages can belong to an unowned transaction.
  *
+ * Live and Handed over read GET /builds-board as their tab is picked; a
+ * handed-over row says only the guide, the maker and when (F19).
+ *
  * Distance is a filter over the FAMILY's stated range, not over any distance
  * between two points — SPLAT stores neither party's location, only a suburb and
  * how far the family said they can travel. A filter that implied otherwise
@@ -34,6 +37,7 @@ import {
   HourglassMedium,
   MapPin,
   Package,
+  SealCheck,
 } from '@phosphor-icons/react/dist/ssr'
 import { buildRowMeta } from '@splat-connect/types'
 import { browserApiClient } from '@/lib/browser-api-client'
@@ -62,6 +66,11 @@ export type OpenBuild = {
   } | null
 }
 
+/** GET /api/toy-transactions/builds-board, one row. */
+type BoardBuild = OpenBuild & { maker_name: string; party: boolean; updated_at: string }
+type Tab = 'open' | 'live' | 'done' | 'mine'
+const BOARD_PAGE = 20
+
 const RANGES = [5, 10, 25, 0] as const
 
 const DIFF: Record<string, { label: string; tint: string }> = {
@@ -73,16 +82,29 @@ const DIFF: Record<string, { label: string; tint: string }> = {
 export function MakersWantedBoard({ builds }: { builds: OpenBuild[] }) {
   const router = useRouter()
   const [range, setRange] = useState<number>(0)
-  // The board's four tabs are Needs a maker / Live / Handed over / Your
-  // requests. This feed only carries unclaimed requests, so only the two it
-  // can fill are drawn.
-  const [tab, setTab] = useState<'open' | 'mine'>('open')
+  const [tab, setTab] = useState<Tab>('open')
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [board, setBoard] = useState<BoardBuild[]>([])
+  const [boardPage, setBoardPage] = useState(0)
+  const [boardMore, setBoardMore] = useState(false)
 
-  const inTab = builds.filter((b) => (tab === 'mine' ? b.mine : !b.mine))
-  const shown = range === 0 ? inTab : inTab.filter((b) => (b.travel_km ?? 0) >= range)
-  const count = (t: 'open' | 'mine') => builds.filter((b) => (t === 'mine' ? b.mine : !b.mine)).length
+  async function loadBoard(t: 'live' | 'done', page: number) {
+    try {
+      const rows = await browserApiClient.get<BoardBuild[]>(`/api/toy-transactions/builds-board?tab=${t}&page=${page}`)
+      setBoard((cur) => (page === 0 ? rows : [...cur, ...rows]))
+      setBoardPage(page)
+      setBoardMore(rows.length === BOARD_PAGE)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'That did not go through. Try once more.')
+    }
+  }
+
+  const onBoard = tab === 'live' || tab === 'done'
+  const inTab: (OpenBuild | BoardBuild)[] = onBoard ? board : builds.filter((b) => (tab === 'mine' ? b.mine : !b.mine))
+  // The family's range filters open requests only; a handed-over row has none (F8).
+  const shown = range === 0 || onBoard ? inTab : inTab.filter((b) => (b.travel_km ?? 0) >= range)
+  const count = (t: Tab) => builds.filter((b) => (t === 'mine' ? b.mine : !b.mine)).length
 
   async function claim(id: string) {
     setError(null)
@@ -102,11 +124,22 @@ export function MakersWantedBoard({ builds }: { builds: OpenBuild[] }) {
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-        <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
+        <Tabs
+          value={tab}
+          onValueChange={(v) => {
+            setTab(v as Tab)
+            if (v === 'live' || v === 'done') {
+              setBoard([])
+              void loadBoard(v, 0)
+            }
+          }}
+        >
           <TabsList aria-label="Filter build requests" className="flex gap-1 rounded-full bg-[var(--surface2)] p-1">
             {(
               [
                 ['open', 'Needs a maker', 'var(--tmint)'],
+                ['live', 'Live', null],
+                ['done', 'Handed over', null],
                 ['mine', 'Your requests', 'var(--tcoral)'],
               ] as const
             ).map(([k, label, nBg]) => {
@@ -120,7 +153,7 @@ export function MakersWantedBoard({ builds }: { builds: OpenBuild[] }) {
                   }`}
                 >
                   {label}
-                  {n > 0 && (
+                  {nBg && n > 0 && (
                     <span className="h-5 min-w-5 rounded-full px-1.5 text-center text-xs font-extrabold leading-5 text-[var(--tink)]" style={{ background: nBg }}>
                       {n}
                     </span>
@@ -159,36 +192,49 @@ export function MakersWantedBoard({ builds }: { builds: OpenBuild[] }) {
           <h3 className="mb-1 mt-3 font-display text-2xl font-extrabold text-ink">
             {tab === 'mine' ? 'You have not asked for a build yet' : 'Nothing at that stage'}
           </h3>
-          <p className="max-w-[38ch] text-muted">
-            {tab === 'mine'
-              ? 'Pick the guide your child needs and ask for a build. It lands here and in My exchanges.'
-              : builds.length === 0
-                ? 'Nothing waiting on a maker right now. Requests land here the moment a family posts one.'
-                : 'No family in that range at the moment. Try Any distance.'}
-          </p>
+          {!onBoard && (
+            <p className="max-w-[38ch] text-muted">
+              {tab === 'mine'
+                ? 'Pick the guide your child needs and ask for a build. It lands here and in My exchanges.'
+                : builds.length === 0
+                  ? 'Nothing waiting on a maker right now. Requests land here the moment a family posts one.'
+                  : 'No family in that range at the moment. Try Any distance.'}
+            </p>
+          )}
         </div>
       ) : (
         <ul className="m-0 grid list-none gap-4 p-0 md:grid-cols-2">
           {shown.map((b) => {
             const diff = b.tutorial?.difficulty ? DIFF[b.tutorial.difficulty] : undefined
             const meta = b.tutorial ? buildRowMeta(b.tutorial) : null
+            const row = b as OpenBuild & Partial<BoardBuild>
+            // The board's T: status pill and footer per stage.
+            const stage =
+              tab === 'live'
+                ? { tint: 'var(--tamber)', icon: <Hammer weight="fill" aria-hidden="true" />, label: 'Live', foot: row.party && !b.mine ? 'You are building it' : `${row.maker_name} is building it` }
+                : tab === 'done'
+                  ? { tint: 'var(--tok)', icon: <SealCheck weight="fill" aria-hidden="true" />, label: 'Handed over', foot: `Built by ${row.maker_name}` }
+                  : b.mine
+                    ? { tint: 'var(--tcoral)', icon: <HourglassMedium weight="fill" aria-hidden="true" />, label: 'Waiting for a maker', foot: 'This is your request' }
+                    : { tint: 'var(--tmint)', icon: <HandWaving weight="fill" aria-hidden="true" />, label: 'Needs a maker', foot: 'Nobody has claimed this yet' }
             return (
               <li key={b.id}>
                 <article className="card flex h-full flex-col gap-3 p-5">
                   <div className="flex flex-wrap items-center justify-between gap-2.5">
                     <span
                       className="inline-flex items-center gap-1.5 rounded-full px-[11px] py-1 text-xs font-extrabold text-[var(--tink)]"
-                      style={{ background: b.mine ? 'var(--tcoral)' : 'var(--tmint)' }}
+                      style={{ background: stage.tint }}
                     >
-                      {b.mine ? (
-                        <HourglassMedium weight="fill" aria-hidden="true" />
-                      ) : (
-                        <HandWaving weight="fill" aria-hidden="true" />
-                      )}
-                      {b.mine ? 'Waiting for a maker' : 'Needs a maker'}
+                      {stage.icon}
+                      {stage.label}
                     </span>
                     <span className="inline-flex items-center gap-1 text-[13px] font-bold text-muted">
-                      <MapPin aria-hidden="true" /> {b.requester_suburb} · {formatRelativeTime(b.created_at)}
+                      {b.requester_suburb && (
+                        <>
+                          <MapPin aria-hidden="true" /> {b.requester_suburb} ·{' '}
+                        </>
+                      )}
+                      {formatRelativeTime(tab === 'done' && row.updated_at ? row.updated_at : b.created_at)}
                     </span>
                   </div>
 
@@ -258,12 +304,17 @@ export function MakersWantedBoard({ builds }: { builds: OpenBuild[] }) {
 
                   <div className="mt-auto flex flex-wrap items-center justify-between gap-2.5 border-t border-line pt-2.5">
                     <span className="text-[13px] font-bold text-muted">
-                      {b.mine ? 'This is your request' : 'Nobody has claimed this yet'}
+                      {stage.foot}
                     </span>
-                    {!b.mine && (
+                    {tab === 'live' && row.party && (
+                      <Link href={`/dashboard/exchanges/build/${b.id}`} className="btn btn-quiet min-h-11 px-[18px] text-sm">
+                        Open the thread
+                      </Link>
+                    )}
+                    {!onBoard && !b.mine && (
                       <PendingButton pending="makers-ask-first" label="Ask first" className="btn btn-quiet min-h-11 px-[18px] text-sm" />
                     )}
-                    {!b.mine && (
+                    {!onBoard && !b.mine && (
                       <button
                         type="button"
                         disabled={busy === b.id}
@@ -280,6 +331,15 @@ export function MakersWantedBoard({ builds }: { builds: OpenBuild[] }) {
             )
           })}
         </ul>
+      )}
+      {onBoard && boardMore && (
+        <button
+          type="button"
+          onClick={() => loadBoard(tab, boardPage + 1)}
+          className="btn btn-quiet mx-auto mt-8 block"
+        >
+          Show more builds
+        </button>
       )}
     </div>
   )

@@ -7,9 +7,9 @@
  * a build thread with this maker on the other end. The board is a different
  * way IN to the same record, not a second kind of record.
  *
- * What the board draws and this does not, both for web's reasons:
- * - Live and Done tabs. GET /open-builds carries unclaimed requests only, so
- *   only the two tabs it can fill are drawn.
+ * Live and Done read GET /builds-board as their tab is picked.
+ *
+ * What the board draws and this does not, for web's reason:
  * - "Ask first". Messages belong to a transaction's two parties and an
  *   unclaimed request has one; a second button that also claimed would be
  *   worse than one honest one.
@@ -36,7 +36,7 @@ import { EmptyState } from '../ui/EmptyState'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
 import { ErrorRow } from '../ui/ErrorRow'
 import { apiMessage, buildRowMeta } from '@splat-connect/types'
-import { PendingButton, pendingHref } from '../ui/pending'
+import { PendingButton } from '../ui/pending'
 
 /** GET /api/toy-transactions/open-builds, one row. No requester name — by design. */
 export type OpenBuild = {
@@ -62,7 +62,18 @@ export type OpenBuild = {
   } | null
 }
 
-type Tab = 'open' | 'mine'
+/** GET /api/toy-transactions/builds-board, one row. A Done row carries only the guide, maker and date. */
+type BoardBuild = OpenBuild & { maker_name: string; party: boolean; updated_at: string }
+
+type Tab = 'open' | 'live' | 'done' | 'mine'
+const BOARD_PAGE = 20
+// The board's four tabs; counts on the first and last only (MB mwTabs).
+const TABS: [Tab, string, string | null][] = [
+  ['open', 'Needs a maker', theme.colors.mintSoft],
+  ['live', 'Live', null],
+  ['done', 'Done', null],
+  ['mine', 'Yours', theme.colors.apricotSoft],
+]
 
 // 0 is "Anywhere", last as on the board. Web's ranges, so a family and a
 // maker read one scale.
@@ -83,6 +94,30 @@ export function MakersWantedScreen() {
   const [refreshing, setRefreshing] = useState(false)
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [board, setBoard] = useState<BoardBuild[]>([])
+  const [boardPage, setBoardPage] = useState(0)
+  const [boardMore, setBoardMore] = useState(false)
+
+  const loadBoard = useCallback(async (t: 'live' | 'done', page: number) => {
+    try {
+      const rows = await apiClient.get<BoardBuild[]>(`/api/toy-transactions/builds-board?tab=${t}&page=${page}`)
+      setBoard((cur) => (page === 0 ? rows : [...cur, ...rows]))
+      setBoardPage(page)
+      setBoardMore(rows.length === BOARD_PAGE)
+      setLoadFailed(false)
+    } catch (err) {
+      console.error('[MakersWantedScreen] builds-board fetch failed:', err)
+      setLoadFailed(true)
+    }
+  }, [])
+
+  function pick(t: Tab) {
+    setTab(t)
+    if (t === 'live' || t === 'done') {
+      setBoard([])
+      void loadBoard(t, 0)
+    }
+  }
 
   const load = useCallback(async () => {
     try {
@@ -126,8 +161,10 @@ export function MakersWantedScreen() {
   }
 
   const count = (t: Tab) => builds.filter((b) => (t === 'mine' ? b.mine : !b.mine)).length
-  const inTab = builds.filter((b) => (tab === 'mine' ? b.mine : !b.mine))
-  const shown = range === 0 ? inTab : inTab.filter((b) => b.km != null && b.km <= range)
+  const onBoard = tab === 'live' || tab === 'done'
+  const inTab: (OpenBuild | BoardBuild)[] = onBoard ? board : builds.filter((b) => (tab === 'mine' ? b.mine : !b.mine))
+  // Distance filters the open requests only (F8): Live and Done carry no km.
+  const shown = range === 0 || onBoard ? inTab : inTab.filter((b) => b.km != null && b.km <= range)
 
   return (
     <Screen>
@@ -166,24 +203,21 @@ export function MakersWantedScreen() {
         </Text>
 
         <View accessibilityRole="tablist" accessibilityLabel="Filter build requests" style={styles.tabs}>
-          {(
-            [
-              ['open', 'Needs a maker', theme.colors.mintSoft],
-              ['mine', 'Yours', theme.colors.apricotSoft],
-            ] as const
-          ).map(([k, label, tint]) => {
+          {TABS.map(([k, label, tint]) => {
             const on = tab === k
             const n = count(k)
             return (
               <Pressable
                 key={k}
-                onPress={() => setTab(k)}
+                onPress={() => pick(k)}
                 accessibilityRole="tab"
+                accessibilityLabel={label}
+                accessibilityValue={tint && n > 0 ? { text: String(n) } : undefined}
                 accessibilityState={{ selected: on }}
                 style={[styles.tab, on && styles.tabOn]}
               >
                 <Text style={styles.tabText}>{label}</Text>
-                {n > 0 ? (
+                {tint && n > 0 ? (
                   <Text style={[styles.tabCount, { backgroundColor: tint }]}>{n}</Text>
                 ) : null}
               </Pressable>
@@ -191,11 +225,6 @@ export function MakersWantedScreen() {
           })}
         </View>
 
-        {/* PENDING(makers-live-done-tabs): Live and Done — /open-builds returns unclaimed requests only. */}
-        <View style={styles.ranges}>
-          <Chip label="Live" active={false} onPress={() => router.push(pendingHref('makers-live-done-tabs'))} />
-          <Chip label="Done" active={false} onPress={() => router.push(pendingHref('makers-live-done-tabs'))} />
-        </View>
         {capsLoading ? null : postcode ? (
           <View style={styles.ranges}>
             {/* The board's one word, so the chips fit on one row. */}
@@ -226,13 +255,15 @@ export function MakersWantedScreen() {
             <Text style={styles.emptyTitle}>
               {tab === 'mine' ? 'You have not asked for a build yet' : 'Nothing at that stage'}
             </Text>
-            <Text style={styles.emptyBody}>
-              {tab === 'mine'
-                ? 'Tap + to pick a guide and ask a maker nearby. It shows up here and in My exchanges.'
-                : builds.length === 0
-                  ? 'Open requests show up here as families post them.'
-                  : 'No family in that range at the moment. Try Any distance.'}
-            </Text>
+            {onBoard ? null : (
+              <Text style={styles.emptyBody}>
+                {tab === 'mine'
+                  ? 'Tap + to pick a guide and ask a maker nearby. It shows up here and in My exchanges.'
+                  : builds.length === 0
+                    ? 'Open requests show up here as families post them.'
+                    : 'No family in that range at the moment. Try Any distance.'}
+              </Text>
+            )}
           </View>
         ) : (
           <View style={styles.list}>
@@ -240,6 +271,7 @@ export function MakersWantedScreen() {
               <BuildCard
                 key={b.id}
                 b={b}
+                kind={onBoard ? tab : 'open'}
                 busy={busy === b.id}
                 onClaim={() => claim(b.id)}
                 onTrack={() => router.push(`/exchanges/build/${b.id}`)}
@@ -247,6 +279,14 @@ export function MakersWantedScreen() {
             ))}
           </View>
         )}
+        {onBoard && boardMore ? (
+          <Button
+            label="Show more builds"
+            variant="secondary"
+            onPress={() => void loadBoard(tab, boardPage + 1)}
+            style={styles.retry}
+          />
+        ) : null}
 
         <View style={styles.moneyNote}>
           <Text style={styles.moneyKicker}>Parts and money</Text>
@@ -279,27 +319,43 @@ export function MakersWantedScreen() {
 
 function BuildCard({
   b,
+  kind,
   busy,
   onClaim,
   onTrack,
 }: {
-  b: OpenBuild
+  b: OpenBuild & Partial<Pick<BoardBuild, 'maker_name' | 'party' | 'updated_at'>>
+  kind: 'open' | 'live' | 'done'
   busy: boolean
   onClaim: () => void
   onTrack: () => void
 }) {
   const diff = b.tutorial?.difficulty ?? null
   const meta = b.tutorial ? buildRowMeta(b.tutorial) : null
+  // The board's T: status pill and footer per stage.
+  const stage =
+    kind === 'live'
+      ? { tint: theme.colors.honeySoft, icon: 'hammer' as const, label: 'Live', foot: b.party && !b.mine ? 'You are building it' : `${b.maker_name} is building it` }
+      : kind === 'done'
+        ? { tint: theme.colors.mintSoft, icon: 'checkmark-circle' as const, label: 'Handed over', foot: `Built by ${b.maker_name}` }
+        : b.mine
+          ? { tint: theme.colors.apricotSoft, icon: 'hourglass' as const, label: 'Waiting for a maker', foot: `Visible to makers within ${b.travel_km} km` }
+          : { tint: theme.colors.mintSoft, icon: 'hand-left' as const, label: 'Needs a maker', foot: 'Unclaimed' }
   return (
     <Card style={styles.card}>
       <View style={styles.cardTop}>
-        <View style={[styles.statusPill, { backgroundColor: b.mine ? theme.colors.apricotSoft : theme.colors.mintSoft }]}>
-          <Ionicons name={b.mine ? 'hourglass' : 'hand-left'} size={11} color={theme.colors.ink} />
-          <Text style={styles.pillText}>{b.mine ? 'Waiting for a maker' : 'Needs a maker'}</Text>
+        <View style={[styles.statusPill, { backgroundColor: stage.tint }]}>
+          <Ionicons name={stage.icon} size={11} color={theme.colors.ink} />
+          <Text style={styles.pillText}>{stage.label}</Text>
         </View>
+        {/* A Done row has no suburb (F19); its time is the hand-over. */}
         <Text style={styles.where} numberOfLines={1}>
-          <Ionicons name="location-outline" size={12} color={theme.colors.muted} /> {b.requester_suburb} ·{' '}
-          {relativeTime(b.created_at)}
+          {b.requester_suburb ? (
+            <>
+              <Ionicons name="location-outline" size={12} color={theme.colors.muted} /> {b.requester_suburb} ·{' '}
+            </>
+          ) : null}
+          {relativeTime(kind === 'done' && b.updated_at ? b.updated_at : b.created_at)}
         </Text>
       </View>
 
@@ -334,7 +390,7 @@ function BuildCard({
       ) : null}
 
       <View style={styles.facts}>
-        {b.km !== null ? <Fact icon="navigate-outline" text={`${b.km} km away`} /> : null}
+        {b.km != null ? <Fact icon="navigate-outline" text={`${b.km} km away`} /> : null}
         {b.child_label ? <Fact icon="happy-outline" text={b.child_label} /> : null}
         {b.travel_km !== null ? <Fact icon="car-outline" text={`${b.travel_km} km`} /> : null}
         {b.urgency ? <Fact icon="calendar-outline" text={b.urgency} /> : null}
@@ -342,9 +398,11 @@ function BuildCard({
 
       <View style={styles.foot}>
         <Text style={styles.footText} numberOfLines={2}>
-          {b.mine ? `Visible to makers within ${b.travel_km} km` : 'Unclaimed'}
+          {stage.foot}
         </Text>
-        {b.mine ? (
+        {kind === 'live' ? (
+          b.party ? <Button label="Thread" variant="secondary" onPress={onTrack} style={styles.footButton} /> : null
+        ) : kind === 'done' ? null : b.mine ? (
           <Button label="Track" variant="secondary" onPress={onTrack} style={styles.footButton} />
         ) : (
           <>

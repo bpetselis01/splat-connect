@@ -68,3 +68,39 @@ it('leaves the cost off when a part is unpriced', async () => {
   expect(await screen.findByText('20 min')).toBeTruthy()
   expect(screen.queryByText(/~\$/)).toBeNull()
 })
+
+it('reads Live and Done from the board feed, naming the maker', async () => {
+  mockGet.mockImplementation((path: string) =>
+    path.startsWith('/api/toy-transactions/builds-board?tab=live')
+      ? Promise.resolve([row({ id: 'l1', maker_name: 'Tom Beattie', party: false })])
+      : path.startsWith('/api/toy-transactions/builds-board?tab=done')
+        ? Promise.resolve([
+            row({
+              id: 'd1', maker_name: 'Rachel Kaur', party: false, build_brief: null, child_label: null,
+              requester_suburb: null, travel_km: null, urgency: null, updated_at: '2026-09-30T00:00:00Z',
+            }),
+          ])
+        : Promise.resolve([row()])
+  )
+  render(<MakersWantedScreen />)
+  const live = await screen.findByRole('tab', { name: 'Live' })
+  expect(live.props.accessibilityValue?.text).toBeUndefined()
+  fireEvent.press(live)
+  expect(await screen.findByText('Tom Beattie is building it')).toBeTruthy()
+  expect(mockGet).toHaveBeenCalledWith('/api/toy-transactions/builds-board?tab=live&page=0')
+  fireEvent.press(screen.getByRole('tab', { name: 'Done' }))
+  expect(await screen.findByText('Built by Rachel Kaur')).toBeTruthy()
+  expect(screen.getByText('Handed over')).toBeTruthy()
+  expect(screen.queryByText(/null/)).toBeNull()
+})
+
+it('offers the thread on a live build of your own', async () => {
+  mockGet.mockImplementation((path: string) =>
+    Promise.resolve(path.includes('tab=live') ? [row({ id: 'l1', maker_name: 'Tom Beattie', party: true })] : [])
+  )
+  render(<MakersWantedScreen />)
+  fireEvent.press(await screen.findByRole('tab', { name: 'Live' }))
+  expect(await screen.findByText('You are building it')).toBeTruthy()
+  fireEvent.press(screen.getByText('Thread'))
+  expect(mockPush).toHaveBeenCalledWith('/exchanges/build/l1')
+})

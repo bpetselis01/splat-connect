@@ -221,6 +221,67 @@ toyTransactions.get('/open-builds', async (c) => {
   )
 })
 
+const BOARD_PAGE = 20
+
+/**
+ * GET /api/toy-transactions/builds-board?tab=live|done&page=N
+ *
+ * Makers wanted's Live and Done tabs (makers-live-done-tabs): claimed builds
+ * still open, and handed-over ones, most recently changed first, 20 a page.
+ * Read with the admin client — 064's policy admits only unclaimed rows — so
+ * this route is the filter. Never requester_id; the maker is named, since the
+ * board says who is building it. km is always null: no postcode is read here.
+ *
+ * A Done row says only what was built, by whom and when (updated_at is the
+ * hand-over): 064 hid the child, suburb and note once a build was claimed, and
+ * a finished build has no reason to show them again. A Live row keeps the
+ * open card's columns.
+ *
+ * ponytail: "came from the board" is read off travel_km, which only the open
+ * form sends (POST /build requires it there; ask-for-build-form never sends
+ * it). A from_board column if an addressed request ever starts sending one.
+ */
+toyTransactions.get('/builds-board', async (c) => {
+  const tab = c.req.query('tab')
+  if (tab !== 'live' && tab !== 'done') return c.json({ error: 'tab must be live or done' }, 400)
+  const page = Math.max(0, Number.parseInt(c.req.query('page') ?? '0', 10) || 0)
+
+  const admin = createAdminClient()
+  const { data, error } = await admin
+    .from('toy_transactions')
+    .select(
+      'id, tutorial_id, build_brief, travel_km, urgency, child_label, requester_suburb, family_has_toy, requester_id, owner_id, owner_org_id, created_at, updated_at'
+    )
+    .eq('type', 'build')
+    .eq('status', tab === 'live' ? 'accepted' : 'completed')
+    .not('travel_km', 'is', null)
+    .order('updated_at', { ascending: false })
+    .range(page * BOARD_PAGE, page * BOARD_PAGE + BOARD_PAGE - 1)
+  if (error) return c.json({ error: error.message }, 500)
+
+  const rows = data ?? []
+  const found = await boardGuides(admin, rows.map((r) => r.tutorial_id as string))
+  if ('error' in found) return c.json({ error: found.error.message }, 500)
+
+  const userId = c.get('userId')
+  const done = tab === 'done'
+  return c.json(
+    await Promise.all(
+      rows.map(async ({ requester_id, owner_id, owner_org_id, ...rest }) => ({
+        ...rest,
+        ...(done
+          ? { build_brief: null, travel_km: null, urgency: null, child_label: null, requester_suburb: null, family_has_toy: false }
+          : {}),
+        km: null,
+        tutorial: found.guides.get(rest.tutorial_id as string) ?? null,
+        maker_name: await ownerSideName(admin, { owner_id, owner_org_id }, 'A maker'),
+        mine: requester_id === userId,
+        party: requester_id === userId || owner_id === userId,
+      }))
+    )
+  )
+})
+
 /**
  * What this record is about, for a notification's `toy_name`.
  *
