@@ -180,6 +180,12 @@
     "match": "search field",
     "why": "intended",
     "reason": "Decided 2026-10-01 (mobile-extra-affordances): the app keeps its search, Continue card and challenge filters."
+   },
+   {
+    "type": "missing-section",
+    "match": "nearest first",
+    "why": "intended",
+    "reason": "Nearest first is a filter chip, off until tapped; the board draws it already switched on, so its heading shows only in that state."
    }
   ]
  },
@@ -764,6 +770,24 @@
     "match": "sticky footer",
     "why": "intended",
     "reason": "On a long form the primary action stays in reach as a sticky footer."
+   },
+   {
+    "type": "missing-section",
+    "match": "$#",
+    "why": "intended",
+    "reason": "The board's rates card lists per-item prices (small part, postage satchel); the model is one dollars-per-gram rate (070), so there is no price heading."
+   },
+   {
+    "type": "radius",
+    "match": "card radius",
+    "why": "intended",
+    "reason": "The rates card holds the dollars-per-gram field, not the board's per-item price rows."
+   },
+   {
+    "type": "colour",
+    "match": "card background",
+    "why": "intended",
+    "reason": "The rates card holds the dollars-per-gram field, not the board's per-item price rows."
    }
   ]
  },
