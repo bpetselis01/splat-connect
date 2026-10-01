@@ -119,7 +119,7 @@ test.describe('public navigation', () => {
    * unbuilt destination does, so it needs one that is still unbuilt.
    */
   test('a scaffold page explains itself and offers to notify', async ({ page }) => {
-    await page.goto('/printing/parts')
+    await page.goto('/impact/map')
     await expect(page.getByText('Not built yet', { exact: true })).toBeVisible()
     await expect(page.getByLabel(/email address/i)).toBeVisible()
     await expect(page.getByRole('link', { name: /guides/i }).first()).toBeVisible()

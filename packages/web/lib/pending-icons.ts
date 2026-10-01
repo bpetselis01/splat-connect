@@ -6,7 +6,6 @@ import { Hourglass, MapTrifold, Cube, ChatCircleDots, Heart, Flag } from '@phosp
 
 const ICONS: Record<string, Icon> = {
   'impact-map': MapTrifold,
-  'printing-parts': Cube,
   'saved-parts': Cube,
   'makers-ask-first': ChatCircleDots,
   'thank-people': Heart,

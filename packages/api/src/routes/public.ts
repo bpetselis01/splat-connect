@@ -19,6 +19,7 @@ import type {
   ContributorProfile,
   OrgPublicProfile,
   PrinterStats,
+  CataloguePart,
 } from '@splat-connect/types'
 
 const publicRoutes = new Hono()
@@ -1033,6 +1034,34 @@ publicRoutes.get('/challenges/:id', async (c) => {
   })
 })
 
+const PARTS_PAGE = 24
+
+/**
+ * GET /api/public/printable-parts?q=&page=
+ *
+ * The parts catalogue: every STL file of an approved guide, searched by
+ * filename and by the guide's title, 24 a page. Anon client — 001's "Anyone
+ * can read stl_files of approved tutorials" admits the rows, and the explicit
+ * filter repeats it.
+ */
+publicRoutes.get('/printable-parts', async (c) => {
+  const q = (c.req.query('q') ?? '').trim().toLowerCase()
+  const asked = Number.parseInt(c.req.query('page') ?? '', 10)
+  const { data, error } = await createAnonClient()
+    .from('stl_files')
+    .select('id, filename, material, filament_grams, print_minutes, tutorial_id, tutorials!inner(id, title, status)')
+    .eq('tutorials.status', 'approved')
+    .order('filename')
+  if (error) return c.json({ error: error.message }, 500)
+  // ponytail: searches and pages after reading every approved STL row; move into SQL when the catalogue reaches thousands.
+  const rows = ((data ?? []) as unknown as CataloguePart[]).filter(
+    (p) => !q || p.filename.toLowerCase().includes(q) || p.tutorials.title.toLowerCase().includes(q)
+  )
+  const pages = Math.max(1, Math.ceil(rows.length / PARTS_PAGE))
+  const page = Number.isFinite(asked) ? Math.min(Math.max(asked, 1), pages) : 1
+  return c.json({ items: rows.slice((page - 1) * PARTS_PAGE, page * PARTS_PAGE), page, pages, total: rows.length })
+})
+
 /**
  * Interest registration from the nine remaining scaffold pages.
  *
@@ -1049,7 +1078,6 @@ const NOTIFY_FEATURE_KEYS = new Set([
   'ask-an-expert',
   'requests',
   'printing',
-  'printing-parts',
   'news',
   'events',
   'map',

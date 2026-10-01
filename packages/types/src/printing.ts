@@ -130,3 +130,21 @@ export function bedFits(bed: { bed_x: number; bed_y: number; bed_z: number }, pa
         (p.size_x_mm! <= bed.bed_y && p.size_y_mm! <= bed.bed_x))
   )
 }
+
+/** One row of the printable parts catalogue (GET /api/public/printable-parts) and of Saved parts. */
+export interface CataloguePart {
+  id: string
+  filename: string
+  material: string | null
+  filament_grams: number | null
+  print_minutes: number | null
+  tutorial_id: string
+  tutorials: { id: string; title: string; status: string }
+}
+
+export interface CataloguePage {
+  items: CataloguePart[]
+  page: number
+  pages: number
+  total: number
+}

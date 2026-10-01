@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { SCAFFOLD_KEYS } from '@/lib/public-nav'
 import MapPage from '@/app/impact/map/page'
-import PrintingPartsPage from '@/app/printing/parts/page'
 
 // Paired with the featureKey each page actually passes to NotifyForm, not
 // just position — SCAFFOLD_KEYS order (derived from PUBLIC_NAV) does not
@@ -17,11 +16,10 @@ import PrintingPartsPage from '@/app/printing/parts/page'
  *
  * The map stays a scaffold ON PURPOSE: the artboard's own Deliveries map screen
  * is a "Not built yet" with a notify form, so shipping one would be inventing a
- * feature the design does not have. Printable parts likewise.
+ * feature the design does not have. Printable parts shipped on 2026-10-01.
  */
 const pages = [
   ['map', MapPage],
-  ['printing-parts', PrintingPartsPage],
 ] as const
 
 describe('scaffold pages', () => {

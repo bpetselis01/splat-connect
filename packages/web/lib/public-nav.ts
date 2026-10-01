@@ -131,8 +131,7 @@ export const PUBLIC_NAV: NavSection[] = [
       {
         href: '/printing/parts',
         label: 'Printable parts',        icon: 'box',
-        state: 'soon',
-        featureKey: 'printing-parts',
+        state: 'live',
         blurb: 'A catalogue of STL files, sized and tested for adaptation work.',
       },
     ],

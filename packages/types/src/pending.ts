@@ -149,6 +149,7 @@ export const PENDING = {
     needs: "Saved-account sign-in on arriving at Sign in [ui]",
   },
   'printing-parts': {
+    shipped: true,
     title: "Printable parts",
     blurb: "A catalogue of STL files, sized and tested for adaptation work.",
     kind: "build",
