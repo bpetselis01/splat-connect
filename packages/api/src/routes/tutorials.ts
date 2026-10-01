@@ -184,7 +184,7 @@ async function hasAcceptedContributorTerms(token: string, userId: string) {
  */
 export function fieldError(body: Record<string, unknown>): string | null {
   const has = (k: string) => k in body && body[k] !== null
-  if (has('prices_checked_on') && !(typeof body.prices_checked_on === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.prices_checked_on) && !Number.isNaN(Date.parse(body.prices_checked_on)))) {
+  if (has('prices_checked_on') && !(typeof body.prices_checked_on === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.prices_checked_on) && !Number.isNaN(Date.parse(body.prices_checked_on)) && new Date(`${body.prices_checked_on}T00:00:00Z`).toISOString().slice(0, 10) === body.prices_checked_on)) {
     return 'Prices checked must be a date'
   }
   if ('photo_captions' in body) {
