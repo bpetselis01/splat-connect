@@ -63,4 +63,38 @@ describe('RequestPrintForm', () => {
       expect(post).toHaveBeenCalledWith('/api/toy-transactions/print', expect.objectContaining({ files: [{ stl_file_id: 'f1', quantity: 2 }] }))
     )
   })
+
+  // Tests: 097 — the bed check runs over the ticked parts only, so an oversized
+  //        part the family leaves out does not hide a small printer
+  it('hides a printer only for the parts that are ticked', async () => {
+    const post = vi.mocked(browserApiClient.post).mockResolvedValue({ id: 'tx-3' })
+    const small = { ...printer('s', 'Sam'), bed_x: 180, bed_y: 180, bed_z: 180 } as PrinterWithOwner
+    const sized = { print_minutes: null, filament_grams: null, material: 'PETG' as const }
+    render(
+      <RequestPrintForm
+        tutorialId="t1"
+        tutorialTitle="Switch mount"
+        parts={[
+          { id: 'f1', filename: 'mount.stl', ...sized, size_x_mm: 50, size_y_mm: 50, size_z_mm: 50 },
+          { id: 'f2', filename: 'tray.stl', ...sized, size_x_mm: 300, size_y_mm: 50, size_z_mm: 20 },
+        ]}
+        printers={[small]}
+        header={<h1>Request a print</h1>}
+      />
+    )
+    expect(screen.queryByRole('checkbox', { name: /Sam/ })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Include tray.stl' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: /Sam/ }))
+    fireEvent.click(screen.getByRole('checkbox', { name: /I understand/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Send request/ }))
+    await waitFor(() =>
+      expect(post).toHaveBeenCalledWith('/api/toy-transactions/print', expect.objectContaining({ printer_ids: ['s'] }))
+    )
+
+    // Ticking the tray again takes Sam off the list and out of the request.
+    fireEvent.click(screen.getByRole('button', { name: 'Include tray.stl' }))
+    expect(screen.queryByRole('checkbox', { name: /Sam/ })).toBeNull()
+    expect(screen.getByText('Pick up to three printers')).toBeTruthy()
+  })
 })
+

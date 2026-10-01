@@ -38,7 +38,7 @@ import {
   Palette,
   PaperPlaneTilt,
 } from '@phosphor-icons/react/dist/ssr'
-import { initials, MAX_PRINTERS_PER_REQUEST, PRINT_COLOURS } from '@splat-connect/types'
+import { bedFits, initials, MAX_PRINTERS_PER_REQUEST, PRINT_COLOURS } from '@splat-connect/types'
 import type { PrinterWithOwner, StlFile } from '@splat-connect/types'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { apiErrorDetail } from '@splat-connect/types'
@@ -90,8 +90,8 @@ export function RequestPrintForm({
   const [picked, setPicked] = useState<string[]>(parts.map((p) => p.id))
   const [qty, setQty] = useState<Record<string, number>>({})
   const qtyOf = (id: string) => qty[id] ?? 1
-  const [printerIds, setPrinterIds] = useState<string[]>(() => {
-    const first = printers.find((p) => printerAvailability(p) === null)
+  const [pickedPrinters, setPickedPrinters] = useState<string[]>(() => {
+    const first = printers.find((p) => printerAvailability(p) === null && bedFits(p, parts))
     return first ? [first.id] : []
   })
   const [colour, setColour] = useState<string>(PRINT_COLOURS[0])
@@ -100,9 +100,14 @@ export function RequestPrintForm({
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
+  const ticked = parts.filter((p) => picked.includes(p.id)).map((p) => ({ ...p, quantity: qtyOf(p.id) }))
+  // 097: a printer whose bed cannot hold the ticked parts is not offered, with
+  // no chip; nothing is hidden unless every ticked part is sized. A pick it
+  // hides is not sent, and comes back if the part is unticked before the next pick.
+  const shown = printers.filter((p) => bedFits(p, ticked))
+  const printerIds = pickedPrinters.filter((id) => shown.some((p) => p.id === id))
   const valid = picked.length > 0 && printerIds.length > 0 && agree
   const full = printerIds.length >= MAX_PRINTERS_PER_REQUEST
-  const ticked = parts.filter((p) => picked.includes(p.id)).map((p) => ({ ...p, quantity: qtyOf(p.id) }))
 
   function toggle(id: string) {
     setPicked((prev) => (prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]))
@@ -271,13 +276,13 @@ export function RequestPrintForm({
               {pickSummary(printerIds.length)}
             </span>
           </div>
-          {printers.length === 0 ? (
+          {shown.length === 0 ? (
             <p className="rounded-[var(--radius-inset)] bg-sunken p-[18px] text-center text-sm text-muted">
               Nobody has listed a printer yet.
             </p>
           ) : (
             <div role="group" aria-label="Printers" className="flex flex-col gap-2.5">
-              {printers.map((printer, i) => {
+              {shown.map((printer, i) => {
                 const unavailable = printerAvailability(printer)
                 const who = printer.org_name ?? printer.owner_name ?? 'A contributor'
                 const on = printerIds.includes(printer.id)
@@ -297,7 +302,7 @@ export function RequestPrintForm({
                       value={printer.id}
                       checked={on}
                       disabled={off}
-                      onChange={() => setPrinterIds((ids) => togglePrinterPick(ids, printer.id))}
+                      onChange={() => setPickedPrinters(togglePrinterPick(printerIds, printer.id))}
                     />
                     <span
                       aria-hidden="true"
