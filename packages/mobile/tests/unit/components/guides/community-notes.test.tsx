@@ -2,8 +2,8 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react-nativ
 import { CommunityNotes } from '../../../../components/guides/community-notes'
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
-jest.mock('expo-image-picker', () => ({ requestMediaLibraryPermissionsAsync: jest.fn(), launchImageLibraryAsync: jest.fn() }))
-jest.mock('../../../../lib/upload', () => ({ uploadFile: jest.fn() }))
+const mockPick = jest.fn()
+jest.mock('../../../../lib/upload', () => ({ pickAndUploadPhoto: (...a: unknown[]) => mockPick(...a) }))
 const mockPost = jest.fn().mockResolvedValue({})
 const mockDelete = jest.fn().mockResolvedValue(undefined)
 jest.mock('../../../../lib/api-client', () => ({ apiClient: { post: (...a: unknown[]) => mockPost(...a), delete: (...a: unknown[]) => mockDelete(...a) } }))
@@ -53,4 +53,19 @@ it('asks a signed-out reader to sign in instead of showing the form', () => {
   expect(screen.getByText('Sign in to add a note.')).toBeTruthy()
   expect(screen.queryByRole('button', { name: 'Post' })).toBeNull()
   expect(screen.queryByLabelText('Your note')).toBeNull()
+})
+
+it('adds a photo through the shared picker and posts its path, or shows why it could not', async () => {
+  mockPick.mockRejectedValueOnce(new Error('Photo library access is needed to choose a photo.'))
+  render(<CommunityNotes {...props} notes={[]} />)
+  fireEvent.press(screen.getByRole('button', { name: 'Add a photo' }))
+  expect(await screen.findByText('Photo library access is needed to choose a photo.')).toBeTruthy()
+
+  mockPick.mockResolvedValueOnce({ path: 'g/notes/a.jpg', url: 'https://x/a.jpg' })
+  fireEvent.press(screen.getByRole('button', { name: 'Add a photo' }))
+  await waitFor(() => expect(mockPick).toHaveBeenLastCalledWith('/api/upload/note-photo', 'g'))
+  fireEvent.press(screen.getByText('Step 1'))
+  fireEvent.changeText(screen.getByLabelText('Your note'), 'See the photo.')
+  fireEvent.press(screen.getByRole('button', { name: 'Post' }))
+  await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/tutorials/g/notes', expect.objectContaining({ photo_path: 'g/notes/a.jpg' })))
 })

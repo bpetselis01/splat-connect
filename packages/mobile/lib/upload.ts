@@ -4,6 +4,7 @@
 // needs the RN {uri,name,type} file shape and no Content-Type of its own —
 // fetch fills in the multipart boundary, and setting one here would drop it.
 import { Platform } from 'react-native'
+import * as ImagePicker from 'expo-image-picker'
 import { getToken } from './api-client'
 
 export type UploadPath =
@@ -90,4 +91,26 @@ export async function uploadFile<T = UploadResult>(
   }
 
   return (await res.json()) as T
+}
+
+/**
+ * Picks one photo from the library and uploads it to `path`. null when the
+ * picker is cancelled. Throws an Error whose message is the sentence to show:
+ * library access refused, or the upload failed.
+ */
+export async function pickAndUploadPhoto<T = UploadResult>(
+  path: UploadPath,
+  id: string,
+  idField: 'tutorialId' | 'toyId' | null = 'tutorialId'
+): Promise<T | null> {
+  const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
+  if (!permission.granted) throw new Error('Photo library access is needed to choose a photo.')
+  const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ['images'] })
+  const asset = result.canceled ? null : result.assets?.[0]
+  if (!asset) return null
+  try {
+    return await uploadFile<T>(path, id, { uri: asset.uri, name: asset.fileName ?? 'photo.jpg', mimeType: asset.mimeType ?? 'image/jpeg' }, idField)
+  } catch {
+    throw new Error('Could not upload the photo. Please try again.')
+  }
 }

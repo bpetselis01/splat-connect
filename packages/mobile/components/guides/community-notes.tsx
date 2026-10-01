@@ -6,10 +6,9 @@
 // problem on anyone else's.
 import { useState } from 'react'
 import { View, Text, Image, StyleSheet } from 'react-native'
-import * as ImagePicker from 'expo-image-picker'
 import type { GuideNote, TutorialStep } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
-import { uploadFile } from '../../lib/upload'
+import { pickAndUploadPhoto } from '../../lib/upload'
 import { relativeTime } from '../../lib/notifications'
 import { stepLabel } from '../../lib/guide-notes'
 import { theme } from '../../lib/theme'
@@ -44,16 +43,11 @@ export function CommunityNotes({ tutorialId, guideTitle, authorName, steps, note
   const open = notes.filter((n) => !n.pinned_at)
 
   async function addPhoto() {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
-    if (!permission.granted) return setError('Photo library access is needed to choose a photo.')
-    const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ['images'] })
-    const asset = result.canceled ? null : result.assets?.[0]
-    if (!asset) return
     try {
-      const { path } = await uploadFile('/api/upload/note-photo', tutorialId, { uri: asset.uri, name: asset.fileName ?? 'photo.jpg', mimeType: asset.mimeType ?? 'image/jpeg' })
-      setPhoto(path ?? null)
-    } catch {
-      setError('Could not upload the photo. Please try again.')
+      const uploaded = await pickAndUploadPhoto('/api/upload/note-photo', tutorialId)
+      if (uploaded) setPhoto(uploaded.path ?? null)
+    } catch (err) {
+      setError((err as Error).message)
     }
   }
 
