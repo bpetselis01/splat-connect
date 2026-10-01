@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-10-01-recycling-build-design.md` (inherits "Rules every slice keeps" from `docs/superpowers/specs/2026-10-01-guides-build-design.md`).
 
-**Runs after batches 1–4.** Batch 2 (`docs/superpowers/plans/2026-10-01-printing-build.md`) reshapes the two files the credit slice edits most: `POST /api/toy-transactions/print` takes `files: [{ stl_file_id, quantity }]` and builds `quantityOf` (its Task 3), and the mobile request screen gains `qty`, a `ticked` list carrying `quantity`, and an `agreeLine` (its Tasks 3–4). Batch 2 also adds `toy_transactions.print_fit`, `print_fit_at` (094), `print_fit_notes` (096) and `requester_postcode` (099); this batch adds `print_credit_grams` beside them and touches none of theirs. The code in Tasks 6–7 is written against batch 2's shape; if batch 2 has not landed, stop and report.
+**Runs after batches 1–4.** Batch 2 (`docs/superpowers/plans/2026-10-01-printing-build.md`) reshapes the two files the credit slice edits most: `POST /api/toy-transactions/print` takes `files: [{ stl_file_id, quantity }]` and builds `quantityOf` (its Task 3), and the mobile request screen gains `qty`, a `ticked` list carrying `quantity`, and an `agreeLine` (its Tasks 3–4). Batch 2 also adds `toy_transactions.print_fit`, `print_fit_at` (094) and `print_fit_notes` (096) (099 added `printers.postcode` only — the build-request postcode is read from the family's profile, never stored); this batch adds `print_credit_grams` beside them and touches none of theirs. The code in Tasks 6–7 is written against batch 2's shape; if batch 2 has not landed, stop and report.
 
 **Where this plan follows the code, not the spec** (each is repeated in the task that meets it):
 
