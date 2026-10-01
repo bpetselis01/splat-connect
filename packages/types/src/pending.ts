@@ -184,6 +184,7 @@ export const PENDING = {
     needs: "Search matches parts, not just title/description [ui,api]",
   },
   'guides-loading-caption': {
+    shipped: true,
     title: "Loading caption",
     blurb: "A loading caption for the guides list is coming.",
     kind: "build",

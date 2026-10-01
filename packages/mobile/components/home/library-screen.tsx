@@ -309,11 +309,12 @@ export function LibraryScreen() {
         }
         ListEmptyComponent={
           loading ? (
-            // PENDING(guides-loading-caption): a "Loading guides…" caption above the skeletons.
-            <View>
+            // The board's caption sits under the skeletons, centred.
+            <View accessibilityLabel="Loading guides">
               <SkeletonRow />
               <SkeletonRow />
               <SkeletonRow />
+              <Text style={styles.loadingCaption}>Loading guides…</Text>
             </View>
           ) : error ? (
             <EmptyState
@@ -459,6 +460,13 @@ const styles = StyleSheet.create({
   sortOptionLabel: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink },
   sortOptionHint: { fontFamily: theme.fonts.semiBold, fontSize: 11.5, color: theme.colors.muted },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2), flexWrap: 'wrap' },
+  loadingCaption: {
+    marginTop: theme.spacing(1),
+    textAlign: 'center',
+    fontFamily: theme.fonts.semiBold,
+    fontSize: 13,
+    color: theme.colors.muted,
+  },
   retry: { marginTop: theme.spacing(5), alignSelf: 'center', paddingHorizontal: theme.spacing(8) },
   // Clears the grid disc pinned bottom-right.
   listContent: { paddingBottom: theme.spacing(20) },

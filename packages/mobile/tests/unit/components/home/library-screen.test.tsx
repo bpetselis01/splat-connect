@@ -200,6 +200,12 @@ describe('LibraryScreen', () => {
     expect(screen.queryByText('Bubble machine')).toBeNull()
     expect(screen.getByText('Head switch arm')).toBeTruthy()
   })
+
+  it('captions the skeletons while guides load', async () => {
+    mockEndpoints({ tutorials: new Promise(() => {}) })
+    render(<LibraryScreen />)
+    expect(await screen.findByText('Loading guides…')).toBeTruthy()
+  })
 })
 
 // 080: the board's "Suits Ollie" — a chip that narrows the list to the guides
