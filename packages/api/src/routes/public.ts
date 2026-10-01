@@ -528,7 +528,7 @@ publicRoutes.get('/contributors/:id', async (c) => {
   ] = await Promise.all([
     sb
       .from('tutorial_contributors')
-      .select('tutorials!inner(*, thanks_count)')
+      .select('tutorials!inner(*, thanks_count, builds_count)')
       .eq('profile_id', id)
       .eq('tutorials.status', 'approved'),
     sb.from('toys').select('*').eq('owner_id', id).eq('status', 'published'),
@@ -577,6 +577,7 @@ publicRoutes.get('/contributors/:id', async (c) => {
     orgBacked = backed.some((r) => (r.data?.length ?? 0) > 0)
   }
   const thanks = guides.reduce((n, t) => n + (t.thanks_count ?? 0), 0)
+  const builds = guides.reduce((n, t) => n + (t.builds_count ?? 0), 0)
 
   const result: ContributorProfile = {
     id: profile.id,
@@ -589,7 +590,8 @@ publicRoutes.get('/contributors/:id', async (c) => {
     // that has since lost approval, and that one is nobody's showcase.
     featured: guides.find((t) => t.id === profile.featured_tutorial_id) ?? null,
     thanks,
-    badges: contributorBadges({ guides: guides.length, thanks, orgBacked, since: profile.created_at }),
+    builds,
+    badges: contributorBadges({ guides: guides.length, builds, orgBacked, since: profile.created_at }),
     created_at: profile.created_at,
   }
   return c.json(result)

@@ -23,6 +23,7 @@ import { EmptyState } from '../ui/EmptyState'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
 import { ReportProblem } from '../reports/report-problem'
 import { PendingButton } from '../ui/pending'
+import { useFlash, FlashLine } from '../ui/Flash'
 
 const SWITCH_TARGET_LABEL = { large: 'Big button', small: 'Small button' } as const
 const HERO_HEIGHT = 240
@@ -58,6 +59,8 @@ export function DetailScreen({ id }: { id: string }) {
   // GET lands, and a failed GET hides the button rather than guessing.
   const [thanks, setThanks] = useState<{ thanked: boolean; own: boolean } | null>(null)
   const [thanking, setThanking] = useState(false)
+  const [built, setBuilt] = useState(false)
+  const [flash, setFlash] = useFlash()
 
   useEffect(() => {
     apiClient
@@ -239,7 +242,20 @@ export function DetailScreen({ id }: { id: string }) {
             <View style={styles.doneCard}>
               <Text style={styles.doneTitle}>{`All ${total} steps done`}</Text>
               <Text style={styles.doneBody}>Log it and this build shows up in My SPLAT.</Text>
-              <PendingButton pending="guide-build-done" label="Mark this build done" />
+              <Button
+                label={built ? 'Build logged' : 'Mark this build done'}
+                disabled={built}
+                onPress={async () => {
+                  try {
+                    await apiClient.post(`/api/tutorials/${tutorial.id}/build`, {})
+                    setBuilt(true)
+                    setFlash('Build logged — nice work')
+                  } catch {
+                    setFlash('Could not log that. Try again.')
+                  }
+                }}
+              />
+              <FlashLine message={flash} />
               {thanks && !thanks.own && !thanks.thanked ? (
                 <Button
                   label={`Say thanks to ${primary?.profiles.name ?? 'the author'}`}

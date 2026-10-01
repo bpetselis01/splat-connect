@@ -12,7 +12,7 @@ jest.mock('../../../../lib/supabase-storage', () => ({
   resolveAuthStorage: () => ({ getItem: jest.fn().mockResolvedValue(null), setItem: jest.fn().mockResolvedValue(undefined), removeItem: jest.fn() }),
 }))
 
-jest.mock('../../../../lib/api-client', () => ({ apiClient: { get: jest.fn() } }))
+jest.mock('../../../../lib/api-client', () => ({ apiClient: { get: jest.fn(), post: jest.fn() } }))
 
 const mockPush = jest.fn()
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }))
@@ -251,5 +251,15 @@ describe('DetailScreen thanks', () => {
     render(<DetailScreen id="1" />)
     expect(await screen.findByText('Safety notes')).toBeTruthy()
     expect(screen.getByText('Battery door must be screwed shut')).toBeTruthy()
+  })
+
+  it('logs the build once every step is ticked', async () => {
+    ;(apiClient.post as jest.Mock).mockResolvedValue({ built: true })
+    mockEndpoints({ detail: Promise.resolve({ ...DETAIL, steps: [{ id: 's1', tutorial_id: '1', position: 1, title: 'Open it', body: 'One screw.', photo_url: null }] }) })
+    render(<DetailScreen id="1" />)
+    fireEvent.press(await screen.findByLabelText('Mark step 1 done'))
+    fireEvent.press(screen.getByText('Mark this build done'))
+    await waitFor(() => expect(apiClient.post).toHaveBeenCalledWith('/api/tutorials/1/build', {}))
+    expect(await screen.findByText('Build logged — nice work')).toBeTruthy()
   })
 })

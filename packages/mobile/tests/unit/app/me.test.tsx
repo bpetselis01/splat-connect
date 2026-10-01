@@ -21,7 +21,9 @@ const line = (id: string, description: string, amount_cents: number, toy: string
 
 beforeEach(() => {
   jest.clearAllMocks()
-  mockGet.mockResolvedValue({ lines: [], total_cents: 0, exchange_count: 0 })
+  mockGet.mockImplementation((p: string) =>
+    Promise.resolve(p === '/api/me/builds' ? { builds: 3 } : { lines: [], total_cents: 0, exchange_count: 0 })
+  )
 })
 
 it('renders every buildNav group as rows, routes them through the map, and ends with Explore', () => {
@@ -36,6 +38,11 @@ it('renders every buildNav group as rows, routes them through the map, and ends 
   // Explore's own screen has no tab, so this row is its way in.
   fireEvent.press(screen.getByLabelText('Everything in Explore'))
   expect(mockPush).toHaveBeenCalledWith('/explore')
+})
+
+it('shows the builds you have logged', async () => {
+  render(<MeTab />)
+  expect(await screen.findByText('3 builds logged')).toBeTruthy()
 })
 
 it("greets by first name and says what a leader leads and how much is waiting", () => {

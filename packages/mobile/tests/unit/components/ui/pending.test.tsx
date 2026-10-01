@@ -8,9 +8,9 @@ beforeEach(() => jest.clearAllMocks())
 
 describe('pending controls', () => {
   it('a pending button looks like its label and opens Not built yet', () => {
-    render(<PendingButton pending="guide-build-done" label="Mark this build done" />)
+    render(<PendingButton pending="print-answer-by" label="Mark this build done" />)
     fireEvent.press(screen.getByText('Mark this build done'))
-    expect(mockPush).toHaveBeenCalledWith({ pathname: '/not-built', params: { feature: 'guide-build-done' } })
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/not-built', params: { feature: 'print-answer-by' } })
   })
   it('a pending row does the same', () => {
     render(<PendingRow pending="customization-metrics" label="Customization" />)

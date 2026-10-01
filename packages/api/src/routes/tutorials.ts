@@ -408,6 +408,30 @@ tutorials.post('/:id/thanks', async (c) => {
 })
 
 /**
+ * Mark this build done (091). Idempotent: a second tap is the same build.
+ * RLS's insert check is what refuses a guide that is not published.
+ */
+tutorials.post('/:id/build', async (c) => {
+  const { error } = await createUserClient(c.get('token'))
+    .from('tutorial_builds')
+    .upsert({ tutorial_id: c.req.param('id'), profile_id: c.get('userId') }, { onConflict: 'tutorial_id,profile_id', ignoreDuplicates: true })
+  // 42501: RLS refused (not published); 22P02: not a uuid; 23503: no such guide.
+  if (error && ['42501', '22P02', '23503'].includes(error.code)) return c.json({ error: 'Not found' }, 404)
+  if (error) return c.json({ error: error.message }, 500)
+  return c.json({ built: true }, 201)
+})
+
+tutorials.delete('/:id/build', async (c) => {
+  const { error } = await createUserClient(c.get('token'))
+    .from('tutorial_builds')
+    .delete()
+    .eq('tutorial_id', c.req.param('id'))
+    .eq('profile_id', c.get('userId'))
+  if (error) return c.json({ error: error.message }, 500)
+  return c.body(null, 204)
+})
+
+/**
  * Steps (080): the whole list, replaced in order. The editor and the PDF import
  * both hold the full list, so one PUT is simpler than per-step CRUD.
  *

@@ -4,6 +4,7 @@ import { CaretRight } from '@phosphor-icons/react/dist/ssr'
 import { ShareButton } from '@/components/share-button'
 import { SaveButton } from '@/components/save-button'
 import { ThanksButton } from '@/components/thanks-button'
+import { MarkBuildDoneButton } from '@/components/mark-build-done-button'
 import { apiClient } from '@/lib/api-client'
 import { getSavedIds } from '@/lib/saves'
 import { getMyChildren } from '@/lib/my-children'
@@ -75,6 +76,7 @@ export default async function TutorialPage({
                 own={thanks.own}
                 signedIn
               />
+              <MarkBuildDoneButton tutorialId={tutorial.id} />
             </>
           ) : (
             <ShareButton title={tutorial.title} />

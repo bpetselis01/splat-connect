@@ -5,7 +5,7 @@
  */
 import { Hono } from 'hono'
 import type { AuthVariables } from '../middleware/auth.js'
-import { createAdminClient } from '../supabase/client.js'
+import { createAdminClient, createUserClient } from '../supabase/client.js'
 import { deleteAccount } from '../account-deletion.js'
 import { revokeApple } from '../apple-revoke.js'
 import { sendEmail } from '../mailer.js'
@@ -26,6 +26,15 @@ export function lastAuthenticatedAt(token: string): number {
     return 0
   }
 }
+
+/** "N builds logged" on My SPLAT (091). RLS shows a member only their own rows. */
+me.get('/builds', async (c) => {
+  const { count, error } = await createUserClient(c.get('token'))
+    .from('tutorial_builds')
+    .select('tutorial_id', { count: 'exact', head: true })
+  if (error) return c.json({ error: error.message }, 500)
+  return c.json({ builds: count ?? 0 })
+})
 
 me.get('/deletion', async (c) => {
   const { data, error } = await createAdminClient().rpc('account_deletion_preview', { uid: c.get('userId') })

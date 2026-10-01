@@ -1823,6 +1823,8 @@ export interface Tutorial {
   /** PostgREST computed fields (066). Present only when a select names them —
    *  the public list and detail routes do. */
   thanks_count?: number
+  /** 091. Present only when a select names it. */
+  builds_count?: number
   has_stl?: boolean
   /** Up to MAX_PHOTOS, in display order. The first is the cover. */
   photo_urls: string[]
@@ -2004,6 +2006,8 @@ export interface ContributorProfile {
   bio?: string | null
   featured?: Tutorial | null
   thanks?: number
+  /** 091. Builds logged over `tutorials`. */
+  builds?: number
   badges?: ContributorBadge[]
   created_at?: string
 }

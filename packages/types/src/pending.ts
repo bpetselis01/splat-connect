@@ -587,6 +587,7 @@ export const PENDING = {
     needs: "Decided 2026-09-30: Learn only. The course outline and fields become editable in Site content. Legal stays code-only, never editable from an admin account. Note: middleware checks that an acceptance exists, not its version.",
   },
   'guide-build-done': {
+    shipped: true,
     title: "Mark this build done",
     blurb: "Logging a finished build to My SPLAT is coming.",
     kind: "build",

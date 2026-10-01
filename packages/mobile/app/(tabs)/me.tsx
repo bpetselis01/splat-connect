@@ -157,6 +157,7 @@ export default function MeTab() {
   const { caps } = useCapabilities()
   const router = useRouter()
   const [money, setMoney] = useState<Outstanding | null>(null)
+  const [builds, setBuilds] = useState(0)
   const go = (href: string) => () => router.push(href as never)
 
   useEffect(() => {
@@ -167,6 +168,12 @@ export default function MeTab() {
       .get<Outstanding>('/api/exchange-costs/outstanding')
       .then((m) => {
         if (!ignore) setMoney(m)
+      })
+      .catch(() => {})
+    apiClient
+      .get<{ builds: number }>('/api/me/builds')
+      .then((b) => {
+        if (!ignore) setBuilds(b.builds)
       })
       .catch(() => {})
     return () => {
@@ -192,6 +199,7 @@ export default function MeTab() {
             <View style={styles.flex}>
               <Text style={styles.name}>Hi, {caps.profile.name.trim().split(/\s+/)[0]}</Text>
               {standing ? <Text style={styles.meta}>{standing}</Text> : null}
+              {builds > 0 ? <Text style={styles.meta}>{`${builds} builds logged`}</Text> : null}
             </View>
           </View>
           {money ? <MoneyPanel money={money} onOpen={(id) => router.push(`/exchanges/${id}` as never)} /> : null}

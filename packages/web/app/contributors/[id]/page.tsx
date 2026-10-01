@@ -72,13 +72,14 @@ export default async function ContributorPage({
 
   const badges = contributor.badges ?? []
   const thanks = contributor.thanks ?? 0
+  const builds = contributor.builds ?? 0
   const featured = contributor.featured ?? null
 
   const jumps = [
     { to: 'ctb-about', label: 'About', show: !!contributor.bio },
     { to: 'ctb-featured', label: 'Featured', show: !!featured },
     { to: 'ctb-guides', label: 'Guides', show: contributor.tutorials.length > 0 },
-    { to: 'ctb-thanks', label: 'Thanks', show: thanks > 0 },
+    { to: 'ctb-thanks', label: 'Thanks', show: thanks > 0 || builds > 0 },
     { to: 'ctb-toys', label: 'Toys', show: toys.length > 0 },
     { to: 'ctb-activity', label: 'Activity', show: activity.length > 0 },
   ].filter((j) => j.show)
@@ -304,9 +305,10 @@ export default async function ContributorPage({
           </section>
         )}
 
-        {thanks > 0 && (
+        {(thanks > 0 || builds > 0) && (
           <section id="ctb-thanks">
             <h2 className={`${H2} mb-1`}>From families who built one</h2>
+            {builds > 0 && <p className="m-0 font-display text-xl font-extrabold text-ink">{builds} builds logged</p>}
             <p className="m-0 text-[15px] leading-relaxed text-muted">
               {thanks === 1 ? '1 family' : `${thanks} families`} built one of {first}&apos;s guides and
               said thanks.

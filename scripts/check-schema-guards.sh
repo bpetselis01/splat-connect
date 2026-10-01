@@ -407,7 +407,11 @@ select * from (values
 
   -- 090. Notes on unpublished drafts are the author's until approval.
   ('090 tutorial_safety_notes has RLS on',
-   (select relrowsecurity from pg_class where oid = 'public.tutorial_safety_notes'::regclass))
+   (select relrowsecurity from pg_class where oid = 'public.tutorial_safety_notes'::regclass)),
+
+  -- 091. Who built which guide says which accounts have a disabled child.
+  ('091 tutorial_builds has RLS on',
+   (select relrowsecurity from pg_class where oid = 'public.tutorial_builds'::regclass))
 ) as t(guard, ok)
 where not ok;
 EOSQL

@@ -143,7 +143,7 @@ export default async function DashboardHub() {
    */
   const viewerId = caps.profile.id
   const isLeader = caps.ledOrgs.length > 0
-  const [builds, events, transactions, printers, tutorials] = await Promise.all([
+  const [builds, events, transactions, printers, tutorials, logged] = await Promise.all([
     apiClient.get<OpenBuild[]>('/api/toy-transactions/open-builds').catch(() => [] as OpenBuild[]),
     apiClient
       .get<Array<{ event: { starts_at: string; ends_at: string | null } }>>('/api/events/mine')
@@ -157,6 +157,7 @@ export default async function DashboardHub() {
           .get<Array<Tutorial & { tutorial_orgs?: TutorialOrg[] }>>('/api/tutorials')
           .catch(() => [])
       : Promise.resolve([]),
+    apiClient.get<{ builds: number }>('/api/me/builds').catch(() => ({ builds: 0 })),
   ])
   const myPrinterIds = new Set(printers.filter((p) => p.owner_id === viewerId).map((p) => p.id))
   const ledOrgIds = new Set(caps.ledOrgs.map((o) => o.id))
@@ -299,6 +300,7 @@ export default async function DashboardHub() {
               Everything that belongs to you — what you have written, what you have lent, and what
               you have asked for.{waitingTotal > 0 && ` ${waitingSentence(waitingTotal)}`}
             </p>
+            {logged.builds > 0 && <p className="mt-2 text-sm font-bold text-ink">{logged.builds} builds logged</p>}
             {waiting.length > 0 && (
               <div className="mt-5 flex flex-wrap gap-2.5">
                 {waiting.map((w) => (
