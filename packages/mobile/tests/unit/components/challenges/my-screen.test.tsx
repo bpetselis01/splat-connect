@@ -95,20 +95,16 @@ describe('MyChallengesScreen', () => {
     expect(await screen.findByText('Too close to an existing guide.')).toBeTruthy()
   })
 
-  it('opens a published idea, and refuses to link one with no public page', async () => {
+  it('opens every idea of your own, published or not', async () => {
     respond([
       idea({ id: 'live', title: 'Published one', status: 'challenge' }),
       idea({ id: 'quiet', title: 'Pending one', status: 'pending' }),
     ])
     render(<MyChallengesScreen />)
-
     fireEvent.press(await screen.findByRole('button', { name: 'Published one' }))
     expect(mockPush).toHaveBeenCalledWith('/explore/challenges/live')
-
-    // A pending idea 404s on the public route by design, so its row is not a
-    // button at all rather than a dead link.
-    expect(screen.queryByRole('button', { name: 'Pending one' })).toBeNull()
-    expect(screen.getByText('Pending one')).toBeTruthy()
+    fireEvent.press(screen.getByRole('button', { name: 'Pending one' }))
+    expect(mockPush).toHaveBeenCalledWith('/explore/challenges/quiet')
   })
 
   it('lists the challenges you joined separately from your own ideas', async () => {

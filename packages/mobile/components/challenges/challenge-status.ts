@@ -8,6 +8,10 @@ type PillSource = Pick<PublicChallenge, 'status' | 'kind' | 'answered_at'> & { a
 
 /** The row's status pill: a Badge status key (for its tone) and its words. */
 export function challengePill(c: PillSource): { status: string; label: string } {
+  // The author's own idea before it is public (challenge-author-states): the
+  // board's stage words for pending and rejected.
+  if (c.status === 'pending') return { status: 'pending', label: 'Waiting' }
+  if (c.status === 'rejected') return { status: 'rejected', label: 'Declined' }
   if (c.status === 'graduated') return { status: 'graduated', label: 'Became a guide' }
   if (c.kind === 'question') {
     // The detail brief carries the marked message; the list carries the date.

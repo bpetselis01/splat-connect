@@ -18,7 +18,9 @@
  * Only `challenge` and `graduated` ideas ever link to their public brief —
  * GET /api/public/challenges/:id 404s a pending or rejected idea by design
  * (see components/notifications-list.tsx's linkFor), so an unlinkable idea
- * stays a plain card, not a dead link.
+ * stays a plain card, not a dead link, with the author's withdraw / revise
+ * action (challenge-author-states). The page sits in a ToastProvider so the
+ * withdraw's confirmation shows.
  *
  * Related files:
  * - packages/api/src/routes/toy-ideas.ts: GET /api/ideas/mine, GET /api/ideas/joined
@@ -39,6 +41,8 @@ import { requireCapabilities } from '@/lib/require-capabilities'
 import { apiClient } from '@/lib/api-client'
 import { BoundaryLink } from '@/components/boundary-link'
 import { MarkNotificationsRead } from '@/components/mark-notifications-read'
+import { IdeaAuthorActions } from '@/components/idea-author-actions'
+import { ToastProvider } from '@/components/toast'
 import { StageFilter, StageNone, StagePill, STAGE, type StageKey } from '@/components/stage'
 import type { ToyIdea, ToyIdeaStatus } from '@splat-connect/types'
 
@@ -109,6 +113,9 @@ function IdeaCard({ idea }: { idea: Card }) {
             An admin reads every idea. Nothing is public until one is approved.
           </span>
         )}
+        {/* Only pending and rejected cards render anything here, and those are
+            plain divs, never inside the BoundaryLink. */}
+        {!idea.joined && <IdeaAuthorActions id={idea.id} status={idea.status} />}
         <span className="flex items-center justify-between gap-2 border-t border-line pt-2.5 text-xs font-bold text-muted">
           <span>{when}</span>
           {linkable && (
@@ -183,7 +190,7 @@ export default async function DashboardChallengesPage({
   const failedBoth = mine.failed && joined.failed
 
   return (
-    <div>
+    <ToastProvider>
       <MarkNotificationsRead bucket="challenges" />
 
       <div className="mb-[26px] flex flex-wrap items-end justify-between gap-5">
@@ -278,6 +285,6 @@ export default async function DashboardChallengesPage({
           )}
         </>
       )}
-    </div>
+    </ToastProvider>
   )
 }

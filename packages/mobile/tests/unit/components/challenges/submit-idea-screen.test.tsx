@@ -14,8 +14,9 @@ const mockPick = jest.fn()
 jest.mock('../../../../lib/upload', () => ({ pickAndUploadPhoto: (...a: unknown[]) => mockPick(...a) }))
 
 const mockPost = jest.fn()
+const mockGet = jest.fn()
 jest.mock('../../../../lib/api-client', () => ({
-  apiClient: { post: (...a: unknown[]) => mockPost(...a) },
+  apiClient: { post: (...a: unknown[]) => mockPost(...a), get: (...a: unknown[]) => mockGet(...a) },
 }))
 
 const mockPush = jest.fn()
@@ -189,5 +190,18 @@ describe('SubmitIdeaScreen', () => {
     expect(screen.getByText("What we can't take on")).toBeTruthy()
     // The bullet is part of the rendered line, so the assertion carries it.
     expect(screen.getByText('· Nothing that could be swallowed.')).toBeTruthy()
+  })
+
+  it('starts a revised idea from the rejected one', async () => {
+    mockGet.mockResolvedValue({
+      id: 'c1', title: 'Old title', summary: 'Old summary', description: 'Old why', kind: 'challenge',
+      contact_prefs: ['co_design'], photo_path: 'ideas/viewer1/p.png', photo_url: 'https://x/p.png', status: 'rejected',
+    })
+    render(<SubmitIdeaScreen from="c1" />)
+    expect(await screen.findByDisplayValue('Old title')).toBeTruthy()
+    expect(screen.getByDisplayValue('Old why')).toBeTruthy()
+    expect(mockGet).toHaveBeenCalledWith('/api/ideas/mine/c1')
+    fireEvent.press(screen.getByRole('button', { name: 'Submit idea' }))
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/ideas', expect.objectContaining({ title: 'Old title', photo_path: 'ideas/viewer1/p.png' })))
   })
 })

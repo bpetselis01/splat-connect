@@ -4,6 +4,7 @@ import { createUserClient, createAdminClient } from '../supabase/client.js'
 import type { AuthVariables } from '../middleware/auth.js'
 import { profileName } from '../profile-name.js'
 import { toyPhotoUrl } from '../photo-storage.js'
+import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 
 const toyIdeas = new Hono<{ Variables: AuthVariables }>()
 
@@ -102,6 +103,24 @@ toyIdeas.get('/mine', async (c) => {
 
   if (error) return c.json({ error: error.message }, 500)
   return c.json((data ?? []).map(withPhotoUrl))
+})
+
+/**
+ * The caller's own idea at any status, review_note included — the mobile
+ * detail's fallback when the public read 404s a pending or rejected one, and
+ * the source a revised idea starts from. Admin client filtered on the token's
+ * user (F1: author_id stays out of user-client reads, so 108 can revoke it).
+ */
+toyIdeas.get('/mine/:id', async (c) => {
+  const { data, error } = await createAdminClient()
+    .from('toy_ideas')
+    .select('*')
+    .eq('id', c.req.param('id'))
+    .eq('author_id', c.get('userId'))
+    .maybeSingle()
+  if (error && error.code !== INVALID_TEXT_REPRESENTATION) return c.json({ error: error.message }, 500)
+  if (!data) return c.json({ error: 'Not found' }, 404)
+  return c.json(withPhotoUrl(data))
 })
 
 /**
@@ -407,6 +426,33 @@ toyIdeas.post('/:id/reports', async (c) => {
   })
 
   return c.json({ reported: true }, 201)
+})
+
+/**
+ * Withdraw a pending idea (107). Author and status are conditions of the
+ * DELETE itself, so a review that lands mid-tap wins. A miss is told apart
+ * afterwards: the caller's own idea that moved on is a 409 with a reason;
+ * anything else is not theirs to know about. Admin client for the same reason
+ * as /mine/:id; 107's policy holds the same line for direct PostgREST calls.
+ */
+toyIdeas.delete('/:id', async (c) => {
+  const id = c.req.param('id')
+  const userId = c.get('userId')
+  const admin = createAdminClient()
+  const { data, error } = await admin
+    .from('toy_ideas')
+    .delete()
+    .eq('id', id)
+    .eq('author_id', userId)
+    .eq('status', 'pending')
+    .select('id')
+  if (error?.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
+  if (error) return c.json({ error: error.message }, 500)
+  if (data.length) return c.body(null, 204)
+  const { data: own } = await admin.from('toy_ideas').select('id').eq('id', id).eq('author_id', userId).maybeSingle()
+  return own
+    ? c.json({ error: 'Only an idea still waiting for review can be withdrawn.' }, 409)
+    : c.json({ error: 'Not found' }, 404)
 })
 
 export default toyIdeas

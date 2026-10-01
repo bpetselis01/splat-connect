@@ -37,6 +37,8 @@ describe('challengePill', () => {
     expect(challengePill({ status: 'challenge', kind: 'question', answered_at: null }).label).toBe('Waiting')
     expect(challengePill({ status: 'challenge', kind: 'question', answered_at: '2026-08-03' }).label).toBe('Answered')
     expect(challengePill({ status: 'graduated', kind: 'challenge', answered_at: null }).label).toBe('Became a guide')
+    expect(challengePill({ status: 'pending', kind: 'challenge', answered_at: null }).label).toBe('Waiting')
+    expect(challengePill({ status: 'rejected', kind: 'challenge', answered_at: null }).label).toBe('Declined')
   })
 })
 

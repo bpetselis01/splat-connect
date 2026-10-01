@@ -77,4 +77,25 @@ describe('IdeaForm', () => {
       expect(browserApiClient.post).toHaveBeenCalledWith('/api/ideas', expect.objectContaining({ photo_path: null }))
     )
   })
+
+  it('starts from the idea it revises, photo included', async () => {
+    render(
+      <IdeaForm
+        initial={{
+          id: 'i1', author_id: 'a', title: 'Old', summary: 'Sum', description: 'Why', intended_use: null, primary_user: null,
+          contact_prefs: ['co_design'], status: 'rejected', review_note: 'No', tutorial_id: null, created_at: '', updated_at: '',
+          photo_path: 'ideas/a/p.png', photo_url: 'https://example.test/p.png',
+        }}
+      />
+    )
+    expect(screen.getByLabelText(/^title$/i)).toHaveValue('Old')
+    expect(screen.getByLabelText(/why it matters/i)).toHaveValue('Why')
+    fireEvent.submit(screen.getByLabelText(/^title$/i).closest('form')!)
+    await waitFor(() =>
+      expect(browserApiClient.post).toHaveBeenCalledWith(
+        '/api/ideas',
+        expect.objectContaining({ title: 'Old', contact_prefs: ['co_design'], photo_path: 'ideas/a/p.png' })
+      )
+    )
+  })
 })

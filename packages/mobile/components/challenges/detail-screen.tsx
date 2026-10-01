@@ -27,8 +27,8 @@ import {
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { challengeHistory, challengePill, challengeStats, shortDate } from './challenge-status'
-import { OUTCOME_STEPS, outcomeStates, PARTICIPANT_ROLE_LABEL } from '@splat-connect/types'
-import type { ToyIdeaDetail, ToyIdeaMessage, ContactPref } from '@splat-connect/types'
+import { isApiError, OUTCOME_STEPS, outcomeStates, PARTICIPANT_ROLE_LABEL } from '@splat-connect/types'
+import type { ToyIdea, ToyIdeaDetail, ToyIdeaMessage, ContactPref } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { confirmDestructive } from '../../lib/confirm'
 import { theme } from '../../lib/theme'
@@ -101,9 +101,12 @@ function TabHead({ id }: { id: Tab }) {
 export function ChallengeDetailScreen({ id }: { id: string }) {
   const router = useRouter()
   const saves = useSaves()
-  const { caps } = useCapabilities()
+  const { caps, loading: capsLoading } = useCapabilities()
   const [challenge, setChallenge] = useState<ToyIdeaDetail | null>(null)
   const [loading, setLoading] = useState(true)
+  // Read from the author's own list, not the public one (challenge-author-states).
+  const [mine, setMine] = useState(false)
+  const [withdrawn, setWithdrawn] = useState(false)
   const [busy, setBusy] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
   const [messages, setMessages] = useState<ToyIdeaMessage[]>([])
@@ -119,29 +122,41 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
   const [reloadKey, setReloadKey] = useState(0)
   const [tab, setTab] = useState<Tab>('status')
 
+  const viewerId = caps?.profile.id ?? null
+  const viewerName = caps?.profile.name ?? null
+
   useEffect(() => {
     let ignore = false
     apiClient
-      // PENDING(challenge-author-states): the author's own pending or rejected idea
-      // (withdraw, rejection note, "Submit a revised idea") — this endpoint 404s those.
       .get<ToyIdeaDetail>(`/api/public/challenges/${id}`)
+      .catch(async (err) => {
+        // A pending or rejected idea 404s publicly. Its author reads it from
+        // their own list instead (challenge-author-states); nobody else can,
+        // and a dropped connection is not a 404.
+        if (!viewerId || !isApiError(err) || err.status !== 404) throw err
+        const own = await apiClient.get<ToyIdea>(`/api/ideas/mine/${id}`)
+        if (!ignore) setMine(true)
+        return { ...own, author_name: viewerName, participants: [], maker_count: 0, answer_count: 0 } as ToyIdeaDetail
+      })
       .then((data) => {
-        if (!ignore) setChallenge(data)
+        if (ignore) return
+        setChallenge(data)
+        setLoading(false)
       })
       // No separate error flag: having a brief or not is the whole question,
       // and a join/leave refetch that fails must leave the brief on screen
-      // rather than replacing a loaded challenge with "couldn't load".
-      .catch(() => {})
-      .finally(() => {
-        if (!ignore) setLoading(false)
+      // rather than replacing a loaded challenge with "couldn't load". While
+      // capabilities are still loading we do not yet know whether this is
+      // the author, so the skeleton stays and the rerun decides.
+      .catch(() => {
+        if (!ignore && !capsLoading) setLoading(false)
       })
     return () => {
       ignore = true
     }
-  }, [id, reloadKey])
+  }, [id, reloadKey, viewerId, viewerName, capsLoading])
 
-  const viewerId = caps?.profile.id ?? null
-  const isAuthor = viewerId !== null && challenge?.author_id === viewerId
+  const isAuthor = viewerId !== null && (challenge?.author_id === viewerId || mine)
   const joined = viewerId !== null && !!challenge?.participants.some((p) => p.profile_id === viewerId)
   const open = challenge?.status === 'challenge'
   // A question (078): answered in its thread, and the asker marks the reply
@@ -242,6 +257,19 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
     }
   }
 
+  async function withdraw() {
+    setBusy(true)
+    setActionError(null)
+    try {
+      await apiClient.delete(`/api/ideas/${id}`)
+      setWithdrawn(true)
+    } catch {
+      setActionError('Could not withdraw this idea. Please try again.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   function confirmLeave() {
     confirmDestructive('Leave this challenge?', 'You will stop taking part in its conversation.', 'Leave', () => void leave())
   }
@@ -252,6 +280,13 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
         <Skeleton width="70%" height={24} />
         <Skeleton width="90%" height={14} />
         <Skeleton width="100%" height={120} />
+      </View>
+    )
+  }
+  if (withdrawn) {
+    return (
+      <View style={styles.screen}>
+        <EmptyState icon="arrow-undo-outline" title="Withdrawn — nothing was published" />
       </View>
     )
   }
@@ -285,15 +320,19 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
   const badge: Partial<Record<Tab, number>> = { makers, thread: challenge.answer_count ?? 0 }
   // PENDING(challenge-writeup-stage): on the board "graduated" means being written up, with who and a follow link.
   const headline =
-    challenge.status === 'graduated'
-      ? { title: 'Solved — it became a guide', body: 'The write-up went through review and is in Guides now.' }
-      : question
-        ? answerId
-          ? { title: 'Answered', body: 'The asker marked the reply that helped. The thread stays open to read.' }
-          : { title: 'Open, waiting for an answer', body: 'Anyone who joins can answer in the thread.' }
-        : makers > 0
-          ? { title: 'Open, and makers are on it', body: 'Anyone can read the brief; makers who join can post in the thread.' }
-          : { title: 'Open, waiting for a maker', body: 'Anyone can read the brief; the first maker to join starts the thread.' }
+    challenge.status === 'pending'
+      ? { title: 'An admin is reading it', body: 'Nothing is public yet. Most ideas are answered inside a week — approved, it opens as a challenge; if not, you get a reason.' }
+      : challenge.status === 'rejected'
+        ? { title: 'Not taken forward', body: 'An admin read it and decided it is not one for SPLAT. Nothing was published. The reason is below — a revised idea is welcome.' }
+        : challenge.status === 'graduated'
+          ? { title: 'Solved — it became a guide', body: 'The write-up went through review and is in Guides now.' }
+          : question
+            ? answerId
+              ? { title: 'Answered', body: 'The asker marked the reply that helped. The thread stays open to read.' }
+              : { title: 'Open, waiting for an answer', body: 'Anyone who joins can answer in the thread.' }
+            : makers > 0
+              ? { title: 'Open, and makers are on it', body: 'Anyone can read the brief; makers who join can post in the thread.' }
+              : { title: 'Open, waiting for a maker', body: 'Anyone can read the brief; the first maker to join starts the thread.' }
 
   return (
     // `padding` shrinks Screen's flex:1 child by the keyboard's height on iOS,
@@ -310,7 +349,9 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
         <View style={styles.statusLine}>
           <Badge status={pill.status} label={pill.label} />
           <Text style={styles.meta}>
-            {`Published ${shortDate(challenge.created_at)} · ${challenge.author_name ?? 'anonymous'}`}
+            {listed
+              ? `Published ${shortDate(challenge.created_at)} · ${challenge.author_name ?? 'anonymous'}`
+              : `Submitted ${shortDate(challenge.created_at)} · only you can see this`}
           </Text>
         </View>
         <Text style={styles.title} accessibilityRole="header">
@@ -334,8 +375,15 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
             ) : isAuthor ? (
               // The author is never a participant row (038's insert policy refuses
               // it), so they get neither control — the thread is theirs by
-              // authorship, not by joining.
-              <Text style={styles.quiet}>This is your challenge.</Text>
+              // authorship, not by joining. Before it is public, the author's
+              // two moves: withdraw it, or send a revised one.
+              challenge.status === 'pending' ? (
+                <Button label="Withdraw the idea" variant="secondary" loading={busy} onPress={() => void withdraw()} />
+              ) : challenge.status === 'rejected' ? (
+                <Button label="Submit a revised idea" variant="accent" onPress={() => router.push(`/explore/challenges/new?from=${id}`)} />
+              ) : (
+                <Text style={styles.quiet}>This is your challenge.</Text>
+              )
             ) : open ? (
               <Button
                 label={question ? 'Join to answer' : 'Join this challenge'}
@@ -348,7 +396,7 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
               </Text>
             )}
           </View>
-          <SaveButton slug="challenges" id={challenge.id} saves={saves} circled />
+          {listed ? <SaveButton slug="challenges" id={challenge.id} saves={saves} circled /> : null}
         </View>
         {viewerId !== null && !joined && !isAuthor && open ? (
           <Text style={styles.gateHint}>Join this challenge to read and take part in the conversation.</Text>
@@ -394,14 +442,22 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
               <Text style={styles.headlineTitle}>{headline.title}</Text>
               <Text style={styles.quiet}>{headline.body}</Text>
             </View>
-            <View style={styles.stats}>
-              {stats.map((s) => (
-                <View key={s.label} style={styles.stat}>
-                  <Text style={styles.statN}>{s.n}</Text>
-                  <Text style={styles.statLabel}>{s.label}</Text>
-                </View>
-              ))}
-            </View>
+            {challenge.status === 'rejected' && challenge.review_note ? (
+              <View style={styles.note}>
+                <Text style={styles.noteLead}>Why it was not taken forward:</Text>
+                <Text style={styles.noteText}>{challenge.review_note}</Text>
+              </View>
+            ) : null}
+            {listed ? (
+              <View style={styles.stats}>
+                {stats.map((s) => (
+                  <View key={s.label} style={styles.stat}>
+                    <Text style={styles.statN}>{s.n}</Text>
+                    <Text style={styles.statLabel}>{s.label}</Text>
+                  </View>
+                ))}
+              </View>
+            ) : null}
             {/* The list shape has no tutorial_id, so this is the only place the
                 guide a solved challenge became can be linked from. */}
             {challenge.tutorial_id ? (
@@ -685,6 +741,9 @@ const styles = StyleSheet.create({
   eventTitle: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink },
   eventDate: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted },
   hero: { height: 160, borderRadius: 16, width: '100%' },
+  note: { gap: 2, padding: theme.spacing(3), borderRadius: 14, backgroundColor: theme.colors.apricotSoft },
+  noteLead: { fontFamily: theme.fonts.black, fontSize: 13.5, lineHeight: 20, color: theme.colors.ink },
+  noteText: { fontFamily: theme.fonts.regular, fontSize: 13.5, lineHeight: 20, color: theme.colors.ink },
   summary: {
     fontFamily: theme.fonts.semiBold,
     fontSize: theme.type.label,

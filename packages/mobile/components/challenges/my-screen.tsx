@@ -41,12 +41,6 @@ const IDEA_STAGE: Record<ToyIdeaStatus, StageKey> = {
 }
 
 function IdeaRow({ idea, onOpen }: { idea: ToyIdea; onOpen: () => void }) {
-  // Only a published challenge has a public page — GET
-  // /api/public/challenges/:id 404s a pending or rejected idea by design — so
-  // those rows stay unpressable rather than pointing at a dead route. Every
-  // joined idea is 'challenge' or 'graduated' by construction (038's join
-  // policy), so this always resolves true in that section.
-  const linkable = idea.status === 'challenge' || idea.status === 'graduated'
   // review_note is the point of the rejected state — an admin's reason for
   // declining, never shown publicly, only to the author here. Absent only
   // when an admin rejected without one, and then the summary stands.
@@ -60,8 +54,8 @@ function IdeaRow({ idea, onOpen }: { idea: ToyIdea; onOpen: () => void }) {
         meta={meta}
         thumb={<RowThumb glyph="bulb-outline" />}
         pill={<StagePill stage={IDEA_STAGE[idea.status]} label={IDEA_LABEL[idea.status]} />}
-        onPress={linkable ? onOpen : undefined}
-        accessibilityHint="Opens the public challenge."
+        onPress={onOpen}
+        accessibilityHint="Opens the challenge."
       />
     </View>
   )

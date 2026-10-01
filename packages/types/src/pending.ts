@@ -417,6 +417,7 @@ export const PENDING = {
     needs: "Role, joined date, \"You\" marker on maker rows [ui,api]",
   },
   'challenge-author-states': {
+    shipped: true,
     title: "Your idea",
     blurb: "Seeing, withdrawing and resubmitting your own idea from here is coming.",
     kind: "build",

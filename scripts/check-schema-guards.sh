@@ -488,7 +488,13 @@ select * from (values
         and pg_get_constraintdef(oid) like '%author_id%'
         and pg_get_constraintdef(oid) like '%00000000-0000-4000-8000-00000000dead%')
    and has_column_privilege('anon', 'public.toy_ideas', 'photo_path', 'select')
-   and not has_column_privilege('anon', 'public.toy_ideas', 'review_note', 'select'))
+   and not has_column_privilege('anon', 'public.toy_ideas', 'review_note', 'select')),
+  -- 107. A wider delete policy would let an author pull a live challenge and its thread.
+  ('107 toy_ideas delete is the author''s, while pending',
+   (select count(*) = 1 from pg_policies
+      where schemaname = 'public' and tablename = 'toy_ideas' and cmd = 'DELETE'
+        and qual like '%auth.uid()%' and qual like '%pending%')
+   and has_table_privilege('authenticated', 'public.toy_ideas', 'delete'))
 ) as t(guard, ok)
 where not ok;
 EOSQL

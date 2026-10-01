@@ -4,7 +4,7 @@
 // required, why it matters is optional, posting to the same POST /api/ideas.
 //
 // Title comes from the native header (app/(tabs)/explore/_layout.tsx).
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { View, Text, Image, Pressable, ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native'
 import { useRouter } from 'expo-router'
 import { apiMessage, CONTACT_PREFS, type ContactPref, type ToyIdea, type ToyIdeaKind } from '@splat-connect/types'
@@ -60,7 +60,7 @@ type Draft = Record<FieldKey, string>
 
 const EMPTY: Draft = { title: '', summary: '', description: '' }
 
-export function SubmitIdeaScreen() {
+export function SubmitIdeaScreen({ from }: { from?: string } = {}) {
   const router = useRouter()
   const { caps } = useCapabilities()
   const [draft, setDraft] = useState<Draft>(EMPTY)
@@ -71,6 +71,21 @@ export function SubmitIdeaScreen() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [sent, setSent] = useState(false)
+
+  // "Submit a revised idea" (challenge-author-states): start from the
+  // rejected one. A new idea is filed; the old one stays as it was judged.
+  useEffect(() => {
+    if (!from) return
+    apiClient
+      .get<ToyIdea>(`/api/ideas/mine/${from}`)
+      .then((idea) => {
+        setDraft({ title: idea.title, summary: idea.summary, description: idea.description ?? '' })
+        setKind(idea.kind ?? 'challenge')
+        setPrefs(idea.contact_prefs)
+        setPhoto(idea.photo_path && idea.photo_url ? { path: idea.photo_path, url: idea.photo_url } : null)
+      })
+      .catch(() => {})
+  }, [from])
 
   function togglePref(pref: ContactPref) {
     setPrefs((cur) => (cur.includes(pref) ? cur.filter((p) => p !== pref) : [...cur, pref]))

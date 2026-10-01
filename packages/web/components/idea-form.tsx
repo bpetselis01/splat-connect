@@ -54,11 +54,24 @@ const EMPTY_FIELDS: Fields = {
   contact_prefs: [],
 }
 
-export function IdeaForm() {
+/** `initial`: the rejected idea a revised one starts from (challenge-author-states). */
+export function IdeaForm({ initial }: { initial?: ToyIdea } = {}) {
   const router = useRouter()
-  const [fields, setFields] = useState<Fields>(EMPTY_FIELDS)
+  const [fields, setFields] = useState<Fields>(
+    initial
+      ? {
+          kind: initial.kind ?? 'challenge',
+          title: initial.title,
+          summary: initial.summary,
+          description: initial.description ?? '',
+          contact_prefs: initial.contact_prefs,
+        }
+      : EMPTY_FIELDS
+  )
   // 106: the upload's path is what the idea takes; its url is the preview.
-  const [photo, setPhoto] = useState<{ path: string; url: string } | null>(null)
+  const [photo, setPhoto] = useState<{ path: string; url: string } | null>(
+    initial?.photo_path && initial.photo_url ? { path: initial.photo_path, url: initial.photo_url } : null
+  )
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 

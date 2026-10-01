@@ -476,4 +476,65 @@ describe('ChallengeDetailScreen', () => {
     fireEvent.press(await screen.findByRole('tab', { name: 'Brief' }))
     expect(screen.queryByTestId('challenge-photo')).toBeNull()
   })
+
+  describe('the author’s own idea before it is public', () => {
+    // What apiClient throws for a 404: the fallback keys on the status.
+    const notFound = () => Object.assign(new Error('404'), { status: 404 })
+    const own = (status: string, over: object = {}) => {
+      mockUseCapabilities.mockReturnValue(viewer('author1'))
+      mockGet.mockImplementation((path: string) =>
+        path === '/api/ideas/mine/c1'
+          ? Promise.resolve(detail({ status, review_note: null, participants: undefined, ...over }))
+          : Promise.reject(notFound())
+      )
+    }
+
+    it('reads a pending idea from the author’s own list and withdraws it', async () => {
+      own('pending')
+      mockDelete.mockResolvedValue(undefined)
+      render(<ChallengeDetailScreen id="c1" />)
+      expect(await screen.findByText('An admin is reading it')).toBeTruthy()
+      expect(screen.getByText(/· only you can see this$/)).toBeTruthy()
+      fireEvent.press(screen.getByRole('button', { name: 'Withdraw the idea' }))
+      await waitFor(() => expect(mockDelete).toHaveBeenCalledWith('/api/ideas/c1'))
+      expect(await screen.findByText('Withdrawn — nothing was published')).toBeTruthy()
+    })
+
+    it('says so when the withdraw fails, and keeps the idea on screen', async () => {
+      own('pending')
+      mockDelete.mockRejectedValue(new Error('409'))
+      render(<ChallengeDetailScreen id="c1" />)
+      fireEvent.press(await screen.findByRole('button', { name: 'Withdraw the idea' }))
+      expect(await screen.findByText('Could not withdraw this idea. Please try again.')).toBeTruthy()
+      expect(screen.getByText('An admin is reading it')).toBeTruthy()
+    })
+
+    it('gives a rejected idea its reason and a way to send a revised one', async () => {
+      own('rejected', { review_note: 'Closer to a clinical aid.' })
+      render(<ChallengeDetailScreen id="c1" />)
+      expect(await screen.findByText('Not taken forward')).toBeTruthy()
+      expect(screen.getByText('Closer to a clinical aid.')).toBeTruthy()
+      fireEvent.press(screen.getByRole('button', { name: 'Submit a revised idea' }))
+      expect(mockPush).toHaveBeenCalledWith('/explore/challenges/new?from=c1')
+    })
+
+    it('never asks for the author’s copy when nobody is signed in', async () => {
+      mockUseCapabilities.mockReturnValue(signedOut)
+      mockGet.mockRejectedValue(notFound())
+      render(<ChallengeDetailScreen id="c1" />)
+      expect(await screen.findByText("Couldn't load this challenge.")).toBeTruthy()
+      expect(mockGet).not.toHaveBeenCalledWith('/api/ideas/mine/c1')
+    })
+
+    it('waits for capabilities before deciding the idea cannot load', async () => {
+      own('pending')
+      mockUseCapabilities.mockReturnValue({ caps: null, loading: true, refresh: jest.fn() })
+      const { rerender } = render(<ChallengeDetailScreen id="c1" />)
+      await waitFor(() => expect(mockGet).toHaveBeenCalledWith('/api/public/challenges/c1'))
+      expect(screen.queryByText("Couldn't load this challenge.")).toBeNull()
+      mockUseCapabilities.mockReturnValue(viewer('author1'))
+      rerender(<ChallengeDetailScreen id="c1" />)
+      expect(await screen.findByText('An admin is reading it')).toBeTruthy()
+    })
+  })
 })
