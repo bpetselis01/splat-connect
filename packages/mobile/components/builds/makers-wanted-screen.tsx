@@ -35,7 +35,7 @@ import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
 import { ErrorRow } from '../ui/ErrorRow'
-import { apiMessage } from '@splat-connect/types'
+import { apiMessage, buildRowMeta } from '@splat-connect/types'
 import { PendingButton, pendingHref } from '../ui/pending'
 
 /** GET /api/toy-transactions/open-builds, one row. No requester name — by design. */
@@ -52,7 +52,14 @@ export type OpenBuild = {
   mine: boolean
   /** 099. Whole km from the maker's postcode; null when either is unknown. */
   km: number | null
-  tutorial: { id: string; title: string; difficulty: Difficulty | null; status: string } | null
+  tutorial: {
+    id: string
+    title: string
+    difficulty: Difficulty | null
+    status: string
+    build_minutes: number | null
+    parts_total_cents: number | null
+  } | null
 }
 
 type Tab = 'open' | 'mine'
@@ -282,6 +289,7 @@ function BuildCard({
   onTrack: () => void
 }) {
   const diff = b.tutorial?.difficulty ?? null
+  const meta = b.tutorial ? buildRowMeta(b.tutorial) : null
   return (
     <Card style={styles.card}>
       <View style={styles.cardTop}>
@@ -309,6 +317,7 @@ function BuildCard({
             {diff ? (
               <Text style={[styles.pill, { backgroundColor: theme.colors.difficulty[diff].bg }]}>{DIFF_LABEL[diff]}</Text>
             ) : null}
+            {meta ? <Text style={[styles.pill, { backgroundColor: theme.colors.surfaceSunken }]}>{meta}</Text> : null}
             <Text style={[styles.pill, { backgroundColor: theme.colors.tone.mint.bg }]}>Family covers parts</Text>
             {b.family_has_toy ? (
               <Text style={[styles.pill, { backgroundColor: theme.colors.honeySoft }]}>Family has the toy</Text>
@@ -324,7 +333,6 @@ function BuildCard({
         </Text>
       ) : null}
 
-      {/* PENDING(makers-row-meta): the guide's build time and ~cost — /open-builds returns title and difficulty only. */}
       <View style={styles.facts}>
         {b.km !== null ? <Fact icon="navigate-outline" text={`${b.km} km away`} /> : null}
         {b.child_label ? <Fact icon="happy-outline" text={b.child_label} /> : null}

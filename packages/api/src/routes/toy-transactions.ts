@@ -1,7 +1,7 @@
 import { chunk } from '../chunk.js'
 import { Hono, type Context } from 'hono'
 import { randomInt, randomUUID } from 'node:crypto'
-import { needsAction, isOwnerSide, answerBy, printRequestExpired, shortDate, fitNotesProblem } from '@splat-connect/types'
+import { needsAction, isOwnerSide, answerBy, printRequestExpired, shortDate, fitNotesProblem, partsTotalCents } from '@splat-connect/types'
 import type { PrintJobFile, PrintSettings } from '@splat-connect/types'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
@@ -129,6 +129,40 @@ type MessagePreview = { body: string; sender_id: string; kind: string; created_a
 // Newest message per transaction, for the list preview. PostgREST has no clean
 // "latest per group", so this reads the caller's messages in order and keeps the
 // last of each — RLS already limits the rows to threads they are part of.
+type BoardGuide = {
+  id: string
+  title: string
+  difficulty: string | null
+  status: string
+  build_minutes: number | null
+  parts_total_cents: number | null
+}
+
+/**
+ * The guide half of a Makers wanted row: what it is, how hard, how long, and
+ * roughly what the parts cost (makers-row-meta). The total is batch 1's
+ * partsTotalCents — null unless every required part is priced. Named columns
+ * only, and every one checked against the table: a select naming a column
+ * that does not exist fails whole and returns null — which rendered every card
+ * on the board as "a guide that is no longer published", with no error anywhere.
+ */
+async function boardGuides(
+  admin: ReturnType<typeof createAdminClient>,
+  tutorialIds: string[]
+): Promise<{ guides: Map<string, BoardGuide> } | { error: { message: string } }> {
+  const { data, error } = await admin
+    .from('tutorials')
+    .select('id, title, difficulty, status, build_minutes, parts(is_optional, price_cents)')
+    .in('id', tutorialIds)
+  if (error) return { error }
+  type Row = Omit<BoardGuide, 'parts_total_cents'> & { parts: { is_optional: boolean; price_cents: number | null }[] | null }
+  return {
+    guides: new Map(
+      ((data ?? []) as Row[]).map(({ parts, ...g }) => [g.id, { ...g, parts_total_cents: partsTotalCents(parts ?? []) }])
+    ),
+  }
+}
+
 /**
  * GET /api/toy-transactions/open-builds
  *
@@ -159,17 +193,9 @@ toyTransactions.get('/open-builds', async (c) => {
   if (error) return c.json({ error: error.message }, 500)
 
   const rows = data ?? []
-  const admin = createAdminClient()
-  // Named columns only, and every one checked against the table. A select
-  // naming a column that does not exist fails the whole query and returns null
-  // — which rendered every card on the board as "a guide that is no longer
-  // published", with no error anywhere.
-  const { data: guides, error: guideError } = await admin
-    .from('tutorials')
-    .select('id, title, difficulty, status')
-    .in('id', rows.map((r) => r.tutorial_id as string))
-  if (guideError) return c.json({ error: guideError.message }, 500)
-  const guide = new Map((guides ?? []).map((g) => [g.id as string, g]))
+  const found = await boardGuides(createAdminClient(), rows.map((r) => r.tutorial_id as string))
+  if ('error' in found) return c.json({ error: found.error.message }, 500)
+  const guide = found.guides
 
   const userId = c.get('userId')
   // Nearest first with `near` (099), from each family's profile postcode, read

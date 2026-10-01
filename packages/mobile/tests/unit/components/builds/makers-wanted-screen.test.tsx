@@ -45,3 +45,26 @@ it('filters on the real distance from the maker, and says it on the row', async 
   fireEvent.press(screen.getByText('10 km'))
   expect(screen.queryByText(/Penrith/)).toBeNull()
 })
+
+/** Tasks 13–15's rows: no distance, and the guide's time and cost (makers-row-meta). */
+export const row = (over: object = {}) => ({
+  id: 'b1', tutorial_id: 'g1', build_brief: 'Leo lights up at bubbles.', travel_km: 10, urgency: 'No rush',
+  child_label: 'Leo, 3', requester_suburb: 'Newtown', family_has_toy: false, created_at: '2026-09-28T00:00:00Z', mine: false, km: null,
+  tutorial: { id: 'g1', title: 'Bubble machine', difficulty: 'easy', status: 'approved', build_minutes: 20, parts_total_cents: 2800 },
+  ...over,
+})
+
+it('shows each guide’s build time and rough parts cost', async () => {
+  mockGet.mockResolvedValue([row()])
+  render(<MakersWantedScreen />)
+  expect(await screen.findByText('20 min · ~$28.00')).toBeTruthy()
+})
+
+it('leaves the cost off when a part is unpriced', async () => {
+  mockGet.mockResolvedValue([
+    row({ tutorial: { id: 'g1', title: 'Bubble machine', difficulty: 'easy', status: 'approved', build_minutes: 20, parts_total_cents: null } }),
+  ])
+  render(<MakersWantedScreen />)
+  expect(await screen.findByText('20 min')).toBeTruthy()
+  expect(screen.queryByText(/~\$/)).toBeNull()
+})

@@ -1900,6 +1900,20 @@ export function formatBuildTime(minutes: number): string {
   return `${Math.round((minutes / 60) * 10) / 10} h`
 }
 
+/**
+ * A Makers wanted row's "20 min · ~$28.00" (MB r.time · ~r.cost). Either half
+ * is left out when unknown — a guide with an unpriced required part has no
+ * total (partsTotalCents) — and the whole thing is null when both are. Here,
+ * not builds.ts, so builds.ts never value-imports index (F17: no cycle).
+ */
+export function buildRowMeta(t: { build_minutes?: number | null; parts_total_cents?: number | null }): string | null {
+  const bits = [
+    t.build_minutes ? formatBuildTime(t.build_minutes) : null,
+    t.parts_total_cents != null ? `~${formatCents(t.parts_total_cents)}` : null,
+  ].filter(Boolean)
+  return bits.length ? bits.join(' · ') : null
+}
+
 /** "Age 3–7" as the board writes it (en dash); null when neither end is set,
  *  so a meta line can filter it out like any other absent fact. */
 export function formatAgeRange(min: number | null | undefined, max: number | null | undefined): string | null {

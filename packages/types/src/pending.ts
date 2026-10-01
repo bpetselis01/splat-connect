@@ -448,6 +448,7 @@ export const PENDING = {
     needs: "Live and Done tabs on Makers wanted [ui,api]",
   },
   'makers-row-meta': {
+    shipped: true,
     title: "Build time and cost",
     blurb: "Build time and cost on each request are coming.",
     kind: "build",

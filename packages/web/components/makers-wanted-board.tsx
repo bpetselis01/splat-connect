@@ -35,6 +35,7 @@ import {
   MapPin,
   Package,
 } from '@phosphor-icons/react/dist/ssr'
+import { buildRowMeta } from '@splat-connect/types'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formatRelativeTime } from '@/lib/relative-time'
@@ -51,7 +52,14 @@ export type OpenBuild = {
   family_has_toy: boolean
   created_at: string
   mine: boolean
-  tutorial: { id: string; title: string; difficulty: string | null; status: string } | null
+  tutorial: {
+    id: string
+    title: string
+    difficulty: string | null
+    status: string
+    build_minutes: number | null
+    parts_total_cents: number | null
+  } | null
 }
 
 const RANGES = [5, 10, 25, 0] as const
@@ -163,6 +171,7 @@ export function MakersWantedBoard({ builds }: { builds: OpenBuild[] }) {
         <ul className="m-0 grid list-none gap-4 p-0 md:grid-cols-2">
           {shown.map((b) => {
             const diff = b.tutorial?.difficulty ? DIFF[b.tutorial.difficulty] : undefined
+            const meta = b.tutorial ? buildRowMeta(b.tutorial) : null
             return (
               <li key={b.id}>
                 <article className="card flex h-full flex-col gap-3 p-5">
@@ -209,6 +218,9 @@ export function MakersWantedBoard({ builds }: { builds: OpenBuild[] }) {
                           <span className="rounded-full px-2.5 py-[3px] text-[var(--tink)]" style={{ background: diff.tint }}>
                             {diff.label}
                           </span>
+                        )}
+                        {meta && (
+                          <span className="rounded-full bg-[var(--surface2)] px-2.5 py-[3px] text-ink">{meta}</span>
                         )}
                         {b.family_has_toy && (
                           <span className="inline-flex items-center gap-1 rounded-full bg-[var(--tamber)] px-2.5 py-[3px] text-[var(--tink)]">
