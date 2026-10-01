@@ -110,8 +110,8 @@ describe('ToyLibraryScreen', () => {
     render(<ToyLibraryScreen />)
     await screen.findByText('Bubble machine')
     // Words, never a score: 8 is "Good", 5 is "Well-loved".
-    expect(screen.getByText('Good', { includeHiddenElements: true })).toBeTruthy()
-    expect(screen.getByText('Well-loved', { includeHiddenElements: true })).toBeTruthy()
+    expect(screen.getAllByText('Good', { includeHiddenElements: true })).toHaveLength(2)
+    expect(screen.getAllByText('Well-loved', { includeHiddenElements: true })).toHaveLength(2)
     expect(screen.getByText('Jamie')).toBeTruthy()
     expect(screen.getByText('TAD Australia')).toBeTruthy()
     // The number survives for a screen reader, in the row's hint.
@@ -148,16 +148,19 @@ describe('ToyLibraryScreen', () => {
     expect(screen.getAllByText('Switch-adapted', { includeHiddenElements: true }).length).toBe(2)
   })
 
-  it('filters by condition bucket', async () => {
+  it('filters by the four condition grades', async () => {
     mockGet.mockResolvedValue([
       toy({ id: 't1', name: 'Good toy', condition: 8 }),
       toy({ id: 't2', name: 'Worn toy', condition: 2 }),
     ])
     render(<ToyLibraryScreen />)
     await screen.findByText('Good toy')
-    fireEvent.press(screen.getByRole('button', { name: 'Well-loved (1–3)' }))
+    fireEvent.press(screen.getByRole('button', { name: 'Needs a fix' }))
     expect(screen.queryByText('Good toy')).toBeNull()
     expect(screen.getByText('Worn toy')).toBeTruthy()
+    fireEvent.press(screen.getByRole('button', { name: 'Good' }))
+    expect(screen.getByText('Good toy')).toBeTruthy()
+    expect(screen.queryByText('Worn toy')).toBeNull()
   })
 
   it('filters by the switch-adapted toggle', async () => {

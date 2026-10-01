@@ -67,7 +67,7 @@ describe('InventoryScreen', () => {
 
     expect(await screen.findByText('Bear')).toBeTruthy()
     expect(screen.getByText('Drum')).toBeTruthy()
-    expect(screen.getByText(/^5 in stock · Condition/)).toBeTruthy()
+    expect(screen.getByText('5 in stock · Good')).toBeTruthy()
     // The board's shelf words: published is Available, anything else a Draft.
     expect(screen.getByText('Available')).toBeTruthy()
     expect(screen.getByText('Draft')).toBeTruthy()

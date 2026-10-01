@@ -2,6 +2,8 @@ export * from './nav-model'
 // Named, not `export *`: the api runs this package through tsx as CommonJS,
 // and Node's CJS export lexer cannot see esbuild's `__reExport` — the two
 // lines above export nothing at runtime there. Named re-exports do.
+export { gradeOf, GRADES } from './toy-grade'
+export type { Grade, GradeKey } from './toy-grade'
 export { contributorBadges } from './contributor-badges'
 export type { ContributorBadge, ContributorBadgeInput } from './contributor-badges'
 export { TOOL_GET_BY_LABEL, partsTotalCents, checkedOn, realignCaptions, formatPrintMinutes, printSettingRows, printSettingsLine } from './guides'

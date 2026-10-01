@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { View, Text, Image, ScrollView, Pressable, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import { toyFacts, type OfferType, type Toy, type ToyDetail } from '@splat-connect/types'
+import { gradeOf, toyFacts, type OfferType, type Toy, type ToyDetail } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { useSaves } from '../../lib/saves'
@@ -165,8 +165,7 @@ export function ToyDetailScreen({ id }: { id: string }) {
 
       <View style={styles.pillRow}>
         {toy.offer_type ? <Pill variant="large" icon="gift-outline" label={OFFER_LABEL[toy.offer_type]} bg={theme.colors.tone.mint.bg} fg={theme.colors.tone.mint.fg} /> : null}
-        {/* PENDING(toy-condition-words): "Good condition", not "Condition 7 / 10". */}
-        <Pill variant="large" icon="checkmark-circle-outline" label={`Condition ${toy.condition} / 10`} bg={theme.colors.tone.mint.bg} fg={theme.colors.tone.mint.fg} />
+        <Pill variant="large" icon="checkmark-circle-outline" label={`${gradeOf(toy.condition).label} condition`} bg={theme.colors.tone.mint.bg} fg={theme.colors.tone.mint.fg} />
         {toy.switch_adapted ? <Pill variant="large" label="Switch-adapted" bg={theme.colors.tone.brand.bg} fg={theme.colors.tone.brand.fg} /> : null}
       </View>
 

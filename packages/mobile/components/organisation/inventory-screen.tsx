@@ -11,7 +11,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { View, ScrollView, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
-import type { ToyWithOwner } from '@splat-connect/types'
+import { gradeOf, type ToyWithOwner } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { useCapabilities } from '../../lib/capabilities'
@@ -36,7 +36,7 @@ function StockRow({ toy, onPress }: { toy: ToyWithOwner; onPress: () => void }) 
     <View style={styles.rowPress}>
       <ListRow
         title={toy.name}
-        meta={`${toy.quantity} in stock · Condition ${toy.condition}/10${toy.switch_adapted ? ' · Switch-adapted' : ''}`}
+        meta={`${toy.quantity} in stock · ${gradeOf(toy.condition).label}${toy.switch_adapted ? ' · Switch-adapted' : ''}`}
         thumb={<RowThumb photo={toy.cover_photo_url} />}
         pill={pill}
         onPress={onPress}

@@ -57,17 +57,16 @@ test('the condition buckets keep only the toys that fall in them', async ({ page
   await expect(page.getByText(good)).toBeVisible()
   await expect(page.getByText(wellLoved)).toBeVisible()
 
-  await pickFilter(page, 'Good (7–10)')
+  await pickFilter(page, 'Like new')
   await expect(page.getByText(good)).toBeVisible()
   await expect(page.getByText(wellLoved)).toHaveCount(0)
 
-  await pickFilter(page, 'Well-loved (1–3)')
+  await pickFilter(page, 'Needs a fix')
   await expect(page.getByText(wellLoved)).toBeVisible()
   await expect(page.getByText(good)).toHaveCount(0)
 
-  // Fair sits between the two, so it is the bucket that proves the thresholds
-  // exclude as well as include.
-  await pickFilter(page, 'Fair (4–6)')
+  // Good sits between the two, so it proves the cut points exclude as well as include.
+  await pickFilter(page, 'Good')
   await expect(page.getByText(good)).toHaveCount(0)
   await expect(page.getByText(wellLoved)).toHaveCount(0)
 })

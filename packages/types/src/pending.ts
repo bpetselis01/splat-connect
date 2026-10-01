@@ -367,6 +367,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["mobile"],
     needs: "\"Good condition\" words, not \"7 / 10\" [ui]",
+    shipped: true,
   },
   'organisations-list-meta': {
     title: "Organisation details",

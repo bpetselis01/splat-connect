@@ -11,7 +11,7 @@ import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import type { ToyWithOwner } from '@splat-connect/types'
-import { toyHolderName } from '@splat-connect/types'
+import { gradeOf, GRADES, toyHolderName, type GradeKey } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { useSaves } from '../../lib/saves'
@@ -32,30 +32,17 @@ import { nearParam } from '../../lib/near'
 
 type IconName = React.ComponentProps<typeof Ionicons>['name']
 
-// The same buckets and thresholds as web's toy-library-client.tsx, now chips.
-type ConditionBucket = 'good' | 'fair' | 'well-loved'
-const CONDITIONS: { value: ConditionBucket; label: string }[] = [
-  { value: 'good', label: 'Good (7–10)' },
-  { value: 'fair', label: 'Fair (4–6)' },
-  { value: 'well-loved', label: 'Well-loved (1–3)' },
-]
-
-function matchesCondition(condition: number, bucket: ConditionBucket | null): boolean {
-  if (!bucket) return true
-  if (bucket === 'good') return condition >= 7
-  if (bucket === 'fair') return condition >= 4 && condition <= 6
-  return condition <= 3
+/** The board's grade look: one icon and tint per word. The words are types'. */
+const GRADE_LOOK: Record<GradeKey, { icon: IconName; bg: string }> = {
+  'like-new': { icon: 'sparkles-outline', bg: theme.colors.successSoft },
+  good: { icon: 'checkmark-circle-outline', bg: theme.colors.mintSoft },
+  'well-loved': { icon: 'heart-outline', bg: theme.colors.honeySoft },
+  'needs-fix': { icon: 'build-outline', bg: theme.colors.apricotSoft },
 }
 
-/**
- * The board's condition grade: a description of the toy in words, never a
- * score. Same cut points as the board's GRADE().
- */
 function conditionGrade(c: number): { label: string; icon: IconName; bg: string } {
-  if (c >= 9) return { label: 'Like new', icon: 'sparkles-outline', bg: theme.colors.successSoft }
-  if (c >= 7) return { label: 'Good', icon: 'checkmark-circle-outline', bg: theme.colors.mintSoft }
-  if (c >= 5) return { label: 'Well-loved', icon: 'heart-outline', bg: theme.colors.honeySoft }
-  return { label: 'Needs a fix', icon: 'build-outline', bg: theme.colors.apricotSoft }
+  const g = gradeOf(c)
+  return { label: g.label, ...GRADE_LOOK[g.key] }
 }
 
 const TINTS = [
@@ -74,7 +61,7 @@ export function ToyLibraryScreen() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
-  const [condition, setCondition] = useState<ConditionBucket | null>(null)
+  const [condition, setCondition] = useState<GradeKey | null>(null)
   const [switchAdaptedOnly, setSwitchAdaptedOnly] = useState(false)
   const [availableOnly, setAvailableOnly] = useState(false)
   const [newest, setNewest] = useState(false)
@@ -129,7 +116,7 @@ export function ToyLibraryScreen() {
   const visible = toys.filter(
     (t) =>
       (!q || t.name.toLowerCase().includes(q)) &&
-      matchesCondition(t.condition, condition) &&
+      (!condition || gradeOf(t.condition).key === condition) &&
       (!switchAdaptedOnly || t.switch_adapted) &&
       // A person's toy is one unit; an organisation's may run out without the
       // row going away, and that is the only "not available" a public toy has.
@@ -207,13 +194,13 @@ export function ToyLibraryScreen() {
               ) : (
                 <Chip variant="filter" icon="navigate-outline" label="Add your postcode" active={false} onPress={() => router.push('/account')} />
               )}
-              {CONDITIONS.map((c) => (
+              {GRADES.map((g) => (
                 <Chip
-                  key={c.value}
+                  key={g.key}
                   variant="filter"
-                  label={c.label}
-                  active={condition === c.value}
-                  onPress={() => setCondition((cur) => (cur === c.value ? null : c.value))}
+                  label={g.label}
+                  active={condition === g.key}
+                  onPress={() => setCondition((cur) => (cur === g.key ? null : g.key))}
                 />
               ))}
             </ScrollView>
