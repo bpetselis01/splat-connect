@@ -40,6 +40,8 @@ describe('GET /api/public/organizations', () => {
     expect(Object.keys(found!).sort()).toEqual([
       'description',
       'id',
+      // 099. Whole km, null without a signed-in `near`; never the postcode.
+      'km',
       'name',
       'recycling_materials',
       'recycling_note',

@@ -24,6 +24,7 @@ import { Hono } from 'hono'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { ledOrgIds } from '../toy-access.js'
+import { readNear, byDistance } from '../distance.js'
 import { PHOTO_MIME, PHOTO_MAX_BYTES } from './upload.js'
 import { PRINT_MATERIALS } from '@splat-connect/types'
 import type { PrinterStats, TestPrint } from '@splat-connect/types'
@@ -32,7 +33,7 @@ import type { AuthVariables } from '../middleware/auth.js'
 const printers = new Hono<{ Variables: AuthVariables }>()
 
 const SELECT =
-  'id, owner_id, owner_org_id, name, materials, bed_x, bed_y, bed_z, suburb, state, accepting, capacity, notes, filament_cents_per_g, rate_note, created_at, updated_at, printer_stats, verified'
+  'id, owner_id, owner_org_id, name, materials, bed_x, bed_y, bed_z, suburb, state, postcode, accepting, capacity, notes, filament_cents_per_g, rate_note, created_at, updated_at, printer_stats, verified'
 
 type Row = {
   id: string
@@ -45,6 +46,7 @@ type Row = {
   bed_z: number
   suburb: string | null
   state: string | null
+  postcode: string | null
   accepting: boolean
   capacity: number
   notes: string | null
@@ -189,19 +191,29 @@ function invalid(body: Record<string, unknown>, partial: boolean): string | null
       return 'The cost note is 500 characters or fewer.'
     }
   }
+  // 099. Four digits or nothing; a postcode is what distance is measured from.
+  if (has('postcode') && body.postcode !== null && body.postcode !== '') {
+    if (typeof body.postcode !== 'string' || !/^\d{4}$/.test(body.postcode.trim())) {
+      return 'Postcode is four digits.'
+    }
+  }
   return null
 }
 
 /**
  * GET /api/printers
  *
- * Every machine, newest first, with its owner's name and how full it is.
+ * Every machine, newest first — or nearest first with `near` (099) — with its
+ * owner's name and how full it is. The postcode decides the km and is then
+ * dropped: it is the owner's, and only they see it (/mine, /:id).
  * Deliberately not filtered to "accepting": a requester choosing where to send
  * a job is better served by seeing a full machine marked full than by a list
  * that silently omits it and looks empty.
  */
 // PENDING(locations-and-distance): distance from the asker needs a stored location, not a suburb.
 printers.get('/', async (c) => {
+  const near = readNear((key) => c.req.query(key))
+  if (typeof near === 'string') return c.json({ error: near }, 400)
   const admin = createAdminClient()
   const { data, error } = await admin
     .from('printers')
@@ -217,8 +229,9 @@ printers.get('/', async (c) => {
     ),
     ownerNames(admin, rows),
   ])
+  const ranked = await byDistance(rows, (r) => r.postcode, near)
   return c.json(
-    rows.map((r) => ({
+    ranked.map(({ postcode: _postcode, ...r }) => ({
       ...r,
       owner_name: r.owner_id ? names.people.get(r.owner_id) ?? null : null,
       org_name: r.owner_org_id ? names.orgs.get(r.owner_org_id) ?? null : null,
@@ -286,12 +299,19 @@ printers.get('/:id', async (c) => {
   if (!data) return c.json({ error: 'Not found' }, 404)
 
   const row = data as unknown as Row
-  const [counts, names] = await Promise.all([
+  const userId = c.get('userId')
+  const [counts, names, orgs] = await Promise.all([
     openJobCounts(admin, [row.id]),
     ownerNames(admin, [row]),
+    row.owner_org_id ? ledOrgIds(admin, userId) : Promise.resolve([] as string[]),
   ])
+  // The owner's form reads the postcode back; nobody else is told where a
+  // machine is beyond its suburb.
+  const mine = row.owner_id === userId || (!!row.owner_org_id && orgs.includes(row.owner_org_id))
+  const { postcode, ...shown } = row
   return c.json({
-    ...row,
+    ...shown,
+    ...(mine ? { postcode } : {}),
     owner_name: row.owner_id ? names.people.get(row.owner_id) ?? null : null,
     org_name: row.owner_org_id ? names.orgs.get(row.owner_org_id) ?? null : null,
     open_jobs: counts.get(row.id) ?? 0,
@@ -406,6 +426,7 @@ printers.post('/', async (c) => {
         typeof body.filament_cents_per_g === 'number' ? body.filament_cents_per_g : null,
       rate_note:
         typeof body.rate_note === 'string' && body.rate_note.trim() ? body.rate_note.trim() : null,
+      postcode: typeof body.postcode === 'string' ? body.postcode.trim() || null : null,
     })
     .select('id')
     .maybeSingle()
@@ -440,7 +461,7 @@ printers.patch('/:id', async (c) => {
   ] as const) {
     if (Object.hasOwn(body, field)) patch[field] = body[field]
   }
-  for (const field of ['suburb', 'state', 'notes', 'rate_note'] as const) {
+  for (const field of ['suburb', 'state', 'notes', 'rate_note', 'postcode'] as const) {
     if (Object.hasOwn(body, field)) {
       patch[field] = typeof body[field] === 'string' && (body[field] as string).trim()
         ? (body[field] as string).trim()

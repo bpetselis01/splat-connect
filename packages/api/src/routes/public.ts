@@ -3,13 +3,14 @@
  * client, so RLS enforces status='approved'/'published' as a second, database-level
  * backstop behind each query's own explicit filter.
  */
-import { Hono } from 'hono'
+import { Hono, type Context } from 'hono'
 import { nameFormerContributors } from '../former-contributor.js'
 import { chunk } from '../chunk.js'
 import { createAnonClient, createAdminClient } from '../supabase/client.js'
 import { atCapacityToyIds } from '../toy-access.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { notePhotoUrl } from './tutorial-notes.js'
+import { readNear, byDistance, type Near } from '../distance.js'
 import { buildCalendar, contributorBadges, readMinutes } from '@splat-connect/types'
 import type {
   ImpactSummary,
@@ -170,7 +171,41 @@ publicRoutes.get('/tutorials/:id/notes', async (c) => {
   )
 })
 
+/**
+ * pickup_postcode of these profiles and organisations, by id (099). Admin
+ * client: neither column is public, and only a km built from it leaves here.
+ */
+async function pickupPostcodes(people: string[], orgs: string[]): Promise<Map<string, string | null>> {
+  const admin = createAdminClient()
+  const reads = [
+    ...chunk([...new Set(people)]).map((ids) => admin.from('profiles').select('id, pickup_postcode').in('id', ids)),
+    ...chunk([...new Set(orgs)]).map((ids) => admin.from('organizations').select('id, pickup_postcode').in('id', ids)),
+  ]
+  const results = await Promise.all(reads)
+  return new Map(
+    results.flatMap((r) => (r.data ?? []) as Array<{ id: string; pickup_postcode: string | null }>).map((x) => [x.id, x.pickup_postcode])
+  )
+}
+
+/**
+ * `near` and `within` for a public list (099), or the 400's sentence. Honoured
+ * only for a signed-in caller: these routes take no session, and a radius
+ * answered for anyone lets a stranger narrow it until a member's toy drops out
+ * — bisecting their postcode. Signed out, the list is what it was before.
+ */
+async function publicNear(c: Context): Promise<Near | string> {
+  const near = readNear((key) => c.req.query(key))
+  if (typeof near === 'string' || !near.near) return near
+  const header = c.req.header('Authorization')
+  const { data } = header?.startsWith('Bearer ')
+    ? await createAdminClient().auth.getUser(header.slice(7))
+    : { data: { user: null } }
+  return data.user ? near : { near: null, within: null }
+}
+
 publicRoutes.get('/toys', async (c) => {
+  const near = await publicNear(c)
+  if (typeof near === 'string') return c.json({ error: near }, 400)
   const supabase = createAnonClient()
   const { data, error } = await supabase
     .from('toys')
@@ -184,7 +219,15 @@ publicRoutes.get('/toys', async (c) => {
   const unavailable = await atCapacityToyIds(createAdminClient(), null, true)
   if (unavailable === null) return c.json({ error: 'Failed to load toys' }, 500)
   const hidden = new Set(unavailable)
-  return c.json((data ?? []).filter((t) => !hidden.has(t.id)))
+  const shown = (data ?? []).filter((t) => !hidden.has(t.id))
+  // Postcodes are read only when somebody asked for distance.
+  const postcodes = near.near
+    ? await pickupPostcodes(
+        shown.map((t) => t.owner_id).filter((id): id is string => !!id),
+        shown.map((t) => t.owner_org_id).filter((id): id is string => !!id)
+      )
+    : new Map<string, string | null>()
+  return c.json(await byDistance(shown, (t) => postcodes.get(t.owner_org_id ?? t.owner_id) ?? null, near))
 })
 
 publicRoutes.get('/toys/:id', async (c) => {
@@ -512,6 +555,8 @@ publicRoutes.get('/impact', async (c) => {
  * comment on packages/web/app/organizations/page.tsx.
  */
 publicRoutes.get('/organizations', async (c) => {
+  const near = await publicNear(c)
+  if (typeof near === 'string') return c.json({ error: near }, 400)
   const supabase = createAnonClient()
   const { data, error } = await supabase
     .from('organizations')
@@ -527,7 +572,9 @@ publicRoutes.get('/organizations', async (c) => {
     console.error('[public/organizations] read failed:', error.message)
     return c.json([], 200)
   }
-  return c.json(data ?? [])
+  const orgs = data ?? []
+  const postcodes = near.near ? await pickupPostcodes([], orgs.map((o) => o.id)) : new Map<string, string | null>()
+  return c.json(await byDistance(orgs, (o) => postcodes.get(o.id) ?? null, near))
 })
 
 /**

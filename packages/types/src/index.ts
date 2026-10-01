@@ -425,6 +425,10 @@ export interface Printer {
    *  copied onto the job at accept, exactly as 028 does for a toy handover. */
   suburb: string | null
   state: string | null
+  /** 099. Four digits; distance is measured from it. The owner's only: on
+   *  /api/printers/mine and an owner's /:id, never in the list. Optional:
+   *  fixtures predate it. */
+  postcode?: string | null
   accepting: boolean
   capacity: number
   notes: string | null
@@ -448,6 +452,8 @@ export interface PrinterWithOwner extends Printer {
   verified?: boolean
   /** 098, on /api/printers/mine only. */
   test_print?: TestPrint | null
+  /** 099. Whole km from the viewer's postcode; null when either is unknown or none was asked for. */
+  km?: number | null
 }
 
 /** The materials a printer can declare. Presentational, so it lives here
