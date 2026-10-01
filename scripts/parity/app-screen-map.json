@@ -857,7 +857,15 @@
   "group": "push",
   "boardRoute": "organisation/[tutorialId]",
   "route": "/organisation/[tutorialId]",
-  "role": "leader"
+  "role": "leader",
+  "explained": [
+   {
+    "type": "copy",
+    "match": "board paragraphs absent",
+    "why": "intended",
+    "reason": "The board runs title, author, difficulty and minutes into one sentence; the app draws them as the title, badges and byline above the description, so no single paragraph matches."
+   }
+  ]
  },
  {
   "id": "org_toys",
