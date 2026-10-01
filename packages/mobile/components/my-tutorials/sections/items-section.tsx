@@ -18,7 +18,6 @@ import { TextField } from '../../ui/TextField'
 import { Button } from '../../ui/Button'
 import { ErrorRow } from '../../ui/ErrorRow'
 import { SectionFooter } from '../section-footer'
-import { PendingButton } from '../../ui/pending'
 import { DraftGate } from './draft-gate'
 
 const NOUN_LABEL = { parts: 'Part', tools: 'Tool' } as const
@@ -39,6 +38,7 @@ function ItemsEditor({ noun }: { noun: 'parts' | 'tools' }) {
   const withQuantity = noun === 'parts'
   const singular = NOUN_LABEL[noun]
 
+  const [linksOpen, setLinksOpen] = useState<number | null>(null)
   const [rows, setRows] = useState<ItemRow[]>(() =>
     ((tutorial?.[noun] ?? []) as ItemRow[]).map((r) => ({
       name: r.name,
@@ -98,7 +98,14 @@ function ItemsEditor({ noun }: { noun: 'parts' | 'tools' }) {
                   </Pressable>
                 </View>
               ) : null}
-              {noun === 'parts' ? <PendingButton pending="editor-part-buy-links" label="Buy links" variant="ghost" /> : null}
+              {noun === 'parts' ? (
+                <Button
+                  label={`Buy links${row.buy_links.length ? ` (${row.buy_links.length})` : ''}`}
+                  accessibilityLabel={`Buy links for part ${i + 1}`}
+                  variant="ghost"
+                  onPress={() => setLinksOpen((cur) => (cur === i ? null : i))}
+                />
+              ) : null}
               <Pressable
                 testID={`item-optional-${i}`}
                 accessibilityRole="checkbox"
@@ -125,6 +132,38 @@ function ItemsEditor({ noun }: { noun: 'parts' | 'tools' }) {
                 <Ionicons name="close" size={18} color={theme.colors.danger} />
               </Pressable>
             </View>
+            {noun === 'parts' && linksOpen === i ? (
+              <View style={styles.links}>
+                {row.buy_links.map((link, n) => (
+                  <View key={n} style={styles.linkRow}>
+                    <TextField
+                      accessibilityLabel={`Part ${i + 1} link ${n + 1} shop`}
+                      placeholder="Shop, e.g. Jaycar"
+                      value={link.label}
+                      onChangeText={(label) => update(i, { buy_links: row.buy_links.map((l, k) => (k === n ? { ...l, label } : l)) })}
+                    />
+                    <TextField
+                      accessibilityLabel={`Part ${i + 1} link ${n + 1} address`}
+                      placeholder="https://"
+                      autoCapitalize="none"
+                      keyboardType="url"
+                      value={link.url}
+                      onChangeText={(url) => update(i, { buy_links: row.buy_links.map((l, k) => (k === n ? { ...l, url } : l)) })}
+                    />
+                    <Button
+                      label="Remove link"
+                      variant="ghost"
+                      onPress={() => update(i, { buy_links: row.buy_links.filter((_, k) => k !== n) })}
+                    />
+                  </View>
+                ))}
+                <Button
+                  label="+ Add a buy link"
+                  variant="ghost"
+                  onPress={() => update(i, { buy_links: [...row.buy_links, { label: '', url: '' }] })}
+                />
+              </View>
+            ) : null}
             {/* Named rather than silently dropped: replaceItems filters blank
                 names out of the POST, so without this the row looks saved. */}
             {!row.name.trim() ? (
@@ -220,6 +259,8 @@ const styles = StyleSheet.create({
     fontSize: theme.type.caption,
     color: theme.colors.muted,
   },
+  links: { marginTop: theme.spacing(3), gap: theme.spacing(2) },
+  linkRow: { gap: theme.spacing(1) },
   remove: { marginLeft: 'auto' },
   blankHint: {
     fontFamily: theme.fonts.regular,

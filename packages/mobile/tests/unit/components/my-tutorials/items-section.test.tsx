@@ -133,3 +133,14 @@ it('says the guide did not load, and retries, when the draft fails', () => {
   expect(mockDraft.reload).toHaveBeenCalled()
   mockDraft.loadError = false
 })
+
+it('edits a part\u2019s buy links on the phone', () => {
+  render(<ItemsSection noun="parts" />)
+  fireEvent.press(screen.getByRole('button', { name: 'Buy links for part 1' }))
+  fireEvent.press(screen.getByRole('button', { name: '+ Add a buy link' }))
+  fireEvent.changeText(screen.getByLabelText('Part 1 link 1 shop'), 'Jaycar')
+  fireEvent.changeText(screen.getByLabelText('Part 1 link 1 address'), 'https://jaycar.com.au/x')
+  expect(mockDraft.replaceItems).toHaveBeenLastCalledWith('parts', [
+    expect.objectContaining({ name: 'Switch', buy_links: [{ label: 'Jaycar', url: 'https://jaycar.com.au/x' }] }),
+  ])
+})

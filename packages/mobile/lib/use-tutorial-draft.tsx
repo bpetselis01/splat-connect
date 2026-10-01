@@ -129,19 +129,21 @@ function useTutorialDraft(id: string): TutorialDraft {
 
   async function postItems(noun: 'parts' | 'tools', rows: ItemRow[]) {
     const clean = rows.filter((r) => r.name.trim())
+    // A link is sent only once it has an address: a half-typed row must not reach the web as a dead link.
+    const links = (r: ItemRow) => r.buy_links.filter((l) => l.url.trim())
     if (noun === 'parts') {
       const saved = await apiClient.post<Part[]>(`/api/tutorials/${id}/parts`, {
-        parts: clean.map(({ name, quantity, is_optional, buy_links }) => ({
-          name,
-          quantity: quantity ?? 1,
-          is_optional,
-          buy_links,
+        parts: clean.map((r) => ({
+          name: r.name,
+          quantity: r.quantity ?? 1,
+          is_optional: r.is_optional,
+          buy_links: links(r),
         })),
       })
       setTutorial((prev) => (prev ? { ...prev, parts: saved } : prev))
     } else {
       const saved = await apiClient.post<Tool[]>(`/api/tutorials/${id}/tools`, {
-        tools: clean.map(({ name, is_optional, buy_links }) => ({ name, is_optional, buy_links })),
+        tools: clean.map((r) => ({ name: r.name, is_optional: r.is_optional, buy_links: links(r) })),
       })
       setTutorial((prev) => (prev ? { ...prev, tools: saved } : prev))
     }

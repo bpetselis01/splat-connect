@@ -461,6 +461,7 @@ export const PENDING = {
     needs: "Backing field in the phone editor [ui,api]",
   },
   'editor-part-buy-links': {
+    shipped: true,
     title: "Buy links",
     blurb: "Editing where to buy a part from the phone is coming. Use the web editor for now.",
     kind: "build",
