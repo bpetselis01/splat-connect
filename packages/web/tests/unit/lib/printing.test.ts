@@ -1,5 +1,14 @@
 import { describe, it, expect } from 'vitest'
-import { printCostCents, costRange, answerBy, needsAction, printRequestExpired } from '@splat-connect/types'
+import {
+  printCostCents,
+  costRange,
+  answerBy,
+  needsAction,
+  printRequestExpired,
+  machineStatsLines,
+  orgPrintFacts,
+  statsLine,
+} from '@splat-connect/types'
 
 describe('printCostCents', () => {
   it('sums grams × quantity × rate', () => {
@@ -53,5 +62,33 @@ describe('answer by', () => {
     } as const
     expect(needsAction({ ...tx, created_at: ago(1) }, 'p')).toBe(true)
     expect(needsAction({ ...tx, created_at: ago(8) }, 'p')).toBe(false)
+  })
+})
+
+const stats = { jobs: 21, median_days: 3, fitted: 20, fit_answers: 21, colours: ['Black', 'White', 'Blue'] }
+
+describe('printer stats', () => {
+  it('reads as the find card says it', () => {
+    expect(statsLine(stats)).toBe('21 jobs · ~3 days')
+    expect(statsLine({ ...stats, jobs: 1, median_days: 1 })).toBe('1 job · ~1 day')
+  })
+  it('is hidden below one completed job', () => {
+    expect(statsLine({ ...stats, jobs: 0, median_days: null })).toBeNull()
+    expect(machineStatsLines({ ...stats, jobs: 0 })).toEqual([])
+    expect(orgPrintFacts(undefined)).toEqual([])
+  })
+  it('gives the machine picker its three lines', () => {
+    expect(machineStatsLines(stats)).toEqual([
+      '21 completed · median 3 days',
+      '20 of 21 fitted first time',
+      'Colours: Black, White, Blue',
+    ])
+    expect(machineStatsLines({ ...stats, fit_answers: 0, colours: [] })).toEqual(['21 completed · median 3 days'])
+  })
+  it('gives an organisation Turnaround and Fit', () => {
+    expect(orgPrintFacts(stats)).toEqual([
+      { k: 'Turnaround', v: 'Median 3 days' },
+      { k: 'Fit', v: '20 of 21 first time' },
+    ])
   })
 })

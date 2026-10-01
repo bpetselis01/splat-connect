@@ -18,7 +18,7 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { PrinterWithOwner, StlFile, Tutorial } from '@splat-connect/types'
-import { initials, MAX_PRINTERS_PER_REQUEST, plural } from '@splat-connect/types'
+import { initials, MAX_PRINTERS_PER_REQUEST, plural, statsLine } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { useCapabilities } from '../../lib/capabilities'
 import { theme } from '../../lib/theme'
@@ -175,12 +175,11 @@ export function FindPrinterScreen({ guideId }: { guideId?: string }) {
                   <View style={styles.flex}>
                     <Text style={styles.printerName}>{who}</Text>
                     <Text style={styles.meta}>
-                      {[p.owner_org_id ? 'Organisation' : 'Contributor', [p.suburb, p.state].filter(Boolean).join(' ') || null, p.name]
+                      {[p.owner_org_id ? 'Organisation' : 'Contributor', [p.suburb, p.state].filter(Boolean).join(' ') || null, p.name, statsLine(p.printer_stats)]
                         .filter(Boolean)
                         .join(' · ')}
                     </Text>
                   </View>
-                  {/* PENDING(printer-stats): "N jobs · median N days" under the name. */}
                   <Badge status={avail.tone} label={avail.label} />
                 </View>
                 <View style={styles.tags}>

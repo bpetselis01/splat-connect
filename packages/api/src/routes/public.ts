@@ -18,6 +18,7 @@ import type {
   ImpactRecent,
   ContributorProfile,
   OrgPublicProfile,
+  PrinterStats,
 } from '@splat-connect/types'
 
 const publicRoutes = new Hono()
@@ -859,6 +860,14 @@ async function orgProfileExtras(id: string, backed: Array<{ id: string }>) {
     return null
   }
 
+  // Turnaround and Fit (095), over every machine the organisation owns — the
+  // accepting filter above is for the "They print" card, not for its record.
+  const { data: machines } = await admin.from('printers').select('id').eq('owner_org_id', id)
+  const machineIds = (machines ?? []).map((m) => m.id as string)
+  const { data: printStats } = machineIds.length
+    ? await admin.rpc('print_job_stats', { p_printer_ids: machineIds })
+    : { data: null }
+
   // Leaders agreed to the org-leader terms, which say their names go on the
   // guides they back. Name and that count, nothing else.
   const leaderIds = (leaders.data ?? []).map((l) => l.user_id as string)
@@ -895,6 +904,7 @@ async function orgProfileExtras(id: string, backed: Array<{ id: string }>) {
     doors: (doors.data ?? []) as OrgPublicProfile['doors'],
     rate_lines: (rates.data ?? []) as OrgPublicProfile['rate_lines'],
     printers: (printers.data ?? []) as OrgPublicProfile['printers'],
+    print_stats: (printStats as PrinterStats | null) ?? null,
     fromFamilies: [
       ...(thanks.data ?? []).map((t) => ({
         quote: t.note as string,

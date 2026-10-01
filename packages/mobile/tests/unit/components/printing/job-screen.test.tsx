@@ -112,3 +112,15 @@ it('asks the family whether it fitted once collected', async () => {
   fireEvent.press(screen.getByText('Fitted'))
   await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions/j1/print-fit', { fit: 'fitted' }))
 })
+
+it('shows the family the printer’s record on the printer card', async () => {
+  mockGet.mockImplementation((path: string) =>
+    path === '/api/toy-transactions/j1'
+      ? Promise.resolve(job({ status: 'accepted', printer_id: 'p1' }))
+      : path === '/api/printers/p1'
+        ? Promise.resolve({ id: 'p1', filament_cents_per_g: null, rate_note: null, printer_stats: { jobs: 4, median_days: 6, fitted: 0, fit_answers: 0, colours: [] } })
+        : Promise.reject(new Error('n/a'))
+  )
+  render(<PrintJobScreen id="j1" />)
+  expect(await screen.findByText('4 jobs · ~6 days')).toBeTruthy()
+})

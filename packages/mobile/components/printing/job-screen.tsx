@@ -17,8 +17,8 @@ import { useCallback, useRef, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Image, Pressable, type TextInput } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import type { Printer, ToyTransaction, ToyTransactionDetail, ToyTransactionMessage } from '@splat-connect/types'
-import { apiMessage, formatCents, isOwnerSide, plural } from '@splat-connect/types'
+import type { PrinterStats, PrinterWithOwner, ToyTransaction, ToyTransactionDetail, ToyTransactionMessage } from '@splat-connect/types'
+import { apiMessage, formatCents, isOwnerSide, plural, statsLine } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { supabase } from '../../lib/supabase'
 import { useCapabilities } from '../../lib/capabilities'
@@ -53,7 +53,7 @@ export function PrintJobScreen({ id }: { id: string }) {
   const router = useRouter()
   const { caps } = useCapabilities()
   const [tx, setTx] = useState<ToyTransactionDetail | null>(null)
-  const [printer, setPrinter] = useState<Printer | null>(null)
+  const [printer, setPrinter] = useState<PrinterWithOwner | null>(null)
   const [costs, setCosts] = useState<Costs | null>(null)
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -84,7 +84,7 @@ export function PrintJobScreen({ id }: { id: string }) {
       // The side panels are best-effort: a job with no rate or no cost line
       // still reads correctly without them.
       if (fresh.printer_id) {
-        apiClient.get<Printer>(`/api/printers/${fresh.printer_id}`).then(setPrinter, () => {})
+        apiClient.get<PrinterWithOwner>(`/api/printers/${fresh.printer_id}`).then(setPrinter, () => {})
       }
       apiClient.get<Costs>(`/api/exchange-costs/${id}`).then(setCosts, () => {})
       // A storage path in the private print-shots bucket, signed in-process
@@ -202,6 +202,7 @@ export function PrintJobScreen({ id }: { id: string }) {
             tx={tx}
             state={state}
             isPrinter={isPrinter}
+            printerStats={printer?.printer_stats}
             other={other}
             photoUrl={photoUrl}
             busy={busy}
@@ -305,6 +306,7 @@ function StateCard({
   tx,
   state,
   isPrinter,
+  printerStats,
   other,
   photoUrl,
   busy,
@@ -320,6 +322,7 @@ function StateCard({
   tx: ToyTransactionDetail
   state: JobState
   isPrinter: boolean
+  printerStats?: PrinterStats
   other: string
   photoUrl: string | null
   busy: boolean
@@ -361,7 +364,7 @@ function StateCard({
       <Card style={styles.block}>
         <Text style={styles.strong}>{isPrinter ? tx.requester_name : tx.owner_name}</Text>
         {machine ? <Text style={styles.meta}>{machine}</Text> : null}
-        {/* PENDING(printer-stats): the printer's jobs and median days on this card. */}
+        {!isPrinter && statsLine(printerStats) ? <Text style={styles.meta}>{statsLine(printerStats)}</Text> : null}
         {!isPrinter ? <Button label="Message" variant="ghost" onPress={onMessage} /> : null}
         <Text style={styles.body}>
           {isPrinter

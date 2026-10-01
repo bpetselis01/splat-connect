@@ -428,7 +428,18 @@ select * from (values
   ('093 notifications_type_check permits tutorial_noted',
    (select count(*) = 1 from pg_constraint
       where conname = 'notifications_type_check'
-        and pg_get_constraintdef(oid) like '%tutorial_noted%'))
+        and pg_get_constraintdef(oid) like '%tutorial_noted%')),
+
+  -- 095. Both DEFINER (as invoker RLS hides every job and the record reads 0);
+  -- the raw aggregate takes any printer ids, so only the API may call it.
+  -- printers.ts selects printer_stats by name: absent, every printer list 500s.
+  ('095 print_job_stats() is service-role only and printer_stats() is definer',
+   (select count(*) = 2 from pg_proc p
+      where p.pronamespace = 'public'::regnamespace and p.prosecdef
+        and ((p.proname = 'print_job_stats'
+              and not has_function_privilege('authenticated', p.oid, 'execute')
+              and not has_function_privilege('anon', p.oid, 'execute'))
+          or p.proname = 'printer_stats')))
 ) as t(guard, ok)
 where not ok;
 EOSQL

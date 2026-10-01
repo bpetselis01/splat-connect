@@ -21,12 +21,13 @@ import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { ledOrgIds } from '../toy-access.js'
 import { PRINT_MATERIALS } from '@splat-connect/types'
+import type { PrinterStats } from '@splat-connect/types'
 import type { AuthVariables } from '../middleware/auth.js'
 
 const printers = new Hono<{ Variables: AuthVariables }>()
 
 const SELECT =
-  'id, owner_id, owner_org_id, name, materials, bed_x, bed_y, bed_z, suburb, state, accepting, capacity, notes, filament_cents_per_g, rate_note, created_at, updated_at'
+  'id, owner_id, owner_org_id, name, materials, bed_x, bed_y, bed_z, suburb, state, accepting, capacity, notes, filament_cents_per_g, rate_note, created_at, updated_at, printer_stats'
 
 type Row = {
   id: string
@@ -46,6 +47,7 @@ type Row = {
   rate_note: string | null
   created_at: string
   updated_at: string
+  printer_stats: PrinterStats
 }
 
 /**
@@ -168,7 +170,6 @@ function invalid(body: Record<string, unknown>, partial: boolean): string | null
  * a job is better served by seeing a full machine marked full than by a list
  * that silently omits it and looks empty.
  */
-// PENDING(printer-stats): jobs done, median turnaround, first-time fit and colours per printer.
 // PENDING(locations-and-distance): distance from the asker needs a stored location, not a suburb.
 printers.get('/', async (c) => {
   const supabase = createUserClient(c.get('token'))

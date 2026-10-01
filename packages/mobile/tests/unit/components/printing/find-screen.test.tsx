@@ -70,3 +70,15 @@ it('browses without Pick buttons when no guide is given', async () => {
   await screen.findByText('Every request starts from a guide')
   expect(screen.queryByLabelText('Pick Maker A')).toBeNull()
 })
+
+it('shows a printer’s jobs and turnaround under its name', async () => {
+  mockGet.mockImplementation((path: string) =>
+    Promise.resolve(
+      path === '/api/printers'
+        ? [printer('a', { printer_stats: { jobs: 21, median_days: 3, fitted: 20, fit_answers: 21, colours: [] } })]
+        : GUIDE
+    )
+  )
+  render(<FindPrinterScreen guideId="g1" />)
+  expect(await screen.findByText(/21 jobs · ~3 days/)).toBeTruthy()
+})

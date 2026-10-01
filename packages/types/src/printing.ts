@@ -47,3 +47,39 @@ export function printRequestExpired(
     tx.type === 'print' && tx.status === 'requested' && !!tx.created_at && now > Date.parse(answerBy(tx.created_at))
   )
 }
+
+/** 095's printer_stats / print_job_stats. */
+export interface PrinterStats {
+  jobs: number
+  median_days: number | null
+  fitted: number
+  fit_answers: number
+  colours: string[]
+}
+
+const count = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
+
+/** The find and job cards' "21 jobs · ~3 days". Null below one completed job. */
+export function statsLine(s?: PrinterStats | null): string | null {
+  if (!s || s.jobs < 1) return null
+  return s.median_days === null ? count(s.jobs, 'job') : `${count(s.jobs, 'job')} · ~${count(s.median_days, 'day')}`
+}
+
+/** The offer machine picker's lines, in the board's words. */
+export function machineStatsLines(s?: PrinterStats | null): string[] {
+  if (!s || s.jobs < 1) return []
+  return [
+    s.median_days === null ? `${s.jobs} completed` : `${s.jobs} completed · median ${count(s.median_days, 'day')}`,
+    s.fit_answers ? `${s.fitted} of ${s.fit_answers} fitted first time` : null,
+    s.colours.length ? `Colours: ${s.colours.join(', ')}` : null,
+  ].filter((l): l is string => l !== null)
+}
+
+/** Turnaround and Fit on an organisation's profile ("Median 3 days", "29 of 30 first time"). */
+export function orgPrintFacts(s?: PrinterStats | null): Array<{ k: string; v: string }> {
+  if (!s || s.jobs < 1) return []
+  return [
+    s.median_days === null ? null : { k: 'Turnaround', v: `Median ${count(s.median_days, 'day')}` },
+    s.fit_answers ? { k: 'Fit', v: `${s.fitted} of ${s.fit_answers} first time` } : null,
+  ].filter((f): f is { k: string; v: string } => f !== null)
+}

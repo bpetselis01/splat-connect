@@ -122,3 +122,18 @@ it('leaves an expired request off the Requests tab', async () => {
   render(<PrintForOthersScreen />)
   expect(await screen.findByText('Nothing waiting')).toBeTruthy()
 })
+
+it('shows each machine’s record in the picker', async () => {
+  const stats = { jobs: 21, median_days: 3, fitted: 20, fit_answers: 21, colours: ['Black', 'White'] }
+  mockGet.mockImplementation((path: string) =>
+    Promise.resolve(
+      path === '/api/printers/mine'
+        ? [machine('Ender PLA', { materials: ['PLA'] }), machine('Bambu P1S', { bed_x: 256, printer_stats: stats })]
+        : [REQUEST]
+    )
+  )
+  render(<PrintForOthersScreen />)
+  expect(await screen.findByText('21 completed · median 3 days')).toBeTruthy()
+  expect(screen.getByText('20 of 21 fitted first time')).toBeTruthy()
+  expect(screen.getByText('Colours: Black, White')).toBeTruthy()
+})

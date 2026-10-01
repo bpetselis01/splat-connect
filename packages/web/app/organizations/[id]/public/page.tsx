@@ -47,6 +47,7 @@ import { doorLink } from '@/lib/org-profile'
 import {
   formatBuildTime,
   formatCents,
+  orgPrintFacts,
   PAYMENT_METHODS,
   type OrgDoorTarget,
   type OrgPublicProfile,
@@ -553,6 +554,12 @@ export default async function OrgPublicProfilePage({
                       <dd className="m-0 font-extrabold">{materials.join(' · ')}</dd>
                     </>
                   )}
+                  {orgPrintFacts(org.print_stats).map((f) => (
+                    <div key={f.k} className="contents">
+                      <dt className="font-semibold opacity-80">{f.k}</dt>
+                      <dd className="m-0 font-extrabold">{f.v}</dd>
+                    </div>
+                  ))}
                   {rateLines.map((l) => (
                     <div key={l.id} className="contents">
                       <dt className="font-semibold opacity-80">{l.description}</dt>

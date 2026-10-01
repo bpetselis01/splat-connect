@@ -22,6 +22,7 @@ export { isApiError, apiErrorDetail, apiMessage, makeApiClient } from './api-cor
 export type { ApiError } from './api-core'
 export { dateBadge, shortDate, monthHeading, monthKey, longDate, formatTimeRange, isPast } from './dates'
 import { printRequestExpired } from './printing'
+import type { PrinterStats } from './printing'
 // Named, not only the `export *` below: the API runs under tsx, which loads
 // this package as CommonJS, and Node cannot see names behind `export *` there.
 export { printCostCents, costRange, PRINT_ANSWER_DAYS, answerBy, printRequestExpired } from './printing'
@@ -439,6 +440,8 @@ export interface PrinterWithOwner extends Printer {
   org_name: string | null
   /** Accepted jobs on this machine right now, against its capacity. */
   open_jobs: number
+  /** 095. Optional: fixtures predate it. */
+  printer_stats?: PrinterStats
 }
 
 /** The materials a printer can declare. Presentational, so it lives here
@@ -2076,6 +2079,8 @@ export interface OrgPublicProfile {
   rate_lines?: OrgRateLine[]
   /** Accepting printers the organisation owns, for the "They print" card. */
   printers?: Array<{ id: string; name: string; materials: string[]; filament_cents_per_g: number | null }>
+  /** 095, over every machine the organisation owns. */
+  print_stats?: PrinterStats | null
   /** 077's counts. */
   thanks_count?: number
   follower_count?: number

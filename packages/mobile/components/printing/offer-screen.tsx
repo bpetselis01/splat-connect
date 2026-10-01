@@ -41,7 +41,7 @@ import { TextField } from '../ui/TextField'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { ErrorRow } from '../ui/ErrorRow'
-import { apiMessage, pickupAddress, plural, printSettingsLine } from '@splat-connect/types'
+import { apiMessage, machineStatsLines, pickupAddress, plural, printSettingsLine } from '@splat-connect/types'
 
 type Tab = 'requests' | 'jobs' | 'printers'
 
@@ -399,6 +399,11 @@ function IncomingCard({
                     <Badge status={f.ok ? 'completed' : 'requested'} label={f.ok ? 'Fits' : 'Needs a change'} />
                   </View>
                   <Text style={styles.meta}>{f.why}</Text>
+                  {machineStatsLines(m.printer_stats).map((line) => (
+                    <Text key={line} style={styles.meta}>
+                      {line}
+                    </Text>
+                  ))}
                 </View>
               </Pressable>
             )

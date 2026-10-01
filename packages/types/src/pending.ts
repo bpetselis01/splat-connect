@@ -278,6 +278,7 @@ export const PENDING = {
     needs: "Machines, forms, min/max, turnaround, you get, hours, door; max check [ui,api,db]",
   },
   'printer-stats': {
+    shipped: true,
     title: "Printer track record",
     blurb: "Jobs done, turnaround and first-time fit for each printer are coming.",
     kind: "build",

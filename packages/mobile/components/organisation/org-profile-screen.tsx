@@ -17,7 +17,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet, Image } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import { PAYMENT_METHODS, formatCents, apiMessage, firstName } from '@splat-connect/types'
+import { PAYMENT_METHODS, formatCents, apiMessage, firstName, orgPrintFacts } from '@splat-connect/types'
 import type { OrgDoorTarget, OrgPublicProfile, OrgRelationship, Tutorial } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { useAuth } from '../../lib/auth-context'
@@ -189,9 +189,11 @@ export function OrgProfileScreen({ id }: { id: string }) {
           {prints ? (
             <View style={[styles.panel, { backgroundColor: theme.colors.honeySoft }]}>
               <Text style={styles.panelTitle}>They print — you cover the filament</Text>
-              {/* PENDING(printer-stats): Turnaround (median days) and Fit ("29 of 30 first time"); "Ask them to print" should preselect this org. */}
               {printers.length > 0 ? <Fact k="Machines" v={printers.map((p) => p.name).join(' · ')} /> : null}
               {materials.length > 0 ? <Fact k="Materials" v={materials.join(' · ')} /> : null}
+              {orgPrintFacts(org.print_stats).map((f) => (
+                <Fact key={f.k} k={f.k} v={f.v} />
+              ))}
               {rateLines.map((l) => (
                 <Fact
                   key={l.id}
