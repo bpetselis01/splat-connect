@@ -28,7 +28,7 @@ import type {
   ToyTransactionDetail,
   ToyTransactionMessage,
 } from '@splat-connect/types'
-import { isOwnerSide, needsAction, actionLabel, formatCents, apiMessage } from '@splat-connect/types'
+import { isOwnerSide, needsAction, actionLabel, formatCents, apiMessage, printRequestExpired } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { useCapabilities } from '../../lib/capabilities'
@@ -333,7 +333,7 @@ export function ExchangeThreadScreen({ id }: { id: string }) {
                   : `Exchange with ${otherPartyName}`}
               </Text>
             </View>
-            <Badge status={tx.status} />
+            {printRequestExpired(tx) ? <Badge status="withdrawn" label="Expired" /> : <Badge status={tx.status} />}
           </Card>
 
           {costLines.length > 0 ? (
@@ -433,7 +433,7 @@ export function ExchangeThreadScreen({ id }: { id: string }) {
                 </View>
               ) : null}
 
-              {tx.status === 'requested' && isOwner ? (
+              {tx.status === 'requested' && isOwner && !printRequestExpired(tx) ? (
                 pickup ? (
                   <View style={styles.actionBlock}>
                     <Text style={styles.blockTitle}>Where should they collect it?</Text>

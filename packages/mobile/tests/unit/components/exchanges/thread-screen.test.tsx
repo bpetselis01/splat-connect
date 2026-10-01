@@ -310,6 +310,17 @@ describe('ExchangeThreadScreen — requested, owner side', () => {
   })
 })
 
+describe('ExchangeThreadScreen — an expired print request', () => {
+  it('reads Expired and offers the owner no Accept', async () => {
+    mockGet.mockResolvedValue(
+      detail({ type: 'print', created_at: new Date(Date.now() - 8 * 864e5).toISOString() })
+    )
+    await open()
+    expect(screen.getByText('Expired')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Accept' })).toBeNull()
+  })
+})
+
 describe('ExchangeThreadScreen — requested, requester side', () => {
   it('offers Withdraw request and posts /withdraw, with no owner controls', async () => {
     mockGet.mockResolvedValue(detail({ owner_id: 'owner1', requester_id: 'viewer1' }))
