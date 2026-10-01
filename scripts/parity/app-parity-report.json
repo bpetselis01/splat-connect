@@ -1,7 +1,113 @@
 {
- "at": "2026-10-01T12:25:05.278Z",
+ "at": "2026-10-01T17:22:52.731Z",
  "live": "http://localhost:3112",
  "screens": [
+  {
+   "id": "challenge_detail",
+   "name": "Challenge",
+   "group": "push",
+   "route": "/explore/challenges/4dcb8edc-42f6-4b38-b83a-2ed94ad345c6",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/explore/challenges/4dcb8edc-42f6-4b38-b83a-2ed94ad345c6",
+   "explained": [
+    {
+     "type": "radius",
+     "severity": "medium",
+     "what": "card radius",
+     "board": "16px",
+     "live": "20px",
+     "why": "harness",
+     "reason": "The board nests its cards (a bordered box inside the card), so its leaf cards are inner boxes without shadow; the app's are the outer cards. Counting every card fixes it here and breaks nine web screens. The 16px leaf is the status box, which the app draws at 16 in the same tint inside its card."
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "none",
+     "live": "set",
+     "why": "harness",
+     "reason": "The board nests its cards (a bordered box inside the card), so its leaf cards are inner boxes without shadow; the app's are the outer cards. Counting every card fixes it here and breaks nine web screens."
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "card background",
+     "board": "rgb(223,243,234)",
+     "live": "rgb(255,255,255)",
+     "why": "harness",
+     "reason": "The board nests its cards (a bordered box inside the card), so its leaf cards are inner boxes without shadow; the app's are the outer cards. Counting every card fixes it here and breaks nine web screens."
+    }
+   ],
+   "boardHeadings": 3,
+   "liveHeadings": 2
+  },
+  {
+   "id": "challenge_new",
+   "name": "Submit an idea",
+   "group": "push",
+   "route": "/explore/challenges/new",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/explore/challenges/new",
+   "explained": [],
+   "boardHeadings": 0,
+   "liveHeadings": 0
+  },
+  {
+   "id": "makers_wanted",
+   "name": "Makers wanted",
+   "group": "push",
+   "route": "/explore/makers-wanted",
+   "findings": [
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "set",
+     "live": "none"
+    }
+   ],
+   "role": "parent",
+   "finalUrl": "/explore/makers-wanted",
+   "explained": [],
+   "boardHeadings": 0,
+   "liveHeadings": 1
+  },
+  {
+   "id": "mw_new",
+   "name": "Ask for a build",
+   "group": "modal",
+   "route": "/explore/makers-wanted/new",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/explore/makers-wanted/new",
+   "explained": [],
+   "boardHeadings": 0,
+   "liveHeadings": 0
+  },
+  {
+   "id": "build_thread",
+   "name": "Build thread",
+   "group": "push",
+   "route": "/exchanges/build/a0daf7d7-6f2e-43ff-abe1-e2021f5514ff",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/exchanges/build/a0daf7d7-6f2e-43ff-abe1-e2021f5514ff",
+   "explained": [
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "none",
+     "live": "set",
+     "why": "harness",
+     "reason": "The board nests its cards (a bordered box inside the card), so its leaf cards are inner boxes without shadow; the app's are the outer cards. Counting every card fixes it here and breaks nine web screens."
+    }
+   ],
+   "boardHeadings": 2,
+   "liveHeadings": 1
+  },
   {
    "id": "toy_library",
    "name": "Toy library",
@@ -53,28 +159,6 @@
     }
    ],
    "boardHeadings": 3,
-   "liveHeadings": 1
-  },
-  {
-   "id": "build_thread",
-   "name": "Build thread",
-   "group": "push",
-   "route": "/exchanges/build/c51701d0-5f13-46f5-a8c0-12563918216b",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/exchanges/build/c51701d0-5f13-46f5-a8c0-12563918216b",
-   "explained": [
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "none",
-     "live": "set",
-     "why": "harness",
-     "reason": "The board nests its cards (a bordered box inside the card), so its leaf cards are inner boxes without shadow; the app's are the outer cards. Counting every card fixes it here and breaks nine web screens."
-    }
-   ],
-   "boardHeadings": 2,
    "liveHeadings": 1
   },
   {
@@ -469,126 +553,6 @@
    "explained": [],
    "boardHeadings": 5,
    "liveHeadings": 1
-  },
-  {
-   "id": "challenge_detail",
-   "name": "Challenge",
-   "group": "push",
-   "route": "/explore/challenges/794f67ad-4e20-44a0-a000-2e77373de151",
-   "findings": [
-    {
-     "type": "shadow",
-     "severity": "medium",
-     "what": "no button on live carries a shadow",
-     "board": "set",
-     "live": "none"
-    }
-   ],
-   "role": "parent",
-   "finalUrl": "/explore/challenges/794f67ad-4e20-44a0-a000-2e77373de151",
-   "explained": [
-    {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "16px",
-     "live": "20px",
-     "why": "harness",
-     "reason": "The board nests its cards (a bordered box inside the card), so its leaf cards are inner boxes without shadow; the app's are the outer cards. Counting every card fixes it here and breaks nine web screens. The 16px leaf is the status box, which the app draws at 16 in the same tint inside its card."
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "none",
-     "live": "set",
-     "why": "harness",
-     "reason": "The board nests its cards (a bordered box inside the card), so its leaf cards are inner boxes without shadow; the app's are the outer cards. Counting every card fixes it here and breaks nine web screens."
-    },
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "card background",
-     "board": "rgb(223,243,234)",
-     "live": "rgb(255,255,255)",
-     "why": "harness",
-     "reason": "The board nests its cards (a bordered box inside the card), so its leaf cards are inner boxes without shadow; the app's are the outer cards. Counting every card fixes it here and breaks nine web screens."
-    }
-   ],
-   "boardHeadings": 3,
-   "liveHeadings": 2
-  },
-  {
-   "id": "challenge_new",
-   "name": "Submit an idea",
-   "group": "push",
-   "route": "/explore/challenges/new",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/explore/challenges/new",
-   "explained": [
-    {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "16px",
-     "live": "20px",
-     "why": "intended",
-     "reason": "The white card is What we can't take on: families learn up front what SPLAT won't build (mains, load-bearing, swallowable, medical), as on web."
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "none",
-     "live": "set",
-     "why": "intended",
-     "reason": "The What we can't take on card, as on web."
-    },
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "card background",
-     "board": "rgba(0,0,0,0)",
-     "live": "rgb(255,255,255)",
-     "why": "intended",
-     "reason": "The What we can't take on card, as on web."
-    }
-   ],
-   "boardHeadings": 0,
-   "liveHeadings": 0
-  },
-  {
-   "id": "makers_wanted",
-   "name": "Makers wanted",
-   "group": "push",
-   "route": "/explore/makers-wanted",
-   "findings": [
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "set",
-     "live": "none"
-    }
-   ],
-   "role": "parent",
-   "finalUrl": "/explore/makers-wanted",
-   "explained": [],
-   "boardHeadings": 0,
-   "liveHeadings": 1
-  },
-  {
-   "id": "mw_new",
-   "name": "Ask for a build",
-   "group": "modal",
-   "route": "/explore/makers-wanted/new",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/explore/makers-wanted/new",
-   "explained": [],
-   "boardHeadings": 0,
-   "liveHeadings": 0
   },
   {
    "id": "recycling",
@@ -1188,15 +1152,15 @@
  ],
  "summary": {
   "screens": 61,
-  "clean": 55,
-  "withFindings": 3,
+  "clean": 56,
+  "withFindings": 2,
   "errored": 0,
   "skipped": 3,
-  "findings": 3,
-  "explained": 45,
+  "findings": 2,
+  "explained": 42,
   "byType": {
-   "font": 1,
-   "shadow": 2
+   "shadow": 1,
+   "font": 1
   }
  }
 }

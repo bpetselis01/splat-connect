@@ -334,27 +334,7 @@
   "group": "push",
   "boardRoute": "explore/challenges/new",
   "route": "/explore/challenges/new",
-  "role": "parent",
-  "explained": [
-   {
-    "type": "radius",
-    "match": "card radius",
-    "why": "intended",
-    "reason": "The white card is What we can't take on: families learn up front what SPLAT won't build (mains, load-bearing, swallowable, medical), as on web."
-   },
-   {
-    "type": "shadow",
-    "match": "card shadow",
-    "why": "intended",
-    "reason": "The What we can't take on card, as on web."
-   },
-   {
-    "type": "colour",
-    "match": "card background",
-    "why": "intended",
-    "reason": "The What we can't take on card, as on web."
-   }
-  ]
+  "role": "parent"
  },
  {
   "id": "makers_wanted",
