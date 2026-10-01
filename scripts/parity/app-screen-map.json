@@ -56,6 +56,24 @@
   "role": "parent",
   "explained": [
    {
+    "type": "radius",
+    "match": "card radius",
+    "why": "intended",
+    "reason": "The cover-photo drop zone is a dashed field (the field radius, no fill, no shadow) - the harness reads any bordered rounded box as a card, and the board's cards are the 20px white sheet cards."
+   },
+   {
+    "type": "shadow",
+    "match": "card shadow",
+    "why": "intended",
+    "reason": "The cover-photo drop zone is a dashed field (the field radius, no fill, no shadow) - the harness reads any bordered rounded box as a card, and the board's cards are the 20px white sheet cards."
+   },
+   {
+    "type": "colour",
+    "match": "card background",
+    "why": "intended",
+    "reason": "The cover-photo drop zone is a dashed field (the field radius, no fill, no shadow) - the harness reads any bordered rounded box as a card, and the board's cards are the 20px white sheet cards."
+   },
+   {
     "type": "picture",
     "match": "form sheet",
     "why": "intended",
