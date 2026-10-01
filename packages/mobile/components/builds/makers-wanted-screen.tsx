@@ -13,8 +13,9 @@
  * - "Ask first". Messages belong to a transaction's two parties and an
  *   unclaimed request has one; a second button that also claimed would be
  *   worse than one honest one.
- * - Distance from the maker. SPLAT stores a suburb and how far the FAMILY can
- *   travel, never a point, so the filter is over their range, not "within".
+ *
+ * Distance is measured from the maker's profile postcode to the family's (099);
+ * without one, the chips ask for it.
  */
 import { useCallback, useState } from 'react'
 import { View, Text, ScrollView, Pressable, RefreshControl, StyleSheet } from 'react-native'
@@ -22,6 +23,7 @@ import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-rou
 import { Ionicons } from '@expo/vector-icons'
 import type { Difficulty } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
+import { useCapabilities } from '../../lib/capabilities'
 import { theme } from '../../lib/theme'
 import { relativeTime } from '../../lib/notifications'
 import { Screen } from '../ui/Screen'
@@ -47,6 +49,8 @@ export type OpenBuild = {
   family_has_toy: boolean
   created_at: string
   mine: boolean
+  /** 099. Whole km from the maker's postcode; null when either is unknown. */
+  km: number | null
   tutorial: { id: string; title: string; difficulty: Difficulty | null; status: string } | null
 }
 
@@ -60,6 +64,7 @@ const DIFF_LABEL: Record<Difficulty, string> = { easy: 'Easy', medium: 'Medium',
 
 export function MakersWantedScreen() {
   const router = useRouter()
+  const postcode = useCapabilities().caps?.profile.pickup_postcode ?? null
   const params = useLocalSearchParams<{ tab?: string }>()
   const [tab, setTab] = useState<Tab>(params.tab === 'mine' ? 'mine' : 'open')
   const [range, setRange] = useState<number>(0)
@@ -72,7 +77,11 @@ export function MakersWantedScreen() {
 
   const load = useCallback(async () => {
     try {
-      setBuilds(await apiClient.get<OpenBuild[]>('/api/toy-transactions/open-builds'))
+      setBuilds(
+        await apiClient.get<OpenBuild[]>(
+          postcode ? `/api/toy-transactions/open-builds?near=${postcode}` : '/api/toy-transactions/open-builds'
+        )
+      )
       setLoadFailed(false)
     } catch (err) {
       console.error('[MakersWantedScreen] open-builds fetch failed:', err)
@@ -81,7 +90,7 @@ export function MakersWantedScreen() {
       setLoading(false)
       setRefreshing(false)
     }
-  }, [])
+  }, [postcode])
 
   // Refetched on focus: coming back from the ask sheet or a claimed thread must
   // show the board as it now is, not as it was.
@@ -109,7 +118,7 @@ export function MakersWantedScreen() {
 
   const count = (t: Tab) => builds.filter((b) => (t === 'mine' ? b.mine : !b.mine)).length
   const inTab = builds.filter((b) => (tab === 'mine' ? b.mine : !b.mine))
-  const shown = range === 0 ? inTab : inTab.filter((b) => (b.travel_km ?? 0) >= range)
+  const shown = range === 0 ? inTab : inTab.filter((b) => b.km != null && b.km <= range)
 
   return (
     <Screen>
@@ -178,19 +187,20 @@ export function MakersWantedScreen() {
           <Chip label="Live" active={false} onPress={() => router.push(pendingHref('makers-live-done-tabs'))} />
           <Chip label="Done" active={false} onPress={() => router.push(pendingHref('makers-live-done-tabs'))} />
         </View>
-        {/* PENDING(locations-and-distance): "Within 5/10/25 km of you" and km per row need stored locations. */}
-        <View style={styles.ranges}>
-          {/* The board's one word, so the chips fit on one row. */}
-          <Text style={styles.rangeLabel}>Within</Text>
-          {RANGES.map((km) => (
-            <Chip
-              key={km}
-              label={km === 0 ? 'Anywhere' : `${km} km+`}
-              active={range === km}
-              onPress={() => setRange(km)}
-            />
-          ))}
-        </View>
+        {/* PENDING(locations-and-distance) */}
+        {postcode ? (
+          <View style={styles.ranges}>
+            {/* The board's one word, so the chips fit on one row. */}
+            <Text style={styles.rangeLabel}>Within</Text>
+            {RANGES.map((km) => (
+              <Chip key={km} label={km === 0 ? 'Anywhere' : `${km} km`} active={range === km} onPress={() => setRange(km)} />
+            ))}
+          </View>
+        ) : (
+          <View style={styles.ranges}>
+            <Chip label="Add your postcode" icon="location-outline" active={false} onPress={() => router.push('/account')} />
+          </View>
+        )}
 
         <ErrorRow message={error} />
 
@@ -315,6 +325,7 @@ function BuildCard({
 
       {/* PENDING(makers-row-meta): the guide's build time and ~cost — /open-builds returns title and difficulty only. */}
       <View style={styles.facts}>
+        {b.km !== null ? <Fact icon="navigate-outline" text={`${b.km} km away`} /> : null}
         {b.child_label ? <Fact icon="happy-outline" text={b.child_label} /> : null}
         {b.travel_km !== null ? <Fact icon="car-outline" text={`${b.travel_km} km`} /> : null}
         {b.urgency ? <Fact icon="calendar-outline" text={b.urgency} /> : null}

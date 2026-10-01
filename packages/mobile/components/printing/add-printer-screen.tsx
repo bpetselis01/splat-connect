@@ -110,6 +110,7 @@ export function AddPrinterScreen() {
         bed_z: bed,
         suburb: caps?.profile.pickup_suburb ?? '',
         state: caps?.profile.pickup_state ?? '',
+        postcode: caps?.profile.pickup_postcode ?? '',
         notes: `${PICKUPS[pickup]![0]} — ${PICKUPS[pickup]![1]}`,
         filament_cents_per_g: cents,
         rate_note: rateNote.trim() || null,

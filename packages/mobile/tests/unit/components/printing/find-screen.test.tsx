@@ -10,9 +10,8 @@ jest.mock('../../../../lib/api-client', () => ({ apiClient: { get: (...a: unknow
 const mockPush = jest.fn()
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }))
 
-jest.mock('../../../../lib/capabilities', () => ({
-  useCapabilities: () => ({ caps: { profile: { id: 'me' }, ledOrgs: [] } }),
-}))
+const mockCaps: { profile: Record<string, unknown>; ledOrgs: unknown[] } = { profile: { id: 'me' }, ledOrgs: [] }
+jest.mock('../../../../lib/capabilities', () => ({ useCapabilities: () => ({ caps: mockCaps }) }))
 
 const printer = (id: string, over: object = {}) => ({
   id,
@@ -39,6 +38,7 @@ const GUIDE = {
 
 beforeEach(() => {
   mockPush.mockClear()
+  delete mockCaps.profile.pickup_postcode
   mockGet.mockImplementation((path: string) =>
     Promise.resolve(
       path === '/api/printers'
@@ -118,6 +118,26 @@ it('filters to verified printers and marks them', async () => {
   // The seal, not the chip: Ionicons is mocked to a host element, so its props are queryable.
   expect(screen.UNSAFE_getAllByProps({ name: 'shield-checkmark', accessibilityLabel: 'Verified' })).toHaveLength(1)
   fireEvent.press(screen.getByText('Verified'))
+  expect(screen.queryByText('Maker B')).toBeNull()
+  expect(screen.getByText('Maker A')).toBeTruthy()
+})
+
+it('asks for a postcode before it can say what is within 10 km', async () => {
+  render(<FindPrinterScreen guideId="g1" />)
+  fireEvent.press(await screen.findByText('Add your postcode'))
+  expect(mockPush).toHaveBeenCalledWith('/account')
+})
+
+it('measures from the profile postcode and keeps what is within 10 km', async () => {
+  mockCaps.profile.pickup_postcode = '2000'
+  mockGet.mockImplementation((path: string) =>
+    Promise.resolve(
+      path === '/api/printers?near=2000' ? [printer('a', { km: 4 }), printer('b', { km: 40 })] : GUIDE
+    )
+  )
+  render(<FindPrinterScreen guideId="g1" />)
+  expect(await screen.findByText(/· 4 km/)).toBeTruthy()
+  fireEvent.press(screen.getByText('Within 10 km'))
   expect(screen.queryByText('Maker B')).toBeNull()
   expect(screen.getByText('Maker A')).toBeTruthy()
 })

@@ -8,10 +8,6 @@
  * only browses — a request's parts come from a guide's STL files, so there is
  * nothing to send yet, and the screen says where to start instead of offering
  * a Pick that leads nowhere.
- *
- * The board's "Within 10 km" filter is not drawn: a printer row stores a
- * suburb, not a location. A filter that filters on nothing is worse than no
- * filter.
  */
 import { useEffect, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
@@ -38,7 +34,6 @@ import { Chip } from '../ui/Chip'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
-import { pendingHref } from '../ui/pending'
 
 type Guide = Tutorial & { stl_files: StlFile[] }
 
@@ -54,10 +49,12 @@ export function FindPrinterScreen({ guideId }: { guideId?: string }) {
   const [openOnly, setOpenOnly] = useState(false)
   const [hasMaterial, setHasMaterial] = useState(false)
   const [verifiedOnly, setVerifiedOnly] = useState(false)
+  const [within10, setWithin10] = useState(false)
+  const postcode = caps?.profile.pickup_postcode ?? null
 
   useEffect(() => {
     Promise.all([
-      apiClient.get<PrinterWithOwner[]>('/api/printers'),
+      apiClient.get<PrinterWithOwner[]>(postcode ? `/api/printers?near=${postcode}` : '/api/printers'),
       guideId ? apiClient.get<Guide>(`/api/public/tutorials/${guideId}`) : Promise.resolve(null),
     ])
       .then(([p, g]) => {
@@ -68,7 +65,7 @@ export function FindPrinterScreen({ guideId }: { guideId?: string }) {
         console.error('[FindPrinterScreen] load failed:', err)
         setError(true)
       })
-  }, [guideId])
+  }, [guideId, postcode])
 
   if (error) {
     return (
@@ -101,6 +98,7 @@ export function FindPrinterScreen({ guideId }: { guideId?: string }) {
       (!openOnly || isOpen(p)) &&
       (!hasMaterial || p.materials.includes(material)) &&
       (!verifiedOnly || !!p.verified) &&
+      (!within10 || (p.km != null && p.km <= 10)) &&
       bedFits(p, guide?.stl_files ?? [])
   )
   const canPick = !!guide && guide.stl_files.length > 0
@@ -144,8 +142,11 @@ export function FindPrinterScreen({ guideId }: { guideId?: string }) {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
           <Chip label="Open now" icon="flash-outline" active={openOnly} onPress={() => setOpenOnly((v) => !v)} />
           <Chip label={`Has ${material}`} icon="cube-outline" active={hasMaterial} onPress={() => setHasMaterial((v) => !v)} />
-          {/* PENDING(locations-and-distance) */}
-          <Chip label="Within 10 km" icon="location-outline" active={false} onPress={() => router.push(pendingHref('locations-and-distance'))} />
+          {postcode ? (
+            <Chip label="Within 10 km" icon="location-outline" active={within10} onPress={() => setWithin10((v) => !v)} />
+          ) : (
+            <Chip label="Add your postcode" icon="location-outline" active={false} onPress={() => router.push('/account')} />
+          )}
           <Chip label="Verified" icon="shield-checkmark-outline" active={verifiedOnly} onPress={() => setVerifiedOnly((v) => !v)} />
         </ScrollView>
 
@@ -165,6 +166,7 @@ export function FindPrinterScreen({ guideId }: { guideId?: string }) {
                   setOpenOnly(false)
                   setHasMaterial(false)
                   setVerifiedOnly(false)
+                  setWithin10(false)
                 }}
                 style={styles.clear}
               />
@@ -191,7 +193,13 @@ export function FindPrinterScreen({ guideId }: { guideId?: string }) {
                       ) : null}
                     </View>
                     <Text style={styles.meta}>
-                      {[p.owner_org_id ? 'Organisation' : 'Contributor', [p.suburb, p.state].filter(Boolean).join(' ') || null, p.name, statsLine(p.printer_stats)]
+                      {[
+                        p.owner_org_id ? 'Organisation' : 'Contributor',
+                        p.km != null ? `${p.km} km` : null,
+                        [p.suburb, p.state].filter(Boolean).join(' ') || null,
+                        p.name,
+                        statsLine(p.printer_stats),
+                      ]
                         .filter(Boolean)
                         .join(' · ')}
                     </Text>

@@ -26,8 +26,9 @@ jest.mock('../../../../lib/saves', () => ({
 
 // The CornerMenu shows an exchange-action count from capabilities; the screen
 // must render without them (signed out, or the fetch failing).
+const mockCaps = { current: null as null | { profile: Record<string, unknown> } }
 jest.mock('../../../../lib/capabilities', () => ({
-  useCapabilities: () => ({ caps: null, loading: false, refresh: jest.fn() }),
+  useCapabilities: () => ({ caps: mockCaps.current, loading: false, refresh: jest.fn() }),
 }))
 
 const toy = (over: object) => ({
@@ -53,10 +54,28 @@ const toy = (over: object) => ({
 
 beforeEach(() => {
   jest.clearAllMocks()
+  mockCaps.current = null
   mockGet.mockResolvedValue([])
 })
 
 describe('ToyLibraryScreen', () => {
+  it('asks for a postcode before it can sort nearest first', async () => {
+    render(<ToyLibraryScreen />)
+    fireEvent.press(await screen.findByText('Add your postcode'))
+    expect(mockPush).toHaveBeenCalledWith('/account')
+  })
+
+  it('sorts nearest first from the profile postcode, with km on each toy', async () => {
+    mockCaps.current = { profile: { id: 'me', pickup_postcode: '2000' } }
+    mockGet.mockImplementation((path: string) =>
+      Promise.resolve(path === '/api/public/toys?near=2000' ? [toy({ id: 't1', name: 'Bubble machine', km: 3 })] : [])
+    )
+    render(<ToyLibraryScreen />)
+    fireEvent.press(await screen.findByText('Nearest first'))
+    expect(await screen.findByText('3 km')).toBeTruthy()
+    expect(mockGet).toHaveBeenCalledWith('/api/public/toys?near=2000')
+  })
+
   it('renders toy names from the public toys endpoint', async () => {
     mockGet.mockResolvedValue([toy({ id: 't1', name: 'Bubble machine' }), toy({ id: 't2', name: 'Switch car' })])
     render(<ToyLibraryScreen />)

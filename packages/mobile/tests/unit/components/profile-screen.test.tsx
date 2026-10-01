@@ -114,6 +114,15 @@ describe('ProfileScreen', () => {
       expect(await screen.findByText('Saved')).toBeTruthy()
     })
 
+    it('saves a postcode, for everything that measures distance', async () => {
+      mockUseAuth.mockReturnValue(auth({}))
+      mockGet.mockResolvedValue([])
+      mockPatch.mockResolvedValue({})
+      render(<ProfileScreen />)
+      fireEvent(await screen.findByLabelText('Postcode'), 'endEditing', { nativeEvent: { text: '2042' } })
+      await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/api/contributors/me', { pickup_postcode: '2042' }))
+    })
+
     it('does not save an unchanged or empty name', async () => {
       mockUseAuth.mockReturnValue(auth({}))
       render(<ProfileScreen />)

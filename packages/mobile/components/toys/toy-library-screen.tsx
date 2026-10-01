@@ -28,7 +28,6 @@ import { Segmented } from '../ui/Segmented'
 import { TabHero } from '../ui/TabHero'
 import { RowCard, MetaItem } from '../ui/RowCard'
 import { useCapabilities } from '../../lib/capabilities'
-import { pendingHref } from '../ui/pending'
 
 type IconName = React.ComponentProps<typeof Ionicons>['name']
 
@@ -70,7 +69,7 @@ export function ToyLibraryScreen() {
   const router = useRouter()
   const saves = useSaves()
   const { caps } = useCapabilities()
-  const [toys, setToys] = useState<ToyWithOwner[]>([])
+  const [toys, setToys] = useState<Array<ToyWithOwner & { km?: number | null }>>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
@@ -78,6 +77,8 @@ export function ToyLibraryScreen() {
   const [switchAdaptedOnly, setSwitchAdaptedOnly] = useState(false)
   const [availableOnly, setAvailableOnly] = useState(false)
   const [newest, setNewest] = useState(false)
+  const [nearest, setNearest] = useState(false)
+  const postcode = caps?.profile.pickup_postcode ?? null
   // Bumping this re-runs the fetch — the retry button's and pull-to-refresh's
   // shared handle.
   const [reloadKey, setReloadKey] = useState(0)
@@ -100,7 +101,9 @@ export function ToyLibraryScreen() {
     if (!refreshing) setLoading(true)
     setError(null)
     apiClient
-      .get<ToyWithOwner[]>('/api/public/toys')
+      .get<Array<ToyWithOwner & { km?: number | null }>>(
+        nearest && postcode ? `/api/public/toys?near=${postcode}` : '/api/public/toys'
+      )
       .then((data) => {
         if (!ignore) setToys(data)
       })
@@ -117,7 +120,7 @@ export function ToyLibraryScreen() {
     return () => {
       ignore = true
     }
-  }, [reloadKey])
+  }, [reloadKey, nearest, postcode])
 
   // Every published toy is already loaded (the endpoint isn't paged), so every
   // filter runs client-side, same as web's toy-library-client.tsx.
@@ -133,9 +136,7 @@ export function ToyLibraryScreen() {
   )
   if (newest) visible.sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))
   const filtered = !!q || !!condition || switchAdaptedOnly || availableOnly
-  // The board says "Nearest first", but no toy carries a place yet — a
-  // heading that claimed an order the list does not have would be a lie.
-  const heading = filtered ? 'Matching toys' : newest ? 'Newest first' : 'All toys'
+  const heading = filtered ? 'Matching toys' : newest ? 'Newest first' : nearest ? 'Nearest first' : 'All toys'
 
   return (
     <Screen ownHeader>
@@ -200,8 +201,11 @@ export function ToyLibraryScreen() {
                 onPress={() => setSwitchAdaptedOnly((v) => !v)}
               />
               <Chip variant="filter" icon="time-outline" label="Newest" active={newest} onPress={() => setNewest((v) => !v)} />
-              {/* PENDING(locations-and-distance): the board's location chip and nearest-first order. */}
-              <Chip variant="filter" icon="navigate-outline" label="Nearest first" active={false} onPress={() => router.push(pendingHref('locations-and-distance'))} />
+              {postcode ? (
+                <Chip variant="filter" icon="navigate-outline" label="Nearest first" active={nearest} onPress={() => setNearest((v) => !v)} />
+              ) : (
+                <Chip variant="filter" icon="navigate-outline" label="Add your postcode" active={false} onPress={() => router.push('/account')} />
+              )}
               {CONDITIONS.map((c) => (
                 <Chip
                   key={c.value}
@@ -286,6 +290,7 @@ export function ToyLibraryScreen() {
                       <Badge status="grade" label={grade.label} icon={grade.icon} bg={grade.bg} />
                     </View>
                     {holder ? <MetaItem icon="location-outline">{holder}</MetaItem> : null}
+                    {item.km != null ? <MetaItem icon="navigate-outline">{`${item.km} km`}</MetaItem> : null}
                   </View>
                 }
                 aside={<SaveButton slug="toys" id={item.id} saves={saves} />}

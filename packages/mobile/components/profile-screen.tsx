@@ -71,6 +71,19 @@ export function ProfileScreen() {
     }
   }
 
+  // 099. Distance on Find a printer, Makers wanted and the toy library is
+  // measured from here. Four digits or nothing; anything else saves and simply
+  // measures nothing.
+  async function savePostcode(raw: string) {
+    const postcode = raw.trim()
+    if (postcode === (profile?.pickup_postcode ?? '')) return
+    try {
+      await apiClient.patch('/api/contributors/me', { pickup_postcode: postcode || null })
+    } catch (err) {
+      console.error('[ProfileScreen] postcode save failed:', err)
+    }
+  }
+
   // Reached only through the (my) group, whose layout redirects to sign-in
   // without a session — by the time this renders, one is guaranteed to exist.
   const user = session!.user
@@ -116,6 +129,14 @@ export function ProfileScreen() {
                       ? 'Could not save your name. Please try again.'
                       : ' '}
               </Text>
+              <TextField
+                label="Postcode"
+                accessibilityLabel="Postcode"
+                inputMode="numeric"
+                maxLength={4}
+                defaultValue={profile?.pickup_postcode ?? ''}
+                onEndEditing={(e) => void savePostcode(e.nativeEvent.text)}
+              />
               <Text style={styles.frozenHint}>Your email can&apos;t be changed here.</Text>
               {/* HIG: say how this account signs in, so an Apple user knows
                   why there is no password to change. */}

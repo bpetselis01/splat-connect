@@ -6,7 +6,7 @@ const mockPost = jest.fn()
 jest.mock('../../../../lib/api-client', () => ({ apiClient: { post: (...a: unknown[]) => mockPost(...a) } }))
 jest.mock('expo-router', () => ({ useRouter: () => ({ back: jest.fn(), push: jest.fn() }) }))
 jest.mock('../../../../lib/capabilities', () => ({
-  useCapabilities: () => ({ caps: { profile: { id: 'me', pickup_suburb: 'Newtown', pickup_state: 'NSW' }, ledOrgs: [] } }),
+  useCapabilities: () => ({ caps: { profile: { id: 'me', pickup_suburb: 'Newtown', pickup_state: 'NSW', pickup_postcode: '2042' }, ledOrgs: [] } }),
 }))
 
 beforeEach(() => mockPost.mockReset())
@@ -22,7 +22,7 @@ it('sends the standard rates with the printer', async () => {
   await waitFor(() =>
     expect(mockPost).toHaveBeenCalledWith(
       '/api/printers',
-      expect.objectContaining({ filament_cents_per_g: 12, rate_note: 'At what the spool cost me.' })
+      expect.objectContaining({ postcode: '2042', filament_cents_per_g: 12, rate_note: 'At what the spool cost me.' })
     )
   )
 })

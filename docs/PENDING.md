@@ -335,7 +335,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 - Platforms: mobile, web, api
 - Needs: Decided 2026-09-30: postcode centre points (ABS data, CC BY) with a SQL distance in rounded km; postcode on printers and build requests; sort and filter in the four list APIs. No address or point is stored.
-- In code: `packages/api/src/routes/printers.ts`, `packages/mobile/components/builds/makers-wanted-screen.tsx`, `packages/mobile/components/printing/find-screen.tsx`, `packages/mobile/components/toys/toy-library-screen.tsx`
+- In code: `packages/mobile/components/builds/makers-wanted-screen.tsx`
 
 ### `recycling-credit-spending` — Use your recycling credit
 
