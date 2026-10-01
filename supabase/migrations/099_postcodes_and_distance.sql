@@ -28,6 +28,7 @@
 -- DOWN:
 --   drop function if exists public.postcode_kms(text, text[]);
 --   drop function if exists public.postcode_km(text, text);
+--   grant select on public.printers to anon, authenticated;
 --   alter table public.toy_transactions drop column if exists requester_postcode;
 --   alter table public.printers drop column if exists postcode;
 --   drop table if exists public.postcode_centroids;
@@ -47,6 +48,20 @@ create policy "Anyone can read postcode centres"
 
 alter table public.printers
   add column postcode text check (postcode is null or postcode ~ '^\d{4}$');
+
+-- The postcode is the owner's; only a km built from it leaves the API. 058's
+-- policy shows every printer row to anon and authenticated, and the table-level
+-- select grant would hand them this column with it, so the grant becomes
+-- per-column (028's profiles pattern: a column-level revoke cannot subtract
+-- from a table-level grant). A later printers column is NOT granted by
+-- default — extend this list. Whole-row reads (select *, and the computed
+-- fields printer_stats and verified, which take the row) now need the admin
+-- client: routes/printers.ts reads through it.
+revoke select on public.printers from anon, authenticated;
+grant select (
+  id, owner_id, owner_org_id, name, materials, bed_x, bed_y, bed_z, suburb, state,
+  accepting, capacity, notes, created_at, updated_at, filament_cents_per_g, rate_note
+) on public.printers to anon, authenticated;
 
 alter table public.toy_transactions
   add column requester_postcode text check (requester_postcode is null or requester_postcode ~ '^\d{4}$');

@@ -8,7 +8,11 @@
  * a job at accept, the same rule 028 set for a toy handover.
  *
  * Writes go through the USER client so 058's owner policy is what decides,
- * rather than a filter written here.
+ * rather than a filter written here. Reads go through the ADMIN client: 099
+ * made the table's select grant per-column to keep `postcode` from anon and
+ * signed-in keys, and the computed fields in SELECT take the whole row, which
+ * a column grant cannot satisfy. 058's read policy is `using (true)`, so the
+ * admin client sees no row the user client would not.
  *
  * Related files:
  * - supabase/migrations/058_printers_and_print_jobs.sql: the table and its two
@@ -51,6 +55,9 @@ type Row = {
   printer_stats: PrinterStats
   verified: boolean
 }
+
+/** One machine as written, once the user client's write has passed 058's policy. */
+const readOne = (id: string) => createAdminClient().from('printers').select(SELECT).eq('id', id).single()
 
 /**
  * How many accepted jobs each of these machines is carrying.
@@ -195,15 +202,14 @@ function invalid(body: Record<string, unknown>, partial: boolean): string | null
  */
 // PENDING(locations-and-distance): distance from the asker needs a stored location, not a suburb.
 printers.get('/', async (c) => {
-  const supabase = createUserClient(c.get('token'))
-  const { data, error } = await supabase
+  const admin = createAdminClient()
+  const { data, error } = await admin
     .from('printers')
     .select(SELECT)
     .order('created_at', { ascending: false })
   if (error) return c.json({ error: error.message }, 500)
 
   const rows = (data ?? []) as unknown as Row[]
-  const admin = createAdminClient()
   const [counts, names] = await Promise.all([
     openJobCounts(
       admin,
@@ -228,7 +234,6 @@ printers.get('/', async (c) => {
  * param route below, or "mine" is read as a printer id.
  */
 printers.get('/mine', async (c) => {
-  const supabase = createUserClient(c.get('token'))
   const userId = c.get('userId')
   const admin = createAdminClient()
   const orgs = await ledOrgIds(admin, userId)
@@ -237,7 +242,7 @@ printers.get('/mine', async (c) => {
     ? `owner_id.eq.${userId},owner_org_id.in.(${orgs.join(',')})`
     : `owner_id.eq.${userId}`
 
-  const { data, error } = await supabase
+  const { data, error } = await admin
     .from('printers')
     .select(SELECT)
     .or(filter)
@@ -268,8 +273,8 @@ printers.get('/mine', async (c) => {
 })
 
 printers.get('/:id', async (c) => {
-  const supabase = createUserClient(c.get('token'))
-  const { data, error } = await supabase
+  const admin = createAdminClient()
+  const { data, error } = await admin
     .from('printers')
     .select(SELECT)
     .eq('id', c.req.param('id'))
@@ -281,7 +286,6 @@ printers.get('/:id', async (c) => {
   if (!data) return c.json({ error: 'Not found' }, 404)
 
   const row = data as unknown as Row
-  const admin = createAdminClient()
   const [counts, names] = await Promise.all([
     openJobCounts(admin, [row.id]),
     ownerNames(admin, [row]),
@@ -403,12 +407,14 @@ printers.post('/', async (c) => {
       rate_note:
         typeof body.rate_note === 'string' && body.rate_note.trim() ? body.rate_note.trim() : null,
     })
-    .select(SELECT)
+    .select('id')
     .maybeSingle()
 
   if (error) return c.json({ error: error.message }, 500)
   if (!data) return c.json({ error: 'That printer is not yours to add' }, 403)
-  return c.json(data, 201)
+  const saved = await readOne(data.id)
+  if (saved.error) return c.json({ error: saved.error.message }, 500)
+  return c.json(saved.data, 201)
 })
 
 /**
@@ -446,13 +452,15 @@ printers.patch('/:id', async (c) => {
     .from('printers')
     .update(patch)
     .eq('id', c.req.param('id'))
-    .select(SELECT)
+    .select('id')
     .maybeSingle()
 
   if (error) return c.json({ error: error.message }, 500)
   // RLS returns no row rather than refusing, so an absent row IS the refusal.
   if (!data) return c.json({ error: 'No such printer of yours.' }, 404)
-  return c.json(data)
+  const saved = await readOne(data.id)
+  if (saved.error) return c.json({ error: saved.error.message }, 500)
+  return c.json(saved.data)
 })
 
 /**

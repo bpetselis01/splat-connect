@@ -454,7 +454,13 @@ select * from (values
   -- 099. Distance is computed from these points; with RLS off, any key could
   -- move a postcode and reorder every "near you" list.
   ('099 postcode_centroids has RLS on',
-   (select relrowsecurity from pg_class where oid = 'public.postcode_centroids'::regclass))
+   (select relrowsecurity from pg_class where oid = 'public.postcode_centroids'::regclass)),
+
+  -- 099. Only a km built from a printer's postcode leaves the API. With the
+  -- table-level grant back, any key could read every owner's postcode.
+  ('099 printers.postcode is not selectable by anon/authenticated',
+   (select not has_column_privilege('anon', 'public.printers', 'postcode', 'select')
+       and not has_column_privilege('authenticated', 'public.printers', 'postcode', 'select')))
 ) as t(guard, ok)
 where not ok;
 EOSQL
