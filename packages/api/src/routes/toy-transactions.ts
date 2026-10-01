@@ -1980,4 +1980,58 @@ toyTransactions.post('/:id/print-ready', async (c) => {
   return c.json(sanitizeCodes(updated, userId, ledOrgs))
 })
 
+/**
+ * POST /api/toy-transactions/:id/print-fit
+ *
+ * "Did it fit?" — the family who asked answers once, after collecting. A
+ * reprint tells the printer in the thread and the inbox; a fit needs no
+ * message. updated_at is left alone: the job page reads it as the day the
+ * parts were collected.
+ */
+toyTransactions.post('/:id/print-fit', async (c) => {
+  const body = (await c.req.json().catch(() => null)) as { fit?: unknown } | null
+  const fit = body?.fit
+  if (fit !== 'fitted' && fit !== 'reprint') return c.json({ error: 'Say fitted or reprint.' }, 400)
+
+  const loaded = await loadForParty(c)
+  if ('status' in loaded) return c.json({ error: 'message' in loaded ? loaded.message : 'Not found' }, loaded.status)
+  const tx = loaded.data
+  const userId = c.get('userId')
+  if (tx.type !== 'print') return c.json({ error: 'Only a print job is asked whether it fitted' }, 400)
+  if (userId !== tx.requester_id) return c.json({ error: 'Only the family who asked says whether it fitted' }, 403)
+  if (tx.status !== 'completed') return c.json({ error: 'Say whether it fitted once you have collected it' }, 409)
+  if (tx.print_fit) return c.json({ error: 'You already said how it fitted.' }, 409)
+
+  const admin = createAdminClient()
+  const { data: updated, error } = await admin
+    .from('toy_transactions')
+    .update({ print_fit: fit, print_fit_at: new Date().toISOString() })
+    .eq('id', tx.id)
+    .is('print_fit', null)
+    .select()
+    .maybeSingle()
+  if (error) return c.json({ error: error.message }, 500)
+  if (!updated) return c.json({ error: 'You already said how it fitted.' }, 409)
+
+  if (fit === 'reprint') {
+    await admin.from('toy_transaction_messages').insert({
+      transaction_id: tx.id,
+      sender_id: userId,
+      kind: 'system',
+      body: 'Needs a reprint.',
+    })
+    // The guide's title by hand: subjectName() reads a print job's null toy_id
+    // as "a toy".
+    const { data: guide } = await admin.from('tutorials').select('title').eq('id', tx.tutorial_id).maybeSingle()
+    await notifyOwnerSide(admin, tx as any, {
+      type: 'toy_message',
+      toy_transaction_id: tx.id,
+      toy_name: (guide as { title: string } | null)?.title ?? 'a print job',
+      actor_name: await profileName(admin, userId, 'The family'),
+    })
+  }
+
+  return c.json(sanitizeCodes(updated, userId, await ledOrgIds(admin, userId)))
+})
+
 export default toyTransactions

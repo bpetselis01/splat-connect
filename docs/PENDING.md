@@ -169,10 +169,10 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 - Needs: Jobs, median days, first-time fit, colours — find, job, offer, org cards [ui,api,db]
 - In code: `packages/api/src/routes/printers.ts`, `packages/mobile/components/organisation/org-profile-screen.tsx`, `packages/mobile/components/printing/find-screen.tsx`, `packages/mobile/components/printing/job-screen.tsx`
 
-### `print-fit-feedback` — Did it fit?
+### `print-fit-author-view` — Fit answers for guide authors
 
-- Platforms: mobile, api
-- Needs: "Did it fit?" after collection [ui,api,db]
+- Platforms: web, mobile, api
+- Needs: The guide author sees the fit answers for their guide [ui,api]
 - In code: `packages/mobile/components/printing/job-screen.tsx`
 
 ### `toy-holder-location` — Where the toy is

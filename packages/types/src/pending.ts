@@ -290,6 +290,14 @@ export const PENDING = {
     kind: "build",
     platforms: ["mobile", "api"],
     needs: "\"Did it fit?\" after collection [ui,api,db]",
+    shipped: true,
+  },
+  'print-fit-author-view': {
+    title: "Fit answers for guide authors",
+    blurb: "Guide authors seeing how their guide's prints fitted is coming.",
+    kind: "build",
+    platforms: ["web", "mobile", "api"],
+    needs: "The guide author sees the fit answers for their guide [ui,api]",
   },
   'message-printer': {
     title: "Message the printer",

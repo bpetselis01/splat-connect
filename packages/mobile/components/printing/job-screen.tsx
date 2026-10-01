@@ -9,7 +9,7 @@
  * take the code), the family's says what they are waiting for. It is chosen
  * by `jobState` in lib/printing.ts, which the tests hold.
  *
- * The board's "Did it fit?" after collection and its recycling-credit lines
+ * The board's recycling-credit lines
  * have no API behind them, so they are not drawn. The dashed "switch to the
  * printer's side" row is a prototype shortcut, not a feature.
  */
@@ -214,6 +214,7 @@ export function PrintJobScreen({ id }: { id: string }) {
             }}
             onAnswer={() => router.push('/print-for-others')}
             onMessage={openThread}
+            onFit={(fit) => run(() => apiClient.post<ToyTransaction>(`/api/toy-transactions/${id}/print-fit`, { fit }))}
           />
 
           {!isPrinter && state !== 'declined' && state !== 'withdrawn' && state !== 'expired' ? (
@@ -314,6 +315,7 @@ function StateCard({
   onConfirm,
   onAnswer,
   onMessage,
+  onFit,
 }: {
   tx: ToyTransactionDetail
   state: JobState
@@ -328,6 +330,7 @@ function StateCard({
   onConfirm: () => void
   onAnswer: () => void
   onMessage: () => void
+  onFit: (fit: 'fitted' | 'reprint') => void
 }) {
   const machine = tx.printer ? `On ${tx.printer.name}` : null
 
@@ -436,7 +439,31 @@ function StateCard({
       <Card style={[styles.block, styles.mint]}>
         <Text style={styles.strong}>Collected</Text>
         <Text style={[styles.body, styles.ink]}>Both of you confirmed. Closed and kept as a record.</Text>
-        <PendingButton pending="print-fit-feedback" label="Did it fit?" />
+        {!isPrinter ? (
+          <View style={styles.fit}>
+            {/* PENDING(print-fit-author-view): the copy below promises the guide author sees this; no author surface yet. */}
+            <Text style={styles.strong}>Did it fit?</Text>
+            <Text style={[styles.body, styles.ink]}>
+              One tap. It goes back to the printer and to the guide author so the next print is better.
+            </Text>
+            <View style={styles.fitRow}>
+              <Button
+                label="Fitted"
+                variant={tx.print_fit === 'fitted' ? 'primary' : 'secondary'}
+                disabled={busy || !!tx.print_fit}
+                onPress={() => onFit('fitted')}
+                style={styles.flex}
+              />
+              <Button
+                label="Needs a reprint"
+                variant={tx.print_fit === 'reprint' ? 'primary' : 'secondary'}
+                disabled={busy || !!tx.print_fit}
+                onPress={() => onFit('reprint')}
+                style={styles.flex}
+              />
+            </View>
+          </View>
+        ) : null}
         <PendingButton pending="thank-people" label="Say thanks to the printer" variant="ghost" />
         <PendingButton pending="report-problem-mobile" label="Report a problem" variant="ghost" />
       </Card>
@@ -466,6 +493,8 @@ function StateCard({
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  fit: { gap: theme.spacing(2) },
+  fitRow: { flexDirection: 'row', gap: theme.spacing(2) },
   content: { paddingBottom: theme.spacing(4), gap: theme.spacing(4) },
   head: { flexDirection: 'row', alignItems: 'flex-start', gap: theme.spacing(3) },
   glyph: {

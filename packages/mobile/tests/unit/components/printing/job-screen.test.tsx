@@ -102,3 +102,13 @@ it('tells the family when the printer has to answer by, and says Expired after i
   expect(await screen.findByText(/^This request expired on .+; ask again\.$/)).toBeTruthy()
   expect(screen.getAllByText('Expired').length).toBeGreaterThan(0)
 })
+it('asks the family whether it fitted once collected', async () => {
+  serve(job({ status: 'completed' }))
+  mockPost.mockResolvedValue(job({ status: 'completed', print_fit: 'fitted' }))
+  render(<PrintJobScreen id="j1" />)
+  expect(
+    await screen.findByText('One tap. It goes back to the printer and to the guide author so the next print is better.')
+  ).toBeTruthy()
+  fireEvent.press(screen.getByText('Fitted'))
+  await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions/j1/print-fit', { fit: 'fitted' }))
+})

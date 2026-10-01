@@ -390,6 +390,10 @@ export interface ToyTransaction {
    *  reason that exists only as a chat message cannot be shown on the list row
    *  that needs it. */
   decline_reason: string | null
+  /** 094. The family's answer to "Did it fit?", once the parts are collected.
+   *  Optional: fixtures predate it. */
+  print_fit?: 'fitted' | 'reprint' | null
+  print_fit_at?: string | null
   created_at: string
   updated_at: string
 }
