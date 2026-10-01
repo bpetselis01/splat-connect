@@ -59,6 +59,13 @@ export function sectionsFor(kind: TutorialKind): SectionId[] {
   return kind === 'assistive_tech' ? [...base, 'stl'] : base
 }
 
+/** The hub's "{ready} of {total} sections complete", shared with My tutorials. */
+export function sectionProgress(t: TutorialWithDetails): { ready: number; total: number } {
+  const sections = sectionsFor(t.kind)
+  const incomplete = new Set(getMissingFields(t).map((g) => g.section))
+  return { ready: sections.filter((s) => !incomplete.has(s)).length, total: sections.length }
+}
+
 /**
  * Where a section's "Next" goes: the next section still missing something,
  * wrapping past the end, skipping the one you are on.

@@ -2,9 +2,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import { View, Text, FlatList, RefreshControl, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
-import type { Tutorial } from '@splat-connect/types'
-import { KIND_LABEL } from '@splat-connect/types'
+import type { Tutorial, TutorialOrg, TutorialWithDetails } from '@splat-connect/types'
+import { KIND_LABEL, shortDate } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
+import { sectionProgress } from '../../lib/tutorial-sections'
 import { theme } from '../../lib/theme'
 import { Screen } from '../ui/Screen'
 import { Button } from '../ui/Button'
@@ -13,16 +14,32 @@ import { EmptyState } from '../ui/EmptyState'
 import { ListIntro, ListRow, RowThumb, StageFilter, StageNone, StagePill } from '../list/list-kit'
 import { stageOptions, TUTORIAL_STAGE, type StageOption } from '../list/stage'
 
+type MineRow = Tutorial & { tutorial_orgs?: TutorialOrg[] }
+
 const stageOf = (t: Tutorial) => TUTORIAL_STAGE[t.status]
 
-function TutorialRow({ item, onPress }: { item: Tutorial; onPress: () => void }) {
+/** The board's row meta: a draft's progress, who is holding a submitted guide, else what it is and who backs it. */
+export function tutorialMeta(t: MineRow): string {
+  const orgs = t.tutorial_orgs ?? []
+  if (t.status === 'draft') {
+    const { ready, total } = sectionProgress(t as unknown as TutorialWithDetails)
+    return `Draft · ${ready} of ${total} sections done`
+  }
+  const deciding = orgs.find((o) => o.status === 'pending')
+  if (t.status === 'pending' && deciding?.organizations?.name) {
+    return `With ${deciding.organizations.name} since ${shortDate(deciding.requested_at)}`
+  }
+  const backer = orgs.find((o) => o.status === 'accepted')?.organizations?.name
+  return [`${KIND_LABEL[t.kind]} · ${t.difficulty}`, backer].filter(Boolean).join(' · ')
+}
+
+function TutorialRow({ item, onPress }: { item: MineRow; onPress: () => void }) {
   return (
     <View style={styles.rowWrap}>
       <ListRow
         title={item.title}
-        // PENDING(my-tutorials-meta): backing org, "4 of 6 sections done", "With Northside since…".
         // PENDING(my-tutorials-views): a view count — no views column.
-        meta={`${KIND_LABEL[item.kind]} · ${item.difficulty}`}
+        meta={tutorialMeta(item)}
         thumb={<RowThumb photo={item.toy_photo_url} glyph="color-wand-outline" />}
         // "Draft" rather than "Hidden" for a guide, as web does: the editor
         // calls it a draft, and so does everything a contributor reads.
@@ -43,7 +60,7 @@ function TutorialRow({ item, onPress }: { item: Tutorial; onPress: () => void })
 
 export function MyTutorialsListScreen() {
   const router = useRouter()
-  const [tutorials, setTutorials] = useState<Tutorial[]>([])
+  const [tutorials, setTutorials] = useState<MineRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   // Bumping this re-runs the fetch — the retry button's handle, same as
@@ -64,7 +81,7 @@ export function MyTutorialsListScreen() {
     if (!refreshing) setLoading(true)
     setError(null)
     apiClient
-      .get<Tutorial[]>('/api/tutorials/mine')
+      .get<MineRow[]>('/api/tutorials/mine')
       .then((data) => {
         if (!ignore) setTutorials(data)
       })

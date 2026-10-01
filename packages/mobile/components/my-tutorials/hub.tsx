@@ -16,6 +16,7 @@ import { confirmDestructive } from '../../lib/confirm'
 import { useDraft } from '../../lib/use-tutorial-draft'
 import {
   getMissingFields,
+  sectionProgress,
   sectionsFor,
   sectionSummary,
   SECTION_LABEL,
@@ -110,7 +111,7 @@ export function TutorialHub({ id, justCreated, fromPdf }: { id: string; justCrea
   const missing = getMissingFields(tutorial)
   const sections = sectionsFor(tutorial.kind)
   const incomplete = new Set(missing.map((g) => g.section))
-  const ready = sections.filter((s) => !incomplete.has(s)).length
+  const { ready } = sectionProgress(tutorial)
   const isDraft = tutorial.status === 'draft'
 
   async function handleSubmit() {

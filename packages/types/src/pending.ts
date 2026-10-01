@@ -447,6 +447,7 @@ export const PENDING = {
     needs: "Item + person per line, Settled/To settle, All settled [ui]",
   },
   'my-tutorials-meta': {
+    shipped: true,
     title: "Guide progress",
     blurb: "Backing and progress on each of your guides are coming.",
     kind: "build",

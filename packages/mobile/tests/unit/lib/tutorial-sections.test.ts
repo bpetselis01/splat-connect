@@ -1,5 +1,6 @@
 import {
   getMissingFields,
+  sectionProgress,
   sectionsFor,
   sectionSummary,
   SECTION_LABEL,
@@ -138,5 +139,12 @@ describe('SECTION_LABEL', () => {
       files: 'Files',
       stl: '3D print files',
     })
+  })
+})
+
+describe('sectionProgress', () => {
+  it('counts the sections with nothing missing, out of the sections this kind shows', () => {
+    const t = { title: 'T', difficulty: 'easy', build_minutes: 30, tutorial_pdf_url: 'x', photo_urls: ['p'], parts: [{}], tools: [], stl_files: [], kind: 'toy_adaptation', safety_declared_at: null } as never
+    expect(sectionProgress(t)).toEqual({ ready: 4, total: 6 })
   })
 })
