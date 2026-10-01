@@ -12,6 +12,7 @@ import { theme } from '../../lib/theme'
 import { Provenance, type ProvenanceContributor, type ProvenanceOrg } from '../guides/provenance'
 import { PicksRow } from '../guides/picks-row'
 import { GuideSteps } from '../guides/guide-steps'
+import { GuideTools } from '../guides/guide-tools'
 import { Badge } from '../ui/Badge'
 import { SaveButton } from '../ui/SaveButton'
 import { PhotoCarousel } from '../ui/PhotoCarousel'
@@ -270,21 +271,8 @@ export function DetailScreen({ id }: { id: string }) {
         )}
       </Section>
 
-      {/* PENDING(guide-tools-checklist): "I have it" per tool and "X of Y already yours", saved on the device, plus a link to Tools and materials on Learn. */}
       {/* PENDING(tool-notes): why each tool, and Buy once / Borrow / Substitute. */}
-      <Section title="Tools you'll need" hint="What you'll need on the bench.">
-        {tutorial.tools.length ? (
-          tutorial.tools.map((item) => (
-            <ListRow
-              key={item.id}
-              icon="build-outline"
-              label={`${item.name}${item.is_optional ? ' (optional)' : ''}`}
-            />
-          ))
-        ) : (
-          <Text style={styles.listItem}>No tools listed.</Text>
-        )}
-      </Section>
+      <GuideTools tutorialId={tutorial.id} tools={tutorial.tools} />
 
       {/* The way into printing. Keyed on the guide having STL files rather than
           on its kind: a print request's parts ARE those files, so a guide

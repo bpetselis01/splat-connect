@@ -209,6 +209,7 @@ export const PENDING = {
     needs: "Notes per step, \"Missing step\", photo, author pins as revision, banner [ui,api,db]",
   },
   'guide-tools-checklist': {
+    shipped: true,
     title: "Tools checklist",
     blurb: "Checking off the tools you already have is coming.",
     kind: "build",
