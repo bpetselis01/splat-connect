@@ -29,7 +29,6 @@ import { ListSection, Pill, StagePill } from '../list/list-kit'
 import { TUTORIAL_STAGE } from '../list/stage'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
-import { PendingRow } from '../ui/pending'
 
 const SECTION_ICON: Record<SectionId, ComponentProps<typeof Ionicons>['name']> = {
   details: 'document-text-outline',
@@ -39,6 +38,15 @@ const SECTION_ICON: Record<SectionId, ComponentProps<typeof Ionicons>['name']> =
   tools: 'construct-outline',
   files: 'folder-open-outline',
   stl: 'cube-outline',
+}
+
+/** What the More row says about backing: who said yes, who is still deciding. */
+function backingSummary(t: { tutorial_orgs?: { status: string; organizations?: { name: string } | null }[] }): string {
+  const rows = t.tutorial_orgs ?? []
+  const backing = rows.filter((b) => b.status === 'accepted').map((b) => b.organizations?.name ?? 'An organisation')
+  const deciding = rows.filter((b) => b.status === 'pending').length
+  if (backing.length) return `Backed by ${backing.join(', ')}${deciding ? ` · ${deciding} still deciding` : ''}`
+  return deciding ? `${deciding} still deciding` : 'None yet - optional'
 }
 
 const STATUS_WORD = { draft: 'Draft', pending: 'Submitted', approved: 'Approved', rejected: 'Returned' } as const
@@ -276,12 +284,18 @@ export function TutorialHub({ id, justCreated, fromPdf }: { id: string; justCrea
           )
         })}
 
-        {/* Read-only facts, not actions — so they sit under the checklist
-            rather than in the menu. Backing is a second fetch on web and is not
-            one here: "ask on the web" is the whole of what mobile can say about
-            it, and a request would be a round trip to say so. */}
+        {/* Facts under the checklist rather than in the menu. Backing opens its
+            own screen; collaborators and recommendations are edited on the web. */}
         <ListSection style={styles.moreHeading}>More</ListSection>
-        <PendingRow pending="editor-backing" label="Backing" icon="ribbon-outline" />
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Backing. ${backingSummary(tutorial)}`}
+          onPress={() => router.push(`/tutorials/${id}/backing`)}
+          style={styles.moreRow}
+        >
+          <Text style={styles.moreLabel}>Backing</Text>
+          <Text style={styles.moreValue}>{backingSummary(tutorial)}</Text>
+        </Pressable>
         <View style={styles.moreRow}>
           <Text style={styles.moreLabel}>Collaborators</Text>
           <Text style={styles.moreValue}>

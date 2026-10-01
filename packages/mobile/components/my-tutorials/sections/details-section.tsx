@@ -5,6 +5,7 @@
 // no Save button here, and no local copy of the tutorial to fall out of sync
 // with the one the hub is reading.
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
+import { useRouter } from 'expo-router'
 import type { Difficulty, TutorialKind, TutorialMaturity } from '@splat-connect/types'
 import {
   BUILD_TIME_OPTIONS,
@@ -19,6 +20,7 @@ import { useDraft } from '../../../lib/use-tutorial-draft'
 import { theme } from '../../../lib/theme'
 import { Screen } from '../../ui/Screen'
 import { TextField } from '../../ui/TextField'
+import { Button } from '../../ui/Button'
 import { Chip } from '../../ui/Chip'
 import { ErrorRow } from '../../ui/ErrorRow'
 import { SectionFooter } from '../section-footer'
@@ -47,14 +49,14 @@ const SWITCH_ROWS = [
 ] as const
 
 export function DetailsSection() {
+  const router = useRouter()
   const { tutorial, save, saveError } = useDraft()
   if (!tutorial) return null
 
   return (
     <Screen>
       <ScrollView showsVerticalScrollIndicator={false} automaticallyAdjustKeyboardInsets>
-        {/* PENDING(editor-backing): the board adds "and who is backing it". */}
-        <Text style={styles.lead}>What the toy is and who it suits.</Text>
+        <Text style={styles.lead}>What the toy is, who it suits, and who is backing the guide.</Text>
         <TextField
           label="Title"
           accessibilityLabel="Title"
@@ -160,6 +162,8 @@ export function DetailsSection() {
         <Text style={styles.hint}>
           A parent whose child can manage all of these sees "Suits" their child on the guide.
         </Text>
+
+        <Button label="Backing" variant="secondary" onPress={() => router.push(`/tutorials/${tutorial.id}/backing`)} />
 
         <ErrorRow message={saveError} />
       </ScrollView>

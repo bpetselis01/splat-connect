@@ -454,6 +454,7 @@ export const PENDING = {
     needs: "Backing org, \"4 of 6 sections\", \"With … since\" [ui]",
   },
   'editor-backing': {
+    shipped: true,
     title: "Backing",
     blurb: "Asking an organisation to back your guide from the phone is coming. Use the web editor for now.",
     kind: "build",

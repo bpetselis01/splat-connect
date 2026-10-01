@@ -193,14 +193,14 @@ it('asks a PDF-started draft to be checked, and says which steps were not saved'
 
 // The spec's "More" section: read-only facts, below the checklist. Not in the
 // menu, which holds actions.
-it('lists what is edited elsewhere, with Backing as a pending row', () => {
+it('lists what is edited elsewhere, and opens Backing', () => {
   mockDraft.tutorial = tutorial({
     tutorial_contributors: [{ profiles: { name: 'Ada' } }],
     tutorial_recommendations: [{ id: 'r1' }],
   })
   render(<TutorialHub id="t1" />)
-  // PENDING(editor-backing) lives in the hub; the row opens Not built yet.
-  expect(screen.getByRole('button', { name: 'Backing' })).toBeTruthy()
+  fireEvent.press(screen.getByRole('button', { name: /^Backing/ }))
+  expect(mockPush).toHaveBeenCalledWith('/tutorials/t1/backing')
   expect(screen.getByText('Collaborators')).toBeTruthy()
   expect(screen.getByText(/Ada - edit on the web/)).toBeTruthy()
   expect(screen.getByText('Recommendations')).toBeTruthy()
