@@ -243,6 +243,10 @@ tutorials.patch('/:id', async (c) => {
   if (invalid) return c.json({ error: invalid }, 400)
 
   const update = pickEditable(body, EDITABLE)
+  // fieldError measured these trimmed; store what it measured so the CHECK agrees.
+  for (const k of ['material', 'toy_name', 'toy_brand', 'works_with', 'no_build_note']) {
+    if (typeof update[k] === 'string') update[k] = (update[k] as string).trim()
+  }
   // Not in EDITABLE because the client never chooses the timestamp: it affirms
   // the checklist (safety_declared: true) and the server stamps when.
   if (body.safety_declared === true) update.safety_declared_at = new Date().toISOString()

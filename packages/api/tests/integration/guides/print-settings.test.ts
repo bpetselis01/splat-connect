@@ -30,6 +30,12 @@ describe('088 print settings', () => {
     expect(data).toEqual({ layer_height_mm: 0.2, infill_percent: 25, material: 'PETG', print_minutes: 190 })
   })
 
+  it('stores a 40-character material with a trailing space, trimmed', async () => {
+    expect((await patch({ material: 'x'.repeat(40) + ' ' })).status).toBe(200)
+    const { data } = await adminClient().from('tutorials').select('material').eq('id', guide).single()
+    expect(data?.material).toBe('x'.repeat(40))
+  })
+
   it('refuses each out of range with a sentence', async () => {
     const cases: [Record<string, unknown>, string][] = [
       [{ layer_height_mm: 2 }, 'Layer height must be between 0.05 and 1 mm'],
