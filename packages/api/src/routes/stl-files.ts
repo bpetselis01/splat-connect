@@ -46,7 +46,9 @@ router.patch('/:id/stl-files/:fileId', async (c) => {
   const supabase = createUserClient(c.get('token'))
   const { data, error } = await supabase
     .from('stl_files')
-    .update(settings(body))
+    // Only the keys sent: a client that edits sizes alone (the phone's Save
+    // sizes) must not null the grams, minutes and material it never sent.
+    .update(Object.fromEntries(Object.entries(settings(body)).filter(([k]) => Object.hasOwn(body, k))))
     .eq('id', c.req.param('fileId'))
     .eq('tutorial_id', c.req.param('id'))
     .select()
