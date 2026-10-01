@@ -26,7 +26,7 @@ import {
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { challengeHistory, challengePill, challengeStats, shortDate } from './challenge-status'
-import { OUTCOME_STEPS, outcomeStates } from '@splat-connect/types'
+import { OUTCOME_STEPS, outcomeStates, PARTICIPANT_ROLE_LABEL } from '@splat-connect/types'
 import type { ToyIdeaDetail, ToyIdeaMessage, ContactPref } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { confirmDestructive } from '../../lib/confirm'
@@ -453,11 +453,22 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
             {challenge.participants.length === 0 ? (
               <Text style={styles.quiet}>Nobody has joined yet.</Text>
             ) : (
-              <View style={styles.tagRow}>
-                {/* PENDING(challenge-maker-meta): role, joined date and a "You" marker on each maker. */}
-                {challenge.participants.map((p) => (
-                  <Pill key={p.profile_id} variant="outline" label={p.name ?? 'Someone'} bg={theme.colors.surface} fg={theme.colors.text} />
-                ))}
+              <View accessibilityRole="list" style={styles.makerList}>
+                {challenge.participants.map((p) => {
+                  const meta = [
+                    p.role ? PARTICIPANT_ROLE_LABEL[p.role] : null,
+                    `joined ${shortDate(p.joined_at)}`,
+                    challenge.writing_up?.profile_id === p.profile_id ? 'writing it up' : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')
+                  return (
+                    <View key={p.profile_id} style={styles.makerRow}>
+                      <Text style={styles.makerName}>{p.profile_id === viewerId ? 'You' : p.name ?? 'Someone'}</Text>
+                      <Text style={styles.eventDate}>{meta}</Text>
+                    </View>
+                  )
+                })}
               </View>
             )}
             {challenge.contact_prefs.length > 0 ? (
@@ -690,6 +701,9 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     marginBottom: theme.spacing(2),
   },
+  makerList: { gap: theme.spacing(2) },
+  makerRow: { padding: theme.spacing(3), borderRadius: theme.radii.field, backgroundColor: theme.colors.surfaceSunken, gap: 2 },
+  makerName: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2) },
   quiet: {
     fontFamily: theme.fonts.regular,

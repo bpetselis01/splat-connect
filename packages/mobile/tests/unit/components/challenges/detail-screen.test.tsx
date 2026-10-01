@@ -1,6 +1,7 @@
 // packages/mobile/tests/unit/components/challenges/detail-screen.test.tsx
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { Alert } from 'react-native'
+import { shortDate } from '../../../../components/challenges/challenge-status'
 import { ChallengeDetailScreen } from '../../../../components/challenges/detail-screen'
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
@@ -438,5 +439,24 @@ describe('ChallengeDetailScreen', () => {
     render(<ChallengeDetailScreen id="c1" />)
     expect(await screen.findByRole('tab', { name: 'Brief' })).toBeTruthy()
     expect(screen.queryByRole('tab', { name: 'Outcome' })).toBeNull()
+  })
+
+  it('gives each maker their role and join date, and marks the viewer and the writer', async () => {
+    mockGet.mockResolvedValue(
+      detail({
+        status: 'graduated',
+        participants: [
+          { profile_id: 'p1', name: 'Tom Beattie', role: 'contributor', joined_at: '2026-08-16T03:00:00Z' },
+          { profile_id: 'viewer1', name: 'Viewer', role: 'contributor', joined_at: '2026-09-02T03:00:00Z' },
+        ],
+        writing_up: { profile_id: 'p1', name: 'Tom Beattie', started_at: '2026-09-02T03:00:00Z' },
+      })
+    )
+    render(<ChallengeDetailScreen id="c1" />)
+    fireEvent.press(await screen.findByRole('tab', { name: 'Makers' }))
+    expect(screen.getByText('Tom Beattie')).toBeTruthy()
+    expect(screen.getByText('Maker · joined 16 Aug · writing it up')).toBeTruthy()
+    expect(screen.getByText('You')).toBeTruthy()
+    expect(screen.getByText(`Maker · joined ${shortDate('2026-09-02T03:00:00Z')}`)).toBeTruthy()
   })
 })

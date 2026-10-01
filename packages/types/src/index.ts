@@ -11,7 +11,7 @@ export { contributorBadges } from './contributor-badges'
 export type { ContributorBadge, ContributorBadgeInput } from './contributor-badges'
 export { TOOL_GET_BY_LABEL, partsTotalCents, checkedOn, realignCaptions, formatPrintMinutes, printSettingRows, printSettingsLine } from './guides'
 export type { ToolGetBy, PrintSettings } from './guides'
-export { OUTCOME_STEPS, outcomeStates } from './challenges'
+export { OUTCOME_STEPS, outcomeStates, PARTICIPANT_ROLE_LABEL } from './challenges'
 export type { OutcomeState } from './challenges'
 export { BUILD_URGENCIES } from './builds'
 export type { BuildUrgency } from './builds'
@@ -977,6 +977,8 @@ export interface ToyIdeaParticipant {
   removed_at: string | null
   /** The reporter who caused the removal; null again once an admin reinstates. */
   removed_by: string | null
+  /** profiles.role, on the public brief only — admin or contributor. */
+  role?: Role
   /** Joined from profiles at read time for display. */
   name?: string | null
 }
@@ -1022,6 +1024,8 @@ export const CHALLENGE_FILTERS: { id: string; label: string; keep: (c: PublicCha
 export interface ToyIdeaDetail extends ToyIdea, Partial<ChallengeCounts> {
   author_name: string | null
   participants: ToyIdeaParticipant[]
+  /** The graduated guide's primary contributor and when the draft began. */
+  writing_up?: { profile_id: string; name: string; started_at: string } | null
   /** Absent for viewers who may not read the thread. */
   messages?: ToyIdeaMessage[]
 }

@@ -408,6 +408,7 @@ export const PENDING = {
     needs: "Hero photo and \"What a solution has to do\" [ui,api,db]",
   },
   'challenge-maker-meta': {
+    shipped: true,
     title: "Maker details",
     blurb: "Each maker’s role and join date are coming.",
     kind: "build",

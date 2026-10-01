@@ -6,6 +6,7 @@
 import { Hono, type Context } from 'hono'
 import { nameFormerContributors } from '../former-contributor.js'
 import { chunk } from '../chunk.js'
+import { profileName } from '../profile-name.js'
 import { createAnonClient, createAdminClient } from '../supabase/client.js'
 import { atCapacityToyIds } from '../toy-access.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
@@ -1104,6 +1105,25 @@ async function challengeCounts(ideas: { id: string; author_id: string }[]) {
  * private even on a public challenge. A pending/rejected idea 404s rather
  * than 403ing: indistinguishable from one that never existed.
  */
+/**
+ * Who is writing a graduated challenge up: the draft guide's primary
+ * contributor, and when the draft was made. Graduation (admin.ts) makes the
+ * idea's author primary, so today this names the author.
+ */
+async function writingUp(
+  admin: ReturnType<typeof createAdminClient>,
+  idea: { status: string; tutorial_id: string | null }
+): Promise<{ profile_id: string; name: string; started_at: string } | null> {
+  if (idea.status !== 'graduated' || !idea.tutorial_id) return null
+  const [{ data: primary }, { data: guide }] = await Promise.all([
+    admin.from('tutorial_contributors').select('profile_id').eq('tutorial_id', idea.tutorial_id).eq('role', 'primary').limit(1).maybeSingle(),
+    admin.from('tutorials').select('created_at').eq('id', idea.tutorial_id).maybeSingle(),
+  ])
+  if (!primary || !guide) return null
+  const id = primary.profile_id as string
+  return { profile_id: id, name: await profileName(admin, id, 'A maker'), started_at: guide.created_at as string }
+}
+
 publicRoutes.get('/challenges/:id', async (c) => {
   const admin = createAdminClient()
   // Explicit columns, never select('*'). review_note holds an admin's private
@@ -1131,7 +1151,7 @@ publicRoutes.get('/challenges/:id', async (c) => {
     // ambiguous ever since — PostgREST answers "more than one relationship was
     // found" with a 500, which this route hands to web's challenge detail page
     // as a notFound(). Every public challenge brief was unreachable.
-    .select('idea_id, profile_id, joined_at, profiles!toy_idea_participants_profile_id_fkey(name)')
+    .select('idea_id, profile_id, joined_at, profiles!toy_idea_participants_profile_id_fkey(name, role)')
     .eq('idea_id', idea.id)
     // Reads via the admin client, so RLS is not what keeps a removed person
     // off this public list -- this filter is. Without it a removed person
@@ -1149,7 +1169,9 @@ publicRoutes.get('/challenges/:id', async (c) => {
     participants: (participants ?? []).map((p: any) => ({
       idea_id: p.idea_id, profile_id: p.profile_id, joined_at: p.joined_at,
       name: p.profiles?.name ?? null,
+      role: p.profiles?.role ?? 'contributor',
     })),
+    writing_up: await writingUp(admin, idea as { status: string; tutorial_id: string | null }),
   })
 })
 

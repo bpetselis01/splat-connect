@@ -2,7 +2,7 @@
  * The pure rules behind a design challenge's detail, shared by web and mobile
  * (docs/superpowers/specs/2026-10-01-challenges-makers-build-design.md).
  */
-import type { ToyIdeaStatus } from './index'
+import type { Role, ToyIdeaStatus } from './index'
 
 export type OutcomeState = 'done' | 'now' | 'todo'
 
@@ -50,3 +50,6 @@ export function outcomeStates(status: ToyIdeaStatus): OutcomeState[] {
     status === 'rejected' ? 'todo' : i < at ? 'done' : i === at ? 'now' : 'todo'
   )
 }
+
+/** profiles.role in the board's words on a Makers row. "OT" is not stored. */
+export const PARTICIPANT_ROLE_LABEL: Record<Role, string> = { contributor: 'Maker', admin: 'Admin' }
