@@ -18,6 +18,7 @@ import { apiMessage, leaderActions } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { supabase } from '../../lib/supabase'
 import { theme } from '../../lib/theme'
+import { reviewLead, reviewRows } from '../../lib/review-checklist'
 import { useCapabilities } from '../../lib/capabilities'
 import { Screen } from '../ui/Screen'
 import { Badge } from '../ui/Badge'
@@ -166,8 +167,7 @@ export function ReviewDetailScreen({ tutorialId }: { tutorialId: string }) {
   }
 
   const author = tutorial.tutorial_contributors?.find((tc) => tc.role === 'primary')?.profiles?.name
-  const partCount = tutorial.parts?.length ?? 0
-  const toolCount = tutorial.tools?.length ?? 0
+  const rows = reviewRows(tutorial)
 
   return (
     <Screen>
@@ -185,34 +185,14 @@ export function ReviewDetailScreen({ tutorialId }: { tutorialId: string }) {
 
         <View style={styles.checks}>
           <ListSection>Check</ListSection>
-          {/* PENDING(review-checklist): Summary, Steps ("6 steps, all photographed") and Safety notes with OK/Flag, and "five of six complete". */}
-          {tutorial.tutorial_pdf_url ? (
-            <CheckRow
-              title="Tutorial PDF"
-              meta="Open the tutorial PDF"
-              label="Open the tutorial PDF"
-              ok
-              onPress={() => void openPdf()}
-            />
-          ) : (
-            <CheckRow title="Tutorial PDF" meta="No PDF attached yet" ok={false} />
+          <Text style={styles.lead}>{reviewLead(rows)}</Text>
+          {rows.map((r) =>
+            r.title === 'Files' && tutorial.tutorial_pdf_url ? (
+              <CheckRow key={r.title} title={r.title} meta={r.meta} ok={r.ok} label="Open the tutorial PDF" onPress={() => void openPdf()} />
+            ) : (
+              <CheckRow key={r.title} title={r.title} meta={r.meta} ok={r.ok} />
+            )
           )}
-          <CheckRow
-            title="Parts and tools"
-            meta={`${partCount} part${partCount === 1 ? '' : 's'} · ${toolCount} tool${toolCount === 1 ? '' : 's'}`}
-            ok={partCount > 0 && toolCount > 0}
-          />
-          {tutorial.kind === 'assistive_tech' ? (
-            <CheckRow
-              title="3D print files"
-              meta={
-                (tutorial.stl_files?.length ?? 0) > 0
-                  ? `${tutorial.stl_files!.length} STL file${tutorial.stl_files!.length === 1 ? '' : 's'}`
-                  : 'No STL yet — assistive tech needs one'
-              }
-              ok={(tutorial.stl_files?.length ?? 0) > 0}
-            />
-          ) : null}
         </View>
 
         <ErrorRow message={error} />
@@ -308,6 +288,7 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing(3),
   },
   checks: { marginTop: theme.spacing(5) },
+  lead: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.caption, color: theme.colors.muted, marginBottom: theme.spacing(2) },
   checkRow: { marginBottom: theme.spacing(2) },
   actions: { marginTop: theme.spacing(5) },
   actionHint: {

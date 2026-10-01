@@ -853,15 +853,7 @@
   "group": "push",
   "boardRoute": "organisation/[tutorialId]",
   "route": "/organisation/[tutorialId]",
-  "role": "leader",
-  "explained": [
-   {
-    "type": "copy",
-    "match": "board paragraphs absent",
-    "why": "pending",
-    "pending": "review-checklist"
-   }
-  ]
+  "role": "leader"
  },
  {
   "id": "org_toys",

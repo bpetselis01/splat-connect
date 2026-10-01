@@ -502,6 +502,7 @@ export const PENDING = {
     needs: "\"Your standard rates\" panel (API accepts it) [ui]",
   },
   'review-checklist': {
+    shipped: true,
     title: "Section checklist",
     blurb: "A per-section review checklist is coming.",
     kind: "build",
