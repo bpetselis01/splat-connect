@@ -1944,6 +1944,10 @@ toyTransactions.post('/print', async (c) => {
     if (typeof asked.org_id !== 'string' || !Number.isInteger(asked.grams) || (asked.grams as number) < 1) {
       return c.json({ error: 'Say how many grams of credit, in whole grams.' }, 400)
     }
+    // 114's column and ledger both stop at a tonne; past it the insert would 500.
+    if ((asked.grams as number) > 1000000) {
+      return c.json({ error: 'One job can use at most 1,000,000 g of credit.' }, 400)
+    }
     if (!printers!.some((p) => p.owner_org_id === asked.org_id)) {
       return c.json({ error: 'Credit can only be spent at the organisation that issued it.' }, 400)
     }

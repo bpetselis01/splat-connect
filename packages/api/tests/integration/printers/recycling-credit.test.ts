@@ -108,6 +108,7 @@ describe('asking with credit', () => {
   it.each([
     [{ org_id: 'x', grams: 1.5 }, 'Say how many grams of credit, in whole grams.'],
     [{ grams: 50 }, 'Say how many grams of credit, in whole grams.'],
+    [{ org_id: 'x', grams: 1000001 }, 'One job can use at most 1,000,000 g of credit.'],
   ])('refuses %j', async (print_credit, message) => {
     const res = await ask(0, [printers.a1], { print_credit })
     expect(res.status).toBe(400)
