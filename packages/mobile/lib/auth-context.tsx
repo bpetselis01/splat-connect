@@ -106,13 +106,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signUp(email: string, password: string, name: string) {
+    const web = process.env.EXPO_PUBLIC_WEB_URL
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: { name, contributor_terms_version: AGREEMENT_VERSIONS.contributor_terms },
         // Only the email's link uses this; the app itself takes the code.
-        emailRedirectTo: `${process.env.EXPO_PUBLIC_WEB_URL}/auth/confirmed`,
+        // Supabase's WAF answers an http (raw-IP dev) redirect with an HTML
+        // 403 that supabase-js can't parse, so only https is ever sent.
+        ...(web?.startsWith('https://') ? { emailRedirectTo: `${web}/auth/confirmed` } : {}),
       },
     })
     if (error) return result(error)

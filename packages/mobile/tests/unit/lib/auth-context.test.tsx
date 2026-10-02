@@ -59,6 +59,11 @@ function wrapper({ children }: { children: ReactNode }) {
   return <AuthProvider>{children}</AuthProvider>
 }
 
+const webUrl = process.env.EXPO_PUBLIC_WEB_URL
+afterAll(() => {
+  process.env.EXPO_PUBLIC_WEB_URL = webUrl
+})
+
 describe('useAuth', () => {
   beforeEach(() => {
     jest.clearAllMocks()
@@ -116,6 +121,7 @@ describe('useAuth', () => {
   //        metadata, and no role — enable_confirmations leaves no session to
   //        POST /api/agreements with, so handle_new_user() records it instead.
   it('signUp passes name and contributor_terms_version in metadata', async () => {
+    process.env.EXPO_PUBLIC_WEB_URL = 'https://splat.example'
     mockSignUp.mockResolvedValue({ data: { user: { identities: [{ id: 'i1' }] } }, error: null })
     const { result } = renderHook(() => useAuth(), { wrapper })
     await waitFor(() => expect(result.current.loading).toBe(false))
@@ -126,9 +132,22 @@ describe('useAuth', () => {
       password: 'pw',
       options: {
         data: { name: 'Pat', contributor_terms_version: AGREEMENT_VERSIONS.contributor_terms },
-        emailRedirectTo: `${process.env.EXPO_PUBLIC_WEB_URL}/auth/confirmed`,
+        emailRedirectTo: 'https://splat.example/auth/confirmed',
       },
     })
+  })
+
+  // Tests: Supabase's WAF answers a raw-IP http redirect with an HTML 403,
+  //        which reached the person as "JSON Parse error". The app takes the
+  //        code, so a non-https web URL sends no redirect at all.
+  it.each(['http://100.102.50.23:3100', '', undefined])('signUp sends no redirect for web URL %p', async (url) => {
+    if (url === undefined) delete process.env.EXPO_PUBLIC_WEB_URL
+    else process.env.EXPO_PUBLIC_WEB_URL = url
+    mockSignUp.mockResolvedValue({ data: { user: { identities: [{ id: 'i1' }] } }, error: null })
+    const { result } = renderHook(() => useAuth(), { wrapper })
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    await act(() => result.current.signUp('p@b.com', 'pw', 'Pat'))
+    expect(mockSignUp.mock.calls[0][0].options).not.toHaveProperty('emailRedirectTo')
   })
 
   // Tests: Supabase returns 200 + empty identities for an already-registered email
