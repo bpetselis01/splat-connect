@@ -298,6 +298,7 @@ function readOrgPickup(body: Record<string, unknown>): Record<string, string | n
   return address
 }
 
+const MAX_UNDER_MIN = 'The maximum per drop cannot be under the minimum.'
 
 /**
  * PATCH /api/organizations/:id/profile
@@ -444,7 +445,7 @@ organizations.patch('/:id/profile', async (c) => {
     const min = (Object.hasOwn(patch, 'recycling_min_kg') ? patch.recycling_min_kg : current?.recycling_min_kg) as number | null
     const max = (Object.hasOwn(patch, 'recycling_max_kg') ? patch.recycling_max_kg : current?.recycling_max_kg) as number | null
     if (max != null && max < (min ?? MIN_DROPOFF_GRAMS / 1000)) {
-      return c.json({ error: 'The maximum per drop cannot be under the minimum.' }, 400)
+      return c.json({ error: MAX_UNDER_MIN }, 400)
     }
   }
 
@@ -454,6 +455,10 @@ organizations.patch('/:id/profile', async (c) => {
     .eq('id', orgId)
     .select(ORG_COLUMNS)
     .maybeSingle()
+  // Two editors saving min and max at once both pass the read above; 113's CHECK catches it.
+  if (error?.code === '23514' && error.message.includes('organizations_recycling_max_over_min')) {
+    return c.json({ error: MAX_UNDER_MIN }, 400)
+  }
   if (error) return c.json({ error: error.message }, 500)
   if (!data) return c.json({ error: 'Not found' }, 404)
   return c.json((await withExtras([data]))[0])
