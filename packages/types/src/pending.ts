@@ -694,6 +694,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["mobile", "api"],
     needs: "Decided 2026-09-30: one profile_thanks table mirroring org thanks (077): note, show_note, optional transaction; notification; only the count is public. Covers printer, exchange, build and profile.",
+    shipped: true,
   },
   'locations-and-distance': {
     shipped: true,
