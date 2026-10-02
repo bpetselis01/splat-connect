@@ -422,10 +422,10 @@ describe('Terms gate', () => {
     expect(screen.queryByLabelText('Your name')).toBeNull()
   })
 
-  it('sends an accepted account on to Guides', () => {
+  it('sends an accepted account on to Home', () => {
     mockAuth.hasContributorTerms = true
     render(<TermsGate />)
-    expect(mockRedirect).toHaveBeenCalledWith('/guides')
+    expect(mockRedirect).toHaveBeenCalledWith('/home')
   })
 })
 

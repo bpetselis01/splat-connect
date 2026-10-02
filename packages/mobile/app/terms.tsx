@@ -50,7 +50,7 @@ export default function TermsGate() {
 
   if (gate === 'loading') return null
   if (gate !== 'ok') return <Redirect href={gate} />
-  if (hasContributorTerms) return <Redirect href="/guides" />
+  if (hasContributorTerms) return <Redirect href="/home" />
 
   async function accept() {
     setError(null)

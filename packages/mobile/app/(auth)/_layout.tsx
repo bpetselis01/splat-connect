@@ -7,6 +7,6 @@ import { useAuth } from '../../lib/auth-context'
 export default function AuthLayout() {
   const { session, loading, resetting } = useAuth()
   if (loading) return null
-  if (session && !resetting) return <Redirect href="/guides" />
+  if (session && !resetting) return <Redirect href="/home" />
   return <Stack screenOptions={{ headerShown: false }} initialRouteName="welcome" />
 }

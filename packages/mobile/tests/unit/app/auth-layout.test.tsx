@@ -18,10 +18,10 @@ jest.mock('../../../lib/auth-context', () => ({ useAuth: () => mockUseAuth() }))
 beforeEach(() => jest.clearAllMocks())
 
 describe('AuthLayout', () => {
-  it('sends a session to Guides', () => {
+  it('sends a session to Home', () => {
     mockUseAuth.mockReturnValue({ loading: false, session: { user: { user_metadata: {} } } })
     render(<AuthLayout />)
-    expect(mockRedirect).toHaveBeenCalledWith('/guides')
+    expect(mockRedirect).toHaveBeenCalledWith('/home')
   })
 
   it('holds the redirect while a reset is saving its new password', () => {
