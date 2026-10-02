@@ -80,3 +80,19 @@ describe('print request detail, customization answers', () => {
     expect(screen.queryByText(/Reach from seated/)).toBeNull()
   })
 })
+
+// Tests: the family sees the credit a job spent (114) while it is live, and not
+//        on a job that was declined or withdrawn, where nothing was spent.
+describe('print request detail, recycling credit', () => {
+  const asFamily = { requester_id: 'printer-1', owner_id: 'maker-9', print_credit_grams: 120 }
+
+  it.each(['accepted', 'completed'])('shows the credit on a %s job', async (status) => {
+    await open({ ...asFamily, status })
+    expect(screen.getByText('Your recycling credit (120 g)')).toBeTruthy()
+  })
+
+  it.each(['requested', 'rejected', 'withdrawn'])('hides it on a %s job', async (status) => {
+    await open({ ...asFamily, status })
+    expect(screen.queryByText('Your recycling credit (120 g)')).toBeNull()
+  })
+})

@@ -195,8 +195,9 @@ export default async function PrintJobPage({ params }: { params: Promise<{ id: s
           />
         </div>
       )}
-      {/* 114: grams spent at accept. Not money, so not a line on the panel's total. */}
-      {!viewerIsPrinter && tx.print_credit_grams != null && tx.status !== 'requested' && (
+      {/* 114: grams spent at accept. Not money, so not a line on the panel's total.
+          Only a live job spent it: mobile's rule, which hides declined, withdrawn and expired. */}
+      {!viewerIsPrinter && tx.print_credit_grams != null && (tx.status === 'accepted' || tx.status === 'completed') && (
         <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[var(--tmint)] px-3 py-1 text-sm font-extrabold text-[var(--tink)]">
           Your recycling credit ({tx.print_credit_grams} g)
         </p>
