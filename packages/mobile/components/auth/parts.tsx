@@ -18,6 +18,7 @@ import {
   type TextInputProps,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { theme } from '../../lib/theme'
 import { BackButton } from '../ui/BackButton'
 import { Screen } from '../ui/Screen'
@@ -42,13 +43,14 @@ export function AuthStage({
   back?: boolean
   foot?: boolean
 }) {
+  const insets = useSafeAreaInsets()
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Screen ownHeader>
         <ScrollView
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scroll}
+          contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + theme.spacing(8) }]}
         >
           <View style={styles.column}>
             {back ? (
@@ -67,7 +69,9 @@ export function AuthStage({
 
 export function Heading({ children, center }: { children: string; center?: boolean }) {
   return (
-    <Text accessibilityRole="header" style={[styles.heading, center && styles.center]}>
+    // Capped so a title breaks between words, never inside one, on a 320pt
+    // screen at the largest accessibility size.
+    <Text accessibilityRole="header" maxFontSizeMultiplier={1.6} style={[styles.heading, center && styles.center]}>
       {children}
     </Text>
   )
@@ -290,7 +294,7 @@ export function TextLink({ lead, label, onPress, testID }: { lead?: string; labe
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  scroll: { flexGrow: 1, justifyContent: 'center', paddingBottom: theme.spacing(8) },
+  scroll: { flexGrow: 1, justifyContent: 'center' },
   column: { width: '100%', maxWidth: 440, alignSelf: 'center', gap: theme.spacing(3) },
   back: { alignSelf: 'flex-start' },
   center: { textAlign: 'center' },
