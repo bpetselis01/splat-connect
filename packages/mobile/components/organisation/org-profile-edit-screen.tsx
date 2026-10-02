@@ -11,7 +11,7 @@
 import { useCallback, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { useFocusEffect } from 'expo-router'
-import { AU_STATES, type Organization, type OrgThanks } from '@splat-connect/types'
+import { apiMessage, AU_STATES, type Organization, type OrgThanks } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { useCapabilities } from '../../lib/capabilities'
 import { theme } from '../../lib/theme'
@@ -69,8 +69,7 @@ export function OrgProfileEditScreen() {
       await apiClient.patch(`/api/organizations/${orgId}/profile`, { ...form, name: form.name.trim() })
       setNote({ ok: true, text: 'Saved. It is on your public page now.' })
     } catch (err) {
-      const detail = err instanceof Error ? /: (.+)$/.exec(err.message)?.[1] : null
-      setNote({ ok: false, text: detail ?? 'That did not save. Check your connection and try again.' })
+      setNote({ ok: false, text: apiMessage(err, 'That did not save. Check your connection and try again.') })
     } finally {
       setSaving(false)
     }

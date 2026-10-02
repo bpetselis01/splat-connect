@@ -267,4 +267,12 @@ describe('NewGuideRoute — Start from a PDF', () => {
     fireEvent.press(screen.getByLabelText('Choose PDF'))
     expect(await screen.findByText('That file is not a PDF.')).toBeTruthy()
   })
+
+  it('keeps a server fault out of the PDF error', async () => {
+    mockUpload.mockRejectedValue(new Error('Upload to /api/tutorials/import-pdf failed with status 500: TypeError: undefined is not an object'))
+    render(<NewGuideRoute />)
+    fireEvent.press(screen.getByLabelText('Start from a PDF'))
+    fireEvent.press(screen.getByLabelText('Choose PDF'))
+    expect(await screen.findByText('Could not read this PDF. Please try again.')).toBeTruthy()
+  })
 })

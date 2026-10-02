@@ -19,6 +19,7 @@ import { Button } from '../ui/Button'
 import { ErrorRow } from '../ui/ErrorRow'
 import { FlashLine, useFlash } from '../ui/Flash'
 import { ReportProblem } from '../reports/report-problem'
+import { apiMessage } from '@splat-connect/types'
 
 type Props = {
   tutorialId: string
@@ -62,8 +63,7 @@ export function CommunityNotes({ tutorialId, guideTitle, authorName, steps, note
       setAt(undefined)
       await reload()
     } catch (err) {
-      const detail = err instanceof Error ? /status \d+: (.+)$/.exec(err.message)?.[1] : null
-      setError(detail ?? 'Could not post that. Please try again.')
+      setError(apiMessage(err, 'Could not post that. Please try again.'))
     } finally {
       setBusy(false)
     }

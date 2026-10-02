@@ -13,7 +13,7 @@ import { useState } from 'react'
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import { STORY_KINDS, STORY_KIND_LABEL, readMinutes, type StoryKind } from '@splat-connect/types'
+import { apiMessage, STORY_KINDS, STORY_KIND_LABEL, readMinutes, type StoryKind } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { useCapabilities } from '../../lib/capabilities'
 import { theme } from '../../lib/theme'
@@ -74,8 +74,7 @@ export function StoryFormScreen() {
       })
       router.back()
     } catch (e) {
-      const detail = e instanceof Error ? /: (.+)$/.exec(e.message)?.[1] : null
-      setError(detail ?? 'That did not save. Try once more.')
+      setError(apiMessage(e, 'That did not save. Try once more.'))
       setSaving(null)
     }
   }

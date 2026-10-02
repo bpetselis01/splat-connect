@@ -19,6 +19,7 @@ import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import {
   ANSWER_TYPES,
+  apiMessage,
   AU_STATES,
   EVENT_KINDS,
   EVENT_KIND_LABEL,
@@ -165,8 +166,7 @@ export function EventFormScreen() {
       await apiClient.put(`/api/organizations/${org!.id}/events/${saved.id}/questions`, { questions })
       router.back()
     } catch (e) {
-      const detail = e instanceof Error ? /: (.+)$/.exec(e.message)?.[1] : null
-      setError(detail ?? 'That did not save. Try once more.')
+      setError(apiMessage(e, 'That did not save. Try once more.'))
       setSaving(null)
     }
   }
