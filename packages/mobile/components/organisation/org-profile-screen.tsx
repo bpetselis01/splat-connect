@@ -17,8 +17,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet, Image } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import { PAYMENT_METHODS, formatCents, apiMessage, firstName, orgPrintFacts } from '@splat-connect/types'
-import type { OrgDoorTarget, OrgPublicProfile, OrgRelationship, Tutorial } from '@splat-connect/types'
+import { PAYMENT_METHODS, formatCents, apiMessage, firstName, orgPrintFacts, recyclingPerDrop } from '@splat-connect/types'
+import type { OrgDoorTarget, OrgPublicProfile, OrgRelationship, RecyclingGives, Tutorial } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { useAuth } from '../../lib/auth-context'
 import { useCapabilities } from '../../lib/capabilities'
@@ -45,6 +45,13 @@ const DOOR_ICON: Record<OrgDoorTarget, IconName> = {
   message: 'chatbubble-ellipses-outline',
 }
 const QUOTE_TINTS = [theme.colors.mintSoft, theme.colors.honeySoft, theme.colors.violetSoft, theme.colors.accentLight]
+
+// MB's org profile words for 113's recycling_gives.
+const GIVES_PROFILE: Record<RecyclingGives, string> = {
+  credit: 'Print credit on their machines',
+  spool: 'A spool to take home',
+  either: 'Credit, or a spool',
+}
 
 export function OrgProfileScreen({ id }: { id: string }) {
   const router = useRouter()
@@ -210,8 +217,11 @@ export function OrgProfileScreen({ id }: { id: string }) {
           {recycles ? (
             <View style={[styles.panel, { backgroundColor: theme.colors.mintSoft }]}>
               <Text style={styles.panelTitle}>They take waste plastic</Text>
-              {/* PENDING(org-recycling-details): Form, min/max per drop, turnaround, "You get" and hours — only polymers and a note are stored. */}
               <Fact k="Polymers" v={(org.recycling_materials ?? []).join(' · ')} />
+              {(org.recycling_forms ?? []).length ? <Fact k="Form" v={org.recycling_forms!.join(', ')} /> : null}
+              <Fact k="Per drop" v={recyclingPerDrop(org)} />
+              <Fact k="You get" v={GIVES_PROFILE[org.recycling_gives ?? 'credit']} />
+              {org.recycling_hours ? <Fact k="When" v={org.recycling_hours} /> : null}
               {org.recycling_note ? <Text style={styles.panelBody}>{org.recycling_note}</Text> : null}
               <Button label="Book a drop-off" variant="secondary" onPress={() => router.push('/explore/recycling')} />
             </View>

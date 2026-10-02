@@ -1507,7 +1507,6 @@ organizations.get('/recycling/mine', async (c) => {
   )
 })
 
-// PENDING(org-recycling-details): machines, forms, min/max per drop, turnaround, "You get", hours and door need columns.
 organizations.get('/:id/recycling', async (c) => {
   const supabase = createUserClient(c.get('token'))
   const { data, error } = await supabase

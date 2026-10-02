@@ -7,10 +7,20 @@
 import type { DropoffStatus, Organization, RecyclingDropoff } from '@splat-connect/types'
 import { MIN_DROPOFF_GRAMS, RECYCLING_DECLARATION } from '@splat-connect/types'
 
-export type TakerOrg = Pick<Organization, 'id' | 'name' | 'status' | 'suburb' | 'state'> & {
-  recycling_materials?: string[]
-  recycling_note?: string | null
-}
+export type TakerOrg = Pick<Organization, 'id' | 'name' | 'status' | 'suburb' | 'state'> &
+  Pick<
+    Organization,
+    | 'recycling_materials'
+    | 'recycling_note'
+    | 'recycling_machines'
+    | 'recycling_forms'
+    | 'recycling_min_kg'
+    | 'recycling_max_kg'
+    | 'recycling_turnaround'
+    | 'recycling_gives'
+    | 'recycling_hours'
+    | 'recycling_door'
+  >
 
 /**
  * Who can take plastic: an organisation that has published at least one
@@ -29,10 +39,21 @@ export const kg = (grams: number) => `${(grams / 1000).toFixed(1)} kg`
 /**
  * Why the booking cannot go yet, or null when it can. The order is the order
  * the form reads in, so the line under the button names the first thing left.
+ * minGrams/maxGrams are the organisation's own limits (113); the platform
+ * floor still applies under any minimum.
  */
-export function bookingProblem(input: { grams: number | null; material: string; ticked: number }): string | null {
-  if (input.grams === null || input.grams < MIN_DROPOFF_GRAMS) {
-    return `A drop needs to be at least ${MIN_DROPOFF_GRAMS / 1000} kg.`
+export function bookingProblem(input: {
+  grams: number | null
+  material: string
+  ticked: number
+  minGrams?: number
+  maxGrams?: number | null
+  orgName?: string
+}): string | null {
+  const min = Math.max(MIN_DROPOFF_GRAMS, input.minGrams ?? 0)
+  if (input.grams === null || input.grams < min) return `A drop needs to be at least ${min / 1000} kg.`
+  if (input.maxGrams != null && input.grams > input.maxGrams) {
+    return `${input.orgName} takes at most ${input.maxGrams / 1000} kg at once.`
   }
   if (!input.material) return 'Pick the polymer you are bringing.'
   const left = RECYCLING_DECLARATION.length - input.ticked

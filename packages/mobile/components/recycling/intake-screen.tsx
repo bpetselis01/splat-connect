@@ -10,18 +10,17 @@
  * is the rule, shared with web; the API repeats the two-kilo floor and the
  * credit-within-weight limit.
  *
- * "What you can take" edits only the two fields that have columns (059's
- * recycling_materials and recycling_note). The board's machines, forms, min,
- * max, turnaround, hours and door have nowhere to be stored; the note carries
- * them, as web's what-you-take.tsx decided.
+ * "What you can take" edits every field the board draws (059's polymers and
+ * note, 113's machines, forms, per-drop limits, turnaround, what they get
+ * back, hours and door).
  *
  * The first led organisation, as web has it. Title from app/(my)/_layout.tsx.
  */
 import { useCallback, useState } from 'react'
 import { View, Text, ScrollView, TextInput, Image, StyleSheet } from 'react-native'
 import { useFocusEffect } from 'expo-router'
-import type { Organization, RecyclingDropoff } from '@splat-connect/types'
-import { PRINT_MATERIALS, apiMessage, initials, intakeCredit, weighedInLine } from '@splat-connect/types'
+import type { Organization, RecyclingDropoff, RecyclingGives } from '@splat-connect/types'
+import { PRINT_MATERIALS, RECYCLING_FORMS, RECYCLING_MACHINES, apiMessage, initials, intakeCredit, weighedInLine } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { useCapabilities } from '../../lib/capabilities'
 import { theme } from '../../lib/theme'
@@ -168,7 +167,6 @@ export function IntakeScreen() {
               </>
             ) : null}
 
-            {/* PENDING(org-recycling-details): Machines, Forms, Min, Max, Turnaround, They get back, Hours and Door — no columns yet. */}
             <Text style={styles.eyebrow}>What you can take</Text>
             <Text style={styles.sub}>
               Contributors see this before they pack a box. Every unlisted item is one somebody
@@ -308,22 +306,69 @@ function BookedRow({
   )
 }
 
+// MB's editor words for 113's recycling_gives.
+const GIVES_EDIT: Array<[RecyclingGives, string]> = [
+  ['credit', 'Print credit'],
+  ['spool', 'A spool back'],
+  ['either', 'Either'],
+]
+const BAD_KG = 'Per drop is between 2 and 1000 kg, to one decimal place.'
+/** '' is "not said"; anything else must read as kilos to one decimal. */
+const kgValue = (text: string): number | null | undefined => {
+  const t = text.trim()
+  if (!t) return null
+  return /^\d{1,4}(\.\d)?$/.test(t) ? Number(t) : undefined
+}
+
+function ChipSet({ label, options, value, onChange }: { label: string; options: readonly string[]; value: string[]; onChange: (v: string[]) => void }) {
+  return (
+    <View style={styles.group}>
+      <Text style={styles.label}>{label}</Text>
+      <View style={styles.chips}>
+        {options.map((m) => {
+          const on = value.includes(m)
+          return <Chip key={m} label={m} active={on} onPress={() => onChange(on ? value.filter((x) => x !== m) : [...value, m])} />
+        })}
+      </View>
+    </View>
+  )
+}
+
 function WhatYouTake({ org }: { org: Organization }) {
   const [materials, setMaterials] = useState<string[]>(org.recycling_materials ?? [])
+  const [machines, setMachines] = useState<string[]>(org.recycling_machines ?? [])
+  const [forms, setForms] = useState<string[]>(org.recycling_forms ?? [])
+  const [min, setMin] = useState(org.recycling_min_kg != null ? String(org.recycling_min_kg) : '')
+  const [max, setMax] = useState(org.recycling_max_kg != null ? String(org.recycling_max_kg) : '')
+  const [turnaround, setTurnaround] = useState(org.recycling_turnaround ?? '')
+  const [gives, setGives] = useState<RecyclingGives>(org.recycling_gives ?? 'credit')
+  const [hours, setHours] = useState(org.recycling_hours ?? '')
+  const [door, setDoor] = useState(org.recycling_door ?? '')
   const [note, setNote] = useState(org.recycling_note ?? '')
   const [busy, setBusy] = useState(false)
   const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null)
   // Whatever they already publish stays pickable even if it is not a print
   // material — a leader should be able to untick "HDPE", not be stuck with it.
-  const options = [...new Set([...PRINT_MATERIALS, ...materials])]
+  const polymers = [...new Set([...PRINT_MATERIALS, ...materials])]
 
   async function save() {
+    const minKg = kgValue(min)
+    const maxKg = kgValue(max)
+    if (minKg === undefined || maxKg === undefined) return setStatus({ ok: false, text: BAD_KG })
     setBusy(true)
     setStatus(null)
     try {
       await apiClient.patch(`/api/organizations/${org.id}/profile`, {
         recycling_materials: materials,
         recycling_note: note,
+        recycling_machines: machines,
+        recycling_forms: forms,
+        recycling_min_kg: minKg,
+        recycling_max_kg: maxKg,
+        recycling_turnaround: turnaround,
+        recycling_gives: gives,
+        recycling_hours: hours,
+        recycling_door: door,
       })
       setStatus({ ok: true, text: 'Saved — contributors see this now.' })
     } catch (err) {
@@ -335,31 +380,41 @@ function WhatYouTake({ org }: { org: Organization }) {
 
   return (
     <Card style={styles.row}>
-      <Text style={styles.label}>Polymers</Text>
-      <View style={styles.chips}>
-        {options.map((m) => {
-          const on = materials.includes(m)
-          return (
-            <Chip
-              key={m}
-              label={m}
-              active={on}
-              onPress={() => setMaterials(on ? materials.filter((x) => x !== m) : [...materials, m])}
-            />
-          )
-        })}
-      </View>
+      <ChipSet label="Machines" options={RECYCLING_MACHINES} value={machines} onChange={setMachines} />
+      <ChipSet label="Polymers" options={polymers} value={materials} onChange={setMaterials} />
       <Text style={styles.meta}>
         Leave it empty if you do not take drop-offs — nobody can book one until something is on
         this list.
       </Text>
+      <ChipSet label="In what form" options={RECYCLING_FORMS} value={forms} onChange={setForms} />
+      <View style={styles.kgRow}>
+        <View style={styles.flex}>
+          <TextField label="Minimum" accessibilityLabel="Minimum" value={min} onChangeText={setMin} keyboardType="decimal-pad" placeholder="2" />
+        </View>
+        <View style={styles.flex}>
+          <TextField label="Maximum" accessibilityLabel="Maximum" value={max} onChangeText={setMax} keyboardType="decimal-pad" />
+        </View>
+      </View>
+      <Text style={styles.meta}>The platform floor is 2 kg. You can ask for more, never less.</Text>
+      <TextField label="Turnaround" accessibilityLabel="Turnaround" value={turnaround} onChangeText={setTurnaround} maxLength={60} />
+      <View style={styles.group}>
+        <Text style={styles.label}>They get back</Text>
+        <View accessibilityRole="radiogroup" style={styles.chips}>
+          {GIVES_EDIT.map(([value, label]) => (
+            <Chip key={value} label={label} role="radio" active={gives === value} onPress={() => setGives(value)} />
+          ))}
+        </View>
+      </View>
+      <TextField label="Drop-off hours" accessibilityLabel="Drop-off hours" value={hours} onChangeText={setHours} maxLength={80} />
+      <TextField label="Which door" accessibilityLabel="Which door" value={door} onChangeText={setDoor} maxLength={120} />
       <TextField
         label="How you want it brought"
+        accessibilityLabel="How you want it brought"
         value={note}
         onChangeText={setNote}
         multiline
         maxLength={500}
-        placeholder="Clean, dry, sorted. Tuesday and Thursday, 9am–4pm, loading door on the lane."
+        placeholder="Clean, dry, sorted."
       />
       {status ? (
         status.ok ? (
@@ -441,4 +496,5 @@ const styles = StyleSheet.create({
   },
   label: { fontFamily: theme.fonts.black, fontSize: 13.5, color: theme.colors.ink },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
+  group: { gap: 8 },
 })

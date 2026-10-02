@@ -31,7 +31,7 @@ const mockUpload = jest.fn()
 jest.mock('../../../../lib/upload', () => ({ uploadFile: (...a: unknown[]) => mockUpload(...a) }))
 
 const ORGS = [
-  { id: 'north', name: 'Northside Therapy', status: 'active', suburb: 'Crows Nest', state: 'NSW', recycling_materials: ['PLA', 'PETG'], recycling_note: 'Tue and Thu, 9am–4pm' },
+  { id: 'north', name: 'Northside Therapy', status: 'active', suburb: 'Crows Nest', state: 'NSW', recycling_materials: ['PLA', 'PETG'], recycling_note: 'Bring it sorted.', recycling_machines: ['Shredder', 'Extruder'], recycling_forms: ['Failed prints', 'Offcuts'], recycling_min_kg: 2, recycling_max_kg: 8, recycling_turnaround: 'About 3 weeks', recycling_gives: 'credit', recycling_hours: 'Tue and Thu, 9am–4pm', recycling_door: 'Loading door on Corella Lane' },
   { id: 'none', name: 'Takes Nothing', status: 'active', suburb: null, state: null, recycling_materials: [], recycling_note: null },
   { id: 'susp', name: 'Suspended Space', status: 'suspended', suburb: null, state: null, recycling_materials: ['PLA'], recycling_note: null },
 ]
@@ -156,4 +156,24 @@ it('says so when the photo upload fails, and clears it on a successful retry', a
   fireEvent.press(screen.getByLabelText('Photo of the sorted plastic'))
   await waitFor(() => expect(screen.queryByText('Could not upload the photo. Please try again.')).toBeNull())
   expect(mockUpload).toHaveBeenCalledTimes(2)
+})
+
+it('draws the board’s card for each recycler, with the note below', async () => {
+  render(<RecyclingScreen />)
+  expect(await screen.findByText('PLA, PETG · Failed prints, Offcuts')).toBeTruthy()
+  expect(screen.getByText('Shredder · Extruder')).toBeTruthy()
+  expect(screen.getByText('2–8 kg · About 3 weeks')).toBeTruthy()
+  expect(screen.getByText('Print credit')).toBeTruthy()
+  expect(screen.getByText('Tue and Thu, 9am–4pm · Loading door on Corella Lane')).toBeTruthy()
+  expect(screen.getByText('Bring it sorted.')).toBeTruthy()
+})
+
+it('holds a booking over the maximum', async () => {
+  render(<RecyclingScreen />)
+  fireEvent.press(await screen.findByLabelText('Book a drop-off at Northside Therapy'))
+  expect(screen.getByText('Tue and Thu, 9am–4pm · Loading door on Corella Lane · 2–8 kg')).toBeTruthy()
+  fireEvent.changeText(screen.getByLabelText('How much, roughly, in kilograms'), '9')
+  expect(screen.getAllByText('Northside Therapy takes at most 8 kg at once.').length).toBeGreaterThan(0)
+  for (const line of RECYCLING_DECLARATION) fireEvent.press(screen.getByLabelText(line))
+  expect(screen.getByLabelText('Book the drop-off').props.accessibilityState.disabled).toBe(true)
 })

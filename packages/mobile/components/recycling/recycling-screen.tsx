@@ -12,16 +12,15 @@
  * the "worth roughly" panel is labelled an estimate for that reason.
  * The photo is uploaded first (112) and the booking sends its path.
  *
- * Where the board draws fields no column holds (machines, per-drop maximum,
- * turnaround, hours, door, spool-or-credit), the organisation's free-text
- * recycling_note stands in, exactly as web's intake editor decided.
+ * Every field the board draws on a recycler's card has a column (059, 113);
+ * `recycling_note` stays as free text below them.
  */
 import { useCallback, useState } from 'react'
 import { View, Text, ScrollView, Pressable, TextInput, Image, StyleSheet } from 'react-native'
 import { useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import * as ImagePicker from 'expo-image-picker'
-import type { RecyclingDropoff } from '@splat-connect/types'
+import type { RecyclingDropoff, RecyclingGives } from '@splat-connect/types'
 import {
   DECLARATION_VERSION,
   MIN_DROPOFF_GRAMS,
@@ -30,6 +29,7 @@ import {
   apiMessage,
   initials,
   kgToGrams,
+  recyclingPerDrop,
 } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { uploadFile } from '../../lib/upload'
@@ -75,6 +75,14 @@ const TINTS = [
 
 const place = (o: TakerOrg) => [o.suburb, o.state].filter(Boolean).join(' ')
 const date = (iso: string) => new Date(iso).toLocaleDateString('en-AU', { day: 'numeric', month: 'long' })
+
+// MB's card words for 113's recycling_gives.
+const GIVES_CARD: Record<RecyclingGives, string> = {
+  credit: 'Print credit',
+  spool: 'A spool back',
+  either: 'Credit or a spool',
+}
+const when = (o: TakerOrg) => [o.recycling_hours, o.recycling_door].filter(Boolean).join(' · ')
 
 export function RecyclingScreen() {
   const { caps } = useCapabilities()
@@ -251,11 +259,15 @@ export function RecyclingScreen() {
                       {place(o) ? <Text style={styles.meta}>{place(o)}</Text> : null}
                     </View>
                   </View>
-                  {/* PENDING(org-recycling-details): machines, max per drop, turnaround, hours, door and "You get". */}
-                  <Fact term="Takes" value={(o.recycling_materials ?? []).join(', ')} />
-                  <Fact term="Per drop" value={`From ${MIN_DROPOFF_GRAMS / 1000} kg`} />
-                  <Fact term="You get" value="Print credit" />
-                  {o.recycling_note ? <Fact term="When" value={o.recycling_note} quiet /> : null}
+                  <Fact
+                    term="Takes"
+                    value={[(o.recycling_materials ?? []).join(', '), (o.recycling_forms ?? []).join(', ')].filter(Boolean).join(' · ')}
+                  />
+                  {(o.recycling_machines ?? []).length ? <Fact term="Machines" value={o.recycling_machines!.join(' · ')} /> : null}
+                  <Fact term="Per drop" value={recyclingPerDrop(o)} />
+                  <Fact term="You get" value={GIVES_CARD[o.recycling_gives ?? 'credit']} />
+                  {when(o) ? <Fact term="When" value={when(o)} /> : null}
+                  {o.recycling_note ? <Text style={styles.meta}>{o.recycling_note}</Text> : null}
                   <Button
                     label="Book a drop-off here"
                     variant="secondary"
@@ -283,11 +295,11 @@ export function RecyclingScreen() {
   )
 }
 
-function Fact({ term, value, quiet }: { term: string; value: string; quiet?: boolean }) {
+function Fact({ term, value }: { term: string; value: string }) {
   return (
     <View style={styles.fact}>
       <Text style={styles.factTerm}>{term}</Text>
-      <Text style={[styles.factValue, quiet && styles.factQuiet]}>{value}</Text>
+      <Text style={styles.factValue}>{value}</Text>
     </View>
   )
 }
@@ -312,8 +324,10 @@ function BookDropoff({
   const [error, setError] = useState<string | null>(null)
 
   const grams = kgToGrams(amount)
-  const problem = bookingProblem({ grams, material, ticked: ticked.length })
-  const heavyEnough = grams !== null && grams >= MIN_DROPOFF_GRAMS
+  const minGrams = Math.max(MIN_DROPOFF_GRAMS, org.recycling_min_kg != null ? Math.round(org.recycling_min_kg * 1000) : 0)
+  const maxGrams = org.recycling_max_kg != null ? Math.round(org.recycling_max_kg * 1000) : null
+  const problem = bookingProblem({ grams, material, ticked: ticked.length, minGrams, maxGrams, orgName: org.name })
+  const heavyEnough = grams !== null && grams >= minGrams
   const toggle = (line: string) =>
     setTicked((t) => (t.includes(line) ? t.filter((l) => l !== line) : [...t, line]))
 
@@ -378,8 +392,9 @@ function BookDropoff({
         <View>
           <Text style={styles.bookTitle}>Drop-off at {org.name}</Text>
           <Text style={styles.meta}>
-            {[org.recycling_note, `From ${MIN_DROPOFF_GRAMS / 1000} kg a drop`].filter(Boolean).join(' · ')}
+            {[when(org), recyclingPerDrop({ ...org, recycling_turnaround: null })].filter(Boolean).join(' · ')}
           </Text>
+          {org.recycling_note ? <Text style={styles.meta}>{org.recycling_note}</Text> : null}
         </View>
 
         <View>
@@ -399,7 +414,11 @@ function BookDropoff({
           <Text style={styles.help}>
             {grams !== null && grams > 0 && grams < MIN_DROPOFF_GRAMS
               ? `Under the ${MIN_DROPOFF_GRAMS / 1000} kg minimum — hold on to it.`
-              : `At least ${MIN_DROPOFF_GRAMS / 1000} kg. They weigh it again at the door — this is just so they can plan.`}
+              : maxGrams !== null && grams !== null && grams > maxGrams
+                ? `${org.name} takes at most ${maxGrams / 1000} kg at once.`
+                : maxGrams !== null
+                  ? `Between ${minGrams / 1000} and ${maxGrams / 1000} kg. They weigh it again at the door.`
+                  : `At least ${minGrams / 1000} kg. They weigh it again at the door — this is just so they can plan.`}
           </Text>
         </View>
 
@@ -490,7 +509,7 @@ function BookDropoff({
           <Text style={styles.heroLine}>
             {heavyEnough
               ? `About three quarters of what you bring becomes filament. ${org.name} issues it after they weigh it.`
-              : `Enter a weight of at least ${MIN_DROPOFF_GRAMS / 1000} kg to see what it is worth.`}
+              : `Enter a weight of at least ${minGrams / 1000} kg to see what it is worth.`}
           </Text>
         </View>
 
@@ -579,7 +598,6 @@ const styles = StyleSheet.create({
   fact: { flexDirection: 'row', gap: 12 },
   factTerm: { width: 64, fontFamily: theme.fonts.bold, fontSize: 12.5, color: theme.colors.muted },
   factValue: { flex: 1, fontFamily: theme.fonts.black, fontSize: 12.5, color: theme.colors.ink },
-  factQuiet: { fontFamily: theme.fonts.semiBold, color: theme.colors.muted },
   amber: {
     flexDirection: 'row',
     gap: 6,

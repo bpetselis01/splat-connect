@@ -110,6 +110,30 @@ describe('OrgProfileScreen', () => {
     )
     expect(await screen.findByText('Thanked 3 times')).toBeTruthy()
   })
+
+  it('draws what the recycler takes in the board’s terms', async () => {
+    mockGet.mockImplementation((path: string) =>
+      Promise.resolve(
+        path.startsWith('/api/public')
+          ? {
+              ...ORG,
+              recycling_materials: ['PLA', 'PETG'],
+              recycling_forms: ['Offcuts'],
+              recycling_max_kg: 8,
+              recycling_turnaround: 'About 3 weeks',
+              recycling_gives: 'either',
+              recycling_hours: 'Tue and Thu, 9am–4pm',
+            }
+          : relationship()
+      )
+    )
+    render(<OrgProfileScreen id="o1" />)
+    expect(await screen.findByText('They take waste plastic')).toBeTruthy()
+    expect(screen.getByText('Offcuts')).toBeTruthy()
+    expect(screen.getByText('2–8 kg · About 3 weeks')).toBeTruthy()
+    expect(screen.getByText('Credit, or a spool')).toBeTruthy()
+    expect(screen.getByText('Tue and Thu, 9am–4pm')).toBeTruthy()
+  })
 })
 
 describe('org-profile helpers', () => {

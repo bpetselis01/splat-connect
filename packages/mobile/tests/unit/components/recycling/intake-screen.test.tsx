@@ -45,7 +45,7 @@ const drop = (over: object) => ({
 
 function route(drops: object[]) {
   mockGet.mockImplementation((path: string) => {
-    if (path === '/api/organizations/org1') return Promise.resolve({ id: 'org1', name: 'N', recycling_materials: ['PLA'], recycling_note: null })
+    if (path === '/api/organizations/org1') return Promise.resolve({ id: 'org1', name: 'N', recycling_materials: ['PLA'], recycling_note: null, recycling_machines: [], recycling_forms: [], recycling_min_kg: null, recycling_max_kg: null, recycling_turnaround: null, recycling_gives: 'credit', recycling_hours: null, recycling_door: null })
     if (path === '/api/organizations/org1/recycling') return Promise.resolve(drops)
     return Promise.reject(new Error('API GET failed with status 404: Not found'))
   })
@@ -129,4 +129,29 @@ it('shows the leader the photo the contributor booked with', async () => {
   render(<IntakeScreen />)
   const photo = await screen.findByLabelText('Photo of the sorted plastic')
   expect(photo.props.source).toEqual({ uri: 'https://signed/x.jpg' })
+})
+
+it('publishes what the machines take, in one PATCH', async () => {
+  route([])
+  render(<IntakeScreen />)
+  fireEvent.press(await screen.findByLabelText('Shredder'))
+  fireEvent.press(screen.getByLabelText('Offcuts'))
+  fireEvent.changeText(screen.getByLabelText('Maximum'), '8')
+  fireEvent.press(screen.getByLabelText('A spool back'))
+  fireEvent.changeText(screen.getByLabelText('Which door'), 'Back gate')
+  fireEvent.press(screen.getByLabelText('Save what you take'))
+  await waitFor(() =>
+    expect(mockPatch).toHaveBeenCalledWith('/api/organizations/org1/profile', {
+      recycling_materials: ['PLA'],
+      recycling_note: '',
+      recycling_machines: ['Shredder'],
+      recycling_forms: ['Offcuts'],
+      recycling_min_kg: null,
+      recycling_max_kg: 8,
+      recycling_turnaround: '',
+      recycling_gives: 'spool',
+      recycling_hours: '',
+      recycling_door: 'Back gate',
+    })
+  )
 })

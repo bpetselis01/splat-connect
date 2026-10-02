@@ -273,6 +273,7 @@ export const PENDING = {
     needs: "Backed-guide/shelf-toy rows with photo and meta, See all, leader avatars [ui,api]",
   },
   'org-recycling-details': {
+    shipped: true,
     title: "Recycling details",
     blurb: "Machines, forms, limits, turnaround and hours for each recycler are coming.",
     kind: "build",

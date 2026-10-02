@@ -44,6 +44,11 @@ describe('bookingProblem', () => {
     expect(bookingProblem({ grams: 2000, material: 'PLA', ticked: 0 })).toBe('7 declaration lines still to tick.')
     expect(bookingProblem({ grams: 2000, material: 'PLA', ticked: all })).toBeNull()
   })
+  it('holds a drop under the organisation’s minimum or over its maximum', () => {
+    expect(bookingProblem({ grams: 2500, material: 'PLA', ticked: all, minGrams: 3000 })).toBe('A drop needs to be at least 3 kg.')
+    expect(bookingProblem({ grams: 9000, material: 'PLA', ticked: all, maxGrams: 8000, orgName: 'Northside' })).toBe('Northside takes at most 8 kg at once.')
+    expect(bookingProblem({ grams: 8000, material: 'PLA', ticked: all, maxGrams: 8000, orgName: 'Northside' })).toBeNull()
+  })
 })
 
 describe('status → pill and actions', () => {
