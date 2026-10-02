@@ -43,7 +43,7 @@ import { TextField } from '../ui/TextField'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { ErrorRow } from '../ui/ErrorRow'
-import { PendingButton } from '../ui/pending'
+import { ReportProblem } from '../reports/report-problem'
 import { ListRow, RowThumb } from '../list/list-kit'
 
 type IconName = React.ComponentProps<typeof Ionicons>['name']
@@ -359,7 +359,11 @@ export function OrgProfileScreen({ id }: { id: string }) {
         </Section>
       ) : null}
 
-      <PendingButton pending="report-problem-mobile" label="Report a problem" variant="ghost" />
+      <View style={styles.reportLine}>
+        <Text style={styles.reportText}>Something wrong here? </Text>
+        <ReportProblem subjectKind="organisation" subjectId={org.id} subjectLabel={org.name} item={`${org.name} profile`} />
+        <Text style={styles.reportText}>. Goes to SPLAT only.</Text>
+      </View>
     </ScrollView>
   )
 }
@@ -528,6 +532,8 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   content: { padding: theme.spacing(4), paddingBottom: theme.spacing(10) },
   flex: { flex: 1, minWidth: 0 },
+  reportLine: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', marginTop: theme.spacing(4) },
+  reportText: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted },
   retry: { marginTop: theme.spacing(5), alignSelf: 'center', paddingHorizontal: theme.spacing(8) },
   // Edge to edge, as the board's cover runs: out past the content padding.
   cover: {

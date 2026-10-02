@@ -260,6 +260,7 @@ export const PENDING = {
     shipped: true,
   },
   'report-problem-mobile': {
+    shipped: true,
     title: "Report a problem",
     blurb: "Reporting from here is coming. Use the web or the contact page for now.",
     kind: "build",

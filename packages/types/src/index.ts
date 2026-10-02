@@ -2510,5 +2510,9 @@ export function fitLine(
   return `Suits ${child.name?.trim() || 'your child'}${summary ? ` — ${summary}` : ''}`
 }
 
+/** What a member report can be about (065, widened in 118). */
+export const REPORT_SUBJECT_KINDS = ['guide', 'toy', 'person', 'organisation', 'print_job', 'exchange', 'build', 'other'] as const
+export type ReportSubjectKind = (typeof REPORT_SUBJECT_KINDS)[number]
+
 export * from './pending'
 export * from './printing'

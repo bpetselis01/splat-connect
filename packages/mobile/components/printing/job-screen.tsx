@@ -34,7 +34,7 @@ import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { MessageBubble } from '../ui/MessageBubble'
 import { ErrorRow } from '../ui/ErrorRow'
-import { PendingButton } from '../ui/pending'
+import { ReportProblem } from '../reports/report-problem'
 import { ThankButton } from '../people/thank-button'
 
 const POLL_MS = 10_000
@@ -491,7 +491,7 @@ function StateCard({
             transactionId={tx.id}
           />
         ) : null}
-        <PendingButton pending="report-problem-mobile" label="Report a problem" variant="ghost" />
+        <ReportProblem subjectKind="print_job" subjectId={tx.id} subjectLabel={`Print job with ${other}`} item="this print job" who={other} />
       </Card>
     )
   }

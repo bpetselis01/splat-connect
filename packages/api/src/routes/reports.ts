@@ -16,18 +16,20 @@
  *
  * Related files:
  * - supabase/migrations/065_admin_queues.sql: the table and its four policies
+ * - supabase/migrations/118_member_report_kinds.sql: exchange/build kinds; members insert only their own columns
  * - src/routes/admin.ts: GET/PATCH /admin/member-reports, the queue
  */
 import { Hono } from 'hono'
 import { createUserClient } from '../supabase/client.js'
 import type { AuthVariables } from '../middleware/auth.js'
+import { REPORT_SUBJECT_KINDS } from '@splat-connect/types'
 
 const reports = new Hono<{ Variables: AuthVariables }>()
 
 const COLUMNS =
   'id, reporter_id, subject_kind, subject_label, subject_id, category, body, ok_to_contact, status, note_to_reporter, created_at'
 
-const SUBJECT_KINDS = new Set(['guide', 'toy', 'person', 'organisation', 'print_job', 'other'])
+const SUBJECT_KINDS = new Set<string>(REPORT_SUBJECT_KINDS)
 const CATEGORIES = new Set(['safety', 'no_show', 'arrived_broken', 'wrong_info', 'conduct', 'other'])
 
 /** What the reporter has filed, with any note that came back. */

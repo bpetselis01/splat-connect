@@ -44,7 +44,7 @@ import { EmptyState } from '../ui/EmptyState'
 import { MessageBubble } from '../ui/MessageBubble'
 import { ErrorRow } from '../ui/ErrorRow'
 import { apiMessage } from '@splat-connect/types'
-import { PendingButton } from '../ui/pending'
+import { ReportProblem } from '../reports/report-problem'
 import { ThankButton } from '../people/thank-button'
 import { CostPanel } from '../exchanges/cost-panel'
 
@@ -459,7 +459,7 @@ export function BuildThreadScreen({ id }: { id: string }) {
               }
             />
           ) : null}
-          <PendingButton pending="report-problem-mobile" label="Report a problem" variant="ghost" />
+          <ReportProblem subjectKind="build" subjectId={tx.id} subjectLabel={`${tx.toy_name ?? 'A build'} — build with ${otherName}`} item="this build" who={otherName} />
         </ScrollView>
 
         <View style={styles.footer}>

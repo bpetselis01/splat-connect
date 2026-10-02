@@ -13,7 +13,7 @@ import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
-import { PendingButton } from '../ui/pending'
+import { ReportProblem } from '../reports/report-problem'
 import { ThankButton } from '../people/thank-button'
 import { formatViews } from '../my-tutorials/list-screen'
 
@@ -180,7 +180,7 @@ export function ShowcaseScreen({ kind, id }: { kind: ShowcaseKind; id: string })
       {kind === 'person' ? (
         <View style={[styles.section, styles.actions]}>
           <ThankButton label="Say thanks" to={{ profileId: id }} />
-          <PendingButton pending="report-problem-mobile" label="Report a problem" variant="ghost" />
+          <ReportProblem subjectKind="person" subjectId={id} subjectLabel={profile.name} item="this profile" who={profile.name} />
         </View>
       ) : null}
 

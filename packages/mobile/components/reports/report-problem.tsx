@@ -8,6 +8,7 @@
 import { useState } from 'react'
 import { Modal, View, Text, Pressable, ScrollView, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import type { ReportSubjectKind } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { Button } from '../ui/Button'
@@ -27,14 +28,23 @@ export function ReportProblem({
   subjectKind,
   subjectId,
   subjectLabel,
+  item,
+  who,
 }: {
-  subjectKind: 'guide' | 'toy'
+  subjectKind: ReportSubjectKind
   subjectId: string | null
+  /** What the admin queue shows. */
   subjectLabel: string
+  /** The board's words in the sheet ("this exchange"); the label when absent. */
+  item?: string
+  /** The other party, when there is one (MB repWho). */
+  who?: string
 }) {
   const [open, setOpen] = useState(false)
   const [reason, setReason] = useState<string | null>(null)
   const [text, setText] = useState('')
+  // On by default, as the board draws it (MB contact:true); the reporter can say no.
+  const [contact, setContact] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [sent, setSent] = useState<string | null>(null)
@@ -42,6 +52,7 @@ export function ReportProblem({
   function start() {
     setReason(null)
     setText('')
+    setContact(true)
     setError(null)
     setSent(null)
     setOpen(true)
@@ -58,7 +69,7 @@ export function ReportProblem({
         subject_label: subjectLabel,
         category: reason,
         body: text,
-        ok_to_contact: true,
+        ok_to_contact: contact,
       })
       setSent(
         reason === 'safety'
@@ -84,7 +95,7 @@ export function ReportProblem({
           <View style={styles.sheet}>
             <ScrollView contentContainerStyle={styles.sheetContent} keyboardShouldPersistTaps="handled">
               <Text style={styles.title}>Tell SPLAT what happened</Text>
-              <Text style={styles.sub}>{`About ${subjectLabel}. Goes to the SPLAT team only.`}</Text>
+              <Text style={styles.sub}>{`About ${item ?? subjectLabel}${who ? ` · with ${who}` : ''}. Goes to the SPLAT team only.`}</Text>
               {sent ? (
                 <Text accessibilityRole="alert" style={styles.sent}>
                   {sent}
@@ -109,6 +120,7 @@ export function ReportProblem({
                     onChangeText={setText}
                     multiline
                   />
+                  <Chip label="OK to contact me about this" active={contact} onPress={() => setContact(!contact)} />
                   {error ? (
                     <Text accessibilityRole="alert" style={styles.error}>
                       {error}

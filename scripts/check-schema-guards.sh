@@ -620,7 +620,22 @@ select * from (values
    (select pg_get_constraintdef(oid) like '%profile_thanked%'
       from pg_constraint
      where conname = 'notifications_type_check'
-       and conrelid = 'public.notifications'::regclass))
+       and conrelid = 'public.notifications'::regclass)),
+
+  -- 118. A member writing status or note_to_reporter on their own report would
+  -- forge the admin's answer; nothing in the product would look different.
+  ('118 member_reports.status/note_to_reporter are not insertable by members',
+   (select count(*) = 0 from information_schema.column_privileges
+      where table_schema = 'public' and table_name = 'member_reports'
+        and column_name in ('status', 'note_to_reporter', 'handled_by', 'handled_at')
+        and grantee in ('anon', 'authenticated')
+        and privilege_type = 'INSERT')),
+
+  ('118 member_reports_subject_kind_check permits exchange and build',
+   (select pg_get_constraintdef(oid) like '%''exchange''%' and pg_get_constraintdef(oid) like '%''build''%'
+      from pg_constraint
+     where conname = 'member_reports_subject_kind_check'
+       and conrelid = 'public.member_reports'::regclass))
 ) as t(guard, ok)
 where not ok;
 EOSQL

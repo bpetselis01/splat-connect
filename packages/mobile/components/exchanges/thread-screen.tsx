@@ -41,7 +41,7 @@ import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { MessageBubble } from '../ui/MessageBubble'
 import { ErrorRow } from '../ui/ErrorRow'
-import { PendingButton } from '../ui/pending'
+import { ReportProblem } from '../reports/report-problem'
 import { ThankButton } from '../people/thank-button'
 import { FlashLine, useFlash } from '../ui/Flash'
 import { CostPanel } from './cost-panel'
@@ -576,7 +576,7 @@ export function ExchangeThreadScreen({ id, startAccept = false }: { id: string; 
               transactionId={tx.id}
             />
           ) : null}
-          <PendingButton pending="report-problem-mobile" label="Report a problem" variant="ghost" />
+          <ReportProblem subjectKind="exchange" subjectId={tx.id} subjectLabel={`${tx.toy_name} — exchange with ${otherPartyName}`} item="this exchange" who={otherPartyName} />
         </ScrollView>
 
         <View style={styles.footer}>
