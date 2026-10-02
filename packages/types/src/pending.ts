@@ -845,6 +845,7 @@ export const PENDING = {
     shipped: true,
   },
   'wizard-steps': {
+    shipped: true,
     title: "More profile questions",
     blurb: "Questions about what your child enjoys and their measurements are coming.",
     kind: "build",

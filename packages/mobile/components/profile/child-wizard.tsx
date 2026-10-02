@@ -1,7 +1,8 @@
 // packages/mobile/components/profile/child-wizard.tsx
 // The child profile wizard, (onboarding)/child — the phone twin of web's
 // components/child-wizard.tsx, so the two first runs match: name and age, the
-// four switch questions, then the room. One question a screen, every one
+// four switch questions, the room, then the board's Play and Measurements
+// (120; web's wizard has not caught up). One question a screen, every one
 // skippable. Continue saves what the step answered; Skip saves nothing, because
 // not answering is not the same as answering blank.
 //
@@ -11,17 +12,28 @@
 import { useEffect, useState } from 'react'
 import { ScrollView, View, Text, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
-import { CHILD_QUESTIONS, type ChildAnswers } from '@splat-connect/types'
+import { CHILD_MEASURES, CHILD_QUESTIONS, ENJOYS, type ChildAnswers, type ChildMeasureField, type ChildProfile } from '@splat-connect/types'
 import { theme } from '../../lib/theme'
 import { useChildProfile } from '../../lib/use-child-profile'
 import { Button } from '../ui/Button'
 import { TextField } from '../ui/TextField'
-import { ChoiceChips, NeedsChips } from './fields'
+import { ChoiceChips, ManyChips, MeasureField, NeedsChips } from './fields'
 
-// PENDING(wizard-steps): the board asks About, Hands, Movement, "What does your child enjoy?" and Measurements.
-const STEPS: { heading: string; line: string; fields: (keyof ChildAnswers)[] }[] = [
-  { heading: 'Who are we finding toys for?', line: 'Hi! A few quick questions. Skip any you like.', fields: ['name', 'age'] },
+/** What the wizard writes: the board's questions (079) plus Play and Measurements (120). */
+type Answers = ChildAnswers & Pick<ChildProfile, 'enjoys' | ChildMeasureField>
+
+type Kind = 'about' | 'question' | 'room' | 'play' | 'measure'
+
+// Six screens from 079 (not the board's About/Hands/Movement — those answers
+// have no columns, and the four questions are what suitsChild matches on),
+// then the board's last two. `line` is what web's mascot says on the step;
+// `help` is the board's sentence under the heading, where it has one.
+// Play is data capture only (Byron 2026-10-02): the board's "We will put those
+// toys first." is kept as drawn, but nothing sorts or matches on `enjoys` yet.
+const STEPS: { kind: Kind; heading: string; line: string; help?: string; fields: (keyof Answers)[] }[] = [
+  { kind: 'about', heading: 'Who are we finding toys for?', line: 'Hi! A few quick questions. Skip any you like.', fields: ['name', 'age'] },
   ...CHILD_QUESTIONS.map((q, i) => ({
+    kind: 'question' as const,
     heading: q.prompt,
     line: [
       'Whichever hand they reach with first is the right answer.',
@@ -29,26 +41,41 @@ const STEPS: { heading: string; line: string; fields: (keyof ChildAnswers)[] }[]
       'Big targets are easier. Either answer helps.',
       'Some switches want a tap, some a hold.',
     ][i],
-    fields: [q.field] as (keyof ChildAnswers)[],
+    fields: [q.field] as (keyof Answers)[],
   })),
-  { heading: 'What matters in the room?', line: 'Almost done. This one is fine to skip.', fields: ['everyday_needs'] },
+  { kind: 'room', heading: 'What matters in the room?', line: 'Rather than in the hand. Pick any that apply.', fields: ['everyday_needs'] },
+  {
+    kind: 'play',
+    heading: 'What does your child enjoy?',
+    help: 'We will put those toys first.',
+    line: 'Lights and sound are the classic reward. Some children prefer calm.',
+    fields: ['enjoys'],
+  },
+  {
+    kind: 'measure',
+    heading: 'Any measurements? (optional)',
+    help: 'Only for printed grips and mounts.',
+    line: 'Almost done. This one is fine to skip.',
+    fields: CHILD_MEASURES.map((m) => m.field),
+  },
 ]
 
-const EMPTY: ChildAnswers = {
+const EMPTY: Answers = {
   name: null, age: null, working_hand: null, press_force: null, aim: null, hold: null, everyday_needs: [],
+  enjoys: [], palm_width_mm: null, reach_cm: null, tray_mm: null,
 }
 
 export function ChildWizard() {
   const router = useRouter()
   const { profile, loading, save } = useChildProfile()
   const [step, setStep] = useState(0)
-  const [draft, setDraft] = useState<ChildAnswers>(EMPTY)
+  const [draft, setDraft] = useState<Answers>(EMPTY)
   // Seed once from an existing child, so coming back shows what is already set.
   useEffect(() => {
     if (profile) setDraft((d) => (d === EMPTY ? { ...EMPTY, ...pick(profile) } : d))
   }, [profile])
 
-  const set = (patch: Partial<ChildAnswers>) => setDraft((d) => ({ ...d, ...patch }))
+  const set = (patch: Partial<Answers>) => setDraft((d) => ({ ...d, ...patch }))
 
   function next() {
     if (step < STEPS.length - 1) setStep(step + 1)
@@ -57,20 +84,21 @@ export function ChildWizard() {
   }
 
   function saveAndNext() {
-    // Only what this step answered. An emptied needs list is an answer when
-    // the child had needs before; otherwise empty is the same as a skip.
+    // Only what this step answered. An emptied list is an answer when the
+    // child had some before; otherwise empty is the same as a skip.
     const answered = STEPS[step].fields.filter((f) => {
       const v = draft[f]
-      return Array.isArray(v) ? v.length > 0 || (profile?.everyday_needs?.length ?? 0) > 0 : v !== null
+      if (!Array.isArray(v)) return v !== null
+      const before = profile?.[f as 'everyday_needs' | 'enjoys']
+      return v.length > 0 || (before?.length ?? 0) > 0
     })
-    const fields: Partial<ChildAnswers> = Object.fromEntries(answered.map((f) => [f, draft[f]]))
+    const fields: Partial<Answers> = Object.fromEntries(answered.map((f) => [f, draft[f]]))
     if ('name' in fields) fields.name = fields.name?.trim() || null
     if (Object.keys(fields).length) save(fields)
     next()
   }
 
   const current = STEPS[step]
-  const q = step >= 1 && step <= CHILD_QUESTIONS.length ? CHILD_QUESTIONS[step - 1] : null
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -85,8 +113,9 @@ export function ChildWizard() {
       <Text style={styles.stepOf}>STEP {step + 1} OF {STEPS.length}</Text>
       <Text accessibilityRole="header" style={styles.heading}>{current.heading}</Text>
       <Text style={styles.line}>{current.line}</Text>
+      {current.help ? <Text style={styles.help}>{current.help}</Text> : null}
 
-      {loading ? null : step === 0 ? (
+      {loading ? null : current.kind === 'about' ? (
         <>
           <TextField
             label="First name (optional)"
@@ -102,10 +131,20 @@ export function ChildWizard() {
             onChangeText={(v) => set({ age: v.trim() === '' || Number.isNaN(Number(v)) ? null : Number(v) })}
           />
         </>
-      ) : q ? (
-        <ChoiceChips options={q.options} value={draft[q.field]} onChange={(v) => set({ [q.field]: v })} />
-      ) : (
+      ) : current.kind === 'question' ? (
+        (() => {
+          const q = CHILD_QUESTIONS[step - 1]
+          return <ChoiceChips options={q.options} value={draft[q.field]} onChange={(v) => set({ [q.field]: v })} />
+        })()
+      ) : current.kind === 'room' ? (
         <NeedsChips value={draft.everyday_needs} onChange={(v) => set({ everyday_needs: v })} />
+      ) : current.kind === 'play' ? (
+        <ManyChips options={ENJOYS} value={draft.enjoys} onChange={(v) => set({ enjoys: v })} />
+      ) : (
+        CHILD_MEASURES.map((m) => (
+          // An out-of-range number is not an answer: it stays on screen with its range.
+          <MeasureField key={m.field} measure={m} value={draft[m.field]} onChange={(v) => set({ [m.field]: v ?? null })} />
+        ))
       )}
 
       <View style={styles.actions}>
@@ -121,10 +160,11 @@ export function ChildWizard() {
   )
 }
 
-function pick(p: ChildAnswers): ChildAnswers {
+function pick(p: Answers): Answers {
   return {
     name: p.name, age: p.age, working_hand: p.working_hand, press_force: p.press_force,
     aim: p.aim, hold: p.hold, everyday_needs: p.everyday_needs ?? [],
+    enjoys: p.enjoys ?? [], palm_width_mm: p.palm_width_mm, reach_cm: p.reach_cm, tray_mm: p.tray_mm,
   }
 }
 
@@ -148,6 +188,7 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     marginBottom: theme.spacing(5),
   },
+  help: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.label, color: theme.colors.text, lineHeight: 21, marginTop: -theme.spacing(3), marginBottom: theme.spacing(4) },
   private: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted, marginTop: theme.spacing(3), textAlign: 'center' },
   actions: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: theme.spacing(5) },
   actionsRight: { flexDirection: 'row', gap: theme.spacing(2) },

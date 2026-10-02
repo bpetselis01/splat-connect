@@ -21,6 +21,8 @@ const HEADINGS = [
   'Can they aim at a target?',
   'How long can they hold a press?',
   'What matters in the room?',
+  'What does your child enjoy?',
+  'Any measurements? (optional)',
 ]
 
 beforeEach(() => {
@@ -42,7 +44,7 @@ describe('ChildWizard', () => {
       await act(async () => { jest.advanceTimersByTime(500) })
       expect(mockPost).not.toHaveBeenCalled()
       expect(mockPatch).not.toHaveBeenCalled()
-      expect(screen.queryByText(/MACS|BFMF|measure/i)).toBeNull()
+      expect(screen.queryByText(/MACS|BFMF/)).toBeNull()
     } finally {
       jest.useRealTimers()
     }
@@ -65,6 +67,45 @@ describe('ChildWizard', () => {
       await waitFor(() =>
         expect(mockPost).toHaveBeenCalledWith('/api/child-profiles', { name: 'Sam', working_hand: 'either' })
       )
+    } finally {
+      jest.useRealTimers()
+    }
+  })
+
+  it('saves what the child enjoys from the Play step', async () => {
+    jest.useFakeTimers()
+    try {
+      render(<ChildWizard />)
+      await screen.findByText(HEADINGS[0])
+      for (let i = 0; i < 6; i++) fireEvent.press(screen.getByRole('button', { name: 'Skip' }))
+      expect(screen.getByText('What does your child enjoy?')).toBeTruthy()
+      // Kept as the board draws it; nothing sorts by it (Byron 2026-10-02).
+      expect(screen.getByText('We will put those toys first.')).toBeTruthy()
+      fireEvent.press(screen.getByRole('button', { name: 'Lights' }))
+      fireEvent.press(screen.getByRole('button', { name: 'Bubbles and water' }))
+      fireEvent.press(screen.getByRole('button', { name: 'Continue' }))
+      expect(screen.getByText('Any measurements? (optional)')).toBeTruthy()
+      await act(async () => { jest.advanceTimersByTime(500) })
+      await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/child-profiles', { enjoys: ['light', 'water'] }))
+    } finally {
+      jest.useRealTimers()
+    }
+  })
+
+  it('saves the measurements in range and says the range of one that is not', async () => {
+    jest.useFakeTimers()
+    try {
+      render(<ChildWizard />)
+      await screen.findByText(HEADINGS[0])
+      for (let i = 0; i < 7; i++) fireEvent.press(screen.getByRole('button', { name: 'Skip' }))
+      expect(screen.getByText('Only for printed grips and mounts.')).toBeTruthy()
+      fireEvent.changeText(screen.getByPlaceholderText('e.g. 62'), '62')
+      fireEvent.changeText(screen.getByPlaceholderText('e.g. 30'), '400')
+      expect(screen.getByText('Between 5 and 150.')).toBeTruthy()
+      fireEvent.press(screen.getByRole('button', { name: 'Finish' }))
+      await act(async () => { jest.advanceTimersByTime(500) })
+      // The reach is out of range, so it is not an answer — only the hand width saves.
+      await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/child-profiles', { palm_width_mm: 62 }))
     } finally {
       jest.useRealTimers()
     }
