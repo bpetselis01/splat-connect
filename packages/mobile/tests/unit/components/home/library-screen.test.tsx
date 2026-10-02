@@ -17,7 +17,8 @@ jest.mock('../../../../lib/api-client', () => ({
     delete: (...a: unknown[]) => mockDelete(...a),
   },
 }))
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }))
+let mockParams: Record<string, string> = {}
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }), useLocalSearchParams: () => mockParams }))
 // The greeting reads the first name off capabilities.
 jest.mock('../../../../lib/capabilities', () => ({
   useCapabilities: () => ({ caps: { profile: { name: 'Priya Nadarajah' } }, loading: false, refresh: jest.fn() }),
@@ -47,6 +48,7 @@ function mockEndpoints({
 }
 
 beforeEach(() => {
+  mockParams = {}
   jest.clearAllMocks()
   mockEndpoints({
     tutorials: Promise.resolve([
@@ -256,5 +258,18 @@ describe('Suits <child>', () => {
     render(<LibraryScreen />)
     await screen.findByText('Light touch switch')
     expect(screen.queryByText(/Suits/)).toBeNull()
+  })
+
+  // wizard-mascot-done: the done screen's "See the matches" lands here with suits=1.
+  it('arrives already filtered when opened with suits=1', async () => {
+    mockParams = { suits: '1' }
+    mockEndpoints({
+      tutorials: Promise.resolve([tagged, firm]),
+      children: Promise.resolve([{ name: 'Ollie', press_force: 'light', hold: 'second', aim: null }]),
+    })
+    render(<LibraryScreen />)
+    expect(await screen.findByText('Light touch switch')).toBeTruthy()
+    await waitFor(() => expect(screen.queryByText('Firm lever')).toBeNull())
+    expect(screen.getByText('Suits Ollie')).toBeTruthy()
   })
 })

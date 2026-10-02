@@ -596,6 +596,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["mobile", "api"],
     needs: "Mascot per step and \"profile is ready\" match screen [ui,api]",
+    shipped: true,
   },
   'web-toy-family-notes': {
     title: "Notes from the family",

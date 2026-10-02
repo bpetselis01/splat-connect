@@ -8,6 +8,7 @@ export { autoPicks, initialPicks, MAX_PICKS, pickOptions, PICK_KIND_LABEL, sameP
 export type { PicksMode, ToyPick, ToyPickInput } from './toy-picks'
 import type { PicksMode, ToyPick } from './toy-picks'
 export { contributorBadges } from './contributor-badges'
+export { matchesForChild, childNeedsLine } from './child-matches'
 export type { ContributorBadge, ContributorBadgeInput } from './contributor-badges'
 export { TOOL_GET_BY_LABEL, partsTotalCents, checkedOn, realignCaptions, formatPrintMinutes, printSettingRows, printSettingsLine } from './guides'
 export type { ToolGetBy, PrintSettings } from './guides'

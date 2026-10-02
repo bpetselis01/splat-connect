@@ -40,6 +40,11 @@ describe('ChildWizard', () => {
         expect(await screen.findByText(h)).toBeTruthy()
         fireEvent.press(screen.getByRole('button', { name: 'Skip' }))
       }
+      // Finish (or Skip on the last step) opens the done screen, not Guides.
+      expect(mockReplace).not.toHaveBeenCalled()
+      expect(await screen.findByText("Your child's profile is ready")).toBeTruthy()
+      fireEvent.press(screen.getByRole('button', { name: 'See the matches' }))
+      // Nothing matched (every list is empty), so Guides opens unfiltered.
       expect(mockReplace).toHaveBeenCalledWith('/guides')
       await act(async () => { jest.advanceTimersByTime(500) })
       expect(mockPost).not.toHaveBeenCalled()
@@ -106,6 +111,41 @@ describe('ChildWizard', () => {
       await act(async () => { jest.advanceTimersByTime(500) })
       // The reach is out of range, so it is not an answer — only the hand width saves.
       await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/child-profiles', { palm_width_mm: 62 }))
+    } finally {
+      jest.useRealTimers()
+    }
+  })
+
+  it('ends on the board\'s done screen with the matches, and opens Guides filtered to them', async () => {
+    mockGet.mockImplementation((path: string) =>
+      path === '/api/public/tutorials'
+        ? Promise.resolve([
+            { id: 'g1', switch_force: 'light', switch_target: 'large', switch_hold: null },
+            { id: 'g2', switch_force: 'full', switch_target: null, switch_hold: null },
+          ])
+        : path === '/api/public/toys'
+          ? Promise.resolve([
+              { id: 'y1', switch_adapted: true, status: 'published', paused_at: null },
+              { id: 'y2', switch_adapted: false, status: 'published', paused_at: null },
+            ])
+          : Promise.resolve([])
+    )
+    jest.useFakeTimers()
+    try {
+      render(<ChildWizard />)
+      fireEvent.changeText(await screen.findByPlaceholderText('e.g. Sam'), 'Ollie')
+      fireEvent.press(screen.getByRole('button', { name: 'Continue' }))
+      fireEvent.press(screen.getByRole('button', { name: 'Skip' })) // hand
+      fireEvent.press(screen.getByRole('button', { name: 'Light' }))
+      fireEvent.press(screen.getByRole('button', { name: 'Continue' }))
+      fireEvent.press(screen.getByRole('button', { name: 'Yes, large' }))
+      fireEvent.press(screen.getByRole('button', { name: 'Continue' }))
+      for (let i = 0; i < 4; i++) fireEvent.press(screen.getByRole('button', { name: 'Skip' })) // hold, room, play, measurements
+      expect(await screen.findByText("Ollie's profile is ready")).toBeTruthy()
+      expect(await screen.findByText('We found 1 guide and 1 toy that suit a light press with a big button.')).toBeTruthy()
+      fireEvent.press(screen.getByRole('button', { name: 'See the matches' }))
+      expect(mockReplace).toHaveBeenCalledWith('/guides?suits=1')
+      await act(async () => { jest.advanceTimersByTime(500) })
     } finally {
       jest.useRealTimers()
     }

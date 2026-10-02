@@ -10,6 +10,9 @@ import { theme } from '../../lib/theme'
 const MASCOT = {
   wave: require('../../assets/mascot-wave.png'),
   hold: require('../../assets/mascot-hold.png'),
+  // wizard-mascot-done: the wizard's other two poses, rendered the same way.
+  think: require('../../assets/mascot-think.png'),
+  party: require('../../assets/mascot-party.png'),
 }
 
 export type MascotPose = keyof typeof MASCOT

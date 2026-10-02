@@ -5,7 +5,7 @@
 // heading with a sort control, then row cards.
 import { useEffect, useState } from 'react'
 import { View, Text, FlatList, RefreshControl, ScrollView, Pressable, StyleSheet } from 'react-native'
-import { useRouter } from 'expo-router'
+import { useLocalSearchParams, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import type { Tutorial, TutorialOrg, TutorialKind, Difficulty } from '@splat-connect/types'
@@ -106,6 +106,12 @@ export function LibraryScreen() {
   // children. Never shown when none do — the screen then says nothing.
   const children = useMyChildren()
   const [suitsOnly, setSuitsOnly] = useState(false)
+  // wizard-mascot-done: the done screen's "See the matches" opens this tab with
+  // suits=1. An effect, not the initial state: the tab may already be mounted.
+  const { suits: suitsParam } = useLocalSearchParams<{ suits?: string }>()
+  useEffect(() => {
+    if (suitsParam === '1') setSuitsOnly(true)
+  }, [suitsParam])
   // Bumping this re-runs the fetch — the retry button's and pull-to-refresh's
   // shared handle.
   const [reloadKey, setReloadKey] = useState(0)

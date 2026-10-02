@@ -8,15 +8,15 @@
 //
 // Edits the account's first child and creates one on the first answered step —
 // useChildProfile's no-argument mode, the same rule web's wizard follows.
-// ponytail: no mascot art on mobile yet; its lines are carried as plain text.
 import { useEffect, useState } from 'react'
 import { ScrollView, View, Text, StyleSheet } from 'react-native'
-import { useRouter } from 'expo-router'
 import { CHILD_MEASURES, CHILD_QUESTIONS, ENJOYS, type ChildAnswers, type ChildMeasureField, type ChildProfile } from '@splat-connect/types'
 import { theme } from '../../lib/theme'
 import { useChildProfile } from '../../lib/use-child-profile'
 import { Button } from '../ui/Button'
 import { TextField } from '../ui/TextField'
+import { Mascot, type MascotPose } from '../ui/TabHero'
+import { ChildDone } from './child-done'
 import { ChoiceChips, ManyChips, MeasureField, NeedsChips } from './fields'
 
 /** What the wizard writes: the board's questions (079) plus Play and Measurements (120). */
@@ -27,11 +27,12 @@ type Kind = 'about' | 'question' | 'room' | 'play' | 'measure'
 // Six screens from 079 (not the board's About/Hands/Movement — those answers
 // have no columns, and the four questions are what suitsChild matches on),
 // then the board's last two. `line` is what web's mascot says on the step;
-// `help` is the board's sentence under the heading, where it has one.
+// `help` is the board's sentence under the heading, where it has one; `pose`
+// is the bear beside the line (MB's poses, web's POSE).
 // Play is data capture only (Byron 2026-10-02): the board's "We will put those
 // toys first." is kept as drawn, but nothing sorts or matches on `enjoys` yet.
-const STEPS: { kind: Kind; heading: string; line: string; help?: string; fields: (keyof Answers)[] }[] = [
-  { kind: 'about', heading: 'Who are we finding toys for?', line: 'Hi! A few quick questions. Skip any you like.', fields: ['name', 'age'] },
+const STEPS: { kind: Kind; heading: string; line: string; pose: MascotPose; help?: string; fields: (keyof Answers)[] }[] = [
+  { kind: 'about', heading: 'Who are we finding toys for?', line: 'Hi! A few quick questions. Skip any you like.', pose: 'wave', fields: ['name', 'age'] },
   ...CHILD_QUESTIONS.map((q, i) => ({
     kind: 'question' as const,
     heading: q.prompt,
@@ -41,14 +42,16 @@ const STEPS: { kind: Kind; heading: string; line: string; help?: string; fields:
       'Big targets are easier. Either answer helps.',
       'Some switches want a tap, some a hold.',
     ][i],
+    pose: (['think', 'hold', 'think', 'hold'] as const)[i],
     fields: [q.field] as (keyof Answers)[],
   })),
-  { kind: 'room', heading: 'What matters in the room?', line: 'Rather than in the hand. Pick any that apply.', fields: ['everyday_needs'] },
+  { kind: 'room', heading: 'What matters in the room?', line: 'Rather than in the hand. Pick any that apply.', pose: 'party', fields: ['everyday_needs'] },
   {
     kind: 'play',
     heading: 'What does your child enjoy?',
     help: 'We will put those toys first.',
     line: 'Lights and sound are the classic reward. Some children prefer calm.',
+    pose: 'party',
     fields: ['enjoys'],
   },
   {
@@ -56,6 +59,7 @@ const STEPS: { kind: Kind; heading: string; line: string; help?: string; fields:
     heading: 'Any measurements? (optional)',
     help: 'Only for printed grips and mounts.',
     line: 'Almost done. This one is fine to skip.',
+    pose: 'think',
     fields: CHILD_MEASURES.map((m) => m.field),
   },
 ]
@@ -66,9 +70,9 @@ const EMPTY: Answers = {
 }
 
 export function ChildWizard() {
-  const router = useRouter()
   const { profile, loading, save } = useChildProfile()
   const [step, setStep] = useState(0)
+  const [done, setDone] = useState(false)
   const [draft, setDraft] = useState<Answers>(EMPTY)
   // Seed once from an existing child, so coming back shows what is already set.
   useEffect(() => {
@@ -79,8 +83,7 @@ export function ChildWizard() {
 
   function next() {
     if (step < STEPS.length - 1) setStep(step + 1)
-    // PENDING(wizard-mascot-done): the mascot on each step and a "profile is ready — N guides, M toys" screen before Guides.
-    else router.replace('/guides')
+    else setDone(true)
   }
 
   function saveAndNext() {
@@ -100,6 +103,14 @@ export function ChildWizard() {
 
   const current = STEPS[step]
 
+  if (done) {
+    return (
+      <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+        <ChildDone child={draft} />
+      </ScrollView>
+    )
+  }
+
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <View style={styles.bars} accessibilityLabel={`Step ${step + 1} of ${STEPS.length}`}>
@@ -112,7 +123,10 @@ export function ChildWizard() {
       </View>
       <Text style={styles.stepOf}>STEP {step + 1} OF {STEPS.length}</Text>
       <Text accessibilityRole="header" style={styles.heading}>{current.heading}</Text>
-      <Text style={styles.line}>{current.line}</Text>
+      <View style={styles.says}>
+        <Mascot pose={current.pose} size={74} />
+        <Text style={styles.saysText}>{current.line}</Text>
+      </View>
       {current.help ? <Text style={styles.help}>{current.help}</Text> : null}
 
       {loading ? null : current.kind === 'about' ? (
@@ -181,13 +195,18 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing(2),
     marginBottom: theme.spacing(2),
   },
-  line: {
-    fontFamily: theme.fonts.regular,
-    fontSize: theme.type.label,
-    color: theme.colors.muted,
-    lineHeight: 21,
+  says: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 11,
+    padding: 13,
+    borderRadius: 18,
+    borderWidth: theme.border.hairline,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.accentFaint,
     marginBottom: theme.spacing(5),
   },
+  saysText: { flex: 1, fontFamily: theme.fonts.semiBold, fontSize: 13.5, lineHeight: 20, color: theme.colors.ink },
   help: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.label, color: theme.colors.text, lineHeight: 21, marginTop: -theme.spacing(3), marginBottom: theme.spacing(4) },
   private: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted, marginTop: theme.spacing(3), textAlign: 'center' },
   actions: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: theme.spacing(5) },

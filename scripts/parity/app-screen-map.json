@@ -854,8 +854,8 @@
    {
     "type": "copy",
     "match": "board paragraphs absent",
-    "why": "pending",
-    "pending": "wizard-mascot-done"
+    "why": "intended",
+    "reason": "The wizard keeps 079's six questions before the board's Play and Measurements; the board's Hands and Movement have no columns. So the bear says web's \"Hi! A few quick questions\" (eight steps, not five), and the About step carries no help sentence."
    },
    {
     "type": "picture",
