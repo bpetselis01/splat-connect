@@ -48,7 +48,7 @@ type TutorialDetail = Tutorial & {
   safety_notes?: TutorialSafetyNote[]
 }
 
-export function DetailScreen({ id }: { id: string }) {
+export function DetailScreen({ id, printWith }: { id: string; printWith?: string }) {
   const router = useRouter()
   const saves = useSaves()
   const children = useMyChildren()
@@ -363,7 +363,7 @@ export function DetailScreen({ id }: { id: string }) {
       ) : null}
       {tutorial.stl_files.length > 0 ? (
         <AnimatedPressable
-          onPress={() => router.push({ pathname: '/printing', params: { guide: tutorial.id } })}
+          onPress={() => router.push({ pathname: '/printing', params: printWith ? { guide: tutorial.id, printWith } : { guide: tutorial.id } })}
           accessibilityRole="button"
           accessibilityLabel="Ask someone to print"
           accessibilityHint="Pick up to three printers nearby"

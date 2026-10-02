@@ -108,7 +108,7 @@ export function LibraryScreen() {
   const [suitsOnly, setSuitsOnly] = useState(false)
   // wizard-mascot-done: the done screen's "See the matches" opens this tab with
   // suits=1. An effect, not the initial state: the tab may already be mounted.
-  const { suits: suitsParam } = useLocalSearchParams<{ suits?: string }>()
+  const { suits: suitsParam, printWith } = useLocalSearchParams<{ suits?: string; printWith?: string }>()
   useEffect(() => {
     if (suitsParam === '1') setSuitsOnly(true)
   }, [suitsParam])
@@ -378,7 +378,7 @@ export function LibraryScreen() {
                 accessibilityHint={`${item.difficulty} difficulty. ${KIND_LABEL[item.kind]}. ${
                   org ? `Backed by ${org}` : 'Reviewed by SPLAT'
                 }. Opens the tutorial.`}
-                onPress={() => router.push({ pathname: '/guides/[id]', params: { id: item.id } })}
+                onPress={() => router.push({ pathname: '/guides/[id]', params: printWith ? { id: item.id, printWith } : { id: item.id } })}
                 pills={
                   <>
                     <Badge status={item.difficulty} icon={pill.icon} bg={pill.bg} />

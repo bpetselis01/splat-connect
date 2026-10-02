@@ -111,6 +111,15 @@ describe('OrgProfileScreen', () => {
     expect(await screen.findByText('Thanked 3 times')).toBeTruthy()
   })
 
+  it('asks a printing organisation to print with it already chosen', async () => {
+    mockGet.mockImplementation((path: string) =>
+      Promise.resolve(path.startsWith('/api/public') ? { ...ORG, printers: [{ id: 'p1', name: 'Prusa', materials: ['PETG'] }] } : relationship())
+    )
+    render(<OrgProfileScreen id="o1" />)
+    fireEvent.press(await screen.findByText('Ask them to print'))
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/printing', params: { printWith: 'o1' } })
+  })
+
   it('draws what the recycler takes in the board’s terms', async () => {
     mockGet.mockImplementation((path: string) =>
       Promise.resolve(

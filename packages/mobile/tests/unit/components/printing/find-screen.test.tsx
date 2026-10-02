@@ -150,3 +150,27 @@ it('sends no near for a postcode that is not four digits, and asks again', async
   expect(mockGet).toHaveBeenCalledWith('/api/printers')
   expect(mockGet).not.toHaveBeenCalledWith(expect.stringContaining('near='))
 })
+
+it('preselects the open printers of the organisation it was opened for', async () => {
+  mockGet.mockImplementation((path: string) =>
+    Promise.resolve(
+      path === '/api/printers'
+        ? [
+            printer('a', { owner_id: null, owner_org_id: 'org1', org_name: 'Shed' }),
+            printer('b', { owner_id: null, owner_org_id: 'org1', org_name: 'Shed', name: 'Bambu', accepting: false }),
+            printer('c'),
+          ]
+        : GUIDE
+    )
+  )
+  render(<FindPrinterScreen guideId="g1" printWith="org1" />)
+  expect(await screen.findByText('Ask 1 printer')).toBeTruthy()
+  fireEvent.press(screen.getByText('Ask 1 printer'))
+  expect(mockPush).toHaveBeenCalledWith({ pathname: '/printing/request', params: { guide: 'g1', printers: 'a' } })
+})
+
+it('carries the organisation through Find a guide when no guide is given', async () => {
+  render(<FindPrinterScreen printWith="org1" />)
+  fireEvent.press(await screen.findByText('Find a guide'))
+  expect(mockPush).toHaveBeenCalledWith({ pathname: '/guides', params: { printWith: 'org1' } })
+})

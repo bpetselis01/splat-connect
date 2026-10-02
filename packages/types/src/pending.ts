@@ -323,6 +323,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["mobile"],
     needs: "\"Ask them to print\" from an org profile preselects that org",
+    shipped: true,
   },
   'web-printer-directory-stats': {
     title: "Printer track record",

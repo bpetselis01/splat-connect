@@ -163,6 +163,18 @@ describe('DetailScreen', () => {
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/printing', params: { guide: '1' } })
   })
 
+  it('passes on the organisation it was opened to print with', async () => {
+    mockEndpoints({
+      detail: Promise.resolve({
+        ...DETAIL,
+        stl_files: [{ id: 's1', tutorial_id: '1', filename: 'mount.stl', file_url: '1/mount.stl' }],
+      }),
+    })
+    render(<DetailScreen id="1" printWith="o1" />)
+    fireEvent.press(await screen.findByLabelText('Ask someone to print'))
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/printing', params: { guide: '1', printWith: 'o1' } })
+  })
+
   it('asks a maker nearby with this guide already picked', async () => {
     render(<DetailScreen id="1" />)
     fireEvent.press(await screen.findByRole('button', { name: "Can't build it? Ask a maker nearby" }))

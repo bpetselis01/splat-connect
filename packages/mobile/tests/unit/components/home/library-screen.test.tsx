@@ -18,7 +18,8 @@ jest.mock('../../../../lib/api-client', () => ({
   },
 }))
 let mockParams: Record<string, string> = {}
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }), useLocalSearchParams: () => mockParams }))
+const mockPush = jest.fn()
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }), useLocalSearchParams: () => mockParams }))
 // The greeting reads the first name off capabilities.
 jest.mock('../../../../lib/capabilities', () => ({
   useCapabilities: () => ({ caps: { profile: { name: 'Priya Nadarajah' } }, loading: false, refresh: jest.fn() }),
@@ -59,6 +60,13 @@ beforeEach(() => {
 })
 
 describe('LibraryScreen', () => {
+  it('carries an organisation to print with into the guide it opens', async () => {
+    mockParams = { printWith: 'o1' }
+    render(<LibraryScreen />)
+    fireEvent.press(await screen.findByText('Build a Robot Arm'))
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/guides/[id]', params: { id: '1', printWith: 'o1' } })
+  })
+
   it('renders tutorial titles from the public tutorials endpoint', async () => {
     render(<LibraryScreen />)
     expect(await screen.findByText('Build a Robot Arm')).toBeTruthy()
