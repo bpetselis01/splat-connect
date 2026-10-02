@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react'
 import { ScrollView, View, Text, Pressable, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import { buildNav, formatCents, type IconName as NavIcon, type MeCounts, type MoneyMine, type MoneyThread, type ToyTransactionType } from '@splat-connect/types'
+import { BADGE_RULES, buildNav, formatCents, type IconName as NavIcon, type MeCounts, type MoneyMine, type MoneyThread, type ToyTransactionType } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { useCapabilities } from '../../lib/capabilities'
 import { threadHref } from '../../lib/builds'
@@ -161,6 +161,7 @@ export default function MeTab() {
   const [money, setMoney] = useState<MoneyMine | null>(null)
   const [builds, setBuilds] = useState(0)
   const [counts, setCounts] = useState<MeCounts | undefined>(undefined)
+  const [badgesOpen, setBadgesOpen] = useState(false)
   const go = (href: string) => () => router.push(href as never)
 
   useEffect(() => {
@@ -233,6 +234,19 @@ export default function MeTab() {
               })}
             </View>
           ))}
+          <View style={styles.group}>
+            <Row label="How badges are earned" icon="ribbon-outline" onPress={() => setBadgesOpen((o) => !o)} />
+            {badgesOpen ? (
+              <View style={styles.money}>
+                {BADGE_RULES.map((b) => (
+                  <View key={b.label}>
+                    <Text style={styles.moneyLineTitle}>{b.label}</Text>
+                    <Text style={styles.moneyLineWho}>{b.rule}</Text>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+          </View>
           <View style={styles.group}>
             <Text style={styles.eyebrow}>Explore</Text>
             {EXPLORE.map((row) => (

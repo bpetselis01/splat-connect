@@ -151,3 +151,11 @@ it('renders every row uncounted when the counts call fails', async () => {
   expect(screen.queryByText('7')).toBeNull()
   expect(screen.queryByText('6')).toBeNull()
 })
+
+it('explains each badge and its threshold from one row', () => {
+  render(<MeTab />)
+  expect(screen.queryByText('Have 10 approved guides published.')).toBeNull()
+  fireEvent.press(screen.getByLabelText('How badges are earned'))
+  expect(screen.getByText('Have 10 approved guides published.')).toBeTruthy()
+  expect(screen.getByText('Families log 100 builds from your published guides.')).toBeTruthy()
+})
