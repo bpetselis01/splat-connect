@@ -1,6 +1,5 @@
 // packages/mobile/tests/unit/components/explore/learn-hub.test.tsx
 import { render, screen, fireEvent } from '@testing-library/react-native'
-import { Linking } from 'react-native'
 import { LearnHub, learnSections } from '../../../../components/explore/learn-hub'
 import { LEARN_ARTICLES } from '../../../../lib/learn-content'
 
@@ -98,16 +97,17 @@ describe('LearnHub', () => {
     expect(screen.getByTestId('learn-node-icon-tools-and-materials', { includeHiddenElements: true })).toBeTruthy()
   })
 
-  it('opens the web Ask an expert page', () => {
+  // Decided 2026-09-30 (learn-ask-an-expert-mobile): the app reaches guides,
+  // Learn, Submit an idea and organisations directly; the row only sent people
+  // to a web page.
+  it('has no Ask an expert row', () => {
     mockUseLearnProgress.mockReturnValue({
       read: new Set(),
       markRead: jest.fn(),
       next: LEARN_ARTICLES[0],
       count: 0,
     })
-    const openURL = jest.spyOn(Linking, 'openURL').mockImplementation(() => Promise.resolve(true))
     render(<LearnHub />)
-    fireEvent.press(screen.getByRole('link', { name: 'Ask an expert' }))
-    expect(openURL).toHaveBeenCalledWith(`${process.env.EXPO_PUBLIC_WEB_URL}/learn/ask-an-expert`)
+    expect(screen.queryByText('Ask an expert')).toBeNull()
   })
 })

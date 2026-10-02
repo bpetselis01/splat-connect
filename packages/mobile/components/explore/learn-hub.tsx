@@ -1,7 +1,7 @@
 // packages/mobile/components/explore/learn-hub.tsx
 // Title comes from the native header (app/(tabs)/explore/_layout.tsx), so
 // this doesn't repeat it — same convention as about-screen.tsx.
-import { View, Text, Linking, ScrollView, StyleSheet } from 'react-native'
+import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { theme } from '../../lib/theme'
@@ -12,10 +12,6 @@ import { Card } from '../ui/Card'
 import { Meter } from '../ui/Meter'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
 
-function openWebPage(path: string) {
-  Linking.openURL(`${process.env.EXPO_PUBLIC_WEB_URL}${path}`)
-}
-
 const START_HERE = 3
 
 /** The board's order: the first three numbered as the path in, the rest below. */
@@ -23,8 +19,8 @@ export function learnSections(articles: LearnArticle[]) {
   return { start: articles.slice(0, START_HERE), deeper: articles.slice(START_HERE) }
 }
 
-// No "SOON" rows: every article and Ask an expert are built. A row for an
-// unbuilt page would be the one place to add it.
+// No "SOON" rows: every article is built. Ask an expert stays on the web only
+// (decided 2026-09-30).
 const DEEPER_ICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   'tools-and-materials': 'construct-outline',
   'safety-and-cleaning': 'shield-checkmark-outline',
@@ -93,23 +89,6 @@ export function LearnHub() {
               onPress={() => router.push(`/explore/learn/${article.slug}`)}
             />
           ))}
-          {/* PENDING(learn-ask-an-expert-mobile): the board draws this as a Soon row; it links to the live web page today. */}
-          <AnimatedPressable
-            onPress={() => openWebPage('/learn/ask-an-expert')}
-            accessibilityRole="link"
-            accessibilityLabel="Ask an expert"
-            pressScale={0.985}
-            style={styles.row}
-          >
-            <View style={[styles.tile, styles.tileIcon]}>
-              <Ionicons name="chatbubbles-outline" size={20} color={theme.colors.ink} />
-            </View>
-            <View style={styles.rowText}>
-              <Text style={styles.rowTitle}>Ask an expert</Text>
-              <Text style={styles.rowIntro}>Put a question to an OT or a maker.</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={theme.colors.muted} />
-          </AnimatedPressable>
         </View>
       </ScrollView>
     </Screen>

@@ -774,6 +774,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["mobile"],
     needs: "Decided 2026-09-30: remove the row on mobile; the app already reaches guides, Learn, Submit an idea and organisations directly. Web keeps its signpost page.",
+    shipped: true,
   },
   'me-rows-structure': {
     title: "Makers wanted",
