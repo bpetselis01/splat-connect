@@ -2319,6 +2319,15 @@ export interface ImpactSummary {
   deliveriesByMonth: Array<{ month: string; n: number }>
 }
 
+/** A row of GET /api/public/impact/map (121): one suburb with three or more deliveries. */
+export interface ImpactMapSuburb {
+  suburb: string
+  state: string
+  deliveries: number
+  lat: number
+  lng: number
+}
+
 export interface ContributorProfile {
   id: string
   name: string

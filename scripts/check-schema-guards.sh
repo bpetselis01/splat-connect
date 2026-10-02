@@ -670,7 +670,20 @@ select * from (values
   ('120 child_profiles palm_width_mm is ranged 20-250',
    (select count(*) = 1 from pg_constraint
       where conname = 'child_profiles_palm_width_range'
-        and conrelid = 'public.child_profiles'::regclass))
+        and conrelid = 'public.child_profiles'::regclass)),
+
+  -- 121. The deliveries map's privacy floor lives in this one function. A
+  -- body without the HAVING would publish suburbs with one or two families;
+  -- a browser key able to call it could read it without the API.
+  ('121 impact_map() keeps its three-delivery floor and is service-role only',
+   (select count(*) = 1 from pg_proc p
+      where p.pronamespace = 'public'::regnamespace
+        and p.proname = 'impact_map'
+        and p.prosecdef
+        and p.prosrc like '%having count(*) >= 3%'
+        and p.prosrc not like '%pickup_line1%'
+        and not has_function_privilege('authenticated', p.oid, 'execute')
+        and not has_function_privilege('anon', p.oid, 'execute')))
 ) as t(guard, ok)
 where not ok;
 EOSQL

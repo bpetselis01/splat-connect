@@ -634,6 +634,18 @@ publicRoutes.get('/impact', async (c) => {
 })
 
 /**
+ * impact-map: completed handovers by suburb. impact_map() (121) holds every
+ * rule — suburb level only, three or more, postcode centres not addresses —
+ * so the rows go out exactly as it returns them (Controller ruling 4). It is
+ * service-role only, hence the admin client.
+ */
+publicRoutes.get('/impact/map', async (c) => {
+  const { data, error } = await createAdminClient().rpc('impact_map')
+  if (error) return c.json({ error: 'Failed to load the map' }, 500)
+  return c.json(data ?? [])
+})
+
+/**
  * The organisations directory, for logged-out visitors.
  *
  * Separate from GET /api/organizations rather than an auth-state branch inside
