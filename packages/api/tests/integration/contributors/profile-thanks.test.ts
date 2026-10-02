@@ -20,6 +20,8 @@ let family: TestUser
 let stranger: TestUser
 let tutorialId: string
 let txId: string
+let orgId: string
+let orgTxId: string
 
 const post = (token: string, id: string, body: unknown = {}) =>
   app.request(`/api/contributors/${id}/thanks`, {
@@ -41,11 +43,22 @@ beforeAll(async () => {
     .select('id')
     .single()
   txId = tx!.id
+  // An organisation's build: the stranger leads the org that made it for the family.
+  orgId = (await admin.from('organizations').insert({ name: `Thanks ${Date.now()}`, status: 'active' }).select('id').single()).data!.id
+  await admin.from('org_leaders').insert({ org_id: orgId, user_id: stranger.id })
+  const { data: orgTx } = await admin
+    .from('toy_transactions')
+    .insert({ type: 'build', status: 'completed', tutorial_id: tutorialId, build_brief: 'For Mia.', requester_id: family.id, owner_org_id: orgId })
+    .select('id')
+    .single()
+  orgTxId = orgTx!.id
 })
 
 afterAll(async () => {
   const admin = adminClient()
   await admin.from('notifications').delete().in('recipient_id', [maker.id, family.id, stranger.id])
+  await admin.from('toy_transactions').delete().in('id', [txId, orgTxId])
+  await admin.from('organizations').delete().eq('id', orgId)
   await admin.from('tutorials').delete().eq('id', tutorialId)
   await Promise.all([maker, family, stranger].map((u) => deleteTestUser(u.id)))
 })
@@ -61,6 +74,14 @@ describe('117 profile thanks', () => {
   it('refuses a transaction the two were never party to, and thanking yourself', async () => {
     expect((await post(stranger.token, maker.id, { transaction_id: txId })).status).toBe(400)
     expect((await post(maker.token, maker.id)).status).toBe(403)
+    // Leading the org that made the build is not being party to the maker's.
+    expect((await post(stranger.token, family.id, { transaction_id: txId })).status).toBe(400)
+  })
+
+  it('lets a leader of the organisation that held the toy thank the family for it', async () => {
+    expect((await post(stranger.token, family.id, { transaction_id: orgTxId })).status).toBe(201)
+    const { data } = await adminClient().from('profile_thanks').select('transaction_id').eq('profile_id', family.id).eq('thanker_id', stranger.id).single()
+    expect(data!.transaction_id).toBe(orgTxId)
   })
 
   it('takes one thanks per person, tied to the build, and tells the maker on the build', async () => {

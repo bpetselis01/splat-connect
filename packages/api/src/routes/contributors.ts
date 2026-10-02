@@ -136,15 +136,26 @@ contributors.post('/:id/thanks', async (c) => {
 
   const admin = createAdminClient()
   // A thanks may name the exchange it was for, but only one the two of them
-  // were the two sides of.
+  // were the two sides of. A leader of the organisation that held the toy
+  // stands on the owner's side; the organisation itself is thanked through
+  // organizations.ts, never here.
   if (txId) {
     const { data: tx, error } = await admin
       .from('toy_transactions')
-      .select('requester_id, owner_id')
+      .select('requester_id, owner_id, owner_org_id')
       .eq('id', txId)
       .maybeSingle()
     if (error && error.code !== INVALID_TEXT_REPRESENTATION) return c.json({ error: error.message }, 500)
-    const sides = tx ? [tx.requester_id, tx.owner_id] : []
+    const sides: (string | null)[] = tx ? [tx.requester_id, tx.owner_id] : []
+    if (tx?.owner_org_id && !sides.includes(userId)) {
+      const { data: lead } = await admin
+        .from('org_leaders')
+        .select('id')
+        .eq('org_id', tx.owner_org_id)
+        .eq('user_id', userId)
+        .maybeSingle()
+      if (lead) sides.push(userId)
+    }
     if (!sides.includes(userId) || !sides.includes(profileId)) {
       return c.json({ error: 'That exchange is not between the two of you.' }, 400)
     }
