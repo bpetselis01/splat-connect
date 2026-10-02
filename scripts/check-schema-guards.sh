@@ -579,7 +579,14 @@ select * from (values
   -- 114. An older body accepts the job and never spends the credit.
   ('114 accept_toy_transaction() spends recycling credit',
    (select count(*) = 1 from pg_proc
-      where proname = 'accept_toy_transaction' and prosrc like '%recycling_credit_spends%'))
+      where proname = 'accept_toy_transaction' and prosrc like '%recycling_credit_spends%')),
+
+  -- 115. Without it a member inserts their own 'received' row and mints credit.
+  ('115 recycling_dropoffs insert must be a booking with no leader columns',
+   (select count(*) = 1 from pg_policies
+      where tablename = 'recycling_dropoffs' and cmd = 'INSERT'
+        and with_check like '%booked%' and with_check like '%credit_grams IS NULL%'
+        and with_check like '%weighed_grams IS NULL%' and with_check like '%decided_by IS NULL%'))
 ) as t(guard, ok)
 where not ok;
 EOSQL

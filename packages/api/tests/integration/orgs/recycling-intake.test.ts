@@ -4,6 +4,7 @@
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
+import { createUserClient } from '../../../src/supabase/client.js'
 import { DECLARATION_VERSION } from '@splat-connect/types'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
 import { createOrg, addLeader } from '../../helpers/orgs.js'
@@ -54,5 +55,35 @@ describe('weighing in', () => {
     )
     expect(res.status).toBe(200)
     expect(((await res.json()) as { credit_grams: number }).credit_grams).toBe(2100)
+  })
+})
+
+/*
+ * 115: credit is minted by a leader weighing it in. A member writing straight
+ * to PostgREST must not be able to book a row that arrives already received.
+ */
+describe('booking by direct insert', () => {
+  const booking = () => ({
+    org_id: orgId, contributor_id: family.id, material: 'PLA', estimated_grams: 2500,
+    condition_declared: true, declaration_version: DECLARATION_VERSION,
+  })
+
+  it('refuses a row carrying any column the leader sets', async () => {
+    const db = createUserClient(family.token)
+    for (const extra of [
+      { status: 'received', weighed_grams: 1000000, credit_grams: 1000000 },
+      { weighed_grams: 2500 },
+      { credit_grams: 2000 },
+      { decided_by: family.id },
+      { status: 'declined' },
+    ]) {
+      const { error } = await db.from('recycling_dropoffs').insert({ ...booking(), ...extra })
+      expect(error?.code, JSON.stringify(extra)).toBe('42501')
+    }
+  })
+
+  it('still takes a plain booking', async () => {
+    const { error } = await createUserClient(family.token).from('recycling_dropoffs').insert(booking())
+    expect(error).toBeNull()
   })
 })
