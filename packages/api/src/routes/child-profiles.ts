@@ -27,7 +27,7 @@
  * confirm the row exists.
  */
 import { Hono } from 'hono'
-import { AIM, EVERYDAY_NEEDS, HOLD, PRESS_FORCE, WORKING_HAND } from '@splat-connect/types'
+import { AIM, CHILD_MEASURES, ENJOYS, EVERYDAY_NEEDS, HOLD, PRESS_FORCE, WORKING_HAND } from '@splat-connect/types'
 import { createUserClient } from '../supabase/client.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { pickEditable } from './pick-editable.js'
@@ -39,11 +39,16 @@ const childProfiles = new Hono<{ Variables: AuthVariables }>()
 // set by the server; id/role/etc. from the body are ignored — trust-boundary
 // input filtering.
 //
-// Only the board's questions (079) are writable. The older ability/needs/
-// customisation columns (MACS, BFMF, grip, measurements, sensory…) are no longer
-// asked, so they are no longer accepted either — APP 3 minimisation. They stay
-// in the table and still come back on GET until a decision drops them.
-const EDITABLE = ['name', 'age', 'working_hand', 'press_force', 'aim', 'hold', 'everyday_needs'] as const
+// Only the board's questions are writable: the four switch questions and the
+// room (079), and the Play and Measurements steps (120). The older ability/
+// needs columns (MACS, BFMF, grip, sensory…) are no longer asked, so they are
+// no longer accepted either — APP 3 minimisation. palm_width_mm came back in
+// 120 by decision (2026-09-30: "Measurements as an optional step"). The rest
+// stay in the table and still come back on GET until a decision drops them.
+const EDITABLE = [
+  'name', 'age', 'working_hand', 'press_force', 'aim', 'hold', 'everyday_needs',
+  'enjoys', 'palm_width_mm', 'reach_cm', 'tray_mm',
+] as const
 
 const valuesOf = (vocab: readonly { value: string }[]) => vocab.map((o) => o.value) as readonly string[]
 const SINGLE_CHOICE: Record<string, readonly string[]> = {
@@ -53,6 +58,7 @@ const SINGLE_CHOICE: Record<string, readonly string[]> = {
   hold: valuesOf(HOLD),
 }
 const NEEDS = valuesOf(EVERYDAY_NEEDS)
+const ENJOY_VALUES = valuesOf(ENJOYS)
 
 /**
  * Returns the whitelisted subset of a request body, a string naming the first
@@ -73,6 +79,22 @@ function editableFrom(body: unknown): Record<string, unknown> | string | null {
       return `everyday_needs must be a list drawn from ${NEEDS.join(', ')}`
     }
     row.everyday_needs = [...new Set(needs)]
+  }
+  const enjoys = row.enjoys
+  if (enjoys !== undefined) {
+    if (!Array.isArray(enjoys) || enjoys.some((e) => !ENJOY_VALUES.includes(e as string))) {
+      return `enjoys must be a list drawn from ${ENJOY_VALUES.join(', ')}`
+    }
+    row.enjoys = [...new Set(enjoys)]
+  }
+  // 120's CHECKs hold the same ranges; answering here keeps a typo from
+  // surfacing as a 500 naming a constraint.
+  for (const m of CHILD_MEASURES) {
+    const v = row[m.field]
+    if (v === undefined || v === null) continue
+    if (typeof v !== 'number' || !Number.isFinite(v) || v < m.min || v > m.max) {
+      return `${m.field} must be a number from ${m.min} to ${m.max}`
+    }
   }
   return { ...row, updated_at: new Date().toISOString() }
 }

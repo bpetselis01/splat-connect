@@ -648,7 +648,29 @@ select * from (values
   ('119 notifications.body is capped at 300',
    (select count(*) > 0 from pg_constraint
       where conrelid = 'public.notifications'::regclass
-        and pg_get_constraintdef(oid) like '%length(body)%300%'))
+        and pg_get_constraintdef(oid) like '%length(body)%300%')),
+
+  -- 120. Not a guard but the same silent failure: without the columns every
+  -- wizard save on the Play or Measurements step 500s.
+  ('120 child_profiles enjoys, reach_cm and tray_mm exist',
+   (select count(*) = 3 from information_schema.columns
+      where table_schema = 'public' and table_name = 'child_profiles'
+        and column_name in ('enjoys', 'reach_cm', 'tray_mm'))),
+
+  -- 120. The measurements are the child's private data and the table holds
+  -- table-level grants, so RLS is their only boundary: on, and no policy that
+  -- reads without naming the parent or an admin.
+  ('120 child_profiles RLS on, every policy scoped to the parent or admin',
+   (select relrowsecurity from pg_class where oid = 'public.child_profiles'::regclass)
+   and not exists (select 1 from pg_policies
+      where schemaname = 'public' and tablename = 'child_profiles'
+        and coalesce(qual, with_check) not like '%auth.uid()%'
+        and coalesce(qual, with_check) not like '%is_admin()%')),
+
+  ('120 child_profiles palm_width_mm is ranged 20-250',
+   (select count(*) = 1 from pg_constraint
+      where conname = 'child_profiles_palm_width_range'
+        and conrelid = 'public.child_profiles'::regclass))
 ) as t(guard, ok)
 where not ok;
 EOSQL

@@ -209,15 +209,16 @@ describe('child profiles collection', () => {
     }
   })
 
+  // palm_width_mm left this list in 120: the registry's 2026-09-30 decision
+  // made Measurements an optional wizard step (play-measurements.test.ts).
   it('no longer accepts the retired ability and needs fields', async () => {
     const res = await app.request('/api/child-profiles', authed(parent.token, {
       method: 'POST',
-      body: JSON.stringify({ name: 'Minimal', macs_level: 'II', challenges: ['Grasping'], palm_width_mm: 60 }),
+      body: JSON.stringify({ name: 'Minimal', macs_level: 'II', challenges: ['Grasping'] }),
     }))
     expect(res.status).toBe(201)
-    const row = (await res.json()) as { macs_level: string | null; challenges: string[]; palm_width_mm: number | null }
+    const row = (await res.json()) as { macs_level: string | null; challenges: string[] }
     expect(row.macs_level).toBeNull()
     expect(row.challenges).toEqual([])
-    expect(row.palm_width_mm).toBeNull()
   })
 })

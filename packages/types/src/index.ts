@@ -75,6 +75,11 @@ export interface ChildProfile {
   aim: Aim | null
   hold: Hold | null
   everyday_needs: EverydayNeed[]
+  /** 120. "What does your child enjoy?" — kept for a future recommender; nothing sorts or matches on it. */
+  enjoys: Enjoy[]
+  /** 120. Optional, for printed grips and mounts. palm_width_mm (above) is the third. */
+  reach_cm: number | null
+  tray_mm: number | null
   created_at: string
   updated_at: string
 }
@@ -110,6 +115,36 @@ export const EVERYDAY_NEEDS = [
   { value: 'shared_siblings', label: 'Shared with siblings' },
   { value: 'travels_bag', label: 'Travels in a bag' },
 ] as const
+
+// 120 — the board's Play step (MB wizard), in its order and words.
+export const ENJOYS = [
+  { value: 'light', label: 'Lights' },
+  { value: 'sound', label: 'Music and sound' },
+  { value: 'move', label: 'Things that move' },
+  { value: 'soft', label: 'Soft and cuddly' },
+  { value: 'calm', label: 'Calm and sensory' },
+  { value: 'water', label: 'Bubbles and water' },
+] as const
+export type Enjoy = (typeof ENJOYS)[number]['value']
+
+/** 120 — the board's three optional measurements, with the range the API and
+ *  the table both enforce. One list for the wizard, both editors and the route. */
+export const CHILD_MEASURES = [
+  { field: 'palm_width_mm', label: 'Hand width (mm)', placeholder: 'e.g. 62', min: 20, max: 250 },
+  { field: 'reach_cm', label: 'Reach from seated (cm)', placeholder: 'e.g. 30', min: 5, max: 150 },
+  { field: 'tray_mm', label: 'Tray thickness (mm)', placeholder: 'e.g. 15', min: 1, max: 100 },
+] as const
+export type ChildMeasure = (typeof CHILD_MEASURES)[number]
+export type ChildMeasureField = ChildMeasure['field']
+
+/** A typed measurement read against its range: `null` when blank, the number
+ *  when in range, `undefined` when it is not an answer (not a number, or out of
+ *  range) — the form then shows "Between {min} and {max}." and saves nothing. */
+export function readMeasure(m: ChildMeasure, text: string): number | null | undefined {
+  if (text.trim() === '') return null
+  const n = Number(text)
+  return Number.isFinite(n) && n >= m.min && n <= m.max ? n : undefined
+}
 export type WorkingHand = (typeof WORKING_HAND)[number]['value']
 export type PressForce = (typeof PRESS_FORCE)[number]['value']
 export type Aim = (typeof AIM)[number]['value']
