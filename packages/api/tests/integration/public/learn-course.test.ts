@@ -86,6 +86,22 @@ describe('GET /api/public/learn-course', () => {
     expect((await read()).title).toBe('Toy adaptation, start to finish')
   })
 
+  it('serves no outline for a hidden course, while the admin read keeps it for the preview', async () => {
+    const v = await version()
+    const res = await put({ title: 'Toy adaptation, start to finish', shown_as: 'hidden' }, v)
+    expect(res.status).toBe(200)
+    expect(await read()).toEqual({ title: null, outcome: null, shown_as: 'hidden', units: [] })
+    const row = await adminRow(admin)
+    expect(row!.value).toMatchObject({ title: 'Toy adaptation, start to finish', shown_as: 'hidden' })
+    // A row a hand edit broke elsewhere stays hidden (fails closed).
+    await adminClient().from('site_content').update({ value: { shown_as: 'hidden', units: 'everything' } }).eq('key', 'learn-course')
+    expect(await read()).toEqual({ title: null, outcome: null, shown_as: 'hidden', units: [] })
+    await adminClient()
+      .from('site_content')
+      .update({ value: { title: 'Toy adaptation, start to finish', shown_as: 'sign_in' }, updated_at: v })
+      .eq('key', 'learn-course')
+  })
+
   it('a hand-edited bad row is the default course, never an error', async () => {
     const v = await version()
     await adminClient().from('site_content').update({ value: { units: 'everything' } }).eq('key', 'learn-course')

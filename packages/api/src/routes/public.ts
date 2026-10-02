@@ -25,6 +25,7 @@ import type {
   PrinterStats,
   CataloguePart,
   ToyPick,
+  LearnCourse,
 } from '@splat-connect/types'
 
 const publicRoutes = new Hono()
@@ -369,7 +370,8 @@ publicRoutes.get('/content/home', async (c) => {
 /**
  * site-content-learn-legal-editing: the Learn course outline, merged over the
  * code's default. Web Learn and mobile Learn both read this; with nothing
- * saved it is the code's course exactly.
+ * saved it is the code's course exactly. A hidden course serves no outline at
+ * all — an admin previews it from the saved row (GET /api/admin/content).
  */
 publicRoutes.get('/learn-course', async (c) => {
   const { data, error } = await createAnonClient()
@@ -378,7 +380,11 @@ publicRoutes.get('/learn-course', async (c) => {
     .eq('key', 'learn-course')
     .maybeSingle()
   if (error) return c.json({ error: error.message }, 500)
-  return c.json(mergeLearnCourse(data?.value ?? null))
+  const course = mergeLearnCourse(data?.value ?? null)
+  if (course.shown_as === 'hidden') {
+    return c.json({ title: null, outcome: null, shown_as: 'hidden', units: [] } satisfies LearnCourse)
+  }
+  return c.json(course)
 })
 
 /**

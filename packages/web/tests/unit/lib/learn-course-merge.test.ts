@@ -60,6 +60,14 @@ describe('mergeLearnCourse', () => {
     expect(mergeLearnCourse({ units: 'everything' })).toEqual(LEARN_COURSE)
     expect(mergeLearnCourse([1, 2])).toEqual(LEARN_COURSE)
   })
+
+  it('keeps a readable "Shown as" when the rest of the row is unreadable, so a hidden course stays hidden', () => {
+    const c = mergeLearnCourse({ shown_as: 'hidden', title: '', units: 'everything' })
+    expect(c.shown_as).toBe('hidden')
+    expect(c.units).toEqual(LEARN_COURSE.units)
+    expect(mergeLearnCourse({ shown_as: 'sign_in', units: 7 }).shown_as).toBe('sign_in')
+    expect(mergeLearnCourse({ shown_as: 'members', units: 7 }).shown_as).toBe('free')
+  })
 })
 
 describe('readLearnCourse', () => {

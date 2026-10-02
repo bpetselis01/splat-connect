@@ -353,11 +353,16 @@ export function readLearnCourse(v: unknown): { value: LearnCourseSaved } | { err
  * lessons come in the saved order with their saved title, minutes and kind;
  * a slug the unit does not have — unknown, or another unit's — is ignored, so
  * a lesson never changes unit; lessons left out follow in default order.
- * Anything readLearnCourse refuses is the default, whole.
+ * Anything readLearnCourse refuses is the default course — but it keeps a
+ * readable "Shown as", so a hidden course with one bad field stays hidden
+ * (fails closed).
  */
 export function mergeLearnCourse(saved: unknown): LearnCourse {
   const read = readLearnCourse(saved)
-  if ('error' in read) return LEARN_COURSE
+  if ('error' in read) {
+    const shown = isObj(saved) && SHOWN.includes(saved.shown_as as string) ? (saved.shown_as as LearnShownAs) : 'free'
+    return shown === 'free' ? LEARN_COURSE : { ...LEARN_COURSE, shown_as: shown }
+  }
   const s = read.value
   const byId = new Map(UNITS.map((u) => [u.id, u]))
   const seen = new Set<string>()
