@@ -9,7 +9,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { View, ScrollView, RefreshControl, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import type { SaveSlug } from '@splat-connect/types'
+import { gradeOf, guideMeta, type Difficulty, type SaveSlug } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { useSaves } from '../../lib/saves'
@@ -28,9 +28,31 @@ type SavedEntity = {
   summary?: string | null
   description?: string | null
   condition?: number
+  difficulty?: Difficulty
+  build_minutes?: number | null
+  author_name?: string | null
+  toy_photo_url?: string | null
+  cover_photo_url?: string | null
+  profiles?: { name: string } | null
+  organizations?: { name: string } | null
   filename?: string
   tutorial_id?: string
   tutorials?: { title: string } | null
+}
+
+/** The row's second line and picture, per kind of thing saved. */
+function rowFacts(slug: SaveSlug, item: SavedEntity): { meta: string | null; photo: string | null } {
+  if (slug === 'tutorials' && item.difficulty) {
+    return {
+      meta: guideMeta({ difficulty: item.difficulty, build_minutes: item.build_minutes ?? null }, item.author_name),
+      photo: item.toy_photo_url ?? null,
+    }
+  }
+  if (slug === 'toys' && item.condition != null) {
+    const holder = item.organizations?.name ?? item.profiles?.name ?? null
+    return { meta: [gradeOf(item.condition).label, holder].filter(Boolean).join(' · '), photo: item.cover_photo_url ?? null }
+  }
+  return { meta: item.summary ?? item.description ?? item.tutorials?.title ?? null, photo: null }
 }
 
 const KIND: Record<
@@ -183,8 +205,7 @@ export function SavedListScreen({ slug }: { slug: SaveSlug }) {
           {items.map((item) => {
             // tutorials/challenges carry title; toys and organisations carry name.
             const label = item.title ?? item.name ?? item.filename ?? ''
-            // PENDING(saved-list-meta): "difficulty · time · author" and a thumbnail — the API returns no author name.
-            const line = item.summary ?? item.description ?? item.tutorials?.title ?? null
+            const { meta, photo } = rowFacts(slug, item)
             return (
               // The bookmark is a sibling of the pressable, never a child —
               // the same rule as every other saveable row.
@@ -192,9 +213,9 @@ export function SavedListScreen({ slug }: { slug: SaveSlug }) {
                 <ListRow
                   onPress={() => router.push(kind.route(item))}
                   accessibilityLabel={label}
-                  thumb={<RowThumb glyph={kind.icon} />}
+                  thumb={<RowThumb photo={photo} glyph={kind.icon} />}
                   title={label}
-                  meta={line}
+                  meta={meta}
                   // Room for the island, which sits over the row beside the chevron.
                   trailing={<View style={styles.islandRoom} />}
                 />

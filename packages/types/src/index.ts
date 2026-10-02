@@ -2052,6 +2052,9 @@ export interface Tutorial {
   builds_count?: number
   /** 092. On /api/tutorials/mine and the public contributor read. */
   view_count?: number
+  /** Present on saved guides and an organisation's guide rows: the primary
+   *  contributor's name, resolved by id on the server. */
+  author_name?: string | null
   has_stl?: boolean
   /** Up to MAX_PHOTOS, in display order. The first is the cover. */
   photo_urls: string[]

@@ -17,6 +17,7 @@ import { Hono } from 'hono'
 import { chunk } from '../chunk.js'
 import { SAVE_SLUGS, type SaveSlug, type SavedIds } from '@splat-connect/types'
 import { createUserClient } from '../supabase/client.js'
+import { primaryAuthorNames } from '../profile-name.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
 const saves = new Hono<{ Variables: AuthVariables }>()
@@ -150,7 +151,15 @@ saves.get('/:slug', async (c) => {
   const byId = new Map(
     results.flatMap((r) => (r.data ?? []) as { id: string }[]).map((e) => [e.id, e])
   )
-  return c.json(ids.map((id) => byId.get(id)).filter(Boolean))
+  const entities = ids.map((id) => byId.get(id)).filter(Boolean) as Array<{ id: string }>
+  // saved-list-meta: a guide row names its author. Resolved by id, not
+  // embedded — see primaryAuthorNames.
+  if (slug === 'tutorials') {
+    const names = await primaryAuthorNames(entities.map((e) => e.id))
+    if (!names) return c.json({ error: 'Failed to load saved guides' }, 500)
+    return c.json(entities.map((e) => ({ ...e, author_name: names.get(e.id) ?? null })))
+  }
+  return c.json(entities)
 })
 
 saves.post('/', async (c) => {

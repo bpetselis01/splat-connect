@@ -553,6 +553,7 @@ export const PENDING = {
     needs: "Date, maker and post counts [ui,api]",
   },
   'saved-list-meta': {
+    shipped: true,
     title: "Saved details",
     blurb: "Difficulty, time and author on saved items are coming.",
     kind: "build",
