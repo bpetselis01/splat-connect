@@ -26,7 +26,6 @@
     "expo-router": "~57.0.17",
     "expo-secure-store": "~57.0.2",
     "expo-splash-screen": "~57.0.8",
-    "expo-video": "~57.0.3",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.86.3",

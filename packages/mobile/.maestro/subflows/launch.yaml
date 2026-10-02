@@ -5,23 +5,6 @@ appId: com.splatconnect.mobile
 # the SecureStore entry that is the entire subject of the suite.
 - launchApp
 
-# app/_layout.tsx renders IntroVideo over the whole app on every cold start, and
-# IntroVideo.tsx is a full-screen Pressable that swallows touches until playToEnd,
-# a decode error, or the 8s MAX_INTRO_MS ceiling. Tapping "Skip intro" — its
-# accessibilityLabel, which Android exposes as content-desc — is deterministic.
-# optional: true because a fast decode may have dismissed it already.
-- tapOn:
-    text: "Skip intro"
-    optional: true
-
-# IntroVideo is a sibling overlay, not a parent of the tab bar, so "Home" can be
-# assertVisible-able while the overlay is still covering the screen and
-# swallowing touches. Wait for the overlay to actually be gone first.
-- extendedWaitUntil:
-    notVisible:
-      text: "Skip intro"
-    timeout: 10000
-
 # No landing assertion here on purpose: this subflow is run both signed out
 # (lands on sign-in) and after a stopApp with a live session (lands on Guides),
 # so there is no one string true of both. Each flow asserts its own landing on

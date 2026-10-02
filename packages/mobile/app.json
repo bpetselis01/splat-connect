@@ -31,7 +31,6 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-video",
       "expo-splash-screen",
       [
         "expo-image-picker",
