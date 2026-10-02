@@ -18,7 +18,7 @@ jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 // reaches all the way to the live supabase client. Mocking auth-context here
 // (unused by the thread itself) is what keeps that import inert, same as
 // request-block.test.tsx does for the same transitive reason.
-jest.mock('../../../../lib/auth-context', () => ({ useAuth: jest.fn() }))
+jest.mock('../../../../lib/auth-context', () => ({ useAuth: () => ({ session: { user: { id: 'signed-in' } } }) }))
 
 const mockGet = jest.fn()
 const mockPost = jest.fn()

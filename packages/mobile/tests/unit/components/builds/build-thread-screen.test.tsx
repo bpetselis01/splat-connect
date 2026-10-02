@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react-native'
 import { BuildThreadScreen } from '../../../../components/builds/build-thread-screen'
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
-jest.mock('../../../../lib/auth-context', () => ({ useAuth: jest.fn() }))
+jest.mock('../../../../lib/auth-context', () => ({ useAuth: () => ({ session: { user: { id: 'signed-in' } } }) }))
 jest.mock('expo-image-picker', () => ({}))
 jest.mock('../../../../lib/upload', () => ({ uploadFile: jest.fn() }))
 jest.mock('../../../../lib/supabase', () => ({

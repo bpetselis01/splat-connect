@@ -6,7 +6,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react-nativ
 import { PrintJobScreen } from '../../../../components/printing/job-screen'
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
-jest.mock('../../../../lib/auth-context', () => ({ useAuth: jest.fn() }))
+jest.mock('../../../../lib/auth-context', () => ({ useAuth: () => ({ session: { user: { id: 'signed-in' } } }) }))
 jest.mock('../../../../lib/supabase', () => ({
   supabase: { storage: { from: () => ({ createSignedUrl: () => Promise.resolve({ data: null }) }) } },
 }))

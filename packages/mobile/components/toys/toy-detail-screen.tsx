@@ -16,7 +16,7 @@ import { EmptyState } from '../ui/EmptyState'
 import { ReportProblem } from '../reports/report-problem'
 import { RequestBlock } from './request-block'
 import { Pill } from '../list/list-kit'
-import { PendingButton } from '../ui/pending'
+import { ThankButton } from '../people/thank-button'
 
 const OFFER_LABEL: Record<OfferType, string> = {
   donation: 'Gift — nothing comes back',
@@ -220,10 +220,9 @@ export function ToyDetailScreen({ id }: { id: string }) {
       ) : null}
 
       <View style={styles.footerRow}>
-        {/* Only an organisation can be thanked (077); a person holder opens
-            Not built yet until people can be thanked. */}
-        {canAsk && !toy.owner_org_id && personName ? (
-          <PendingButton pending="thank-people" label={`Thank ${personName}`} style={styles.thank} />
+        {/* A person holder is thanked through 117, an organisation through 077. */}
+        {canAsk && !toy.owner_org_id && personName && toy.owner_id ? (
+          <ThankButton label={`Thank ${personName}`} to={{ profileId: toy.owner_id }} style={styles.thank} />
         ) : canAsk && toy.owner_org_id && orgName ? (
           <Button
             label={thanked ? `Thanked ${orgName}` : `Thank ${orgName}`}

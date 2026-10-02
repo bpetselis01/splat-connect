@@ -14,6 +14,7 @@ import { Button } from '../ui/Button'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { PendingButton } from '../ui/pending'
+import { ThankButton } from '../people/thank-button'
 import { formatViews } from '../my-tutorials/list-screen'
 
 type ShowcaseKind = 'person' | 'org'
@@ -143,7 +144,6 @@ export function ShowcaseScreen({ kind, id }: { kind: ShowcaseKind; id: string })
   const guides: Tutorial[] =
     kind === 'person' ? (profile as ContributorProfile).tutorials : (profile as OrgPublicProfile).tutorialsBacked
   const toys = kind === 'org' ? (profile as OrgPublicProfile).toysShared : []
-  const firstName = profile.name.split(' ')[0]
   const person = kind === 'person' ? (profile as ContributorProfile) : null
   const thanked = person?.thanks ?? 0
 
@@ -179,7 +179,7 @@ export function ShowcaseScreen({ kind, id }: { kind: ShowcaseKind; id: string })
       ) : null}
       {kind === 'person' ? (
         <View style={[styles.section, styles.actions]}>
-          <PendingButton pending="thank-people" label={`Say thanks to ${firstName}`} />
+          <ThankButton label="Say thanks" to={{ profileId: id }} />
           <PendingButton pending="report-problem-mobile" label="Report a problem" variant="ghost" />
         </View>
       ) : null}

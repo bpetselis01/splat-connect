@@ -45,6 +45,7 @@ import { MessageBubble } from '../ui/MessageBubble'
 import { ErrorRow } from '../ui/ErrorRow'
 import { apiMessage } from '@splat-connect/types'
 import { PendingButton } from '../ui/pending'
+import { ThankButton } from '../people/thank-button'
 import { CostPanel } from '../exchanges/cost-panel'
 
 const POLL_MS = 10_000
@@ -436,6 +437,14 @@ export function BuildThreadScreen({ id }: { id: string }) {
               />
             ))}
           </View>
+          {/* 117: once it is handed over, each side may thank the other. */}
+          {tx.status === 'completed' && (tx.owner_id || tx.owner_org_id) && (c.isMaker || c.isFamily) ? (
+            <ThankButton
+              label={`Say thanks to ${otherName}`}
+              to={c.isMaker ? { profileId: tx.requester_id } : tx.owner_org_id ? { orgId: tx.owner_org_id } : { profileId: tx.owner_id! }}
+              transactionId={tx.id}
+            />
+          ) : null}
           {/* Once a maker has the build: before that there is nobody to owe. */}
           {(tx.status === 'accepted' || tx.status === 'completed') && (c.isMaker || c.isFamily) ? (
             <CostPanel

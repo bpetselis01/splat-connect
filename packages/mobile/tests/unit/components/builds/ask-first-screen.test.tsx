@@ -2,7 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react-nativ
 import { AskFirstScreen } from '../../../../components/builds/ask-first-screen'
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
-jest.mock('../../../../lib/auth-context', () => ({ useAuth: jest.fn() }))
+jest.mock('../../../../lib/auth-context', () => ({ useAuth: () => ({ session: { user: { id: 'signed-in' } } }) }))
 const mockReplace = jest.fn()
 jest.mock('expo-router', () => {
   const { useEffect } = jest.requireActual('react')

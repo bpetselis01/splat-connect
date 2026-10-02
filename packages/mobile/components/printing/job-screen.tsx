@@ -35,6 +35,7 @@ import { EmptyState } from '../ui/EmptyState'
 import { MessageBubble } from '../ui/MessageBubble'
 import { ErrorRow } from '../ui/ErrorRow'
 import { PendingButton } from '../ui/pending'
+import { ThankButton } from '../people/thank-button'
 
 const POLL_MS = 10_000
 const LOAD_ERROR = "Couldn't load this print job."
@@ -481,7 +482,15 @@ function StateCard({
             </View>
           </View>
         ) : null}
-        <PendingButton pending="thank-people" label="Say thanks to the printer" variant="ghost" />
+        {/* Only the requester thanks the printer: a person through 117, an organisation through 077. */}
+        {!isPrinter ? (
+          <ThankButton
+            label="Say thanks to the printer"
+            variant="ghost"
+            to={tx.owner_org_id ? { orgId: tx.owner_org_id } : { profileId: tx.owner_id! }}
+            transactionId={tx.id}
+          />
+        ) : null}
         <PendingButton pending="report-problem-mobile" label="Report a problem" variant="ghost" />
       </Card>
     )

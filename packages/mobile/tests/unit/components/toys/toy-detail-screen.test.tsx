@@ -31,7 +31,7 @@ jest.mock('../../../../lib/saves', () => ({
 // useAuth from lib/auth-context — and that module's real implementation
 // reaches all the way to the live supabase client. Mocking auth-context here
 // (unused by this screen itself) is what keeps that import inert.
-jest.mock('../../../../lib/auth-context', () => ({ useAuth: jest.fn() }))
+jest.mock('../../../../lib/auth-context', () => ({ useAuth: () => ({ session: { user: { id: 'signed-in' } } }) }))
 
 const mockUseCapabilities = jest.fn()
 jest.mock('../../../../lib/capabilities', () => ({
@@ -192,13 +192,12 @@ describe('ToyDetailScreen', () => {
     expect(await screen.findByRole('button', { name: 'Thanked TAD Australia' })).toBeTruthy()
   })
 
-  // A person holder can't be thanked yet (only organisations can, 077); the
-  // board draws the button, so it opens Not built yet (thank-people).
-  it('sends thanks for a person holder to Not built yet', async () => {
+  // thank-people: a person holder is thanked directly.
+  it('thanks a person holder directly', async () => {
     render(<ToyDetailScreen id="toy1" />)
     await screen.findByText('Bubble machine')
     fireEvent.press(screen.getByRole('button', { name: /^Thank/ }))
-    expect(mockPush).toHaveBeenCalledWith({ pathname: '/not-built', params: { feature: 'thank-people' } })
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith(expect.stringMatching(/^\/api\/contributors\/.+\/thanks$/), {}))
     expect(screen.getByRole('button', { name: 'Report a problem' })).toBeTruthy()
   })
 

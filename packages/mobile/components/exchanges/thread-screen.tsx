@@ -42,6 +42,7 @@ import { EmptyState } from '../ui/EmptyState'
 import { MessageBubble } from '../ui/MessageBubble'
 import { ErrorRow } from '../ui/ErrorRow'
 import { PendingButton } from '../ui/pending'
+import { ThankButton } from '../people/thank-button'
 import { FlashLine, useFlash } from '../ui/Flash'
 import { CostPanel } from './cost-panel'
 
@@ -569,7 +570,11 @@ export function ExchangeThreadScreen({ id, startAccept = false }: { id: string; 
             ))}
           </View>
           {tx.status === 'completed' ? (
-            <PendingButton pending="thank-people" label={`Say thanks to ${otherPartyName}`} />
+            <ThankButton
+              label={`Say thanks to ${otherPartyName}`}
+              to={isOwner ? { profileId: tx.requester_id } : tx.owner_org_id ? { orgId: tx.owner_org_id } : { profileId: tx.owner_id! }}
+              transactionId={tx.id}
+            />
           ) : null}
           <PendingButton pending="report-problem-mobile" label="Report a problem" variant="ghost" />
         </ScrollView>
