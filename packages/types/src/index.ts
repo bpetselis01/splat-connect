@@ -1535,6 +1535,9 @@ export interface RecyclingDropoff {
   declaration_version: string | null
   /** A storage path in the private `recycling-photos` bucket, never a URL. */
   photo_url: string | null
+  /** 112. A one-hour signed URL for `photo_url`, on the contributor's and the
+   *  organisation's reads only. */
+  photo_signed_url?: string | null
   note: string | null
   status: DropoffStatus
   weighed_grams: number | null

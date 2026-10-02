@@ -272,4 +272,26 @@ upload.post('/idea-photo', async (c) => {
   return c.json({ path: data.path, url: admin.storage.from('toy-photos').getPublicUrl(data.path).data.publicUrl })
 })
 
+/**
+ * The photo of the sorted plastic on a drop-off booking (112). Written with
+ * the caller's own client, so 112's storage policy is what admits it: only
+ * under <their id>/. The extension is the checked MIME type's, never the
+ * filename's. The path is what POST /organizations/:id/recycling takes; the
+ * url is signed because the bucket is private, and is for the preview only.
+ * ponytail: a photo picked and never booked stays in the bucket; sweep <uid>/
+ * against recycling_dropoffs if storage ever matters.
+ */
+upload.post('/recycling-photo', async (c) => {
+  const file = (await c.req.formData()).get('file')
+  if (!(file instanceof File)) return c.json({ error: 'file is required' }, 400)
+  if (!PHOTO_MIME.includes(file.type)) return c.json({ error: 'Photos need to be a JPEG, PNG, WebP, AVIF or HEIC image.' }, 400)
+  if (file.size > PHOTO_MAX_BYTES) return c.json({ error: 'Photos need to be under 10 MB.' }, 400)
+  const ext = file.type === 'image/jpeg' ? 'jpg' : file.type.slice('image/'.length)
+  const bucket = createUserClient(c.get('token')).storage.from('recycling-photos')
+  const { data, error } = await bucket.upload(`${c.get('userId')}/${crypto.randomUUID()}.${ext}`, file, { upsert: false })
+  if (error) return c.json({ error: error.message }, 500)
+  const { data: signed } = await bucket.createSignedUrl(data.path, 3600)
+  return c.json({ path: data.path, url: signed?.signedUrl ?? null })
+})
+
 export default upload

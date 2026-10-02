@@ -24,7 +24,11 @@ export async function deleteAccount(admin: Admin, userId: string, keepCredit: bo
   const { data, error } = await admin.rpc('delete_account', { uid: userId, keep_credit: keepCredit })
   if (error) return { error: error.message.includes('sole_leader') ? ('sole_leader' as const) : error.message }
   const result = data as DeletionResult
-  await Promise.allSettled([removeFiles(admin, [...result.toyIds, ...result.tutorialIds]), notifyCancelled(admin, result)])
+  await Promise.allSettled([
+    removeFiles(admin, [...result.toyIds, ...result.tutorialIds]),
+    removeRecyclingPhotos(admin, userId),
+    notifyCancelled(admin, result),
+  ])
   return { result }
 }
 
@@ -39,6 +43,16 @@ async function removeFiles(admin: Admin, ids: string[]) {
       }
     }
   }
+}
+
+/** 112: the leaver's photos of sorted plastic. 112's trigger already cleared
+ *  them off the drop-offs 083 handed to the placeholder. */
+async function removeRecyclingPhotos(admin: Admin, userId: string) {
+  const { data } = await admin.storage.from('recycling-photos').list(userId, { limit: 1000 })
+  const paths = (data ?? []).map((f) => `${userId}/${f.name}`)
+  if (!paths.length) return
+  const { error } = await admin.storage.from('recycling-photos').remove(paths)
+  if (error) console.error(`account deletion: recycling-photos/${userId} left behind`, error.message)
 }
 
 async function notifyCancelled(admin: Admin, { cancelled }: DeletionResult) {

@@ -1416,6 +1416,23 @@ organizations.delete('/:orgId/stories/:id', async (c) => {
 const DROPOFF_COLUMNS =
   'id, org_id, contributor_id, material, estimated_grams, condition_declared, declaration_version, photo_url, note, status, weighed_grams, credit_grams, decided_by, created_at, updated_at'
 
+/** 112's CHECK, said once more in the API so the answer is a sentence. */
+const ownPhotoPath = (userId: string) =>
+  new RegExp(`^${userId}/[0-9a-f-]{36}\\.(jpg|png|webp|avif|heic|heif)$`)
+
+/**
+ * The photo is a path in a private bucket; whoever may read the row gets a
+ * one-hour signed URL beside it. Signed with the service role because the
+ * caller already passed RLS on the row itself.
+ */
+async function withPhotoUrls<T extends { photo_url: string | null }>(rows: T[]) {
+  const paths = rows.map((r) => r.photo_url).filter((p): p is string => Boolean(p))
+  if (!paths.length) return rows.map((r) => ({ ...r, photo_signed_url: null }))
+  const { data } = await createAdminClient().storage.from('recycling-photos').createSignedUrls(paths, 3600)
+  const url = new Map((data ?? []).map((s) => [s.path, s.signedUrl]))
+  return rows.map((r) => ({ ...r, photo_signed_url: r.photo_url ? (url.get(r.photo_url) ?? null) : null }))
+}
+
 /**
  * GET /api/organizations/recycling/mine — the caller's own drop-offs, at every
  * organisation, newest first. RLS already limits a contributor to their own
@@ -1429,7 +1446,9 @@ organizations.get('/recycling/mine', async (c) => {
     .order('created_at', { ascending: false })
   if (error) return c.json({ error: error.message }, 500)
   return c.json(
-    (data ?? []).map(({ organizations: org, ...row }: any) => ({ ...row, org_name: org?.name ?? null }))
+    await withPhotoUrls(
+      (data ?? []).map(({ organizations: org, ...row }: any) => ({ ...row, org_name: org?.name ?? null }))
+    )
   )
 })
 
@@ -1447,14 +1466,14 @@ organizations.get('/:id/recycling', async (c) => {
   // or not that person shows a public profile. Names only, and only to leaders.
   const admin = createAdminClient()
   if (!rows.length || !(await ledOrgIds(admin, c.get('userId'))).includes(c.req.param('id'))) {
-    return c.json(rows)
+    return c.json(await withPhotoUrls(rows))
   }
   const { data: people } = await admin
     .from('profiles')
     .select('id, name')
     .in('id', [...new Set(rows.map((r) => r.contributor_id))])
   const name = new Map((people ?? []).map((p) => [p.id, p.name]))
-  return c.json(rows.map((r) => ({ ...r, contributor_name: name.get(r.contributor_id) ?? null })))
+  return c.json(await withPhotoUrls(rows.map((r) => ({ ...r, contributor_name: name.get(r.contributor_id) ?? null }))))
 })
 
 /**
@@ -1518,6 +1537,12 @@ organizations.post('/:id/recycling', async (c) => {
     )
   }
 
+  // 112: a path in the caller's own folder, from POST /api/upload/recycling-photo.
+  const photo = body.photo_url ?? null
+  if (photo !== null && (typeof photo !== 'string' || !ownPhotoPath(c.get('userId')).test(photo))) {
+    return c.json({ error: 'That photo is not one you uploaded.' }, 400)
+  }
+
   const { data, error } = await supabase
     .from('recycling_dropoffs')
     .insert({
@@ -1527,6 +1552,7 @@ organizations.post('/:id/recycling', async (c) => {
       estimated_grams: grams,
       condition_declared: true,
       declaration_version: DECLARATION_VERSION,
+      photo_url: photo,
       note: typeof body.note === 'string' && body.note.trim() ? body.note.trim() : null,
     })
     .select(DROPOFF_COLUMNS)

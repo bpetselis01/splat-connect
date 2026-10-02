@@ -537,7 +537,21 @@ select * from (values
   ('111 notifications_type_check permits build_question',
    (select count(*) = 1 from pg_constraint
       where conname = 'notifications_type_check'
-        and pg_get_constraintdef(oid) like '%build_question%'))
+        and pg_get_constraintdef(oid) like '%build_question%')),
+
+  -- 112. A public bucket would put photos of people's homes and bags on the open web.
+  ('112 recycling-photos bucket is private',
+   (select count(*) = 1 from storage.buckets where id = 'recycling-photos' and not public)),
+
+  -- 112. Without it a booking could point at anyone's object.
+  ('112 recycling_dropoffs photo path is pinned to its contributor',
+   (select count(*) = 1 from pg_constraint
+      where conname = 'recycling_dropoffs_photo_is_own_path')),
+
+  -- 112. Without it, deleting an account that booked with a photo fails.
+  ('112 recycling_dropoffs_photo_follows_owner trigger',
+   (select count(*) > 0 from pg_trigger
+      where tgname = 'recycling_dropoffs_photo_follows_owner' and not tgisinternal))
 ) as t(guard, ok)
 where not ok;
 EOSQL
