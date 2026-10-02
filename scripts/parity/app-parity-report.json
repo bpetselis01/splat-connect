@@ -1,7 +1,87 @@
 {
- "at": "2026-10-01T17:22:52.731Z",
+ "at": "2026-10-02T02:51:46.723Z",
  "live": "http://localhost:3112",
  "screens": [
+  {
+   "id": "print_request",
+   "name": "Request a print",
+   "group": "modal",
+   "route": "/printing/request?guide=0cd04c60-4e82-420d-bf20-0802f35f9b75&printers=bfa47ab7-761a-4998-929d-2d449b7a2e61,d35bf477-7811-4d0f-acc4-ecc6a3f95f9c",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/printing/request",
+   "explained": [],
+   "boardHeadings": 0,
+   "liveHeadings": 0
+  },
+  {
+   "id": "print_job",
+   "name": "Print job",
+   "group": "push",
+   "route": "/printing/jobs/1ba442ab-3125-499f-b0cc-e1757986290e",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/printing/jobs/1ba442ab-3125-499f-b0cc-e1757986290e",
+   "explained": [
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "none",
+     "live": "set",
+     "why": "harness",
+     "reason": "The board nests its cards (a bordered box inside the card), so its leaf cards are inner boxes without shadow; the app's are the outer cards. Counting every card fixes it here and breaks nine web screens."
+    }
+   ],
+   "boardHeadings": 2,
+   "liveHeadings": 1
+  },
+  {
+   "id": "guide_org",
+   "name": "Organisation",
+   "group": "push",
+   "route": "/guides/organisation/b18e1691-ad84-4b49-83fc-1961768273d6",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/guides/organisation/b18e1691-ad84-4b49-83fc-1961768273d6",
+   "explained": [],
+   "boardHeadings": 8,
+   "liveHeadings": 9
+  },
+  {
+   "id": "recycling",
+   "name": "Recycling",
+   "group": "push",
+   "route": "/explore/recycling",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/explore/recycling",
+   "explained": [
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "h1 wording",
+     "board": "#",
+     "live": "# kg",
+     "why": "harness",
+     "reason": "The board sets the 44px number and its kg unit in separate elements, so its h1 reads '#'; the app's reads '# kg'. Both are 44px Baloo."
+    }
+   ],
+   "boardHeadings": 2,
+   "liveHeadings": 2
+  },
+  {
+   "id": "org_recycling",
+   "name": "Recycling intake",
+   "group": "push",
+   "route": "/organisation/recycling",
+   "findings": [],
+   "role": "leader",
+   "finalUrl": "/organisation/recycling",
+   "explained": [],
+   "boardHeadings": 0,
+   "liveHeadings": 0
+  },
   {
    "id": "challenge_detail",
    "name": "Challenge",
@@ -345,18 +425,6 @@
    "liveHeadings": 2
   },
   {
-   "id": "guide_org",
-   "name": "Organisation",
-   "group": "push",
-   "route": "/guides/organisation/1a2db95b-194d-4f4e-8b2a-ea3774f5bf8b",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/guides/organisation/1a2db95b-194d-4f4e-8b2a-ea3774f5bf8b",
-   "explained": [],
-   "boardHeadings": 8,
-   "liveHeadings": 9
-  },
-  {
    "id": "print_find",
    "name": "Find a printer",
    "group": "push",
@@ -377,40 +445,6 @@
    ],
    "boardHeadings": 0,
    "liveHeadings": 0
-  },
-  {
-   "id": "print_request",
-   "name": "Request a print",
-   "group": "modal",
-   "route": "/printing/request?guide=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa&printers=42079194-1a7a-4aba-bb8c-5133d91feb32,ab32c1b9-6458-41cc-8154-f76d91bbf445",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/printing/request",
-   "explained": [],
-   "boardHeadings": 0,
-   "liveHeadings": 0
-  },
-  {
-   "id": "print_job",
-   "name": "Print job",
-   "group": "push",
-   "route": "/printing/jobs/11e739a8-baf9-4efd-85ac-0217d8cfe1f8",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/printing/jobs/11e739a8-baf9-4efd-85ac-0217d8cfe1f8",
-   "explained": [
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "none",
-     "live": "set",
-     "why": "harness",
-     "reason": "The board nests its cards (a bordered box inside the card), so its leaf cards are inner boxes without shadow; the app's are the outer cards. Counting every card fixes it here and breaks nine web screens."
-    }
-   ],
-   "boardHeadings": 2,
-   "liveHeadings": 1
   },
   {
    "id": "print_basics",
@@ -553,40 +587,6 @@
    "explained": [],
    "boardHeadings": 5,
    "liveHeadings": 1
-  },
-  {
-   "id": "recycling",
-   "name": "Recycling",
-   "group": "push",
-   "route": "/explore/recycling",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/explore/recycling",
-   "explained": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h1 wording",
-     "board": "#",
-     "live": "# kg",
-     "why": "harness",
-     "reason": "The board sets the 44px number and its kg unit in separate elements, so its h1 reads '#'; the app's reads '# kg'. Both are 44px Baloo."
-    }
-   ],
-   "boardHeadings": 2,
-   "liveHeadings": 2
-  },
-  {
-   "id": "org_recycling",
-   "name": "Recycling intake",
-   "group": "push",
-   "route": "/organisation/recycling",
-   "findings": [],
-   "role": "leader",
-   "finalUrl": "/organisation/recycling",
-   "explained": [],
-   "boardHeadings": 0,
-   "liveHeadings": 0
   },
   {
    "id": "about",
