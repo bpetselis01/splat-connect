@@ -1,7 +1,43 @@
 {
- "at": "2026-10-02T06:36:03.125Z",
+ "at": "2026-10-02T09:45:52.904Z",
  "live": "http://localhost:3110",
  "screens": [
+  {
+   "id": "about",
+   "name": "About",
+   "group": "About",
+   "route": "/about",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/about",
+   "explained": [],
+   "boardHeadings": 9,
+   "liveHeadings": 9
+  },
+  {
+   "id": "contact",
+   "name": "Contact",
+   "group": "About",
+   "route": "/contact",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/contact",
+   "explained": [],
+   "boardHeadings": 1,
+   "liveHeadings": 1
+  },
+  {
+   "id": "account",
+   "name": "Account",
+   "group": "My SPLAT",
+   "route": "/dashboard/profile",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/dashboard/profile",
+   "explained": [],
+   "boardHeadings": 3,
+   "liveHeadings": 3
+  },
   {
    "id": "admin_review",
    "name": "Review queue (live)",
@@ -889,18 +925,6 @@
    "liveHeadings": 1
   },
   {
-   "id": "about",
-   "name": "About",
-   "group": "About",
-   "route": "/about",
-   "findings": [],
-   "role": "guest",
-   "finalUrl": "/about",
-   "explained": [],
-   "boardHeadings": 9,
-   "liveHeadings": 9
-  },
-  {
    "id": "about_team",
    "name": "Our team",
    "group": "About",
@@ -921,18 +945,6 @@
    ],
    "boardHeadings": 10,
    "liveHeadings": 4
-  },
-  {
-   "id": "contact",
-   "name": "Contact",
-   "group": "About",
-   "route": "/contact",
-   "findings": [],
-   "role": "guest",
-   "finalUrl": "/contact",
-   "explained": [],
-   "boardHeadings": 1,
-   "liveHeadings": 1
   },
   {
    "id": "org_requests",
@@ -1384,18 +1396,6 @@
    "explained": [],
    "boardHeadings": 5,
    "liveHeadings": 5
-  },
-  {
-   "id": "account",
-   "name": "Account",
-   "group": "My SPLAT",
-   "route": "/dashboard/profile",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/dashboard/profile",
-   "explained": [],
-   "boardHeadings": 3,
-   "liveHeadings": 3
   },
   {
    "id": "child",

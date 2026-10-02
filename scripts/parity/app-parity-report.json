@@ -1,7 +1,19 @@
 {
- "at": "2026-10-02T06:37:09.973Z",
- "live": "http://localhost:3112",
+ "at": "2026-10-02T09:45:18.717Z",
+ "live": "http://localhost:3122",
  "screens": [
+  {
+   "id": "about",
+   "name": "About",
+   "group": "push",
+   "route": "/explore/about",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/explore/about",
+   "explained": [],
+   "boardHeadings": 0,
+   "liveHeadings": 2
+  },
   {
    "id": "contributor",
    "name": "Contributor",
@@ -692,28 +704,6 @@
    "liveHeadings": 1
   },
   {
-   "id": "about",
-   "name": "About",
-   "group": "push",
-   "route": "/explore/about",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/explore/about",
-   "explained": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "splat stands for supporting play by adapting toys. we make toy adaptat",
-     "live": null,
-     "why": "pending",
-     "pending": "about-content-mobile"
-    }
-   ],
-   "boardHeadings": 0,
-   "liveHeadings": 2
-  },
-  {
    "id": "my_tutorials",
    "name": "My tutorials",
    "group": "push",
@@ -1119,7 +1109,7 @@
   "errored": 0,
   "skipped": 3,
   "findings": 2,
-  "explained": 38,
+  "explained": 37,
   "byType": {
    "shadow": 1,
    "font": 1
