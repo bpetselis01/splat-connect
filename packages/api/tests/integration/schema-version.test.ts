@@ -5,7 +5,7 @@
  * here instead of 500ing route by route (the 088 inbox outage).
  */
 import { readdirSync } from 'node:fs'
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import app from '../../src/app.js'
 
 describe('schema version', () => {
@@ -15,5 +15,15 @@ describe('schema version', () => {
     expect(res.status).toBe(200)
     const body = (await res.json()) as { status: string; schema: { code: string | null; db: string | null; behind: boolean } }
     expect(body.schema).toEqual({ code: newest, db: newest, behind: false })
+  })
+
+  it('/health shows no schema detail in production', async () => {
+    vi.stubEnv('NODE_ENV', 'production')
+    try {
+      const res = await app.request('/health')
+      expect(await res.json()).toEqual({ status: 'ok' })
+    } finally {
+      vi.unstubAllEnvs()
+    }
   })
 })
