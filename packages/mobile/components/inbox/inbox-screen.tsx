@@ -28,6 +28,7 @@ import { apiClient } from '../../lib/api-client'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { theme } from '../../lib/theme'
 import { tabBarClearance } from '../../lib/tab-bar-layout'
+import { scrollFrame, scrollContent } from '../../lib/layout'
 import { threadHref } from '../../lib/builds'
 import { linkFor, relativeTime } from '../../lib/notifications'
 import { Screen } from '../ui/Screen'
@@ -379,7 +380,8 @@ export function InboxScreen({
       ) : (
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: showHeader ? tabBarClearance(insets.bottom) : theme.spacing(6) }}
+          style={scrollFrame}
+          contentContainerStyle={[scrollContent, { paddingBottom: showHeader ? tabBarClearance(insets.bottom) : theme.spacing(6) }]}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.ink} />
           }

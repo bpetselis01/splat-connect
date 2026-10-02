@@ -1,3 +1,5 @@
+import { StyleSheet } from 'react-native'
+import { tabBarClearance } from '../../../../lib/tab-bar-layout'
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { CornerMenu } from '../../../../components/ui/CornerMenu'
 
@@ -42,4 +44,10 @@ it('tells a screen reader whether it is open, since the glyph only cross-fades',
   // from accessibility queries — opt back in, as the scrim test does.
   const opened = screen.getByLabelText('Guide actions', { includeHiddenElements: true })
   expect(opened.props.accessibilityState.expanded).toBe(true)
+})
+
+it('sits above the floating tab bar, not behind it', () => {
+  render(<CornerMenu label="Guide actions" items={items} />)
+  const zone = StyleSheet.flatten(screen.getByTestId('corner-menu-zone').props.style) as { bottom?: number }
+  expect(zone.bottom).toBe(tabBarClearance(0))
 })

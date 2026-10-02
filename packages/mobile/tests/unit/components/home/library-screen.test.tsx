@@ -1,5 +1,6 @@
 // packages/mobile/tests/unit/components/home/library-screen.test.tsx
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
+import { theme } from '../../../../lib/theme'
 import { ScrollView, FlatList, StyleSheet } from 'react-native'
 import { tabBarClearance } from '../../../../lib/tab-bar-layout'
 import { LibraryScreen } from '../../../../components/home/library-screen'
@@ -65,7 +66,23 @@ beforeEach(() => {
 const clears = (nodes: { props: { contentContainerStyle?: unknown } }[]) =>
   nodes.some((n) => (StyleSheet.flatten(n.props.contentContainerStyle as object) as { paddingBottom?: number } | undefined)?.paddingBottom === tabBarClearance(0))
 
+
+// The page ground is the background token, and the scroll frame spans the
+// Screen padding so it cannot clip the cards' shadows into a grey rectangle.
+const groundOk = (root: any, frame: { props: { style?: unknown; contentContainerStyle?: unknown } }) => {
+  const ground = StyleSheet.flatten(root.props.style) as { backgroundColor?: string }
+  const f = StyleSheet.flatten(frame.props.style as object) as { marginHorizontal?: number }
+  const c = StyleSheet.flatten(frame.props.contentContainerStyle as object) as { paddingHorizontal?: number }
+  return ground.backgroundColor === theme.colors.background && f.marginHorizontal === -16 && c.paddingHorizontal === 16
+}
+
 describe('LibraryScreen', () => {
+  it('sits on the page ground with a full-width scroll frame', async () => {
+    render(<LibraryScreen />)
+    await screen.findByText('Build a Robot Arm')
+    expect(groundOk(screen.toJSON(), screen.UNSAFE_getByType(FlatList))).toBe(true)
+  })
+
   it('pads its list so the last row clears the floating tab bar', async () => {
     render(<LibraryScreen />)
     await screen.findByText('Build a Robot Arm')

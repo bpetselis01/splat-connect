@@ -1,5 +1,6 @@
 // packages/mobile/tests/unit/components/inbox/inbox-screen.test.tsx
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
+import { theme } from '../../../../lib/theme'
 import { ScrollView, FlatList, StyleSheet } from 'react-native'
 import { tabBarClearance } from '../../../../lib/tab-bar-layout'
 import type { Notification } from '@splat-connect/types'
@@ -81,7 +82,24 @@ beforeEach(() => {
 const clears = (nodes: { props: { contentContainerStyle?: unknown } }[]) =>
   nodes.some((n) => (StyleSheet.flatten(n.props.contentContainerStyle as object) as { paddingBottom?: number } | undefined)?.paddingBottom === tabBarClearance(0))
 
+
+// The page ground is the background token, and the scroll frame spans the
+// Screen padding so it cannot clip the cards' shadows into a grey rectangle.
+const groundOk = (root: any, frame: { props: { style?: unknown; contentContainerStyle?: unknown } }) => {
+  const ground = StyleSheet.flatten(root.props.style) as { backgroundColor?: string }
+  const f = StyleSheet.flatten(frame.props.style as object) as { marginHorizontal?: number }
+  const c = StyleSheet.flatten(frame.props.contentContainerStyle as object) as { paddingHorizontal?: number }
+  return ground.backgroundColor === theme.colors.background && f.marginHorizontal === -16 && c.paddingHorizontal === 16
+}
+
 describe('InboxScreen', () => {
+  it('sits on the page ground with a full-width scroll frame', async () => {
+    respond([notification({})])
+    render(<InboxScreen showHeader />)
+    await waitFor(() => expect(screen.UNSAFE_queryAllByType(ScrollView).length).toBeGreaterThan(0))
+    expect(groundOk(screen.toJSON(), screen.UNSAFE_getAllByType(ScrollView)[0])).toBe(true)
+  })
+
   it('pads its list for the floating tab bar on the tab root, not on the pushed copy', async () => {
     respond([notification({})])
     const { unmount } = render(<InboxScreen showHeader />)

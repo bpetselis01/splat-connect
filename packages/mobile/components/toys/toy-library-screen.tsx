@@ -16,6 +16,7 @@ import { apiClient } from '../../lib/api-client'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { theme } from '../../lib/theme'
 import { tabBarClearance } from '../../lib/tab-bar-layout'
+import { scrollFrame, scrollContent, SEARCH_GAP } from '../../lib/layout'
 import { useSaves } from '../../lib/saves'
 import { Chip } from '../ui/Chip'
 import { TextField } from '../ui/TextField'
@@ -137,7 +138,8 @@ export function ToyLibraryScreen() {
         // rows' entrance without remounting the header.
         keyExtractor={(t) => `${condition ?? 'any'}:${t.id}`}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: tabBarClearance(insets.bottom) }}
+        style={scrollFrame}
+        contentContainerStyle={[scrollContent, { paddingBottom: tabBarClearance(insets.bottom) }]}
         keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.ink} />
@@ -304,7 +306,7 @@ export function ToyLibraryScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: { gap: theme.spacing(4), marginBottom: theme.spacing(4) },
+  header: { gap: SEARCH_GAP, marginBottom: theme.spacing(4) },
   searchBar: {
     borderRadius: theme.radii.pill,
     borderWidth: theme.border.hairline,

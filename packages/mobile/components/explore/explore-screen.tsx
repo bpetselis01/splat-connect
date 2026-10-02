@@ -8,6 +8,7 @@ import { apiClient } from '../../lib/api-client'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { theme } from '../../lib/theme'
 import { tabBarClearance } from '../../lib/tab-bar-layout'
+import { scrollFrame, scrollContent, SEARCH_GAP } from '../../lib/layout'
 import { TabHero } from '../ui/TabHero'
 import { useLearnProgress } from '../../lib/learn'
 import { LEARN_ARTICLES } from '../../lib/learn-content'
@@ -161,7 +162,8 @@ export function ExploreScreen({ variant = 'explore' }: { variant?: 'explore' | '
     <Screen ownHeader={home}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.content, home && { paddingBottom: tabBarClearance(insets.bottom) }]}
+        style={scrollFrame}
+        contentContainerStyle={[styles.content, scrollContent, home && { paddingBottom: tabBarClearance(insets.bottom) }]}
       >
         {home ? <TabHero greeting="Welcome to SPLAT" title="Home" pose="wave" /> : null}
 
@@ -171,6 +173,7 @@ export function ExploreScreen({ variant = 'explore' }: { variant?: 'explore' | '
           value={search}
           onChangeText={setSearch}
           boxStyle={styles.searchBar}
+          boxTestID="search-box"
           search
         />
 
@@ -318,6 +321,9 @@ const styles = StyleSheet.create({
     borderRadius: theme.radii.pill,
     borderWidth: theme.border.hairline,
     paddingHorizontal: theme.spacing(4),
+    // A search field carries no margin of its own (TextField only gives one
+    // to non-search fields), so the cards below sat 4px under it.
+    marginBottom: SEARCH_GAP,
     ...theme.shadow(2),
   },
   errorRow: { marginBottom: theme.spacing(3), alignItems: 'center' },

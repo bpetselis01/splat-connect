@@ -14,6 +14,7 @@ import { myRoute } from '../../lib/my-routes'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { theme } from '../../lib/theme'
 import { tabBarClearance } from '../../lib/tab-bar-layout'
+import { scrollFrame, scrollContent } from '../../lib/layout'
 import { Screen } from '../../components/ui/Screen'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { Mascot } from '../../components/ui/TabHero'
@@ -204,7 +205,11 @@ export default function MeTab() {
   return (
     <Screen ownHeader>
       {caps ? (
-        <ScrollView contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance(insets.bottom) }]} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          style={scrollFrame}
+          contentContainerStyle={[styles.content, scrollContent, { paddingBottom: tabBarClearance(insets.bottom) }]}
+          showsVerticalScrollIndicator={false}
+        >
           <ScreenHeader title="My SPLAT" />
           <View style={styles.hero}>
             <Mascot pose="wave" size={72} />

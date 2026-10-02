@@ -14,6 +14,7 @@ import { apiClient } from '../../lib/api-client'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { theme } from '../../lib/theme'
 import { tabBarClearance } from '../../lib/tab-bar-layout'
+import { scrollFrame, scrollContent, SEARCH_GAP } from '../../lib/layout'
 import { useSaves } from '../../lib/saves'
 import { useMyChildren } from '../../lib/my-children'
 import { useCapabilities } from '../../lib/capabilities'
@@ -208,7 +209,8 @@ export function LibraryScreen() {
         // rows' entrance without remounting the header.
         keyExtractor={(t) => `${difficulty ?? 'all'}:${t.id}`}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: tabBarClearance(insets.bottom) }}
+        style={scrollFrame}
+        contentContainerStyle={[scrollContent, { paddingBottom: tabBarClearance(insets.bottom) }]}
         keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.ink} />
@@ -419,7 +421,7 @@ export function LibraryScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: { gap: theme.spacing(4), marginBottom: theme.spacing(4) },
+  header: { gap: SEARCH_GAP, marginBottom: theme.spacing(4) },
   searchBar: {
     borderRadius: theme.radii.pill,
     borderWidth: theme.border.hairline,

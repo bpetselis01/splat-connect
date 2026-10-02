@@ -1,5 +1,6 @@
 // packages/mobile/tests/unit/components/explore/explore-screen.test.tsx
 import { ScrollView, StyleSheet } from 'react-native'
+import { theme } from '../../../../lib/theme'
 import { tabBarClearance } from '../../../../lib/tab-bar-layout'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { ExploreScreen } from '../../../../components/explore/explore-screen'
@@ -38,7 +39,25 @@ beforeEach(() => {
   })
 })
 
+
+// The page ground is the background token, and the scroll frame spans the
+// Screen padding so it cannot clip the cards' shadows into a grey rectangle.
+const groundOk = (root: any, frame: { props: { style?: unknown; contentContainerStyle?: unknown } }) => {
+  const ground = StyleSheet.flatten(root.props.style) as { backgroundColor?: string }
+  const f = StyleSheet.flatten(frame.props.style as object) as { marginHorizontal?: number }
+  const c = StyleSheet.flatten(frame.props.contentContainerStyle as object) as { paddingHorizontal?: number }
+  return ground.backgroundColor === theme.colors.background && f.marginHorizontal === -16 && c.paddingHorizontal === 16
+}
+
 describe('ExploreScreen as Home', () => {
+  it('sits on the page ground, and leaves a 16 gap under the search field', async () => {
+    render(<ExploreScreen variant="home" />)
+    await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(4))
+    expect(groundOk(screen.toJSON(), screen.UNSAFE_getByType(ScrollView))).toBe(true)
+    const box = screen.getByTestId('search-box')
+    expect((StyleSheet.flatten(box.props.style) as { marginBottom?: number }).marginBottom).toBeGreaterThanOrEqual(16)
+  })
+
   it('pads its scroll content so the last row clears the floating tab bar', async () => {
     render(<ExploreScreen variant="home" />)
     await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(4))
