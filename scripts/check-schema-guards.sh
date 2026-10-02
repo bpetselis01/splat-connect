@@ -321,6 +321,14 @@ select * from (values
         and cmd in ('INSERT', 'UPDATE', 'DELETE', 'ALL')
         and coalesce(with_check, qual) not like '%is_admin%')),
 
+  -- 122. Only the API writes site content (service role): the admin PUT checks
+  -- the Learn outline and refuses a stale save, and a write policy would let
+  -- an admin's own session skip both.
+  ('122 site_content has no write policy',
+   (select count(*) = 0 from pg_policies
+      where tablename = 'site_content'
+        and cmd in ('INSERT', 'UPDATE', 'DELETE', 'ALL'))),
+
   -- 070. Same failure shape as 046: the API selects these columns by name, so a
   -- ledger that reads as applied with the columns absent makes every printer
   -- list and add a 500.
