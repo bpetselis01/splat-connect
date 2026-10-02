@@ -87,3 +87,39 @@ describe('booking by direct insert', () => {
     expect(error).toBeNull()
   })
 })
+
+/*
+ * 115: a decided drop-off is final. Credit may already be spent against it, so
+ * re-weighing it down would drive the balance negative.
+ */
+describe('after it is decided', () => {
+  it('refuses to change a received drop-off, through the API', async () => {
+    const res = await app.request(
+      `/api/organizations/${orgId}/recycling/${dropId}`,
+      json(leader.token, 'PATCH', { status: 'received', weighed_grams: 2000, credit_grams: 0 })
+    )
+    expect(res.status).toBe(409)
+    expect(((await res.json()) as { error: string }).error).toBe('This drop-off has already been decided and cannot be changed.')
+    const declining = await app.request(`/api/organizations/${orgId}/recycling/${dropId}`, json(leader.token, 'PATCH', { status: 'declined' }))
+    expect(declining.status).toBe(409)
+  })
+
+  it('refuses the same on a direct update by the leader (the policy)', async () => {
+    const { data } = await createUserClient(leader.token)
+      .from('recycling_dropoffs')
+      .update({ credit_grams: 0 })
+      .eq('id', dropId)
+      .select('id')
+    expect(data).toEqual([])
+    const { data: row } = await adminClient().from('recycling_dropoffs').select('credit_grams').eq('id', dropId).single()
+    expect(row!.credit_grams).toBe(2100)
+  })
+
+  it('still answers 404 for a drop-off that is not there', async () => {
+    const res = await app.request(
+      `/api/organizations/${orgId}/recycling/${crypto.randomUUID()}`,
+      json(leader.token, 'PATCH', { status: 'declined' })
+    )
+    expect(res.status).toBe(404)
+  })
+})

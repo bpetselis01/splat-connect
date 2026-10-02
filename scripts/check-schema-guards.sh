@@ -586,7 +586,13 @@ select * from (values
    (select count(*) = 1 from pg_policies
       where tablename = 'recycling_dropoffs' and cmd = 'INSERT'
         and with_check like '%booked%' and with_check like '%credit_grams IS NULL%'
-        and with_check like '%weighed_grams IS NULL%' and with_check like '%decided_by IS NULL%'))
+        and with_check like '%weighed_grams IS NULL%' and with_check like '%decided_by IS NULL%')),
+
+  -- 115. Without it a leader re-weighs a drop-off whose credit is spent.
+  ('115 recycling_dropoffs leader update admits only booked rows',
+   (select count(*) = 1 from pg_policies
+      where tablename = 'recycling_dropoffs' and cmd = 'UPDATE'
+        and qual like '%is_org_leader%' and qual like '%booked%'))
 ) as t(guard, ok)
 where not ok;
 EOSQL

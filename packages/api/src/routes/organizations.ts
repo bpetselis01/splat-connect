@@ -1719,10 +1719,23 @@ organizations.patch('/:orgId/recycling/:id', async (c) => {
     .update(patch)
     .eq('id', c.req.param('id'))
     .eq('org_id', c.req.param('orgId'))
+    // 115: once decided it is final. Credit may already be spent against it.
+    .eq('status', 'booked')
     .select(DROPOFF_COLUMNS)
     .maybeSingle()
   if (error) return c.json({ error: error.message }, 500)
-  if (!data) return c.json({ error: 'No such drop-off at your organisation.' }, 404)
+  if (!data) {
+    const { data: existing } = await supabase
+      .from('recycling_dropoffs')
+      .select('status')
+      .eq('id', c.req.param('id'))
+      .eq('org_id', c.req.param('orgId'))
+      .maybeSingle()
+    if (existing && existing.status !== 'booked') {
+      return c.json({ error: 'This drop-off has already been decided and cannot be changed.' }, 409)
+    }
+    return c.json({ error: 'No such drop-off at your organisation.' }, 404)
+  }
   return c.json(data)
 })
 
