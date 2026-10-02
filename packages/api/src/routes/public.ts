@@ -14,7 +14,7 @@ import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { toyPhotoUrl } from '../photo-storage.js'
 import { withPhotoUrl } from './toy-ideas.js'
 import { readNear, byDistance, pickupPostcodes, type Near } from '../distance.js'
-import { autoPicks, buildCalendar, contributorBadges, gradeOf, partsTotalCents, readMinutes } from '@splat-connect/types'
+import { autoPicks, buildCalendar, contributorBadges, gradeOf, mergeLearnCourse, partsTotalCents, readMinutes } from '@splat-connect/types'
 import type {
   ImpactSummary,
   ImpactEntity,
@@ -364,6 +364,21 @@ publicRoutes.get('/content/home', async (c) => {
     numbers: byKey.get('home-numbers') ?? null,
     scenes: byKey.get('home-scenes') ?? null,
   })
+})
+
+/**
+ * site-content-learn-legal-editing: the Learn course outline, merged over the
+ * code's default. Web Learn and mobile Learn both read this; with nothing
+ * saved it is the code's course exactly.
+ */
+publicRoutes.get('/learn-course', async (c) => {
+  const { data, error } = await createAnonClient()
+    .from('site_content')
+    .select('value')
+    .eq('key', 'learn-course')
+    .maybeSingle()
+  if (error) return c.json({ error: error.message }, 500)
+  return c.json(mergeLearnCourse(data?.value ?? null))
 })
 
 /**

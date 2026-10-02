@@ -10,7 +10,7 @@ import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { ORG_COLUMNS } from './organizations.js'
 import { systemMessage, withPhotoUrl } from './toy-ideas.js'
 import type { AuthVariables } from '../middleware/auth.js'
-import { notificationBody, type AdminCounts, type TutorialStatus } from '@splat-connect/types'
+import { notificationBody, readLearnCourse, type AdminCounts, type TutorialStatus } from '@splat-connect/types'
 
 const admin = new Hono<{ Variables: AuthVariables }>()
 
@@ -989,28 +989,74 @@ admin.patch('/test-prints/:id', async (c) => {
 })
 
 /**
- * Site content. One row per section, read by key.
+ * Site content. One row per section, read by key. Each row carries who saved it
+ * last, by name through the admin client (never a profiles(...) embed).
  */
 admin.get('/content', async (c) => {
-  const { data, error } = await createAdminClient().from('site_content').select('key, value, updated_at')
+  const sb = createAdminClient()
+  const { data, error } = await sb.from('site_content').select('key, value, updated_at, updated_by')
   if (error) return c.json({ error: error.message }, 500)
-  return c.json(data ?? [])
+  const ids = [...new Set((data ?? []).map((r) => r.updated_by as string | null).filter((id): id is string => !!id))]
+  const { data: people } = ids.length ? await sb.from('profiles').select('id, name').in('id', ids) : { data: [] }
+  const name = new Map((people ?? []).map((p) => [p.id as string, p.name as string]))
+  return c.json(
+    (data ?? []).map((r) => ({ ...r, updated_by_name: (r.updated_by && name.get(r.updated_by as string)) || null }))
+  )
 })
+
+/**
+ * Keys whose save must name the version it was loaded at
+ * (`expected_updated_at`: the row's updated_at, or null when there was no
+ * row). Several admins may edit the course; the second save over a changed
+ * row is refused, never silently laid over the first.
+ */
+const VERSIONED_KEYS = new Set(['learn-course'])
+const STALE = 'Someone else saved this course since you opened it. Reload to see their changes.'
 
 admin.put('/content/:key', async (c) => {
   const key = c.req.param('key')
   if (!/^[a-z][a-z0-9-]{1,60}$/.test(key)) return c.json({ error: 'Not a content key' }, 400)
-  const body = (await c.req.json().catch(() => null)) as { value?: unknown } | null
+  const body = (await c.req.json().catch(() => null)) as { value?: unknown; expected_updated_at?: unknown } | null
   if (!body || typeof body.value !== 'object' || body.value === null || Array.isArray(body.value)) {
     return c.json({ error: 'Send the section as an object.' }, 400)
   }
+  // site-content-learn-legal-editing: the course outline is checked, not just
+  // stored — every Learn page reads it. The trimmed value is what is saved.
+  let value: unknown = body.value
+  if (key === 'learn-course') {
+    const read = readLearnCourse(body.value)
+    if ('error' in read) return c.json({ error: read.error }, 400)
+    value = read.value
+  }
 
-  const { data, error } = await createAdminClient()
+  const sb = createAdminClient()
+  const row = { key, value, updated_by: c.get('userId'), updated_at: new Date().toISOString() }
+
+  if (VERSIONED_KEYS.has(key)) {
+    const expected = body.expected_updated_at
+    if (expected !== null && (typeof expected !== 'string' || Number.isNaN(Date.parse(expected)))) {
+      return c.json({ error: 'Reload the page and save again.' }, 400)
+    }
+    // Atomic either way: the update matches only the version the form loaded,
+    // and the insert fails on the primary key if someone saved first.
+    const { data, error } =
+      expected === null
+        ? await sb.from('site_content').insert(row).select('key, value, updated_at').maybeSingle()
+        : await sb
+            .from('site_content')
+            .update(row)
+            .eq('key', key)
+            .eq('updated_at', expected)
+            .select('key, value, updated_at')
+            .maybeSingle()
+    if (error?.code === '23505' || (!error && !data)) return c.json({ error: STALE }, 409)
+    if (error) return c.json({ error: error.message }, 500)
+    return c.json(data)
+  }
+
+  const { data, error } = await sb
     .from('site_content')
-    .upsert(
-      { key, value: body.value, updated_by: c.get('userId'), updated_at: new Date().toISOString() },
-      { onConflict: 'key' }
-    )
+    .upsert(row, { onConflict: 'key' })
     .select('key, value, updated_at')
     .maybeSingle()
   if (error) return c.json({ error: error.message }, 500)

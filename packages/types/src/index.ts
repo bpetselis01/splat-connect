@@ -9,6 +9,11 @@ export type { PicksMode, ToyPick, ToyPickInput } from './toy-picks'
 import type { PicksMode, ToyPick } from './toy-picks'
 export { contributorBadges } from './contributor-badges'
 export { matchesForChild, childNeedsLine } from './child-matches'
+export {
+  LEARN_COURSE, LEARN_SHOWN_AS, LESSON_KIND_LABEL,
+  learnLessons, lessonBySlug, unitOf, nextAfter, courseHours, readLearnCourse, mergeLearnCourse,
+} from './learn-course'
+export type { LearnCourse, LearnCourseSaved, LearnUnit, LearnLesson, LessonKind, LearnShownAs } from './learn-course'
 export type { ContributorBadge, ContributorBadgeInput } from './contributor-badges'
 export { TOOL_GET_BY_LABEL, partsTotalCents, checkedOn, realignCaptions, formatPrintMinutes, printSettingRows, printSettingsLine } from './guides'
 export type { ToolGetBy, PrintSettings } from './guides'
