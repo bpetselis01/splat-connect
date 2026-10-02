@@ -33,10 +33,11 @@ import {
   Car,
   GlobeHemisphereWest,
   PersonSimpleWalk,
+  Trophy,
 } from '@phosphor-icons/react/dist/ssr'
 import type { PrinterWithOwner } from '@splat-connect/types'
 import { filamentRate } from '@/lib/filament-rate'
-import { initials } from '@splat-connect/types'
+import { initials, statsLine } from '@splat-connect/types'
 
 type Filters = {
   avail?: 'open' | 'noq' | 'any'
@@ -271,6 +272,7 @@ function PrinterCard({ printer: p, tint }: { printer: PrinterWithOwner; tint: st
   const who = p.org_name ?? p.owner_name ?? 'A contributor'
   const open = isOpen(p)
   const where = [p.suburb, p.state].filter(Boolean).join(' ')
+  const record = statsLine(p.printer_stats)
   const avail = !p.accepting
     ? { label: 'Not taking jobs', bg: 'var(--surface2)', Icon: MoonStars }
     : !open
@@ -315,7 +317,12 @@ function PrinterCard({ printer: p, tint }: { printer: PrinterWithOwner; tint: st
           <avail.Icon weight="fill" aria-hidden="true" />
           {avail.label}
         </span>
-        {/* PENDING(web-printer-directory-stats): the phone's find card shows each printer's track record (statsLine); this card does not yet. */}
+        {record && (
+          <span className="printer-card__pill bg-sunken">
+            <Trophy aria-hidden="true" />
+            {record}
+          </span>
+        )}
         {p.materials.length > 0 && (
           <span className="printer-card__pill bg-sunken">
             <Cube aria-hidden="true" />

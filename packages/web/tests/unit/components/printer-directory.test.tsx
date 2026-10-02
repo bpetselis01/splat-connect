@@ -92,6 +92,20 @@ describe('PrinterDirectory', () => {
     expect(screen.queryByRole('link', { name: 'Add your postcode' })).toBeNull()
   })
 
+  it('shows a track record only once a printer has finished a job', () => {
+    const stats = { median_days: 3, fitted: 0, fit_answers: 0, colours: [] }
+    render(
+      <PrinterDirectory
+        printers={[
+          { ...base, printer_stats: { ...stats, jobs: 21 } },
+          { ...base, id: 'p3', owner_name: 'New Printer', printer_stats: { ...stats, jobs: 0, median_days: null } },
+        ]}
+        gate={null}
+      />
+    )
+    expect(screen.getAllByText(/\d+ jobs? · ~\d+ days?/).map((n) => n.textContent)).toEqual(['21 jobs · ~3 days'])
+  })
+
   it('shows no km for a printer with no distance', () => {
     render(<PrinterDirectory printers={[{ ...base, km: null }]} gate={null} hasPostcode />)
     expect(screen.queryByText(/· \d+ km/)).toBeNull()

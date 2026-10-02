@@ -326,6 +326,7 @@ export const PENDING = {
     shipped: true,
   },
   'web-printer-directory-stats': {
+    shipped: true,
     title: "Printer track record",
     blurb: "Each printer's jobs done and usual turnaround here is coming. The phone shows it now.",
     kind: "build",
