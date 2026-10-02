@@ -1,4 +1,6 @@
 // packages/mobile/tests/unit/components/explore/explore-screen.test.tsx
+import { ScrollView, StyleSheet } from 'react-native'
+import { tabBarClearance } from '../../../../lib/tab-bar-layout'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { ExploreScreen } from '../../../../components/explore/explore-screen'
 import { LEARN_ARTICLES } from '../../../../lib/learn-content'
@@ -33,6 +35,36 @@ beforeEach(() => {
         deliveriesByMonth: [],
       })
     return Promise.resolve([])
+  })
+})
+
+describe('ExploreScreen as Home', () => {
+  it('pads its scroll content so the last row clears the floating tab bar', async () => {
+    render(<ExploreScreen variant="home" />)
+    await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(4))
+    const pad = (n: { props: { contentContainerStyle?: unknown } }) =>
+      (StyleSheet.flatten(n.props.contentContainerStyle as object) as { paddingBottom?: number }).paddingBottom
+    expect(pad(screen.UNSAFE_getByType(ScrollView))).toBe(tabBarClearance(0))
+  })
+
+  it('titles itself Home with no back button, and adds Guides and Toys doors', async () => {
+    render(<ExploreScreen variant="home" />)
+    await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(4))
+    expect(screen.getByText('Home')).toBeTruthy()
+    expect(screen.queryByLabelText(/back/i)).toBeNull()
+    fireEvent.press(screen.getByLabelText('Guides'))
+    expect(mockPush).toHaveBeenCalledWith('/guides')
+    fireEvent.press(screen.getByLabelText('Toys'))
+    expect(mockPush).toHaveBeenCalledWith('/toy-library')
+    fireEvent.press(screen.getByLabelText('Learn'))
+    expect(mockPush).toHaveBeenCalledWith('/explore/learn')
+  })
+
+  it('keeps the plain Explore free of the Home hero and the extra doors', async () => {
+    render(<ExploreScreen />)
+    await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(4))
+    expect(screen.queryByText('Home')).toBeNull()
+    expect(screen.queryByLabelText('Guides')).toBeNull()
   })
 })
 

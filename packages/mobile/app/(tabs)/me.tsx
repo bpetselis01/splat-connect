@@ -61,8 +61,6 @@ const EXPLORE: { label: string; href: string; icon: Glyph }[] = [
   { label: 'Design challenges', href: '/explore/challenges', icon: 'extension-puzzle-outline' },
   { label: 'Organisations', href: '/toy-library/organisations', icon: 'business-outline' },
   { label: 'About SPLAT', href: '/explore/about', icon: 'information-circle-outline' },
-  // Explore's own screen has no tab; this row is the way in.
-  { label: 'Everything in Explore', href: '/explore', icon: 'compass-outline' },
 ]
 
 /** The board's icon per kind of thread. */

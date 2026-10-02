@@ -57,6 +57,13 @@ export const PENDING = {
     platforms: ["api"],
     needs: "Hosted Supabase Site URL is http://localhost:3000",
   },
+  'map-tab': {
+    title: "Map",
+    blurb: "The map of toys, printers, events and drop-offs near you is coming.",
+    kind: "build",
+    platforms: ["mobile"],
+    needs: "Map pins, filters and list view (sub-project 6 of the 2026-10-02 notes)",
+  },
   'org-visit-map': {
     title: "Map and address",
     blurb: "An organisation's map and street address are coming. Message them to arrange a visit for now.",

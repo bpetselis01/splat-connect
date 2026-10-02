@@ -1,8 +1,6 @@
-// The board's bar: a floating pill with four ordinary tabs — Guides, Toys,
-// Inbox, Me — and nothing raised above the shelf. Me is the hub that used to
-// hide behind a centre disc and a popover; a tab is one tap fewer and one
-// idea fewer. Ours rather than react-navigation's because the pill floats
-// inside the canvas instead of spanning the screen edge to edge.
+// A floating glass pill with four ordinary tabs — Home, Map, Inbox, Me.
+// Ours rather than react-navigation's because the pill floats over the
+// content instead of spanning the screen edge to edge.
 import { useEffect, type ReactNode } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import Animated, {
@@ -20,11 +18,14 @@ import { BlurView } from 'expo-blur'
 import { theme } from '../lib/theme'
 import { TAB_BAR_HEIGHT, TAB_BAR_OFFSET } from '../lib/tab-bar-layout'
 
-const HIDDEN = new Set(['explore'])
+// Roots that show the bar. Guides and Toys are hidden tabs reached from Home:
+// they show the bar with Home lit. Explore is a pushed place, never a root.
+const BAR_ROOTS = new Set(['home', 'map', 'inbox', 'me', 'guides', 'toy-library'])
+const BUTTONS = ['home', 'map', 'inbox', 'me']
 
 const ICONS: Record<string, { on: keyof typeof Ionicons.glyphMap; off: keyof typeof Ionicons.glyphMap }> = {
-  guides: { on: 'book', off: 'book-outline' },
-  'toy-library': { on: 'cube', off: 'cube-outline' },
+  home: { on: 'home', off: 'home-outline' },
+  map: { on: 'map', off: 'map-outline' },
   inbox: { on: 'mail', off: 'mail-outline' },
   me: { on: 'person', off: 'person-outline' },
 }
@@ -51,25 +52,25 @@ function SpringIcon({ focused, children }: { focused: boolean; children: ReactNo
 type Props = BottomTabBarProps & { badges: Record<string, number> }
 
 export function TabBar({ state, descriptors, navigation, insets, badges }: Props) {
-  // The board draws the bar on the four tab roots only: a screen pushed on a
-  // tab's stack, and Explore (reached from Me), go without it.
+  // The bar shows on tab roots only: a screen pushed on a tab's stack, and
+  // Explore, go without it.
   const current = state.routes[state.index]
   const depth = (current?.state as { index?: number } | undefined)?.index ?? 0
-  if (!current || HIDDEN.has(current.name) || depth > 0) return null
+  if (!current || !BAR_ROOTS.has(current.name) || depth > 0) return null
 
-  const items = state.routes
-    // Explore keeps its screens but has no button. By name, not by the
-    // layout's href: null — a custom bar is handed every route regardless.
-    .filter((route) => !HIDDEN.has(route.name))
+  const lit = BUTTONS.includes(current.name) ? current.name : 'home'
+  const items = BUTTONS.flatMap((name) => state.routes.filter((r) => r.name === name))
     .map((route) => {
-      const focused = state.routes[state.index]?.key === route.key
+      const focused = route.name === lit
       const label = descriptors[route.key].options.title ?? route.name
-      const icon = ICONS[route.name] ?? ICONS.guides
+      const icon = ICONS[route.name] ?? ICONS.home
       const badge = badges[route.name] ?? 0
       const noun = route.name === 'inbox' ? 'unread' : 'waiting'
       const onPress = () => {
         const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true })
-        if (!focused && !event.defaultPrevented) {
+        // Not `!focused`: Home is lit on the Guides and Toys roots too, and
+        // tapping it there must still go back to Home.
+        if (route.key !== current.key && !event.defaultPrevented) {
           // Selection feedback, not impact: a tab change is a selection in
           // iOS's haptic grammar. Fire-and-forget — web rejects, not no-ops.
           Haptics.selectionAsync().catch(() => {})

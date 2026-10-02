@@ -34,7 +34,7 @@ beforeEach(() => {
   )
 })
 
-it('renders every buildNav group as rows, routes them through the map, and ends with Explore', () => {
+it('renders every buildNav group as rows, routes them through the map, and no longer links to the Explore index', () => {
   render(<MeTab />)
   // getAllByText: "Account" is both a group heading and a row label.
   for (const h of ['Add a tutorial', 'Exchange a toy', 'Give us a challenge', 'Organisation', 'Account', 'Explore']) expect(screen.getAllByText(h).length).toBeGreaterThan(0)
@@ -43,9 +43,8 @@ it('renders every buildNav group as rows, routes them through the map, and ends 
   expect(mockPush).toHaveBeenCalledWith('/toys')
   fireEvent.press(screen.getByLabelText('Learn'))
   expect(mockPush).toHaveBeenCalledWith('/explore/learn')
-  // Explore's own screen has no tab, so this row is its way in.
-  fireEvent.press(screen.getByLabelText('Everything in Explore'))
-  expect(mockPush).toHaveBeenCalledWith('/explore')
+  // Explore's index is no longer reachable from Me: Home carries its list.
+  expect(screen.queryByLabelText('Everything in Explore')).toBeNull()
 })
 
 it('shows the builds you have logged', async () => {
