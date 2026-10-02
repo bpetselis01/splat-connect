@@ -870,6 +870,7 @@ export const PENDING = {
     needs: "Decided 2026-09-30: no lending (toys are given, exchanged, built or printed only), so no Out or Needs clean. Add Retired (retired_at) for broken or worn-out org toys.",
   },
   'web-inventory-retired': {
+    shipped: true,
     title: "Retired toys on the web shelf",
     blurb: "Retired toys on the web shelf are coming.",
     kind: "build",

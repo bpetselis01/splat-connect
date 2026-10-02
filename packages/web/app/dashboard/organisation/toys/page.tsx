@@ -16,19 +16,20 @@
  * - lib/org-access.ts: the same "affordance, not control" rule this notFound() follows
  */
 import Link from 'next/link'
+import type { Route } from 'next'
 import { notFound } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
 import { getCapabilities } from '@/lib/capabilities'
 import { Archive, Package, Plus, Tag, PencilSimple, Gift } from '@phosphor-icons/react/dist/ssr'
 import { OrgPickupForm, type OrgPickup } from '@/components/org-pickup-form'
+import { DeleteEntityButton } from '@/components/delete-entity-button'
 import { GRADE_ICON } from '@/components/toy-library-card'
 import { gradeOf } from '@/lib/toy-grade'
 import type { Toy, ToyTransactionSummary } from '@splat-connect/types'
 
-type OrgToy = Toy & { organizations: { name: string } | null }
+/** has_history is true when any handover names the toy, which is what keeps it from being removed. */
+type OrgToy = Toy & { organizations: { name: string } | null; has_history?: boolean }
 
-// PENDING(web-inventory-retired): the Retired pill and reason, and Remove on a
-// retired toy with no handovers (has_history), as mobile's inventory-screen has.
 export default async function OrgInventoryPage() {
   const caps = await getCapabilities()
   // The rail hides this row for a non-leader, but the rail is an affordance —
@@ -59,7 +60,7 @@ export default async function OrgInventoryPage() {
   const stats = [
     {
       k: 'On the shelf',
-      v: toys.filter((t) => t.status === 'published').reduce((n, t) => n + t.quantity, 0),
+      v: toys.filter((t) => t.status === 'published' && !t.retired_at).reduce((n, t) => n + t.quantity, 0),
     },
     {
       k: 'Delivered all time',
@@ -119,8 +120,9 @@ export default async function OrgInventoryPage() {
           {toys.map((toy) => {
             const grade = gradeOf(toy.condition)
             const GradeIcon = GRADE_ICON[grade.key]
-            const [status, tint] =
-              toy.status === 'draft'
+            const [status, tint] = toy.retired_at
+              ? ['Retired', 'var(--surface2)']
+              : toy.status === 'draft'
                 ? ['Hidden', 'var(--surface2)']
                 : toy.quantity === 0
                   ? ['Out of stock', 'var(--tamber)']
@@ -148,16 +150,21 @@ export default async function OrgInventoryPage() {
                           {grade.label}
                         </span>
                         <span className="pill-tag" style={{ backgroundColor: tint }}>
+                          {toy.retired_at && <Archive weight="bold" aria-hidden="true" />}
                           {status}
                         </span>
                       </p>
                     </div>
                   </div>
-                  <p className="text-[13px] font-bold text-muted">
-                    <Package weight="bold" aria-hidden="true" className="mr-1 inline text-brand-dark" />
-                    {toy.quantity} in stock
-                    {caps.ledOrgs.length > 1 && toy.organizations && <> · {toy.organizations.name}</>}
-                  </p>
+                  {toy.retired_at ? (
+                    toy.retired_note && <p className="text-[13px] font-bold text-muted">{toy.retired_note}</p>
+                  ) : (
+                    <p className="text-[13px] font-bold text-muted">
+                      <Package weight="bold" aria-hidden="true" className="mr-1 inline text-brand-dark" />
+                      {toy.quantity} in stock
+                      {caps.ledOrgs.length > 1 && toy.organizations && <> · {toy.organizations.name}</>}
+                    </p>
+                  )}
                   <div className="mt-auto flex flex-wrap items-center gap-2">
                     <Link
                       href={`/dashboard/toys/${toy.id}`}
@@ -167,11 +174,20 @@ export default async function OrgInventoryPage() {
                       Edit
                     </Link>
                     {/* The public listing only exists once it is published. */}
-                    {toy.status === 'published' && (
+                    {toy.status === 'published' && !toy.retired_at && (
                       <Link href={`/toy-library/${toy.id}`} className="btn btn-quiet px-[15px] text-sm">
                         <Tag weight="bold" aria-hidden="true" />
                         Listing
                       </Link>
+                    )}
+                    {/* A toy a handover names stays: removing it would erase the handover. */}
+                    {toy.retired_at && !toy.has_history && (
+                      <DeleteEntityButton
+                        endpoint={`/api/toys/${toy.id}`}
+                        redirectTo={'/dashboard/organisation/toys' as Route<string>}
+                        label="toy"
+                        className="btn btn-danger min-h-11 px-[18px] text-sm"
+                      />
                     )}
                   </div>
                 </article>

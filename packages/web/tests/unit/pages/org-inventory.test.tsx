@@ -16,7 +16,7 @@ vi.mock('@/lib/capabilities', () => ({
   }),
 }))
 vi.mock('@/lib/api-client', () => ({ apiClient: { get: vi.fn() } }))
-vi.mock('next/navigation', () => ({ notFound: () => notFound() }))
+vi.mock('next/navigation', () => ({ notFound: () => notFound(), useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }) }))
 vi.mock('next/link', () => ({
   default: ({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) => (
     <a href={href} className={className}>{children}</a>
@@ -43,7 +43,9 @@ const PICKUP = {
   pickup_instructions: null,
 }
 
-function toy(overrides: Partial<Toy> = {}): Toy & { organizations: { name: string } | null } {
+function toy(
+  overrides: Partial<Toy & { has_history: boolean }> = {}
+): Toy & { organizations: { name: string } | null; has_history?: boolean } {
   return {
     id: 't1',
     owner_id: null,
@@ -95,6 +97,24 @@ describe('the organisation toy inventory page', () => {
     mockFetches([toy({ quantity: 0 })])
     render(await OrgInventoryPage())
     expect(screen.getByText('Out of stock')).toBeInTheDocument()
+  })
+
+  it('marks a retired toy with its reason, off the shelf count and the public listing', async () => {
+    mockFetches([toy({ retired_at: '2026-09-30T00:00:00Z', retired_note: 'Cracked casing', has_history: true }), toy({ id: 't2', quantity: 2 })])
+    render(await OrgInventoryPage())
+
+    expect(screen.getByText('Retired')).toBeInTheDocument()
+    expect(screen.getByText('Cracked casing')).toBeInTheDocument()
+    expect(screen.getAllByText('Listing')).toHaveLength(1)
+    expect(screen.getByText('2', { selector: '.count-chip__value' })).toBeInTheDocument()
+    // A handover names it, so removing it would erase that record.
+    expect(screen.queryByRole('button', { name: /Delete toy/ })).not.toBeInTheDocument()
+  })
+
+  it('offers removal only on a retired toy no handover names', async () => {
+    mockFetches([toy({ retired_at: '2026-09-30T00:00:00Z', has_history: false }), toy({ id: 't2', has_history: false })])
+    render(await OrgInventoryPage())
+    expect(screen.getAllByRole('button', { name: /Delete toy/ })).toHaveLength(1)
   })
 
   it('warns when an org has no pickup address, since it can then accept nothing', async () => {
