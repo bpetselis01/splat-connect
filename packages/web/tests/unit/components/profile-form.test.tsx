@@ -69,6 +69,16 @@ describe('ProfileForm', () => {
     )
   })
 
+  it('saves what you do, the line under your name on your public profile', async () => {
+    patch.mockResolvedValue({ ...PROFILE, occupation: 'Occupational therapist' })
+    render(<ProfileForm profile={PROFILE} />)
+    fireEvent.change(screen.getByLabelText('What you do'), { target: { value: ' Occupational therapist ' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+    await waitFor(() =>
+      expect(patch).toHaveBeenCalledWith('/api/contributors/me', expect.objectContaining({ occupation: 'Occupational therapist' }))
+    )
+  })
+
   it('offers no featured pick without a published guide', () => {
     render(<ProfileForm profile={PROFILE} />)
     expect(screen.queryByLabelText('Featured guide')).not.toBeInTheDocument()

@@ -732,7 +732,7 @@ publicRoutes.get('/contributors/:id', async (c) => {
 
   const { data: profile } = await admin
     .from('profiles')
-    .select('id, name, public_showcase, bio, featured_tutorial_id, created_at, profile_thanks_count')
+    .select('id, name, public_showcase, bio, occupation, featured_tutorial_id, created_at, profile_thanks_count')
     .eq('id', id)
     .maybeSingle()
   if (!profile || !profile.public_showcase) return c.json({ error: 'Not found' }, 404)
@@ -741,6 +741,7 @@ publicRoutes.get('/contributors/:id', async (c) => {
     { data: contribRows, error: tutorialsError },
     { data: toysShared, error: toysError },
     { data: deliveredTx, error: deliveredError },
+    { data: led, error: ledError },
   ] = await Promise.all([
     sb
       .from('tutorial_contributors')
@@ -755,8 +756,17 @@ publicRoutes.get('/contributors/:id', async (c) => {
       .eq('status', 'completed')
       // A completed build or print job has no toy; .in('id', [null]) 500s the page.
       .not('toy_id', 'is', null),
+    // 124. The org chip: an active organisation they lead. Admin client, as
+    // an anon embed of organizations is refused under 033's column grants.
+    admin
+      .from('org_leaders')
+      .select('organizations!inner(id, name)')
+      .eq('user_id', id)
+      .eq('organizations.status', 'active')
+      .order('created_at')
+      .limit(1),
   ])
-  if (tutorialsError || toysError || deliveredError) {
+  if (tutorialsError || toysError || deliveredError || ledError) {
     return c.json({ error: 'Failed to load contributor profile' }, 500)
   }
 
@@ -812,6 +822,8 @@ publicRoutes.get('/contributors/:id', async (c) => {
     builds,
     badges: contributorBadges({ guides: guides.length, builds, orgBacked, since: profile.created_at }),
     created_at: profile.created_at,
+    occupation: profile.occupation ?? null,
+    org: (led?.[0] as unknown as { organizations: { id: string; name: string } } | undefined)?.organizations ?? null,
   }
   return c.json(result)
 })

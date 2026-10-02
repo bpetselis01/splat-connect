@@ -127,6 +127,7 @@ export const PENDING = {
     kind: "content",
     platforms: ["mobile", "api"],
     needs: "Occupation line and org chip on a contributor profile [db]",
+    shipped: true,
   },
   'learn-article-hero': {
     title: "Article pictures",

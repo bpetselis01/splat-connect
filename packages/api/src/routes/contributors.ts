@@ -2,8 +2,8 @@
  * Contributor profile routes: GET/PATCH /api/contributors/me, and saying
  * thanks to a person (117).
  *
- * `name`, the pickup_* address fields, `public_showcase`, `bio` and
- * `featured_tutorial_id` are mutable
+ * `name`, the pickup_* address fields, `public_showcase`, `bio`,
+ * `featured_tutorial_id` and `occupation` are mutable
  * (see EDITABLE below).
  * `role` and `email` are frozen by the profiles_freeze_identity trigger
  * (009) — role was an escalation path, and email mirrors auth.users.
@@ -34,6 +34,8 @@ const EDITABLE = [
   'name', 'pickup_line1', 'pickup_suburb', 'pickup_state', 'pickup_postcode', 'public_showcase',
   // 072: the public profile's About paragraph and featured guide.
   'bio', 'featured_tutorial_id',
+  // 124: the public profile's role line.
+  'occupation',
 ] as const
 
 contributors.patch('/me', async (c) => {
@@ -69,6 +71,13 @@ contributors.patch('/me', async (c) => {
   }
   if ('bio' in patch && patch.bio !== null && typeof patch.bio !== 'string') {
     return c.json({ error: 'bio must be a string' }, 400)
+  }
+  if (typeof patch.occupation === 'string') patch.occupation = patch.occupation.trim() || null
+  if ('occupation' in patch && patch.occupation !== null && typeof patch.occupation !== 'string') {
+    return c.json({ error: 'occupation must be a string' }, 400)
+  }
+  if (typeof patch.occupation === 'string' && patch.occupation.length > 60) {
+    return c.json({ error: 'Keep what you do to 60 characters.' }, 400)
   }
   if (typeof patch.featured_tutorial_id === 'string') {
     const { data: own } = await createUserClient(c.get('token'))

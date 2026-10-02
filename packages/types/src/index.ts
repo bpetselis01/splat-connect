@@ -2034,6 +2034,8 @@ export interface Profile {
    *  reader of the row has migrated. */
   bio?: string | null
   featured_tutorial_id?: string | null
+  /** 124: the public profile's role line (≤60 chars). */
+  occupation?: string | null
   created_at: string
 }
 
@@ -2347,6 +2349,9 @@ export interface ContributorProfile {
   builds?: number
   badges?: ContributorBadge[]
   created_at?: string
+  /** 124. What they do, in their words; and the active organisation they lead. */
+  occupation?: string | null
+  org?: { id: string; name: string } | null
 }
 
 export interface OrgPublicProfile {

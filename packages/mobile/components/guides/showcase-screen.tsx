@@ -159,7 +159,18 @@ export function ShowcaseScreen({ kind, id }: { kind: ShowcaseKind; id: string })
         </View>
         <View style={styles.headerBody}>
           <Text style={styles.name}>{profile.name}</Text>
-          {/* PENDING(contributor-role-line): the role line ("Occupational therapist") and an organisation chip — no occupation column. */}
+          {person?.occupation ? <Text style={styles.role}>{person.occupation}</Text> : null}
+          {person?.org ? (
+            <AnimatedPressable
+              onPress={() => router.push(`/guides/organisation/${person.org!.id}`)}
+              accessibilityRole="link"
+              accessibilityLabel={`Organisation: ${person.org.name}`}
+              style={styles.orgChip}
+            >
+              <Ionicons name="business-outline" size={13} color={theme.colors.primaryDeep} />
+              <Text style={styles.orgChipText} numberOfLines={1}>{person.org.name}</Text>
+            </AnimatedPressable>
+          ) : null}
           {person ? (
             person.created_at ? (
               <Text style={styles.meta}>{`Joined ${new Date(person.created_at).toLocaleDateString('en-AU', { month: 'long', year: 'numeric' })}`}</Text>
@@ -238,6 +249,20 @@ const styles = StyleSheet.create({
   avatarInitial: { fontFamily: theme.fonts.bold, fontSize: theme.type.title, color: theme.colors.primaryDeep },
   headerBody: { flex: 1 },
   name: { fontFamily: theme.fonts.display, fontSize: 22, color: theme.colors.text },
+  role: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.label, color: theme.colors.text, marginTop: theme.spacing(1) },
+  orgChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    maxWidth: '100%',
+    gap: 5,
+    marginTop: theme.spacing(2),
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: theme.radii.pill,
+    backgroundColor: theme.colors.accentLight,
+  },
+  orgChipText: { flexShrink: 1, fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.primaryDeep },
   meta: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted, marginTop: theme.spacing(1) },
   section: { marginBottom: theme.spacing(6) },
   // Say thanks and Report a problem share one row, as on the board.

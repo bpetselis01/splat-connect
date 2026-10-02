@@ -42,6 +42,7 @@ export function ProfileScreen() {
   // The display name is the one profile field editable here. Committed on end
   // of editing rather than per keystroke — a name is typed once, not streamed.
   const [postcodeError, setPostcodeError] = useState<string | null>(null)
+  const [occupationError, setOccupationError] = useState<string | null>(null)
   const [nameState, setNameState] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle')
   const [terms, setTerms] = useState<UserAgreement | null>(null)
 
@@ -69,6 +70,19 @@ export function ProfileScreen() {
     } catch (err) {
       console.error('[ProfileScreen] rename failed:', err)
       setNameState('failed')
+    }
+  }
+
+  // 124. The line under your name on your public profile.
+  async function saveOccupation(raw: string) {
+    const occupation = raw.trim()
+    if (occupation === (profile?.occupation ?? '')) return
+    setOccupationError(null)
+    try {
+      await apiClient.patch('/api/contributors/me', { occupation: occupation || null })
+    } catch (err) {
+      console.error('[ProfileScreen] occupation save failed:', err)
+      setOccupationError(apiMessage(err, 'Could not save what you do. Please try again.'))
     }
   }
 
@@ -136,6 +150,15 @@ export function ProfileScreen() {
                       ? 'Could not save your name. Please try again.'
                       : ' '}
               </Text>
+              <TextField
+                label="What you do"
+                accessibilityLabel="What you do"
+                placeholder="Occupational therapist"
+                maxLength={60}
+                defaultValue={profile?.occupation ?? ''}
+                onEndEditing={(e) => void saveOccupation(e.nativeEvent.text)}
+              />
+              {occupationError ? <Text accessibilityLiveRegion="polite" style={styles.nameStatus}>{occupationError}</Text> : null}
               <TextField
                 label="Postcode"
                 accessibilityLabel="Postcode"

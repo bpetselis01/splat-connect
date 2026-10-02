@@ -1,7 +1,7 @@
 'use client'
 /**
- * Account settings. `name`, pickup address fields, `public_showcase`, `bio` and
- * `featured_tutorial_id` are editable: `role` and `email` are frozen by
+ * Account settings. `name`, pickup address fields, `public_showcase`, `bio`,
+ * `occupation` and `featured_tutorial_id` are editable: `role` and `email` are frozen by
  * the profiles_freeze_identity trigger (009), so offering fields for them would
  * promise something the database refuses.
  *
@@ -37,6 +37,7 @@ export function ProfileForm({
 }) {
   const [name, setName] = useState(profile.name)
   const [bio, setBio] = useState(profile.bio ?? '')
+  const [occupation, setOccupation] = useState(profile.occupation ?? '')
   const [featured, setFeatured] = useState(profile.featured_tutorial_id ?? '')
   const [pickupLine1, setPickupLine1] = useState(profile.pickup_line1 || '')
   const [pickupSuburb, setPickupSuburb] = useState(profile.pickup_suburb || '')
@@ -57,6 +58,7 @@ export function ProfileForm({
       pickup_postcode: pickupPostcode,
       public_showcase: publicShowcase,
       bio: bio.trim() || null,
+      occupation: occupation.trim() || null,
       featured_tutorial_id: featured || null,
     })
   }
@@ -94,6 +96,19 @@ export function ProfileForm({
           under the identity fields because that is where the board draws them
           on /contributors/[id]: right under the name. */}
       <div className="flex flex-col gap-3 border-t border-line pt-4">
+        <div>
+          <label htmlFor="occupation" className="field-label">What you do</label>
+          <input
+            id="occupation"
+            type="text"
+            maxLength={60}
+            value={occupation}
+            onChange={(e) => setOccupation(e.target.value)}
+            className={FIELD}
+            placeholder="Occupational therapist"
+          />
+          <p className="mt-[7px] text-[13px] text-muted">Shown under your name on your public profile.</p>
+        </div>
         <div>
           <label htmlFor="bio" className="field-label">About you</label>
           <textarea
