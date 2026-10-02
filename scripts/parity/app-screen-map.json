@@ -841,15 +841,7 @@
   "group": "push",
   "boardRoute": "(my)/admin",
   "route": "/admin",
-  "role": "admin",
-  "explained": [
-   {
-    "type": "copy",
-    "match": "board paragraphs absent",
-    "why": "intended",
-    "reason": "Phones link out to the web admin: review tables do not fit a phone (admin.tsx)."
-   }
-  ]
+  "role": "admin"
  },
  {
   "id": "wizard",
