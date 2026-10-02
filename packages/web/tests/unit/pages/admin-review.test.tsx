@@ -103,4 +103,48 @@ describe('admin review queue', () => {
     expect(screen.getByRole('link', { name: /open full preview/i })).toHaveAttribute('href', '/admin/review/t2')
     expect(screen.getAllByRole('link', { name: 'Platform project' })[0]).toHaveAttribute('href', '/admin/review/t2')
   })
+
+  // Tests: ?q= narrows the queue to titles containing it, case-insensitive
+  // How:   q=PLATFORM over three guides; only 'Platform project' remains, box keeps the text
+  // Chain: a GET form over the list already loaded — refresh-safe, no client code
+  it('filters the queue by guide title, ignoring case', async () => {
+    get.mockResolvedValue([handled, unhandled, askedOnly])
+    const { default: Page } = await import('@/app/admin/review/page')
+    render(await Page({ searchParams: Promise.resolve({ q: 'PLATFORM' }) }))
+    expect(screen.getByText('Platform project')).toBeInTheDocument()
+    expect(screen.queryByText('Backed project')).toBeNull()
+    expect(screen.queryByText('Asked but unanswered')).toBeNull()
+    expect(screen.getByRole('searchbox', { name: 'Search by guide or contributor name' })).toHaveValue('PLATFORM')
+  })
+
+  // Tests: ?q= also matches a credited contributor's name
+  // How:   p1 resolves to Rachel Kaur via /api/admin/contributors; q=rachel keeps only her guide
+  // Chain: names come from the admin contributors list, never a profiles embed
+  it('filters by contributor name', async () => {
+    get.mockImplementation(async (path: string) =>
+      path === '/api/admin/contributors'
+        ? { accounts: [{ id: 'p1', name: 'Rachel Kaur', email: 'r@x' }], total: 1 }
+        : path === '/api/admin/ideas'
+          ? []
+          : [
+              { ...handled, tutorial_contributors: [{ profile_id: 'p1' }] },
+              { ...unhandled, tutorial_contributors: [] },
+            ]
+    )
+    const { default: Page } = await import('@/app/admin/review/page')
+    render(await Page({ searchParams: Promise.resolve({ q: 'rachel' }) }))
+    expect(screen.getByText('Backed project')).toBeInTheDocument()
+    expect(screen.queryByText('Platform project')).toBeNull()
+  })
+
+  // Tests: a search with no match says so and keeps the box to search again
+  // How:   q=zzz over two guides
+  // Chain: the empty state must not claim the queue is empty when only the search is
+  it('says so when nothing matches, and keeps the search box', async () => {
+    get.mockResolvedValue([handled, unhandled])
+    const { default: Page } = await import('@/app/admin/review/page')
+    render(await Page({ searchParams: Promise.resolve({ q: 'zzz' }) }))
+    expect(screen.getByText('No guide or contributor matches that search.')).toBeInTheDocument()
+    expect(screen.getByRole('searchbox')).toBeInTheDocument()
+  })
 })

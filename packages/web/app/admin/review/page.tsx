@@ -53,13 +53,12 @@ function waiting(iso: string, now: number = Date.now()): { text: string; days: n
   return { text: `${days} day${days === 1 ? '' : 's'}`, days }
 }
 
-// PENDING(web-admin-review-list): the board's search input above the list.
 export default async function ReviewListPage({
   searchParams,
 }: {
-  searchParams: Promise<{ mine?: string; selected?: string; page?: string }>
+  searchParams: Promise<{ mine?: string; selected?: string; page?: string; q?: string }>
 }) {
-  const { mine, selected, page: pageParam } = await searchParams
+  const { mine, selected, page: pageParam, q: rawQ } = await searchParams
   const [all, accounts, ideas] = await Promise.all([
     apiClient.get<Queued[]>('/api/admin/tutorials?status=pending'),
     // Names for the CONTRIBUTOR column. Resolved here rather than embedded:
@@ -71,13 +70,23 @@ export default async function ReviewListPage({
   ])
   const nameOf = new Map((accounts?.accounts ?? []).map((a) => [a.id, a.name || a.email]))
   const pendingIdeas = Array.isArray(ideas) ? ideas.filter((i) => i.status === 'pending').length : 0
+  const namesOf = (t: Queued) =>
+    (t.tutorial_contributors ?? []).map((c) => nameOf.get(c.profile_id)).filter(Boolean) as string[]
+
+  // Search runs over the queue this page already loaded — a title or any
+  // credited contributor's name, case-insensitive. A GET form, so it needs no
+  // client code and survives a refresh.
+  const q = (rawQ ?? '').trim().toLowerCase()
+  const searched = q
+    ? all.filter((t) => t.title.toLowerCase().includes(q) || namesOf(t).some((n) => n.toLowerCase().includes(q)))
+    : all
 
   const acceptedFor = (t: Queued) =>
     (t.tutorial_orgs ?? []).filter((b) => b.status === 'accepted')
   const hidingHandled = mine === '1'
-  const unhandled = all.filter((t) => acceptedFor(t).length === 0)
-  const tutorials = hidingHandled ? unhandled : all
-  const handledCount = all.length - unhandled.length
+  const unhandled = searched.filter((t) => acceptedFor(t).length === 0)
+  const tutorials = hidingHandled ? unhandled : searched
+  const handledCount = all.filter((t) => acceptedFor(t).length > 0).length
 
   // The pane, only for a row that is on screen: once a guide is approved or
   // sent back it leaves the pending list and the pane closes with it.
@@ -86,6 +95,7 @@ export default async function ReviewListPage({
   const baseQuery = new URLSearchParams()
   if (hidingHandled) baseQuery.set('mine', '1')
   if (page > 1) baseQuery.set('page', String(page))
+  if (q) baseQuery.set('q', rawQ!.trim())
   const qs = baseQuery.toString()
   const base = qs ? `/admin/review?${qs}` : '/admin/review'
   const paneHref = (id: string) => `${base}${qs ? '&' : '?'}selected=${id}`
@@ -93,21 +103,28 @@ export default async function ReviewListPage({
   const detail = picked
     ? await apiClient.get<TutorialWithDetails>(`/api/tutorials/${picked.id}`).catch(() => null)
     : null
-  const namesOf = (t: Queued) =>
-    (t.tutorial_contributors ?? []).map((c) => nameOf.get(c.profile_id)).filter(Boolean)
 
   const header = (
-    <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
-      <div>
-        <span className="text-[13px] font-extrabold uppercase tracking-[0.1em] text-muted">
-          Admin
-        </span>
-        <h1 className="mt-1 font-display text-4xl font-extrabold leading-[1.1] text-ink">
-          Review queue
-        </h1>
+    <>
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <span className="text-[13px] font-extrabold uppercase tracking-[0.1em] text-muted">Admin</span>
+          <h1 className="mt-1 font-display text-4xl font-extrabold leading-[1.1] text-ink">Review queue</h1>
+        </div>
+        <ReviewTabs current="guides" guides={all.length} ideas={pendingIdeas} />
       </div>
-      <ReviewTabs current="guides" guides={all.length} ideas={pendingIdeas} />
-    </div>
+      <form role="search" action="/admin/review" className="mb-4 max-w-[420px]">
+        {hidingHandled && <input type="hidden" name="mine" value="1" />}
+        <input
+          type="search"
+          name="q"
+          defaultValue={rawQ ?? ''}
+          aria-label="Search by guide or contributor name"
+          placeholder="Search by guide or contributor name"
+          className="field h-[46px] bg-surface"
+        />
+      </form>
+    </>
   )
 
   if (tutorials.length === 0) {
@@ -119,20 +136,25 @@ export default async function ReviewListPage({
             <CheckCircle className="h-8 w-8" />
           </span>
           <p className="mt-4 font-bold text-ink">
-            {hidingHandled && handledCount > 0
-              ? 'Nothing left for you.'
-              : 'No tutorials pending review.'}
+            {q
+              ? 'No guide or contributor matches that search.'
+              : hidingHandled && handledCount > 0
+                ? 'Nothing left for you.'
+                : 'No tutorials pending review.'}
           </p>
-          <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
-            {hidingHandled && handledCount > 0 ? (
-              <>
-                {handledCount} {handledCount === 1 ? 'tutorial is' : 'tutorials are'} with an
-                organisation. <Link href="/admin/review">Show everything</Link>.
-              </>
-            ) : (
-              'Submissions land here the moment a contributor sends one for review.'
-            )}
-          </p>
+          {!q && (
+            <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
+              {hidingHandled && handledCount > 0 ? (
+                <>
+                  {handledCount} {handledCount === 1 ? 'tutorial is' : 'tutorials are'} with an
+                  organisation. <Link href="/admin/review">Show everything</Link>.
+                </>
+              ) : (
+                'Submissions land here the moment a contributor sends one for review.'
+              )}
+            </p>
+          )}
+          {q && <Link href="/admin/review">Show everything</Link>}
         </div>
       </div>
     )
@@ -249,7 +271,7 @@ export default async function ReviewListPage({
             ))}
         </div>
       </div>
-      <Pager page={page} pages={pages} params={{ mine: hidingHandled ? '1' : undefined }} />
+      <Pager page={page} pages={pages} params={{ mine: hidingHandled ? '1' : undefined, q: q ? rawQ!.trim() : undefined }} />
       {detail && picked && (
         <AdminReviewPane
           tutorial={detail}

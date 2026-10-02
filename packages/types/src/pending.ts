@@ -629,6 +629,7 @@ export const PENDING = {
     shipped: true,
   },
   'web-admin-review-list': {
+    shipped: true,
     title: "Review list details",
     blurb: "Search and more detail in the review list are coming.",
     kind: "build",
