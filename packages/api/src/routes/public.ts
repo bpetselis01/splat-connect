@@ -691,7 +691,7 @@ publicRoutes.get('/contributors/:id', async (c) => {
   ] = await Promise.all([
     sb
       .from('tutorial_contributors')
-      .select('tutorials!inner(*, thanks_count, builds_count)')
+      .select('tutorials!inner(*, thanks_count, builds_count, view_count)')
       .eq('profile_id', id)
       .eq('tutorials.status', 'approved'),
     sb.from('toys').select('*').eq('owner_id', id).eq('status', 'published'),

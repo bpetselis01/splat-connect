@@ -1978,6 +1978,23 @@ export function formatBuildTime(minutes: number): string {
   return `${Math.round((minutes / 60) * 10) / 10} h`
 }
 
+/** The board's difficulty words. */
+export const DIFFICULTY_LABEL: Record<Difficulty, string> = { easy: 'Easy', medium: 'Medium', hard: 'Hard' }
+
+/**
+ * A guide row's meta line, the board's order: "Easy · 20 min · 2.1k views",
+ * "Easy · 20 min · Rachel Kaur". Whatever the row adds goes on the end; a
+ * missing time or tail drops out rather than leaving a gap.
+ */
+export function guideMeta(
+  t: { difficulty: Difficulty; build_minutes: number | null },
+  ...tail: (string | null | undefined)[]
+): string {
+  return [DIFFICULTY_LABEL[t.difficulty], t.build_minutes != null ? formatBuildTime(t.build_minutes) : null, ...tail]
+    .filter(Boolean)
+    .join(' · ')
+}
+
 /**
  * A Makers wanted row's "20 min · ~$28.00" (MB r.time · ~r.cost). Either half
  * is left out when unknown — a guide with an unpriced required part has no
@@ -2033,7 +2050,7 @@ export interface Tutorial {
   thanks_count?: number
   /** 091. Present only when a select names it. */
   builds_count?: number
-  /** 092. Present only on /api/tutorials/mine. */
+  /** 092. On /api/tutorials/mine and the public contributor read. */
   view_count?: number
   has_stl?: boolean
   /** Up to MAX_PHOTOS, in display order. The first is the cover. */

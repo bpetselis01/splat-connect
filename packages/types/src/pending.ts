@@ -257,6 +257,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["mobile"],
     needs: "Bio, joined, toys delivered, thanks, row meta (API has them) [ui]",
+    shipped: true,
   },
   'report-problem-mobile': {
     title: "Report a problem",

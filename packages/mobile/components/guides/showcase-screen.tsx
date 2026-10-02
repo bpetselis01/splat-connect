@@ -4,7 +4,7 @@ import { View, Text, ScrollView, StyleSheet, Image } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { ContributorProfile, OrgPublicProfile, Tutorial } from '@splat-connect/types'
-import { KIND_LABEL } from '@splat-connect/types'
+import { KIND_LABEL, guideMeta, plural } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
@@ -14,6 +14,7 @@ import { Button } from '../ui/Button'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { PendingButton } from '../ui/pending'
+import { formatViews } from '../my-tutorials/list-screen'
 
 type ShowcaseKind = 'person' | 'org'
 type ShowcaseProfile = ContributorProfile | OrgPublicProfile
@@ -24,7 +25,7 @@ type ShelfToy = OrgPublicProfile['toysShared'][number]
  * title, difficulty + kind badges) — kept as its own copy rather than an
  * import, since that component is private to the library list.
  */
-function GuideCard({ tutorial, onPress }: { tutorial: Tutorial; onPress: () => void }) {
+function GuideCard({ tutorial, meta, onPress }: { tutorial: Tutorial; meta?: string; onPress: () => void }) {
   return (
     <AnimatedPressable
       onPress={onPress}
@@ -50,10 +51,14 @@ function GuideCard({ tutorial, onPress }: { tutorial: Tutorial; onPress: () => v
               TutorialRow: the row is already a button whose spoken name would
               otherwise absorb these badges and double-announce them. The
               row's hint carries difficulty and kind instead. */}
-          <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.badgeRow}>
-            <Badge status={tutorial.difficulty} />
-            <Badge status={tutorial.kind} label={KIND_LABEL[tutorial.kind]} />
-          </View>
+          {meta ? (
+            <Text style={styles.cardMeta}>{meta}</Text>
+          ) : (
+            <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.badgeRow}>
+              <Badge status={tutorial.difficulty} />
+              <Badge status={tutorial.kind} label={KIND_LABEL[tutorial.kind]} />
+            </View>
+          )}
         </View>
       </Card>
     </AnimatedPressable>
@@ -139,6 +144,8 @@ export function ShowcaseScreen({ kind, id }: { kind: ShowcaseKind; id: string })
     kind === 'person' ? (profile as ContributorProfile).tutorials : (profile as OrgPublicProfile).tutorialsBacked
   const toys = kind === 'org' ? (profile as OrgPublicProfile).toysShared : []
   const firstName = profile.name.split(' ')[0]
+  const person = kind === 'person' ? (profile as ContributorProfile) : null
+  const thanked = person?.thanks ?? 0
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -149,12 +156,27 @@ export function ShowcaseScreen({ kind, id }: { kind: ShowcaseKind; id: string })
         <View style={styles.headerBody}>
           <Text style={styles.name}>{profile.name}</Text>
           {/* PENDING(contributor-role-line): the role line ("Occupational therapist") and an organisation chip — no occupation column. */}
-          <Text style={styles.meta}>
-            {guides.length} guides · {profile.toysShared.length} toys shared
-          </Text>
-          {/* PENDING(contributor-profile-details): bio, "Joined", toys delivered and thanks — the API already returns them. */}
+          {person ? (
+            person.created_at ? (
+              <Text style={styles.meta}>{`Joined ${new Date(person.created_at).toLocaleDateString('en-AU', { month: 'long', year: 'numeric' })}`}</Text>
+            ) : null
+          ) : (
+            <Text style={styles.meta}>
+              {guides.length} guides · {profile.toysShared.length} toys shared
+            </Text>
+          )}
         </View>
       </Card>
+      {person ? (
+        <View style={styles.section}>
+          <View style={styles.chips}>
+            <Text style={styles.chip}>{plural(guides.length, 'guide')}</Text>
+            <Text style={styles.chip}>{`${person.toysDelivered.length} toys delivered`}</Text>
+            <Text style={styles.chip}>{`Thanked ${thanked} ${thanked === 1 ? 'time' : 'times'}`}</Text>
+          </View>
+          {person.bio ? <Text style={styles.bio}>{person.bio}</Text> : null}
+        </View>
+      ) : null}
       {kind === 'person' ? (
         <View style={[styles.section, styles.actions]}>
           <PendingButton pending="thank-people" label={`Say thanks to ${firstName}`} />
@@ -171,6 +193,7 @@ export function ShowcaseScreen({ kind, id }: { kind: ShowcaseKind; id: string })
             <GuideCard
               key={t.id}
               tutorial={t}
+              meta={person ? guideMeta(t, t.view_count != null ? `${formatViews(t.view_count)} views` : null) : undefined}
               onPress={() => router.push({ pathname: '/guides/[id]', params: { id: t.id } })}
             />
           ))}
@@ -237,6 +260,21 @@ const styles = StyleSheet.create({
   cardBody: { flex: 1, justifyContent: 'center', gap: theme.spacing(2) },
   cardTitle: { fontFamily: theme.fonts.black, color: theme.colors.text, fontSize: 14, lineHeight: 19 },
   badgeRow: { flexDirection: 'row', gap: theme.spacing(2) },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2) },
+  chip: {
+    fontFamily: theme.fonts.bold,
+    fontSize: theme.type.caption,
+    color: theme.colors.ink,
+    backgroundColor: theme.colors.surface,
+    borderWidth: theme.border.hairline,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radii.pill,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    overflow: 'hidden',
+  },
+  bio: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, lineHeight: 21, color: theme.colors.text, marginTop: theme.spacing(3) },
+  cardMeta: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.caption, color: theme.colors.muted, marginTop: 2 },
   toyRow: {
     flexDirection: 'row',
     alignItems: 'center',
