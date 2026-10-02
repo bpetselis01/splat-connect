@@ -7,14 +7,14 @@ import { Hono, type Context } from 'hono'
 import { nameFormerContributors } from '../former-contributor.js'
 import { chunk } from '../chunk.js'
 import { challengeCounts } from '../challenge-counts.js'
-import { profileName } from '../profile-name.js'
+import { primaryAuthorNames, profileName } from '../profile-name.js'
 import { createAnonClient, createAdminClient } from '../supabase/client.js'
 import { atCapacityToyIds } from '../toy-access.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { toyPhotoUrl } from '../photo-storage.js'
 import { withPhotoUrl } from './toy-ideas.js'
 import { readNear, byDistance, pickupPostcodes, type Near } from '../distance.js'
-import { autoPicks, buildCalendar, contributorBadges, gradeOf, readMinutes } from '@splat-connect/types'
+import { autoPicks, buildCalendar, contributorBadges, gradeOf, partsTotalCents, readMinutes } from '@splat-connect/types'
 import type {
   ImpactSummary,
   ImpactEntity,
@@ -856,11 +856,11 @@ publicRoutes.get('/organizations/:id', async (c) => {
   ] = await Promise.all([
     sb
       .from('tutorial_orgs')
-      .select('tutorials!inner(*)')
+      .select('tutorials!inner(*, parts(is_optional, price_cents))')
       .eq('org_id', id)
       .eq('status', 'accepted')
       .eq('tutorials.status', 'approved'),
-    sb.from('tutorials').select('*').eq('reviewed_for_org_id', id).eq('status', 'approved'),
+    sb.from('tutorials').select('*, parts(is_optional, price_cents)').eq('reviewed_for_org_id', id).eq('status', 'approved'),
     sb
       .from('toys')
       .select('*')
@@ -909,6 +909,19 @@ publicRoutes.get('/organizations/:id', async (c) => {
   const extras = await orgProfileExtras(id, tutorialsBacked as Array<{ id: string }>)
   if (!extras) return c.json({ error: 'Failed to load organisation profile' }, 500)
 
+  // Each guide row's author (by id, admin client) and parts
+  // total (null unless every required part is priced — partsTotalCents).
+  type Row = { id: string; parts?: { is_optional: boolean; price_cents: number | null }[] }
+  const allGuides = [...(tutorialsBacked as Row[]), ...((tutorialsApproved ?? []) as Row[])]
+  const authors = await primaryAuthorNames([...new Set(allGuides.map((t) => t.id))])
+  if (!authors) return c.json({ error: 'Failed to load organisation profile' }, 500)
+  const withRowFacts = (rows: Row[]) =>
+    rows.map(({ parts, ...t }) => ({
+      ...t,
+      author_name: authors.get(t.id) ?? null,
+      parts_total_cents: partsTotalCents(parts ?? []),
+    }))
+
   const deliveredToyIds = [...new Set((deliveredTx ?? []).map((tx) => tx.toy_id))]
   let toysDelivered: unknown[] = []
   if (deliveredToyIds.length > 0) {
@@ -928,8 +941,8 @@ publicRoutes.get('/organizations/:id', async (c) => {
     status: org.status,
     events: (events ?? []) as OrgPublicProfile['events'],
     stories: (stories ?? []) as OrgPublicProfile['stories'],
-    tutorialsBacked: tutorialsBacked as OrgPublicProfile['tutorialsBacked'],
-    tutorialsApproved: (tutorialsApproved ?? []) as OrgPublicProfile['tutorialsApproved'],
+    tutorialsBacked: withRowFacts(tutorialsBacked as Row[]) as OrgPublicProfile['tutorialsBacked'],
+    tutorialsApproved: withRowFacts((tutorialsApproved ?? []) as Row[]) as OrgPublicProfile['tutorialsApproved'],
     toysShared: (toysShared ?? []) as OrgPublicProfile['toysShared'],
     toysDelivered: toysDelivered as OrgPublicProfile['toysDelivered'],
     ...extras,

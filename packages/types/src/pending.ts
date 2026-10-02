@@ -267,6 +267,7 @@ export const PENDING = {
     needs: "Report on contributor, organisation, print job, build thread, exchange thread [ui]",
   },
   'org-profile-rows': {
+    shipped: true,
     title: "More on each row",
     blurb: "Photos, details and See all links on organisation pages are coming.",
     kind: "build",

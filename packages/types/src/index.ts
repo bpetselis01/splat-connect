@@ -144,6 +144,8 @@ export function childSummary(c: Pick<ChildProfile, 'age' | ChildQuestionField>):
 }
 
 export type OfferType = 'donation' | 'exchange' | 'both'
+/** Short offer words for a row, as web's toy card writes them. */
+export const OFFER_SHORT_LABEL: Record<OfferType, string> = { donation: 'Gift', exchange: 'Swap only', both: 'Swap or gift' }
 
 /**
  * How many photos a toy or a guide may carry. One number for four enforcers —
@@ -2074,6 +2076,8 @@ export interface Tutorial {
   /** Present on saved guides and an organisation's guide rows: the primary
    *  contributor's name, resolved by id on the server. */
   author_name?: string | null
+  /** On an organisation's guide rows: partsTotalCents over the guide's parts. */
+  parts_total_cents?: number | null
   has_stl?: boolean
   /** Up to MAX_PHOTOS, in display order. The first is the cover. */
   photo_urls: string[]

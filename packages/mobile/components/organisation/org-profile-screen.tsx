@@ -14,10 +14,21 @@
  * thanking themselves — and their organisation's messages are on Me.
  */
 import { useCallback, useEffect, useState } from 'react'
-import { View, Text, ScrollView, StyleSheet, Image } from 'react-native'
+import { View, Text, ScrollView, StyleSheet, Image, Pressable } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import { PAYMENT_METHODS, formatCents, apiMessage, firstName, orgPrintFacts, recyclingPerDrop } from '@splat-connect/types'
+import {
+  PAYMENT_METHODS,
+  OFFER_SHORT_LABEL,
+  formatCents,
+  apiMessage,
+  firstName,
+  gradeOf,
+  guideMeta,
+  initials,
+  orgPrintFacts,
+  recyclingPerDrop,
+} from '@splat-connect/types'
 import type { OrgDoorTarget, OrgPublicProfile, OrgRelationship, RecyclingGives, Tutorial } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { useAuth } from '../../lib/auth-context'
@@ -33,6 +44,7 @@ import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { ErrorRow } from '../ui/ErrorRow'
 import { PendingButton } from '../ui/pending'
+import { ListRow, RowThumb } from '../list/list-kit'
 
 type IconName = React.ComponentProps<typeof Ionicons>['name']
 
@@ -62,6 +74,8 @@ export function OrgProfileScreen({ id }: { id: string }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const [reloadKey, setReloadKey] = useState(0)
+  const [allGuides, setAllGuides] = useState(false)
+  const [allToys, setAllToys] = useState(false)
 
   useEffect(() => {
     let ignore = false
@@ -254,38 +268,40 @@ export function OrgProfileScreen({ id }: { id: string }) {
         </Section>
       ) : null}
 
-      {/* PENDING(org-profile-rows): photo, meta and "backed by <leader>" on guide rows; photo, offer and grade on shelf toys; "See all" links; leader initials and role. */}
       {guides.length > 0 ? (
-        <Section title={<>Guides they back <Text style={styles.count}>{guides.length}</Text></>} hint="Backing means a leader read it, checked the safety list and built it once. Their name is on it.">
-          {guides.map((g) => (
-            <AnimatedPressable
+        <Section
+          title={<>Guides they back <Text style={styles.count}>{guides.length}</Text></>}
+          hint="Backing means a leader read it, checked the safety list and built it once. Their name is on it."
+          action={guides.length > 4 && !allGuides ? { label: `All ${guides.length} →`, onPress: () => setAllGuides(true) } : undefined}
+        >
+          {(allGuides ? guides : guides.slice(0, 4)).map((g) => (
+            <ListRow
               key={g.id}
+              title={g.title}
+              // The author on the meta's second line, as MB:1199 puts g.by under g.meta.
+              meta={[guideMeta(g, g.parts_total_cents != null ? formatCents(g.parts_total_cents) : null), g.author_name].filter(Boolean).join('\n')}
+              thumb={<RowThumb photo={g.toy_photo_url} glyph="color-wand-outline" />}
               onPress={() => router.push({ pathname: '/guides/[id]', params: { id: g.id } })}
-              accessibilityRole="button"
               accessibilityLabel={g.title}
-            >
-              <Card style={styles.row}>
-                <Text style={styles.rowTitle}>{g.title}</Text>
-              </Card>
-            </AnimatedPressable>
+            />
           ))}
         </Section>
       ) : null}
 
       {org.toysShared.length > 0 ? (
-        <Section title={<>Toys on their shelf <Text style={styles.count}>{org.toysShared.length}</Text></>}>
-          {org.toysShared.map((t) => (
-            <AnimatedPressable
+        <Section
+          title={<>Toys on their shelf <Text style={styles.count}>{org.toysShared.length}</Text></>}
+          action={org.toysShared.length > 4 && !allToys ? { label: 'See all →', onPress: () => setAllToys(true) } : undefined}
+        >
+          {(allToys ? org.toysShared : org.toysShared.slice(0, 4)).map((t) => (
+            <ListRow
               key={t.id}
+              title={t.name}
+              meta={[t.offer_type ? OFFER_SHORT_LABEL[t.offer_type] : null, gradeOf(t.condition).label].filter(Boolean).join(' · ')}
+              thumb={<RowThumb photo={t.cover_photo_url} glyph="cube-outline" />}
               onPress={() => router.push({ pathname: '/toy-library/[id]', params: { id: t.id } })}
-              accessibilityRole="button"
               accessibilityLabel={t.name}
-            >
-              <Card style={styles.row}>
-                <Text style={styles.rowTitle}>{t.name}</Text>
-                <Text style={styles.rowMeta}>{t.quantity} available</Text>
-              </Card>
-            </AnimatedPressable>
+            />
           ))}
         </Section>
       ) : null}
@@ -304,11 +320,16 @@ export function OrgProfileScreen({ id }: { id: string }) {
       {(org.leaders ?? []).length > 0 ? (
         <Section title="Leaders" hint="The people whose names go on the guides.">
           {(org.leaders ?? []).map((l, i) => (
-            <Card key={`${l.name}-${i}`} style={styles.row}>
-              <Text style={styles.rowTitle}>{l.name}</Text>
-              <Text style={styles.rowMeta}>
-                {l.guides_backed} {l.guides_backed === 1 ? 'guide' : 'guides'} backed
-              </Text>
+            <Card key={`${l.name}-${i}`} style={[styles.row, styles.leaderRow]}>
+              <View style={styles.leaderAvatar}>
+                <Text style={styles.leaderInitials}>{initials(l.name)}</Text>
+              </View>
+              <View style={styles.flex}>
+                <Text style={styles.rowTitle}>{l.name}</Text>
+                <Text style={styles.rowMeta}>
+                  {l.guides_backed} {l.guides_backed === 1 ? 'guide' : 'guides'} backed
+                </Text>
+              </View>
             </Card>
           ))}
         </Section>
@@ -343,10 +364,27 @@ export function OrgProfileScreen({ id }: { id: string }) {
   )
 }
 
-function Section({ title, hint, children }: { title: React.ReactNode; hint?: string; children: React.ReactNode }) {
+function Section({
+  title,
+  hint,
+  action,
+  children,
+}: {
+  title: React.ReactNode
+  hint?: string
+  action?: { label: string; onPress: () => void }
+  children: React.ReactNode
+}) {
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle} accessibilityRole="header">{title}</Text>
+      <View style={styles.sectionHead}>
+        <Text style={styles.sectionTitle} accessibilityRole="header">{title}</Text>
+        {action ? (
+          <Pressable onPress={action.onPress} accessibilityRole="button" accessibilityLabel={action.label} hitSlop={8}>
+            <Text style={styles.sectionAction}>{action.label}</Text>
+          </Pressable>
+        ) : null}
+      </View>
       {hint ? <Text style={styles.hint}>{hint}</Text> : null}
       <View style={styles.sectionBody}>{children}</View>
     </View>
@@ -489,7 +527,7 @@ function OrgButtons({
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   content: { padding: theme.spacing(4), paddingBottom: theme.spacing(10) },
-  flex: { flex: 1 },
+  flex: { flex: 1, minWidth: 0 },
   retry: { marginTop: theme.spacing(5), alignSelf: 'center', paddingHorizontal: theme.spacing(8) },
   // Edge to edge, as the board's cover runs: out past the content padding.
   cover: {
@@ -555,6 +593,18 @@ const styles = StyleSheet.create({
   statLabel: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.muted, marginTop: theme.spacing(1) },
   section: { marginBottom: theme.spacing(6) },
   sectionTitle: { fontFamily: theme.fonts.display, fontSize: 18, color: theme.colors.text },
+  sectionHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: theme.spacing(2) },
+  sectionAction: { fontFamily: theme.fonts.black, fontSize: theme.type.caption, color: theme.colors.primaryDeep },
+  leaderRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3) },
+  leaderAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.accentLight,
+  },
+  leaderInitials: { fontFamily: theme.fonts.black, fontSize: 14, color: theme.colors.ink },
   // A section's count, muted beside its title, as the board sets it.
   count: { fontFamily: theme.fonts.semiBold, fontSize: 13, color: theme.colors.muted },
   hint: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted, marginTop: theme.spacing(1), lineHeight: 19 },

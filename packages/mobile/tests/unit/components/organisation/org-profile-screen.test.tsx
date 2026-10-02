@@ -134,6 +134,34 @@ describe('OrgProfileScreen', () => {
     expect(screen.getByText('Credit, or a spool')).toBeTruthy()
     expect(screen.getByText('Tue and Thu, 9am–4pm')).toBeTruthy()
   })
+
+  it('reads guide, toy and leader rows the way the board does, and expands past four', async () => {
+    const guide = (i: number) => ({
+      id: `g${i}`, title: `Guide ${i}`, difficulty: 'easy', build_minutes: 20, parts_total_cents: 2400,
+      author_name: 'Rachel Kaur', toy_photo_url: null, status: 'approved',
+    })
+    load(null)
+    mockGet.mockImplementation((path: string) =>
+      Promise.resolve(
+        path.startsWith('/api/public')
+          ? {
+              ...ORG,
+              tutorialsBacked: [1, 2, 3, 4, 5].map(guide),
+              toysShared: [{ id: 'y1', name: 'Light-up drum', condition: 9, offer_type: 'donation', quantity: 1, cover_photo_url: null }],
+            }
+          : null
+      )
+    )
+    render(<OrgProfileScreen id="o1" />)
+    expect(await screen.findByText('Guide 1')).toBeTruthy()
+    expect(screen.getAllByText('Easy · 20 min · $24.00\nRachel Kaur')).toHaveLength(4)
+    expect(screen.queryByText('Guide 5')).toBeNull()
+    fireEvent.press(screen.getByRole('button', { name: 'All 5 →' }))
+    expect(screen.getByText('Guide 5')).toBeTruthy()
+    expect(screen.getByText('Gift · Like new')).toBeTruthy()
+    expect(screen.getByText('3 guides backed')).toBeTruthy()
+    expect(screen.getByText('RK')).toBeTruthy()
+  })
 })
 
 describe('org-profile helpers', () => {
