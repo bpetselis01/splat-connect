@@ -8,6 +8,9 @@ jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 const mockPush = jest.fn()
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }))
 
+const mockGet = jest.fn()
+jest.mock('../../../../lib/api-client', () => ({ apiClient: { get: (...a: unknown[]) => mockGet(...a) } }))
+
 const mockUseLearnProgress = jest.fn()
 jest.mock('../../../../lib/learn', () => ({ useLearnProgress: () => mockUseLearnProgress() }))
 
@@ -27,6 +30,8 @@ jest.mock('../../../../lib/learn', () => ({ useLearnProgress: () => mockUseLearn
 
 beforeEach(() => {
   jest.clearAllMocks()
+  mockGet.mockRejectedValue(new Error('offline'))
+  jest.spyOn(console, 'error').mockImplementation(() => {})
 })
 
 describe('LearnHub', () => {
@@ -109,5 +114,23 @@ describe('LearnHub', () => {
     })
     render(<LearnHub />)
     expect(screen.queryByText('Ask an expert')).toBeNull()
+  })
+
+  // site-content-learn-legal-editing: the app reads the course's title, outcome and "Shown as".
+  it("shows a saved course title and outcome in place of the app's intro", async () => {
+    mockUseLearnProgress.mockReturnValue({ read: new Set(), markRead: jest.fn(), next: LEARN_ARTICLES[0], count: 0 })
+    mockGet.mockResolvedValue({ title: 'Toy adaptation, start to finish', outcome: 'Adapt a battery toy for a switch.', shown_as: 'free', units: [] })
+    render(<LearnHub />)
+    expect(await screen.findByText('Toy adaptation, start to finish')).toBeTruthy()
+    expect(screen.getByText('Adapt a battery toy for a switch.')).toBeTruthy()
+    expect(screen.queryByText(/How switch adaptation works/)).toBeNull()
+  })
+
+  it('says "Course hidden" and lists nothing when an admin hid the course', async () => {
+    mockUseLearnProgress.mockReturnValue({ read: new Set(), markRead: jest.fn(), next: LEARN_ARTICLES[0], count: 0 })
+    mockGet.mockResolvedValue({ title: null, outcome: null, shown_as: 'hidden', units: [] })
+    render(<LearnHub />)
+    expect(await screen.findByText('Course hidden')).toBeTruthy()
+    expect(screen.queryByText('Start here')).toBeNull()
   })
 })

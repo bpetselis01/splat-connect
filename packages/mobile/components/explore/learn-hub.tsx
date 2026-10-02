@@ -1,10 +1,13 @@
 // packages/mobile/components/explore/learn-hub.tsx
 // Title comes from the native header (app/(tabs)/explore/_layout.tsx), so
 // this doesn't repeat it — same convention as about-screen.tsx.
+import { useEffect, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
+import type { LearnCourse } from '@splat-connect/types'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { theme } from '../../lib/theme'
+import { apiClient } from '../../lib/api-client'
 import { useLearnProgress } from '../../lib/learn'
 import { LEARN_ARTICLES, type LearnArticle } from '../../lib/learn-content'
 import { Screen } from '../ui/Screen'
@@ -34,11 +37,45 @@ export function LearnHub() {
   const nextPosition = next ? LEARN_ARTICLES.findIndex((a) => a.slug === next.slug) + 1 : 0
   const { start, deeper } = learnSections(LEARN_ARTICLES)
 
+  // site-content-learn-legal-editing: Site content's course title, outcome and
+  // "Shown as". The app's articles are flat (no units or lessons), so that is
+  // all of the outline it can use; sign-in-needed reads as Free here, because
+  // the articles ship inside the app. Hidden hides it from everyone here,
+  // admins included: the course an admin previews is the web's. A failed read
+  // keeps the app's own words.
+  const [course, setCourse] = useState<LearnCourse | null>(null)
+  useEffect(() => {
+    let ignore = false
+    apiClient
+      .get<LearnCourse>('/api/public/learn-course')
+      .then((c) => {
+        if (!ignore) setCourse(c)
+      })
+      .catch((err) => console.error('[LearnHub] course fetch failed:', err))
+    return () => {
+      ignore = true
+    }
+  }, [])
+
+  if (course?.shown_as === 'hidden') {
+    return (
+      <Screen>
+        <Text style={styles.allRead}>Course hidden</Text>
+      </Screen>
+    )
+  }
+
   return (
     <Screen>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        {course?.title ? (
+          <Text accessibilityRole="header" style={styles.courseTitle}>
+            {course.title}
+          </Text>
+        ) : null}
         <Text style={styles.intro}>
-          How switch adaptation works, from first switch to safe finish. For instructions on one toy, use Guides.
+          {course?.outcome ??
+            'How switch adaptation works, from first switch to safe finish. For instructions on one toy, use Guides.'}
         </Text>
 
         {next ? (
@@ -155,6 +192,13 @@ function LearnRow({
 
 const styles = StyleSheet.create({
   content: { paddingBottom: theme.spacing(6) },
+  courseTitle: {
+    fontFamily: theme.fonts.display,
+    fontSize: 24,
+    lineHeight: 29,
+    color: theme.colors.text,
+    marginBottom: theme.spacing(2),
+  },
   intro: {
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.label,
