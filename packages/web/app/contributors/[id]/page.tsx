@@ -19,7 +19,7 @@ import { ShelfToyCard } from '@/components/shelf-toy-card'
 import { tintFor } from '@/components/card-photo'
 import { getCapabilities } from '@/lib/capabilities'
 import { safePhotoSrc } from '@/lib/photo-src'
-import { initials, monthHeading, shortDate } from '@splat-connect/types'
+import { initials, monthHeading, nextBadgeLine, shortDate } from '@splat-connect/types'
 import { formatBuildTime, type ContributorProfile } from '@splat-connect/types'
 
 const DIFFICULTY_LABEL = { easy: 'Easy', medium: 'Medium', hard: 'Hard' } as const
@@ -38,7 +38,8 @@ export default async function ContributorPage({
 
   const contributor = (await res.json()) as ContributorProfile
   const first = contributor.name.split(' ')[0]
-  const signedIn = !!(await getCapabilities())
+  const caps = await getCapabilities()
+  const signedIn = !!caps
   const tint = tintFor(contributor.id)
   const toys = [...contributor.toysShared, ...contributor.toysDelivered]
 
@@ -73,6 +74,8 @@ export default async function ContributorPage({
   const badges = contributor.badges ?? []
   const thanks = contributor.thanks ?? 0
   const builds = contributor.builds ?? 0
+  // Only on your own profile: what is left to earn is not for others to read.
+  const next = caps?.profile.id === contributor.id ? nextBadgeLine({ guides: contributor.tutorials.length, builds }) : null
   const featured = contributor.featured ?? null
 
   const jumps = [
@@ -213,6 +216,8 @@ export default async function ContributorPage({
             </ul>
           </section>
         )}
+
+        {next && <p className="m-0 text-[13px] font-bold text-muted">{next}</p>}
 
         {featured && (
           <section id="ctb-featured">

@@ -10,7 +10,8 @@ jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 const mockGet = jest.fn()
 jest.mock('../../../../lib/api-client', () => ({ apiClient: { get: (...a: unknown[]) => mockGet(...a) } }))
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }))
-jest.mock('../../../../lib/auth-context', () => ({ useAuth: () => ({ session: null }) }))
+let mockUser: string | null = null
+jest.mock('../../../../lib/auth-context', () => ({ useAuth: () => ({ session: mockUser ? { user: { id: mockUser } } : null }) }))
 
 const tutorial = (over: object) => ({
   id: 't1', title: 'Build a Robot Arm', description: null, difficulty: 'easy', kind: 'toy_adaptation',
@@ -48,6 +49,19 @@ const ORG = {
 describe('ShowcaseScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    mockUser = null
+  })
+
+  it('shows the next badge on your own profile only', async () => {
+    mockGet.mockResolvedValue(PERSON)
+    mockUser = 'c1'
+    const own = render(<ShowcaseScreen kind="person" id="c1" />)
+    expect(await screen.findByText('9 more guides for 10 guides')).toBeTruthy()
+    own.unmount()
+    mockUser = 'someone-else'
+    render(<ShowcaseScreen kind="person" id="c1" />)
+    await screen.findByText('Sam Taylor')
+    expect(screen.queryByText('9 more guides for 10 guides')).toBeNull()
   })
 
   it('renders a contributor profile with their guides and no toys section', async () => {

@@ -4,8 +4,9 @@ import { View, Text, ScrollView, StyleSheet, Image } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { ContributorProfile, OrgPublicProfile, Tutorial } from '@splat-connect/types'
-import { KIND_LABEL, guideMeta, plural } from '@splat-connect/types'
+import { KIND_LABEL, guideMeta, nextBadgeLine, plural } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
+import { useAuth } from '../../lib/auth-context'
 import { theme } from '../../lib/theme'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
 import { Card } from '../ui/Card'
@@ -83,6 +84,7 @@ function ToyRow({ toy }: { toy: ShelfToy }) {
  */
 export function ShowcaseScreen({ kind, id }: { kind: ShowcaseKind; id: string }) {
   const router = useRouter()
+  const { session } = useAuth()
   const [profile, setProfile] = useState<ShowcaseProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
@@ -146,6 +148,8 @@ export function ShowcaseScreen({ kind, id }: { kind: ShowcaseKind; id: string })
   const toys = kind === 'org' ? (profile as OrgPublicProfile).toysShared : []
   const person = kind === 'person' ? (profile as ContributorProfile) : null
   const thanked = person?.thanks ?? 0
+  // Only on your own profile: what is left to earn is not for others to read.
+  const next = person && session?.user.id === id ? nextBadgeLine({ guides: guides.length, builds: person.builds ?? 0 }) : null
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -175,6 +179,7 @@ export function ShowcaseScreen({ kind, id }: { kind: ShowcaseKind; id: string })
             <Text style={styles.chip}>{`Thanked ${thanked} ${thanked === 1 ? 'time' : 'times'}`}</Text>
           </View>
           {person.bio ? <Text style={styles.bio}>{person.bio}</Text> : null}
+          {next ? <Text style={styles.bio}>{next}</Text> : null}
         </View>
       ) : null}
       {kind === 'person' ? (
