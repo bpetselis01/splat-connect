@@ -60,6 +60,17 @@ it('lists only active organisations that take plastic, and your drop-offs', asyn
   expect(screen.getByText('1,900 g of print credit unspent')).toBeTruthy()
 })
 
+it('still lists organisations and drop-offs when the credit read fails', async () => {
+  const ok = mockGet.getMockImplementation()!
+  mockGet.mockImplementation((path: string) =>
+    path === '/api/organizations/recycling/credit' ? Promise.reject(new Error('down')) : ok(path)
+  )
+  render(<RecyclingScreen />)
+  expect(await screen.findByText('Northside Therapy')).toBeTruthy()
+  expect(screen.getByText('3.2 kg PETG')).toBeTruthy()
+  expect(screen.getByText('0 g of print credit unspent')).toBeTruthy()
+})
+
 it('books only after two kilos and all seven lines, sending the declaration version', async () => {
   render(<RecyclingScreen />)
   fireEvent.press(await screen.findByLabelText('Book a drop-off at Northside Therapy'))

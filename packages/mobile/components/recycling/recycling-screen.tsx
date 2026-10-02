@@ -105,7 +105,7 @@ export function RecyclingScreen() {
       const [all, mine, c] = await Promise.all([
         apiClient.get<TakerOrg[]>('/api/public/organizations'),
         apiClient.get<RecyclingDropoff[]>('/api/organizations/recycling/mine'),
-        apiClient.get<RecyclingCredit[]>('/api/organizations/recycling/credit'),
+        apiClient.get<RecyclingCredit[]>('/api/organizations/recycling/credit').catch(() => [] as RecyclingCredit[]),
       ])
       setOrgs(all)
       setDrops(mine)
