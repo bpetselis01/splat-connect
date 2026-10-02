@@ -96,7 +96,7 @@ export const PENDING = {
     title: "Our team",
     blurb: "Who runs SPLAT Connect is coming to this page.",
     kind: "content",
-    platforms: ["web"],
+    platforms: ["web", "mobile"],
     needs: "Names, roles, bios on /about/team",
   },
   'org-facts': {
@@ -120,6 +120,7 @@ export const PENDING = {
     kind: "content",
     platforms: ["mobile"],
     needs: "Board's About lead and rows (No paid tier, Reviewed, Our team, Contact times)",
+    shipped: true,
   },
   'contributor-role-line': {
     title: "What they do",

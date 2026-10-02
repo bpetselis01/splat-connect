@@ -391,15 +391,7 @@
   "group": "push",
   "boardRoute": "explore/about",
   "route": "/explore/about",
-  "role": "parent",
-  "explained": [
-   {
-    "type": "copy",
-    "match": "board paragraphs absent",
-    "why": "pending",
-    "pending": "about-content-mobile"
-   }
-  ]
+  "role": "parent"
  },
  {
   "id": "inbox",

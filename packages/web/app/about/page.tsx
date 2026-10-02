@@ -9,6 +9,7 @@ import {
   SealCheck,
   UsersThree,
 } from '@phosphor-icons/react/dist/ssr'
+import { ABOUT_LEAD, ABOUT_PILLARS, ABOUT_TEAM_BLURB } from '@splat-connect/types'
 
 export const metadata = {
   title: 'About SPLAT Connect',
@@ -16,32 +17,18 @@ export const metadata = {
     'What SPLAT is, what it promises, and who runs the platform that makes the knowledge shareable.',
 }
 
-const PILLARS = [
-  {
-    icon: Gift,
-    tint: 'var(--b100)',
-    t: 'No paid tier, ever',
-    d: 'No commission, no ads, nothing to subscribe to. If a family cannot afford it, it does not work.',
-  },
-  {
-    icon: SealCheck,
-    tint: 'var(--tmint)',
-    t: 'Reviewed, not just posted',
-    d: 'Every guide is read by an administrator or an organisation leader before it goes public.',
-  },
-  {
-    icon: BookOpenText,
-    tint: 'var(--tamber)',
-    t: 'Information, not devices',
-    d: 'We publish instructions. We do not manufacture, supply or prescribe anything.',
-  },
+const PILLAR_LOOK = [
+  { icon: Gift, tint: 'var(--b100)' },
+  { icon: SealCheck, tint: 'var(--tmint)' },
+  { icon: BookOpenText, tint: 'var(--tamber)' },
 ]
+const PILLARS = ABOUT_PILLARS.map((p, i) => ({ ...p, ...PILLAR_LOOK[i]! }))
 
 // The board's four, not PUBLIC_NAV's five: Stories lives under Impact on the
 // board, and these cards carry a small left-aligned glyph rather than the hub
 // grid's art band.
 const KIDS: Array<{ href: Route; label: string; blurb: string; icon: typeof Gift }> = [
-  { href: '/about/team', label: 'Our team', blurb: 'The people behind the platform.', icon: UsersThree },
+  { href: '/about/team', label: 'Our team', blurb: ABOUT_TEAM_BLURB, icon: UsersThree },
   { href: '/contact', label: 'Contact', blurb: 'Get in touch about a guide, a toy or a partnership.', icon: EnvelopeSimple },
   {
     href: '/about/partners',
@@ -59,10 +46,7 @@ export default function AboutPage() {
         About
       </h1>
       <p className="mt-3.5 max-w-[64ch] text-lg leading-[1.6] text-muted [text-wrap:pretty]">
-        SPLAT stands for Supporting Play by Adapting Toys. We make toy adaptation knowledge
-        discoverable and shareable, so a parent who has never held a soldering iron can still
-        get a toy their child can start. The knowledge on the platform is free and stays free.
-        The making is given time; you cover the parts.
+        {ABOUT_LEAD}
       </p>
 
       <div className="mt-[34px] grid gap-4 sm:grid-cols-3">

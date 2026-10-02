@@ -8,6 +8,7 @@ export { autoPicks, initialPicks, MAX_PICKS, pickOptions, PICK_KIND_LABEL, sameP
 export type { PicksMode, ToyPick, ToyPickInput } from './toy-picks'
 import type { PicksMode, ToyPick } from './toy-picks'
 export { contributorBadges, nextBadgeThreshold, nextBadgeLine, BADGE_RULES } from './contributor-badges'
+export { ABOUT_LEAD, ABOUT_PILLARS, ABOUT_TEAM_BLURB, CONTACT_TIMES } from './about'
 export { matchesForChild, childNeedsLine } from './child-matches'
 export {
   LEARN_COURSE, LEARN_SHOWN_AS, LESSON_KIND_LABEL,
