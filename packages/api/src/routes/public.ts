@@ -637,9 +637,11 @@ publicRoutes.get('/organizations', async (c) => {
     // The recycling columns join the list because /get-involved/recycling and
     // its booking form both filter on "who can take what" — the alternative was
     // a fetch per organisation to answer a question the directory already knows.
-    // All four are public by design and granted in 059; the street address is
+    // All are public by design and granted in 059 and 113; the street address is
     // not among them and stays on the pickup columns.
-    .select('id, name, description, status, suburb, state, recycling_materials, recycling_note')
+    .select(
+      'id, name, description, status, suburb, state, recycling_materials, recycling_note, recycling_machines, recycling_forms, recycling_min_kg, recycling_max_kg, recycling_turnaround, recycling_gives, recycling_hours, recycling_door'
+    )
     .order('name')
 
   if (error) {
@@ -817,10 +819,10 @@ publicRoutes.get('/organizations/:id', async (c) => {
 
   const { data: org } = await sb
     .from('organizations')
-    // 059's profile fields. Public by design and granted in that migration —
+    // 059's and 113's profile fields. Public by design and granted there —
     // the street address is NOT among them and stays on the pickup columns.
     .select(
-      'id, name, status, description, about, suburb, state, capabilities, contact_email, contact_phone, website_url, rate_note, recycling_materials, recycling_note'
+      'id, name, status, description, about, suburb, state, capabilities, contact_email, contact_phone, website_url, rate_note, recycling_materials, recycling_note, recycling_machines, recycling_forms, recycling_min_kg, recycling_max_kg, recycling_turnaround, recycling_gives, recycling_hours, recycling_door'
     )
     .eq('id', id)
     .maybeSingle()

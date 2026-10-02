@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { intakeCredit, weighedInLine } from '@splat-connect/types'
+import { intakeCredit, weighedInLine, recyclingPerDrop, RECYCLING_MACHINES, RECYCLING_FORMS } from '@splat-connect/types'
 
 describe('intakeCredit', () => {
   it('waits for a weight', () => {
@@ -38,5 +38,25 @@ describe('intakeCredit', () => {
 describe('weighedInLine', () => {
   it('is the board’s toast', () => {
     expect(weighedInLine(2600, 1950, 'Tom Beattie')).toBe('Weighed at 2.6 kg — 1950 g credit issued to Tom Beattie')
+  })
+})
+
+describe('recyclingPerDrop', () => {
+  it('is the board’s range and turnaround', () => {
+    expect(recyclingPerDrop({ recycling_min_kg: 2, recycling_max_kg: 8, recycling_turnaround: 'About 3 weeks' })).toBe('2–8 kg · About 3 weeks')
+  })
+  it('stands the platform floor in for an unset minimum', () => {
+    expect(recyclingPerDrop({ recycling_max_kg: 5 })).toBe('2–5 kg')
+  })
+  it('reads "From" without a maximum', () => {
+    expect(recyclingPerDrop({})).toBe('From 2 kg')
+    expect(recyclingPerDrop({ recycling_min_kg: 3, recycling_turnaround: 'One school term' })).toBe('From 3 kg · One school term')
+  })
+})
+
+describe('the board’s chip lists', () => {
+  it('are the board’s five machines and five forms', () => {
+    expect(RECYCLING_MACHINES).toEqual(['Shredder', 'Extruder', 'Filament dryer', 'Injection moulder', 'Sheet press'])
+    expect(RECYCLING_FORMS).toEqual(['Failed prints', 'Offcuts', 'Sprues and rafts', 'Bottle caps', 'Clean packaging'])
   })
 })

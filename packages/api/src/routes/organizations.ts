@@ -24,6 +24,9 @@ import {
   MIN_DROPOFF_GRAMS,
   ORG_DOOR_TARGETS,
   PAYMENT_METHODS,
+  RECYCLING_MACHINES,
+  RECYCLING_FORMS,
+  RECYCLING_GIVES,
 } from '@splat-connect/types'
 import type { AuthVariables } from '../middleware/auth.js'
 import { sendEmail } from '../mailer.js'
@@ -47,7 +50,7 @@ const organizations = new Hono<{ Variables: AuthVariables }>()
 // 059's public profile fields are in here and in that migration's grant. The
 // two have to move together, which is what the note above is about.
 export const ORG_COLUMNS =
-  'id, name, description, status, created_by, created_at, updated_at, about, suburb, state, capabilities, contact_email, contact_phone, website_url, rate_note, recycling_materials, recycling_note'
+  'id, name, description, status, created_by, created_at, updated_at, about, suburb, state, capabilities, contact_email, contact_phone, website_url, rate_note, recycling_materials, recycling_note, recycling_machines, recycling_forms, recycling_min_kg, recycling_max_kg, recycling_turnaround, recycling_gives, recycling_hours, recycling_door'
 
 /**
  * 076's columns and 077's counts. Public by design, but 076 did not extend
@@ -361,6 +364,9 @@ organizations.patch('/:id/profile', async (c) => {
     ['kind', 60],
     ['visit_hours', 120],
     ['service_area', 120],
+    ['recycling_turnaround', 60],
+    ['recycling_hours', 80],
+    ['recycling_door', 120],
   ] as const) {
     const problem = text(field, max)
     if (problem) return c.json({ error: problem }, 400)
@@ -391,6 +397,55 @@ organizations.patch('/:id/profile', async (c) => {
       return c.json({ error: `${field} must be a list of words` }, 400)
     }
     patch[field] = (value as string[]).map((v) => v.trim()).slice(0, 20)
+  }
+
+  // 113. Chips from the board's lists only; a leader cannot invent a machine.
+  for (const [field, allowed] of [
+    ['recycling_machines', RECYCLING_MACHINES],
+    ['recycling_forms', RECYCLING_FORMS],
+  ] as const) {
+    if (!Object.hasOwn(body, field)) continue
+    const value = body[field]
+    if (!Array.isArray(value) || value.some((v) => !(allowed as readonly unknown[]).includes(v))) {
+      return c.json({ error: `${field} must come from the list` }, 400)
+    }
+    patch[field] = [...new Set(value as string[])]
+  }
+
+  if (Object.hasOwn(body, 'recycling_gives')) {
+    if (!RECYCLING_GIVES.includes(body.recycling_gives as never)) {
+      return c.json({ error: 'recycling_gives must be credit, spool or either' }, 400)
+    }
+    patch.recycling_gives = body.recycling_gives
+  }
+
+  // 113. Kilos to one decimal; the minimum may only raise the platform floor.
+  for (const field of ['recycling_min_kg', 'recycling_max_kg'] as const) {
+    if (!Object.hasOwn(body, field)) continue
+    const value = body[field]
+    if (value === null) {
+      patch[field] = null
+      continue
+    }
+    if (typeof value !== 'number' || !/^\d{1,4}(\.\d)?$/.test(String(value)) || value > 1000) {
+      return c.json({ error: 'Per drop is between 2 and 1000 kg, to one decimal place.' }, 400)
+    }
+    if (value < MIN_DROPOFF_GRAMS / 1000) {
+      return c.json({ error: 'The platform floor is 2 kg. You can ask for more, never less.' }, 400)
+    }
+    patch[field] = value
+  }
+  if (Object.hasOwn(patch, 'recycling_min_kg') || Object.hasOwn(patch, 'recycling_max_kg')) {
+    const { data: current } = await createAdminClient()
+      .from('organizations')
+      .select('recycling_min_kg, recycling_max_kg')
+      .eq('id', orgId)
+      .maybeSingle()
+    const min = (Object.hasOwn(patch, 'recycling_min_kg') ? patch.recycling_min_kg : current?.recycling_min_kg) as number | null
+    const max = (Object.hasOwn(patch, 'recycling_max_kg') ? patch.recycling_max_kg : current?.recycling_max_kg) as number | null
+    if (max != null && max < (min ?? MIN_DROPOFF_GRAMS / 1000)) {
+      return c.json({ error: 'The maximum per drop cannot be under the minimum.' }, 400)
+    }
   }
 
   const { data, error } = await createAdminClient()
@@ -1517,6 +1572,20 @@ organizations.post('/:id/recycling', async (c) => {
   // Two kilos so a machine run is worth firing up — the artboard's minimum, and
   // the one number here that is a policy rather than a bound.
   if (grams < MIN_DROPOFF_GRAMS) return c.json({ error: 'Drop-offs start at two kilos.' }, 400)
+
+  // 113. The organisation's own limits, inside the platform's.
+  const { data: org } = await supabase
+    .from('organizations')
+    .select('name, recycling_min_kg, recycling_max_kg')
+    .eq('id', c.req.param('id'))
+    .maybeSingle()
+  if (!org) return c.json({ error: 'Not found' }, 404)
+  if (org.recycling_max_kg != null && grams > Math.round(org.recycling_max_kg * 1000)) {
+    return c.json({ error: `${org.name} takes at most ${org.recycling_max_kg} kg at once.` }, 400)
+  }
+  if (org.recycling_min_kg != null && grams < Math.round(org.recycling_min_kg * 1000)) {
+    return c.json({ error: `${org.name} takes at least ${org.recycling_min_kg} kg at once.` }, 400)
+  }
 
   if (body.condition_declared !== true) {
     return c.json({ error: 'Tick every line of the condition declaration first.' }, 400)

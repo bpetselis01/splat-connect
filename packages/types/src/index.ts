@@ -1127,6 +1127,15 @@ export interface Organization {
   rate_note?: string | null
   recycling_materials?: string[]
   recycling_note?: string | null
+  /** 113. What the recycler takes, beyond polymers. Public by design. */
+  recycling_machines?: string[]
+  recycling_forms?: string[]
+  recycling_min_kg?: number | null
+  recycling_max_kg?: number | null
+  recycling_turnaround?: string | null
+  recycling_gives?: RecyclingGives
+  recycling_hours?: string | null
+  recycling_door?: string | null
   /** 076. "What you are", the two pictures, the Visit card and how they like
    *  to be paid back. `verified_at` is written by an admin only. */
   kind?: string | null
@@ -1538,6 +1547,28 @@ export function intakeCredit(
 /** The board's toast once a drop-off is weighed in. */
 export const weighedInLine = (weighedGrams: number, creditGrams: number, who: string) =>
   `Weighed at ${weighedGrams / 1000} kg — ${creditGrams} g credit issued to ${who}`
+
+/** The board's "What you can take" chips (113). Presentational, so a list here
+ *  rather than a CHECK. */
+export const RECYCLING_MACHINES = ['Shredder', 'Extruder', 'Filament dryer', 'Injection moulder', 'Sheet press'] as const
+export const RECYCLING_FORMS = ['Failed prints', 'Offcuts', 'Sprues and rafts', 'Bottle caps', 'Clean packaging'] as const
+/** What a contributor gets back for a drop-off (113). Credit by default. */
+export type RecyclingGives = 'credit' | 'spool' | 'either'
+export const RECYCLING_GIVES: RecyclingGives[] = ['credit', 'spool', 'either']
+
+/**
+ * The board's "Per drop" line: "2–8 kg · About 3 weeks". The platform floor
+ * stands in for an unset minimum; with no maximum it reads "From 2 kg".
+ */
+export function recyclingPerDrop(o: {
+  recycling_min_kg?: number | null
+  recycling_max_kg?: number | null
+  recycling_turnaround?: string | null
+}): string {
+  const min = o.recycling_min_kg ?? MIN_DROPOFF_GRAMS / 1000
+  const range = o.recycling_max_kg != null ? `${min}–${o.recycling_max_kg} kg` : `From ${min} kg`
+  return [range, o.recycling_turnaround].filter(Boolean).join(' · ')
+}
 
 export type DropoffStatus = 'booked' | 'received' | 'declined' | 'cancelled'
 
@@ -2204,6 +2235,15 @@ export interface OrgPublicProfile {
   rate_note?: string | null
   recycling_materials?: string[]
   recycling_note?: string | null
+  /** 113. What the recycler takes, beyond polymers. Public by design. */
+  recycling_machines?: string[]
+  recycling_forms?: string[]
+  recycling_min_kg?: number | null
+  recycling_max_kg?: number | null
+  recycling_turnaround?: string | null
+  recycling_gives?: RecyclingGives
+  recycling_hours?: string | null
+  recycling_door?: string | null
   /** Published only. An online event's joining link is deliberately absent —
    *  "online links are never public". */
   events?: Array<

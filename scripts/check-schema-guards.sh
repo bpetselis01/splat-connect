@@ -551,7 +551,19 @@ select * from (values
   -- 112. Without it, deleting an account that booked with a photo fails.
   ('112 recycling_dropoffs_photo_follows_owner trigger',
    (select count(*) > 0 from pg_trigger
-      where tgname = 'recycling_dropoffs_photo_follows_owner' and not tgisinternal))
+      where tgname = 'recycling_dropoffs_photo_follows_owner' and not tgisinternal)),
+
+  -- 113. ORG_COLUMNS and both public.ts selects name these; without the
+  -- columns, or anon's grant on them, every organisation read fails.
+  ('113 organizations recycling detail columns are anon-readable',
+   has_column_privilege('anon', 'public.organizations', 'recycling_machines', 'select')
+   and has_column_privilege('anon', 'public.organizations', 'recycling_door', 'select')
+   and has_column_privilege('anon', 'public.organizations', 'recycling_gives', 'select')),
+
+  -- 113. The API refuses max under min; this backs it.
+  ('113 organizations_recycling_max_over_min check',
+   (select count(*) = 1 from pg_constraint
+      where conname = 'organizations_recycling_max_over_min'))
 ) as t(guard, ok)
 where not ok;
 EOSQL
