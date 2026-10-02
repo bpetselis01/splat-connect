@@ -33,12 +33,13 @@ import printers from './routes/printers.js'
 import events from './routes/events.js'
 import reports from './routes/reports.js'
 import me from './routes/me.js'
+import { schemaStatus } from './schema-version.js'
 
 const app = new Hono()
 
 app.use('*', cors({ origin: process.env.CORS_ORIGIN ?? `http://localhost:${process.env.PORT ?? '3100'}` }))
 
-app.get('/health', (c) => c.json({ status: 'ok' }))
+app.get('/health', async (c) => c.json({ status: 'ok', schema: await schemaStatus() }))
 
 // Public routes — no auth required
 app.route('/api/public', publicRoutes)
