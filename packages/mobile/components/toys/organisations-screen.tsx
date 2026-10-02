@@ -1,9 +1,9 @@
 // packages/mobile/components/toys/organisations-screen.tsx
 import { useEffect, useState } from 'react'
-import { View, Text, FlatList, RefreshControl, StyleSheet } from 'react-native'
+import { View, Text, Image, FlatList, RefreshControl, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import type { Organization } from '@splat-connect/types'
+import type { OrgListing } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { Screen } from '../ui/Screen'
@@ -16,9 +16,18 @@ import { EmptyState } from '../ui/EmptyState'
 // The endpoint returns every organisation, suspended included (web lists and
 // marks those); this drill-down keeps it lean and shows active ones only —
 // there is no per-row detail here to explain a SUSPENDED badge.
-type OrgRow = Pick<Organization, 'id' | 'name' | 'status'>
+type OrgRow = OrgListing
+
+/** "Newcastle, NSW · 18 backed · 7 toys", or "· has a printer" (MB org_list). */
+export function orgListMeta(o: OrgListing): string {
+  const place = [o.suburb, o.state].filter(Boolean).join(', ')
+  const counts =
+    o.backed_count || o.toy_count ? `${o.backed_count} backed · ${o.toy_count} toys` : o.has_printer ? 'has a printer' : null
+  return [place || null, counts].filter(Boolean).join(' · ')
+}
 
 function OrgRow({ item, onPress }: { item: OrgRow; onPress: () => void }) {
+  const meta = orgListMeta(item)
   return (
     <AnimatedPressable
       onPress={onPress}
@@ -29,13 +38,24 @@ function OrgRow({ item, onPress }: { item: OrgRow; onPress: () => void }) {
       style={styles.rowPress}
     >
       <Card style={styles.card}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarInitial}>{item.name.charAt(0).toUpperCase()}</Text>
+        {item.logo_url ? (
+          <Image source={{ uri: item.logo_url }} style={styles.avatar} accessibilityIgnoresInvertColors />
+        ) : (
+          <View style={styles.avatar}>
+            <Text style={styles.avatarInitial}>{item.name.charAt(0).toUpperCase()}</Text>
+          </View>
+        )}
+        <View style={styles.body}>
+          <Text style={styles.name} numberOfLines={2}>
+            {item.name}
+          </Text>
+          {meta ? <Text style={styles.meta}>{meta}</Text> : null}
         </View>
-        {/* PENDING(organisations-list-meta): "Newcastle, NSW · 18 backed · 7 toys", Verified/Printer badges and a logo — the list endpoint selects none of these. */}
-        <Text style={styles.name} numberOfLines={2}>
-          {item.name}
-        </Text>
+        {item.verified_at ? (
+          <Text style={[styles.badge, styles.verified]}>Verified</Text>
+        ) : item.has_printer ? (
+          <Text style={[styles.badge, styles.printer]}>Printer</Text>
+        ) : null}
         <Ionicons name="chevron-forward" size={18} color={theme.colors.primary} />
       </Card>
     </AnimatedPressable>
@@ -107,6 +127,7 @@ export function OrganisationsScreen() {
           keyExtractor={(o) => o.id}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
+          ListHeaderComponent={<Text style={styles.lead}>{`${visible.length} organisations standing behind the work.`}</Text>}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.ink} />
           }
@@ -135,5 +156,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarInitial: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.primaryDeep },
-  name: { flex: 1, fontFamily: theme.fonts.bold, color: theme.colors.text, fontSize: theme.type.label },
+  name: { fontFamily: theme.fonts.bold, color: theme.colors.text, fontSize: theme.type.label },
+  body: { flex: 1, minWidth: 0, gap: 2 },
+  meta: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.caption, color: theme.colors.muted },
+  badge: {
+    fontFamily: theme.fonts.black,
+    fontSize: 11,
+    color: theme.colors.ink,
+    borderRadius: theme.radii.pill,
+    paddingHorizontal: 9,
+    paddingVertical: 2,
+    overflow: 'hidden',
+  },
+  verified: { backgroundColor: theme.colors.successSoft },
+  printer: { backgroundColor: theme.colors.apricotSoft },
+  lead: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted, marginBottom: theme.spacing(3) },
 })

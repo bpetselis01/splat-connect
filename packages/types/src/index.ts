@@ -1161,6 +1161,21 @@ export interface Organization {
   rate_lines?: OrgRateLine[]
 }
 
+/** A row of GET /api/public/organizations (116). */
+export interface OrgListing extends Pick<Organization, 'recycling_materials' | 'recycling_note'> {
+  id: string
+  name: string
+  description: string | null
+  status: Organization['status']
+  suburb: string | null
+  state: string | null
+  logo_url: string | null
+  verified_at: string | null
+  backed_count: number
+  toy_count: number
+  has_printer: boolean
+}
+
 /** "What you are" — the editor's suggestions; free text is allowed (076). */
 export const ORG_KINDS = [
   'Paediatric OT service',

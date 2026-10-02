@@ -640,8 +640,9 @@ publicRoutes.get('/organizations', async (c) => {
     // a fetch per organisation to answer a question the directory already knows.
     // All are public by design and granted in 059 and 113; the street address is
     // not among them and stays on the pickup columns.
+    // 116: logo and verified are 081's anon grants. The three counts are below.
     .select(
-      'id, name, description, status, suburb, state, recycling_materials, recycling_note, recycling_machines, recycling_forms, recycling_min_kg, recycling_max_kg, recycling_turnaround, recycling_gives, recycling_hours, recycling_door'
+      'id, name, description, status, suburb, state, logo_url, verified_at, recycling_materials, recycling_note, recycling_machines, recycling_forms, recycling_min_kg, recycling_max_kg, recycling_turnaround, recycling_gives, recycling_hours, recycling_door'
     )
     .order('name')
 
@@ -649,7 +650,25 @@ publicRoutes.get('/organizations', async (c) => {
     console.error('[public/organizations] read failed:', error.message)
     return c.json([], 200)
   }
-  const orgs = data ?? []
+  // 116. The counts are computed fields, which take the whole row, and anon
+  // holds only named columns of organizations — so they come through the admin
+  // client, three numbers per id and nothing else. A failed count read leaves
+  // the directory up with zeros rather than empty.
+  const { data: countRows, error: countError } = await createAdminClient()
+    .from('organizations')
+    .select('id, org_backed_count, org_toy_count, org_has_printer')
+  if (countError) console.error('[public/organizations] counts failed:', countError.message)
+  const counts = new Map(
+    ((countRows ?? []) as Array<{ id: string; org_backed_count: number; org_toy_count: number; org_has_printer: boolean }>).map(
+      (r) => [r.id, r]
+    )
+  )
+  const orgs = (data ?? []).map((o) => ({
+    ...o,
+    backed_count: counts.get(o.id)?.org_backed_count ?? 0,
+    toy_count: counts.get(o.id)?.org_toy_count ?? 0,
+    has_printer: counts.get(o.id)?.org_has_printer ?? false,
+  }))
   const postcodes = near.near ? await pickupPostcodes([], orgs.map((o) => o.id)) : new Map<string, string | null>()
   return c.json(await byDistance(orgs, (o) => postcodes.get(o.id) ?? null, near))
 })

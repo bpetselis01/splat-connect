@@ -219,15 +219,7 @@
   "group": "push",
   "boardRoute": "toy-library/organisations",
   "route": "/toy-library/organisations",
-  "role": "parent",
-  "explained": [
-   {
-    "type": "copy",
-    "match": "board paragraphs absent",
-    "why": "pending",
-    "pending": "organisations-list-meta"
-   }
-  ]
+  "role": "parent"
  },
  {
   "id": "lib_org",

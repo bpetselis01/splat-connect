@@ -592,7 +592,16 @@ select * from (values
   ('115 recycling_dropoffs leader update admits only booked rows',
    (select count(*) = 1 from pg_policies
       where tablename = 'recycling_dropoffs' and cmd = 'UPDATE'
-        and qual like '%is_org_leader%' and qual like '%booked%'))
+        and qual like '%is_org_leader%' and qual like '%booked%')),
+
+  -- 116. Without these the directory's counts read fails and every row shows
+  -- zeros; callable by anon they would be a client surface nobody reviewed.
+  ('116 organisation list count functions exist, service-role only',
+   (select count(*) = 3 from pg_proc
+      where pronamespace = 'public'::regnamespace
+        and proname in ('org_backed_count', 'org_toy_count', 'org_has_printer')
+        and not has_function_privilege('anon', oid, 'execute')
+        and not has_function_privilege('authenticated', oid, 'execute')))
 ) as t(guard, ok)
 where not ok;
 EOSQL

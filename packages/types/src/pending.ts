@@ -378,6 +378,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["mobile", "api"],
     needs: "Location, counts, Verified/Printer badges, logo, count line [ui,api]",
+    shipped: true,
   },
   'explore-community-stats': {
     title: "This community so far",
