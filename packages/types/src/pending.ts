@@ -655,6 +655,7 @@ export const PENDING = {
     needs: "Decided 2026-09-30: a private thread per (request, maker) before claiming, readable by the family and that maker, with a notification (new build_request_questions table).",
   },
   'site-content-learn-legal-editing': {
+    shipped: true,
     title: "Edit Learn and Legal",
     blurb: "Learn and Legal are read-only in Site content for now.",
     kind: "build",
