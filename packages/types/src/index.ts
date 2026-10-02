@@ -7,7 +7,7 @@ export type { Grade, GradeKey } from './toy-grade'
 export { autoPicks, initialPicks, MAX_PICKS, pickOptions, PICK_KIND_LABEL, samePick } from './toy-picks'
 export type { PicksMode, ToyPick, ToyPickInput } from './toy-picks'
 import type { PicksMode, ToyPick } from './toy-picks'
-export { contributorBadges } from './contributor-badges'
+export { contributorBadges, nextBadgeThreshold, nextBadgeLine, BADGE_RULES } from './contributor-badges'
 export { matchesForChild, childNeedsLine } from './child-matches'
 export {
   LEARN_COURSE, LEARN_SHOWN_AS, LESSON_KIND_LABEL,

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { contributorBadges } from '@splat-connect/types'
+import { contributorBadges, nextBadgeThreshold, nextBadgeLine, BADGE_RULES } from '@splat-connect/types'
 
 const NOW = new Date('2026-09-22T00:00:00Z')
 const ids = (input: Parameters<typeof contributorBadges>[0]) =>
@@ -28,5 +28,30 @@ describe('contributorBadges', () => {
     expect(one).toEqual([{ id: 'years-1', label: '1 year on SPLAT' }])
     const two = contributorBadges({ guides: 0, builds: 0, orgBacked: false, since: '2024-03-01T00:00:00Z' }, NOW)
     expect(two.map((b) => b.label)).toEqual(['2 years on SPLAT'])
+  })
+})
+
+describe('nextBadgeThreshold', () => {
+  it('names the nearest unearned badge by remaining count', () => {
+    expect(nextBadgeThreshold({ guides: 0, builds: 0 })).toEqual({ label: 'First guide', remaining: 1, what: 'guide' })
+    expect(nextBadgeThreshold({ guides: 8, builds: 0 })).toEqual({ label: '10 guides', remaining: 2, what: 'guide' })
+    expect(nextBadgeThreshold({ guides: 25, builds: 97 })).toEqual({ label: '100 builds', remaining: 3, what: 'build' })
+  })
+
+  it('is null once every count badge is earned', () => {
+    expect(nextBadgeThreshold({ guides: 25, builds: 100 })).toBeNull()
+    expect(nextBadgeLine({ guides: 25, builds: 100 })).toBeNull()
+  })
+
+  it('words the line and agrees with contributorBadges at the threshold', () => {
+    expect(nextBadgeLine({ guides: 9, builds: 0 })).toBe('1 more guide for 10 guides')
+    expect(nextBadgeLine({ guides: 8, builds: 0 })).toBe('2 more guides for 10 guides')
+    expect(ids({ guides: 10, builds: 0, orgBacked: false, since: '2026-09-01T00:00:00Z' })).toContain('guides-10')
+  })
+
+  it('explains every badge', () => {
+    expect(BADGE_RULES.map((r) => r.label)).toEqual(
+      expect.arrayContaining(['First guide', '10 guides', '25 guides', 'Org backed', '100 builds']),
+    )
   })
 })
