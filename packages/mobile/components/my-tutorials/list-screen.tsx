@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { View, Text, FlatList, RefreshControl, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import type { Tutorial, TutorialOrg, TutorialWithDetails } from '@splat-connect/types'
-import { KIND_LABEL } from '@splat-connect/types'
+import { KIND_LABEL, guideFitLine } from '@splat-connect/types'
 import { shortDate } from '../challenges/challenge-status'
 import { apiClient } from '../../lib/api-client'
 import { sectionProgress } from '../../lib/tutorial-sections'
@@ -36,7 +36,9 @@ export function tutorialMeta(t: MineRow): string {
     return `With ${deciding.organizations.name} since ${shortDate(deciding.requested_at)}`
   }
   const backer = orgs.find((o) => o.status === 'accepted')?.organizations?.name
-  if (t.status === 'approved') return [`${formatViews(t.view_count ?? 0)} views`, backer].filter(Boolean).join(' · ')
+  if (t.status === 'approved') {
+    return [`${formatViews(t.view_count ?? 0)} views`, guideFitLine(t.print_fit_stats), backer].filter(Boolean).join(' · ')
+  }
   return [`${KIND_LABEL[t.kind]} · ${t.difficulty}`, backer].filter(Boolean).join(' · ')
 }
 

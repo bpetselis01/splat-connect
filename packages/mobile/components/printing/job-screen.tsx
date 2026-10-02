@@ -459,7 +459,6 @@ function StateCard({
         <Text style={[styles.body, styles.ink]}>Both of you confirmed. Closed and kept as a record.</Text>
         {!isPrinter ? (
           <View style={styles.fit}>
-            {/* PENDING(print-fit-author-view): the copy below promises the guide author sees this; no author surface yet. */}
             <Text style={styles.strong}>Did it fit?</Text>
             <Text style={[styles.body, styles.ink]}>
               One tap. It goes back to the printer and to the guide author so the next print is better.

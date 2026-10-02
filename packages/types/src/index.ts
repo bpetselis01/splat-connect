@@ -40,7 +40,7 @@ import { printRequestExpired } from './printing'
 import type { PrinterStats, PrintFitNotes, TestPrint } from './printing'
 // Named, not only the `export *` below: the API runs under tsx, which loads
 // this package as CommonJS, and Node cannot see names behind `export *` there.
-export { printCostCents, costRange, PRINT_ANSWER_DAYS, answerBy, printRequestExpired, PRINT_FIT_QUESTIONS, fitNotesProblem, fitNotesLines, bedFits, VERIFIED_MIN_JOBS, testPrintLabel, statsLine, machineStatsLines, orgPrintFacts } from './printing'
+export { printCostCents, costRange, PRINT_ANSWER_DAYS, answerBy, printRequestExpired, PRINT_FIT_QUESTIONS, fitNotesProblem, fitNotesLines, bedFits, VERIFIED_MIN_JOBS, testPrintLabel, statsLine, machineStatsLines, orgPrintFacts, guideFitLine } from './printing'
 export { costSummary } from './cost-summary'
 export type { CostLine, CostSummary } from './cost-summary'
 export { getMissingToyFields, computeToyStepStatuses } from './toy-steps'
@@ -2142,6 +2142,8 @@ export interface Tutorial {
   builds_count?: number
   /** 092. On /api/tutorials/mine and the public contributor read. */
   view_count?: number
+  /** 094's Did it fit? answers on this guide's prints. On /api/tutorials/mine only: the author's to see. */
+  print_fit_stats?: Pick<PrinterStats, 'fitted' | 'fit_answers'>
   /** Present on saved guides and an organisation's guide rows: the primary
    *  contributor's name, resolved by id on the server. */
   author_name?: string | null

@@ -308,6 +308,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web", "mobile", "api"],
     needs: "The guide author sees the fit answers for their guide [ui,api]",
+    shipped: true,
   },
   'web-print-customization': {
     shipped: true,

@@ -9,6 +9,7 @@ import {
   machineStatsLines,
   orgPrintFacts,
   statsLine,
+  guideFitLine,
 } from '@splat-connect/types'
 
 describe('printCostCents', () => {
@@ -85,6 +86,12 @@ describe('printer stats', () => {
       'Colours: Black, White, Blue',
     ])
     expect(machineStatsLines({ ...stats, fit_answers: 0, colours: [] })).toEqual(['21 completed · median 3 days'])
+  })
+  it('tells a guide author how their guide’s prints fitted, once anyone has said', () => {
+    expect(guideFitLine({ fitted: 12, fit_answers: 14 })).toBe('12 of 14 prints fitted')
+    expect(guideFitLine({ fitted: 1, fit_answers: 1 })).toBe('1 of 1 print fitted')
+    expect(guideFitLine({ fitted: 0, fit_answers: 0 })).toBeNull()
+    expect(guideFitLine(undefined)).toBeNull()
   })
   it('gives an organisation Turnaround and Fit', () => {
     expect(orgPrintFacts(stats)).toEqual([
