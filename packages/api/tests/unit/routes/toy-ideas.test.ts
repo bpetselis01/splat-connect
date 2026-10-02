@@ -675,9 +675,10 @@ describe('GET /ideas/joined', () => {
   //        themselves, not the participant rows the join goes through
   // How:   mocks the user-client chain and asserts .eq('profile_id', ...) is
   //        called with 'user-1', the id makeApp's auth stub puts on the
-  //        token, then checks the embedded toy_ideas row is unwrapped; also
-  //        asserts the admin mock is never touched, same as the messages
-  //        read test above
+  //        token, then checks the embedded toy_ideas row is unwrapped with its
+  //        joined_at and counts; the admin client reads only author_id (to
+  //        leave the author's replies out of posts) and the counts, never
+  //        the participant list itself
   // Chain: same integrity property as POST / ignoring a body-supplied
   //        author_id — this route reads no request field for whose list to
   //        return, only the authenticated identity, so a regression that let
@@ -686,30 +687,56 @@ describe('GET /ideas/joined', () => {
   //        RLS silently on a query that is supposed to be scoped by it.
   it("scopes to the token's own id and unwraps the joined idea", async () => {
     const idea = { id: 'idea-1', title: 'Big-button remote', status: 'challenge' }
-    const order = vi.fn().mockResolvedValue({ data: [{ toy_ideas: idea }], error: null })
+    const joined_at = '2026-07-12T02:00:00Z'
+    const order = vi.fn().mockResolvedValue({ data: [{ joined_at, toy_ideas: idea }], error: null })
     const is = vi.fn().mockReturnValue({ order })
     const eq = vi.fn().mockReturnValue({ is })
     const select = vi.fn().mockReturnValue({ eq })
-    mockFrom.mockReturnValue({ select })
+    // mockFrom answers both the user client's participant read and the admin
+    // client's toy_ideas read (see the vi.mock above).
+    mockFrom.mockImplementation((t: string) =>
+      t === 'toy_idea_participants'
+        ? { select }
+        : { select: () => ({ in: () => Promise.resolve({ data: [{ id: 'idea-1', author_id: 'author-1' }], error: null }) }) }
+    )
+    mockAdminFrom.mockImplementation((t: string) => {
+      if (t === 'toy_idea_participants') {
+        return { select: () => ({ in: () => ({ is: () => Promise.resolve({ data: [{ idea_id: 'idea-1' }], error: null }) }) }) }
+      }
+      if (t === 'toy_idea_messages') {
+        // The author's own reply is not a post; the maker's is.
+        const rows = [
+          { idea_id: 'idea-1', sender_id: 'author-1' },
+          { idea_id: 'idea-1', sender_id: 'maker-2' },
+        ]
+        return { select: () => ({ in: () => ({ eq: () => Promise.resolve({ data: rows, error: null }) }) }) }
+      }
+      return defaultAdminFrom(t)
+    })
 
     const res = await makeApp().request('/joined')
 
     expect(res.status).toBe(200)
-    expect(await res.json()).toEqual([{ ...idea, photo_url: null }])
+    const body = (await res.json()) as Record<string, unknown>[]
+    expect(body).toEqual([{ ...idea, photo_url: null, joined_at, maker_count: 1, answer_count: 1 }])
+    // 108: author_id is read to count, never returned to a maker.
+    expect(body[0]).not.toHaveProperty('author_id')
     expect(mockFrom).toHaveBeenCalledWith('toy_idea_participants')
     // Explicit columns, not toy_ideas!inner(*) — IMPORTANT 3 of the
     // whole-branch review: a participant is never entitled to review_note,
     // which the author's own private rejection reasoning.
     expect(select).toHaveBeenCalledWith(
-      'toy_ideas!inner(id, title, summary, description, intended_use, primary_user, contact_prefs, status, tutorial_id, kind, answer_message_id, answered_at, photo_path, created_at, updated_at)'
+      'joined_at, toy_ideas!inner(id, title, summary, description, intended_use, primary_user, contact_prefs, status, tutorial_id, kind, answer_message_id, answered_at, photo_path, created_at, updated_at)'
     )
     expect(select.mock.calls[0][0]).not.toContain('review_note')
+    expect(select.mock.calls[0][0]).not.toContain('author_id')
     expect(eq).toHaveBeenCalledWith('profile_id', 'user-1')
     // 042: a removed row must not keep showing the caller a challenge they
     // were excluded from — this is the only unit coverage of that filter.
     expect(is).toHaveBeenCalledWith('removed_at', null)
     expect(order).toHaveBeenCalledWith('created_at', { foreignTable: 'toy_ideas', ascending: false })
-    expect(mockAdminFrom).not.toHaveBeenCalled()
+    // The admin client counts; it never reads profiles or writes anything here.
+    expect(mockAdminFrom.mock.calls.map((c) => c[0]).sort()).toEqual(['toy_idea_messages', 'toy_idea_participants'])
   })
 
   // Tests: a Postgres error surfaces as 500 rather than a swallowed empty list
