@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
 import type { PrinterWithOwner } from '@splat-connect/types'
 import { RequestPrintForm } from '@/components/request-print-form'
 import { browserApiClient } from '@/lib/browser-api-client'
@@ -42,6 +42,33 @@ describe('RequestPrintForm', () => {
         colour: 'Black',
         note: '',
       })
+    )
+  })
+
+  it('sends the customization answers, and a second tap clears one', async () => {
+    const post = vi.mocked(browserApiClient.post).mockResolvedValue({ id: 'tx-3' })
+    render(
+      <RequestPrintForm
+        tutorialId="t1"
+        tutorialTitle="Switch mount"
+        parts={[{ id: 'f1', filename: 'mount.stl', print_minutes: null, filament_grams: null, material: 'PETG' }]}
+        printers={[printer('a', 'Ann')]}
+        header={<h1>Request a print</h1>}
+      />
+    )
+    const answer = (question: string, option: string) =>
+      fireEvent.click(within(screen.getByRole('group', { name: question })).getByRole('button', { name: option }))
+    answer('Reach from seated', '20–40 cm')
+    answer('Mount needed', 'Floor stand')
+    answer('Tray thickness', '15 mm')
+    answer('Tray thickness', '15 mm')
+    fireEvent.click(screen.getByRole('checkbox', { name: /I understand/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Send request/ }))
+    await waitFor(() =>
+      expect(post).toHaveBeenCalledWith(
+        '/api/toy-transactions/print',
+        expect.objectContaining({ fit_notes: { reach: '20–40 cm', mount: 'Floor stand' } })
+      )
     )
   })
 

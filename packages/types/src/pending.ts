@@ -310,6 +310,7 @@ export const PENDING = {
     needs: "The guide author sees the fit answers for their guide [ui,api]",
   },
   'web-print-customization': {
+    shipped: true,
     title: "Customization questions",
     blurb: "Telling the printer about reach, switch size, mount and tray here is coming. The phone asks these now.",
     kind: "build",
