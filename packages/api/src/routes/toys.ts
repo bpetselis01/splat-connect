@@ -228,6 +228,7 @@ toys.post('/', async (c) => {
     return c.json({ error: 'You do not lead that organisation' }, 403)
   }
 
+  if (typeof body.name !== 'string' || !body.name.trim()) return c.json({ error: 'Give the toy a name.' }, 400)
   const quantity = orgId ? readQuantity(body.quantity) : 1
   if (quantity === null) return c.json({ error: 'Quantity must be a whole number, 1 or more' }, 400)
 
@@ -260,6 +261,9 @@ toys.patch('/:id', async (c) => {
   }
   if ('picks_mode' in body && body.picks_mode !== 'auto' && body.picks_mode !== 'picked') {
     return c.json({ error: 'Show picks automatically or hand-picked.' }, 400)
+  }
+  if ('name' in body && !(typeof body.name === 'string' && body.name.trim())) {
+    return c.json({ error: 'Give the toy a name.' }, 400)
   }
   const supabase = createUserClient(c.get('token'))
   const orgIds = await ledOrgIds(supabase, c.get('userId'))

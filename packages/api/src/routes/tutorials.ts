@@ -143,6 +143,7 @@ reviewer:reviewed_by(name), reviewed_for:reviewed_for_org_id(name)'
 
 tutorials.post('/', async (c) => {
   const body = await c.req.json()
+  if (typeof body.title !== 'string' || !body.title.trim()) return c.json({ error: 'Give the guide a title.' }, 400)
   if (!(await hasAcceptedContributorTerms(c.get('token'), c.get('userId')))) {
     return c.json({ error: 'You must accept the contributor terms before contributing' }, 403)
   }

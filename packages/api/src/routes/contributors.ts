@@ -66,6 +66,9 @@ contributors.patch('/me', async (c) => {
   ) {
     return c.json({ error: 'A postcode is four digits.' }, 400)
   }
+  if ('name' in patch && !(typeof patch.name === 'string' && patch.name.trim())) {
+    return c.json({ error: 'Add your name.' }, 400)
+  }
   if (typeof patch.bio === 'string' && patch.bio.length > 600) {
     return c.json({ error: 'bio must be 600 characters or fewer' }, 400)
   }
