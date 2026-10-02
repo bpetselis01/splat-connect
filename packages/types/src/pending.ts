@@ -546,6 +546,7 @@ export const PENDING = {
     shipped: true,
   },
   'my-challenges-meta': {
+    shipped: true,
     title: "Challenge details",
     blurb: "Dates and counts on your challenges are coming.",
     kind: "build",

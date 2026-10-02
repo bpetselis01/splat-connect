@@ -9,8 +9,9 @@ import { useCallback, useEffect, useState } from 'react'
 import { View, ScrollView, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import type { ToyIdea, ToyIdeaStatus } from '@splat-connect/types'
+import { plural, type MyIdea, type ToyIdeaStatus } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
+import { shortDate } from './challenge-status'
 import { theme } from '../../lib/theme'
 import { Screen } from '../ui/Screen'
 import { Button } from '../ui/Button'
@@ -29,7 +30,7 @@ const IDEA_LABEL: Record<ToyIdeaStatus, string> = {
   rejected: 'Not taken forward',
 }
 
-type Loaded = { items: ToyIdea[]; failed: boolean }
+type Loaded = { items: MyIdea[]; failed: boolean }
 const NOTHING: Loaded = { items: [], failed: false }
 
 /** The board's CSTAGE: an idea's lifecycle on the shared stage words. */
@@ -40,12 +41,31 @@ const IDEA_STAGE: Record<ToyIdeaStatus, StageKey> = {
   rejected: 'declined',
 }
 
-function IdeaRow({ idea, onOpen }: { idea: ToyIdea; onOpen: () => void }) {
-  // review_note is the point of the rejected state — an admin's reason for
-  // declining, never shown publicly, only to the author here. Absent only
-  // when an admin rejected without one, and then the summary stands.
-  // PENDING(my-challenges-meta): joined/submitted date, maker and post counts — /api/ideas/mine selects no counts.
-  const meta = idea.status === 'rejected' && idea.review_note ? idea.review_note : idea.summary
+/** The board's second line for each row (MB my_challenges). A rejected idea's
+ *  reason is read on the idea itself, never on the list. */
+export function ideaMeta(idea: MyIdea, joined: boolean): string {
+  const makers = idea.maker_count ?? 0
+  if (joined) {
+    const when = `Joined ${shortDate(idea.joined_at ?? idea.created_at)}`
+    return idea.status === 'graduated'
+      ? `${when} · being written up`
+      : `${when} · ${plural(makers, 'maker')} · ${plural(idea.answer_count ?? 0, 'post')}`
+  }
+  const submitted = `Your idea · submitted ${shortDate(idea.created_at)}`
+  switch (idea.status) {
+    case 'pending':
+      return `${submitted} · with an admin`
+    case 'challenge':
+      return `${submitted} · ${plural(makers, 'maker')} joined`
+    case 'graduated':
+      return `${submitted} · being written up`
+    case 'rejected':
+      return `Your idea · declined ${shortDate(idea.updated_at)}${idea.review_note ? ' — a reason is attached' : ''}`
+  }
+}
+
+function IdeaRow({ idea, joined, onOpen }: { idea: MyIdea; joined: boolean; onOpen: () => void }) {
+  const meta = ideaMeta(idea, joined)
 
   return (
     <View style={styles.rowWrap}>
@@ -69,8 +89,10 @@ function Group({
   empty,
   onOpen,
   stage,
+  joined,
 }: {
   stage: 'all' | StageKey
+  joined: boolean
   title: string
   loaded: Loaded
   loading: boolean
@@ -102,7 +124,7 @@ function Group({
         </EmptyState>
       ) : (
         shown.map((idea) => (
-          <IdeaRow key={idea.id} idea={idea} onOpen={() => onOpen(idea.id)} />
+          <IdeaRow key={idea.id} idea={idea} joined={joined} onOpen={() => onOpen(idea.id)} />
         ))
       )}
     </View>
@@ -123,7 +145,7 @@ export function MyChallengesScreen() {
     // being flaky must not blank the other section.
     const load = (path: string, set: (v: Loaded) => void) =>
       apiClient
-        .get<ToyIdea[]>(path)
+        .get<MyIdea[]>(path)
         .then((items) => {
           if (!ignore) set({ items, failed: false })
         })
@@ -186,6 +208,7 @@ export function MyChallengesScreen() {
           }}
           onOpen={openChallenge}
           stage={stage}
+          joined={false}
         />
 
         <Group
@@ -202,6 +225,7 @@ export function MyChallengesScreen() {
           }}
           onOpen={openChallenge}
           stage={stage}
+          joined
         />
       </ScrollView>
     </Screen>

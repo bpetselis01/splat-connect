@@ -89,10 +89,26 @@ describe('MyChallengesScreen', () => {
     expect(screen.queryByText('Published one')).toBeNull()
   })
 
-  it("shows a rejected idea's review note, which only its author ever sees", async () => {
-    respond([idea({ status: 'rejected', review_note: 'Too close to an existing guide.' })])
+  it('reads each row the way the board does', async () => {
+    respond(
+      [
+        idea({ id: 'm1', title: 'Bubbles', status: 'challenge', created_at: '2026-08-02T00:00:00Z', maker_count: 3, answer_count: 0 }),
+        idea({ id: 'm2', title: 'Light box', status: 'pending', created_at: '2026-08-28T00:00:00Z' }),
+        idea({ id: 'm3', title: 'Spoon', status: 'rejected', review_note: 'Too close to an existing guide.', updated_at: '2026-04-11T00:00:00Z' }),
+      ],
+      [
+        idea({ id: 'j1', title: 'Tray mount', author_id: 'other', status: 'challenge', joined_at: '2026-03-12T00:00:00Z', maker_count: 5, answer_count: 9 }),
+        idea({ id: 'j2', title: 'Quiet fan', author_id: 'other', status: 'graduated', joined_at: '2026-05-03T00:00:00Z' }),
+      ]
+    )
     render(<MyChallengesScreen />)
-    expect(await screen.findByText('Too close to an existing guide.')).toBeTruthy()
+    expect(await screen.findByText('Your idea · submitted 2 Aug · 3 makers joined')).toBeTruthy()
+    expect(screen.getByText('Your idea · submitted 28 Aug · with an admin')).toBeTruthy()
+    expect(screen.getByText('Your idea · declined 11 Apr — a reason is attached')).toBeTruthy()
+    expect(screen.getByText('Joined 12 Mar · 5 makers · 9 posts')).toBeTruthy()
+    expect(screen.getByText('Joined 3 May · being written up')).toBeTruthy()
+    // The reason itself is read on the idea, never on the list.
+    expect(screen.queryByText('Too close to an existing guide.')).toBeNull()
   })
 
   it('opens every idea of your own, published or not', async () => {

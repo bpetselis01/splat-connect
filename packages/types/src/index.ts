@@ -1011,6 +1011,10 @@ export interface ChallengeCounts {
   answer_count: number
 }
 
+/** An idea on an account's own lists (/api/ideas/mine and /joined): its
+ *  counts, and on a joined one, when the account joined. */
+export type MyIdea = ToyIdea & Partial<ChallengeCounts> & { joined_at?: string }
+
 /** One card on the public design-challenges list. */
 export type PublicChallenge = Pick<
   ToyIdea,

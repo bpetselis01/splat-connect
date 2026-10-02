@@ -5,6 +5,7 @@ import type { AuthVariables } from '../middleware/auth.js'
 import { profileName } from '../profile-name.js'
 import { toyPhotoUrl } from '../photo-storage.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
+import { challengeCounts } from '../challenge-counts.js'
 
 const toyIdeas = new Hono<{ Variables: AuthVariables }>()
 
@@ -115,7 +116,9 @@ toyIdeas.get('/mine', async (c) => {
     .order('created_at', { ascending: false })
 
   if (error) return c.json({ error: error.message }, 500)
-  return c.json((data ?? []).map(withPhotoUrl))
+  const ideas = data ?? []
+  const counts = await challengeCounts(ideas)
+  return c.json(ideas.map((i) => ({ ...withPhotoUrl(i), ...counts.get(i.id)! })))
 })
 
 /**
@@ -160,7 +163,7 @@ toyIdeas.get('/joined', async (c) => {
     .select(
       // No author_id (108): a participant is never the author, and an
       // anonymous author stays anonymous to the makers who joined.
-      'toy_ideas!inner(id, title, summary, description, intended_use, primary_user, contact_prefs, status, tutorial_id, kind, answer_message_id, answered_at, photo_path, created_at, updated_at)'
+      'joined_at, toy_ideas!inner(id, title, summary, description, intended_use, primary_user, contact_prefs, status, tutorial_id, kind, answer_message_id, answered_at, photo_path, created_at, updated_at)'
     )
     .eq('profile_id', c.get('userId'))
     // A removed row must not keep showing the caller a challenge they were
@@ -171,7 +174,22 @@ toyIdeas.get('/joined', async (c) => {
     .order('created_at', { foreignTable: 'toy_ideas', ascending: false })
 
   if (error) return c.json({ error: error.message }, 500)
-  return c.json((data ?? []).map((row: any) => withPhotoUrl(row.toy_ideas)))
+  const rows = (data ?? []) as unknown as Array<{ joined_at: string; toy_ideas: { id: string; photo_path: string | null } }>
+  // author_id is read here, through the admin client, only so the author's own
+  // replies are not counted as posts; it never reaches the response (108).
+  const ids = rows.map((r) => r.toy_ideas.id)
+  const { data: authors, error: authorsError } = ids.length
+    ? await createAdminClient().from('toy_ideas').select('id, author_id').in('id', ids)
+    : { data: [], error: null }
+  if (authorsError) return c.json({ error: authorsError.message }, 500)
+  const counts = await challengeCounts((authors ?? []) as { id: string; author_id: string }[])
+  return c.json(
+    rows.map((r) => ({
+      ...withPhotoUrl(r.toy_ideas),
+      joined_at: r.joined_at,
+      ...(counts.get(r.toy_ideas.id) ?? { maker_count: 0, answer_count: 0 }),
+    }))
+  )
 })
 
 /**
