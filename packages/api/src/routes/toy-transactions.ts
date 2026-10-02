@@ -1,7 +1,7 @@
 import { chunk } from '../chunk.js'
 import { Hono, type Context } from 'hono'
 import { randomInt, randomUUID } from 'node:crypto'
-import { needsAction, isOwnerSide, answerBy, printRequestExpired, shortDate, fitNotesProblem, partsTotalCents } from '@splat-connect/types'
+import { needsAction, isOwnerSide, answerBy, printRequestExpired, shortDate, fitNotesProblem, partsTotalCents, notificationBody } from '@splat-connect/types'
 import type { PrintJobFile, PrintSettings, BuildQuestion, BuildQuestions } from '@splat-connect/types'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
@@ -770,6 +770,9 @@ toyTransactions.post('/:id/messages', async (c) => {
       toy_transaction_id: c.req.param('id'),
       toy_name: await subjectName(admin, tx as any),
       actor_name: await profileName(admin, userId, 'A contributor'),
+      // 119: the message itself. Every recipient below is a party to this
+      // transaction (the requester, or the owner side via notifyOwnerSide).
+      body: notificationBody(body.body),
     }
     // A leader posting notifies the family; the family posting notifies every
     // leader, so whoever picks the thread up next has it in their inbox.
@@ -964,6 +967,8 @@ toyTransactions.post('/:id/reject', async (c) => {
     toy_transaction_id: tx.id,
     toy_name: await subjectName(admin, tx as any),
     actor_name: await ownerSideName(admin, tx as any, 'The owner'),
+    // 119: the decline reason, to the requester's row only.
+    body: notificationBody(reason),
   })
 
   return c.json(sanitizeCodes(updated, userId, ledOrgs))

@@ -8,7 +8,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Route } from 'next'
 import type { Notification, NotificationType } from '@splat-connect/types'
-import { copyFor } from '@splat-connect/types'
+import { copyFor, notificationSecondLine, shortDate } from '@splat-connect/types'
 import {
   ArrowCounterClockwise as Undo,
   BookOpen,
@@ -164,6 +164,7 @@ export function NotificationsList({
     <ul className="flex flex-col gap-2.5">
       {notifications.map((n) => {
         const inviteId = n.type === 'collaborator_invited' ? pendingInvitesByTutorial[n.tutorial_id!] : undefined
+        const secondLine = notificationSecondLine(n, shortDate)
         const [Glyph, tint] = ICON[n.type] ?? [Inbox, 'var(--b100)']
         return (
           // The whole card is the target, as the board draws it; the title
@@ -192,6 +193,7 @@ export function NotificationsList({
               >
                 {copyFor(n)}
               </button>
+              {secondLine && <p className="mt-0.5 text-sm leading-normal text-muted">{secondLine}</p>}
               {inviteId && (
                 <div className="relative z-10 mt-2 flex gap-2">
                   <button

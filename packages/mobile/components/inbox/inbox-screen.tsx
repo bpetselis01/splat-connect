@@ -23,7 +23,7 @@ import type {
   ToyTransactionSummary,
   TutorialCollaboratorInvite,
 } from '@splat-connect/types'
-import { copyFor, notificationBucket, subjectName } from '@splat-connect/types'
+import { copyFor, notificationBucket, notificationSecondLine, subjectName } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { threadHref } from '../../lib/builds'
@@ -288,7 +288,6 @@ export function InboxScreen({
     )
   }
 
-  // PENDING(notification-second-line): a body line under the title (e.g. the return reason) — Notification has no body field.
   function noteCard(n: Notification) {
     const tile = TYPE_TILE[n.type] ?? BUCKET_TILE[notificationBucket(n.type)]
     const inviteId =
@@ -298,6 +297,7 @@ export function InboxScreen({
         icon={tile.icon}
         tint={tile.tint}
         title={copyFor(n)}
+        body={notificationSecondLine(n, (iso) => new Date(iso).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }))}
         when={relativeTime(n.created_at)}
         unread={n.read_at === null}
         label={copyFor(n)}

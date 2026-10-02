@@ -39,8 +39,21 @@ describe('NotificationsList', () => {
         onDeclineInvite={vi.fn()}
       />
     )
-    fireEvent.click(screen.getByText(/Spoon Holder/))
+    fireEvent.click(screen.getByRole('button', { name: /Spoon Holder/ }))
     await waitFor(() => expect(onMarkRead).toHaveBeenCalledWith('n1'))
+  })
+
+  it('shows the reason as a second line (119)', () => {
+    render(
+      <NotificationsList
+        notifications={[baseNotif({ type: 'tutorial_rejected', body: 'Step 4 needs the wire named.' })]}
+        pendingInvitesByTutorial={{}}
+        onMarkRead={vi.fn()}
+        onAcceptInvite={vi.fn()}
+        onDeclineInvite={vi.fn()}
+      />
+    )
+    expect(screen.getByText('Step 4 needs the wire named.')).toBeInTheDocument()
   })
 
   it('renders Accept/Decline for a pending invite notification', async () => {
@@ -76,14 +89,14 @@ describe('NotificationsList', () => {
   it('shows toy-specific copy for a toy_request notification', () => {
     render(<NotificationsList notifications={[baseNotif({ type: 'toy_request', tutorial_id: null, tutorial_title: null, toy_transaction_id: 'tx-1', toy_name: 'Fire truck' })]} pendingInvitesByTutorial={{}} onMarkRead={vi.fn()} onAcceptInvite={vi.fn()} onDeclineInvite={vi.fn()} />)
     expect(screen.getByText(/requested/i)).toBeInTheDocument()
-    expect(screen.getByText(/fire truck/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /fire truck/i })).toBeInTheDocument()
   })
 
   it('navigates to the exchange thread when a toy notification is clicked', async () => {
     const onMarkRead = vi.fn().mockResolvedValue(undefined)
     render(<NotificationsList notifications={[baseNotif({ type: 'toy_accepted', tutorial_id: null, tutorial_title: null, toy_transaction_id: 'tx-1', toy_name: 'Fire truck' })]} pendingInvitesByTutorial={{}} onMarkRead={onMarkRead} onAcceptInvite={vi.fn()} onDeclineInvite={vi.fn()} />)
 
-    fireEvent.click(screen.getByText(/fire truck/i))
+    fireEvent.click(screen.getByRole('button', { name: /fire truck/i }))
 
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/dashboard/exchanges/tx-1'))
   })
@@ -135,7 +148,7 @@ describe('NotificationsList', () => {
           onDeclineInvite={vi.fn()}
         />
       )
-      fireEvent.click(screen.getByText(/fire truck/i))
+      fireEvent.click(screen.getByRole('button', { name: /fire truck/i }))
       await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/dashboard/exchanges/tx-9'))
     })
 
@@ -149,7 +162,7 @@ describe('NotificationsList', () => {
           onDeclineInvite={vi.fn()}
         />
       )
-      fireEvent.click(screen.getByText(/spoon holder/i))
+      fireEvent.click(screen.getByRole('button', { name: /spoon holder/i }))
       await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/tutorials/t9/edit'))
     })
 
@@ -199,7 +212,7 @@ describe('NotificationsList', () => {
             onDeclineInvite={vi.fn()}
           />
         )
-        fireEvent.click(screen.getByText(/spoon holder/i))
+        fireEvent.click(screen.getByRole('button', { name: /spoon holder/i }))
         await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/dashboard/organisation'))
       })
 
@@ -214,7 +227,7 @@ describe('NotificationsList', () => {
             onDeclineInvite={vi.fn()}
           />
         )
-        fireEvent.click(screen.getByText(/spoon holder/i))
+        fireEvent.click(screen.getByRole('button', { name: /spoon holder/i }))
         await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/admin/review/t9'))
       })
     }

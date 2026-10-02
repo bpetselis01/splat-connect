@@ -487,6 +487,7 @@ export const PENDING = {
     needs: "Toy photo in the exchange header [ui,api]",
   },
   'notification-second-line': {
+    shipped: true,
     title: "Notification details",
     blurb: "More detail on each notification is coming.",
     kind: "build",

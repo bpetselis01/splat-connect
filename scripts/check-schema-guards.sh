@@ -635,7 +635,20 @@ select * from (values
    (select pg_get_constraintdef(oid) like '%''exchange''%' and pg_get_constraintdef(oid) like '%''build''%'
       from pg_constraint
      where conname = 'member_reports_subject_kind_check'
-       and conrelid = 'public.member_reports'::regclass))
+       and conrelid = 'public.member_reports'::regclass)),
+
+  -- 119. A notification's body carries a private reason; a member update grant
+  -- on it would let a recipient rewrite what they were told.
+  ('119 notifications: members may update read_at only',
+   (select count(*) = 1 from information_schema.column_privileges
+      where table_schema = 'public' and table_name = 'notifications'
+        and grantee in ('anon', 'authenticated')
+        and privilege_type = 'UPDATE')),
+
+  ('119 notifications.body is capped at 300',
+   (select count(*) > 0 from pg_constraint
+      where conrelid = 'public.notifications'::regclass
+        and pg_get_constraintdef(oid) like '%length(body)%300%'))
 ) as t(guard, ok)
 where not ok;
 EOSQL

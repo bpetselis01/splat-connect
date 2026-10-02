@@ -1911,6 +1911,22 @@ export const COPY: Record<NotificationType, (n: Notification) => string> = {
 // fallback took the whole inbox down when the four build/print types landed.
 export const copyFor = (n: Notification): string => COPY[n.type]?.(n) ?? `${n.actor_name} updated something you're part of`
 
+/** A reason or message cut to fit 119's 300-character body: trimmed, blank →
+ *  null, too long → 299 characters and an ellipsis. Never refused. */
+export function notificationBody(text: string | null | undefined): string | null {
+  const t = (text ?? '').trim()
+  if (!t) return null
+  return t.length > 300 ? `${t.slice(0, 299)}…` : t
+}
+
+/** A card's second line: the body, else "{subject} · {date}" (MB notifications).
+ *  The date formatter is the caller's — mobile formats its own (Hermes). */
+export function notificationSecondLine(n: Notification, date: (iso: string) => string): string | null {
+  if (n.body) return n.body
+  const subject = n.tutorial_title || n.toy_name || null
+  return [subject, date(n.created_at)].filter(Boolean).join(' · ') || null
+}
+
 /** The types in one bucket, for a grouped update. */
 export function typesInBucket(bucket: NotificationBucket): NotificationType[] {
   return NOTIFICATION_TYPES.filter((t) => NOTIFICATION_BUCKET[t] === bucket)
@@ -1945,6 +1961,8 @@ export interface Notification {
    *  print or build carries toy_transaction_id instead. */
   profile_id?: string | null
   actor_name: string
+  /** 119: the reason or message, ≤ 300. */
+  body?: string | null
   read_at: string | null
   created_at: string
 }

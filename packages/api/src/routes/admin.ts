@@ -10,7 +10,7 @@ import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { ORG_COLUMNS } from './organizations.js'
 import { systemMessage, withPhotoUrl } from './toy-ideas.js'
 import type { AuthVariables } from '../middleware/auth.js'
-import type { TutorialStatus } from '@splat-connect/types'
+import { notificationBody, type TutorialStatus } from '@splat-connect/types'
 
 const admin = new Hono<{ Variables: AuthVariables }>()
 
@@ -72,6 +72,8 @@ admin.patch('/tutorials/:id/status', async (c) => {
           tutorial_id: c.req.param('id'),
           tutorial_title: data.title,
           actor_name: 'SPLAT',
+          // 119: the reason a guide came back, to its contributors only.
+          body: body.status === 'approved' ? null : notificationBody(body.rejection_note),
         }))
       )
     if (notifyError) console.error('[admin.status] notification insert failed:', notifyError.message)
@@ -316,6 +318,8 @@ admin.patch('/ideas/:id/status', async (c) => {
     type: status === 'challenge' ? 'idea_approved' : 'idea_rejected',
     idea_id: data.id,
     actor_name: 'SPLAT',
+    // 119: review_note is private to the author — their row alone carries it.
+    body: status === 'challenge' ? null : notificationBody(reviewNote),
   })
   if (notifyError) console.error('[admin.ideas.status] notification insert failed:', notifyError.message)
 
