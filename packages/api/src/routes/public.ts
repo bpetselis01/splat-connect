@@ -1281,7 +1281,6 @@ const NOTIFY_FEATURE_KEYS = new Set([
   'printing',
   'news',
   'events',
-  'map',
   'partners',
   'support',
 ])

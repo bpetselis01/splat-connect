@@ -113,18 +113,6 @@ test.describe('public navigation', () => {
     expect(page.url()).not.toContain('/login')
   })
 
-  /*
-   * Repointed from /get-involved/requests, which stopped being a scaffold with
-   * 057 — a build request is a real record now. The claim is about what an
-   * unbuilt destination does, so it needs one that is still unbuilt.
-   */
-  test('a scaffold page explains itself and offers to notify', async ({ page }) => {
-    await page.goto('/impact/map')
-    await expect(page.getByText('Not built yet', { exact: true })).toBeVisible()
-    await expect(page.getByLabel(/email address/i)).toBeVisible()
-    await expect(page.getByRole('link', { name: /guides/i }).first()).toBeVisible()
-  })
-
   test('the homepage reaches all seven sections', async ({ page }) => {
     // The launcher grid went with the Soft Pop rebuild of / (a23f5dad); the
     // header is what reaches every section now, two of them through More.

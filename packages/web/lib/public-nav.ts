@@ -293,8 +293,7 @@ export const PUBLIC_NAV: NavSection[] = [
       {
         href: '/impact/map',
         label: 'Deliveries map',        icon: 'map',
-        state: 'soon',
-        featureKey: 'map',
+        state: 'live',
         blurb: 'Where adapted toys have actually landed.',
       },
     ],

@@ -69,6 +69,6 @@ describe('POST /api/public/notify', () => {
     const email = `multi-${Date.now()}@example.com`
     seededEmails.push(email)
     expect((await post({ email, featureKey: 'news' })).status).toBe(200)
-    expect((await post({ email, featureKey: 'map' })).status).toBe(200)
+    expect((await post({ email, featureKey: 'events' })).status).toBe(200)
   })
 })

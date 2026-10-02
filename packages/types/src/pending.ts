@@ -165,6 +165,7 @@ export const PENDING = {
     needs: "Saved printable parts list and tile [ui,api]",
   },
   'impact-map': {
+    shipped: true,
     title: "Deliveries map",
     blurb: "Where adapted toys have actually landed.",
     kind: "build",
