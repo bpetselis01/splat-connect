@@ -37,7 +37,8 @@ test('pressing a chosen answer again clears it', async ({ page }) => {
 test('the wizard skips to the guides without creating a profile', async ({ page }) => {
   await signUpNewAccount(page, uniqueSignupEmail())
   await page.goto('/child')
-  for (let i = 0; i < 6; i++) await page.getByRole('button', { name: 'Skip', exact: true }).click()
+  for (let i = 0; i < 8; i++) await page.getByRole('button', { name: 'Skip', exact: true }).click()
+  await page.getByRole('button', { name: 'See the matches' }).click()
   await expect(page).toHaveURL(/\/guides/)
 
   await page.goto('/account')
