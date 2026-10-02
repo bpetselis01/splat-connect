@@ -1,33 +1,27 @@
 import { render, screen, fireEvent } from '@testing-library/react-native'
-import { ChoiceChips, NeedsChips } from '../../../../components/profile/fields'
-import { WORKING_HAND } from '@splat-connect/types'
+import { CHILD_MEASURES } from '@splat-connect/types'
+import { MeasureField } from '../../../../components/profile/fields'
 
-describe('ChoiceChips', () => {
-  it('marks the chosen option selected and the rest not', () => {
-    render(<ChoiceChips label="Which hand?" options={WORKING_HAND} value="right" onChange={jest.fn()} />)
-    expect(screen.getByText('Which hand?')).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Right', selected: true })).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Left', selected: false })).toBeTruthy()
+jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
+
+const hand = CHILD_MEASURES[0]
+
+describe('MeasureField', () => {
+  it('follows a stored value that changes while it is not being edited', () => {
+    const { rerender } = render(<MeasureField measure={hand} value={null} onChange={() => {}} />)
+    expect(screen.getByPlaceholderText('e.g. 62').props.value).toBe('')
+    rerender(<MeasureField measure={hand} value={62} onChange={() => {}} />)
+    expect(screen.getByPlaceholderText('e.g. 62').props.value).toBe('62')
   })
 
-  it('emits a new choice, and null when the chosen one is pressed again', () => {
-    const onChange = jest.fn()
-    render(<ChoiceChips options={WORKING_HAND} value="right" onChange={onChange} />)
-    fireEvent.press(screen.getByRole('button', { name: 'Left' }))
-    expect(onChange).toHaveBeenLastCalledWith('left')
-    fireEvent.press(screen.getByRole('button', { name: 'Right' }))
-    expect(onChange).toHaveBeenLastCalledWith(null)
-  })
-})
-
-describe('NeedsChips', () => {
-  it('adds and removes a need', () => {
-    const onChange = jest.fn()
-    render(<NeedsChips value={['quiet']} onChange={onChange} />)
-    expect(screen.getByRole('button', { name: 'Quiet toys only', selected: true })).toBeTruthy()
-    fireEvent.press(screen.getByRole('button', { name: 'Wipeable' }))
-    expect(onChange).toHaveBeenLastCalledWith(['quiet', 'wipeable'])
-    fireEvent.press(screen.getByRole('button', { name: 'Quiet toys only' }))
-    expect(onChange).toHaveBeenLastCalledWith([])
+  it('keeps what the parent is typing while focused', () => {
+    const { rerender } = render(<MeasureField measure={hand} value={62} onChange={() => {}} />)
+    const input = screen.getByPlaceholderText('e.g. 62')
+    fireEvent(input, 'focus')
+    fireEvent.changeText(input, '400')
+    // The wizard turns an out-of-range answer into null; the text must stay.
+    rerender(<MeasureField measure={hand} value={null} onChange={() => {}} />)
+    expect(screen.getByPlaceholderText('e.g. 62').props.value).toBe('400')
+    expect(screen.getByText('Between 20 and 250.')).toBeTruthy()
   })
 })

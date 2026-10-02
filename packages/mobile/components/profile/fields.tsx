@@ -3,7 +3,7 @@
 // onboarding wizard (child-wizard.tsx).
 // Selectable pills use the shared ui/Chip, not a local copy — a hand-rolled
 // pill here is how the profile screens drifted from the library filter's styling.
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { EVERYDAY_NEEDS, readMeasure, type ChildMeasure, type EverydayNeed } from '@splat-connect/types'
 import { theme } from '../../lib/theme'
@@ -75,6 +75,12 @@ export function MeasureField({ measure, value, onChange }: {
   onChange: (v: number | null | undefined) => void
 }) {
   const [text, setText] = useState(value != null ? String(value) : '')
+  // Follow the stored value when it changes from outside (a profile that
+  // loads late, another save) — but never under the parent's thumb.
+  const editing = useRef(false)
+  useEffect(() => {
+    if (!editing.current) setText(value != null ? String(value) : '')
+  }, [value])
   return (
     <TextField
       label={measure.label}
@@ -82,6 +88,8 @@ export function MeasureField({ measure, value, onChange }: {
       keyboardType="numeric"
       value={text}
       hint={readMeasure(measure, text) === undefined ? `Between ${measure.min} and ${measure.max}.` : undefined}
+      onFocus={() => { editing.current = true }}
+      onBlur={() => { editing.current = false }}
       onChangeText={(v) => {
         setText(v)
         onChange(readMeasure(measure, v))

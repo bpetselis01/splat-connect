@@ -183,6 +183,18 @@ describe('ChildEditor', () => {
     )
   })
 
+  it('accepts a decimal measurement, which readMeasure and the table both allow', async () => {
+    vi.mocked(browserApiClient.patch).mockResolvedValue(child())
+    render(<ChildEditor child={child({ id: 'c1' })} />)
+    const input = screen.getByLabelText('Hand width (mm)')
+    expect(input).toHaveAttribute('step', 'any')
+    fireEvent.change(input, { target: { value: '62.5' } })
+    expect(input).toBeValid()
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+    await screen.findByText('Saved')
+    expect(browserApiClient.patch).toHaveBeenCalledWith('/api/child-profiles/c1', expect.objectContaining({ palm_width_mm: 62.5 }))
+  })
+
   it('says the range of a measurement out of it and does not save', () => {
     render(<ChildEditor child={child({ id: 'c1' })} />)
     fireEvent.change(screen.getByLabelText('Hand width (mm)'), { target: { value: '10' } })

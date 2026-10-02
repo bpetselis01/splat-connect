@@ -281,6 +281,7 @@ export function ChildEditor({ child: initialChild, label }: { child: ChildProfil
                     id={`measure-${m.field}`}
                     type="number"
                     inputMode="decimal"
+                    step="any"
                     min={m.min}
                     max={m.max}
                     placeholder={m.placeholder}
