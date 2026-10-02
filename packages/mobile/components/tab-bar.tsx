@@ -16,7 +16,9 @@ import Animated, {
 import type { BottomTabBarProps } from 'expo-router/js-tabs'
 import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
+import { BlurView } from 'expo-blur'
 import { theme } from '../lib/theme'
+import { TAB_BAR_HEIGHT, TAB_BAR_OFFSET } from '../lib/tab-bar-layout'
 
 const HIDDEN = new Set(['explore'])
 
@@ -87,36 +89,39 @@ export function TabBar({ state, descriptors, navigation, insets, badges }: Props
           <SpringIcon focused={focused}>
             <Ionicons name={focused ? icon.on : icon.off} size={24} color={tint} />
           </SpringIcon>
-          <Text style={[styles.label, { color: tint }]}>{label}</Text>
+          <Text maxFontSizeMultiplier={1.3} style={[styles.label, { color: tint }]}>{label}</Text>
           {badge > 0 ? (
             <View style={styles.badge}>
-              <Text style={styles.badgeText}>{String(badge)}</Text>
+              <Text style={styles.badgeText}>{(badge > 99 ? '99+' : String(badge))}</Text>
             </View>
           ) : null}
         </Pressable>
       )
     })
 
-  // In flow, not floating over the content: the canvas shows around the pill
-  // and a list's last row never hides under it. Sits on the home indicator
-  // where there is one, 14px off the edge where there is not.
+  // Floats over the content so a list scrolls behind the glass; tab roots
+  // reserve tabBarClearance. Sits on the home indicator where there is one.
   return (
-    <View style={[styles.shelf, { paddingBottom: Math.max(insets.bottom, 14) }]}>
-      <View testID="tab-bar" style={styles.bar}>{items}</View>
+    <View testID="tab-bar" style={[styles.bar, { bottom: Math.max(insets.bottom, TAB_BAR_OFFSET) }]}>
+      <BlurView intensity={60} tint="light" style={StyleSheet.absoluteFill} />
+      {items}
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  shelf: { paddingHorizontal: 12, backgroundColor: theme.colors.background },
   bar: {
+    position: 'absolute',
+    left: 14,
+    right: 14,
     flexDirection: 'row',
-    height: 72,
+    height: TAB_BAR_HEIGHT,
     padding: 6,
     borderRadius: theme.radii.pill,
     borderWidth: theme.border.hairline,
     borderColor: theme.colors.border,
-    backgroundColor: 'rgba(255,255,255,0.92)',
+    overflow: 'hidden',
+    backgroundColor: 'rgba(255,255,255,0.62)',
     ...theme.shadow(3),
   },
   item: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 2, borderRadius: theme.radii.pill },

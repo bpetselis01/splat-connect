@@ -1,5 +1,7 @@
 // packages/mobile/tests/unit/components/home/library-screen.test.tsx
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
+import { ScrollView, FlatList, StyleSheet } from 'react-native'
+import { tabBarClearance } from '../../../../lib/tab-bar-layout'
 import { LibraryScreen } from '../../../../components/home/library-screen'
 
 // Ionicons loads its font asynchronously and setStates after the test ends;
@@ -59,7 +61,17 @@ beforeEach(() => {
   })
 })
 
+
+const clears = (nodes: { props: { contentContainerStyle?: unknown } }[]) =>
+  nodes.some((n) => (StyleSheet.flatten(n.props.contentContainerStyle as object) as { paddingBottom?: number } | undefined)?.paddingBottom === tabBarClearance(0))
+
 describe('LibraryScreen', () => {
+  it('pads its list so the last row clears the floating tab bar', async () => {
+    render(<LibraryScreen />)
+    await screen.findByText('Build a Robot Arm')
+    expect(clears(screen.UNSAFE_getAllByType(FlatList))).toBe(true)
+  })
+
   it('carries an organisation to print with into the guide it opens', async () => {
     mockParams = { printWith: 'o1' }
     render(<LibraryScreen />)

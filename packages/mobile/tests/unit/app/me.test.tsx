@@ -1,4 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
+import { ScrollView, FlatList, StyleSheet } from 'react-native'
+import { tabBarClearance } from '../../../lib/tab-bar-layout'
 import MeTab from '../../../app/(tabs)/me'
 
 // `mock`-prefixed: jest hoists the factory above this const, and only that prefix is allowed through.
@@ -158,4 +160,12 @@ it('explains each badge and its threshold from one row', () => {
   fireEvent.press(screen.getByLabelText('How badges are earned'))
   expect(screen.getByText('Have 10 approved guides published.')).toBeTruthy()
   expect(screen.getByText('Families log 100 builds from your published guides.')).toBeTruthy()
+})
+
+const clears = (nodes: { props: { contentContainerStyle?: unknown } }[]) =>
+  nodes.some((n) => (StyleSheet.flatten(n.props.contentContainerStyle as object) as { paddingBottom?: number } | undefined)?.paddingBottom === tabBarClearance(0))
+
+it('pads its scroll content so the last row clears the floating tab bar', () => {
+  render(<MeTab />)
+  expect(clears(screen.UNSAFE_getAllByType(ScrollView))).toBe(true)
 })

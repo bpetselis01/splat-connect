@@ -13,7 +13,9 @@ import Animated, { FadeInDown } from 'react-native-reanimated'
 import type { ToyWithOwner } from '@splat-connect/types'
 import { gradeOf, GRADES, toyHolderName, type GradeKey } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { theme } from '../../lib/theme'
+import { tabBarClearance } from '../../lib/tab-bar-layout'
 import { useSaves } from '../../lib/saves'
 import { Chip } from '../ui/Chip'
 import { TextField } from '../ui/TextField'
@@ -54,6 +56,7 @@ const TINTS = [
 ]
 
 export function ToyLibraryScreen() {
+  const insets = useSafeAreaInsets()
   const router = useRouter()
   const saves = useSaves()
   const { caps, loading: capsLoading } = useCapabilities()
@@ -134,7 +137,7 @@ export function ToyLibraryScreen() {
         // rows' entrance without remounting the header.
         keyExtractor={(t) => `${condition ?? 'any'}:${t.id}`}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={{ paddingBottom: tabBarClearance(insets.bottom) }}
         keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.ink} />
@@ -316,5 +319,4 @@ const styles = StyleSheet.create({
   count: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.muted },
   meta: { gap: 6, alignItems: 'flex-start' },
   retry: { marginTop: theme.spacing(5), alignSelf: 'center', paddingHorizontal: theme.spacing(8) },
-  listContent: { paddingBottom: theme.spacing(20) },
 })

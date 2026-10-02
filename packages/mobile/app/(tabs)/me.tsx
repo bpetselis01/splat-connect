@@ -11,7 +11,9 @@ import { apiClient } from '../../lib/api-client'
 import { useCapabilities } from '../../lib/capabilities'
 import { threadHref } from '../../lib/builds'
 import { myRoute } from '../../lib/my-routes'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { theme } from '../../lib/theme'
+import { tabBarClearance } from '../../lib/tab-bar-layout'
 import { Screen } from '../../components/ui/Screen'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { Mascot } from '../../components/ui/TabHero'
@@ -156,6 +158,7 @@ function MoneyPanel({ money, onOpen }: { money: MoneyMine; onOpen: (t: MoneyThre
 }
 
 export default function MeTab() {
+  const insets = useSafeAreaInsets()
   const { caps } = useCapabilities()
   const router = useRouter()
   const [money, setMoney] = useState<MoneyMine | null>(null)
@@ -203,7 +206,7 @@ export default function MeTab() {
   return (
     <Screen ownHeader>
       {caps ? (
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance(insets.bottom) }]} showsVerticalScrollIndicator={false}>
           <ScreenHeader title="My SPLAT" />
           <View style={styles.hero}>
             <Mascot pose="wave" size={72} />
@@ -260,7 +263,7 @@ export default function MeTab() {
 }
 
 const styles = StyleSheet.create({
-  content: { gap: 18, paddingBottom: theme.spacing(8) },
+  content: { gap: 18 },
   flex: { flex: 1, minWidth: 0 },
   pressed: { transform: [{ scale: 0.98 }] },
   eyebrow: {

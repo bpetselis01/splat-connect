@@ -11,7 +11,9 @@ import Animated, { FadeInDown } from 'react-native-reanimated'
 import type { Tutorial, TutorialOrg, TutorialKind, Difficulty } from '@splat-connect/types'
 import { KIND_LABEL, fitLine, formatBuildTime } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { theme } from '../../lib/theme'
+import { tabBarClearance } from '../../lib/tab-bar-layout'
 import { useSaves } from '../../lib/saves'
 import { useMyChildren } from '../../lib/my-children'
 import { useCapabilities } from '../../lib/capabilities'
@@ -88,6 +90,7 @@ function greetingFor(hour: number): string {
 }
 
 export function LibraryScreen() {
+  const insets = useSafeAreaInsets()
   const router = useRouter()
   const saves = useSaves()
   const { caps } = useCapabilities()
@@ -205,7 +208,7 @@ export function LibraryScreen() {
         // rows' entrance without remounting the header.
         keyExtractor={(t) => `${difficulty ?? 'all'}:${t.id}`}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={{ paddingBottom: tabBarClearance(insets.bottom) }}
         keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.ink} />
@@ -486,6 +489,4 @@ const styles = StyleSheet.create({
     color: theme.colors.muted,
   },
   retry: { marginTop: theme.spacing(5), alignSelf: 'center', paddingHorizontal: theme.spacing(8) },
-  // Clears the grid disc pinned bottom-right.
-  listContent: { paddingBottom: theme.spacing(20) },
 })

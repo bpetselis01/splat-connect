@@ -1,5 +1,8 @@
 import { render, screen, fireEvent } from '@testing-library/react-native'
+import { StyleSheet } from 'react-native'
+import { BlurView } from 'expo-blur'
 import { TabBar } from '../../../components/tab-bar'
+import { tabBarClearance } from '../../../lib/tab-bar-layout'
 
 const routes = ['guides', 'toy-library', 'explore', 'inbox', 'me'].map((name, i) => ({ key: `${name}-${i}`, name }))
 const titles: Record<string, string> = { guides: 'Guides', 'toy-library': 'Toys', explore: 'Explore', inbox: 'Inbox', me: 'Me' }
@@ -47,4 +50,25 @@ it('hides on a pushed screen and on Explore, and shows on a tab root', () => {
   screen.unmount()
   render(<TabBar {...at(1, 0)} badges={{}} />)
   expect(screen.getByText('Toys')).toBeTruthy()
+})
+
+it('floats: absolute, 14px margins, 66px tall, above the home indicator, over a blur', () => {
+  render(<TabBar {...props} insets={{ top: 0, bottom: 34, left: 0, right: 0 }} badges={{}} />)
+  const bar = StyleSheet.flatten(screen.getByTestId('tab-bar').props.style)
+  expect(bar).toMatchObject({ position: 'absolute', left: 14, right: 14, height: 66, bottom: 34 })
+  expect(screen.UNSAFE_getByType(BlurView)).toBeTruthy()
+  screen.unmount()
+  render(<TabBar {...props} badges={{}} />)
+  expect(StyleSheet.flatten(screen.getByTestId('tab-bar').props.style).bottom).toBe(14)
+})
+
+it('tabBarClearance is bar + offset + 12', () => {
+  expect(tabBarClearance(34)).toBe(66 + 34 + 12)
+  expect(tabBarClearance(0)).toBe(66 + 14 + 12)
+})
+
+it('caps label scaling at 1.3 and shows 99+ for a badge over 99', () => {
+  render(<TabBar {...props} badges={{ inbox: 150 }} />)
+  expect(screen.getByText('Guides').props.maxFontSizeMultiplier).toBe(1.3)
+  expect(screen.getByText('99+')).toBeTruthy()
 })

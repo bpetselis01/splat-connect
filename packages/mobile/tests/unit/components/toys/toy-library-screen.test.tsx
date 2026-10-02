@@ -1,5 +1,7 @@
 // packages/mobile/tests/unit/components/toys/toy-library-screen.test.tsx
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
+import { ScrollView, FlatList, StyleSheet } from 'react-native'
+import { tabBarClearance } from '../../../../lib/tab-bar-layout'
 import { ToyLibraryScreen } from '../../../../components/toys/toy-library-screen'
 
 // Ionicons loads its font asynchronously and setStates after the test ends;
@@ -241,4 +243,12 @@ describe('ToyLibraryScreen', () => {
     expect(screen.getByText('Bubble machine')).toBeTruthy()
     expect(mockPush).not.toHaveBeenCalledWith(expect.objectContaining({ pathname: '/not-built' }))
   })
+})
+
+const clears = (nodes: { props: { contentContainerStyle?: unknown } }[]) =>
+  nodes.some((n) => (StyleSheet.flatten(n.props.contentContainerStyle as object) as { paddingBottom?: number } | undefined)?.paddingBottom === tabBarClearance(0))
+
+it('pads its list so the last row clears the floating tab bar', () => {
+  render(<ToyLibraryScreen />)
+  expect(clears(screen.UNSAFE_getAllByType(FlatList))).toBe(true)
 })

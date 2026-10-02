@@ -1,5 +1,7 @@
 // packages/mobile/tests/unit/components/inbox/inbox-screen.test.tsx
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
+import { ScrollView, FlatList, StyleSheet } from 'react-native'
+import { tabBarClearance } from '../../../../lib/tab-bar-layout'
 import type { Notification } from '@splat-connect/types'
 import { InboxScreen } from '../../../../components/inbox/inbox-screen'
 
@@ -75,7 +77,21 @@ beforeEach(() => {
   mockPost.mockResolvedValue(null)
 })
 
+
+const clears = (nodes: { props: { contentContainerStyle?: unknown } }[]) =>
+  nodes.some((n) => (StyleSheet.flatten(n.props.contentContainerStyle as object) as { paddingBottom?: number } | undefined)?.paddingBottom === tabBarClearance(0))
+
 describe('InboxScreen', () => {
+  it('pads its list for the floating tab bar on the tab root, not on the pushed copy', async () => {
+    respond([notification({})])
+    const { unmount } = render(<InboxScreen showHeader />)
+    await waitFor(() => expect(clears(screen.UNSAFE_getAllByType(ScrollView))).toBe(true))
+    unmount()
+    render(<InboxScreen />)
+    await waitFor(() => expect(screen.getAllByText(/Switch car/).length).toBeGreaterThan(0))
+    expect(clears(screen.UNSAFE_getAllByType(ScrollView))).toBe(false)
+  })
+
   it('splits exchanges from notifications, and counts what is unread in each group', async () => {
     respond([
       notification({ id: 'n1', type: 'toy_request', toy_transaction_id: 'tx1' }),
