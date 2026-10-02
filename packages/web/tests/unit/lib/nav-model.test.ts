@@ -193,4 +193,23 @@ describe('buildNav', () => {
     expect(challenge.rows[2].href).toBe('/get-involved/makers-wanted')
     expect(hrefs(buildNav(caps()))).not.toContain('/get-involved/recycling')
   })
+
+  it('puts each count on its row, and none where the count is zero', () => {
+    const rows = buildNav(caps({ ledOrgs: [org] }), {
+      tutorials: 2, challenges: 1, makers: 3, printRequests: 1, printJobs: 0, review: 5, intake: 2, orgOrders: 1,
+    }).flatMap((g) => g.rows)
+    const at = (href: string) => rows.find((r) => r.href === href)?.count
+    expect(at('/dashboard/tutorials')).toBe(2)
+    expect(at('/dashboard/challenges')).toBe(1)
+    expect(at('/get-involved/makers-wanted')).toBe(3)
+    expect(at('/dashboard/print-requests')).toBe(1)
+    expect(at('/dashboard/printers')).toBeUndefined()
+    expect(at('/dashboard/organisation')).toBe(5)
+    expect(at('/dashboard/organisation/recycling')).toBe(2)
+    expect(at('/dashboard/organisation/orders')).toBe(1)
+  })
+
+  it('leaves every row uncounted when no counts are given', () => {
+    expect(buildNav(caps({ ledOrgs: [org] })).flatMap((g) => g.rows).filter((r) => r.count !== undefined).map((r) => r.href)).toEqual([])
+  })
 })

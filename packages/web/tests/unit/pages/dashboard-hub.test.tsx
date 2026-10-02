@@ -42,11 +42,18 @@ vi.mock('@/lib/capabilities', () => ({
 const money = vi.hoisted(() => ({
   current: { lines: [] as unknown[], total_cents: 0, exchange_count: 0 },
 }))
+const meCounts = vi.hoisted(() => ({
+  current: { tutorials: 0, challenges: 0, makers: 4, printRequests: 0, printJobs: 0, review: 0, intake: 0, orgOrders: 0 },
+}))
 vi.mock('@/lib/api-client', () => ({
   // Every other fetch is a list the hub counts badges from; empty by default.
   apiClient: {
     get: async (path: string) =>
-      path === '/api/exchange-costs/outstanding' ? money.current : [],
+      path === '/api/exchange-costs/outstanding'
+        ? money.current
+        : path === '/api/me/counts'
+          ? meCounts.current
+          : [],
   },
 }))
 // Real redirect() throws a special digest error rather than returning; the
@@ -319,5 +326,10 @@ describe('DashboardHub', () => {
     money.current = null as never
     render(await DashboardHub())
     expect(screen.getByRole('heading', { name: /Welcome back/ })).toBeInTheDocument()
+  })
+
+  it('badges Build for a family from the counts call', async () => {
+    render(await DashboardHub())
+    expect(screen.getByRole('link', { name: /Build for a family/ })).toHaveTextContent('4')
   })
 })

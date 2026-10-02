@@ -25,14 +25,7 @@ import { Handshake, Tray } from '@phosphor-icons/react/dist/ssr'
 import { apiClient } from '@/lib/api-client'
 import { MoneyPanel, type OutstandingLine } from '@/components/money-panel'
 import { SplatMascot } from '@/components/splat-mascot'
-import { isPast } from '@splat-connect/types'
-import type { OpenBuild } from '@/components/makers-wanted-board'
-import type {
-  PrinterWithOwner,
-  Tutorial,
-  TutorialOrg,
-  ToyTransactionSummary,
-} from '@splat-connect/types'
+import { isPast, type MeCounts } from '@splat-connect/types'
 
 export const metadata = {
   title: 'My SPLAT — SPLAT Connect',
@@ -132,45 +125,22 @@ export default async function DashboardHub() {
   }
 
   /*
-   * The board badges every card that has something behind it. Each number here
-   * comes from the same endpoint the card's own page reads, filtered the same
-   * way, and each fetch degrades to "no badge" rather than failing the hub.
-   * Leaders also pay for the tutorial list, which is what their review queue is
-   * counted from (app/dashboard/organisation/page.tsx has the same rule).
+   * The board badges every card that has something behind it. The counts come
+   * from one call (me-count-badges, GET /api/me/counts), shared with mobile's
+   * Me; each fetch degrades to "no badge" rather than failing the hub.
    */
-  const viewerId = caps.profile.id
-  const isLeader = caps.ledOrgs.length > 0
-  const [builds, events, transactions, printers, tutorials, logged] = await Promise.all([
-    apiClient.get<OpenBuild[]>('/api/toy-transactions/open-builds').catch(() => [] as OpenBuild[]),
+  const [meCounts, events, logged] = await Promise.all([
+    apiClient.get<MeCounts>('/api/me/counts').catch(() => undefined),
     apiClient
       .get<Array<{ event: { starts_at: string; ends_at: string | null } }>>('/api/events/mine')
       .catch(() => []),
-    apiClient
-      .get<ToyTransactionSummary[]>('/api/toy-transactions')
-      .catch(() => [] as ToyTransactionSummary[]),
-    apiClient.get<PrinterWithOwner[]>('/api/printers/mine').catch(() => [] as PrinterWithOwner[]),
-    isLeader
-      ? apiClient
-          .get<Array<Tutorial & { tutorial_orgs?: TutorialOrg[] }>>('/api/tutorials')
-          .catch(() => [])
-      : Promise.resolve([]),
     apiClient.get<{ builds: number }>('/api/me/builds').catch(() => ({ builds: 0 })),
   ])
-  const myPrinterIds = new Set(printers.filter((p) => p.owner_id === viewerId).map((p) => p.id))
-  const ledOrgIds = new Set(caps.ledOrgs.map((o) => o.id))
-  const toReview = tutorials.reduce(
-    (n, t) =>
-      n +
-      (t.tutorial_orgs ?? []).filter(
-        (row) =>
-          ledOrgIds.has(row.org_id) &&
-          (row.status === 'pending' || (row.status === 'accepted' && t.status === 'pending'))
-      ).length,
-    0
-  )
+  const toReview = meCounts?.review ?? 0
 
   /*
-   * Unread for the three cards that have an unread count. Deliberately NOT
+   * Unread for the cards that clear on read; everything else is the model's
+   * count from /api/me/counts. Deliberately NOT
    * caps.exchangeActions on My exchanges: that is a needs-action count, it
    * clears when you act rather than when you read, and it already has its own
    * button in the header. Two numbers meaning different things on one card is
@@ -179,30 +149,15 @@ export default async function DashboardHub() {
   const counts: Record<string, number> = {
     '/dashboard/tutorials': caps.unread.tutorials,
     '/dashboard/exchanges': caps.unread.exchanges,
-    [BUILD_HREF]: builds.length,
     '/dashboard/challenges': caps.unread.challenges,
-    '/dashboard/print-requests': transactions.filter(
-      (tx) =>
-        tx.type === 'print' &&
-        tx.requester_id === viewerId &&
-        (tx.status === 'requested' || tx.status === 'accepted')
-    ).length,
     '/dashboard/events': events.filter((r) => !isPast(r.event.starts_at, r.event.ends_at)).length,
-    '/dashboard/printers': transactions.filter(
-      (tx) =>
-        tx.type === 'print' &&
-        tx.status === 'requested' &&
-        tx.printer_id !== null &&
-        myPrinterIds.has(tx.printer_id)
-    ).length,
-    '/dashboard/organisation': toReview,
     '/notifications': caps.unread.total,
   }
 
   // Built from the same model as mobile's Me, so a destination cannot exist in
   // one and not the other. "Submit an idea" is a public route Design challenges
   // already leads to, so it is a line on that card instead.
-  const rows = buildNav(caps)
+  const rows = buildNav(caps, meCounts)
     .flatMap((g) => g.rows)
     .filter((row) => row.href !== '/get-involved/submit-an-idea')
 
@@ -212,7 +167,7 @@ export default async function DashboardHub() {
       label: LABELS[row.href] ?? row.label,
       state: row.soon ? ('soon' as const) : ('live' as const),
       blurb: blurbs[row.href] ?? '',
-      count: counts[row.href],
+      count: counts[row.href] ?? row.count,
       icon: ICONS[row.href] ?? row.icon,
       tint: TINTS[row.href],
     }))

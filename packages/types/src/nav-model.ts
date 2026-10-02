@@ -40,6 +40,18 @@ export type Capabilities = {
   exchangeActions: number
 }
 
+/** GET /api/me/counts (me-count-badges): what is waiting behind each row. */
+export type MeCounts = {
+  tutorials: number
+  challenges: number
+  makers: number
+  printRequests: number
+  printJobs: number
+  review: number
+  intake: number
+  orgOrders: number
+}
+
 export type IconName =
   | 'book'
   | 'toy'
@@ -85,14 +97,14 @@ export type NavRow = {
 
 export type NavGroup = { heading: string; rows: NavRow[] }
 
-export function buildNav(caps: Capabilities): NavGroup[] {
+export function buildNav(caps: Capabilities, counts?: MeCounts): NavGroup[] {
   const groups: NavGroup[] = [
     {
       heading: 'Add a tutorial',
       rows: [
         // Moved off /dashboard on 2026-08-21: that URL is the account section's
         // hub now, the way /learn and /get-involved are hubs for theirs.
-        { href: '/dashboard/tutorials', label: 'My tutorials', icon: 'file' },
+        { href: '/dashboard/tutorials', label: 'My tutorials', icon: 'file', count: counts?.tutorials || undefined },
       ],
     },
     {
@@ -114,14 +126,14 @@ export function buildNav(caps: Capabilities): NavGroup[] {
       rows: [
         // 'clipboard' rather than 'file' (My tutorials, above): this row lists
         // ideas submitted for review, not the guides someone authored.
-        { href: '/dashboard/challenges', label: 'Design challenges', icon: 'clipboard' },
+        { href: '/dashboard/challenges', label: 'Design challenges', icon: 'clipboard', count: counts?.challenges || undefined },
         // The one row that isn't an account destination — see lib/public-nav.ts's
         // PUBLIC_NAV. components/rail.tsx renders every row through BoundaryLink,
         // so this crosses to a full page load exactly like the header does.
         { href: '/get-involved/submit-an-idea', label: 'Submit an idea', icon: 'clipboard' },
         // me-rows-structure (decided 2026-09-30): the board's Me lists the open
         // build requests here. A public page, like Submit an idea.
-        { href: '/get-involved/makers-wanted', label: 'Makers wanted', icon: 'wrench' },
+        { href: '/get-involved/makers-wanted', label: 'Makers wanted', icon: 'wrench', count: counts?.makers || undefined },
       ],
     },
     {
@@ -131,8 +143,8 @@ export function buildNav(caps: Capabilities): NavGroup[] {
         // than one screen with a toggle: the parts you asked for and the jobs
         // on your own machine have different controls entirely, and merging
         // them would put "start the print" next to "collect it".
-        { href: '/dashboard/print-requests', label: 'My print requests', icon: 'clipboard' },
-        { href: '/dashboard/printers', label: 'Print for others', icon: 'orders' },
+        { href: '/dashboard/print-requests', label: 'My print requests', icon: 'clipboard', count: counts?.printRequests || undefined },
+        { href: '/dashboard/printers', label: 'Print for others', icon: 'orders', count: counts?.printJobs || undefined },
       ],
     },
     {
@@ -155,17 +167,17 @@ export function buildNav(caps: Capabilities): NavGroup[] {
       rows: [
         // "Review queue", not "Manage team": no page anywhere lets a leader
         // add a member or create an org. The label names what exists.
-        { href: '/dashboard/organisation', label: 'Review queue', icon: 'inbox' },
+        { href: '/dashboard/organisation', label: 'Review queue', icon: 'inbox', count: counts?.review || undefined },
         // A different question from the review queue above it: that one asks
         // "is this guide good enough to put our name on", this one asks "can we
         // do this". Merging them would put "approve and publish" next to "we
         // can print those".
         { href: '/dashboard/organisation/requests', label: 'Requests to you', icon: 'handshake' },
         { href: '/dashboard/organisation/toys', label: 'Toy inventory', icon: 'shelf' },
-        { href: '/dashboard/organisation/orders', label: 'Print orders', icon: 'orders' },
+        { href: '/dashboard/organisation/orders', label: 'Print orders', icon: 'orders', count: counts?.orgOrders || undefined },
         // 059. Three screens that had nowhere to read or write until then.
         { href: '/dashboard/organisation/publish', label: 'Events and stories', icon: 'clipboard' },
-        { href: '/dashboard/organisation/recycling', label: 'Recycling intake', icon: 'box' },
+        { href: '/dashboard/organisation/recycling', label: 'Recycling intake', icon: 'box', count: counts?.intake || undefined },
         { href: '/dashboard/organisation/profile', label: 'Organisation profile', icon: 'shield' },
         // 077. Families write to the organisation, not to a leader, so every
         // leader shares this one inbox.

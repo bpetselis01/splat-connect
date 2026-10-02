@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react'
 import { ScrollView, View, Text, Pressable, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import { buildNav, formatCents, type IconName as NavIcon, type MoneyMine, type MoneyThread, type ToyTransactionType } from '@splat-connect/types'
+import { buildNav, formatCents, type IconName as NavIcon, type MeCounts, type MoneyMine, type MoneyThread, type ToyTransactionType } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { useCapabilities } from '../../lib/capabilities'
 import { threadHref } from '../../lib/builds'
@@ -160,6 +160,7 @@ export default function MeTab() {
   const router = useRouter()
   const [money, setMoney] = useState<MoneyMine | null>(null)
   const [builds, setBuilds] = useState(0)
+  const [counts, setCounts] = useState<MeCounts | undefined>(undefined)
   const go = (href: string) => () => router.push(href as never)
 
   useEffect(() => {
@@ -176,6 +177,13 @@ export default function MeTab() {
       .get<{ builds: number }>('/api/me/builds')
       .then((b) => {
         if (!ignore) setBuilds(b.builds)
+      })
+      .catch(() => {})
+    // Badges only: a failed counts call leaves every row uncounted, not gone.
+    apiClient
+      .get<MeCounts>('/api/me/counts')
+      .then((n) => {
+        if (!ignore) setCounts(n)
       })
       .catch(() => {})
     return () => {
@@ -205,7 +213,7 @@ export default function MeTab() {
             </View>
           </View>
           {money ? <MoneyPanel money={money} onOpen={(t) => router.push(threadHref({ id: t.transaction_id, type: t.type }) as never)} /> : null}
-          {buildNav(caps).map((group) => (
+          {buildNav(caps, counts).map((group) => (
             <View key={group.heading} style={styles.group}>
               <Text style={styles.eyebrow}>{group.heading}</Text>
               {group.rows.map((row) => {
@@ -217,7 +225,6 @@ export default function MeTab() {
                     key={row.href}
                     label={row.label}
                     icon={GLYPH[row.icon] ?? 'ellipse-outline'}
-                    // PENDING(me-count-badges): counts for My tutorials, challenges, makers wanted, print requests, review queue, intake and print orders.
                     count={row.count}
                     soon={row.soon || to === '/me'}
                     onPress={go(to)}

@@ -22,7 +22,13 @@ const thread = (over: object = {}) => ({
 beforeEach(() => {
   jest.clearAllMocks()
   mockGet.mockImplementation((p: string) =>
-    Promise.resolve(p === '/api/me/builds' ? { builds: 3 } : { threads: [], owed_cents: 0, unsettled_count: 0 })
+    Promise.resolve(
+      p === '/api/me/builds'
+        ? { builds: 3 }
+        : p === '/api/me/counts'
+          ? { tutorials: 0, challenges: 0, makers: 7, printRequests: 0, printJobs: 0, review: 6, intake: 0, orgOrders: 0 }
+          : { threads: [], owed_cents: 0, unsettled_count: 0 }
+    )
   )
 })
 
@@ -124,4 +130,24 @@ it('opens Makers wanted from Give us a challenge, and Recycling from Explore', (
   fireEvent.press(screen.getByLabelText('Recycling'))
   expect(mockPush).toHaveBeenCalledWith('/explore/recycling')
   expect(screen.queryByLabelText('Recycle plastic')).toBeNull()
+})
+
+it('badges the rows from one counts call', async () => {
+  render(<MeTab />)
+  expect(await screen.findByText('7')).toBeTruthy()
+  expect(screen.getByText('6')).toBeTruthy()
+  expect(mockGet).toHaveBeenCalledWith('/api/me/counts')
+})
+
+// Review Focus 4: a failed counts call costs the badges, never the tab.
+it('renders every row uncounted when the counts call fails', async () => {
+  mockGet.mockImplementation((p: string) =>
+    p === '/api/me/counts' ? Promise.reject(new Error('500')) : Promise.resolve({ threads: [], owed_cents: 0, unsettled_count: 0 })
+  )
+  render(<MeTab />)
+  await waitFor(() => expect(mockGet).toHaveBeenCalledWith('/api/me/counts'))
+  expect(screen.getByLabelText('Makers wanted')).toBeTruthy()
+  expect(screen.getByLabelText('Review queue')).toBeTruthy()
+  expect(screen.queryByText('7')).toBeNull()
+  expect(screen.queryByText('6')).toBeNull()
 })

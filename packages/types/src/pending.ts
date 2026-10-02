@@ -508,6 +508,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["mobile", "api"],
     needs: "Counts on My tutorials, challenges, makers, print, review, intake, orders [ui,api]",
+    shipped: true,
   },
   'money-panel-detail': {
     shipped: true,
