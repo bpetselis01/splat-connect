@@ -1,6 +1,6 @@
 // Sign in: the mobile board's form with Apple/Google above it, Forgot
 // password on the label row, and an emailed code as the other way in.
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { StyleSheet, View } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useAuth, type AuthResult } from '../../lib/auth-context'
@@ -19,16 +19,23 @@ import {
   pill,
 } from '../../components/auth/parts'
 
-// PENDING(android-one-tap): on Android, try the saved-account sign-in from
-// lib/social-auth.tsx in an effect on mount; say nothing if it finds none.
 export default function SignInScreen() {
   const router = useRouter()
   const params = useLocalSearchParams<{ email?: string }>()
-  const { signIn, sendSignInCode, signInWithApple, signInWithGoogle } = useAuth()
+  const { signIn, sendSignInCode, signInWithApple, signInWithGoogle, signInWithSavedGoogle } = useAuth()
   const [email, setEmail] = useState(params.email ?? '')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<AuthProblem | null>(null)
   const [busy, setBusy] = useState<'password' | 'code' | null>(null)
+
+  // android-one-tap: one silent try with a saved Google account (Android only;
+  // social-auth decides). A session sends the (auth) layout on to Guides; no
+  // saved account, or a failure, shows nothing — nobody asked for this.
+  useEffect(() => {
+    void signInWithSavedGoogle()
+    // Once, on arrival.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   const address = email.trim()
 
   async function social(run: () => Promise<AuthResult>) {

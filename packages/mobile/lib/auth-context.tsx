@@ -4,7 +4,7 @@ import { AGREEMENT_VERSIONS, type Profile, type UserAgreement } from '@splat-con
 import { supabase } from './supabase'
 import { apiClient } from './api-client'
 import { problem, toProblem, type AuthProblem } from './auth-errors'
-import { appleCredential, googleIdToken, googleSignOut, type SocialResult } from './social-auth'
+import { appleCredential, googleIdToken, googleSavedIdToken, googleSignOut, type SocialResult } from './social-auth'
 
 /** `problem` null means it worked. `cancelled`: the person closed Apple's or
  *  Google's sheet — the screens show nothing for it. */
@@ -39,6 +39,8 @@ type AuthContextValue = {
    *  authorization code the API revokes the grant with. */
   reauthWithApple: () => Promise<AuthResult & { authorizationCode?: string }>
   signInWithGoogle: () => Promise<AuthResult>
+  /** android-one-tap: a saved Google account, silently. Null when there was none to offer. */
+  signInWithSavedGoogle: () => Promise<AuthResult | null>
   setProfileName: (name: string) => Promise<AuthResult>
   signOut: () => Promise<void>
   acceptContributorTerms: () => Promise<{ error: string | null }>
@@ -180,6 +182,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return withIdToken('google', await googleIdToken())
   }
 
+  async function signInWithSavedGoogle(): Promise<AuthResult | null> {
+    const token = await googleSavedIdToken()
+    return token ? withIdToken('google', { ok: token }) : null
+  }
+
   async function setProfileName(name: string) {
     try {
       const p = await apiClient.patch<Profile>('/api/contributors/me', { name })
@@ -213,7 +220,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         session, profile, loading, hasContributorTerms, pendingName, resetting,
         signIn, signUp, verifyCode, resendSignupCode, sendSignInCode, sendPasswordReset, resetPassword,
-        signInWithApple, reauthWithApple, signInWithGoogle, setProfileName, signOut, acceptContributorTerms,
+        signInWithApple, reauthWithApple, signInWithGoogle, signInWithSavedGoogle, setProfileName, signOut, acceptContributorTerms,
       }}
     >
       {children}

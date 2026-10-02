@@ -142,11 +142,12 @@ export const PENDING = {
     needs: "Printing basics hero photo",
   },
   'android-one-tap': {
+    shipped: true,
     title: "One-tap sign-in on Android",
     blurb: "Signing in with a saved Google account in one tap is coming with Google sign-in.",
     kind: "build",
     platforms: ["mobile"],
-    needs: "Saved-account sign-in on arriving at Sign in [ui]",
+    needs: "Built 2026-10-01 and unit-tested only (Controller ruling 5): Sign in tries a saved Google account on arrival on Android. It runs for real once google-sign-in is set up — the Google client ids in .env.local and a prebuild with the native module.",
   },
   'printing-parts': {
     shipped: true,

@@ -54,13 +54,16 @@ export async function appleCredential(): Promise<
 
 let configured = false
 
+function configureGoogle(G: typeof GoogleModule) {
+  if (configured) return
+  G.GoogleSignin.configure({ webClientId, iosClientId })
+  configured = true
+}
+
 export async function googleIdToken(): Promise<SocialResult<string>> {
   const G = google()
   try {
-    if (!configured) {
-      G.GoogleSignin.configure({ webClientId, iosClientId })
-      configured = true
-    }
+    configureGoogle(G)
     await G.GoogleSignin.hasPlayServices()
     const res = await G.GoogleSignin.signIn()
     if (!G.isSuccessResponse(res)) return { cancelled: true }
@@ -72,10 +75,26 @@ export async function googleIdToken(): Promise<SocialResult<string>> {
   }
 }
 
-// PENDING(android-one-tap): add a silent sign-in here — GoogleSignin.hasPreviousSignIn()
-// then signInSilently(), returning the idToken like googleIdToken() — for Sign in
-// to call on arrival (artifact step 3: "Credential Manager offers a saved
-// account in one tap").
+/**
+ * android-one-tap: on Android, the Google account this app signed in with
+ * before, without a sheet (the artifact's "Credential Manager offers a saved
+ * account in one tap"). Null whenever there is nothing to offer — not
+ * Android, Google not set up, no previous sign-in, no saved credential, or any
+ * error — because arriving at Sign in must never show a failure nobody asked for.
+ */
+export async function googleSavedIdToken(): Promise<string | null> {
+  if (Platform.OS !== 'android' || !googleAvailable()) return null
+  try {
+    const G = google()
+    configureGoogle(G)
+    if (!G.GoogleSignin.hasPreviousSignIn()) return null
+    const res = await G.GoogleSignin.signInSilently()
+    return res.type === 'success' ? (res.data.idToken ?? null) : null
+  } catch {
+    return null
+  }
+}
+
 export async function googleSignOut(): Promise<void> {
   if (!configured) return
   try {

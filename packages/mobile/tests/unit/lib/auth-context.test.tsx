@@ -19,11 +19,13 @@ const mockUpdateUser = jest.fn()
 const mockSignInWithIdToken = jest.fn()
 const mockAppleCredential = jest.fn()
 const mockGoogleIdToken = jest.fn()
+const mockGoogleSaved = jest.fn()
 const mockGoogleSignOut = jest.fn()
 
 jest.mock('../../../lib/social-auth', () => ({
   appleCredential: () => mockAppleCredential(),
   googleIdToken: () => mockGoogleIdToken(),
+  googleSavedIdToken: () => mockGoogleSaved(),
   googleSignOut: () => mockGoogleSignOut(),
 }))
 
@@ -202,6 +204,24 @@ describe('useAuth', () => {
     await waitFor(() => expect(result.current.loading).toBe(false))
     const res = await act(() => result.current.signInWithGoogle())
     expect(res.problem?.message).toBe("Couldn't sign in with Google. Try again, or use your email.")
+  })
+
+  it('signs a saved Google account straight in (android-one-tap)', async () => {
+    mockGoogleSaved.mockResolvedValue('saved-jwt')
+    mockSignInWithIdToken.mockResolvedValue({ error: null })
+    const { result } = renderHook(() => useAuth(), { wrapper })
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    const res = await act(() => result.current.signInWithSavedGoogle())
+    expect(res).toEqual({ problem: null })
+    expect(mockSignInWithIdToken).toHaveBeenCalledWith({ provider: 'google', token: 'saved-jwt' })
+  })
+
+  it('does nothing when there is no saved Google account', async () => {
+    mockGoogleSaved.mockResolvedValue(null)
+    const { result } = renderHook(() => useAuth(), { wrapper })
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(await act(() => result.current.signInWithSavedGoogle())).toBeNull()
+    expect(mockSignInWithIdToken).not.toHaveBeenCalled()
   })
 
   it('setProfileName saves through the API and updates the profile', async () => {

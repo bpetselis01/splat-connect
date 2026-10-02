@@ -46,6 +46,7 @@ const mockAuth = {
   resetPassword: jest.fn(),
   signInWithApple: jest.fn(),
   signInWithGoogle: jest.fn(),
+  signInWithSavedGoogle: jest.fn(() => Promise.resolve(null)),
   setProfileName: jest.fn(),
   acceptContributorTerms: jest.fn(),
   signOut: jest.fn(),
@@ -167,6 +168,13 @@ describe('Sign in', () => {
     fireEvent.press(screen.getByTestId('google-sign-in'))
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/not-built', params: { feature: 'google-sign-in' } })
     expect(mockAuth.signInWithGoogle).not.toHaveBeenCalled()
+  })
+
+  // android-one-tap: one silent try on arrival; nothing on screen either way.
+  it('tries the saved Google account once on arrival and says nothing', async () => {
+    render(<SignIn />)
+    await waitFor(() => expect(mockAuth.signInWithSavedGoogle).toHaveBeenCalledTimes(1))
+    expect(screen.queryByRole('alert')).toBeNull()
   })
 })
 

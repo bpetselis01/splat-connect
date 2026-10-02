@@ -16,6 +16,9 @@ export async function appleCredential(): Promise<
 export async function googleIdToken(): Promise<SocialResult<string>> {
   return { failed: 'Not available on web.' }
 }
+export async function googleSavedIdToken(): Promise<string | null> {
+  return null
+}
 export async function googleSignOut() {}
 export function AppleButton(_: { onPress: () => void; height: number }) {
   return null
