@@ -124,3 +124,9 @@ it('shows the family the printer’s record on the printer card', async () => {
   render(<PrintJobScreen id="j1" />)
   expect(await screen.findByText('4 jobs · ~6 days')).toBeTruthy()
 })
+
+it('puts the spent recycling credit on the family’s cost card', async () => {
+  serve(job({ status: 'accepted', owner_org_id: 'north', owner_id: null, print_credit_grams: 120 }))
+  render(<PrintJobScreen id="j1" />)
+  expect(await screen.findByText('Your recycling credit (120 g)')).toBeTruthy()
+})

@@ -240,6 +240,9 @@ export function PrintJobScreen({ id }: { id: string }) {
                   ? 'Free · parts only'
                   : `About ${formatCents(printer.filament_cents_per_g)} / g of filament, settled between you`}
               </Text>
+              {tx.print_credit_grams != null && tx.status !== 'requested' ? (
+                <Text style={styles.strong}>{`Your recycling credit (${tx.print_credit_grams} g)`}</Text>
+              ) : null}
               {printer?.rate_note ? <Text style={styles.body}>“{printer.rate_note}”</Text> : null}
               {costs && costs.total_cents > 0 ? (
                 <View style={styles.payBack}>

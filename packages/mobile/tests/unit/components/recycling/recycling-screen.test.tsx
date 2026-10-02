@@ -45,7 +45,7 @@ beforeEach(() => {
   jest.clearAllMocks()
   mockCaps = { profile: { id: 'me' }, ledOrgs: [] }
   mockGet.mockImplementation((path: string) =>
-    Promise.resolve(path === '/api/public/organizations' ? ORGS : path === '/api/organizations/recycling/mine' ? MINE : [])
+    Promise.resolve(path === '/api/public/organizations' ? ORGS : path === '/api/organizations/recycling/mine' ? MINE : path === '/api/organizations/recycling/credit' ? [{ org_id: 'north', org_name: 'Northside Therapy', grams: 1900, weighed_grams: 3200 }] : [])
   )
   mockPost.mockResolvedValue({})
 })
@@ -57,7 +57,7 @@ it('lists only active organisations that take plastic, and your drop-offs', asyn
   expect(screen.queryByText('Suspended Space')).toBeNull()
   expect(screen.getByText('3.2 kg PETG')).toBeTruthy()
   expect(screen.getByText('+2400 g')).toBeTruthy()
-  expect(screen.getByText('2,400 g of print credit issued')).toBeTruthy()
+  expect(screen.getByText('1,900 g of print credit unspent')).toBeTruthy()
 })
 
 it('books only after two kilos and all seven lines, sending the declaration version', async () => {

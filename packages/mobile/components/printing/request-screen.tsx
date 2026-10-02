@@ -14,7 +14,7 @@ import { useEffect, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import type { PrintDelivery, PrintFitNotes, PrinterWithOwner, StlFile, Tutorial } from '@splat-connect/types'
+import type { PrintDelivery, PrintFitNotes, PrinterWithOwner, RecyclingCredit, StlFile, Tutorial } from '@splat-connect/types'
 import { apiMessage, costRange, formatCents, PRINT_COLOURS, PRINT_FIT_QUESTIONS, printCostCents, printSettingsLine } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
@@ -26,7 +26,6 @@ import { TextField } from '../ui/TextField'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { ErrorRow } from '../ui/ErrorRow'
-import { PendingRow } from '../ui/pending'
 
 type Guide = Tutorial & { stl_files: StlFile[] }
 
@@ -50,6 +49,9 @@ export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; p
   const router = useRouter()
   const [guide, setGuide] = useState<Guide | null>(null)
   const [printers, setPrinters] = useState<PrinterWithOwner[]>([])
+  const [credit, setCredit] = useState<RecyclingCredit[]>([])
+  // The board ticks it for you: credit is what most families would want spent.
+  const [useCredit, setUseCredit] = useState(true)
   const [loadFailed, setLoadFailed] = useState(false)
   const [parts, setParts] = useState<string[]>([])
   const [qty, setQty] = useState<Record<string, number>>({})
@@ -65,11 +67,14 @@ export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; p
     Promise.all([
       apiClient.get<Guide>(`/api/public/tutorials/${guideId}`),
       apiClient.get<PrinterWithOwner[]>('/api/printers'),
+      // A failed credit read must not hide the form.
+      apiClient.get<RecyclingCredit[]>('/api/organizations/recycling/credit').catch(() => [] as RecyclingCredit[]),
     ])
-      .then(([g, p]) => {
+      .then(([g, p, c]) => {
         setGuide(g)
         setParts(g.stl_files.map((f) => f.id))
         setPrinters(p.filter((x) => printerIds.includes(x.id)))
+        setCredit(c)
       })
       .catch((err) => {
         console.error('[RequestPrintScreen] load failed:', err)
@@ -105,6 +110,19 @@ export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; p
   const agreeLine = about
     ? `I understand I cover the filament — about ${about} at the printer’s declared rate — and that I settle it with them, not through SPLAT.`
     : 'I understand I cover the filament, and that I settle it with the printer, not through SPLAT.'
+  // 114: credit at the first organisation asked where the family has some.
+  // Spent only if that organisation is the one that accepts; never more than
+  // the job's filament, which is unknown if any part has no grams.
+  const creditAt = printers.map((p) => credit.find((c) => c.org_id === p.owner_org_id)).find(Boolean) ?? null
+  const jobGrams = ticked.some((f) => f.filament_grams == null)
+    ? null
+    : ticked.reduce((n, f) => n + f.filament_grams! * f.quantity, 0)
+  const creditUse = creditAt && jobGrams ? Math.min(creditAt.grams, jobGrams) : 0
+  const creditOn = useCredit && creditUse > 0
+  const agreeText =
+    creditOn && creditUse >= jobGrams!
+      ? 'I understand my recycling credit covers the filament on this job, and that any balance is settled with the printer, not through SPLAT.'
+      : agreeLine
   const valid = ticked.length > 0 && printerIds.length > 0 && agree
 
   async function send() {
@@ -115,6 +133,7 @@ export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; p
         printer_ids: printerIds,
         tutorial_id: guideId,
         files: ticked.map((f) => ({ stl_file_id: f.id, quantity: f.quantity })),
+        ...(creditOn && creditAt ? { print_credit: { org_id: creditAt.org_id, grams: creditUse } } : {}),
         note: note.trim() || undefined,
         colour,
         delivery,
@@ -285,11 +304,31 @@ export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; p
           </Text>
         </View>
 
-        <PendingRow pending="recycling-credit-spending" label="Use my recycling credit" icon="leaf-outline" />
+        {creditUse > 0 && creditAt ? (
+          <Pressable
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: creditOn }}
+            accessibilityLabel={`Use ${creditUse} g of your credit at ${creditAt.org_name}`}
+            onPress={() => setUseCredit((v) => !v)}
+            style={[styles.part, creditOn && styles.agreeOn]}
+          >
+            <Ionicons
+              name={creditOn ? 'checkbox' : 'square-outline'}
+              size={24}
+              color={creditOn ? theme.colors.success : theme.colors.muted}
+            />
+            <View style={styles.flex}>
+              <Text style={styles.partName}>{`Use ${creditUse} g of your credit at ${creditAt.org_name}`}</Text>
+              <Text style={styles.meta}>
+                {`You have ${creditAt.grams} g from ${(creditAt.weighed_grams / 1000).toFixed(1)} kg you dropped off. Only deducted if they are the one who takes it.`}
+              </Text>
+            </View>
+          </Pressable>
+        ) : null}
         <Pressable
           accessibilityRole="checkbox"
           accessibilityState={{ checked: agree }}
-          accessibilityLabel={agreeLine}
+          accessibilityLabel={agreeText}
           onPress={() => setAgree((v) => !v)}
           style={[styles.part, agree && styles.agreeOn]}
         >
@@ -298,7 +337,7 @@ export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; p
             size={24}
             color={agree ? theme.colors.success : theme.colors.muted}
           />
-          <Text style={[styles.partName, styles.flex]}>{agreeLine}</Text>
+          <Text style={[styles.partName, styles.flex]}>{agreeText}</Text>
         </Pressable>
       </ScrollView>
 

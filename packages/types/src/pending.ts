@@ -713,6 +713,7 @@ export const PENDING = {
     needs: "Decided 2026-09-30: authors enter part dimensions per file; printers whose bed doesn't fit are hidden, with no chip. Future: read the dimensions from the STL on upload.",
   },
   'recycling-credit-spending': {
+    shipped: true,
     title: "Use your recycling credit",
     blurb: "Spending recycling credit on prints is coming.",
     kind: "build",

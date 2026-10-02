@@ -8,7 +8,7 @@
  * Web's rules, not new ones (components/dropoff-form.tsx): two kilos minimum,
  * one polymer from that organisation's own list, all seven declaration lines,
  * and the declaration's version sent so the API can refuse a stale wording.
- * Credit is shown as the organisation recorded it and never computed here —
+ * Unspent credit comes from the API's balance (114); nothing here computes it —
  * the "worth roughly" panel is labelled an estimate for that reason.
  * The photo is uploaded first (112) and the booking sends its path.
  *
@@ -20,7 +20,7 @@ import { View, Text, ScrollView, Pressable, TextInput, Image, StyleSheet } from 
 import { useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import * as ImagePicker from 'expo-image-picker'
-import type { RecyclingDropoff, RecyclingGives } from '@splat-connect/types'
+import type { RecyclingCredit, RecyclingDropoff, RecyclingGives } from '@splat-connect/types'
 import {
   DECLARATION_VERSION,
   MIN_DROPOFF_GRAMS,
@@ -89,6 +89,7 @@ export function RecyclingScreen() {
   const me = caps?.profile.id
   const [orgs, setOrgs] = useState<TakerOrg[]>([])
   const [drops, setDrops] = useState<RecyclingDropoff[]>([])
+  const [credit, setCredit] = useState<RecyclingCredit[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
   const [bookingAt, setBookingAt] = useState<TakerOrg | null>(null)
@@ -101,12 +102,14 @@ export function RecyclingScreen() {
       return
     }
     try {
-      const [all, mine] = await Promise.all([
+      const [all, mine, c] = await Promise.all([
         apiClient.get<TakerOrg[]>('/api/public/organizations'),
         apiClient.get<RecyclingDropoff[]>('/api/organizations/recycling/mine'),
+        apiClient.get<RecyclingCredit[]>('/api/organizations/recycling/credit'),
       ])
       setOrgs(all)
       setDrops(mine)
+      setCredit(c)
       setLoadError(false)
     } catch (err) {
       console.error('[RecyclingScreen] load failed:', err)
@@ -186,11 +189,8 @@ export function RecyclingScreen() {
               <Text style={styles.heroNumber}>
                 {(total.grams / 1000).toFixed(1)} <Text style={styles.heroUnit}>kg</Text>
               </Text>
-              {/* "Issued", not the board's "unspent": nothing records spending
-                  credit yet, so a remaining balance would be a guess. */}
-              {/* PENDING(recycling-credit-spending): "unspent" rather than "issued" once credit can be spent. */}
               <Text style={styles.heroSub}>
-                {total.credit.toLocaleString('en-AU')} g of print credit issued
+                {credit.reduce((n, c) => n + c.grams, 0).toLocaleString('en-AU')} g of print credit unspent
               </Text>
             </View>
 

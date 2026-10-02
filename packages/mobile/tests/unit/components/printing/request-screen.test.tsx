@@ -22,7 +22,9 @@ const PRINTER = { id: 'p1', owner_name: 'Tom B.', org_name: null, filament_cents
 beforeEach(() => {
   mockGet.mockReset()
   mockPost.mockReset()
-  mockGet.mockImplementation((path: string) => Promise.resolve(path === '/api/printers' ? [PRINTER] : GUIDE))
+  mockGet.mockImplementation((path: string) =>
+    Promise.resolve(path === '/api/printers' ? [PRINTER] : path === '/api/organizations/recycling/credit' ? [] : GUIDE)
+  )
 })
 
 it('sends a quantity per part', async () => {
@@ -52,7 +54,7 @@ it('names the estimate in the agree line, and falls back without a rate', async 
     Promise.resolve(
       path === '/api/printers'
         ? [{ ...PRINTER, filament_cents_per_g: 10 }, { id: 'p2', owner_name: 'Ann', org_name: null, filament_cents_per_g: 20 }]
-        : GUIDE
+        : path === '/api/organizations/recycling/credit' ? [] : GUIDE
     )
   )
   render(<RequestPrintScreen guideId="g1" printerIds={['p1', 'p2']} />)
@@ -76,7 +78,7 @@ it('keeps today’s line when one printer has a rate and another is free', async
     Promise.resolve(
       path === '/api/printers'
         ? [{ ...PRINTER, filament_cents_per_g: 10 }, { id: 'p2', owner_name: 'Ann', org_name: null, filament_cents_per_g: null }]
-        : GUIDE
+        : path === '/api/organizations/recycling/credit' ? [] : GUIDE
     )
   )
   render(<RequestPrintScreen guideId="g1" printerIds={['p1', 'p2']} />)
@@ -85,7 +87,7 @@ it('keeps today’s line when one printer has a rate and another is free', async
 
 it('multiplies by quantity', async () => {
   mockGet.mockImplementation((path: string) =>
-    Promise.resolve(path === '/api/printers' ? [{ ...PRINTER, filament_cents_per_g: 10 }] : GUIDE)
+    Promise.resolve(path === '/api/printers' ? [{ ...PRINTER, filament_cents_per_g: 10 }] : path === '/api/organizations/recycling/credit' ? [] : GUIDE)
   )
   render(<RequestPrintScreen guideId="g1" printerIds={['p1']} />)
   fireEvent.press(await screen.findByLabelText('More mount.stl'))
@@ -109,4 +111,68 @@ it('sends the customization answers that were picked', async () => {
       expect.objectContaining({ fit_notes: { reach: '20–40 cm', mount: 'Floor stand' } })
     )
   )
+})
+
+const ORG_PRINTER = { id: 'p2', owner_id: null, owner_org_id: 'north', owner_name: null, org_name: 'Northside Therapy', filament_cents_per_g: null }
+const serveCredit = (grams: number) =>
+  mockGet.mockImplementation((path: string) =>
+    Promise.resolve(
+      path === '/api/printers'
+        ? [ORG_PRINTER]
+        : path === '/api/organizations/recycling/credit'
+          ? [{ org_id: 'north', org_name: 'Northside Therapy', grams, weighed_grams: 3200 }]
+          : GUIDE
+    )
+  )
+
+it('offers credit at the organisation being asked, covering the job, and sends it', async () => {
+  serveCredit(900)
+  mockPost.mockResolvedValue({ id: 'j1' })
+  render(<RequestPrintScreen guideId="g1" printerIds={['p2']} />)
+  // 10 g + 4 g of parts.
+  expect(await screen.findByText('Use 14 g of your credit at Northside Therapy')).toBeTruthy()
+  expect(screen.getByText('You have 900 g from 3.2 kg you dropped off. Only deducted if they are the one who takes it.')).toBeTruthy()
+  expect(
+    screen.getByText('I understand my recycling credit covers the filament on this job, and that any balance is settled with the printer, not through SPLAT.')
+  ).toBeTruthy()
+  fireEvent.press(screen.getByRole('checkbox', { name: /I understand/ }))
+  fireEvent.press(screen.getByText('Send request'))
+  await waitFor(() =>
+    expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions/print', expect.objectContaining({ print_credit: { org_id: 'north', grams: 14 } }))
+  )
+})
+
+it('sends no credit when it is unticked, and the agree line goes back to the filament', async () => {
+  serveCredit(900)
+  mockPost.mockResolvedValue({ id: 'j1' })
+  render(<RequestPrintScreen guideId="g1" printerIds={['p2']} />)
+  fireEvent.press(await screen.findByRole('checkbox', { name: /Use 14 g of your credit/ }))
+  expect(screen.queryByText(/my recycling credit covers the filament/)).toBeNull()
+  fireEvent.press(screen.getByRole('checkbox', { name: /I understand/ }))
+  fireEvent.press(screen.getByText('Send request'))
+  await waitFor(() => expect(mockPost).toHaveBeenCalled())
+  expect(mockPost.mock.calls[0][1]).not.toHaveProperty('print_credit')
+})
+
+it('uses only what is left when the balance is smaller than the job', async () => {
+  serveCredit(5)
+  render(<RequestPrintScreen guideId="g1" printerIds={['p2']} />)
+  expect(await screen.findByText('Use 5 g of your credit at Northside Therapy')).toBeTruthy()
+  expect(screen.queryByText(/my recycling credit covers the filament/)).toBeNull()
+})
+
+it('offers nothing for a guide whose part has no grams, or a printer that is a person', async () => {
+  serveCredit(900)
+  mockGet.mockImplementation((path: string) =>
+    Promise.resolve(
+      path === '/api/printers'
+        ? [ORG_PRINTER, PRINTER]
+        : path === '/api/organizations/recycling/credit'
+          ? [{ org_id: 'north', org_name: 'Northside Therapy', grams: 900, weighed_grams: 3200 }]
+          : { ...GUIDE, stl_files: [{ ...GUIDE.stl_files[0], filament_grams: null }] }
+    )
+  )
+  render(<RequestPrintScreen guideId="g1" printerIds={['p2', 'p1']} />)
+  await screen.findByText('Send request')
+  expect(screen.queryByText(/of your credit at/)).toBeNull()
 })
