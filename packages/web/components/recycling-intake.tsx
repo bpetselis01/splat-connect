@@ -37,11 +37,11 @@ function NumberInput({
   onChange: (v: string) => void
 }) {
   return (
-    <label className="inline-flex flex-none items-center gap-2 text-sm font-extrabold text-ink">
+    <label className="inline-flex flex-none items-center gap-2 text-sm font-extrabold text-ink max-sm:gap-1.5">
       {label}
       <input
         aria-label={`${label}, in ${unit === 'kg' ? 'kilograms' : 'grams'}`}
-        className="h-[46px] w-[88px] rounded-field border-(length:--border-width) border-line bg-canvas px-3 font-mono text-[15px] font-bold tabular-nums text-ink"
+        className="h-[46px] w-[88px] max-sm:w-[72px] rounded-field border-(length:--border-width) border-line bg-canvas px-3 font-mono text-[15px] font-bold tabular-nums text-ink"
         inputMode={unit === 'kg' ? 'decimal' : 'numeric'}
         placeholder={unit === 'kg' ? '0.0' : '0'}
         value={value}
