@@ -52,7 +52,14 @@ export function challengeStats(c: ToyIdeaDetail, now: Date): { n: number; label:
 
 const longDate = (iso: string) =>
   new Date(iso).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })
-export const shortDate = (iso: string) => new Date(iso).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })
+// A fixed table, not toLocaleDateString's month: 'short' — en-AU ICU writes
+// "June"/"July"/"Sept" and Hermes may not; the board says "Jul".
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+/** "12 Jul" — the board's short date, in the device's time zone. */
+export const shortDate = (iso: string) => {
+  const d = new Date(iso)
+  return `${d.getDate()} ${MONTHS[d.getMonth()]}`
+}
 
 /**
  * The History timeline, oldest first. "Opened" has no date of its own — the

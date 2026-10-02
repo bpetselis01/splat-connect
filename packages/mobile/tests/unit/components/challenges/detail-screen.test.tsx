@@ -239,7 +239,7 @@ describe('ChallengeDetailScreen', () => {
     render(<ChallengeDetailScreen id="c1" />)
     expect(await screen.findByText('Somebody solved it')).toBeTruthy()
     expect(screen.getByText('Tom Beattie is writing this up')).toBeTruthy()
-    // shortDate, not a literal: Node's ICU says "Sept", Hermes may say "Sep".
+    // shortDate is a fixed month table ("2 Sep"), so either form reads the same.
     expect(
       screen.getByText(`Started ${shortDate('2026-09-02T03:00:00Z')}. The draft still goes through review before a family sees it.`)
     ).toBeTruthy()
