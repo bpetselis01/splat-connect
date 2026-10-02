@@ -829,6 +829,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["mobile", "api"],
     needs: "Decided 2026-09-30: drop both. Sound is everyday_needs 'quiet'; the switch follows from the four ability questions (079). Remove the references.",
+    shipped: true,
   },
   'wizard-steps': {
     title: "More profile questions",
