@@ -18,6 +18,12 @@ describe('notificationBody', () => {
     expect(out).toHaveLength(300)
     expect(out.endsWith('…')).toBe(true)
   })
+  it('never splits an emoji into a lone surrogate', () => {
+    const out = notificationBody('x'.repeat(298) + '😀'.repeat(5))!
+    expect(out).not.toMatch(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/)
+    expect(Array.from(out).length).toBeLessThanOrEqual(300)
+    expect(out).toBe('x'.repeat(298) + '😀…')
+  })
 })
 
 describe('notificationSecondLine', () => {

@@ -6,7 +6,6 @@ import { createUserClient } from '../../../src/supabase/client.js'
 
 let admin: TestUser
 let author: TestUser
-let maker: TestUser
 let tutorialId: string
 let ideaId: string
 
@@ -18,7 +17,7 @@ const as = (token: string, method: string, body: unknown) => ({
 
 beforeAll(async () => {
   const sb = adminClient()
-  ;[admin, author, maker] = await Promise.all([createTestUser('admin'), createTestUser(), createTestUser()])
+  ;[admin, author] = await Promise.all([createTestUser('admin'), createTestUser()])
   const { data: t } = await sb.from('tutorials').insert({ title: 'Fan', difficulty: 'easy', status: 'pending' }).select('id').single()
   tutorialId = t!.id
   await sb.from('tutorial_contributors').insert({ tutorial_id: tutorialId, profile_id: author.id, role: 'primary' })
@@ -28,10 +27,10 @@ beforeAll(async () => {
 
 afterAll(async () => {
   const sb = adminClient()
-  await sb.from('notifications').delete().in('recipient_id', [author.id, maker.id])
+  await sb.from('notifications').delete().eq('recipient_id', author.id)
   await sb.from('tutorials').delete().eq('id', tutorialId)
   await sb.from('toy_ideas').delete().eq('id', ideaId)
-  await Promise.all([admin, author, maker].map((u) => deleteTestUser(u.id)))
+  await Promise.all([admin, author].map((u) => deleteTestUser(u.id)))
 })
 
 describe('119 notification body', () => {

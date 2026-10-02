@@ -1912,11 +1912,14 @@ export const COPY: Record<NotificationType, (n: Notification) => string> = {
 export const copyFor = (n: Notification): string => COPY[n.type]?.(n) ?? `${n.actor_name} updated something you're part of`
 
 /** A reason or message cut to fit 119's 300-character body: trimmed, blank →
- *  null, too long → 299 characters and an ellipsis. Never refused. */
+ *  null, too long → 299 characters and an ellipsis. Never refused. Counted in
+ *  code points, as Postgres length() is: a UTF-16 cut can split an emoji into
+ *  a lone surrogate, which PostgREST refuses — dropping the notification. */
 export function notificationBody(text: string | null | undefined): string | null {
   const t = (text ?? '').trim()
   if (!t) return null
-  return t.length > 300 ? `${t.slice(0, 299)}…` : t
+  const cp = Array.from(t)
+  return cp.length > 300 ? `${cp.slice(0, 299).join('')}…` : t
 }
 
 /** A card's second line: the body, else "{subject} · {date}" (MB notifications).
