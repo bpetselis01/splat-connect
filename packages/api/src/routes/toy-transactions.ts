@@ -894,6 +894,17 @@ toyTransactions.post('/:id/accept', async (c) => {
     actor_name: await ownerSideName(admin, tx as any, 'The owner'),
   })
 
+  // 114: the RPC spent the credit, or found the balance short and accepted
+  // without it. Short is said in the thread, where both sides will see it.
+  if ((result as { credit?: string | null }).credit === 'short') {
+    await admin.from('toy_transaction_messages').insert({
+      transaction_id: tx.id,
+      sender_id: userId,
+      kind: 'system',
+      body: `There was not enough recycling credit left at ${await ownerSideName(admin, tx as any, 'the organisation')} for this job, so it was accepted without credit.`,
+    })
+  }
+
   if (tx.type === 'print' && tx.print_group_id) await withdrawPrintSiblings(admin, tx as any)
 
   // Rival requests are deliberately left open here. An accepted handoff can
@@ -1910,10 +1921,10 @@ toyTransactions.post('/print', async (c) => {
   // guide nobody in the conversation has read.
   const { data: files, error: filesError } = await admin
     .from('stl_files')
-    .select('id, tutorial_id')
+    .select('id, tutorial_id, filament_grams')
     .in('id', fileIds)
   if (filesError) return c.json({ error: filesError.message }, 500)
-  const rows = (files ?? []) as Array<{ id: string; tutorial_id: string }>
+  const rows = (files ?? []) as Array<{ id: string; tutorial_id: string; filament_grams: number | null }>
   if (rows.length !== fileIds.length || rows.some((f) => f.tutorial_id !== body.tutorial_id)) {
     return c.json({ error: 'Those parts do not all belong to that guide' }, 400)
   }
@@ -1924,6 +1935,37 @@ toyTransactions.post('/print', async (c) => {
     .eq('id', body.tutorial_id)
     .maybeSingle()
   if (!tutorial || tutorial.status !== 'approved') return c.json({ error: 'Not found' }, 404)
+
+  // 114: recycling credit, at one organisation being asked. Grams, never
+  // money; spent only if that organisation's printer is the one that accepts.
+  let credit: { org_id: string; grams: number } | null = null
+  if (body.print_credit != null) {
+    const asked = body.print_credit as { org_id?: unknown; grams?: unknown }
+    if (typeof asked.org_id !== 'string' || !Number.isInteger(asked.grams) || (asked.grams as number) < 1) {
+      return c.json({ error: 'Say how many grams of credit, in whole grams.' }, 400)
+    }
+    if (!printers!.some((p) => p.owner_org_id === asked.org_id)) {
+      return c.json({ error: 'Credit can only be spent at the organisation that issued it.' }, 400)
+    }
+    const needed = rows.some((f) => f.filament_grams == null)
+      ? null
+      : rows.reduce((n, f) => n + f.filament_grams! * (quantityOf.get(f.id) ?? 1), 0)
+    if (needed === null) {
+      return c.json({ error: 'This guide does not say how much filament its parts take, so credit cannot be used on it.' }, 400)
+    }
+    if ((asked.grams as number) > needed) {
+      return c.json({ error: `This job needs ${needed} g of filament, so that is the most credit it can use.` }, 400)
+    }
+    const { data: balance, error: balanceError } = await admin.rpc('recycling_credit_balance', {
+      p_profile: userId,
+      p_org: asked.org_id,
+    })
+    if (balanceError) return c.json({ error: balanceError.message }, 500)
+    if ((asked.grams as number) > (balance as number)) {
+      return c.json({ error: `You have ${balance} g of credit there.` }, 400)
+    }
+    credit = { org_id: asked.org_id, grams: asked.grams as number }
+  }
 
   const { data: existing, error: existingError } = await admin
     .from('toy_transactions')
@@ -1960,6 +2002,8 @@ toyTransactions.post('/print', async (c) => {
         requester_id: userId,
         owner_id: printer.owner_id,
         owner_org_id: printer.owner_org_id,
+        // Only this organisation's rows carry it, so any other printer accepting spends nothing.
+        print_credit_grams: credit && printer.owner_org_id === credit.org_id ? credit.grams : null,
       })
       .select()
       .single()

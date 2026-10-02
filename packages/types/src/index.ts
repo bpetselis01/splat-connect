@@ -435,6 +435,10 @@ export interface ToyTransaction {
   print_colour: string | null
   /** 'collect' or 'post' (074). Null on jobs sent before it existed. */
   print_delivery: PrintDelivery | null
+  /** 114. Recycling credit, in grams, at the organisation whose printer this
+   *  row is for. Set at request time only on that organisation's rows; after
+   *  accept it is what was actually spent (null if the balance ran short). */
+  print_credit_grams?: number | null
   /** 096. The family's Customization answers. Optional: fixtures predate it. */
   print_fit_notes?: PrintFitNotes | null
   printing_started_at: string | null
@@ -1568,6 +1572,15 @@ export function recyclingPerDrop(o: {
   const min = o.recycling_min_kg ?? MIN_DROPOFF_GRAMS / 1000
   const range = o.recycling_max_kg != null ? `${min}–${o.recycling_max_kg} kg` : `From ${min} kg`
   return [range, o.recycling_turnaround].filter(Boolean).join(' · ')
+}
+
+/** 114. A member's unspent credit at one organisation: grams, never money,
+ *  spendable only there. `weighed_grams` is what they dropped off there. */
+export interface RecyclingCredit {
+  org_id: string
+  org_name: string | null
+  grams: number
+  weighed_grams: number
 }
 
 export type DropoffStatus = 'booked' | 'received' | 'declined' | 'cancelled'

@@ -563,7 +563,23 @@ select * from (values
   -- 113. The API refuses max under min; this backs it.
   ('113 organizations_recycling_max_over_min check',
    (select count(*) = 1 from pg_constraint
-      where conname = 'organizations_recycling_max_over_min'))
+      where conname = 'organizations_recycling_max_over_min')),
+
+  -- 114. Without RLS any member could read every other member's spends.
+  ('114 recycling_credit_spends has RLS on',
+   (select relrowsecurity from pg_class where oid = 'public.recycling_credit_spends'::regclass)),
+
+  -- 114. Callable by a client, anyone could read anyone's balance.
+  ('114 recycling_credit_balance() is service-role only',
+   (select count(*) = 1 from pg_proc p
+      where p.proname = 'recycling_credit_balance' and p.pronamespace = 'public'::regnamespace
+        and not has_function_privilege('authenticated', p.oid, 'execute')
+        and not has_function_privilege('anon', p.oid, 'execute'))),
+
+  -- 114. An older body accepts the job and never spends the credit.
+  ('114 accept_toy_transaction() spends recycling credit',
+   (select count(*) = 1 from pg_proc
+      where proname = 'accept_toy_transaction' and prosrc like '%recycling_credit_spends%'))
 ) as t(guard, ok)
 where not ok;
 EOSQL

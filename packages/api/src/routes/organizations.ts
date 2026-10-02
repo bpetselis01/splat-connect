@@ -1507,6 +1507,44 @@ organizations.get('/recycling/mine', async (c) => {
   )
 })
 
+/**
+ * GET /api/organizations/recycling/credit — the caller's unspent credit at
+ * each organisation (114). The balance is recycling_credit_balance(), the one
+ * place the arithmetic lives; it is service-role only, so this asks it for
+ * the caller and nobody else. Organisations with nothing left are omitted.
+ */
+organizations.get('/recycling/credit', async (c) => {
+  const admin = createAdminClient()
+  const userId = c.get('userId')
+  const { data: drops, error } = await admin
+    .from('recycling_dropoffs')
+    .select('org_id, weighed_grams')
+    .eq('contributor_id', userId)
+    .eq('status', 'received')
+  if (error) return c.json({ error: error.message }, 500)
+  const weighed = new Map<string, number>()
+  for (const d of drops ?? []) weighed.set(d.org_id, (weighed.get(d.org_id) ?? 0) + (d.weighed_grams ?? 0))
+  const orgIds = [...weighed.keys()]
+  if (!orgIds.length) return c.json([])
+  const [{ data: orgs }, balances] = await Promise.all([
+    admin.from('organizations').select('id, name').in('id', orgIds),
+    Promise.all(orgIds.map((org) => admin.rpc('recycling_credit_balance', { p_profile: userId, p_org: org }))),
+  ])
+  const failed = balances.find((b) => b.error)
+  if (failed) return c.json({ error: failed.error!.message }, 500)
+  const name = new Map((orgs ?? []).map((o) => [o.id as string, o.name as string]))
+  return c.json(
+    orgIds
+      .map((org_id, i) => ({
+        org_id,
+        org_name: name.get(org_id) ?? null,
+        grams: (balances[i].data as number | null) ?? 0,
+        weighed_grams: weighed.get(org_id)!,
+      }))
+      .filter((r) => r.grams > 0)
+  )
+})
+
 organizations.get('/:id/recycling', async (c) => {
   const supabase = createUserClient(c.get('token'))
   const { data, error } = await supabase
