@@ -72,7 +72,14 @@ export default function VerifyScreen() {
       ) : (
         <TextLink testID="resend-code" label="Send a new code" onPress={resend} />
       )}
-      <Button label="Use a different email" variant="secondary" style={pill} onPress={() => router.back()} />
+      {type === 'email' ? (
+        <TextLink
+          label="Wrong email? Change it"
+          onPress={() => router.replace({ pathname: '/code-sign-in', params: { email } })}
+        />
+      ) : (
+        <Button label="Use a different email" variant="secondary" style={pill} onPress={() => router.back()} />
+      )}
       <Lede center>The link in the email works too. It opens SPLAT on the web.</Lede>
     </AuthStage>
   )

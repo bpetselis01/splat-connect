@@ -209,7 +209,7 @@ export function CodeInput({ value, onChange }: { value: string; onChange: (code:
         onChangeText={(t) => onChange(t.replace(/\D/g, '').slice(0, 6))}
         keyboardType="number-pad"
         textContentType="oneTimeCode"
-        autoComplete="one-time-code"
+        autoComplete="sms-otp"
         maxLength={6}
         autoFocus
         caretHidden

@@ -51,21 +51,44 @@ test('signing up with a registered email offers to sign in instead', async ({ pa
   await expect(page.getByLabel('Email', { exact: true })).toHaveValue(email)
 })
 
-test('an emailed code signs an existing account in', async ({ page }) => {
+test('an emailed code signs an existing account in, from the code screen with the keyboard up', async ({ page }) => {
   const { email } = await createContributor()
   await page.goto('/sign-in')
   await page.getByLabel('Email', { exact: true }).fill(email)
-  const sent = Date.now() - 1000
   await page.getByTestId('email-code').click()
+  await expect(page.getByText('Sign in with a code')).toBeVisible()
+  await expect(page.getByLabel('Email', { exact: true }).last()).toHaveValue(email)
+  await expect(page.getByLabel('Email', { exact: true }).last()).toBeFocused()
+  const sent = Date.now() - 1000
+  await page.getByRole('button', { name: 'Send code' }).click()
   await enterEmailedCode(page, email, sent)
   await expect(page).toHaveURL(/\/guides$/)
 })
 
+test('the code screen names an empty or malformed email before sending anything', async ({ page }) => {
+  await page.goto('/code-sign-in')
+  await page.getByRole('button', { name: 'Send code' }).click()
+  await expect(page.getByText('Add your email.')).toBeVisible()
+  await page.getByLabel('Email', { exact: true }).fill('not-an-email')
+  await page.getByRole('button', { name: 'Send code' }).click()
+  await expect(page.getByText("That email address doesn't look right.")).toBeVisible()
+})
+
 test('an emailed code never creates an account', async ({ page }) => {
-  await page.goto('/sign-in')
+  await page.goto('/code-sign-in')
   await page.getByLabel('Email', { exact: true }).fill(uniqueSignupEmail())
-  await page.getByTestId('email-code').click()
+  await page.getByRole('button', { name: 'Send code' }).click()
   await expect(page.getByText('No account uses that email.')).toBeVisible()
+})
+
+test('Wrong email? Change it returns to the code screen with the email', async ({ page }) => {
+  const { email } = await createContributor()
+  await page.goto('/code-sign-in')
+  await page.getByLabel('Email', { exact: true }).fill(email)
+  await page.getByRole('button', { name: 'Send code' }).click()
+  await expect(page.getByText('Check your email')).toBeVisible()
+  await page.getByText('Wrong email? Change it').click()
+  await expect(page.getByLabel('Email', { exact: true }).last()).toHaveValue(email)
 })
 
 test('forgot password resets it in the app, and the new one works', async ({ page }) => {

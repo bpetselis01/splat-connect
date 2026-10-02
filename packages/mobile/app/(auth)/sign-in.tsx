@@ -22,11 +22,11 @@ import {
 export default function SignInScreen() {
   const router = useRouter()
   const params = useLocalSearchParams<{ email?: string }>()
-  const { signIn, sendSignInCode, signInWithApple, signInWithGoogle, signInWithSavedGoogle } = useAuth()
+  const { signIn, signInWithApple, signInWithGoogle, signInWithSavedGoogle } = useAuth()
   const [email, setEmail] = useState(params.email ?? '')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<AuthProblem | null>(null)
-  const [busy, setBusy] = useState<'password' | 'code' | null>(null)
+  const [busy, setBusy] = useState(false)
 
   // android-one-tap: one silent try with a saved Google account (Android only;
   // social-auth decides). A session sends the (auth) layout on to Guides; no
@@ -47,25 +47,15 @@ export default function SignInScreen() {
   async function submit() {
     setError(null)
     if (!address || !password) return setError({ kind: 'other', message: 'Add your email and password.' })
-    setBusy('password')
+    setBusy(true)
     const res = await signIn(address, password)
-    setBusy(null)
+    setBusy(false)
     if (!res.problem) return
     if (res.problem.kind === 'unconfirmed') {
       return router.push({ pathname: '/verify', params: { email: address, type: 'signup' } })
     }
     if (res.problem.kind === 'credentials') setPassword('')
     setError(res.problem)
-  }
-
-  async function emailCode() {
-    setError(null)
-    if (!address) return setError({ kind: 'other', message: 'Type your email first, then we can send a code.' })
-    setBusy('code')
-    const res = await sendSignInCode(address)
-    setBusy(null)
-    if (res.problem) return setError(res.problem)
-    router.push({ pathname: '/verify', params: { email: address, type: 'email' } })
   }
 
   return (
@@ -106,14 +96,11 @@ export default function SignInScreen() {
             : undefined
         }
       />
-      <Button testID="auth-submit" label="Sign in" style={pill} onPress={submit} loading={busy === 'password'} />
-      <Button
+      <Button testID="auth-submit" label="Sign in" style={pill} onPress={submit} loading={busy} />
+      <TextLink
         testID="email-code"
-        label="Email me a sign-in code"
-        variant="secondary"
-        style={pill}
-        onPress={emailCode}
-        loading={busy === 'code'}
+        label="Email me a sign-in code ›"
+        onPress={() => router.push({ pathname: '/code-sign-in', params: { email: address } })}
       />
       <TextLink lead="New here?" label="Create an account" onPress={() => router.replace('/create-account')} />
     </AuthStage>
