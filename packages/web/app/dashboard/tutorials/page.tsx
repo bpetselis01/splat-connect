@@ -1,10 +1,9 @@
 import Link from 'next/link'
-import { Plus } from '@phosphor-icons/react/dist/ssr'
+import { BookOpen, Plus } from '@phosphor-icons/react/dist/ssr'
 import { apiClient } from '@/lib/api-client'
 import { requireCapabilities } from '@/lib/require-capabilities'
 import { DashboardTutorialCard, TUTORIAL_STAGE } from '@/components/dashboard-tutorial-card'
 import { StageFilter, StageNone, STAGE } from '@/components/stage'
-import { BookOpen } from '@/components/icons'
 import { BoundaryLink } from '@/components/boundary-link'
 import { MarkNotificationsRead } from '@/components/mark-notifications-read'
 import type { Tutorial, TutorialOrg } from '@splat-connect/types'
@@ -64,7 +63,7 @@ export default async function DashboardPage({
       {tutorials.length === 0 ? (
         <div className="flex flex-col items-center px-6 py-12 text-center">
           <span aria-hidden="true" className="empty-badge text-brand-dark">
-            <BookOpen className="h-8 w-8" />
+            <BookOpen className="h-8 w-8" weight="bold" aria-hidden="true" />
           </span>
           <p className="mt-4 font-bold text-ink">
             You haven&apos;t submitted any tutorials yet.

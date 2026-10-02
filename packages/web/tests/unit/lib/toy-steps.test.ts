@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getMissingToyFields, computeToyStepStatuses } from '@/lib/toy-steps'
+import { getMissingToyFields, computeToyStepStatuses } from '@splat-connect/types'
 import type { Toy } from '@splat-connect/types'
 
 function toy(overrides: Partial<Toy> = {}): Toy {

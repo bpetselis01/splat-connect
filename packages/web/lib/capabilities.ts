@@ -10,7 +10,7 @@
  * There is deliberately no `isParent`. It used to be derived from a
  * /api/child-profile fetch here, but nothing ever branched on it: "Child
  * profile" is an unconditional nav row (gating it would mean the only way to
- * create a child profile is to already have one — lib/nav-model.ts), and
+ * create a child profile is to already have one — types' nav-model.ts), and
  * app/dashboard/child fetches the row itself because it needs the body, not a
  * boolean. Since this call now runs in the root layout on every cold page
  * load, that unread fetch cost every signed-in page one HTTP round trip and
@@ -48,7 +48,7 @@ export const getCapabilities = cache(async (): Promise<Capabilities | null> => {
     apiClient.get<Organization[]>('/api/organizations/mine').catch(() => [] as Organization[]),
     apiClient
       .get<UnreadCounts>('/api/notifications/me/unread-counts')
-      .catch(() => ({ tutorials: 0, exchanges: 0, challenges: 0, total: 0 }) as UnreadCounts),
+      .catch(() => ({ tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 }) as UnreadCounts),
     apiClient
       .get<{ count: number }>('/api/toy-transactions/action-count')
       .then((r) => r.count)

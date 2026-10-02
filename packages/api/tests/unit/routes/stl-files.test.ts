@@ -103,8 +103,10 @@ describe('PATCH /:id/stl-files/:fileId', () => {
   })
   beforeEach(() => vi.clearAllMocks())
 
-  // Tests: the three settings (068) are written as integers or null, never as whatever was posted
-  // How:   a string minute count and an unlisted material both land as null; grams pass through
+  // Tests: the settings sent (068) are written as integers or null, never as whatever was posted,
+  //        and a setting not sent is not written at all
+  // How:   a string minute count and an unlisted material both land as null; grams pass through;
+  //        the absent sizes are left out of the update
   it('coerces the settings and returns the row', async () => {
     mockUpdateStl.mockReturnValue(chain({ data: { id: 'f1', filament_grams: 41 }, error: null }))
     const res = await makeApp().request('/tutorial-1/stl-files/f1', {
@@ -114,6 +116,18 @@ describe('PATCH /:id/stl-files/:fileId', () => {
     })
     expect(res.status).toBe(200)
     expect(mockUpdateStl).toHaveBeenCalledWith({ print_minutes: null, filament_grams: 41, material: null })
+  })
+
+  // Tests: a part size outside 1–2000 mm is refused with a sentence before the database sees it
+  it('refuses a size outside 1 to 2000 mm', async () => {
+    const res = await makeApp().request('/tutorial-1/stl-files/f1', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ size_x_mm: 0 }),
+    })
+    expect(res.status).toBe(400)
+    expect(await res.json()).toEqual({ error: 'Part sizes are whole millimetres, 1 to 2000.' })
+    expect(mockUpdateStl).not.toHaveBeenCalled()
   })
 
   // Tests: a value past the column check reads as a 400, not a 500

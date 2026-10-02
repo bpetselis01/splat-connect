@@ -12,6 +12,7 @@
 import { Hono, type Context } from 'hono'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import type { AuthVariables } from '../middleware/auth.js'
+import { profileName } from '../profile-name.js'
 
 const collaboratorInvites = new Hono<{ Variables: AuthVariables }>()
 
@@ -43,7 +44,7 @@ async function answer(c: Context<{ Variables: AuthVariables }>, status: 'accepte
   }
 
   const admin = createAdminClient()
-  const { data: invitee } = await admin.from('profiles').select('name').eq('id', data.invited_profile_id).single()
+  const inviteeName = await profileName(admin, data.invited_profile_id, 'A contributor')
   const { data: tutorial } = await admin.from('tutorials').select('title').eq('id', data.tutorial_id).single()
 
   if (status === 'accepted') {
@@ -74,7 +75,7 @@ async function answer(c: Context<{ Variables: AuthVariables }>, status: 'accepte
       type: status === 'accepted' ? 'collaborator_accepted' : 'collaborator_declined',
       tutorial_id: data.tutorial_id,
       tutorial_title: tutorial?.title ?? 'a tutorial',
-      actor_name: invitee?.name ?? 'A contributor',
+      actor_name: inviteeName,
     })
     if (notifyError) console.error('[collaborator-invites.answer] notification insert failed:', notifyError.message)
   }

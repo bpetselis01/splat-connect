@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
-import { createTestUser, deleteTestUser, type TestUser } from '../../helpers/auth.js'
+import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
+import { createProject } from '../../helpers/orgs.js'
 
 const BASE = 'http://localhost'
 
@@ -125,5 +126,36 @@ describe('toys CRUD', () => {
     const list = await req('/', owner.token)
     const listed = (await list.json()) as { id: string }[]
     expect(listed.find((t) => t.id === toy.id)).toBeUndefined()
+  })
+
+  it('takes the facts and an approved guide on create and update, and refuses bad ones', async () => {
+    const approved = await createProject({ authorId: owner.id, status: 'approved' })
+    const draft = await createProject({ authorId: owner.id, status: 'draft' })
+    try {
+      const create = await req('/', owner.token, {
+        method: 'POST',
+        body: JSON.stringify({
+          name: 'Plush dog', condition: 7, age_min: 2, age_max: 6,
+          batteries: ' 2 × AA, included ', switch_fitting: '3.5 mm mono socket', volume: 'Loud', tutorial_id: approved,
+        }),
+      })
+      expect(create.status).toBe(200)
+      const toy = (await create.json()) as Record<string, unknown>
+      expect(toy).toMatchObject({ age_min: 2, age_max: 6, batteries: '2 × AA, included', tutorial_id: approved })
+
+      const patch = (body: object) =>
+        req(`/${toy.id}`, owner.token, { method: 'PATCH', body: JSON.stringify(body) })
+
+      expect((await patch({ tutorial_id: draft })).status).toBe(400)
+      expect((await patch({ age_max: 1 })).status).toBe(400) // below the stored age_min
+      expect((await patch({ age_min: 19 })).status).toBe(400)
+      expect((await patch({ volume: 'x'.repeat(41) })).status).toBe(400)
+
+      const cleared = await patch({ volume: '  ', tutorial_id: null, age_min: null })
+      expect(cleared.status).toBe(200)
+      expect(await cleared.json()).toMatchObject({ volume: null, tutorial_id: null, age_min: null, age_max: 6 })
+    } finally {
+      await adminClient().from('tutorials').delete().in('id', [approved, draft])
+    }
   })
 })

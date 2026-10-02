@@ -3,22 +3,23 @@ import { Hono } from 'hono'
 import type { AuthVariables } from '../../../src/middleware/auth.js'
 
 const mockAdminFrom = vi.fn()
-const mockDeleteUser = vi.fn()
+const mockDeleteAccount = vi.fn()
 
 // --- Mock strategy ---
-// Replaces the Supabase admin client with two controlled fakes: mockAdminFrom for all
-// database table operations (tutorials, profiles), and mockDeleteUser for Supabase Auth's
-// admin.deleteUser call. makeApp() injects role directly so tests can switch between
+// Replaces the Supabase admin client with controlled fakes: mockAdminFrom for all
+// database table operations (tutorials, profiles). The account deletion itself
+// (083's delete_account, via account-deletion.ts) is mocked at its module. makeApp() injects role directly so tests can switch between
 // 'contributor' and 'admin' without running real authentication.
 vi.mock('../../../src/supabase/client.js', () => ({
   createAdminClient: () => ({
     from: mockAdminFrom,
-    auth: { admin: { deleteUser: mockDeleteUser } },
   }),
   // The contributor-account routes go through the user client; no case here
   // reaches one, this only keeps the module mock complete.
   createUserClient: () => ({ from: mockAdminFrom }),
 }))
+
+vi.mock('../../../src/account-deletion.js', () => ({ deleteAccount: mockDeleteAccount }))
 
 const { default: admin } = await import('../../../src/routes/admin.js')
 
@@ -35,6 +36,10 @@ function makeApp(role: 'contributor' | 'admin') {
 }
 
 describe('admin role guard', () => {
+  it('refuses the counts to a contributor', async () => {
+    expect((await makeApp('contributor').request('/counts')).status).toBe(403)
+  })
+
   // Tests: all admin routes return 403 when the requester has the 'contributor' role
   // How:   makeApp('contributor') sets role='contributor' in context; requests /tutorials; checks status 403
   // Chain: non-admins are blocked at the route level before any DB calls are made → the admin
@@ -170,15 +175,39 @@ describe('GET /contributors', () => {
 describe('DELETE /contributors/:id', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  // Tests: DELETE /contributors/:id is a general admin moderation tool that removes any
-  //        contributor account, calling Supabase Auth's deleteUser and returning 204
-  // How:   mockDeleteUser resolves with { error: null }; verifies it was called with the correct user ID
-  // Chain: the user is removed from Supabase Auth entirely → they can no longer log in or make
-  //        authenticated API requests, effectively revoking all access to the platform
-  it('deletes user and returns 204', async () => {
-    mockDeleteUser.mockResolvedValue({ error: null })
+  // Tests: the admin's delete runs the same 083 deletion a person runs on
+  //        themselves, never keeping their name on guides.
+  it('deletes the account through delete_account and returns 204', async () => {
+    mockDeleteAccount.mockResolvedValue({ result: { cancelled: [], toyIds: [], tutorialIds: [] } })
     const res = await makeApp('admin').request('/contributors/c-1', { method: 'DELETE' })
     expect(res.status).toBe(204)
-    expect(mockDeleteUser).toHaveBeenCalledWith('c-1')
+    expect(mockDeleteAccount).toHaveBeenCalledWith(expect.anything(), 'c-1', false)
+  })
+
+  it('refuses a sole organisation leader with 409', async () => {
+    mockDeleteAccount.mockResolvedValue({ error: 'sole_leader' })
+    const res = await makeApp('admin').request('/contributors/c-1', { method: 'DELETE' })
+    expect(res.status).toBe(409)
+  })
+})
+
+describe('GET /counts', () => {
+  // Tests: one failing count reads 0 and the other five still arrive; spot-check caps at the sample
+  // How:   a chainable fake whose result depends on the table; member_reports errors
+  // Chain: Review Focus 4 — one bad table must not take the admin dashboard down
+  it('reads a failing count as 0 and caps spot-check at the sample size', async () => {
+    const counts: Record<string, number> = { tutorials: 40, toy_ideas: 3, profiles: 57, organizations: 14 }
+    mockAdminFrom.mockImplementation((table: string) => {
+      const result = table === 'member_reports'
+        ? { count: null, error: { message: 'boom' } }
+        : { count: counts[table], error: null }
+      const q: any = new Proxy({}, {
+        get: (_, k) => (k === 'then' ? (ok: (v: unknown) => void) => ok(result) : () => q),
+      })
+      return q
+    })
+    const res = await makeApp('admin').request('/counts')
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ tutorials: 40, reports: 0, ideas: 3, spotCheck: 10, accounts: 57, organisations: 14 })
   })
 })

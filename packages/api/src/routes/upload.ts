@@ -5,7 +5,7 @@
  */
 import { Hono, type Context } from 'hono'
 import { MAX_PHOTOS } from '@splat-connect/types'
-import { createUserClient } from '../supabase/client.js'
+import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { ledOrgIds, ownedByCaller } from '../toy-access.js'
 import type { AuthVariables } from '../middleware/auth.js'
@@ -16,7 +16,7 @@ type Ctx = Context<{ Variables: AuthVariables }>
 type UserClient = ReturnType<typeof createUserClient>
 
 /** Mirrors 054's allowed_mime_types on both photo buckets. */
-const PHOTO_MIME = [
+export const PHOTO_MIME = [
   'image/jpeg',
   'image/png',
   'image/webp',
@@ -25,7 +25,7 @@ const PHOTO_MIME = [
   'image/heif',
 ]
 /** Mirrors 053's file_size_limit on both photo buckets. */
-const PHOTO_MAX_BYTES = 10 * 1024 * 1024
+export const PHOTO_MAX_BYTES = 10 * 1024 * 1024
 
 /** Reads the one shape every upload posts. Returns the 400 instead on a bad body. */
 async function readUpload(c: Ctx, idField: 'tutorialId' | 'toyId') {
@@ -110,8 +110,10 @@ upload.post('/stl', fileRoute('stl-files', (id, file) => `${id}/${file.name}`, t
 function photoRoute(
   bucket: string,
   idField: 'tutorialId' | 'toyId',
-  table: 'tutorials' | 'toys',
-  check: (c: Ctx, supabase: UserClient, id: string) => Promise<Response | null>
+  /** null: not part of a gallery, so no MAX_PHOTOS cap (a guide step's photo). */
+  table: 'tutorials' | 'toys' | null,
+  check: (c: Ctx, supabase: UserClient, id: string) => Promise<Response | null>,
+  folder = ''
 ) {
   return async (c: Ctx) => {
     const read = await readUpload(c, idField)
@@ -137,23 +139,25 @@ function photoRoute(
     // Counted before the upload rather than left to the PATCH that follows: a
     // sixth photo rejected after it had been written would leave the object
     // orphaned in the bucket with nothing pointing at it.
-    const { data: row, error: countError } = await supabase
-      .from(table)
-      .select('photo_urls')
-      .eq('id', id)
-      .maybeSingle()
-    if (countError) return c.json({ error: countError.message }, 500)
-    if ((row?.photo_urls?.length ?? 0) >= MAX_PHOTOS) {
-      return c.json(
-        { error: `${MAX_PHOTOS} photos is the limit. Remove one to add another.` },
-        400
-      )
+    if (table) {
+      const { data: row, error: countError } = await supabase
+        .from(table)
+        .select('photo_urls')
+        .eq('id', id)
+        .maybeSingle()
+      if (countError) return c.json({ error: countError.message }, 500)
+      if ((row?.photo_urls?.length ?? 0) >= MAX_PHOTOS) {
+        return c.json(
+          { error: `${MAX_PHOTOS} photos is the limit. Remove one to add another.` },
+          400
+        )
+      }
     }
 
     const ext = file.name.split('.').pop() ?? 'jpg'
     const { data, error } = await supabase.storage
       .from(bucket)
-      .upload(`${id}/${crypto.randomUUID()}.${ext}`, file, { upsert: false })
+      .upload(`${id}/${folder}${crypto.randomUUID()}.${ext}`, file, { upsert: false })
     if (error) return c.json({ error: error.message }, 500)
 
     const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(data.path)
@@ -161,7 +165,133 @@ function photoRoute(
   }
 }
 
+/**
+ * An organisation's logo or cover photo (076), written straight onto the row.
+ *
+ * SERVICE-ROLE for both the object and the column, after an explicit
+ * leadership check: the toy-photos bucket's storage policy scopes writes to a
+ * tutorial's contributors, and no organizations policy lets a leader update the
+ * row at all — the profile PATCH is service-role for the same reason. The
+ * object lives under orgs/<orgId>/ so it can never collide with a tutorial's
+ * folder, which is named by a tutorial id.
+ *
+ * The old picture is left in the bucket. ponytail: orphaned objects, one per
+ * replacement; sweep orgs/<id>/ against the row if storage ever matters.
+ */
+upload.post('/org-image', async (c) => {
+  const formData = await c.req.formData()
+  const file = formData.get('file') as File | null
+  const orgId = formData.get('orgId') as string | null
+  const slot = formData.get('slot')
+  if (!file || !orgId || (slot !== 'logo' && slot !== 'cover')) {
+    return c.json({ error: 'file, orgId and slot (logo or cover) are required' }, 400)
+  }
+  if (!PHOTO_MIME.includes(file.type)) {
+    return c.json({ error: 'Photos need to be a JPEG, PNG, WebP, AVIF or HEIC image.' }, 400)
+  }
+  if (file.size > PHOTO_MAX_BYTES) {
+    const mb = (file.size / 1024 / 1024).toFixed(1)
+    return c.json({ error: `That photo is ${mb} MB — photos need to be under 10 MB.` }, 400)
+  }
+
+  const admin = createAdminClient()
+  // 404 for a non-leader, as the org routes answer: a 403 would confirm the org.
+  if (!(await ledOrgIds(admin, c.get('userId'))).includes(orgId)) return c.json({ error: 'Not found' }, 404)
+
+  const ext = file.name.split('.').pop() ?? 'jpg'
+  const { data, error } = await admin.storage
+    .from('toy-photos')
+    .upload(`orgs/${orgId}/${slot}-${crypto.randomUUID()}.${ext}`, file, {
+      upsert: false,
+      contentType: file.type,
+    })
+  if (error) return c.json({ error: error.message }, 500)
+
+  const url = admin.storage.from('toy-photos').getPublicUrl(data.path).data.publicUrl
+  const { error: rowError } = await admin
+    .from('organizations')
+    .update({ [`${slot}_url`]: url, updated_at: new Date().toISOString() })
+    .eq('id', orgId)
+  if (rowError) return c.json({ error: rowError.message }, 500)
+  return c.json({ url })
+})
+
 upload.post('/photo', photoRoute('toy-photos', 'tutorialId', 'tutorials', checkTutorialContributor))
+// 080: a guide step's photo. Same bucket and checks as /photo, kept out of the
+// guide's five-photo gallery; PUT /api/tutorials/:id/steps stores the URL.
+upload.post('/step-photo', photoRoute('toy-photos', 'tutorialId', null, checkTutorialContributor, 'steps/'))
 upload.post('/toy-photo', photoRoute('toy-photos-library', 'toyId', 'toys', checkToyOwner))
+
+/**
+ * A photo on a community note (093). Anyone signed in may note a published
+ * guide, and toy-photos' storage policy (032) admits only its contributors,
+ * so the object is written with the service role after the guide is checked
+ * to be published — under <id>/notes/, the only path 093's CHECK admits.
+ * ponytail: deleting a note leaves its photo; sweep <id>/notes/ against
+ * tutorial_notes if storage ever matters.
+ */
+upload.post('/note-photo', async (c) => {
+  const read = await readUpload(c, 'tutorialId')
+  if (read instanceof Response) return read
+  const [file, id] = read
+  if (!PHOTO_MIME.includes(file.type)) return c.json({ error: 'Photos need to be a JPEG, PNG, WebP, AVIF or HEIC image.' }, 400)
+  if (file.size > PHOTO_MAX_BYTES) return c.json({ error: 'Photos need to be under 10 MB.' }, 400)
+  const admin = createAdminClient()
+  const { data: guide } = await admin.from('tutorials').select('status').eq('id', id).maybeSingle()
+  if (guide?.status !== 'approved') return c.json({ error: 'Not found' }, 404)
+  // The service role writes anywhere, so nothing in the path comes from the
+  // client's filename: the extension is the checked MIME type's.
+  const ext = file.type === 'image/jpeg' ? 'jpg' : file.type.slice('image/'.length)
+  const { data, error } = await admin.storage.from('toy-photos').upload(`${id}/notes/${crypto.randomUUID()}.${ext}`, file, { upsert: false })
+  if (error) return c.json({ error: error.message }, 500)
+  // The path is what POST /notes takes (093 stores paths); the url is for the preview.
+  return c.json({ path: data.path, url: admin.storage.from('toy-photos').getPublicUrl(data.path).data.publicUrl })
+})
+
+/**
+ * The photo on Submit an idea (106). Chosen before the idea exists, so it is
+ * filed under its author, ideas/<author>/<uuid>.<ext>, and the service role
+ * writes it: toy-photos' storage policy (032) admits only a tutorial's
+ * contributors. POST /api/ideas and 106's CHECK take a path from the caller's
+ * own folder only.
+ * ponytail: a never-sent idea leaves its photo; sweep ideas/ against
+ * toy_ideas.photo_path if storage ever matters.
+ */
+upload.post('/idea-photo', async (c) => {
+  const file = (await c.req.formData()).get('file') as File | null
+  if (!file) return c.json({ error: 'file is required' }, 400)
+  if (!PHOTO_MIME.includes(file.type)) return c.json({ error: 'Photos need to be a JPEG, PNG, WebP, AVIF or HEIC image.' }, 400)
+  if (file.size > PHOTO_MAX_BYTES) return c.json({ error: 'Photos need to be under 10 MB.' }, 400)
+  const admin = createAdminClient()
+  // Nothing in the path comes from the client's filename (note-photo's rule).
+  const ext = file.type === 'image/jpeg' ? 'jpg' : file.type.slice('image/'.length)
+  const { data, error } = await admin.storage
+    .from('toy-photos')
+    .upload(`ideas/${c.get('userId')}/${crypto.randomUUID()}.${ext}`, file, { upsert: false })
+  if (error) return c.json({ error: error.message }, 500)
+  return c.json({ path: data.path, url: admin.storage.from('toy-photos').getPublicUrl(data.path).data.publicUrl })
+})
+
+/**
+ * The photo of the sorted plastic on a drop-off booking (112). Written with
+ * the caller's own client, so 112's storage policy is what admits it: only
+ * under <their id>/. The extension is the checked MIME type's, never the
+ * filename's. The path is what POST /organizations/:id/recycling takes; the
+ * url is signed because the bucket is private, and is for the preview only.
+ * ponytail: a photo picked and never booked stays in the bucket; sweep <uid>/
+ * against recycling_dropoffs if storage ever matters.
+ */
+upload.post('/recycling-photo', async (c) => {
+  const file = (await c.req.formData()).get('file')
+  if (!(file instanceof File)) return c.json({ error: 'file is required' }, 400)
+  if (!PHOTO_MIME.includes(file.type)) return c.json({ error: 'Photos need to be a JPEG, PNG, WebP, AVIF or HEIC image.' }, 400)
+  if (file.size > PHOTO_MAX_BYTES) return c.json({ error: 'Photos need to be under 10 MB.' }, 400)
+  const ext = file.type === 'image/jpeg' ? 'jpg' : file.type.slice('image/'.length)
+  const bucket = createUserClient(c.get('token')).storage.from('recycling-photos')
+  const { data, error } = await bucket.upload(`${c.get('userId')}/${crypto.randomUUID()}.${ext}`, file, { upsert: false })
+  if (error) return c.json({ error: error.message }, 500)
+  const { data: signed } = await bucket.createSignedUrl(data.path, 3600)
+  return c.json({ path: data.path, url: signed?.signedUrl ?? null })
+})
 
 export default upload

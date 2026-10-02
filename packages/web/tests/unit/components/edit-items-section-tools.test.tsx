@@ -148,4 +148,26 @@ describe('EditItemsSection (tools)', () => {
       expect(screen.getByText('Failed to save, please try again')).toBeInTheDocument()
     )
   })
+
+  // Review Focus 1: the list is replaced on every save, so a field this editor
+  // does not show would be erased by an edit it does.
+  it('keeps a tool’s note and get-by through an edit of its name', async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined)
+    render(
+      <EditItemsSection
+        noun="tool"
+        withNotes
+        initialItems={[{ ...mockTools[0], note: 'Borrow from a library', get_by: 'borrow' }]}
+        onSave={onSave}
+      />
+    )
+    fireEvent.click(screen.getByText('Edit'))
+    fireEvent.change(screen.getByDisplayValue('Soldering Iron'), { target: { value: 'Soldering iron, 40 W' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await waitFor(() =>
+      expect(onSave).toHaveBeenCalledWith([
+        { name: 'Soldering iron, 40 W', is_optional: false, buy_links: [], note: 'Borrow from a library', get_by: 'borrow' },
+      ])
+    )
+  })
 })

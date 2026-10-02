@@ -321,6 +321,14 @@ select * from (values
         and cmd in ('INSERT', 'UPDATE', 'DELETE', 'ALL')
         and coalesce(with_check, qual) not like '%is_admin%')),
 
+  -- 122. Only the API writes site content (service role): the admin PUT checks
+  -- the Learn outline and refuses a stale save, and a write policy would let
+  -- an admin's own session skip both.
+  ('122 site_content has no write policy',
+   (select count(*) = 0 from pg_policies
+      where tablename = 'site_content'
+        and cmd in ('INSERT', 'UPDATE', 'DELETE', 'ALL'))),
+
   -- 070. Same failure shape as 046: the API selects these columns by name, so a
   -- ledger that reads as applied with the columns absent makes every printer
   -- list and add a 500.
@@ -352,9 +360,10 @@ select * from (values
   -- 073. The 046 shape: packages/api/src/routes/toys.ts selects both by name,
   -- so a ledger that reads as applied with the functions absent makes every
   -- owner's My Toys a 500. They must also be DEFINER — as invoker, RLS hides
-  -- every row from the counter and the function reads as 0 for everyone.
+  -- every row from the counter and the function reads as 0 for everyone. 3 since
+  -- 105: save_count(toys), save_count(toy_ideas) and request_count(toys).
   ('073 save_count() and request_count() exist and are security definer',
-   (select count(*) = 2 from pg_proc
+   (select count(*) = 3 from pg_proc
       where pronamespace = 'public'::regnamespace
         and proname in ('save_count', 'request_count')
         and prosecdef)),
@@ -377,7 +386,312 @@ select * from (values
   ('069 org_events carries cost_cents and cost_note',
    (select count(*) = 2 from information_schema.columns
       where table_schema = 'public' and table_name = 'org_events'
-        and column_name in ('cost_cents', 'cost_note')))
+        and column_name in ('cost_cents', 'cost_note'))),
+
+  -- 083. delete_account() is SECURITY DEFINER and takes any user id: callable
+  -- by a signed-in client, it would delete any account. Only the API (service
+  -- role) may run it, after checking who is asking.
+  ('083 delete_account() exists and is service-role only',
+   (select count(*) = 1 from pg_proc p
+      where p.proname = 'delete_account' and p.pronamespace = 'public'::regnamespace
+        and not has_function_privilege('authenticated', p.oid, 'execute')
+        and not has_function_privilege('anon', p.oid, 'execute'))),
+
+  -- 083. Every repointed row references this profile; without it the
+  -- deletion fails on its first foreign key.
+  ('083 Deleted member placeholder profile',
+   (select count(*) = 1 from public.profiles where id = '00000000-0000-4000-8000-00000000dead')),
+
+  -- 084. step_down_as_leader() takes any org and user id; callable by a
+  -- client, anyone could remove any leader.
+  ('084 step_down_as_leader() is service-role only',
+   (select count(*) = 1 from pg_proc p
+      where p.proname = 'step_down_as_leader' and p.pronamespace = 'public'::regnamespace
+        and not has_function_privilege('authenticated', p.oid, 'execute')
+        and not has_function_privilege('anon', p.oid, 'execute'))),
+
+  -- 084. Invites carry who invited whom; with RLS off, the anon key reads them all.
+  ('084 org_leader_invites has RLS on',
+   (select relrowsecurity from pg_class where oid = 'public.org_leader_invites'::regclass)),
+
+  -- 090. Notes on unpublished drafts are the author's until approval.
+  ('090 tutorial_safety_notes has RLS on',
+   (select relrowsecurity from pg_class where oid = 'public.tutorial_safety_notes'::regclass)),
+
+  -- 091. Who built which guide says which accounts have a disabled child.
+  ('091 tutorial_builds has RLS on',
+   (select relrowsecurity from pg_class where oid = 'public.tutorial_builds'::regclass)),
+
+  -- 092. Callable by a client, anyone could inflate any guide's views.
+  ('092 bump_tutorial_view() is service-role only',
+   (select count(*) = 1 from pg_proc p
+      where p.proname = 'bump_tutorial_view' and p.pronamespace = 'public'::regnamespace
+        and not has_function_privilege('authenticated', p.oid, 'execute')
+        and not has_function_privilege('anon', p.oid, 'execute'))),
+
+  -- 093. Without RLS any client could pin, edit or delete anyone's note.
+  ('093 tutorial_notes has RLS on',
+   (select relrowsecurity from pg_class where oid = 'public.tutorial_notes'::regclass)),
+
+  -- 093. The 046 shape: a narrower constraint drops every note notification silently.
+  ('093 notifications_type_check permits tutorial_noted',
+   (select count(*) = 1 from pg_constraint
+      where conname = 'notifications_type_check'
+        and pg_get_constraintdef(oid) like '%tutorial_noted%')),
+
+  -- 095. Both DEFINER (as invoker RLS hides every job and the record reads 0);
+  -- the raw aggregate takes any printer ids, so only the API may call it.
+  -- printers.ts selects printer_stats by name: absent, every printer list 500s.
+  ('095 print_job_stats() is service-role only and printer_stats() is definer',
+   (select count(*) = 2 from pg_proc p
+      where p.pronamespace = 'public'::regnamespace and p.prosecdef
+        and ((p.proname = 'print_job_stats'
+              and not has_function_privilege('authenticated', p.oid, 'execute')
+              and not has_function_privilege('anon', p.oid, 'execute'))
+          or p.proname = 'printer_stats'))),
+
+  -- 098. Test prints decide who is Verified; with RLS off, any key could pass its own.
+  ('098 printer_test_prints has RLS on',
+   (select relrowsecurity from pg_class where oid = 'public.printer_test_prints'::regclass)),
+
+  -- 098. Invoker RLS hides every test print and job, so verified() reads false
+  -- for everyone; printers.ts selects it by name, so absent every list 500s.
+  ('098 verified(printers) is definer',
+   (select count(*) = 1 from pg_proc p
+      where p.pronamespace = 'public'::regnamespace and p.prosecdef and p.proname = 'verified')),
+
+  -- 099. Distance is computed from these points; with RLS off, any key could
+  -- move a postcode and reorder every "near you" list.
+  ('099 postcode_centroids has RLS on',
+   (select relrowsecurity from pg_class where oid = 'public.postcode_centroids'::regclass)),
+
+  -- 099. Only a km built from a printer's postcode leaves the API. With the
+  -- table-level grant back, any key could read every owner's postcode.
+  ('099 printers.postcode is not selectable by anon/authenticated',
+   (select not has_column_privilege('anon', 'public.printers', 'postcode', 'select')
+       and not has_column_privilege('authenticated', 'public.printers', 'postcode', 'select'))),
+
+  -- 102. A toy's "Also worth a look" is its holder's to write. With RLS off,
+  -- anyone could point a stranger's toy page at anything.
+  ('102 toy_picks has RLS enabled and a holder-gated write policy',
+   (select coalesce(bool_and(relrowsecurity), false) from pg_class
+      where relname = 'toy_picks' and relnamespace = 'public'::regnamespace)
+   and (select count(*) > 0 from pg_policies
+      where tablename = 'toy_picks'
+        and cmd = 'ALL'
+        and coalesce(qual, with_check) like '%is_org_leader%')),
+
+  -- 105. Without definer it counts only the caller's own save (044's RLS): always 0 or 1.
+  ('105 save_count(toy_ideas) is security definer',
+   (select count(*) = 1 from pg_proc p
+      where p.proname = 'save_count' and p.pronamespace = 'public'::regnamespace
+        and p.prosecdef and pg_get_function_identity_arguments(p.oid) = 'i toy_ideas')),
+
+  -- 106. Without the folder check any member could point an idea at a URL or
+  -- at someone else's upload; without the placeholder arm, deleting an account
+  -- whose idea has a photo fails. Anon reads the photo of a public challenge.
+  ('106 toy_ideas_photo_path_check pins the author folder, and anon reads photo_path',
+   (select count(*) = 1 from pg_constraint
+      where conname = 'toy_ideas_photo_path_check'
+        and pg_get_constraintdef(oid) like '%author_id%'
+        and pg_get_constraintdef(oid) like '%00000000-0000-4000-8000-00000000dead%')
+   and has_column_privilege('anon', 'public.toy_ideas', 'photo_path', 'select')
+   and not has_column_privilege('anon', 'public.toy_ideas', 'review_note', 'select')),
+  -- 107. A wider delete policy would let an author pull a live challenge and its thread.
+  ('107 toy_ideas delete is the author''s, while pending',
+   (select count(*) = 1 from pg_policies
+      where schemaname = 'public' and tablename = 'toy_ideas' and cmd = 'DELETE'
+        and qual like '%auth.uid()%' and qual like '%pending%')
+   and has_table_privilege('authenticated', 'public.toy_ideas', 'delete')),
+  -- 108. With author_id readable, "anonymous" is a name one PostgREST call away
+  -- (ruling 2: for signed-in readers too). The five policies that read it must
+  -- go through is_idea_author, or the thread breaks with "permission denied".
+  ('108 nobody but admins reads toy_ideas.author_id; policies use is_idea_author',
+   (select not has_column_privilege('anon', 'public.toy_ideas', 'author_id', 'select')
+      and not has_column_privilege('authenticated', 'public.toy_ideas', 'author_id', 'select')
+      and has_column_privilege('anon', 'public.toy_ideas', 'anonymous', 'select')
+      and has_column_privilege('authenticated', 'public.toy_ideas', 'anonymous', 'select'))
+   and (select prosecdef from pg_proc where oid = 'public.is_idea_author(uuid)'::regprocedure)
+   and (select count(*) = 7 from pg_policies
+      where schemaname = 'public' and tablename in ('toy_idea_participants', 'toy_idea_messages', 'toy_idea_reports', 'toy_idea_constraints')
+        and coalesce(qual, '') || coalesce(with_check, '') like '%is_idea_author%')
+   and not exists (select 1 from pg_policies
+      where schemaname = 'public' and tablename <> 'toy_ideas'
+        and coalesce(qual, '') || coalesce(with_check, '') like '%i.author_id%')),
+
+  -- 109. The 046 shape: a narrower constraint drops every follower notification silently.
+  ('109 notifications_type_check permits challenge_guide_published',
+   (select count(*) = 1 from pg_constraint
+      where conname = 'notifications_type_check'
+        and pg_get_constraintdef(oid) like '%challenge_guide_published%')),
+
+  -- 109. Without the trigger, "You will be told" is a promise nobody keeps.
+  ('109 tutorials_challenge_guide_published trigger exists',
+   (select count(*) = 1 from pg_trigger
+      where tgname = 'tutorials_challenge_guide_published' and tgrelid = 'public.tutorials'::regclass)),
+
+  -- 110. Without RLS anyone could add constraints to any challenge; with
+  -- added_by readable, an anonymous author is one PostgREST call away.
+  ('110 toy_idea_constraints has RLS on, and anon cannot read added_by',
+   (select relrowsecurity from pg_class where oid = 'public.toy_idea_constraints'::regclass)
+   and not has_column_privilege('anon', 'public.toy_idea_constraints', 'added_by', 'select')),
+
+  -- 111. Without RLS every maker reads every other maker's questions; with
+  -- Supabase's default grants anon reads them too.
+  ('111 build_request_questions has RLS on, and anon has no grant',
+   (select relrowsecurity from pg_class where oid = 'public.build_request_questions'::regclass)
+   and not has_table_privilege('anon', 'public.build_request_questions', 'select')),
+
+  ('111 notifications_type_check permits build_question',
+   (select count(*) = 1 from pg_constraint
+      where conname = 'notifications_type_check'
+        and pg_get_constraintdef(oid) like '%build_question%')),
+
+  -- 112. A public bucket would put photos of people's homes and bags on the open web.
+  ('112 recycling-photos bucket is private',
+   (select count(*) = 1 from storage.buckets where id = 'recycling-photos' and not public)),
+
+  -- 112. Without it a booking could point at anyone's object.
+  ('112 recycling_dropoffs photo path is pinned to its contributor',
+   (select count(*) = 1 from pg_constraint
+      where conname = 'recycling_dropoffs_photo_is_own_path')),
+
+  -- 112. Without it, deleting an account that booked with a photo fails.
+  ('112 recycling_dropoffs_photo_follows_owner trigger',
+   (select count(*) > 0 from pg_trigger
+      where tgname = 'recycling_dropoffs_photo_follows_owner' and not tgisinternal)),
+
+  -- 113. ORG_COLUMNS and both public.ts selects name these; without the
+  -- columns, or anon's grant on them, every organisation read fails.
+  ('113 organizations recycling detail columns are anon-readable',
+   has_column_privilege('anon', 'public.organizations', 'recycling_machines', 'select')
+   and has_column_privilege('anon', 'public.organizations', 'recycling_door', 'select')
+   and has_column_privilege('anon', 'public.organizations', 'recycling_gives', 'select')),
+
+  -- 113. The API refuses max under min; this backs it.
+  ('113 organizations_recycling_max_over_min check',
+   (select count(*) = 1 from pg_constraint
+      where conname = 'organizations_recycling_max_over_min')),
+
+  -- 114. Without RLS any member could read every other member's spends.
+  ('114 recycling_credit_spends has RLS on',
+   (select relrowsecurity from pg_class where oid = 'public.recycling_credit_spends'::regclass)),
+
+  -- 114. Callable by a client, anyone could read anyone's balance.
+  ('114 recycling_credit_balance() is service-role only',
+   (select count(*) = 1 from pg_proc p
+      where p.proname = 'recycling_credit_balance' and p.pronamespace = 'public'::regnamespace
+        and not has_function_privilege('authenticated', p.oid, 'execute')
+        and not has_function_privilege('anon', p.oid, 'execute'))),
+
+  -- 114. An older body accepts the job and never spends the credit.
+  ('114 accept_toy_transaction() spends recycling credit',
+   (select count(*) = 1 from pg_proc
+      where proname = 'accept_toy_transaction' and prosrc like '%recycling_credit_spends%')),
+
+  -- 115. Without it a member inserts their own 'received' row and mints credit.
+  ('115 recycling_dropoffs insert must be a booking with no leader columns',
+   (select count(*) = 1 from pg_policies
+      where tablename = 'recycling_dropoffs' and cmd = 'INSERT'
+        and with_check like '%booked%' and with_check like '%credit_grams IS NULL%'
+        and with_check like '%weighed_grams IS NULL%' and with_check like '%decided_by IS NULL%')),
+
+  -- 115. Without it a leader re-weighs a drop-off whose credit is spent.
+  ('115 recycling_dropoffs leader update admits only booked rows',
+   (select count(*) = 1 from pg_policies
+      where tablename = 'recycling_dropoffs' and cmd = 'UPDATE'
+        and qual like '%is_org_leader%' and qual like '%booked%')),
+
+  -- 116. Without these the directory's counts read fails and every row shows
+  -- zeros; callable by anon they would be a client surface nobody reviewed.
+  ('116 organisation list count functions exist, service-role only',
+   (select count(*) = 3 from pg_proc
+      where pronamespace = 'public'::regnamespace
+        and proname in ('org_backed_count', 'org_toy_count', 'org_has_printer')
+        and not has_function_privilege('anon', oid, 'execute')
+        and not has_function_privilege('authenticated', oid, 'execute'))),
+
+  -- 117. A thanks note is private to two people; RLS off would publish every
+  -- one, and a thanker's update grant on hidden_at would let them undo a hide.
+  ('117 profile_thanks has RLS enabled',
+   (select coalesce(bool_and(relrowsecurity), false) from pg_class
+      where relname = 'profile_thanks' and relnamespace = 'public'::regnamespace)),
+
+  ('117 profile_thanks.hidden_at is not updatable by members',
+   (select count(*) = 0 from information_schema.column_privileges
+      where table_schema = 'public' and table_name = 'profile_thanks'
+        and column_name in ('hidden_at', 'transaction_id')
+        and grantee in ('anon', 'authenticated')
+        and privilege_type in ('UPDATE', 'INSERT'))),
+
+  ('117 notifications_type_check permits profile_thanked',
+   (select pg_get_constraintdef(oid) like '%profile_thanked%'
+      from pg_constraint
+     where conname = 'notifications_type_check'
+       and conrelid = 'public.notifications'::regclass)),
+
+  -- 118. A member writing status or note_to_reporter on their own report would
+  -- forge the admin's answer; nothing in the product would look different.
+  ('118 member_reports.status/note_to_reporter are not insertable by members',
+   (select count(*) = 0 from information_schema.column_privileges
+      where table_schema = 'public' and table_name = 'member_reports'
+        and column_name in ('status', 'note_to_reporter', 'handled_by', 'handled_at')
+        and grantee in ('anon', 'authenticated')
+        and privilege_type = 'INSERT')),
+
+  ('118 member_reports_subject_kind_check permits exchange and build',
+   (select pg_get_constraintdef(oid) like '%''exchange''%' and pg_get_constraintdef(oid) like '%''build''%'
+      from pg_constraint
+     where conname = 'member_reports_subject_kind_check'
+       and conrelid = 'public.member_reports'::regclass)),
+
+  -- 119. A notification's body carries a private reason; a member update grant
+  -- on it would let a recipient rewrite what they were told.
+  ('119 notifications: members may update read_at only',
+   (select count(*) = 1 from information_schema.column_privileges
+      where table_schema = 'public' and table_name = 'notifications'
+        and grantee in ('anon', 'authenticated')
+        and privilege_type = 'UPDATE')),
+
+  ('119 notifications.body is capped at 300',
+   (select count(*) > 0 from pg_constraint
+      where conrelid = 'public.notifications'::regclass
+        and pg_get_constraintdef(oid) like '%length(body)%300%')),
+
+  -- 120. Not a guard but the same silent failure: without the columns every
+  -- wizard save on the Play or Measurements step 500s.
+  ('120 child_profiles enjoys, reach_cm and tray_mm exist',
+   (select count(*) = 3 from information_schema.columns
+      where table_schema = 'public' and table_name = 'child_profiles'
+        and column_name in ('enjoys', 'reach_cm', 'tray_mm'))),
+
+  -- 120. The measurements are the child's private data and the table holds
+  -- table-level grants, so RLS is their only boundary: on, and no policy that
+  -- reads without naming the parent or an admin.
+  ('120 child_profiles RLS on, every policy scoped to the parent or admin',
+   (select relrowsecurity from pg_class where oid = 'public.child_profiles'::regclass)
+   and not exists (select 1 from pg_policies
+      where schemaname = 'public' and tablename = 'child_profiles'
+        and coalesce(qual, with_check) not like '%auth.uid()%'
+        and coalesce(qual, with_check) not like '%is_admin()%')),
+
+  ('120 child_profiles palm_width_mm is ranged 20-250',
+   (select count(*) = 1 from pg_constraint
+      where conname = 'child_profiles_palm_width_range'
+        and conrelid = 'public.child_profiles'::regclass)),
+
+  -- 121. The deliveries map's privacy floor lives in this one function. A
+  -- body without the HAVING would publish suburbs with one or two families;
+  -- a browser key able to call it could read it without the API.
+  ('121 impact_map() keeps its three-delivery floor and is service-role only',
+   (select count(*) = 1 from pg_proc p
+      where p.pronamespace = 'public'::regnamespace
+        and p.proname = 'impact_map'
+        and p.prosecdef
+        and p.prosrc like '%having count(*) >= 3%'
+        and p.prosrc not like '%pickup_line1%'
+        and not has_function_privilege('authenticated', p.oid, 'execute')
+        and not has_function_privilege('anon', p.oid, 'execute')))
 ) as t(guard, ok)
 where not ok;
 EOSQL

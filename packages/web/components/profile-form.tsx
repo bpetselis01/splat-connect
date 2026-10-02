@@ -148,12 +148,12 @@ export function ProfileForm({
           </div>
           <div>
             <label htmlFor="pickup-postcode" className="field-label">Postcode</label>
-            <input id="pickup-postcode" className={FIELD} value={pickupPostcode} onChange={(e) => setPickupPostcode(e.target.value)} />
+            <input id="pickup-postcode" className={FIELD} inputMode="numeric" maxLength={4} pattern="\d{4}" value={pickupPostcode} onChange={(e) => setPickupPostcode(e.target.value)} />
           </div>
         </div>
       </div>
       <div className="flex flex-col gap-1 border-t border-line pt-4">
-        <label htmlFor="public-showcase" className="flex items-center gap-2 text-sm">
+        <label htmlFor="public-showcase" className="flex items-center gap-2 text-sm max-sm:min-h-11">
           <input
             id="public-showcase"
             type="checkbox"

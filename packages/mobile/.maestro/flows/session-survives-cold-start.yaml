@@ -12,21 +12,24 @@ appId: com.splatconnect.mobile
 - clearState
 - runFlow: ../subflows/launch.yaml
 
-# The app now lives behind sign-in — a signed-out launch lands directly on
-# the sign-in screen. Everything here is addressed by testID rather than text:
-# "Sign in" is the card heading, a switch tab AND the submit button, and
-# TextField renders its label as a sibling <Text> carrying the same string as
-# the input's own accessibilityLabel. Every one of those matches two or more
-# nodes, and a text-matched tap lands on whichever comes first.
+# The app lives behind sign-in — a signed-out launch lands on Welcome, whose
+# second door is Sign in. Addressed by testID rather than text: TextField
+# renders its label as a sibling <Text> carrying the same string as the input's
+# own accessibilityLabel, and a text-matched tap lands on whichever comes first.
 - assertVisible:
-    id: "auth-tab-signin"
+    id: "welcome-sign-in"
+- tapOn:
+    id: "welcome-sign-in"
 - tapOn:
     id: "email-input"
 - inputText: ${DEVICE_EMAIL}
+- tapOn: "Welcome back"  # the keyboard covers the password field
 - tapOn:
     id: "password-input"
 - inputText: ${DEVICE_PASSWORD}
-- hideKeyboard
+# hideKeyboard fails on the iOS 26 simulator; a tap outside a field
+# dismisses it on device and simulator alike (ScrollView default).
+- tapOn: "Welcome back"
 - tapOn:
     id: "auth-submit"
 
@@ -44,4 +47,4 @@ appId: com.splatconnect.mobile
 - assertVisible:
     text: "Guides"
 - assertNotVisible:
-    id: "auth-tab-signin"
+    id: "welcome-sign-in"

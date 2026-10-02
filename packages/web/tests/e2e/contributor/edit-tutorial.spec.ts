@@ -27,7 +27,8 @@ test('editing an approved tutorial resets its status to pending', async ({ page 
 
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
-  await page.goto(`/tutorials/${tutorialId}/edit`)
+  // The editor opens on Status (a1535727); the fields are on Details.
+  await page.goto(`/tutorials/${tutorialId}/edit?step=details`)
   await expect(page.locator('input[name="title"]')).toHaveValue('E2E Approved Edit Target')
 
   await page.locator('input[name="title"]').fill('E2E Approved Edit Target (updated)')
@@ -39,7 +40,12 @@ test('editing an approved tutorial resets its status to pending', async ({ page 
   // which is server-rendered fresh from the database on every request.
   await page.goto('/dashboard/tutorials')
   await expect(page.getByText('E2E Approved Edit Target (updated)')).toBeVisible()
-  await expect(page.getByText('PENDING', { exact: true })).toBeVisible()
+  await expect(
+    page
+      .getByTestId('tutorial-row')
+      .filter({ hasText: 'E2E Approved Edit Target (updated)' })
+      .getByText('Waiting', { exact: true })
+  ).toBeVisible()
 })
 
 test('a contributor cannot edit another contributor\'s tutorial', async ({ page }) => {
@@ -64,7 +70,7 @@ test('saving details updates the title, description and difficulty', async ({ pa
 
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
-  await page.goto(`/tutorials/${id}/edit`)
+  await page.goto(`/tutorials/${id}/edit?step=details`)
 
   const renamed = `${title} renamed`
   await page.locator('#edit-title').fill(renamed)
@@ -95,7 +101,7 @@ test('the difficulty select shows the newly saved value after a save', async ({ 
 
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
-  await page.goto(`/tutorials/${id}/edit`)
+  await page.goto(`/tutorials/${id}/edit?step=details`)
 
   await page.locator('#edit-difficulty').selectOption('medium')
   await page.getByRole('button', { name: 'Save details' }).click()
@@ -117,7 +123,8 @@ test('a photo is added to a guide, and the tutorial PDF replaced', async ({ page
   await page.waitForURL('**/dashboard')
   await page.goto(`/tutorials/${id}/edit`)
 
-  const files = await openStep(page, /^Files$/)
+  // A step's tab name carries its status glyph ("Files done"), so anchor the start only.
+  const files = await openStep(page, /^Files\b/)
   // The photo first, and settled before the PDF is picked: adding a photo saves
   // through a server action that revalidates this page, and the PDF is still
   // only in the browser's memory until Save files runs.

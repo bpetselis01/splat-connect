@@ -89,6 +89,17 @@ describe('computeStepStatuses', () => {
     expect(computeStepStatuses(tutorial({ stl_files: [] }), []).stl).toBe('done')
   })
 
+  // 080: optional, so never 'attention' — an older guide has no steps at all.
+  it('steps is neutral when empty and done once one exists', () => {
+    expect(computeStepStatuses(tutorial(), []).steps).toBe('neutral')
+    expect(
+      computeStepStatuses(
+        tutorial({ steps: [{ id: 's1', tutorial_id: 't1', position: 1, title: null, body: 'Open it', photo_url: null }] }),
+        []
+      ).steps
+    ).toBe('done')
+  })
+
   it('recommended is neutral when empty and done once one exists', () => {
     expect(computeStepStatuses(tutorial(), []).recommended).toBe('neutral')
     expect(
@@ -136,10 +147,10 @@ describe('computeStepStatuses', () => {
 
 describe('stepsFor', () => {
   it('a toy adaptation never shows the STL pill', () => {
-    expect(stepsFor('toy_adaptation')).toEqual(['details', 'files', 'parts', 'tools', 'recommended', 'review', 'team'])
+    expect(stepsFor('toy_adaptation')).toEqual(['details', 'steps', 'files', 'parts', 'tools', 'recommended', 'review', 'team'])
   })
 
   it('an assistive-tech tutorial has STL between tools and review', () => {
-    expect(stepsFor('assistive_tech')).toEqual(['details', 'files', 'parts', 'tools', 'stl', 'recommended', 'review', 'team'])
+    expect(stepsFor('assistive_tech')).toEqual(['details', 'steps', 'files', 'parts', 'tools', 'stl', 'recommended', 'review', 'team'])
   })
 })

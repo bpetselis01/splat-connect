@@ -26,14 +26,14 @@ describe('Impact hub grid', () => {
     )
   })
 
-  // Tests: the map is the one scaffold left under Impact
+  // Tests: no scaffold is left under Impact (the map shipped 2026-10-02)
   // Chain: stories and events moved out on 2026-09-17 — to About and Get
   //        Involved, where the artboard puts them — and both are real screens
   //        now. Asserting the map alone is what would catch either being
   //        quietly put back here as a placeholder
-  it('marks the map as not yet built, and lists nothing else unbuilt', () => {
+  it('shows the map as built (impact-map, 2026-10-02), and lists nothing else unbuilt', () => {
     render(<HubGrid items={impact.children} />)
-    expect(screen.getByRole('link', { name: /map/i })).toHaveTextContent(/soon/i)
+    expect(screen.getByRole('link', { name: /map/i })).not.toHaveTextContent(/soon/i)
     expect(screen.queryByRole('link', { name: /news/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /events/i })).not.toBeInTheDocument()
   })

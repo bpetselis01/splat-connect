@@ -20,6 +20,13 @@ const org = (over: object) => ({
   name: 'TAD Australia',
   description: null,
   status: 'active',
+  suburb: null,
+  state: null,
+  logo_url: null,
+  verified_at: null,
+  backed_count: 0,
+  toy_count: 0,
+  has_printer: false,
   ...over,
 })
 
@@ -68,5 +75,18 @@ describe('OrganisationsScreen', () => {
     mockGet.mockResolvedValue([])
     render(<OrganisationsScreen />)
     expect(await screen.findByText('No organisations yet')).toBeTruthy()
+  })
+
+  it('reads place, counts and badges the way the board does', async () => {
+    mockGet.mockResolvedValue([
+      org({ id: 'o1', name: 'Northside', suburb: 'Newcastle', state: 'NSW', backed_count: 18, toy_count: 7, verified_at: '2026-09-01' }),
+      org({ id: 'o2', name: 'Riverina Makerspace', suburb: 'Wagga Wagga', state: 'NSW', has_printer: true }),
+    ])
+    render(<OrganisationsScreen />)
+    expect(await screen.findByText('Newcastle, NSW · 18 backed · 7 toys')).toBeTruthy()
+    expect(screen.getByText('Wagga Wagga, NSW · has a printer')).toBeTruthy()
+    expect(screen.getByText('Verified')).toBeTruthy()
+    expect(screen.getByText('Printer')).toBeTruthy()
+    expect(screen.getByText('2 organisations standing behind the work.')).toBeTruthy()
   })
 })

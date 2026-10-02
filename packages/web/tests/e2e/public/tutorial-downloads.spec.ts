@@ -18,7 +18,8 @@ test('a signed-out visitor is sent to sign up, pointed back at the tutorial', as
 
   try {
     await page.goto(`/tutorials/${tutorialId}`)
-    await page.getByRole('link', { name: 'Download Tutorial PDF' }).click()
+    // The button names the gate to a signed-out reader (1909fb6a).
+    await page.getByRole('link', { name: 'Sign in to download' }).click()
 
     await expect(page).toHaveURL(new RegExp(`/signup\\?next=%2Ftutorials%2F${tutorialId}&reason=download`))
     await expect(page.getByText('You need an account to download tutorial files')).toBeVisible()
@@ -42,7 +43,7 @@ test('a signed-in visitor gets the PDF', async ({ page }) => {
     // this spec is where that race was first found.
     await signIn(page, contributor.email, contributor.password)
     await page.goto(`/tutorials/${tutorialId}`)
-    const href = await page.getByRole('link', { name: 'Download Tutorial PDF' }).getAttribute('href')
+    const href = await page.getByRole('link', { name: 'Download guide (PDF)' }).getAttribute('href')
     expect(href).toBe(`/files/tutorial-pdfs/${objectPath}`)
 
     // page.request shares the browser context's cookies, so this is the same

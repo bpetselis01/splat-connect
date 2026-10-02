@@ -1,8 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
 import { SCAFFOLD_KEYS } from '@/lib/public-nav'
-import MapPage from '@/app/impact/map/page'
-import PrintingPartsPage from '@/app/printing/parts/page'
 
 // Paired with the featureKey each page actually passes to NotifyForm, not
 // just position — SCAFFOLD_KEYS order (derived from PUBLIC_NAV) does not
@@ -15,30 +12,16 @@ import PrintingPartsPage from '@/app/printing/parts/page'
  * /get-involved/events) and the old URLs redirect. Ask an expert, Partners and
  * Support are real too.
  *
- * The map stays a scaffold ON PURPOSE: the artboard's own Deliveries map screen
- * is a "Not built yet" with a notify form, so shipping one would be inventing a
- * feature the design does not have. Printable parts likewise.
+ * Printable parts shipped on 2026-10-01 and the deliveries map on 2026-10-02
+ * (Byron's B4), so no public scaffold is left. The next 'soon' child needs its
+ * page listed here and the "says it is not built ... offers to notify" check
+ * back (git history, this file before impact-map shipped).
  */
-const pages = [
-  ['map', MapPage],
-  ['printing-parts', PrintingPartsPage],
-] as const
+const pages: ReadonlyArray<readonly [string, unknown]> = []
 
 describe('scaffold pages', () => {
   it('covers every scaffold key declared in the nav model', () => {
     expect(pages).toHaveLength(SCAFFOLD_KEYS.length)
     expect(pages.map(([key]) => key).sort()).toEqual([...SCAFFOLD_KEYS].sort())
   })
-
-  it.each(pages)(
-    '%s scaffold page says it is not built, routes onward, and offers to notify under its own key',
-    (expectedKey, Page) => {
-      render(<Page />)
-      expect(screen.getByText(/not built yet/i)).toBeInTheDocument()
-      // The plan layout ends on Guides; the board's "Not built yet" layout on
-      // its "In the meantime" links. Either way, not a dead end.
-      expect(screen.getAllByRole('link').length).toBeGreaterThan(0)
-      expect(screen.getByLabelText(/email/i).id).toBe(`notify-${expectedKey}`)
-    }
-  )
 })

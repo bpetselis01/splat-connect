@@ -5,6 +5,8 @@
 project_id = "splat-connect"
 
 [auth]
+# PENDING(site-url): the HOSTED project's Site URL is still http://localhost:3000,
+# so links in live emails point at localhost. Set it in the dashboard.
 site_url = "http://127.0.0.1:3000"
 # 3100 is the E2E web server; the wildcards let Playwright land on any path.
 additional_redirect_urls = ["https://127.0.0.1:3000", "http://localhost:3100/**", "http://127.0.0.1:3100/**"]
@@ -18,6 +20,21 @@ email_sent = 1000
 
 [auth.email]
 enable_confirmations = true
+
+# 6-digit codes for the mobile app (docs/superpowers/specs/2026-09-30-mobile-sign-in-design.md).
+# Each template carries the code AND the link, so web's link flow is unchanged.
+# The hosted project is configured by pasting the same files into the dashboard.
+[auth.email.template.confirmation]
+subject = "Your SPLAT Connect code"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.magic_link]
+subject = "Your SPLAT Connect sign-in code"
+content_path = "./supabase/templates/magic_link.html"
+
+[auth.email.template.recovery]
+subject = "Reset your SPLAT Connect password"
+content_path = "./supabase/templates/recovery.html"
 
 # Off because the Logflare backend writes a row per request into the same
 # database volume, and nothing prunes it: three days of local development and
@@ -39,3 +56,12 @@ enabled = false
 # No supabase/functions/ directory — nothing to serve.
 [edge_runtime]
 enabled = false
+
+# PENDING(apple-sign-in): for local testing of native Apple sign-in add
+#   [auth.external.apple] enabled = true, client_id = "com.splatconnect.mobile"
+# PENDING(google-sign-in): and
+#   [auth.external.google] enabled = true, client_id = "<web client id>",
+#   skip_nonce_check = true   (iOS Google tokens carry a nonce the app cannot supply)
+# The hosted project is switched on in the dashboard (scripts/setup-mobile-sign-in.sh).
+# PENDING(email-delivery): the hosted project also needs custom SMTP (Resend);
+# the built-in sender reaches only the project team, 2 emails an hour.

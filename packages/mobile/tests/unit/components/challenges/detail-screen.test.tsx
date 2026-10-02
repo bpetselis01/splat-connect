@@ -1,6 +1,7 @@
 // packages/mobile/tests/unit/components/challenges/detail-screen.test.tsx
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { Alert } from 'react-native'
+import { shortDate } from '../../../../components/challenges/challenge-status'
 import { ChallengeDetailScreen } from '../../../../components/challenges/detail-screen'
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
@@ -45,7 +46,7 @@ const viewer = (id: string) => ({
     profile: { id, name: 'Viewer', role: 'contributor' },
     isAdmin: false,
     ledOrgs: [],
-    unread: { tutorials: 0, exchanges: 0, challenges: 0, total: 0 },
+    unread: { tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 },
     exchangeActions: 0,
   },
   loading: false,
@@ -93,6 +94,12 @@ function respond(brief: object, messages: unknown[] = []) {
 const joinedDetail = (over: object = {}) =>
   detail({ participants: [{ profile_id: 'viewer1', name: 'Viewer' }], ...over })
 
+
+/** The conversation has its own tab (MB #challenge_detail). */
+async function openThread() {
+  fireEvent.press(await screen.findByRole('tab', { name: 'Thread' }))
+}
+
 beforeEach(() => {
   jest.clearAllMocks()
   mockUseCapabilities.mockReturnValue(viewer('viewer1'))
@@ -105,11 +112,14 @@ describe('ChallengeDetailScreen', () => {
     render(<ChallengeDetailScreen id="c1" />)
 
     expect(await screen.findByText('A switch a toddler can hit')).toBeTruthy()
+    expect(screen.getByText(/· Priya$/)).toBeTruthy()
+    fireEvent.press(screen.getByRole('tab', { name: 'Brief' }))
     expect(screen.getByText('Every switch we have needs more force than she can manage.')).toBeTruthy()
-    expect(screen.getByText('Posted by Priya')).toBeTruthy()
     expect(screen.getByText('She swipes rather than presses, so a button never latches.')).toBeTruthy()
+    fireEvent.press(screen.getByRole('tab', { name: 'Constraints' }))
     expect(screen.getByText('Turning on a bubble machine during therapy.')).toBeTruthy()
     expect(screen.getByText('A three-year-old with low muscle tone.')).toBeTruthy()
+    fireEvent.press(screen.getByRole('tab', { name: 'Makers' }))
     expect(screen.getByText('Clarification')).toBeTruthy()
     expect(screen.getByText('Sam')).toBeTruthy()
     expect(mockGet).toHaveBeenCalledWith('/api/public/challenges/c1')
@@ -218,15 +228,25 @@ describe('ChallengeDetailScreen', () => {
     expect(screen.queryByRole('button', { name: 'Join this challenge' })).toBeNull()
   })
 
-  it('closes joining on a graduated challenge and points at the guide it became', async () => {
-    mockGet.mockResolvedValue(detail({ status: 'graduated', tutorial_id: 'tut7' }))
+  it('offers to follow a graduated challenge’s write-up, and names who is writing it', async () => {
+    mockGet.mockResolvedValue(
+      detail({
+        status: 'graduated',
+        tutorial_id: 'tut7',
+        writing_up: { profile_id: 'p1', name: 'Tom Beattie', started_at: '2026-09-02T03:00:00Z' },
+      })
+    )
     render(<ChallengeDetailScreen id="c1" />)
-
+    expect(await screen.findByText('Somebody solved it')).toBeTruthy()
+    expect(screen.getByText('Tom Beattie is writing this up')).toBeTruthy()
+    // shortDate is a fixed month table ("2 Sep"), so either form reads the same.
     expect(
-      await screen.findByText('This challenge has moved on to write-up, so joining is no longer open.')
+      screen.getByText(`Started ${shortDate('2026-09-02T03:00:00Z')}. The draft still goes through review before a family sees it.`)
     ).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Join this challenge' })).toBeNull()
-
+    fireEvent.press(screen.getByRole('button', { name: 'Follow the write-up' }))
+    await waitFor(() => expect(mockToggle).toHaveBeenCalledWith('challenges', 'c1'))
+    expect(await screen.findByText('You will be told when the guide is published')).toBeTruthy()
     fireEvent.press(screen.getByRole('button', { name: 'Read the guide' }))
     expect(mockPush).toHaveBeenCalledWith('/guides/tut7')
   })
@@ -241,6 +261,28 @@ describe('ChallengeDetailScreen', () => {
     mockGet.mockRejectedValue(new Error('404'))
     render(<ChallengeDetailScreen id="c1" />)
     expect(await screen.findByText("Couldn't load this challenge.")).toBeTruthy()
+  })
+
+  it('puts the thread in its own tab and counts makers and posts on the tabs', async () => {
+    mockGet.mockResolvedValue(
+      detail({ participants: [{ profile_id: 'p1', name: 'Sam', joined_at: '2026-08-14T03:00:00Z' }], maker_count: 1, answer_count: 4 })
+    )
+    render(<ChallengeDetailScreen id="c1" />)
+    const thread = await screen.findByRole('tab', { name: 'Thread' })
+    expect(thread.props.accessibilityValue).toEqual({ text: '4' })
+    expect(screen.getByRole('tab', { name: 'Makers' }).props.accessibilityValue).toEqual({ text: '1' })
+    fireEvent.press(thread)
+    expect(screen.getByText('Where the work happens. Makers can post.')).toBeTruthy()
+    fireEvent.press(screen.getByRole('tab', { name: 'Makers' }))
+    expect(screen.getByText('Everyone working on this.')).toBeTruthy()
+  })
+
+  it('draws no Makers or Thread tab on an idea that is not public yet', async () => {
+    mockGet.mockResolvedValue(detail({ status: 'pending' }))
+    render(<ChallengeDetailScreen id="c1" />)
+    expect(await screen.findByRole('tab', { name: 'Brief' })).toBeTruthy()
+    expect(screen.queryByRole('tab', { name: 'Makers' })).toBeNull()
+    expect(screen.queryByRole('tab', { name: 'Thread' })).toBeNull()
   })
 
   describe('the thread', () => {
@@ -259,6 +301,7 @@ describe('ChallengeDetailScreen', () => {
         message({ id: 'm3', kind: 'system', sender_id: 'viewer1', body: 'Viewer joined this challenge' }),
       ])
       render(<ChallengeDetailScreen id="c1" />)
+      await openThread()
 
       expect(await screen.findByLabelText('Priya said: Has anyone tried a lever?')).toBeTruthy()
       expect(screen.getByLabelText('You said: Printing one tonight.')).toBeTruthy()
@@ -270,6 +313,7 @@ describe('ChallengeDetailScreen', () => {
       mockUseCapabilities.mockReturnValue(viewer('author1'))
       respond(detail(), [message({ sender_id: 'author1', body: 'Thanks for looking.' })])
       render(<ChallengeDetailScreen id="c1" />)
+      await openThread()
 
       expect(await screen.findByLabelText('You said: Thanks for looking.')).toBeTruthy()
     })
@@ -278,6 +322,7 @@ describe('ChallengeDetailScreen', () => {
       respond(joinedDetail(), [])
       mockPost.mockResolvedValue(message({ id: 'm9', sender_id: 'viewer1', body: 'On it.' }))
       render(<ChallengeDetailScreen id="c1" />)
+      await openThread()
 
       const composer = await screen.findByLabelText('Message this challenge')
       fireEvent.changeText(composer, '  On it.  ')
@@ -292,6 +337,7 @@ describe('ChallengeDetailScreen', () => {
     it('refuses to send an empty message', async () => {
       respond(joinedDetail(), [])
       render(<ChallengeDetailScreen id="c1" />)
+      await openThread()
 
       const send = await screen.findByRole('button', { name: 'Send' })
       fireEvent.changeText(screen.getByLabelText('Message this challenge'), '   ')
@@ -304,6 +350,7 @@ describe('ChallengeDetailScreen', () => {
       respond(joinedDetail(), [])
       mockPost.mockRejectedValue(new Error('offline'))
       render(<ChallengeDetailScreen id="c1" />)
+      await openThread()
 
       fireEvent.changeText(await screen.findByLabelText('Message this challenge'), 'Kept')
       fireEvent.press(screen.getByRole('button', { name: 'Send' }))
@@ -341,10 +388,235 @@ describe('ChallengeDetailScreen', () => {
     it('attributes a message from someone who has since left to nobody in particular', async () => {
       respond(joinedDetail(), [message({ sender_id: 'gone1', body: 'I tried a proximity switch.' })])
       render(<ChallengeDetailScreen id="c1" />)
+      await openThread()
 
       // Their participant row is gone, so the brief carries no name for them —
       // the message stays, unattributed, rather than being dropped.
       expect(await screen.findByLabelText('Someone said: I tried a proximity switch.')).toBeTruthy()
     })
+  })
+
+  // 078: a question is answered in its thread; the asker marks the reply.
+  describe('a question', () => {
+    const reply = message({ id: 'r1', sender_id: 'p1', body: 'A zip pocket.' })
+
+    it('lets the asker mark a reply as the answer, and reloads the brief', async () => {
+      mockUseCapabilities.mockReturnValue(viewer('author1'))
+      let brief: object = detail({ kind: 'question', participants: [{ profile_id: 'p1', name: 'Mei' }] })
+      mockGet.mockImplementation((path: string) => {
+        if (path === '/api/public/challenges/c1') return Promise.resolve(brief)
+        if (path === '/api/ideas/c1/messages') return Promise.resolve([reply, message({ id: 'm2', body: 'Thanks' })])
+        return Promise.reject(new Error(`unexpected GET ${path}`))
+      })
+      mockPost.mockImplementation(() => {
+        brief = { ...(brief as object), answer_message_id: 'r1' }
+        return Promise.resolve({})
+      })
+      render(<ChallengeDetailScreen id="c1" />)
+      await openThread()
+
+      // One reply is someone else's; the asker's own "Thanks" is not offered.
+      const mark = await screen.findAllByRole('button', { name: 'Mark as the answer' })
+      expect(mark).toHaveLength(1)
+      fireEvent.press(mark[0])
+
+      await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/ideas/c1/answer', { message_id: 'r1' }))
+      expect(await screen.findByText('The answer · marked by the asker')).toBeTruthy()
+      expect(screen.getByText('Answered')).toBeTruthy()
+    })
+
+    it('shows the mark but no control to someone else', async () => {
+      respond(joinedDetail({ kind: 'question', answer_message_id: 'r1' }), [reply])
+      render(<ChallengeDetailScreen id="c1" />)
+      await openThread()
+      expect(await screen.findByText('The answer · marked by the asker')).toBeTruthy()
+      expect(screen.queryByRole('button', { name: 'Mark as the answer' })).toBeNull()
+      expect(screen.queryByRole('button', { name: 'Unmark' })).toBeNull()
+    })
+  })
+
+  it('follows a graduated challenge to the write-up on the Outcome tab', async () => {
+    mockGet.mockResolvedValue(detail({ status: 'graduated', tutorial_id: 'tut7' }))
+    render(<ChallengeDetailScreen id="c1" />)
+    fireEvent.press(await screen.findByRole('tab', { name: 'Outcome' }))
+    expect(screen.getByText('What happens when somebody solves it.')).toBeTruthy()
+    expect(screen.getByText('Guide published')).toBeTruthy()
+    expect(screen.getByText('People join and the thread records what has been tried.')).toBeTruthy()
+  })
+
+  it('draws no Outcome for a question, which never becomes a guide', async () => {
+    mockGet.mockResolvedValue(detail({ kind: 'question' }))
+    render(<ChallengeDetailScreen id="c1" />)
+    expect(await screen.findByRole('tab', { name: 'Brief' })).toBeTruthy()
+    expect(screen.queryByRole('tab', { name: 'Outcome' })).toBeNull()
+  })
+
+  it('gives each maker their role and join date, and marks the viewer and the writer', async () => {
+    mockGet.mockResolvedValue(
+      detail({
+        status: 'graduated',
+        participants: [
+          { profile_id: 'p1', name: 'Tom Beattie', role: 'contributor', joined_at: '2026-08-16T03:00:00Z' },
+          { profile_id: 'viewer1', name: 'Viewer', role: 'contributor', joined_at: '2026-09-02T03:00:00Z' },
+        ],
+        writing_up: { profile_id: 'p1', name: 'Tom Beattie', started_at: '2026-09-02T03:00:00Z' },
+      })
+    )
+    render(<ChallengeDetailScreen id="c1" />)
+    fireEvent.press(await screen.findByRole('tab', { name: 'Makers' }))
+    expect(screen.getByText('Tom Beattie')).toBeTruthy()
+    expect(screen.getByText('Maker · joined 16 Aug · writing it up')).toBeTruthy()
+    expect(screen.getByText('You')).toBeTruthy()
+    expect(screen.getByText(`Maker · joined ${shortDate('2026-09-02T03:00:00Z')}`)).toBeTruthy()
+  })
+
+  it('leads the brief with the photo, then the problem, then what a solution has to do', async () => {
+    mockGet.mockResolvedValue(detail({ photo_url: 'https://example.com/hero.png' }))
+    render(<ChallengeDetailScreen id="c1" />)
+    fireEvent.press(await screen.findByRole('tab', { name: 'Brief' }))
+    expect(screen.getByTestId('challenge-photo').props.source).toEqual({ uri: 'https://example.com/hero.png' })
+    expect(screen.getByText('The problem')).toBeTruthy()
+    expect(screen.getByText('She swipes rather than presses, so a button never latches.')).toBeTruthy()
+    expect(screen.getByText('What a solution has to do')).toBeTruthy()
+    expect(screen.getByText('Every switch we have needs more force than she can manage.')).toBeTruthy()
+  })
+
+  it('shows no photo when the idea has none', async () => {
+    render(<ChallengeDetailScreen id="c1" />)
+    fireEvent.press(await screen.findByRole('tab', { name: 'Brief' }))
+    expect(screen.queryByTestId('challenge-photo')).toBeNull()
+  })
+
+  describe('the author’s own idea before it is public', () => {
+    // What apiClient throws for a 404: the fallback keys on the status.
+    const notFound = () => Object.assign(new Error('404'), { status: 404 })
+    const own = (status: string, over: object = {}) => {
+      mockUseCapabilities.mockReturnValue(viewer('author1'))
+      mockGet.mockImplementation((path: string) =>
+        path === '/api/ideas/mine/c1'
+          ? Promise.resolve(detail({ status, review_note: null, participants: undefined, ...over }))
+          : Promise.reject(notFound())
+      )
+    }
+
+    it('reads a pending idea from the author’s own list and withdraws it', async () => {
+      own('pending')
+      mockDelete.mockResolvedValue(undefined)
+      render(<ChallengeDetailScreen id="c1" />)
+      expect(await screen.findByText('An admin is reading it')).toBeTruthy()
+      expect(screen.getByText(/· only you can see this$/)).toBeTruthy()
+      fireEvent.press(screen.getByRole('button', { name: 'Withdraw the idea' }))
+      await waitFor(() => expect(mockDelete).toHaveBeenCalledWith('/api/ideas/c1'))
+      expect(await screen.findByText('Withdrawn — nothing was published')).toBeTruthy()
+    })
+
+    it('says so when the withdraw fails, and keeps the idea on screen', async () => {
+      own('pending')
+      mockDelete.mockRejectedValue(new Error('409'))
+      render(<ChallengeDetailScreen id="c1" />)
+      fireEvent.press(await screen.findByRole('button', { name: 'Withdraw the idea' }))
+      expect(await screen.findByText('Could not withdraw this idea. Please try again.')).toBeTruthy()
+      expect(screen.getByText('An admin is reading it')).toBeTruthy()
+    })
+
+    it('gives a rejected idea its reason and a way to send a revised one', async () => {
+      own('rejected', { review_note: 'Closer to a clinical aid.' })
+      render(<ChallengeDetailScreen id="c1" />)
+      expect(await screen.findByText('Not taken forward')).toBeTruthy()
+      expect(screen.getByText('Closer to a clinical aid.')).toBeTruthy()
+      fireEvent.press(screen.getByRole('button', { name: 'Submit a revised idea' }))
+      expect(mockPush).toHaveBeenCalledWith('/explore/challenges/new?from=c1')
+    })
+
+    it('never asks for the author’s copy when nobody is signed in', async () => {
+      mockUseCapabilities.mockReturnValue(signedOut)
+      mockGet.mockRejectedValue(notFound())
+      render(<ChallengeDetailScreen id="c1" />)
+      expect(await screen.findByText("Couldn't load this challenge.")).toBeTruthy()
+      expect(mockGet).not.toHaveBeenCalledWith('/api/ideas/mine/c1')
+    })
+
+    it('waits for capabilities before deciding the idea cannot load', async () => {
+      own('pending')
+      mockUseCapabilities.mockReturnValue({ caps: null, loading: true, refresh: jest.fn() })
+      const { rerender } = render(<ChallengeDetailScreen id="c1" />)
+      await waitFor(() => expect(mockGet).toHaveBeenCalledWith('/api/public/challenges/c1'))
+      expect(screen.queryByText("Couldn't load this challenge.")).toBeNull()
+      mockUseCapabilities.mockReturnValue(viewer('author1'))
+      rerender(<ChallengeDetailScreen id="c1" />)
+      expect(await screen.findByText('An admin is reading it')).toBeTruthy()
+    })
+  })
+
+  it('reads an anonymous challenge as anonymous, and still knows its own author', async () => {
+    mockUseCapabilities.mockReturnValue(viewer('author1'))
+    mockGet.mockImplementation((path: string) =>
+      path === '/api/ideas/mine/c1'
+        ? Promise.resolve(detail())
+        : path === '/api/ideas/c1/messages'
+          ? Promise.resolve([])
+          : Promise.resolve(detail({ author_id: null, author_name: null, anonymous: true }))
+    )
+    render(<ChallengeDetailScreen id="c1" />)
+    expect(await screen.findByText(/· anonymous$/)).toBeTruthy()
+    expect(await screen.findByText('This is your challenge.')).toBeTruthy()
+  })
+
+  it('never offers an anonymous asker their own message as the answer (F14)', async () => {
+    mockUseCapabilities.mockReturnValue(viewer('author1'))
+    mockGet.mockImplementation((path: string) =>
+      path === '/api/ideas/mine/c1'
+        ? Promise.resolve(detail({ kind: 'question' }))
+        : path === '/api/ideas/c1/messages'
+          ? Promise.resolve([
+              message({ id: 'm1', sender_id: 'author1', body: 'Mine.' }),
+              message({ id: 'm2', sender_id: 'p1', body: 'Try a lever.' }),
+            ])
+          : Promise.resolve(detail({ kind: 'question', author_id: null, author_name: null, anonymous: true, participants: [{ profile_id: 'p1', name: 'Sam' }] }))
+    )
+    render(<ChallengeDetailScreen id="c1" />)
+    await openThread()
+    expect(await screen.findByLabelText('You said: Mine.')).toBeTruthy()
+    await screen.findByLabelText('Sam said: Try a lever.')
+    expect(screen.getAllByRole('button', { name: 'Mark as the answer' })).toHaveLength(1)
+  })
+
+  it('does not poll the thread of the author’s pending idea', async () => {
+    mockUseCapabilities.mockReturnValue(viewer('author1'))
+    mockGet.mockResolvedValue(detail({ status: 'pending' }))
+    render(<ChallengeDetailScreen id="c1" />)
+    expect(await screen.findByText('An admin is reading it')).toBeTruthy()
+    expect(mockGet).not.toHaveBeenCalledWith('/api/ideas/c1/messages')
+  })
+
+  it('lists named constraints with a count, and lets a maker who joined add one', async () => {
+    const k1 = { id: 'k1', label: 'Fluid and electronics share one enclosure', note: 'Anything you add sits above the waterline, or is sealed.' }
+    let brief: object = joinedDetail({ constraints: [k1] })
+    mockGet.mockImplementation((path: string) =>
+      path === '/api/public/challenges/c1' ? Promise.resolve(brief) : Promise.resolve([])
+    )
+    mockPost.mockImplementation(() => {
+      brief = { ...brief, constraints: [k1, { id: 'k2', label: 'It has to survive a fall', note: null }] }
+      return Promise.resolve({})
+    })
+    render(<ChallengeDetailScreen id="c1" />)
+    const tab = await screen.findByRole('tab', { name: 'Constraints' })
+    expect(tab.props.accessibilityValue).toEqual({ text: '1' })
+    fireEvent.press(tab)
+    expect(screen.getByText('Anything you add sits above the waterline, or is sealed.')).toBeTruthy()
+    expect(screen.queryByText('Turning on a bubble machine during therapy.')).toBeNull()
+    fireEvent.changeText(screen.getByLabelText('Constraint'), 'It has to survive a fall')
+    fireEvent.press(screen.getByRole('button', { name: 'Add a constraint' }))
+    await waitFor(() =>
+      expect(mockPost).toHaveBeenCalledWith('/api/ideas/c1/constraints', { label: 'It has to survive a fall', note: null })
+    )
+    expect(await screen.findByText('It has to survive a fall')).toBeTruthy()
+  })
+
+  it('falls back to intended use and who it is for when there are no constraints, and offers no form to a stranger', async () => {
+    render(<ChallengeDetailScreen id="c1" />)
+    fireEvent.press(await screen.findByRole('tab', { name: 'Constraints' }))
+    expect(screen.getByText('Turning on a bubble machine during therapy.')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Add a constraint' })).toBeNull()
   })
 })

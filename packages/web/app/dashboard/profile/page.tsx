@@ -18,8 +18,9 @@ import { apiClient } from '@/lib/api-client'
 import { requireCapabilities } from '@/lib/require-capabilities'
 import { ProfileForm } from '@/components/profile-form'
 import { SignOutButton } from '@/components/sign-out-button'
-import { Child } from '@/components/icons'
-import type { ChildProfile, Tutorial, UserAgreement } from '@splat-connect/types'
+import { OrgInvites } from '@/components/org-invites'
+import { PersonSimple } from '@phosphor-icons/react/dist/ssr'
+import { childSummary, type ChildProfile, type Tutorial, type UserAgreement } from '@splat-connect/types'
 
 // The board's avatar tints, in its order; a child keeps its tint by position.
 const TINTS = ['var(--b100)', 'var(--tcoral)', 'var(--tmint)', 'var(--tamber)', 'var(--tviolet)']
@@ -70,6 +71,7 @@ export default async function ProfileTabPage() {
         <h1 className="title-hub">Account</h1>
         <SignOutButton />
       </div>
+      <OrgInvites />
       <ProfileForm profile={caps.profile} badges={badges} publishedGuides={publishedGuides} />
 
       <div className="mt-10 flex flex-wrap items-end justify-between gap-5 border-t border-line pt-7">
@@ -88,7 +90,7 @@ export default async function ProfileTabPage() {
       {children.length === 0 ? (
         <div className="mt-6 flex flex-col items-center px-6 py-12 text-center">
           <span aria-hidden="true" className="empty-badge text-brand-dark">
-            <Child className="h-8 w-8" />
+            <PersonSimple className="h-8 w-8" weight="bold" aria-hidden="true" />
           </span>
           <p className="mt-4 font-bold text-ink">
             You haven&apos;t added any child profiles yet.
@@ -120,9 +122,7 @@ export default async function ProfileTabPage() {
                   </span>
                   <span className="min-w-0">
                     <span className="block truncate text-base font-extrabold">{name}</span>
-                    {child.age !== null && (
-                      <span className="block text-[13px] text-muted">Age {child.age}</span>
-                    )}
+                    <span className="block text-[13px] text-muted">{childSummary(child)}</span>
                   </span>
                 </Link>
               </li>
@@ -141,6 +141,15 @@ export default async function ProfileTabPage() {
           </li>
         </ul>
       )}
+
+      {/* Apple 5.1.1(v) / Google Play: deletion is self-serve and easy to find. */}
+      <div className="mt-12 border-t border-line pt-7">
+        <h2 className="text-xl font-extrabold text-ink">Delete your account</h2>
+        <p className="mt-2 max-w-[52ch] text-[15px] leading-relaxed text-muted">
+          Removes your profile, child profiles and everything private to you. Published guides stay up without your name.
+        </p>
+        <Link href="/dashboard/profile/delete" className="btn btn-danger mt-4">Delete account</Link>
+      </div>
     </section>
   )
 }

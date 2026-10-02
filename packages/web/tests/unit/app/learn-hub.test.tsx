@@ -1,7 +1,16 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import LearnPage from '@/app/learn/page'
-import { UNITS, LESSONS, COURSE_HOURS } from '@/lib/learn-course'
+import LearnPage from '@/app/learn/(course)/page'
+import { LEARN_COURSE, learnLessons, courseHours } from '@splat-connect/types'
+
+// Rendered past the gate: components/learn-gate.tsx is tested on its own
+// (tests/unit/app/learn-gate.test.tsx); here it only passes the lesson through.
+vi.mock('@/components/learn-gate', () => ({ LearnGate: ({ children }: { children: React.ReactNode }) => children }))
+
+// Rendered with no provider: the context's default is the code's course.
+const UNITS = LEARN_COURSE.units
+const LESSONS = learnLessons(LEARN_COURSE)
+const COURSE_HOURS = courseHours(LEARN_COURSE)
 
 /**
  * The hub became a COURSE home on 2026-09-17. It was a grid of six standalone

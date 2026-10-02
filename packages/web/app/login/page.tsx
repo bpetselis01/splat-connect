@@ -4,6 +4,13 @@ import { Eye, EyeSlash } from '@phosphor-icons/react/dist/ssr'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { sanitiseNextPath } from '@/lib/safe-next-path'
+import { pendingIntent, type SignupIntent } from '@splat-connect/types'
+
+/** Where the sign-up tile lands someone the first time they sign in. */
+const INTENT_LANDING: Record<SignupIntent, string> = {
+  family: '/onboarding/child',
+  maker: '/dashboard/tutorials',
+}
 import Link from 'next/link'
 import type { Route } from 'next'
 import { AuthStage } from '@/components/auth-shell'
@@ -48,7 +55,13 @@ function LoginForm() {
       // same-origin path — see lib/safe-next-path.ts for why that check
       // exists. Absent or rejected, it falls back to the role-based default.
       const fallback = profile?.role === 'admin' ? '/admin' : '/dashboard'
-      window.location.href = sanitiseNextPath(next) ?? fallback
+      // The sign-up tile decides the first landing only. It is spent here
+      // whichever way this sign-in goes, so a ?next= detour (a save, a
+      // download) does not leave it to hijack some later sign-in instead.
+      const intent = pendingIntent(user!.user_metadata)
+      if (intent) await supabase.auth.updateUser({ data: { intent_landed: true } })
+      window.location.href =
+        sanitiseNextPath(next) ?? (intent ? INTENT_LANDING[intent] : fallback)
     } finally {
       setLoading(false)
     }

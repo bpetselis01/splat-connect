@@ -35,6 +35,13 @@ export default function RootLayout() {
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="(my)" />
+          <Stack.Screen name="(onboarding)" />
+          <Stack.Screen name="printing" />
+          {/* No swipe back: the terms gate is where every route sends an
+              account that has not accepted, so there is nothing behind it. */}
+          <Stack.Screen name="terms" options={{ gestureEnabled: false }} />
+          {/* What a pending control opens (packages/types/src/pending.ts). */}
+          <Stack.Screen name="not-built" />
         </Stack>
         {showIntro ? <IntroVideo onFinish={() => setShowIntro(false)} /> : null}
       </AuthProvider>

@@ -25,6 +25,9 @@ vi.mock('next/link', () => ({
 vi.mock('@/components/mark-notifications-read', () => ({
   MarkNotificationsRead: () => null,
 }))
+vi.mock('@/components/idea-author-actions', () => ({
+  IdeaAuthorActions: ({ status }: { status: string }) => <span>actions:{status}</span>,
+}))
 
 import { apiClient } from '@/lib/api-client'
 
@@ -171,5 +174,12 @@ describe('DashboardChallengesPage', () => {
       'href',
       '/get-involved/submit-an-idea'
     )
+  })
+
+  it('puts the author’s actions on their own pending and rejected ideas', async () => {
+    mockLists({ mine: [idea({ id: 'a', status: 'pending' }), idea({ id: 'b', title: 'Kazoo', status: 'rejected' })] })
+    render(await DashboardChallengesPage())
+    expect(screen.getByText('actions:pending')).toBeInTheDocument()
+    expect(screen.getByText('actions:rejected')).toBeInTheDocument()
   })
 })

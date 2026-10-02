@@ -78,7 +78,8 @@ export function Button({
 
 const styles = StyleSheet.create({
   base: {
-    borderRadius: theme.radii.field,
+    // A pill, like every button on the board (Soft Pop radius.pill).
+    borderRadius: theme.radii.pill,
     borderWidth: theme.border.hairline,
     borderColor: theme.colors.border,
     paddingVertical: theme.spacing(3),
@@ -88,5 +89,6 @@ const styles = StyleSheet.create({
     minHeight: 48,
   },
   disabled: { opacity: 0.5 },
-  text: { fontFamily: theme.fonts.black, fontSize: theme.type.body },
+  // Centred when a long label wraps, not left-aligned.
+  text: { fontFamily: theme.fonts.black, fontSize: theme.type.body, textAlign: 'center' },
 })

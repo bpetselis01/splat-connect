@@ -15,6 +15,13 @@
 import { createAdminClient } from './supabase/client.js'
 
 /**
+ * Clients render a URL; a path column (093's note photos, 106's idea photos)
+ * holds a toy-photos path. Built here, never by a client.
+ */
+export const toyPhotoUrl = (path: string | null | undefined) =>
+  path ? `${process.env.SUPABASE_URL}/storage/v1/object/public/toy-photos/${path}` : null
+
+/**
  * `<id>/<uuid>.jpg` out of a public storage URL, or null if the URL does not
  * belong to this bucket. Null rather than a guess: these paths are fed to a
  * delete, so a URL we cannot confidently parse must be skipped, never

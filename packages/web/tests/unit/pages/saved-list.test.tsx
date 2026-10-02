@@ -16,7 +16,7 @@ const baseCaps = {
   profile: { id: 'p1', name: 'Test', role: 'contributor' },
   isAdmin: false,
   ledOrgs: [],
-  unread: { tutorials: 0, exchanges: 0, challenges: 0, total: 0 },
+  unread: { tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 },
   exchangeActions: 0,
 } as unknown as Capabilities
 
@@ -71,16 +71,11 @@ beforeEach(() => {
 })
 
 describe('SavedList', () => {
-  // Chain: organisations was the not-live example here until 2026-09-17, when
-  //        it was switched on — one line in SAVE_SLUGS and one in the API's
-  //        SOURCE, which is exactly what that constant's note promised. The
-  //        assertion moves to printable_part, which is still enum-only, so the
-  //        property under test survives.
-  it('404s a slug that is in the enum but not live', async () => {
-    await expect(SavedList({ params: Promise.resolve({ type: 'parts' }) })).rejects.toThrow(
-      'NEXT_NOT_FOUND'
-    )
-    expect(notFound).toHaveBeenCalled()
+  it('renders saved parts, linking to their guide', async () => {
+    listed.current = [{ id: 'f1', filename: 'cradle-65mm.stl', material: 'PETG', filament_grams: 12, print_minutes: null, tutorial_id: 'g1', tutorials: { id: 'g1', title: 'Switch mount', status: 'approved' } }]
+    render(await SavedList({ params: Promise.resolve({ type: 'parts' }) }))
+    expect(screen.getByText('cradle-65mm.stl')).toBeInTheDocument()
+    expect(screen.getByText('Switch mount')).toBeInTheDocument()
   })
 
   it('renders a live slug that was switched on', async () => {

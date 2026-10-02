@@ -1,7 +1,7 @@
 'use client'
 
 /**
- * Asking one printer for the printed parts of a guide.
+ * Asking up to three printers for the printed parts of a guide (074).
  *
  * "Parts come from the guide, never uploaded" is the artboard's rule, and it is
  * the shape of this form rather than a sentence in it: the only parts offered
@@ -14,10 +14,11 @@
  * Laid out as the board's #print_request_new: numbered panels on the left
  * (parts, preferences, printer, pickup) and a sticky summary with the send
  * button on the right. The summary's time and filament tiles sum the STL rows'
- * own settings (068) over the ticked parts. The board's per-part quantity, its
- * colour and deadline preferences, and its pick-up-to-three printers have no
- * field on the request yet, so they are not drawn — a stepper that sends
- * nothing would be a promise the job page breaks.
+ * own settings (068) over the ticked parts. The first printer to accept takes
+ * the job and the API withdraws the rest. Each part carries a quantity
+ * (058's `print_job_files.quantity`); the board's deadline has no field yet, so
+ * it is not drawn. Web's board has
+ * no collect-or-post choice ("You collect it"), so `delivery` is not sent.
  *
  * A full or closed machine is shown and disabled rather than hidden. A list
  * that silently omits the printer somebody was about to choose reads as an
@@ -32,19 +33,22 @@ import {
   Square,
   Cube,
   Info,
+  Lightning,
   MapPinLine,
+  Palette,
   PaperPlaneTilt,
-  RadioButton,
-  Circle,
 } from '@phosphor-icons/react/dist/ssr'
+import { bedFits, initials, MAX_PRINTERS_PER_REQUEST, PRINT_COLOURS } from '@splat-connect/types'
 import type { PrinterWithOwner, StlFile } from '@splat-connect/types'
 import { browserApiClient } from '@/lib/browser-api-client'
+import { apiErrorDetail } from '@splat-connect/types'
+import { pickSummary, togglePrinterPick } from '@/lib/print-groups'
 import { printerAvailability } from '@/lib/printer-availability'
 import { printTimeLabel, filamentLabel } from '@/lib/print-settings'
 
 export type PrintablePart = Pick<
   StlFile,
-  'id' | 'filename' | 'print_minutes' | 'filament_grams' | 'material'
+  'id' | 'filename' | 'print_minutes' | 'filament_grams' | 'material' | 'size_x_mm' | 'size_y_mm' | 'size_z_mm'
 >
 
 const TINTS = ['var(--tmint)', 'var(--b100)', 'var(--tamber)', 'var(--tviolet)', 'var(--tcoral)']
@@ -60,15 +64,6 @@ const NEXT_STEPS = [
     'A photo of the parts before you travel, then a six-digit code each way.',
   ],
 ]
-
-function initials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0]!.toUpperCase())
-    .join('')
-}
 
 function Eyebrow({ children }: { children: ReactNode }) {
   return <p className="eyebrow text-muted">{children}</p>
@@ -93,16 +88,26 @@ export function RequestPrintForm({
 }) {
   const router = useRouter()
   const [picked, setPicked] = useState<string[]>(parts.map((p) => p.id))
-  const [printerId, setPrinterId] = useState(
-    printers.find((p) => printerAvailability(p) === null)?.id ?? ''
-  )
+  const [qty, setQty] = useState<Record<string, number>>({})
+  const qtyOf = (id: string) => qty[id] ?? 1
+  const [pickedPrinters, setPickedPrinters] = useState<string[]>(() => {
+    const first = printers.find((p) => printerAvailability(p) === null && bedFits(p, parts))
+    return first ? [first.id] : []
+  })
+  const [colour, setColour] = useState<string>(PRINT_COLOURS[0])
   const [note, setNote] = useState('')
   const [agree, setAgree] = useState(false)
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
-  const valid = picked.length > 0 && printerId !== '' && agree
-  const ticked = parts.filter((p) => picked.includes(p.id))
+  const ticked = parts.filter((p) => picked.includes(p.id)).map((p) => ({ ...p, quantity: qtyOf(p.id) }))
+  // 097: a printer whose bed cannot hold the ticked parts is not offered, with
+  // no chip; nothing is hidden unless every ticked part is sized. A pick it
+  // hides is not sent, and comes back if the part is unticked before the next pick.
+  const shown = printers.filter((p) => bedFits(p, ticked))
+  const printerIds = pickedPrinters.filter((id) => shown.some((p) => p.id === id))
+  const valid = picked.length > 0 && printerIds.length > 0 && agree
+  const full = printerIds.length >= MAX_PRINTERS_PER_REQUEST
 
   function toggle(id: string) {
     setPicked((prev) => (prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]))
@@ -116,14 +121,14 @@ export function RequestPrintForm({
       try {
         const tx = await browserApiClient.post<{ id: string }>('/api/toy-transactions/print', {
           tutorial_id: tutorialId,
-          printer_id: printerId,
-          stl_file_ids: picked,
+          printer_ids: printerIds,
+          files: ticked.map((p) => ({ stl_file_id: p.id, quantity: p.quantity })),
+          colour,
           note: note.trim(),
         })
         router.push(`/dashboard/print-requests/${tx.id}` as Route)
       } catch (err) {
-        const detail = err instanceof Error ? /\{"error":"(.+?)"\}/.exec(err.message)?.[1] : null
-        setError(detail ?? 'That did not send. Check your connection and try again.')
+        setError(apiErrorDetail(err) ?? 'That did not send. Check your connection and try again.')
       }
     })
   }
@@ -181,6 +186,29 @@ export function RequestPrintForm({
                   <span className="min-w-0 flex-1 font-mono text-sm font-bold text-ink [overflow-wrap:anywhere]">
                     {part.filename}
                   </span>
+                  <span role="group" aria-label="Quantity" className="inline-flex items-center gap-0.5 rounded-full border border-line bg-surface p-[3px]">
+                    <button
+                      type="button"
+                      aria-label={`Fewer ${part.filename}`}
+                      disabled={!on || qtyOf(part.id) <= 1}
+                      onClick={() => setQty((q) => ({ ...q, [part.id]: Math.max(1, qtyOf(part.id) - 1) }))}
+                      className="h-9 w-9 rounded-full text-lg text-ink"
+                    >
+                      −
+                    </button>
+                    <output aria-live="polite" className="min-w-8 text-center font-mono text-sm font-bold">
+                      ×{qtyOf(part.id)}
+                    </output>
+                    <button
+                      type="button"
+                      aria-label={`More ${part.filename}`}
+                      disabled={!on || qtyOf(part.id) >= 20}
+                      onClick={() => setQty((q) => ({ ...q, [part.id]: Math.min(20, qtyOf(part.id) + 1) }))}
+                      className="h-9 w-9 rounded-full text-lg text-ink"
+                    >
+                      +
+                    </button>
+                  </span>
                 </li>
               )
             })}
@@ -200,6 +228,26 @@ export function RequestPrintForm({
             <Eyebrow>2 · Preferences</Eyebrow>
             <h2 className="print-panel__title">What matters to you?</h2>
           </div>
+          <fieldset className="flex flex-col gap-2">
+            <legend className="mb-2 text-sm font-extrabold text-ink">Colour</legend>
+            <div className="flex flex-wrap gap-2">
+              {PRINT_COLOURS.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  aria-pressed={colour === c}
+                  onClick={() => setColour(c)}
+                  className="chip gap-1.5"
+                >
+                  <Palette size={14} weight="bold" className="text-brand-dark" aria-hidden="true" />
+                  {c}
+                </button>
+              ))}
+            </div>
+            <p className="text-[13px] text-muted">
+              A preference, not a promise — the printer uses what they have on hand.
+            </p>
+          </fieldset>
           <label className="flex flex-col gap-1.5 text-sm font-extrabold text-ink">
             <span>
               A note for the printer <span className="font-semibold text-muted">(optional)</span>
@@ -213,37 +261,49 @@ export function RequestPrintForm({
               placeholder="e.g. It is for a round cot rail, about 25 mm across."
             />
           </label>
+          {/* PENDING(web-print-customization): the four customization questions (PRINT_FIT_QUESTIONS) go here, sent as fit_notes like the phone's request. */}
         </section>
 
         <section className="print-panel">
-          <div>
-            <Eyebrow>3 · Printers</Eyebrow>
-            <h2 className="print-panel__title">Who you asked</h2>
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <Eyebrow>3 · Printers</Eyebrow>
+              <h2 className="print-panel__title">Who you asked</h2>
+            </div>
+            <span
+              aria-live="polite"
+              className="rounded-pill bg-sunken px-3 py-1.5 text-[13px] font-extrabold text-muted"
+            >
+              {pickSummary(printerIds.length)}
+            </span>
           </div>
-          {printers.length === 0 ? (
+          {shown.length === 0 ? (
             <p className="rounded-[var(--radius-inset)] bg-sunken p-[18px] text-center text-sm text-muted">
-              Nobody has listed a printer yet.
+              {printers.length ? 'No printer matches.' : 'Nobody has listed a printer yet.'}
             </p>
           ) : (
-            <div role="radiogroup" aria-label="Printer" className="flex flex-col gap-2.5">
-              {printers.map((printer, i) => {
+            <div role="group" aria-label="Printers" className="flex flex-col gap-2.5">
+              {shown.map((printer, i) => {
                 const unavailable = printerAvailability(printer)
                 const who = printer.org_name ?? printer.owner_name ?? 'A contributor'
-                const on = printerId === printer.id
+                const on = printerIds.includes(printer.id)
+                // A full machine is shown, not hidden; so is the fourth pick,
+                // disabled until one of the three is let go.
+                const off = Boolean(unavailable) || (full && !on)
                 return (
                   <label
                     key={printer.id}
-                    className={`print-part cursor-pointer ${unavailable ? 'cursor-not-allowed opacity-60' : ''}`}
+                    className={`print-part cursor-pointer ${off ? 'cursor-not-allowed opacity-60' : ''}`}
                     data-on={on ? 'true' : undefined}
                   >
                     <input
-                      type="radio"
+                      type="checkbox"
                       name="printer"
                       className="sr-only"
                       value={printer.id}
                       checked={on}
-                      disabled={Boolean(unavailable)}
-                      onChange={() => setPrinterId(printer.id)}
+                      disabled={off}
+                      onChange={() => setPickedPrinters(togglePrinterPick(printerIds, printer.id))}
                     />
                     <span
                       aria-hidden="true"
@@ -265,20 +325,25 @@ export function RequestPrintForm({
                       </span>
                     </span>
                     {on ? (
-                      <RadioButton
-                        size={22}
+                      <CheckSquare
+                        size={24}
                         weight="fill"
                         className="text-brand-dark"
                         aria-hidden="true"
                       />
                     ) : (
-                      <Circle size={22} className="text-line" aria-hidden="true" />
+                      <Square size={24} className="text-line" aria-hidden="true" />
                     )}
                   </label>
                 )
               })}
             </div>
           )}
+          <p className="flex items-start gap-2 text-[13px] leading-[1.5] text-muted">
+            <Lightning size={18} weight="fill" className="flex-none text-honey" aria-hidden="true" />
+            The first printer to accept takes the job. The others are withdrawn for you, so nobody
+            prints it twice.
+          </p>
         </section>
 
         <section className="print-panel flex-row items-start gap-4">
@@ -312,7 +377,7 @@ export function RequestPrintForm({
           <div className="grid grid-cols-2 gap-2 text-center">
             {[
               [picked.length, 'parts'],
-              [printerId ? 1 : 0, 'printers asked'],
+              [printerIds.length, 'printers asked'],
               // "—" where the guide never said: the printer asks in the thread.
               [printTimeLabel(ticked), 'printing'],
               [filamentLabel(ticked), 'filament'],

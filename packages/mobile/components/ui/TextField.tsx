@@ -33,9 +33,13 @@ export function TextField({
   icon,
   boxStyle,
   boxTestID,
+  search = false,
+  trailing,
   style,
   ...input
 }: TextInputProps & {
+  /** React 19 passes a ref as a prop; it reaches the TextInput via `...input`. */
+  ref?: React.Ref<TextInput>
   label?: string
   hint?: string
   /** Renders inside the focus ring, ahead of the input. */
@@ -44,31 +48,40 @@ export function TextField({
   boxStyle?: StyleProp<ViewStyle>
   /** testID for the bordered box, not the inner TextInput. */
   boxTestID?: string
+  /**
+   * The board's search pill: a hairline edge at rest rather than ink, and no
+   * form-field margin under it. A search box is not a form question — it sits
+   * in a toolbar, where an ink ring would be the loudest thing on the screen.
+   */
+  search?: boolean
+  /** Renders inside the box after the input — the password field's eye. */
+  trailing?: React.ReactNode
 }) {
   const focus = useSharedValue(0)
+  const rest = search ? theme.colors.border : theme.colors.ink
 
   const ring = useAnimatedStyle(() => ({
     borderColor: interpolateColor(
       focus.value,
       [0, 1],
-      [theme.colors.ink, theme.colors.primary]
+      [rest, theme.colors.primary]
     ),
   }))
 
   return (
-    <View style={styles.field}>
+    <View style={search ? null : styles.field}>
       {label ? <Text style={styles.label}>{label}</Text> : null}
       {hint ? <Text style={styles.hint}>{hint}</Text> : null}
       <Animated.View
         testID={boxTestID}
-        style={[styles.box, icon ? styles.boxRow : null, boxStyle, ring]}
+        style={[styles.box, icon || trailing ? styles.boxRow : null, boxStyle, ring]}
       >
         {icon ? (
           <Ionicons name={icon} size={19} color={theme.colors.muted} style={styles.icon} />
         ) : null}
         <TextInput
           {...input}
-          style={[styles.input, icon ? styles.inputWithIcon : null, style]}
+          style={[styles.input, icon ? styles.inputWithIcon : null, trailing ? styles.inputFlex : null, style]}
           placeholderTextColor={theme.colors.muted}
           onFocus={(e) => {
             focus.value = withTiming(1, { duration: theme.motion.fast })
@@ -79,6 +92,7 @@ export function TextField({
             input.onBlur?.(e)
           }}
         />
+        {trailing}
       </Animated.View>
     </View>
   )
@@ -107,6 +121,7 @@ const styles = StyleSheet.create({
   boxRow: { flexDirection: 'row', alignItems: 'center' },
   icon: { marginRight: theme.spacing(2) },
   inputWithIcon: { flex: 1, paddingHorizontal: 0 },
+  inputFlex: { flex: 1 },
   input: {
     paddingHorizontal: theme.spacing(4),
     paddingVertical: theme.spacing(3),

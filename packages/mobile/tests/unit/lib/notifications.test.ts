@@ -1,7 +1,7 @@
 // packages/mobile/tests/unit/lib/notifications.test.ts
-import { NOTIFICATION_TYPES, notificationBucket } from '@splat-connect/types'
+import { COPY, copyFor, NOTIFICATION_TYPES, notificationBucket } from '@splat-connect/types'
 import type { Notification, NotificationType } from '@splat-connect/types'
-import { COPY, linkFor, relativeTime } from '../../../lib/notifications'
+import { linkFor, relativeTime } from '../../../lib/notifications'
 
 const notification = (over: Partial<Notification>): Notification => ({
   id: 'n1',
@@ -19,6 +19,11 @@ const notification = (over: Partial<Notification>): Notification => ({
 })
 
 describe('COPY', () => {
+  it('falls back for a type it has no line for, rather than throwing', () => {
+    expect(copyFor(notification({ type: 'some_future_type' as NotificationType }))).toBe("Sam updated something you're part of")
+    expect(copyFor(notification({ type: 'print_ready', toy_name: 'Light Touch Switch' }))).toBe('Sam finished printing Light Touch Switch')
+  })
+
   it('has a line for every notification type there is', () => {
     // The guard against a twenty-first type landing as a blank row.
     for (const type of NOTIFICATION_TYPES) {
@@ -44,8 +49,24 @@ describe('COPY', () => {
 })
 
 describe('linkFor', () => {
+  it('opens Ask first for a question about an unclaimed build', () => {
+    expect(linkFor(notification({ type: 'build_question', toy_transaction_id: 'b1' }))).toBe('/exchanges/build/ask/b1')
+  })
+
+  it('opens the published guide for a followed challenge', () => {
+    expect(linkFor(notification({ type: 'challenge_guide_published', tutorial_id: 't9' }))).toBe('/guides/t9')
+  })
+
   it('sends anything about a transaction to that exchange', () => {
     expect(linkFor(notification({ type: 'toy_message', toy_transaction_id: 'tx1' }))).toBe('/exchanges/tx1')
+  })
+
+  it('sends the two build-stage types straight to the build thread', () => {
+    expect(linkFor(notification({ type: 'build_shot_posted', toy_transaction_id: 'tx1' }))).toBe('/exchanges/build/tx1')
+    expect(linkFor(notification({ type: 'build_approved', toy_transaction_id: 'tx1' }))).toBe('/exchanges/build/tx1')
+    // Any other notice about a build cannot tell from the row; the exchange
+    // thread forwards it (see thread-screen.test).
+    expect(linkFor(notification({ type: 'toy_accepted', toy_transaction_id: 'tx1' }))).toBe('/exchanges/tx1')
   })
 
   it('sends both review-queue types to the organisation hub, ahead of the editor', () => {
@@ -53,6 +74,25 @@ describe('linkFor', () => {
     for (const type of ['backing_requested', 'tutorial_submitted'] as const) {
       expect(linkFor(notification({ type, tutorial_id: 't1' }))).toBe('/organisation')
     }
+  })
+
+  it('sends a note on a guide to the published guide', () => {
+    expect(linkFor(notification({ type: 'tutorial_noted', tutorial_id: 'g1' }))).toBe('/guides/g1')
+  })
+
+  it('reads and routes the four organisation types (077)', () => {
+    expect(COPY.org_message(notification({ type: 'org_message', actor_name: 'Priya', tutorial_title: 'Northbank' })))
+      .toBe('Priya messaged Northbank')
+    expect(COPY.org_message(notification({ type: 'org_message', actor_name: 'Northbank', tutorial_title: 'Northbank' })))
+      .toBe('Northbank replied to your message')
+    expect(linkFor(notification({ type: 'org_message', org_conversation_id: 'c1' }))).toBe('/messages/c1')
+    expect(notificationBucket('org_message')).toBe('exchanges')
+    expect(linkFor(notification({ type: 'org_thanked', org_id: 'o1' }))).toBe('/organisation')
+    expect(notificationBucket('org_thanked')).toBe('organisations')
+    // 117: a showcase thanks opens the showcase; one for an exchange opens it.
+    expect(linkFor(notification({ type: 'profile_thanked', profile_id: 'p1' }))).toBe('/guides/contributor/p1')
+    expect(linkFor(notification({ type: 'profile_thanked', toy_transaction_id: 'tx1' }))).toBe('/exchanges/tx1')
+    expect(linkFor(notification({ type: 'org_event_published', org_event_id: 'e1' }))).toBe('/news/event/e1')
   })
 
   it('sends other tutorial news to that guide', () => {
@@ -80,8 +120,13 @@ describe('linkFor', () => {
       const n = notification({
         type,
         tutorial_id: bucket === 'tutorials' ? 't1' : null,
-        toy_transaction_id: bucket === 'exchanges' ? 'tx1' : null,
+        toy_transaction_id: bucket === 'exchanges' && type !== 'org_message' ? 'tx1' : null,
         idea_id: bucket === 'challenges' ? 'i1' : null,
+        // 077's four each carry their own subject.
+        org_conversation_id: type === 'org_message' ? 'c1' : null,
+        org_event_id: type === 'org_event_published' ? 'e1' : null,
+        org_story_id: type === 'org_story_published' ? 's1' : null,
+        org_id: type === 'org_thanked' ? 'o1' : null,
       })
       expect(linkFor(n)).not.toBe('/inbox')
     }

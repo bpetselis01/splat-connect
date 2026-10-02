@@ -1,5 +1,6 @@
 import {
   getMissingFields,
+  sectionProgress,
   sectionsFor,
   sectionSummary,
   SECTION_LABEL,
@@ -76,16 +77,17 @@ describe('getMissingFields', () => {
 })
 
 describe('sectionsFor', () => {
-  it('gives a toy adaptation five sections and no STL', () => {
-    expect(sectionsFor('toy_adaptation')).toEqual(['details', 'safety', 'parts', 'tools', 'files'])
+  it('gives a toy adaptation six sections and no STL', () => {
+    expect(sectionsFor('toy_adaptation')).toEqual(['details', 'steps', 'parts', 'tools', 'safety', 'files'])
   })
 
   it('adds STL for assistive tech', () => {
     expect(sectionsFor('assistive_tech')).toEqual([
       'details',
-      'safety',
+      'steps',
       'parts',
       'tools',
+      'safety',
       'files',
       'stl',
     ])
@@ -104,15 +106,26 @@ describe('sectionSummary', () => {
       'No STL yet'
     )
     expect(sectionSummary('safety', base({ safety_declared_at: null }))).toBe('Not declared yet')
+    expect(sectionSummary('details', base({ build_minutes: null }))).toBe(
+      'Toy adaptation - Easy - no build time yet'
+    )
   })
 
   it('describes what is there once a section is complete', () => {
     expect(sectionSummary('details', base())).toBe('Toy adaptation - Easy')
     expect(sectionSummary('parts', base())).toBe('1 part')
+    expect(sectionSummary('parts', base({ parts: [{ is_optional: false, price_cents: 5800 }] as never }))).toBe('1 part, $58.00 total')
     expect(
       sectionSummary('tools', base({ tools: [{ name: 'a' }, { name: 'b' }] as never }))
     ).toBe('2 tools')
     expect(sectionSummary('files', base())).toBe('PDF and photo added')
+  })
+
+  // 080: optional, so the empty line is an invitation rather than a gap.
+  it('counts steps, and says nothing is there yet without calling it missing', () => {
+    expect(sectionSummary('steps', base())).toBe('0 steps - nothing yet')
+    expect(sectionSummary('steps', base({ steps: [{ id: 's' }, { id: 't' }] as never }))).toBe('2 steps')
+    expect(getMissingFields(base()).some((g) => g.section === 'steps')).toBe(false)
   })
 })
 
@@ -120,11 +133,19 @@ describe('SECTION_LABEL', () => {
   it('labels every section', () => {
     expect(SECTION_LABEL).toEqual({
       details: 'Details',
+      steps: 'Steps',
       safety: 'Safety',
       parts: 'Parts',
       tools: 'Tools',
       files: 'Files',
       stl: '3D print files',
     })
+  })
+})
+
+describe('sectionProgress', () => {
+  it('counts the sections with nothing missing, out of the sections this kind shows', () => {
+    const t = { title: 'T', difficulty: 'easy', build_minutes: 30, tutorial_pdf_url: 'x', photo_urls: ['p'], parts: [{}], tools: [], stl_files: [], kind: 'toy_adaptation', safety_declared_at: null } as never
+    expect(sectionProgress(t)).toEqual({ ready: 4, total: 6 })
   })
 })

@@ -72,13 +72,14 @@ test('accepting returns the user to where they were blocked and unblocks editing
   await page.getByRole('button', { name: 'Accept and continue' }).click()
 
   await expect(page).toHaveURL(new RegExp(`/tutorials/${tutorialId}/edit`))
+  // The editor opens on Status (a1535727); the title field is on Details.
+  await page.goto(`/tutorials/${tutorialId}/edit?step=details`)
 
   // The original bug: saving an approved tutorial sets status -> pending, which the
   // API refuses without an acceptance row, and the Server Action threw a 500. This is
   // the assertion that would have caught it.
   //
-  // #edit-title / "Save details" are the ids the Details panel actually uses; the
-  // panel is <details open> so no expansion is needed first.
+  // #edit-title / "Save details" are the ids the Details panel actually uses.
   // Typed in a retry loop because "Save details" is gated on a `dirty` flag the
   // form sets from React's onChange. Arriving here straight off the acceptance
   // redirect, the markup can still be the server-rendered HTML: a fill that

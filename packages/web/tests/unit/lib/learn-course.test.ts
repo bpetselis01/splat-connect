@@ -2,10 +2,19 @@ import { describe, it, expect } from 'vitest'
 import { readdirSync, existsSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { UNITS, LESSONS, lessonBySlug, unitOf, nextAfter, COURSE_HOURS } from '@/lib/learn-course'
+import { LEARN_COURSE, learnLessons, courseHours, lessonBySlug as bySlug, unitOf as unitIn, nextAfter as after } from '@splat-connect/types'
+
+// The code default — what every page shows until an admin saves an outline.
+const UNITS = LEARN_COURSE.units
+const LESSONS = learnLessons(LEARN_COURSE)
+const COURSE_HOURS = courseHours(LEARN_COURSE)
+const lessonBySlug = (slug: string) => bySlug(LEARN_COURSE, slug)
+const unitOf = (slug: string) => unitIn(LEARN_COURSE, slug)
+const nextAfter = (slug: string) => after(LEARN_COURSE, slug)
 import content from '@/lib/learn-content.json'
 
-const appLearn = join(dirname(fileURLToPath(import.meta.url)), '../../../app/learn')
+// The course pages live in the (course) route group; Ask an expert sits beside it.
+const appLearn = join(dirname(fileURLToPath(import.meta.url)), '../../../app/learn/(course)')
 const publicDir = join(dirname(fileURLToPath(import.meta.url)), '../../../public')
 
 /**
@@ -37,8 +46,8 @@ describe('the Learn course', () => {
       .map((e) => e.name)
     const known = new Set(LESSONS.map((l) => l.slug))
     // /learn/ask-an-expert is reference material beside the course rather than
-    // a lesson in it, and the course home links it as such.
-    const outside = new Set(['ask-an-expert'])
+    // a lesson in it, and lives outside app/learn/(course) for that reason.
+    const outside = new Set<string>()
     for (const page of pages) {
       expect(known.has(page) || outside.has(page), page).toBe(true)
     }

@@ -75,7 +75,14 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: 'pnpm --filter @splat-connect/api dev',
+      // Binaries directly, never through pnpm: pnpm runs a package script in
+      // its own process group, so Playwright's teardown (SIGKILL to the group
+      // it launched) orphaned the real server, which kept Playwright's stdout
+      // pipe open, and CI hung after the last test until the 6h job limit.
+      // No `watch`: nothing edits the API mid-run.
+      command:
+        './node_modules/.bin/tsx --env-file-if-exists=../../.env.local --env-file-if-exists=.env.local src/index.ts',
+      cwd: '../api',
       url: `http://localhost:${API_PORT}/api/public/tutorials`,
       timeout: 120_000,
       reuseExistingServer: !process.env.CI,
@@ -94,8 +101,8 @@ export default defineConfig({
       // reasoning as packages/mobile/playwright.config.ts, adapted for Next).
       // NEXT_PUBLIC_* vars are inlined at build time, so they must be present
       // for both halves of this command.
-      command:
-        'pnpm --filter @splat-connect/web build && pnpm --filter @splat-connect/web start',
+      // next directly, not via pnpm, for the process-group reason above.
+      command: './node_modules/.bin/next build && ./node_modules/.bin/next start',
       url: WEB_URL,
       timeout: 180_000,
       reuseExistingServer: !process.env.CI,

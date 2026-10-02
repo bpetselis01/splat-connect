@@ -34,7 +34,7 @@ const leader = (orgs: { id: string; name: string }[]) => ({
     profile: { id: 'leader1', name: 'Lee', role: 'contributor' },
     isAdmin: false,
     ledOrgs: orgs,
-    unread: { tutorials: 0, exchanges: 0, challenges: 0, total: 0 },
+    unread: { tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 },
     exchangeActions: 0,
   },
   loading: false,
@@ -87,7 +87,8 @@ describe('ReviewDetailScreen', () => {
     expect(screen.getByText('Switch-adapt a bubble machine.')).toBeTruthy()
     expect(screen.getByText('By Sam')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Open the tutorial PDF' })).toBeTruthy()
-    expect(screen.getByText('2 parts · 1 tool')).toBeTruthy()
+    expect(screen.getByText('6 sections, 4 complete.')).toBeTruthy()
+    expect(screen.getByText('2 parts, 2 without a price')).toBeTruthy()
     expect(mockGet).toHaveBeenCalledWith('/api/tutorials/t1')
   })
 

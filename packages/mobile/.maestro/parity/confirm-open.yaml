@@ -1,0 +1,11 @@
+# iOS asks 'Open in "mobile"?' before a link opens the app. The alert is the
+# system's, outside the app's tree, and a tap by text found the wrong "Open":
+# tap its Open button by position instead.
+appId: com.splatconnect.mobile
+---
+- runFlow:
+    when:
+      visible: 'Open in .*'
+    commands:
+      - tapOn:
+          point: "69%,53%"

@@ -74,7 +74,7 @@ function ContributorTermsForm() {
       {/* Not on the board, which has no way out of this gate; kept, because
           an account that will not accept has nowhere else to sign out. */}
       <p className="auth-card__alt">
-        <button type="button" onClick={signOut} className="text-muted underline">
+        <button type="button" onClick={signOut} className="text-muted underline max-sm:min-h-10 max-sm:px-2">
           Sign out
         </button>
       </p>

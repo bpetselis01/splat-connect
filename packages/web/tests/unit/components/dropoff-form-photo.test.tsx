@@ -1,0 +1,44 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { RECYCLING_DECLARATION } from '@splat-connect/types'
+import { DropoffForm } from '@/components/dropoff-form'
+import { browserApiClient } from '@/lib/browser-api-client'
+
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }) }))
+vi.mock('@/lib/browser-api-client', () => ({ browserApiClient: { post: vi.fn(), postFormData: vi.fn() } }))
+
+const ORG = { id: 'north', name: 'Northside', suburb: null, state: null, recycling_materials: ['PLA'], recycling_note: null }
+
+describe('DropoffForm photo', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('uploads the photo and books with its path', async () => {
+    vi.mocked(browserApiClient.postFormData).mockResolvedValue({ path: 'me/a.jpg', url: 'https://signed/a.jpg' })
+    vi.mocked(browserApiClient.post).mockResolvedValue({})
+    render(<DropoffForm orgs={[ORG]} />)
+    expect(screen.getByText('Sorted, in the bag or box you will carry it in. It saves an argument at the door.')).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Photo of what you are bringing'), {
+      target: { files: [new File(['x'], 'bag.jpg', { type: 'image/jpeg' })] },
+    })
+    expect(await screen.findByAltText('Photo of the sorted plastic')).toHaveAttribute('src', 'https://signed/a.jpg')
+    fireEvent.change(screen.getByPlaceholderText('2.0'), { target: { value: '2.5' } })
+    for (const line of RECYCLING_DECLARATION) fireEvent.click(screen.getByLabelText(line))
+    fireEvent.click(screen.getByRole('button', { name: /Book the drop-off/ }))
+    await waitFor(() =>
+      expect(browserApiClient.post).toHaveBeenCalledWith(
+        '/api/organizations/north/recycling',
+        expect.objectContaining({ photo_url: 'me/a.jpg' })
+      )
+    )
+  })
+})
+
+describe('DropoffForm per-drop limits', () => {
+  it('holds a weight over the organisation’s maximum, in the board’s words', () => {
+    render(<DropoffForm orgs={[{ ...ORG, recycling_max_kg: 5 }]} />)
+    expect(screen.getByText('Between 2 and 5 kg. They weigh it again at the door — this is just so they can plan.')).toBeInTheDocument()
+    fireEvent.change(screen.getByPlaceholderText('2.0'), { target: { value: '6' } })
+    expect(screen.getAllByText('Northside can take at most 5 kg in one drop. Split it across two.').length).toBeGreaterThan(0)
+    expect(screen.getByRole('button', { name: /Book the drop-off/ })).toBeDisabled()
+  })
+})

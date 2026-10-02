@@ -4,17 +4,40 @@
 // needs the RN {uri,name,type} file shape and no Content-Type of its own —
 // fetch fills in the multipart boundary, and setting one here would drop it.
 import { Platform } from 'react-native'
+import * as ImagePicker from 'expo-image-picker'
 import { getToken } from './api-client'
 
 export type UploadPath =
   | '/api/upload/photo'
+  // 080: a guide step's photo; kept out of the five-photo gallery.
+  | '/api/upload/step-photo'
+  // 093: a community note's photo, on anyone's published guide.
+  | '/api/upload/note-photo'
+  // 112: the photo of the sorted plastic. No id part — the path is the caller's own folder.
+  | '/api/upload/recycling-photo'
+  // 106: Submit an idea's photo, filed under the caller; sent with idField null.
+  | '/api/upload/idea-photo'
   | '/api/upload/pdf'
   | '/api/upload/stl'
   | '/api/upload/toy-photo'
+  // A build's working shot. The transaction id is in the path, so this one
+  // is called with idField null and sends the file alone.
+  | `/api/toy-transactions/${string}/working-shot`
+  // The printer's "ready" photo. The route answers with the job row rather
+  // than an UploadResult, and ignores the id field this helper appends.
+  | `/api/toy-transactions/${string}/print-ready`
+  // 098: a printer's SPLAT test print. The printer id is in the path; sent
+  // with idField null, and answers with the test-print row.
+  | `/api/printers/${string}/test-prints`
+  // "Start from a PDF": answers with a PdfImportDraft, not an UploadResult,
+  // and takes no id field.
+  | '/api/tutorials/import-pdf'
 
 export interface UploadResult {
   url: string
   filename?: string
+  /** 093: note-photo's storage path, which POST /notes takes. */
+  path?: string
 }
 
 /**
@@ -23,12 +46,12 @@ export interface UploadResult {
  * routes, 'toyId' for the two toy-library ones. Defaulted so every existing
  * P2 call site (photo/pdf/stl) is unchanged.
  */
-export async function uploadFile(
+export async function uploadFile<T = UploadResult>(
   path: UploadPath,
   id: string,
   file: { uri: string; name: string; mimeType?: string },
-  idField: 'tutorialId' | 'toyId' = 'tutorialId'
-): Promise<UploadResult> {
+  idField: 'tutorialId' | 'toyId' | null = 'tutorialId'
+): Promise<T> {
   const token = await getToken()
 
   const formData = new FormData()
@@ -52,7 +75,7 @@ export async function uploadFile(
       type: file.mimeType ?? 'application/octet-stream',
     } as unknown as Blob)
   }
-  formData.append(idField, id)
+  if (idField) formData.append(idField, id)
 
   const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL}${path}`, {
     method: 'POST',
@@ -71,5 +94,27 @@ export async function uploadFile(
     throw new Error(`Upload to ${path} failed with status ${res.status}${detail}`)
   }
 
-  return (await res.json()) as UploadResult
+  return (await res.json()) as T
+}
+
+/**
+ * Picks one photo from the library and uploads it to `path`. null when the
+ * picker is cancelled. Throws an Error whose message is the sentence to show:
+ * library access refused, or the upload failed.
+ */
+export async function pickAndUploadPhoto<T = UploadResult>(
+  path: UploadPath,
+  id: string,
+  idField: 'tutorialId' | 'toyId' | null = 'tutorialId'
+): Promise<T | null> {
+  const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
+  if (!permission.granted) throw new Error('Photo library access is needed to choose a photo.')
+  const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ['images'] })
+  const asset = result.canceled ? null : result.assets?.[0]
+  if (!asset) return null
+  try {
+    return await uploadFile<T>(path, id, { uri: asset.uri, name: asset.fileName ?? 'photo.jpg', mimeType: asset.mimeType ?? 'image/jpeg' }, idField)
+  } catch {
+    throw new Error('Could not upload the photo. Please try again.')
+  }
 }

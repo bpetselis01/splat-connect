@@ -65,26 +65,62 @@ describe('MyChallengesScreen', () => {
     expect(screen.getByText('Not taken forward')).toBeTruthy()
   })
 
-  it("shows a rejected idea's review note, which only its author ever sees", async () => {
-    respond([idea({ status: 'rejected', review_note: 'Too close to an existing guide.' })])
+  it('counts each stage on the filter, once per idea, and narrows both lists to it', async () => {
+    respond(
+      [
+        idea({ id: 'i1', title: 'Pending one', status: 'pending' }),
+        idea({ id: 'i2', title: 'Published one', status: 'challenge' }),
+        idea({ id: 'i4', title: 'Declined one', status: 'rejected' }),
+      ],
+      // Graduated reads as Waiting; i2 is both yours and joined and counts once.
+      [idea({ id: 'i3', title: 'Written up', status: 'graduated' }), idea({ id: 'i2', title: 'Published one', status: 'challenge' })]
+    )
     render(<MyChallengesScreen />)
-    expect(await screen.findByText('Too close to an existing guide.')).toBeTruthy()
+
+    expect(await screen.findByLabelText('All, 4')).toBeTruthy()
+    expect(screen.getByLabelText('Live, 1')).toBeTruthy()
+    expect(screen.getByLabelText('Waiting, 2')).toBeTruthy()
+    expect(screen.getByLabelText('Declined, 1')).toBeTruthy()
+
+    fireEvent.press(screen.getByLabelText('Waiting, 2'))
+    expect(screen.getByText('Pending one')).toBeTruthy()
+    expect(screen.getByText('Written up')).toBeTruthy()
+    expect(screen.queryByText('Declined one')).toBeNull()
+    expect(screen.queryByText('Published one')).toBeNull()
   })
 
-  it('opens a published idea, and refuses to link one with no public page', async () => {
+  it('reads each row the way the board does', async () => {
+    respond(
+      [
+        idea({ id: 'm1', title: 'Bubbles', status: 'challenge', created_at: '2026-09-02T00:00:00Z', maker_count: 3, answer_count: 0 }),
+        idea({ id: 'm2', title: 'Light box', status: 'pending', created_at: '2026-08-28T00:00:00Z' }),
+        idea({ id: 'm3', title: 'Spoon', status: 'rejected', review_note: 'Too close to an existing guide.', updated_at: '2026-04-11T00:00:00Z' }),
+      ],
+      [
+        idea({ id: 'j1', title: 'Tray mount', author_id: 'other', status: 'challenge', joined_at: '2026-07-12T00:00:00Z', maker_count: 5, answer_count: 9 }),
+        idea({ id: 'j2', title: 'Quiet fan', author_id: 'other', status: 'graduated', joined_at: '2026-05-03T00:00:00Z' }),
+      ]
+    )
+    render(<MyChallengesScreen />)
+    expect(await screen.findByText('Your idea · submitted 2 Sep · 3 makers joined')).toBeTruthy()
+    expect(screen.getByText('Your idea · submitted 28 Aug · with an admin')).toBeTruthy()
+    expect(screen.getByText('Your idea · declined 11 Apr — a reason is attached')).toBeTruthy()
+    expect(screen.getByText('Joined 12 Jul · 5 makers · 9 posts')).toBeTruthy()
+    expect(screen.getByText('Joined 3 May · being written up')).toBeTruthy()
+    // The reason itself is read on the idea, never on the list.
+    expect(screen.queryByText('Too close to an existing guide.')).toBeNull()
+  })
+
+  it('opens every idea of your own, published or not', async () => {
     respond([
       idea({ id: 'live', title: 'Published one', status: 'challenge' }),
       idea({ id: 'quiet', title: 'Pending one', status: 'pending' }),
     ])
     render(<MyChallengesScreen />)
-
     fireEvent.press(await screen.findByRole('button', { name: 'Published one' }))
     expect(mockPush).toHaveBeenCalledWith('/explore/challenges/live')
-
-    // A pending idea 404s on the public route by design, so its row is not a
-    // button at all rather than a dead link.
-    expect(screen.queryByRole('button', { name: 'Pending one' })).toBeNull()
-    expect(screen.getByText('Pending one')).toBeTruthy()
+    fireEvent.press(screen.getByRole('button', { name: 'Pending one' }))
+    expect(mockPush).toHaveBeenCalledWith('/explore/challenges/quiet')
   })
 
   it('lists the challenges you joined separately from your own ideas', async () => {

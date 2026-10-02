@@ -3,6 +3,15 @@ import type { Session } from '@supabase/supabase-js'
 import { AGREEMENT_VERSIONS, type Profile, type UserAgreement } from '@splat-connect/types'
 import { supabase } from './supabase'
 import { apiClient } from './api-client'
+import { problem, toProblem, type AuthProblem } from './auth-errors'
+import { appleCredential, googleIdToken, googleSavedIdToken, googleSignOut, type SocialResult } from './social-auth'
+
+/** `problem` null means it worked. `cancelled`: the person closed Apple's or
+ *  Google's sheet — the screens show nothing for it. */
+export type AuthResult = { problem: AuthProblem | null; cancelled?: boolean }
+
+const ok: AuthResult = { problem: null }
+const result = (error: Parameters<typeof toProblem>[0]): AuthResult => ({ problem: toProblem(error) })
 
 type AuthContextValue = {
   session: Session | null
@@ -13,8 +22,26 @@ type AuthContextValue = {
   // acceptance — the profile-tab gate must key off that exact distinction, or it
   // flashes for every already-accepted user on every launch.
   hasContributorTerms: boolean | null
-  signIn: (email: string, password: string) => Promise<{ error: string | null }>
-  signUp: (email: string, password: string, name: string) => Promise<{ error: string | null }>
+  /** Apple's full name from a first sign-in, for the terms gate's name field. */
+  pendingName: string | null
+  /** True while a password reset is between verifying its code (which signs
+   *  you in) and saving the new password — (auth)/_layout holds its redirect. */
+  resetting: boolean
+  signIn: (email: string, password: string) => Promise<AuthResult>
+  signUp: (email: string, password: string, name: string) => Promise<AuthResult>
+  verifyCode: (email: string, token: string, type: 'signup' | 'email') => Promise<AuthResult>
+  resendSignupCode: (email: string) => Promise<AuthResult>
+  sendSignInCode: (email: string) => Promise<AuthResult>
+  sendPasswordReset: (email: string) => Promise<AuthResult>
+  resetPassword: (email: string, token: string, password: string) => Promise<AuthResult>
+  signInWithApple: () => Promise<AuthResult>
+  /** Apple's sheet again, for account deletion: a fresh sign-in plus the
+   *  authorization code the API revokes the grant with. */
+  reauthWithApple: () => Promise<AuthResult & { authorizationCode?: string }>
+  signInWithGoogle: () => Promise<AuthResult>
+  /** android-one-tap: a saved Google account, silently. Null when there was none to offer. */
+  signInWithSavedGoogle: () => Promise<AuthResult | null>
+  setProfileName: (name: string) => Promise<AuthResult>
   signOut: () => Promise<void>
   acceptContributorTerms: () => Promise<{ error: string | null }>
 }
@@ -26,6 +53,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const [hasContributorTerms, setHasContributorTerms] = useState<boolean | null>(null)
+  const [pendingName, setPendingName] = useState<string | null>(null)
+  const [resetting, setResetting] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -55,18 +84,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let ignore = false
     Promise.all([
       apiClient.get<Profile>('/api/contributors/me').catch(() => null),
-      apiClient.get<UserAgreement[]>('/api/agreements/me').catch(() => [] as UserAgreement[]),
+      // A failed fetch is "unknown" (null), not "not accepted": the terms gate
+      // guards every signed-in route, and a network blip must not send an
+      // accepted account to it.
+      apiClient.get<UserAgreement[]>('/api/agreements/me').catch(() => null),
     ]).then(([p, rows]) => {
       if (ignore) return
       setProfile(p)
-      setHasContributorTerms(rows.some((r) => r.agreement_type === 'contributor_terms'))
+      setHasContributorTerms(rows ? rows.some((r) => r.agreement_type === 'contributor_terms') : null)
     })
     return () => { ignore = true }
   }, [session?.user?.id])
 
   async function signIn(email: string, password: string) {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    return { error: error?.message ?? null }
+    const res = result(error)
+    // An account from before codes existed may never have confirmed: send a
+    // fresh code so the screen can move straight to entering it.
+    if (res.problem?.kind === 'unconfirmed') await supabase.auth.resend({ type: 'signup', email })
+    return res
   }
 
   async function signUp(email: string, password: string, name: string) {
@@ -75,21 +111,95 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
       options: {
         data: { name, contributor_terms_version: AGREEMENT_VERSIONS.contributor_terms },
+        // Only the email's link uses this; the app itself takes the code.
         emailRedirectTo: `${process.env.EXPO_PUBLIC_WEB_URL}/auth/confirmed`,
       },
     })
-    if (error) return { error: error.message }
-    // Supabase returns a 200 with no error but an empty identities array when the
-    // email is already registered (anti-enumeration behavior) — no account is
-    // created or changed, so surface this as an error ourselves.
-    if (data.user?.identities?.length === 0) {
-      return { error: 'This email is already registered. Try signing in instead.' }
+    if (error) return result(error)
+    // Supabase answers an already-registered email with a 200 and an empty
+    // identities array (anti-enumeration), creating nothing — say so ourselves.
+    if (data.user?.identities?.length === 0) return { problem: problem('registered') }
+    return ok
+  }
+
+  async function verifyCode(email: string, token: string, type: 'signup' | 'email') {
+    const { error } = await supabase.auth.verifyOtp({ email, token, type })
+    return result(error)
+  }
+
+  async function resendSignupCode(email: string) {
+    const { error } = await supabase.auth.resend({ type: 'signup', email })
+    return result(error)
+  }
+
+  async function sendSignInCode(email: string) {
+    // Sign-in only: an unknown email is refused rather than made an account.
+    const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: false } })
+    return result(error)
+  }
+
+  async function sendPasswordReset(email: string) {
+    const { error } = await supabase.auth.resetPasswordForEmail(email)
+    return result(error)
+  }
+
+  async function resetPassword(email: string, token: string, password: string) {
+    setResetting(true)
+    try {
+      const verified = await supabase.auth.verifyOtp({ email, token, type: 'recovery' })
+      if (verified.error) return result(verified.error)
+      const { error } = await supabase.auth.updateUser({ password })
+      return result(error)
+    } finally {
+      setResetting(false)
     }
-    return { error: null }
+  }
+
+  async function withIdToken(provider: 'apple' | 'google', got: SocialResult<string>): Promise<AuthResult> {
+    if ('cancelled' in got) return { problem: null, cancelled: true }
+    const name = provider === 'apple' ? 'Apple' : 'Google'
+    const failed = { problem: { kind: 'other' as const, message: `Couldn't sign in with ${name}. Try again, or use your email.` } }
+    if ('failed' in got) return failed
+    const { error } = await supabase.auth.signInWithIdToken({ provider, token: got.ok })
+    if (!error) return ok
+    const res = result(error)
+    return res.problem?.kind === 'offline' || res.problem?.kind === 'rate-limited' ? res : failed
+  }
+
+  async function signInWithApple() {
+    const got = await appleCredential()
+    if ('ok' in got && got.ok.fullName) setPendingName(got.ok.fullName)
+    return withIdToken('apple', 'ok' in got ? { ok: got.ok.idToken } : got)
+  }
+
+  async function reauthWithApple() {
+    const got = await appleCredential()
+    const res = await withIdToken('apple', 'ok' in got ? { ok: got.ok.idToken } : got)
+    return 'ok' in got && !res.problem ? { ...res, authorizationCode: got.ok.authorizationCode ?? undefined } : res
+  }
+
+  async function signInWithGoogle() {
+    return withIdToken('google', await googleIdToken())
+  }
+
+  async function signInWithSavedGoogle(): Promise<AuthResult | null> {
+    const token = await googleSavedIdToken()
+    return token ? withIdToken('google', { ok: token }) : null
+  }
+
+  async function setProfileName(name: string) {
+    try {
+      const p = await apiClient.patch<Profile>('/api/contributors/me', { name })
+      setProfile(p)
+      setPendingName(null)
+      return ok
+    } catch {
+      return { problem: { kind: 'other' as const, message: 'Could not save your name. Please try again.' } }
+    }
   }
 
   async function signOut() {
-    await supabase.auth.signOut()
+    await Promise.all([supabase.auth.signOut(), googleSignOut()])
   }
 
   // Only flips the flag when the server confirms. Reporting an acceptance the server
@@ -107,7 +217,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ session, profile, loading, hasContributorTerms, signIn, signUp, signOut, acceptContributorTerms }}
+      value={{
+        session, profile, loading, hasContributorTerms, pendingName, resetting,
+        signIn, signUp, verifyCode, resendSignupCode, sendSignInCode, sendPasswordReset, resetPassword,
+        signInWithApple, reauthWithApple, signInWithGoogle, signInWithSavedGoogle, setProfileName, signOut, acceptContributorTerms,
+      }}
     >
       {children}
     </AuthContext.Provider>

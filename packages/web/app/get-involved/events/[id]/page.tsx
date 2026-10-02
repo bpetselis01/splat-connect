@@ -43,7 +43,7 @@ import { EventRsvpButton } from '@/components/event-rsvp-button'
 import { EventCostPanel } from '@/components/event-cost-panel'
 import { KIND_TINT } from '@/components/event-card'
 import { ShareButton } from '@/components/share-button'
-import { longDate, formatTimeRange, dateBadge, isPast } from '@/lib/dates'
+import { longDate, formatTimeRange, dateBadge, isPast } from '@splat-connect/types'
 import {
   EVENT_KIND_LABEL,
   formatCents,
@@ -99,7 +99,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
       <div className="grid items-start gap-9 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
         <div className="flex flex-col gap-4 lg:sticky lg:top-6">
           <div
-            className="relative grid aspect-square place-items-center overflow-hidden rounded-card border border-line shadow-[var(--e2),var(--hi)]"
+            className="relative grid aspect-square max-lg:aspect-[16/9] place-items-center overflow-hidden rounded-card border border-line shadow-[var(--e2),var(--hi)]"
             style={{ background: tint }}
           >
             {cover ? (
@@ -179,7 +179,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                 className="grid h-12 w-12 shrink-0 place-items-center rounded-[14px] border border-line bg-[var(--surface)]"
               >
                 <span className="grid place-items-center">
-                  <span className="text-[9px] font-extrabold uppercase text-[var(--coral)]">{badge.month}</span>
+                  <span className="text-[9px] font-extrabold uppercase max-sm:text-[10px] text-[var(--coral)]">{badge.month}</span>
                   <span className="font-display text-lg font-extrabold leading-none">{badge.day}</span>
                 </span>
               </span>

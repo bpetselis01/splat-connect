@@ -75,9 +75,10 @@ test('a leader sees the Organisation group, and the queue merges across two orga
     await expect(page).toHaveURL('/dashboard/organisation')
 
     // Both requests show in the single merged queue — no organisation picker
-    // anywhere on the page to switch between them.
-    await expect(page.getByRole('link', { name: titleA })).toBeVisible()
-    await expect(page.getByRole('link', { name: titleB })).toBeVisible()
+    // anywhere on the page to switch between them. Since the Sep 22 board pass
+    // a row's title is its heading; the row's buttons are the links.
+    await expect(page.getByRole('heading', { name: titleA })).toBeVisible()
+    await expect(page.getByRole('heading', { name: titleB })).toBeVisible()
     await expect(page.getByRole('combobox')).toHaveCount(0)
   } finally {
     await deleteOrg(orgA)
@@ -111,7 +112,12 @@ test('a leader reaches the existing review screen from the tab and approves a tu
     await expect(page).toHaveURL('/dashboard/organisation')
 
     // The row links to the existing per-project review screen, not a new one.
-    await page.getByRole('link', { name: title }).click()
+    // Its title is a heading; "Read the guide" is the row's first way in.
+    await page
+      .getByRole('listitem')
+      .filter({ has: page.getByRole('heading', { name: title }) })
+      .getByRole('link', { name: 'Read the guide' })
+      .click()
     await expect(page).toHaveURL(`/organizations/${orgId}/projects/${tutorialId}`)
     await expect(page.getByRole('heading', { name: title })).toBeVisible()
 
@@ -143,57 +149,52 @@ test('a contributor adds two children, edits one, and deletes one', async ({ pag
     await hub.getByRole('link', { name: /Account/ }).click()
     await expect(page).toHaveURL('/dashboard/profile')
 
-    // Name, age and the clinical scores live on the Ability pill, not the one the
-    // stepper opens on — ChildEditor splits the profile across four steps and
-    // starts at Survey. Saving stays on the editor and swaps /new for the new
-    // id, so the list is reached by navigating rather than by a redirect.
+    // The child profile is one page with one save (components/child-editor.tsx).
+    // Saving stays on the editor and swaps /new for the new id, so the list is
+    // reached by navigating rather than by a redirect.
     //
     // The way back up is the breadcrumb trail (lib/trail.ts), which is what
-    // replaced both the rail and the per-page back control.
+    // replaced both the rail and the per-page back control. Since the Sep 22
+    // parity pass a child's trail is the board's "My SPLAT / Child profile",
+    // so the list is one crumb up and then the hub's Account card.
+    const main = page.getByRole('main')
+    const backToAccount = async () => {
+      await page.getByRole('navigation', { name: 'Breadcrumb' }).getByRole('link', { name: 'My SPLAT' }).click()
+      await expect(page).toHaveURL('/dashboard')
+      await hub.getByRole('link', { name: /Account/ }).click()
+      await expect(page).toHaveURL('/dashboard/profile')
+    }
 
-    // First child, named.
+    // First child, named, with one switch question answered.
     await page.getByRole('link', { name: 'Add child' }).click()
     await expect(page).toHaveURL('/dashboard/child/new')
-    await page.locator('#name').fill('Emma')
-    await page.locator('#age').fill('7')
-    // The MACS/BFMF selects sit inside the collapsed "Clinical scores
-    // (optional)" disclosure; a closed <details> hides them from actionability.
-    await page.getByText('Clinical scores (optional)').click()
-    await page.locator('#macs_level').selectOption('II')
-    await page.getByRole('region', { name: 'Basics' }).getByRole('button', { name: 'Save' }).click()
-    // Scoped to <main>: "Saved" is also a hub card and a footer link, so an
-    // unscoped getByText('Saved') trips strict mode. The confirmation is page
-    // content; the others are navigation.
-    await expect(page.getByRole('main').getByText('Saved')).toBeVisible()
+    await page.getByLabel('Name or nickname').fill('Emma')
+    await page.getByLabel('Age').fill('7')
+    await page.getByRole('group', { name: 'How much force can they apply?' }).getByRole('button', { name: 'Light', exact: true }).click()
+    await page.getByRole('button', { name: 'Create profile' }).click()
+    // Scoped to <main>: "Saved" is also a hub card and a footer link.
+    await expect(main.getByText('Saved', { exact: true })).toBeVisible()
     await expect(page).toHaveURL(/\/dashboard\/child\/[0-9a-f-]{36}/)
-    await page.getByRole('navigation', { name: 'Breadcrumb' }).getByRole('link', { name: 'Account' }).click()
-    await expect(page).toHaveURL('/dashboard/profile')
+    await backToAccount()
     await expect(page.getByRole('link', { name: /Emma/ })).toBeVisible()
 
     // Second child, left unnamed — the list must still tell them apart.
     await page.getByRole('link', { name: 'Add child' }).click()
-    await page.locator('#age').fill('4')
-    await page.getByRole('region', { name: 'Basics' }).getByRole('button', { name: 'Save' }).click()
-    // Scoped to <main>: "Saved" is also a hub card and a footer link, so an
-    // unscoped getByText('Saved') trips strict mode. The confirmation is page
-    // content; the others are navigation.
-    await expect(page.getByRole('main').getByText('Saved')).toBeVisible()
-    await page.getByRole('navigation', { name: 'Breadcrumb' }).getByRole('link', { name: 'Account' }).click()
-    await expect(page).toHaveURL('/dashboard/profile')
+    await page.getByLabel('Age').fill('4')
+    await page.getByRole('button', { name: 'Create profile' }).click()
+    await expect(main.getByText('Saved', { exact: true })).toBeVisible()
+    await backToAccount()
     await expect(page.getByRole('link', { name: /Child 2/ })).toBeVisible()
 
     // Edit the first child and confirm it persists across a reload.
     await page.getByRole('link', { name: /Emma/ }).click()
-    await expect(page.locator('#age')).toHaveValue('7')
-    await expect(page.locator('#macs_level')).toHaveValue('II')
-    await page.locator('#age').fill('8')
-    await page.getByRole('region', { name: 'Basics' }).getByRole('button', { name: 'Save' }).click()
-    // Scoped to <main>: "Saved" is also a hub card and a footer link, so an
-    // unscoped getByText('Saved') trips strict mode. The confirmation is page
-    // content; the others are navigation.
-    await expect(page.getByRole('main').getByText('Saved')).toBeVisible()
+    await expect(page.getByLabel('Age')).toHaveValue('7')
+    await expect(page.getByRole('button', { name: 'Light', exact: true })).toHaveAttribute('aria-pressed', 'true')
+    await page.getByLabel('Age').fill('8')
+    await page.getByRole('button', { name: 'Save changes' }).click()
+    await expect(main.getByText('Saved', { exact: true })).toBeVisible()
     await page.reload()
-    await expect(page.locator('#age')).toHaveValue('8')
+    await expect(page.getByLabel('Age')).toHaveValue('8')
 
     // Delete is opened by a button named after the child, then gated on typing
     // the phrase back — components/delete-entity-button.tsx builds both from the

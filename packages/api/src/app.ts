@@ -7,9 +7,12 @@ import { cors } from 'hono/cors'
 import { authMiddleware } from './middleware/auth.js'
 import publicRoutes from './routes/public.js'
 import tutorials from './routes/tutorials.js'
+import pdfImport from './routes/pdf-import.js'
 import upload from './routes/upload.js'
 import parts from './routes/parts.js'
 import tools from './routes/tools.js'
+import safetyNotes from './routes/safety-notes.js'
+import tutorialNotes from './routes/tutorial-notes.js'
 import stlFiles from './routes/stl-files.js'
 import recommendations from './routes/recommendations.js'
 import admin from './routes/admin.js'
@@ -29,6 +32,7 @@ import exchangeCosts from './routes/exchange-costs.js'
 import printers from './routes/printers.js'
 import events from './routes/events.js'
 import reports from './routes/reports.js'
+import me from './routes/me.js'
 
 const app = new Hono()
 
@@ -46,17 +50,20 @@ app.route('/api/public', publicRoutes)
 const AUTHED = [
   'tutorials', 'upload', 'admin', 'contributors', 'child-profiles', 'toys',
   'toy-transactions', 'agreements', 'organizations', 'collaborators',
-  'notifications', 'ideas', 'saves', 'exchange-costs', 'printers', 'events', 'reports',
+  'notifications', 'ideas', 'saves', 'exchange-costs', 'printers', 'events', 'reports', 'me',
 ] as const
 for (const prefix of AUTHED) {
   app.use(`/api/${prefix}`, authMiddleware)
   app.use(`/api/${prefix}/*`, authMiddleware)
 }
 
+app.route('/api/tutorials', pdfImport)
 app.route('/api/tutorials', tutorials)
 app.route('/api/upload', upload)
 app.route('/api/tutorials', parts)
 app.route('/api/tutorials', tools)
+app.route('/api/tutorials', safetyNotes)
+app.route('/api/tutorials', tutorialNotes)
 app.route('/api/tutorials', stlFiles)
 app.route('/api/tutorials', recommendations)
 app.route('/api/tutorials', tutorialOrgs)
@@ -76,5 +83,6 @@ app.route('/api/exchange-costs', exchangeCosts)
 app.route('/api/printers', printers)
 app.route('/api/events', events)
 app.route('/api/reports', reports)
+app.route('/api/me', me)
 
 export default app

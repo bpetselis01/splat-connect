@@ -61,7 +61,7 @@ test('sort by build time, then flip it', async ({ page }) => {
 
   await page.goto(`/library?q=${encodeURIComponent(marker)}`)
   await page.getByRole('button', { name: 'Newest first' }).click()
-  await page.getByRole('option', { name: /Build time/ }).click()
+  await page.getByRole('button', { name: /Build time/ }).click()
   const titles = page.getByTestId('tutorial-card').locator('.browse-card__title')
   await expect(titles).toHaveText([`${marker} short`, `${marker} long`])
 
@@ -87,12 +87,18 @@ test('a signed-in visitor thanks a guide once, and the count shows on its card',
   await expect(page.getByTitle('Times people said thanks for this guide')).toHaveText('1 thanks')
 })
 
-test('a signed-out visitor is sent to sign up to say thanks', async ({ page }) => {
+// The board gives a guest Share alone (a1535727): no Say thanks button to
+// bounce off, and the rail's one account call to action — the download —
+// takes them to sign up and back to the guide.
+test('a signed-out visitor gets Share alone, and the account call to action goes to sign up', async ({ page }) => {
   const author = await createContributor()
   const id = await createTutorial(author.id, { status: 'approved' })
 
   await page.goto(`/tutorials/${id}`)
-  await page.getByRole('button', { name: /Say thanks/ }).click()
-  await expect(page).toHaveURL(/\/signup\?.*reason=thanks/)
-  await expect(page.getByText('You need an account to say thanks.')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Share' })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Say thanks/ })).toHaveCount(0)
+
+  await page.getByRole('link', { name: 'Sign in to download' }).click()
+  await expect(page).toHaveURL(new RegExp(`/signup\\?next=%2Ftutorials%2F${id}&reason=download`))
+  await expect(page.getByText('You need an account to download tutorial files.')).toBeVisible()
 })

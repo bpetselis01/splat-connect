@@ -7,48 +7,23 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Route } from 'next'
-import type { ComponentType, SVGProps } from 'react'
 import type { Notification, NotificationType } from '@splat-connect/types'
-import { BookOpen, Box, Check, FileText, Handshake, Inbox, Lightbulb, Undo, User } from '@/components/icons'
+import { copyFor, notificationSecondLine } from '@splat-connect/types'
+import {
+  ArrowCounterClockwise as Undo,
+  BookOpen,
+  Buildings as Building,
+  ChatCircleDots,
+  Check,
+  FileText,
+  Handshake,
+  Lightbulb,
+  Package as Box,
+  Tray as Inbox,
+  User,
+} from '@phosphor-icons/react/dist/ssr'
+import type { Icon as Glyph } from '@phosphor-icons/react'
 
-const COPY: Record<NotificationType, (n: Notification) => string> = {
-  collaborator_invited: (n) => `${n.actor_name} invited you to collaborate on "${n.tutorial_title}"`,
-  collaborator_accepted: (n) => `${n.actor_name} accepted your invite to "${n.tutorial_title}"`,
-  collaborator_declined: (n) => `${n.actor_name} declined your invite to "${n.tutorial_title}"`,
-  collaborator_removed: (n) => `${n.actor_name} removed you from "${n.tutorial_title}"`,
-  collaborator_left: (n) => `${n.actor_name} left "${n.tutorial_title}"`,
-  // The two review-queue types. Both name the actor and the project, because
-  // unlike every other type above the recipient did not start this and has no
-  // context for it — a leader may be looking at a title they have never seen.
-  backing_requested: (n) => `${n.actor_name} asked your organisation to back "${n.tutorial_title}"`,
-  tutorial_submitted: (n) => `${n.actor_name} submitted "${n.tutorial_title}" for review`,
-  tutorial_approved: (n) => `"${n.tutorial_title}" was approved and is now published`,
-  tutorial_rejected: (n) => `"${n.tutorial_title}" was rejected`,
-  // Unnamed on purpose: who thanked a guide stays private (066).
-  tutorial_thanked: (n) => `A family said thanks for "${n.tutorial_title}"`,
-  toy_request: (n) => `${n.actor_name} requested ${n.toy_name}`,
-  toy_accepted: (n) => `${n.actor_name} accepted your request for ${n.toy_name}`,
-  toy_rejected: (n) => `${n.actor_name} declined your request for ${n.toy_name}`,
-  toy_withdrawn: (n) => `${n.actor_name} withdrew their request for ${n.toy_name}`,
-  toy_message: (n) => `${n.actor_name} sent a message about ${n.toy_name}`,
-  idea_approved: () => 'Your idea was published as a design challenge',
-  idea_rejected: () => 'Your idea was reviewed and not taken forward',
-  challenge_joined: (n) => `${n.actor_name} joined your design challenge`,
-  challenge_left: (n) => `${n.actor_name} left your design challenge`,
-  challenge_removed: (n) => `${n.actor_name} removed you from a design challenge`,
-  // Two audiences read this since admin.ts's graduate handler notifies the
-  // author (tutorial_contributors role 'primary') and every current
-  // participant (role 'collaborator') alike — the wording must be true for
-  // both without naming a role either could contradict, and it isn't the
-  // author's idea from a participant's side either. Also honest about what
-  // graduation actually did: a tutorial row now exists with status 'draft'
-  // (admin.ts:375), not solved, not in review, not published. Matches
-  // challenge-card.tsx's "Being written up" and badge.tsx
-  // exactly; must never claim more than those two do.
-  idea_graduated: () => 'A challenge you were part of is being written up as a guide, and you are credited on it',
-}
-
-type Glyph = ComponentType<SVGProps<SVGSVGElement>>
 // The board's icon tile: a tint per kind of news, the glyph always in --tink.
 const ICON: Record<NotificationType, [Glyph, string]> = {
   collaborator_invited: [Handshake, 'var(--tmint)'],
@@ -61,6 +36,8 @@ const ICON: Record<NotificationType, [Glyph, string]> = {
   tutorial_approved: [Check, 'var(--tok)'],
   tutorial_rejected: [Undo, 'var(--tbad)'],
   tutorial_thanked: [BookOpen, 'var(--tamber)'],
+  tutorial_noted: [BookOpen, 'var(--tamber)'],
+  challenge_guide_published: [Check, 'var(--tok)'],
   toy_request: [Box, 'var(--tcoral)'],
   toy_accepted: [Handshake, 'var(--tmint)'],
   toy_rejected: [Undo, 'var(--tbad)'],
@@ -72,10 +49,36 @@ const ICON: Record<NotificationType, [Glyph, string]> = {
   challenge_left: [Lightbulb, 'var(--tamber)'],
   challenge_removed: [Lightbulb, 'var(--tamber)'],
   idea_graduated: [FileText, 'var(--tviolet)'],
+  build_shot_posted: [Box, 'var(--tcoral)'],
+  build_approved: [Check, 'var(--tok)'],
+  build_question: [ChatCircleDots, 'var(--tmint)'],
+  print_started: [Box, 'var(--tcoral)'],
+  print_ready: [Check, 'var(--tok)'],
+  org_event_published: [Building, 'var(--b100)'],
+  org_story_published: [FileText, 'var(--tcoral)'],
+  org_message: [Inbox, 'var(--tmint)'],
+  org_thanked: [Handshake, 'var(--tamber)'],
+  profile_thanked: [Handshake, 'var(--tamber)'],
 }
 
 function linkFor(n: Notification, isAdmin: boolean): string {
+  // 111: a question before a claim opens Ask first, for the maker and the family alike.
+  if (n.type === 'build_question' && n.toy_transaction_id) return `/dashboard/exchanges/build/${n.toy_transaction_id}/ask`
+  // Builds and print jobs have their own detail screens; the exchange thread
+  // is only for toys.
+  if (n.toy_transaction_id && (n.type === 'build_shot_posted' || n.type === 'build_approved')) {
+    return `/dashboard/exchanges/build/${n.toy_transaction_id}`
+  }
+  if (n.toy_transaction_id && (n.type === 'print_started' || n.type === 'print_ready')) {
+    return `/dashboard/print-requests/${n.toy_transaction_id}`
+  }
   if (n.toy_transaction_id) return `/dashboard/exchanges/${n.toy_transaction_id}`
+  // 077's subjects. A conversation opens by its own id for either side; a
+  // thanks goes to the leader's editor, where notes can be hidden.
+  if (n.org_conversation_id) return `/dashboard/messages/${n.org_conversation_id}`
+  if (n.org_event_id) return `/get-involved/events/${n.org_event_id}`
+  if (n.org_story_id) return `/about/stories/${n.org_story_id}`
+  if (n.type === 'org_thanked') return '/dashboard/organisation/profile#thanks'
   // The two review-queue types must be answered BEFORE the tutorial_id branch
   // below: their recipient is a reviewer, not a contributor, and
   // /tutorials/:id/edit is the author's editor — a leader following it lands on
@@ -94,6 +97,8 @@ function linkFor(n: Notification, isAdmin: boolean): string {
   // A thank is about the published guide, not work to do on it — the public
   // page, where the count it added is visible, not the editor.
   if (n.type === 'tutorial_thanked' && n.tutorial_id) return `/tutorials/${n.tutorial_id}`
+  if (n.type === 'tutorial_noted' && n.tutorial_id) return `/tutorials/${n.tutorial_id}`
+  if (n.type === 'challenge_guide_published' && n.tutorial_id) return `/tutorials/${n.tutorial_id}`
   if (n.tutorial_id) return `/tutorials/${n.tutorial_id}/edit`
   // A rejected idea has no public page. Not because of RLS — 037 also grants
   // "Authors see their own ideas at any status", so an author's own rejected
@@ -114,6 +119,9 @@ function linkFor(n: Notification, isAdmin: boolean): string {
       ? '/dashboard/challenges'
       : `/get-involved/design-challenges/${n.idea_id}`
   }
+  // 117: a showcase thanks opens the showcase, where the count it added shows.
+  // A thanks for an exchange, print or build left through toy_transaction_id above.
+  if (n.type === 'profile_thanked' && n.profile_id) return `/contributors/${n.profile_id}`
   return '/notifications'
 }
 
@@ -156,6 +164,7 @@ export function NotificationsList({
     <ul className="flex flex-col gap-2.5">
       {notifications.map((n) => {
         const inviteId = n.type === 'collaborator_invited' ? pendingInvitesByTutorial[n.tutorial_id!] : undefined
+        const secondLine = notificationSecondLine(n, () => '')
         const [Glyph, tint] = ICON[n.type] ?? [Inbox, 'var(--b100)']
         return (
           // The whole card is the target, as the board draws it; the title
@@ -171,7 +180,7 @@ export function NotificationsList({
               className="grid h-[42px] w-[42px] flex-none place-items-center rounded-[14px] text-[22px] text-[var(--tink)]"
               style={{ background: tint }}
             >
-              <Glyph />
+              <Glyph weight="bold" />
             </span>
             <div className="min-w-0 flex-1">
               <button
@@ -182,8 +191,9 @@ export function NotificationsList({
                 })}
                 className="block text-left text-[15px] font-extrabold text-ink after:absolute after:inset-0 after:rounded-[18px] after:content-['']"
               >
-                {COPY[n.type](n)}
+                {copyFor(n)}
               </button>
+              {secondLine && <p className="mt-0.5 text-sm leading-normal text-muted">{secondLine}</p>}
               {inviteId && (
                 <div className="relative z-10 mt-2 flex gap-2">
                   <button

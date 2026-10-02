@@ -1,0 +1,1276 @@
+{
+ "at": "2026-10-02T06:37:23.944Z",
+ "live": "http://localhost:3110",
+ "screens": [
+  {
+   "id": "learn",
+   "name": "Learn · Course home",
+   "group": "Learn",
+   "role": "guest",
+   "route": "/learn",
+   "findings": [],
+   "finalUrl": "/learn",
+   "height": 6670
+  },
+  {
+   "id": "impact_map",
+   "name": "Deliveries map",
+   "group": "Impact",
+   "role": "guest",
+   "route": "/impact/map",
+   "findings": [],
+   "finalUrl": "/impact/map",
+   "height": 1682
+  },
+  {
+   "id": "admin_content",
+   "name": "Site content",
+   "group": "Admin",
+   "role": "admin",
+   "route": "/admin/content",
+   "findings": [],
+   "finalUrl": "/admin/content",
+   "height": 3963
+  },
+  {
+   "id": "admin_review",
+   "name": "Review queue (live)",
+   "group": "Admin",
+   "role": "admin",
+   "route": "/admin/review?selected=bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+   "findings": [],
+   "finalUrl": "/admin/review",
+   "height": 5451
+  },
+  {
+   "id": "org_public",
+   "name": "Organisation profile",
+   "group": "Impact",
+   "role": "guest",
+   "route": "/organizations/529257d8-2ad8-4355-a83e-70c7b7c0d091/public",
+   "findings": [],
+   "finalUrl": "/organizations/529257d8-2ad8-4355-a83e-70c7b7c0d091/public",
+   "height": 5007
+  },
+  {
+   "id": "recycling",
+   "name": "Recycling",
+   "group": "Get involved",
+   "role": "guest",
+   "route": "/get-involved/recycling",
+   "findings": [],
+   "finalUrl": "/get-involved/recycling",
+   "height": 3466
+  },
+  {
+   "id": "recycle_new",
+   "name": "Book a drop-off",
+   "group": "Get involved",
+   "role": "parent",
+   "route": "/get-involved/recycling/drop-off",
+   "findings": [],
+   "finalUrl": "/get-involved/recycling/drop-off",
+   "height": 1847
+  },
+  {
+   "id": "org_recycling",
+   "name": "Recycling intake",
+   "group": "Organisation",
+   "role": "leader",
+   "route": "/dashboard/organisation/recycling",
+   "findings": [],
+   "finalUrl": "/dashboard/organisation/recycling",
+   "height": 3983
+  },
+  {
+   "id": "inv_idea",
+   "name": "Submit an idea",
+   "group": "Get involved",
+   "role": "guest",
+   "route": "/get-involved/submit-an-idea",
+   "findings": [],
+   "finalUrl": "/get-involved/submit-an-idea",
+   "height": 2918
+  },
+  {
+   "id": "makers_wanted",
+   "name": "Makers wanted",
+   "group": "Get involved",
+   "role": "guest",
+   "route": "/get-involved/makers-wanted",
+   "findings": [],
+   "finalUrl": "/get-involved/makers-wanted",
+   "height": 2429
+  },
+  {
+   "id": "challenge_detail",
+   "name": "Challenge detail",
+   "group": "Get involved",
+   "role": "guest",
+   "route": "/get-involved/design-challenges/4dcb8edc-42f6-4b38-b83a-2ed94ad345c6",
+   "findings": [],
+   "finalUrl": "/get-involved/design-challenges/4dcb8edc-42f6-4b38-b83a-2ed94ad345c6",
+   "height": 2877
+  },
+  {
+   "id": "build_thread",
+   "name": "Build thread",
+   "group": "My SPLAT",
+   "role": "parent",
+   "route": "/dashboard/exchanges/build/16b23c25-7155-462d-876b-0cd4028c3d65",
+   "findings": [],
+   "finalUrl": "/dashboard/exchanges/build/16b23c25-7155-462d-876b-0cd4028c3d65",
+   "height": 3508
+  },
+  {
+   "id": "toy_detail",
+   "name": "Toy detail",
+   "group": "My SPLAT",
+   "role": "parent",
+   "route": "/dashboard/toys/ffb0874d-1a77-4e61-b535-c4d0f66e3c1e",
+   "findings": [],
+   "finalUrl": "/dashboard/toys/ffb0874d-1a77-4e61-b535-c4d0f66e3c1e",
+   "height": 3439
+  },
+  {
+   "id": "org_toys",
+   "name": "Toy inventory",
+   "group": "Organisation",
+   "role": "leader",
+   "route": "/dashboard/organisation/toys",
+   "findings": [],
+   "finalUrl": "/dashboard/organisation/toys",
+   "height": 2890
+  },
+  {
+   "id": "home",
+   "name": "Home",
+   "group": "Public site",
+   "role": "guest",
+   "route": "/",
+   "findings": [],
+   "finalUrl": "/",
+   "height": 12256
+  },
+  {
+   "id": "library",
+   "name": "Guides library",
+   "group": "Public site",
+   "role": "guest",
+   "route": "/library",
+   "findings": [],
+   "finalUrl": "/library",
+   "height": 13930
+  },
+  {
+   "id": "tutorial",
+   "name": "Guide detail",
+   "group": "Public site",
+   "role": "guest",
+   "route": "/tutorials/f677bc3d-1399-4c41-bd1b-1cfd43ae50c2",
+   "findings": [],
+   "finalUrl": "/tutorials/f677bc3d-1399-4c41-bd1b-1cfd43ae50c2",
+   "height": 3606
+  },
+  {
+   "id": "toys_public",
+   "name": "Toy library",
+   "group": "Public site",
+   "role": "guest",
+   "route": "/toy-library",
+   "findings": [],
+   "finalUrl": "/toy-library",
+   "height": 14784
+  },
+  {
+   "id": "toy_public",
+   "name": "Toy detail",
+   "group": "Public site",
+   "role": "guest",
+   "route": "/toy-library/868e2871-d00e-4b86-bc2c-aa0abdd6001d",
+   "findings": [],
+   "finalUrl": "/toy-library/868e2871-d00e-4b86-bc2c-aa0abdd6001d",
+   "height": 3480
+  },
+  {
+   "id": "toy_request",
+   "name": "Request a toy",
+   "group": "Public site",
+   "role": "parent",
+   "route": "/toy-library/868e2871-d00e-4b86-bc2c-aa0abdd6001d/request",
+   "findings": [],
+   "finalUrl": "/toy-library/868e2871-d00e-4b86-bc2c-aa0abdd6001d/request",
+   "height": 3332
+  },
+  {
+   "id": "wizard",
+   "name": "Child profile wizard",
+   "group": "My SPLAT",
+   "role": "parent",
+   "route": "/onboarding/child",
+   "findings": [],
+   "finalUrl": "/onboarding/child",
+   "height": 800
+  },
+  {
+   "id": "learn_101",
+   "name": "Toy adaptation 101",
+   "group": "Learn",
+   "role": "guest",
+   "route": "/learn/toy-adaptation-101",
+   "findings": [],
+   "finalUrl": "/learn/toy-adaptation-101",
+   "height": 4674
+  },
+  {
+   "id": "learn_switch",
+   "name": "Switch types explained",
+   "group": "Learn",
+   "role": "guest",
+   "route": "/learn/switch-types",
+   "findings": [],
+   "finalUrl": "/learn/switch-types",
+   "height": 5019
+  },
+  {
+   "id": "learn_choose",
+   "name": "Choosing a toy",
+   "group": "Learn",
+   "role": "guest",
+   "route": "/learn/choosing-a-toy",
+   "findings": [],
+   "finalUrl": "/learn/choosing-a-toy",
+   "height": 4538
+  },
+  {
+   "id": "learn_tools",
+   "name": "Tools and materials",
+   "group": "Learn",
+   "role": "guest",
+   "route": "/learn/tools-and-materials",
+   "findings": [],
+   "finalUrl": "/learn/tools-and-materials",
+   "height": 6734
+  },
+  {
+   "id": "learn_safety",
+   "name": "Safe handling",
+   "group": "Learn",
+   "role": "guest",
+   "route": "/learn/safety-and-cleaning",
+   "findings": [],
+   "finalUrl": "/learn/safety-and-cleaning",
+   "height": 4676
+  },
+  {
+   "id": "learn_ask",
+   "name": "Have a question?",
+   "group": "Learn",
+   "role": "guest",
+   "route": "/learn/ask-an-expert",
+   "findings": [],
+   "finalUrl": "/learn/ask-an-expert",
+   "height": 2717
+  },
+  {
+   "id": "learn_circuit",
+   "name": "How a switch works",
+   "group": "Learn",
+   "role": "guest",
+   "route": "/learn/how-a-switch-works",
+   "findings": [],
+   "finalUrl": "/learn/how-a-switch-works",
+   "height": 4896
+  },
+  {
+   "id": "learn_q1",
+   "name": "Checkpoint: the basics",
+   "group": "Learn",
+   "role": "guest",
+   "route": "/learn/checkpoint-1",
+   "findings": [],
+   "finalUrl": "/learn/checkpoint-1",
+   "height": 4285
+  },
+  {
+   "id": "learn_q2",
+   "name": "Checkpoint: the bench",
+   "group": "Learn",
+   "role": "guest",
+   "route": "/learn/checkpoint-2",
+   "findings": [],
+   "finalUrl": "/learn/checkpoint-2",
+   "height": 4138
+  },
+  {
+   "id": "learn_connector",
+   "name": "Wire a 3.5 mm connector",
+   "group": "Learn",
+   "role": "guest",
+   "route": "/learn/wire-a-connector",
+   "findings": [],
+   "finalUrl": "/learn/wire-a-connector",
+   "height": 10042
+  },
+  {
+   "id": "learn_q3",
+   "name": "Checkpoint: the connector",
+   "group": "Learn",
+   "role": "guest",
+   "route": "/learn/checkpoint-3",
+   "findings": [],
+   "finalUrl": "/learn/checkpoint-3",
+   "height": 4254
+  },
+  {
+   "id": "learn_hamster",
+   "name": "Build 1: Hamster Mania",
+   "group": "Learn",
+   "role": "guest",
+   "route": "/learn/build-hamster-mania",
+   "findings": [],
+   "finalUrl": "/learn/build-hamster-mania",
+   "height": 8740
+  },
+  {
+   "id": "learn_duck",
+   "name": "Build 2: Duck bubble machine",
+   "group": "Learn",
+   "role": "guest",
+   "route": "/learn/build-duck-bubbles",
+   "findings": [],
+   "finalUrl": "/learn/build-duck-bubbles",
+   "height": 8065
+  },
+  {
+   "id": "learn_rachel",
+   "name": "Build 3: Ms Rachel doll",
+   "group": "Learn",
+   "role": "guest",
+   "route": "/learn/build-ms-rachel",
+   "findings": [],
+   "finalUrl": "/learn/build-ms-rachel",
+   "height": 8178
+  },
+  {
+   "id": "learn_diyswitch",
+   "name": "Build a 3D-printed switch",
+   "group": "Learn",
+   "role": "guest",
+   "route": "/learn/build-a-switch",
+   "findings": [],
+   "finalUrl": "/learn/build-a-switch",
+   "height": 10491
+  },
+  {
+   "id": "learn_handover",
+   "name": "Checks, cleaning and handover",
+   "group": "Learn",
+   "role": "guest",
+   "route": "/learn/handover",
+   "findings": [],
+   "finalUrl": "/learn/handover",
+   "height": 5224
+  },
+  {
+   "id": "learn_q4",
+   "name": "Final checkpoint",
+   "group": "Learn",
+   "role": "guest",
+   "route": "/learn/final-checkpoint",
+   "findings": [],
+   "finalUrl": "/learn/final-checkpoint",
+   "height": 4674
+  },
+  {
+   "id": "printing",
+   "name": "Find a printer",
+   "group": "3D Printing",
+   "role": "guest",
+   "route": "/printing",
+   "findings": [],
+   "finalUrl": "/printing",
+   "height": 3622
+  },
+  {
+   "id": "printing_basics",
+   "name": "Printing basics",
+   "group": "3D Printing",
+   "role": "guest",
+   "route": "/printing/basics",
+   "findings": [],
+   "finalUrl": "/printing/basics",
+   "height": 3139
+  },
+  {
+   "id": "print_request_new",
+   "name": "Request a print",
+   "group": "3D Printing",
+   "role": "parent",
+   "route": "/printing/requests?guide=37d5ef80-607b-4954-a84b-9d2d86b3bf87",
+   "findings": [],
+   "finalUrl": "/printing/requests",
+   "height": 4036
+  },
+  {
+   "id": "involved",
+   "name": "Get involved",
+   "group": "Get involved",
+   "role": "guest",
+   "route": "/get-involved",
+   "findings": [],
+   "finalUrl": "/get-involved",
+   "height": 5857
+  },
+  {
+   "id": "inv_families",
+   "name": "For families",
+   "group": "Get involved",
+   "role": "guest",
+   "route": "/get-involved/families",
+   "findings": [],
+   "finalUrl": "/get-involved/families",
+   "height": 2967
+  },
+  {
+   "id": "inv_contributors",
+   "name": "For contributors",
+   "group": "Get involved",
+   "role": "guest",
+   "route": "/get-involved/contributors",
+   "findings": [],
+   "finalUrl": "/get-involved/contributors",
+   "height": 2951
+  },
+  {
+   "id": "inv_orgs",
+   "name": "For organisations",
+   "group": "Get involved",
+   "role": "guest",
+   "route": "/get-involved/organisations",
+   "findings": [],
+   "finalUrl": "/get-involved/organisations",
+   "height": 3205
+  },
+  {
+   "id": "org_request",
+   "name": "Request an organisation",
+   "group": "Get involved",
+   "role": "parent",
+   "route": "/get-involved/organisations/request",
+   "findings": [],
+   "finalUrl": "/get-involved/organisations/request",
+   "height": 2634
+  },
+  {
+   "id": "inv_guide",
+   "name": "Submit a guide",
+   "group": "Get involved",
+   "role": "guest",
+   "route": "/get-involved/submit-a-tutorial",
+   "findings": [],
+   "finalUrl": "/get-involved/submit-a-tutorial",
+   "height": 2526
+  },
+  {
+   "id": "mw_new",
+   "name": "Ask for a build",
+   "group": "Get involved",
+   "role": "parent",
+   "route": "/get-involved/makers-wanted/new",
+   "findings": [],
+   "finalUrl": "/get-involved/makers-wanted/new",
+   "height": 3893
+  },
+  {
+   "id": "challenges",
+   "name": "Design challenges",
+   "group": "Get involved",
+   "role": "guest",
+   "route": "/get-involved/design-challenges",
+   "findings": [],
+   "finalUrl": "/get-involved/design-challenges",
+   "height": 14078
+  },
+  {
+   "id": "impact",
+   "name": "Community impact",
+   "group": "Impact",
+   "role": "guest",
+   "route": "/impact",
+   "findings": [],
+   "finalUrl": "/impact",
+   "height": 6976
+  },
+  {
+   "id": "orgs",
+   "name": "Organisations",
+   "group": "Impact",
+   "role": "guest",
+   "route": "/organizations",
+   "findings": [],
+   "finalUrl": "/organizations",
+   "height": 8000
+  },
+  {
+   "id": "contributor",
+   "name": "Contributor profile",
+   "group": "Impact",
+   "role": "guest",
+   "route": "/contributors/11111111-1111-1111-1111-111111111111",
+   "findings": [],
+   "finalUrl": "/contributors/11111111-1111-1111-1111-111111111111",
+   "height": 3532
+  },
+  {
+   "id": "impact_events",
+   "name": "Events",
+   "group": "Get involved",
+   "role": "guest",
+   "route": "/get-involved/events",
+   "findings": [
+    {
+     "type": "target",
+     "what": "a.font-extrabold.text-[var(--b700)].underline \"Parity Org mu5j1p9mwpyw\" is 171x18"
+    },
+    {
+     "type": "target",
+     "what": "a.font-extrabold.text-[var(--b700)].underline \"Northside Therapy\" is 116x18"
+    },
+    {
+     "type": "target",
+     "what": "a.font-extrabold.text-[var(--b700)].underline \"Parity Org mucj4fusv80n\" is 154x18"
+    },
+    {
+     "type": "target",
+     "what": "a.font-extrabold.text-[var(--b700)].underline \"Northside Collective 1789602355001\" is 231x18"
+    },
+    {
+     "type": "target",
+     "what": "a.font-extrabold.text-[var(--b700)].underline \"Northside Therapy Collective\" is 181x18"
+    }
+   ],
+   "finalUrl": "/get-involved/events",
+   "height": 4020
+  },
+  {
+   "id": "event_detail",
+   "name": "Event detail",
+   "group": "Get involved",
+   "role": "guest",
+   "route": "/get-involved/events/0c81690d-021a-4add-b982-8b7106fd9451",
+   "findings": [],
+   "finalUrl": "/get-involved/events/0c81690d-021a-4add-b982-8b7106fd9451",
+   "height": 3470
+  },
+  {
+   "id": "event_register",
+   "name": "Register for an event",
+   "group": "Get involved",
+   "role": "parent",
+   "route": "/get-involved/events/0c81690d-021a-4add-b982-8b7106fd9451/register",
+   "findings": [],
+   "finalUrl": "/get-involved/events/0c81690d-021a-4add-b982-8b7106fd9451/register",
+   "height": 3078
+  },
+  {
+   "id": "impact_news",
+   "name": "Stories",
+   "group": "About",
+   "role": "guest",
+   "route": "/about/stories",
+   "findings": [],
+   "finalUrl": "/about/stories",
+   "height": 4048
+  },
+  {
+   "id": "story_detail",
+   "name": "Story",
+   "group": "About",
+   "role": "guest",
+   "route": "/about/stories/2b8a6d88-711a-4d6e-bfb0-8d243d216b07",
+   "findings": [],
+   "finalUrl": "/about/stories/2b8a6d88-711a-4d6e-bfb0-8d243d216b07",
+   "height": 3489
+  },
+  {
+   "id": "about",
+   "name": "About",
+   "group": "About",
+   "role": "guest",
+   "route": "/about",
+   "findings": [],
+   "finalUrl": "/about",
+   "height": 3088
+  },
+  {
+   "id": "about_team",
+   "name": "Our team",
+   "group": "About",
+   "role": "guest",
+   "route": "/about/team",
+   "findings": [],
+   "finalUrl": "/about/team",
+   "height": 2561
+  },
+  {
+   "id": "contact",
+   "name": "Contact",
+   "group": "About",
+   "role": "guest",
+   "route": "/contact",
+   "findings": [],
+   "finalUrl": "/contact",
+   "height": 3303
+  },
+  {
+   "id": "org_requests",
+   "name": "Requests to your organisation",
+   "group": "Organisation",
+   "role": "leader",
+   "route": "/dashboard/organisation/requests",
+   "findings": [],
+   "finalUrl": "/dashboard/organisation/requests",
+   "height": 2026
+  },
+  {
+   "id": "my_events",
+   "name": "My events",
+   "group": "My SPLAT",
+   "role": "parent",
+   "route": "/dashboard/events",
+   "findings": [],
+   "finalUrl": "/dashboard/events",
+   "height": 1934
+  },
+  {
+   "id": "admin_inbox",
+   "name": "Inbox",
+   "group": "Admin",
+   "role": "admin",
+   "route": "/admin/inbox",
+   "findings": [],
+   "finalUrl": "/admin/inbox",
+   "height": 1962
+  },
+  {
+   "id": "admin_builds",
+   "name": "Build requests",
+   "group": "Admin",
+   "role": "admin",
+   "route": "/admin/build-requests",
+   "findings": [],
+   "finalUrl": "/admin/build-requests",
+   "height": 2210
+  },
+  {
+   "id": "org_event_manage",
+   "name": "Manage event",
+   "group": "My SPLAT",
+   "role": "leader",
+   "route": "/dashboard/org/events/0c81690d-021a-4add-b982-8b7106fd9451",
+   "findings": [],
+   "finalUrl": "/dashboard/org/events/0c81690d-021a-4add-b982-8b7106fd9451",
+   "height": 3489
+  },
+  {
+   "id": "about_partners",
+   "name": "Partners and supporters",
+   "group": "About",
+   "role": "guest",
+   "route": "/about/partners",
+   "findings": [],
+   "finalUrl": "/about/partners",
+   "height": 8581
+  },
+  {
+   "id": "about_support",
+   "name": "Support SPLAT",
+   "group": "About",
+   "role": "guest",
+   "route": "/about/support",
+   "findings": [],
+   "finalUrl": "/about/support",
+   "height": 4084
+  },
+  {
+   "id": "safety",
+   "name": "Safety",
+   "group": "Legal",
+   "role": "guest",
+   "route": "/safety",
+   "findings": [],
+   "finalUrl": "/safety",
+   "height": 5211
+  },
+  {
+   "id": "privacy",
+   "name": "Privacy policy",
+   "group": "Legal",
+   "role": "guest",
+   "route": "/privacy",
+   "findings": [],
+   "finalUrl": "/privacy",
+   "height": 6172
+  },
+  {
+   "id": "terms",
+   "name": "Terms of use",
+   "group": "Legal",
+   "role": "guest",
+   "route": "/terms",
+   "findings": [],
+   "finalUrl": "/terms",
+   "height": 4478
+  },
+  {
+   "id": "conduct",
+   "name": "Code of conduct",
+   "group": "Legal",
+   "role": "guest",
+   "route": "/code-of-conduct",
+   "findings": [],
+   "finalUrl": "/code-of-conduct",
+   "height": 3537
+  },
+  {
+   "id": "legal_purpose",
+   "name": "What Connect is (and isn’t)",
+   "group": "Legal",
+   "role": "guest",
+   "route": "/legal/intended-purpose",
+   "findings": [],
+   "finalUrl": "/legal/intended-purpose",
+   "height": 3190
+  },
+  {
+   "id": "legal_contributor",
+   "name": "Contributor terms",
+   "group": "Legal",
+   "role": "guest",
+   "route": "/legal/contributor-terms",
+   "findings": [],
+   "finalUrl": "/legal/contributor-terms",
+   "height": 2003
+  },
+  {
+   "id": "legal_org",
+   "name": "Organisation leader terms",
+   "group": "Legal",
+   "role": "guest",
+   "route": "/legal/org-leader-terms",
+   "findings": [],
+   "finalUrl": "/legal/org-leader-terms",
+   "height": 2003
+  },
+  {
+   "id": "hub",
+   "name": "My SPLAT",
+   "group": "My SPLAT",
+   "role": "parent",
+   "route": "/dashboard",
+   "findings": [],
+   "finalUrl": "/dashboard",
+   "height": 4483
+  },
+  {
+   "id": "tutorials",
+   "name": "My tutorials",
+   "group": "My SPLAT",
+   "role": "contributor",
+   "route": "/dashboard/tutorials",
+   "findings": [],
+   "finalUrl": "/dashboard/tutorials",
+   "height": 2188
+  },
+  {
+   "id": "upload",
+   "name": "Add a tutorial",
+   "group": "My SPLAT",
+   "role": "contributor",
+   "route": "/upload",
+   "findings": [],
+   "finalUrl": "/upload",
+   "height": 2765
+  },
+  {
+   "id": "editor",
+   "name": "Tutorial editor",
+   "group": "My SPLAT",
+   "role": "contributor",
+   "route": "/tutorials/c35a3058-21df-4ef4-8676-cdff89387a13/edit",
+   "findings": [],
+   "finalUrl": "/tutorials/c35a3058-21df-4ef4-8676-cdff89387a13/edit",
+   "height": 3572
+  },
+  {
+   "id": "toys",
+   "name": "My toys",
+   "group": "My SPLAT",
+   "role": "parent",
+   "route": "/dashboard/toys",
+   "findings": [],
+   "finalUrl": "/dashboard/toys",
+   "height": 2489
+  },
+  {
+   "id": "toy_new",
+   "name": "Add a toy",
+   "group": "My SPLAT",
+   "role": "parent",
+   "route": "/dashboard/toys/new",
+   "findings": [],
+   "finalUrl": "/dashboard/toys/new",
+   "height": 2641
+  },
+  {
+   "id": "exchanges",
+   "name": "My exchanges",
+   "group": "My SPLAT",
+   "role": "parent",
+   "route": "/dashboard/exchanges",
+   "findings": [],
+   "finalUrl": "/dashboard/exchanges",
+   "height": 10038
+  },
+  {
+   "id": "thread",
+   "name": "Exchange thread",
+   "group": "My SPLAT",
+   "role": "parent",
+   "route": "/dashboard/exchanges/f1d44697-b37f-46d8-b6e0-551d084a8555",
+   "findings": [],
+   "finalUrl": "/dashboard/exchanges/f1d44697-b37f-46d8-b6e0-551d084a8555",
+   "height": 3689
+  },
+  {
+   "id": "my_challenges",
+   "name": "My design challenges",
+   "group": "My SPLAT",
+   "role": "parent",
+   "route": "/dashboard/challenges",
+   "findings": [],
+   "finalUrl": "/dashboard/challenges",
+   "height": 2765
+  },
+  {
+   "id": "saved",
+   "name": "Saved",
+   "group": "My SPLAT",
+   "role": "parent",
+   "route": "/dashboard/saved",
+   "findings": [],
+   "finalUrl": "/dashboard/saved",
+   "height": 2451
+  },
+  {
+   "id": "saved_tutorials",
+   "name": "Saved tutorials",
+   "group": "My SPLAT",
+   "role": "parent",
+   "route": "/dashboard/saved/tutorials",
+   "findings": [],
+   "finalUrl": "/dashboard/saved/tutorials",
+   "height": 2065
+  },
+  {
+   "id": "saved_toys",
+   "name": "Saved toys",
+   "group": "My SPLAT",
+   "role": "parent",
+   "route": "/dashboard/saved/toys",
+   "findings": [],
+   "finalUrl": "/dashboard/saved/toys",
+   "height": 2045
+  },
+  {
+   "id": "saved_challenges",
+   "name": "Saved challenges",
+   "group": "My SPLAT",
+   "role": "parent",
+   "route": "/dashboard/saved/challenges",
+   "findings": [],
+   "finalUrl": "/dashboard/saved/challenges",
+   "height": 2065
+  },
+  {
+   "id": "saved_orgs",
+   "name": "Saved organisations",
+   "group": "My SPLAT",
+   "role": "parent",
+   "route": "/dashboard/saved/organisations",
+   "findings": [],
+   "finalUrl": "/dashboard/saved/organisations",
+   "height": 2037
+  },
+  {
+   "id": "notifications",
+   "name": "Notifications",
+   "group": "My SPLAT",
+   "role": "parent",
+   "route": "/notifications",
+   "findings": [],
+   "finalUrl": "/notifications",
+   "height": 2370
+  },
+  {
+   "id": "print_requests",
+   "name": "My print requests",
+   "group": "My SPLAT",
+   "role": "parent",
+   "route": "/dashboard/print-requests",
+   "findings": [],
+   "finalUrl": "/dashboard/print-requests",
+   "height": 5511
+  },
+  {
+   "id": "print_job",
+   "name": "Print job",
+   "group": "My SPLAT",
+   "role": "parent",
+   "route": "/dashboard/print-requests/abaf02fc-7cc6-4cf2-b4c3-6ea92e2dc30d",
+   "findings": [],
+   "finalUrl": "/dashboard/print-requests/abaf02fc-7cc6-4cf2-b4c3-6ea92e2dc30d",
+   "height": 3477
+  },
+  {
+   "id": "print_offer",
+   "name": "Print for others",
+   "group": "My SPLAT",
+   "role": "parent",
+   "route": "/dashboard/printers",
+   "findings": [],
+   "finalUrl": "/dashboard/printers",
+   "height": 3159
+  },
+  {
+   "id": "print_add",
+   "name": "Add a printer",
+   "group": "My SPLAT",
+   "role": "parent",
+   "route": "/dashboard/printers/new",
+   "findings": [],
+   "finalUrl": "/dashboard/printers/new",
+   "height": 3790
+  },
+  {
+   "id": "account",
+   "name": "Account",
+   "group": "My SPLAT",
+   "role": "parent",
+   "route": "/dashboard/profile",
+   "findings": [],
+   "finalUrl": "/dashboard/profile",
+   "height": 3522
+  },
+  {
+   "id": "child",
+   "name": "Child profile",
+   "group": "My SPLAT",
+   "role": "parent",
+   "route": "/dashboard/child/a91abdb2-01de-44d4-868a-c7feb00d5bf0",
+   "findings": [],
+   "finalUrl": "/dashboard/child/a91abdb2-01de-44d4-868a-c7feb00d5bf0",
+   "height": 3081
+  },
+  {
+   "id": "child_new",
+   "name": "Add child",
+   "group": "My SPLAT",
+   "role": "parent",
+   "route": "/dashboard/child/new",
+   "findings": [],
+   "finalUrl": "/dashboard/child/new",
+   "height": 3021
+  },
+  {
+   "id": "org_queue",
+   "name": "Org review queue",
+   "group": "Organisation",
+   "role": "leader",
+   "route": "/dashboard/organisation",
+   "findings": [],
+   "finalUrl": "/dashboard/organisation",
+   "height": 2382
+  },
+  {
+   "id": "org_profile",
+   "name": "Organisation profile",
+   "group": "Organisation",
+   "role": "leader",
+   "route": "/dashboard/organisation/profile",
+   "findings": [],
+   "finalUrl": "/dashboard/organisation/profile",
+   "height": 7704
+  },
+  {
+   "id": "org_posts",
+   "name": "Events and stories",
+   "group": "Organisation",
+   "role": "leader",
+   "route": "/dashboard/organisation/publish",
+   "findings": [],
+   "finalUrl": "/dashboard/organisation/publish",
+   "height": 2547
+  },
+  {
+   "id": "org_event_new",
+   "name": "Publish an event",
+   "group": "Organisation",
+   "role": "leader",
+   "route": "/dashboard/organisation/events/new",
+   "findings": [],
+   "finalUrl": "/dashboard/organisation/events/new",
+   "height": 5218
+  },
+  {
+   "id": "org_story_new",
+   "name": "Publish a story",
+   "group": "Organisation",
+   "role": "leader",
+   "route": "/dashboard/organisation/stories/new",
+   "findings": [],
+   "finalUrl": "/dashboard/organisation/stories/new",
+   "height": 3393
+  },
+  {
+   "id": "org_orders",
+   "name": "Print orders",
+   "group": "Organisation",
+   "role": "leader",
+   "route": "/dashboard/organisation/orders",
+   "findings": [],
+   "finalUrl": "/dashboard/organisation/orders",
+   "height": 3187
+  },
+  {
+   "id": "admin",
+   "name": "Admin dashboard",
+   "group": "Admin",
+   "role": "admin",
+   "route": "/admin",
+   "findings": [],
+   "finalUrl": "/admin",
+   "height": 4177
+  },
+  {
+   "id": "admin_review_detail",
+   "name": "Review a tutorial",
+   "group": "Admin",
+   "role": "admin",
+   "route": "/admin/review/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+   "findings": [],
+   "finalUrl": "/admin/review/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+   "height": 3426
+  },
+  {
+   "id": "admin_reports",
+   "name": "Reports",
+   "group": "Admin",
+   "role": "admin",
+   "route": "/admin/reports",
+   "findings": [],
+   "finalUrl": "/admin/reports",
+   "height": 2032
+  },
+  {
+   "id": "admin_ideas",
+   "name": "Ideas queue",
+   "group": "Admin",
+   "role": "admin",
+   "route": "/admin/ideas",
+   "findings": [],
+   "finalUrl": "/admin/ideas",
+   "height": 6777
+  },
+  {
+   "id": "admin_idea_detail",
+   "name": "Review an idea",
+   "group": "Admin",
+   "role": "admin",
+   "route": "/admin/ideas/37194df9-a3f3-47f0-bc4b-be8b4c541fbb",
+   "findings": [],
+   "finalUrl": "/admin/ideas/37194df9-a3f3-47f0-bc4b-be8b4c541fbb",
+   "height": 2405
+  },
+  {
+   "id": "admin_prints",
+   "name": "Print jobs",
+   "group": "Admin",
+   "role": "admin",
+   "route": "/admin/print-jobs",
+   "findings": [],
+   "finalUrl": "/admin/print-jobs",
+   "height": 3846
+  },
+  {
+   "id": "admin_spot",
+   "name": "Spot-check",
+   "group": "Admin",
+   "role": "admin",
+   "route": "/admin/spot-check",
+   "findings": [],
+   "finalUrl": "/admin/spot-check",
+   "height": 3442
+  },
+  {
+   "id": "admin_orgs",
+   "name": "Organisations",
+   "group": "Admin",
+   "role": "admin",
+   "route": "/admin/organizations",
+   "findings": [],
+   "finalUrl": "/admin/organizations",
+   "height": 8627
+  },
+  {
+   "id": "admin_contributors",
+   "name": "Accounts",
+   "group": "Admin",
+   "role": "admin",
+   "route": "/admin/contributors",
+   "findings": [],
+   "finalUrl": "/admin/contributors",
+   "height": 8222
+  },
+  {
+   "id": "login",
+   "name": "Sign in",
+   "group": "Auth",
+   "role": "guest",
+   "route": "/login",
+   "findings": [],
+   "finalUrl": "/login",
+   "height": 2185
+  },
+  {
+   "id": "signup",
+   "name": "Create account",
+   "group": "Auth",
+   "role": "guest",
+   "route": "/signup",
+   "findings": [],
+   "finalUrl": "/signup",
+   "height": 2797
+  },
+  {
+   "id": "signup_sent",
+   "name": "Check your email",
+   "group": "Auth",
+   "role": "guest",
+   "route": "/signup",
+   "findings": [],
+   "finalUrl": "/signup",
+   "height": 2797
+  },
+  {
+   "id": "confirmed",
+   "name": "Email confirmed",
+   "group": "Auth",
+   "role": "guest",
+   "route": "/auth/confirmed",
+   "findings": [],
+   "finalUrl": "/auth/confirmed",
+   "height": 728
+  },
+  {
+   "id": "terms_gate",
+   "name": "Contributor terms gate",
+   "group": "Auth",
+   "role": "guest",
+   "route": "/onboarding/contributor-terms",
+   "findings": [],
+   "finalUrl": "/onboarding/contributor-terms",
+   "height": 830
+  },
+  {
+   "id": "components",
+   "name": "Component sheet",
+   "group": "Prototype",
+   "role": "guest",
+   "route": "/design-system",
+   "findings": [],
+   "finalUrl": "/design-system",
+   "height": 6407
+  },
+  {
+   "id": "states",
+   "name": "Interaction states",
+   "group": "Prototype",
+   "role": "guest",
+   "route": "/design-system/states",
+   "findings": [],
+   "finalUrl": "/design-system/states",
+   "height": 3258
+  },
+  {
+   "id": "x_org_message",
+   "name": "Message an organisation",
+   "group": "Extra",
+   "role": "parent",
+   "route": "/organizations/0b06226d-8072-4268-93b7-577bf9ab5c60/message",
+   "findings": [],
+   "finalUrl": "/organizations/0b06226d-8072-4268-93b7-577bf9ab5c60/message",
+   "height": 2108
+  },
+  {
+   "id": "x_get_requests",
+   "name": "Requests board",
+   "group": "Extra",
+   "role": "guest",
+   "route": "/get-involved/requests",
+   "findings": [],
+   "finalUrl": "/get-involved/requests",
+   "height": 1879
+  },
+  {
+   "id": "x_print_parts",
+   "name": "Printable parts",
+   "group": "Extra",
+   "role": "guest",
+   "route": "/printing/parts",
+   "findings": [],
+   "finalUrl": "/printing/parts",
+   "height": 2310
+  },
+  {
+   "id": "x_saved_parts",
+   "name": "Saved parts",
+   "group": "Extra",
+   "role": "parent",
+   "route": "/dashboard/saved/parts",
+   "findings": [],
+   "finalUrl": "/dashboard/saved/parts",
+   "height": 2147
+  },
+  {
+   "id": "x_org_messages",
+   "name": "Organisation messages",
+   "group": "Extra",
+   "role": "leader",
+   "route": "/dashboard/organisation/messages",
+   "findings": [],
+   "finalUrl": "/dashboard/organisation/messages",
+   "height": 1825
+  },
+  {
+   "id": "x_admin_org_requests",
+   "name": "Organisation requests",
+   "group": "Extra",
+   "role": "admin",
+   "route": "/admin/organization-requests",
+   "findings": [],
+   "finalUrl": "/admin/organization-requests",
+   "height": 2144
+  }
+ ],
+ "summary": {
+  "screens": 124,
+  "clean": 123,
+  "errored": 0,
+  "findings": 5,
+  "byType": {
+   "target": 5
+  }
+ }
+}

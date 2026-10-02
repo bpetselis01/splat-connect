@@ -1,7 +1,11 @@
 import { Hono } from 'hono'
-import { CONTACT_PREFS, type ContactPref } from '@splat-connect/types'
+import { CONTACT_PREFS, type ContactPref, type ToyIdeaKind } from '@splat-connect/types'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import type { AuthVariables } from '../middleware/auth.js'
+import { profileName } from '../profile-name.js'
+import { toyPhotoUrl } from '../photo-storage.js'
+import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
+import { challengeCounts } from '../challenge-counts.js'
 
 const toyIdeas = new Hono<{ Variables: AuthVariables }>()
 
@@ -9,24 +13,53 @@ const RLS_VIOLATION = '42501'
 
 type Client = ReturnType<typeof createUserClient>
 
-const NARRATIVE_FIELDS = [
-  'title', 'summary', 'description', 'intended_use', 'primary_user',
-] as const
+const IDEA_KINDS: ToyIdeaKind[] = ['challenge', 'question']
+
+// 108: every column authenticated may still read — all but author_id. A
+// user-client read of '*' is refused outright since that revoke.
+const READABLE =
+  'id, title, summary, description, intended_use, primary_user, contact_prefs, status, review_note, tutorial_id, kind, answer_message_id, answered_at, photo_path, anonymous, created_at, updated_at'
+
+const REQUIRED_FIELDS = ['title', 'summary'] as const
+// 103: "Why it matters" is optional; intended use and primary user are only
+// ever sent by an old client. Absent, null or blank all store as null.
+const OPTIONAL_FIELDS = ['description', 'intended_use', 'primary_user'] as const
+
+/** 106: every read sends the URL a client renders beside the stored path. */
+export const withPhotoUrl = <T extends { photo_path?: string | null }>(row: T) => ({
+  ...row,
+  photo_url: toyPhotoUrl(row.photo_path),
+})
+
+// A photo /upload/idea-photo wrote for this author: toy_ideas_photo_path_check's rule.
+const ownIdeaPhoto = (path: string, userId: string) =>
+  path.startsWith(`ideas/${userId}/`) &&
+  /^[0-9a-f-]{36}\.(jpg|png|webp|avif|heic|heif)$/.test(path.slice(`ideas/${userId}/`.length))
 
 /**
- * Every narrative field is required and must survive trimming. A half-filled
- * idea reaches a reviewer with nothing to judge, so this rejects rather than
- * storing blanks — the same reasoning as readPickupAddress in toy-transactions.
+ * A title and a summary are required and must survive trimming — the two
+ * things an admin cannot judge an idea without. Everything else is optional.
+ * Returns the fields, null for a missing title or summary or a malformed
+ * field, or a sentence to send back as the 400.
  */
-function readIdeaBody(body: unknown): Record<string, unknown> | null {
+function readIdeaBody(body: unknown, userId: string): Record<string, unknown> | string | null {
   if (body === null || typeof body !== 'object' || Array.isArray(body)) return null
   const source = body as Record<string, unknown>
   const out: Record<string, unknown> = {}
 
-  for (const field of NARRATIVE_FIELDS) {
+  for (const field of REQUIRED_FIELDS) {
     const value = source[field]
     if (typeof value !== 'string' || !value.trim()) return null
     out[field] = value.trim()
+  }
+  for (const field of OPTIONAL_FIELDS) {
+    const value = source[field]
+    if (value === undefined || value === null) {
+      out[field] = null
+      continue
+    }
+    if (typeof value !== 'string') return null
+    out[field] = value.trim() || null
   }
 
   const prefs = source.contact_prefs ?? []
@@ -34,33 +67,76 @@ function readIdeaBody(body: unknown): Record<string, unknown> | null {
   if (!prefs.every((p) => CONTACT_PREFS.includes(p as ContactPref))) return null
   out.contact_prefs = prefs
 
+  // A build challenge unless the author says it is a question (078). Anything
+  // else is refused rather than defaulted: a typo must not file a question as
+  // something an admin can graduate.
+  const kind = source.kind ?? 'challenge'
+  if (!IDEA_KINDS.includes(kind as ToyIdeaKind)) return null
+  out.kind = kind
+
+  // 106: one optional photo, and only one this author uploaded.
+  const photo = source.photo_path ?? null
+  if (photo !== null && (typeof photo !== 'string' || !ownIdeaPhoto(photo, userId))) {
+    return 'That photo was not uploaded from this account.'
+  }
+  out.photo_path = photo
+
+  // 108: true or false, nothing else — a typo must not publish a name.
+  const anonymous = source.anonymous ?? false
+  if (typeof anonymous !== 'boolean') return 'Post anonymously must be on or off.'
+  out.anonymous = anonymous
+
   return out
 }
 
 toyIdeas.post('/', async (c) => {
-  const fields = readIdeaBody(await c.req.json().catch(() => null))
-  if (!fields) return c.json({ error: 'All fields are required' }, 400)
+  const fields = readIdeaBody(await c.req.json().catch(() => null), c.get('userId'))
+  if (typeof fields === 'string') return c.json({ error: fields }, 400)
+  if (!fields) return c.json({ error: 'A title and a summary are required.' }, 400)
 
-  // author_id comes from the verified token, never the body.
+  // author_id comes from the verified token, never the body. 108 lets the
+  // caller write it but not read it back, so the response adds it.
+  const author_id = c.get('userId')
   const { data, error } = await createUserClient(c.get('token'))
     .from('toy_ideas')
-    .insert({ ...fields, author_id: c.get('userId'), status: 'pending' })
-    .select('*')
+    .insert({ ...fields, author_id, status: 'pending' })
+    .select(READABLE)
     .single()
 
   if (error) return c.json({ error: error.message }, 500)
-  return c.json(data, 201)
+  return c.json(withPhotoUrl({ ...data, author_id }), 201)
 })
 
+// Admin client filtered on the token's user, like /mine/:id below (108).
 toyIdeas.get('/mine', async (c) => {
-  const { data, error } = await createUserClient(c.get('token'))
+  const { data, error } = await createAdminClient()
     .from('toy_ideas')
     .select('*')
     .eq('author_id', c.get('userId'))
     .order('created_at', { ascending: false })
 
   if (error) return c.json({ error: error.message }, 500)
-  return c.json(data ?? [])
+  const ideas = data ?? []
+  const counts = await challengeCounts(ideas)
+  return c.json(ideas.map((i) => ({ ...withPhotoUrl(i), ...counts.get(i.id)! })))
+})
+
+/**
+ * The caller's own idea at any status, review_note included — the mobile
+ * detail's fallback when the public read 404s a pending or rejected one, and
+ * the source a revised idea starts from. Admin client filtered on the token's
+ * user (F1: author_id stays out of user-client reads, so 108 can revoke it).
+ */
+toyIdeas.get('/mine/:id', async (c) => {
+  const { data, error } = await createAdminClient()
+    .from('toy_ideas')
+    .select('*')
+    .eq('id', c.req.param('id'))
+    .eq('author_id', c.get('userId'))
+    .maybeSingle()
+  if (error && error.code !== INVALID_TEXT_REPRESENTATION) return c.json({ error: error.message }, 500)
+  if (!data) return c.json({ error: 'Not found' }, 404)
+  return c.json(withPhotoUrl(data))
 })
 
 /**
@@ -85,7 +161,9 @@ toyIdeas.get('/joined', async (c) => {
     // so unlike GET /api/admin/ideas or the author's own /mine, there is no
     // reader here who is ever entitled to this column.
     .select(
-      'toy_ideas!inner(id, author_id, title, summary, description, intended_use, primary_user, contact_prefs, status, tutorial_id, created_at, updated_at)'
+      // No author_id (108): a participant is never the author, and an
+      // anonymous author stays anonymous to the makers who joined.
+      'joined_at, toy_ideas!inner(id, title, summary, description, intended_use, primary_user, contact_prefs, status, tutorial_id, kind, answer_message_id, answered_at, photo_path, created_at, updated_at)'
     )
     .eq('profile_id', c.get('userId'))
     // A removed row must not keep showing the caller a challenge they were
@@ -96,7 +174,22 @@ toyIdeas.get('/joined', async (c) => {
     .order('created_at', { foreignTable: 'toy_ideas', ascending: false })
 
   if (error) return c.json({ error: error.message }, 500)
-  return c.json((data ?? []).map((row: any) => row.toy_ideas))
+  const rows = (data ?? []) as unknown as Array<{ joined_at: string; toy_ideas: { id: string; photo_path: string | null } }>
+  // author_id is read here, through the admin client, only so the author's own
+  // replies are not counted as posts; it never reaches the response (108).
+  const ids = rows.map((r) => r.toy_ideas.id)
+  const { data: authors, error: authorsError } = ids.length
+    ? await createAdminClient().from('toy_ideas').select('id, author_id').in('id', ids)
+    : { data: [], error: null }
+  if (authorsError) return c.json({ error: authorsError.message }, 500)
+  const counts = await challengeCounts((authors ?? []) as { id: string; author_id: string }[])
+  return c.json(
+    rows.map((r) => ({
+      ...withPhotoUrl(r.toy_ideas),
+      joined_at: r.joined_at,
+      ...(counts.get(r.toy_ideas.id) ?? { maker_count: 0, answer_count: 0 }),
+    }))
+  )
 })
 
 /**
@@ -121,15 +214,21 @@ export async function systemMessage(ideaId: string, actorId: string, body: strin
   if (error) console.error('system message failed', { ideaId, error: error.message })
 }
 
+/**
+ * The idea as the caller may see it (RLS on the user client decides), plus
+ * its author_id from the admin client — 108 took that column away from
+ * every signed-in reader, and join/leave/report need it to notify and check.
+ */
 async function loadIdea(client: Client, id: string) {
-  return client.from('toy_ideas').select('author_id, title, status').eq('id', id).single()
+  const { data, error } = await client.from('toy_ideas').select('id').eq('id', id).single()
+  if (error || !data) return { data: null, error }
+  const { data: idea, error: authorError } = await createAdminClient()
+    .from('toy_ideas').select('author_id').eq('id', id).single()
+  if (authorError || !idea) return { data: null, error: authorError }
+  return { data: { author_id: idea.author_id as string }, error: null }
 }
 
-async function actorName(userId: string): Promise<string> {
-  const { data } = await createAdminClient()
-    .from('profiles').select('name').eq('id', userId).single()
-  return (data?.name as string) ?? 'Someone'
-}
+const actorName = (userId: string) => profileName(createAdminClient(), userId, 'Someone')
 
 toyIdeas.post('/:id/join', async (c) => {
   const id = c.req.param('id')
@@ -232,6 +331,90 @@ toyIdeas.post('/:id/messages', async (c) => {
 })
 
 /**
+ * Add a named constraint (110). The insert policy is the permission check —
+ * the idea's author or a maker on it who was not removed — so a refusal is a
+ * 42501. An unknown idea fails that policy before its FK, so it is a 403 too.
+ * Limits checked here and by the table.
+ */
+toyIdeas.post('/:id/constraints', async (c) => {
+  const parsed = await c.req.json().catch(() => null)
+  const label = typeof parsed?.label === 'string' ? parsed.label.trim() : ''
+  const note = typeof parsed?.note === 'string' ? parsed.note.trim() : ''
+  if (label.length < 1 || label.length > 80) {
+    return c.json({ error: 'A constraint needs a name of up to 80 characters.' }, 400)
+  }
+  if (note.length > 300) return c.json({ error: 'Keep the note to 300 characters.' }, 400)
+
+  const { data, error } = await createUserClient(c.get('token'))
+    .from('toy_idea_constraints')
+    .insert({ idea_id: c.req.param('id'), label, note: note || null, added_by: c.get('userId') })
+    .select('id, label, note')
+    .single()
+  if (error?.code === RLS_VIOLATION) {
+    return c.json({ error: 'Only the author or a maker on this challenge can add a constraint.' }, 403)
+  }
+  if (error?.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
+  if (error) return c.json({ error: error.message }, 500)
+  return c.json(data, 201)
+})
+
+/**
+ * The author of a question marks one reply as its answer, or clears it with
+ * `{ message_id: null }`. Body: { message_id: string | null }.
+ *
+ * Author-only and question-only, checked here rather than by RLS: 037 lets an
+ * author update their idea only while it is pending, and a question is
+ * answered after it opens — so the write goes through the admin client once
+ * this route has decided the caller may make it. The reply must be a user
+ * message on this idea from someone other than the author; an asker cannot
+ * answer their own question.
+ */
+toyIdeas.post('/:id/answer', async (c) => {
+  const id = c.req.param('id')
+  const parsed = await c.req.json().catch(() => null)
+  const messageId = parsed?.message_id
+  if (messageId !== null && typeof messageId !== 'string') {
+    return c.json({ error: 'message_id must be a reply id or null' }, 400)
+  }
+
+  const client = createUserClient(c.get('token'))
+  const { data: idea } = await client.from('toy_ideas').select('kind, status').eq('id', id).maybeSingle()
+  if (!idea) return c.json({ error: 'Question not found' }, 404)
+  // 108: the caller cannot read author_id, only ask whether it is them.
+  const { data: asker } = await client.rpc('is_idea_author', { idea: id })
+  if (asker !== true) {
+    return c.json({ error: 'Only the person who asked can mark the answer' }, 403)
+  }
+  if (idea.kind !== 'question') return c.json({ error: 'Only a question has an answer' }, 409)
+  if (idea.status !== 'challenge') return c.json({ error: 'This question is not open' }, 409)
+
+  const admin = createAdminClient()
+  if (messageId !== null) {
+    const { data: reply } = await admin
+      .from('toy_idea_messages')
+      .select('id')
+      .eq('id', messageId)
+      .eq('idea_id', id)
+      .eq('kind', 'user')
+      .neq('sender_id', c.get('userId'))
+      .maybeSingle()
+    if (!reply) return c.json({ error: 'That reply is not on this question' }, 404)
+  }
+
+  const { data, error } = await admin
+    .from('toy_ideas')
+    .update({
+      answer_message_id: messageId,
+      answered_at: messageId === null ? null : new Date().toISOString(),
+    })
+    .eq('id', id)
+    .select('id, answer_message_id, answered_at')
+    .single()
+  if (error) return c.json({ error: error.message }, 500)
+  return c.json(data)
+})
+
+/**
  * Files a report and, in the same request, carries out the removal it
  * triggers. Body: { reported_profile_id, reason }.
  *
@@ -316,6 +499,33 @@ toyIdeas.post('/:id/reports', async (c) => {
   })
 
   return c.json({ reported: true }, 201)
+})
+
+/**
+ * Withdraw a pending idea (107). Author and status are conditions of the
+ * DELETE itself, so a review that lands mid-tap wins. A miss is told apart
+ * afterwards: the caller's own idea that moved on is a 409 with a reason;
+ * anything else is not theirs to know about. Admin client for the same reason
+ * as /mine/:id; 107's policy holds the same line for direct PostgREST calls.
+ */
+toyIdeas.delete('/:id', async (c) => {
+  const id = c.req.param('id')
+  const userId = c.get('userId')
+  const admin = createAdminClient()
+  const { data, error } = await admin
+    .from('toy_ideas')
+    .delete()
+    .eq('id', id)
+    .eq('author_id', userId)
+    .eq('status', 'pending')
+    .select('id')
+  if (error?.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
+  if (error) return c.json({ error: error.message }, 500)
+  if (data.length) return c.body(null, 204)
+  const { data: own } = await admin.from('toy_ideas').select('id').eq('id', id).eq('author_id', userId).maybeSingle()
+  return own
+    ? c.json({ error: 'Only an idea still waiting for review can be withdrawn.' }, 409)
+    : c.json({ error: 'Not found' }, 404)
 })
 
 export default toyIdeas

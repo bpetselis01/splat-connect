@@ -15,12 +15,11 @@ import Link from 'next/link'
 import type { Route } from 'next'
 import { notFound } from 'next/navigation'
 import { BookOpen, CaretRight, Gift, Hammer, Medal } from '@phosphor-icons/react/dist/ssr'
-import { initials } from '@/components/story-bits'
 import { ShelfToyCard } from '@/components/shelf-toy-card'
 import { tintFor } from '@/components/card-photo'
 import { getCapabilities } from '@/lib/capabilities'
 import { safePhotoSrc } from '@/lib/photo-src'
-import { monthHeading, shortDate } from '@/lib/dates'
+import { initials, monthHeading, nextBadgeLine, shortDate } from '@splat-connect/types'
 import { formatBuildTime, type ContributorProfile } from '@splat-connect/types'
 
 const DIFFICULTY_LABEL = { easy: 'Easy', medium: 'Medium', hard: 'Hard' } as const
@@ -39,7 +38,8 @@ export default async function ContributorPage({
 
   const contributor = (await res.json()) as ContributorProfile
   const first = contributor.name.split(' ')[0]
-  const signedIn = !!(await getCapabilities())
+  const caps = await getCapabilities()
+  const signedIn = !!caps
   const tint = tintFor(contributor.id)
   const toys = [...contributor.toysShared, ...contributor.toysDelivered]
 
@@ -73,13 +73,16 @@ export default async function ContributorPage({
 
   const badges = contributor.badges ?? []
   const thanks = contributor.thanks ?? 0
+  const builds = contributor.builds ?? 0
+  // Only on your own profile: what is left to earn is not for others to read.
+  const next = caps?.profile.id === contributor.id ? nextBadgeLine({ guides: contributor.tutorials.length, builds }) : null
   const featured = contributor.featured ?? null
 
   const jumps = [
     { to: 'ctb-about', label: 'About', show: !!contributor.bio },
     { to: 'ctb-featured', label: 'Featured', show: !!featured },
     { to: 'ctb-guides', label: 'Guides', show: contributor.tutorials.length > 0 },
-    { to: 'ctb-thanks', label: 'Thanks', show: thanks > 0 },
+    { to: 'ctb-thanks', label: 'Thanks', show: thanks > 0 || builds > 0 },
     { to: 'ctb-toys', label: 'Toys', show: toys.length > 0 },
     { to: 'ctb-activity', label: 'Activity', show: activity.length > 0 },
   ].filter((j) => j.show)
@@ -100,7 +103,7 @@ export default async function ContributorPage({
         aria-label="Breadcrumb"
         className="mb-[18px] flex items-center gap-2 text-sm font-bold text-muted"
       >
-        <Link href="/impact" className="text-[var(--b700)]">
+        <Link href="/impact" className="text-[var(--b700)] max-sm:-my-2.5 max-sm:py-2.5">
           Impact
         </Link>
         <CaretRight size={12} weight="bold" aria-hidden="true" />
@@ -214,6 +217,8 @@ export default async function ContributorPage({
           </section>
         )}
 
+        {next && <p className="m-0 text-[13px] font-bold text-muted">{next}</p>}
+
         {featured && (
           <section id="ctb-featured">
             <h2 className={`${H2} mb-1`}>Featured</h2>
@@ -305,9 +310,10 @@ export default async function ContributorPage({
           </section>
         )}
 
-        {thanks > 0 && (
+        {(thanks > 0 || builds > 0) && (
           <section id="ctb-thanks">
             <h2 className={`${H2} mb-1`}>From families who built one</h2>
+            {builds > 0 && <p className="m-0 font-display text-xl font-extrabold text-ink">{builds} builds logged</p>}
             <p className="m-0 text-[15px] leading-relaxed text-muted">
               {thanks === 1 ? '1 family' : `${thanks} families`} built one of {first}&apos;s guides and
               said thanks.

@@ -81,8 +81,29 @@ function collectChrome() {
 }
 
 /** Serialised into the page by run.js. Must be self-contained. */
-function collectFingerprint(rootSelector) {
+function collectFingerprint(arg) {
+  // A selector, or { root, exclude }: the app's tab bar and stack header are
+  // chrome the board draws in its phone frame, outside the screen compared.
+  // levelSteps: the sizes at which an inferred heading is h1, h2, h3 (else h4).
+  // The desktop default; the mobile board sets its h2s at 20-25px.
+  const { root: rootSelector, exclude, levelSteps = [40, 26, 20] } = typeof arg === 'string' ? { root: arg } : arg
   const root = document.querySelector(rootSelector) || document.body
+  const excluded = (el) => !!exclude && !!el.closest(exclude)
+
+  // Family and weight as a reader sees them. expo-google-fonts registers each
+  // weight as its own family (Baloo2_800ExtraBold) at CSS weight 400, so on
+  // React Native web every heading read as "Baloo2_800ExtraBold, 400" against
+  // the board's "Baloo 2, 800" and none passed the heading weight test.
+  const FAMILY = { Baloo2: 'Baloo 2', JetBrainsMono: 'JetBrains Mono' }
+  const rawFamily = (st) => st.fontFamily.split(',')[0].replace(/["']/g, '').trim()
+  const fontOf = (st) => {
+    const m = /^(.+?)_(\d{3})[A-Za-z]*$/.exec(rawFamily(st))
+    return m ? FAMILY[m[1]] || m[1] : rawFamily(st)
+  }
+  const weightOf = (st) => {
+    const m = /_(\d{3})[A-Za-z]*$/.exec(rawFamily(st))
+    return m ? +m[1] : +st.fontWeight
+  }
   const cs = (el) => getComputedStyle(el)
 
   const norm = (s) =>
@@ -112,6 +133,7 @@ function collectFingerprint(rootSelector) {
   const colour = (v) => (v || '').replace(/,\s*1\)$/, ')').replace(/\s+/g, '')
 
   const visible = (el) => {
+    if (excluded(el)) return false
     const r = el.getBoundingClientRect()
     if (r.width < 2 || r.height < 2) return false
     const s = cs(el)
@@ -153,9 +175,15 @@ function collectFingerprint(rootSelector) {
     // dropped them from the live side and the matcher then reported four
     // present-and-correct sections as missing. The size difference is real, but
     // it is a `size` finding — not a missing section.
-    const semantic = /^H[1-6]$/.test(el.tagName)
+    // React Native web renders every heading as a <div role="heading">.
+    const semantic = /^H[1-6]$/.test(el.tagName) || el.getAttribute('role') === 'heading'
     if (!semantic && px(s.fontSize) < HEADING_MIN_SIZE) return false
-    if (!semantic && +s.fontWeight < HEADING_MIN_WEIGHT) return false
+    if (!semantic && weightOf(s) < HEADING_MIN_WEIGHT) return false
+    // An eyebrow is a label, whatever its tag. Live marks its small uppercase
+    // eyebrows up as h2/h3 ("Money you have agreed to", "Meeting them") where
+    // the board sets the same words in a 12px <p>, and every one read as an
+    // extra section. Dropped on both sides alike.
+    if (semantic && s.textTransform === 'uppercase' && px(s.fontSize) < HEADING_MIN_SIZE) return false
     // Inside a semantic heading is part of that heading. The board interpolates
     // a record name as a <span> in its h1 ("Requests to <span>Northside
     // Therapy</span>"), and the span read as a second h1 with no counterpart.
@@ -168,7 +196,7 @@ function collectFingerprint(rootSelector) {
     // "#" the live side lacked.
     if (/^\d+$/.test(t)) return false
     // Own text only: a bold wrapper should not masquerade as its own heading.
-    return ownText(el).length > 1 || /^H[1-6]$/.test(el.tagName)
+    return ownText(el).length > 1 || semantic
   }
 
   // Cards are detected before headings because a heading needs to know whether
@@ -186,6 +214,13 @@ function collectFingerprint(rootSelector) {
   // form, whose five panels are a <form>, a <fieldset> and three <label>s and
   // counted as zero cards.
   const cardEls = [...root.querySelectorAll('div,article,li,section,a,button,label,form,fieldset')].filter((el) => {
+    if (excluded(el)) return false
+    // A text field's own bordered wrapper is a field, not a card: a multi-line
+    // React Native TextInput is a card-sized bordered view around a textarea.
+    // Text fields only: a bordered tile wrapping a checkbox or radio is a card.
+    const textField = (c) =>
+      c.tagName === 'TEXTAREA' || (c.tagName === 'INPUT' && !/^(checkbox|radio|hidden|file|submit|button)$/.test(c.type))
+    if ([...el.children].some(textField)) return false
     const st = cs(el)
     const r = parseFloat(st.borderTopLeftRadius) || 0
     if (r < 8) return false
@@ -267,14 +302,19 @@ function collectFingerprint(rootSelector) {
       return {
         // Semantic level where there is one, else inferred from scale so the
         // two sides are comparable at all.
-        level: /^H([1-6])$/.test(h.tagName)
-          ? +h.tagName[1]
-          : size >= 40 ? 1 : size >= 26 ? 2 : size >= 20 ? 3 : 4,
+        // A role="heading" carries its level in aria-level. React Native web
+        // renders every header-role Text as <h1 role="heading"> with none, so
+        // its tag says nothing and its size decides, as for unsemantic text.
+        level: h.getAttribute('role') === 'heading' && h.hasAttribute('aria-level')
+          ? +h.getAttribute('aria-level')
+          : /^H([1-6])$/.test(h.tagName) && h.getAttribute('role') !== 'heading'
+            ? +h.tagName[1]
+            : size >= levelSteps[0] ? 1 : size >= levelSteps[1] ? 2 : size >= levelSteps[2] ? 3 : 4,
         tag: h.tagName,
         text: norm(headingText(h)).slice(0, 80),
-        font: s.fontFamily.split(',')[0].replace(/["']/g, '').trim(),
+        font: fontOf(s),
         size,
-        weight: +s.fontWeight,
+        weight: weightOf(s),
         colour: colour(s.color),
         // A heading inside a card is the title of a RECORD — "Bubble machine",
         // "Weighted lap snake". The board shows six samples and live shows
@@ -417,7 +457,7 @@ function collectFingerprint(rootSelector) {
       const st = cs(el)
       const size = px(st.fontSize)
       if (!best || size > best.size) {
-        best = { size, weight: +st.fontWeight, font: st.fontFamily.split(',')[0].replace(/["']/g, '').trim() }
+        best = { size, weight: weightOf(st), font: fontOf(st) }
       }
     }
     return best
@@ -457,7 +497,15 @@ function collectFingerprint(rootSelector) {
     const m = /rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/.exec(c)
     return m ? 0.2126 * +m[1] + 0.7152 * +m[2] + 0.0722 * +m[3] : 255
   }
-  const filled = candidates.filter((el) => !NEUTRAL.has(colour(cs(el).backgroundColor)))
+  // A selected chip is a toggle, not an action: with the real submit disabled
+  // until a box is ticked, the "Any colour" chip was elected primary and its
+  // flat fill reported the board's button shadow as missing.
+  const filled = candidates.filter(
+    (el) =>
+      !el.hasAttribute('aria-pressed') &&
+      el.getAttribute('role') !== 'radio' &&
+      !NEUTRAL.has(colour(cs(el).backgroundColor))
+  )
   const darkest = filled.length
     ? filled.reduce((a, b) => (lum(cs(a).backgroundColor) <= lum(cs(b).backgroundColor) ? a : b))
     : null
@@ -468,7 +516,19 @@ function collectFingerprint(rootSelector) {
         (el) => colour(cs(el).backgroundColor) === colour(cs(darkest).backgroundColor)
       )
     : []
-  const inputs = pick('input,select,textarea')
+  // The field a reader sees. A React Native TextInput is a bare <input> (no
+  // border, no fill, radius 0) inside the view that draws the field, and every
+  // app input read as "radius 0, transparent".
+  const fieldBox = (el) => {
+    const bare = (x) => {
+      const st = cs(x)
+      return !(parseFloat(st.borderTopWidth) > 0) && /rgba\(0,\s*0,\s*0,\s*0\)|transparent/.test(st.backgroundColor)
+    }
+    if (!bare(el)) return el
+    for (let x = el.parentElement, i = 0; x && i < 3; x = x.parentElement, i++) if (!bare(x)) return x
+    return el
+  }
+  const inputs = pick('input,select,textarea').map(fieldBox)
 
   // ---- prose copy ---------------------------------------------------------
   // Only on pages without data: there, the words ARE the design, and the board
@@ -486,13 +546,44 @@ function collectFingerprint(rootSelector) {
   // carries Tailwind. Three sibling <p class="mb-[22px]"> on a story page read
   // as a three-row list on live and as prose on the board, so live's body copy
   // was dropped and the board's identical words reported absent.
-  const paragraphs = pick('p')
+  // React Native web sets prose in <div dir="auto">, never <p>; only the
+  // innermost such element, so a paragraph is not counted twice.
+  const paragraphs = pick('p, div[dir="auto"]')
+    .filter((p) => p.tagName === 'P' || !p.querySelector('div[dir="auto"]'))
     .filter((p) => !inCardOnly(p))
     .map((p) => norm(p.innerText))
     .filter((t) => t.length > 25)
     .slice(0, 40)
 
   const cardTitles = cardEls.map(titleOf).filter(Boolean)
+
+  // The screen's own background: the root or its nearest opaque ancestor, else
+  // (React Native web, where body and #root are transparent) the first view
+  // inside the root that spans it.
+  function canvasOf() {
+    const opaque = (el) => { const c = colour(cs(el).backgroundColor); return c !== 'rgba(0,0,0,0)' && c !== 'transparent' ? c : null }
+    for (let el = root; el; el = el.parentElement) if (opaque(el)) return opaque(el)
+    // The deepest such view: React Navigation paints its own #f2f2f2
+    // container under every screen, and the screen's background sits on top.
+    const r = root.getBoundingClientRect()
+    let found = null
+    for (const el of root.querySelectorAll('div')) {
+      const b = el.getBoundingClientRect()
+      if (b.width >= r.width * 0.95 && b.height >= Math.min(r.height, innerHeight) * 0.6 && opaque(el)) found = opaque(el)
+    }
+    return found || colour(cs(document.body).backgroundColor)
+  }
+  // The font the words are set in, not the one body declares: React Native web
+  // never sets body's, which then reads as the browser default.
+  function bodyFontOf() {
+    const declared = fontOf(cs(document.body))
+    if (!/^(Times|Times New Roman|serif)$/.test(declared)) return declared
+    const texts = [...root.querySelectorAll('p,span,div')].filter((el) => visible(el) && ownText(el).length > 1)
+    // Prose where there is some; an empty editor section has only "No parts yet."
+    const prose = texts.filter((el) => ownText(el).length > 20)
+    const fonts = (prose.length ? prose : texts).map((el) => fontOf(cs(el)))
+    return fonts.length ? modal(fonts) : declared
+  }
 
   return {
     headings,
@@ -545,9 +636,9 @@ function collectFingerprint(rootSelector) {
     paragraphs,
     page: {
       height: Math.round(root.getBoundingClientRect().height),
-      canvas: colour(cs(document.body).backgroundColor),
+      canvas: canvasOf(),
       ink: colour(cs(document.body).color),
-      bodyFont: cs(document.body).fontFamily.split(',')[0].replace(/["']/g, '').trim(),
+      bodyFont: bodyFontOf(),
     },
   }
 }

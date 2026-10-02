@@ -26,13 +26,13 @@ import {
   XCircle,
 } from '@phosphor-icons/react/dist/ssr'
 import { safePhotoSrc } from '@/lib/photo-src'
-import { isOwnerSide } from '@splat-connect/types'
+import { isOwnerSide, printRequestExpired } from '@splat-connect/types'
 import type { PickupAddress, ToyTransactionDetail } from '@splat-connect/types'
 import { AcceptPickupDialog } from '@/components/accept-pickup-dialog'
 import { ExchangeChat } from '@/components/exchange-chat'
 import { Badge } from '@/components/badge'
 
-export const BLOCKED_ACCEPT_HINT =
+const BLOCKED_ACCEPT_HINT =
   'You need to either complete the current transaction or withdraw from it.'
 
 export function ToyTransactionThread({
@@ -203,7 +203,8 @@ export function ToyTransactionThread({
         </div>
         )}
 
-        {tx.status === 'requested' && isOwner && (
+        {/* An expired print request is not answerable: accept refuses it (printing.ts). */}
+        {tx.status === 'requested' && isOwner && !printRequestExpired(tx) && (
           <div className={board ? 'xthread-card flex flex-col gap-3 p-5' : 'card flex flex-col gap-3 p-4'}>
             <h2 className="text-base font-bold text-ink">
               {isBuild
@@ -579,7 +580,7 @@ export function ToyTransactionThread({
               type="button"
               disabled={busy}
               onClick={() => run(onWithdraw)}
-              className="inline-flex items-center gap-2 text-[13px] font-bold text-muted underline underline-offset-[3px] hover:text-danger"
+              className="inline-flex items-center gap-2 text-[13px] font-bold text-muted underline underline-offset-[3px] hover:text-danger max-sm:min-h-11 max-sm:px-3"
             >
               <XCircle aria-hidden="true" />
               Withdraw the request

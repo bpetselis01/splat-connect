@@ -14,7 +14,7 @@ const baseCaps: Capabilities = {
   },
   isAdmin: false,
   ledOrgs: [],
-  unread: { tutorials: 0, exchanges: 0, challenges: 0, total: 0 },
+  unread: { tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 },
   exchangeActions: 0,
 }
 
@@ -42,11 +42,18 @@ vi.mock('@/lib/capabilities', () => ({
 const money = vi.hoisted(() => ({
   current: { lines: [] as unknown[], total_cents: 0, exchange_count: 0 },
 }))
+const meCounts = vi.hoisted(() => ({
+  current: { tutorials: 0, challenges: 0, makers: 4, printRequests: 0, printJobs: 0, review: 0, intake: 0, orgOrders: 0 },
+}))
 vi.mock('@/lib/api-client', () => ({
   // Every other fetch is a list the hub counts badges from; empty by default.
   apiClient: {
     get: async (path: string) =>
-      path === '/api/exchange-costs/outstanding' ? money.current : [],
+      path === '/api/exchange-costs/outstanding'
+        ? money.current
+        : path === '/api/me/counts'
+          ? meCounts.current
+          : [],
   },
 }))
 // Real redirect() throws a special digest error rather than returning; the
@@ -144,7 +151,7 @@ describe('DashboardHub', () => {
   it('badges the unread count without eating the description', async () => {
     caps.current = {
       ...baseCaps,
-      unread: { tutorials: 2, exchanges: 3, challenges: 0, total: 5 },
+      unread: { tutorials: 2, exchanges: 3, challenges: 0, organisations: 0, total: 5 },
     }
     render(await DashboardHub())
     const card = screen.getByRole('link', { name: /My exchanges/ })
@@ -164,7 +171,7 @@ describe('DashboardHub', () => {
   it('gives My toys no badge', async () => {
     caps.current = {
       ...baseCaps,
-      unread: { tutorials: 2, exchanges: 3, challenges: 0, total: 5 },
+      unread: { tutorials: 2, exchanges: 3, challenges: 0, organisations: 0, total: 5 },
     }
     render(await DashboardHub())
     expect(
@@ -173,13 +180,20 @@ describe('DashboardHub', () => {
   })
 
   // Eight before: Submit an idea folded into Design challenges.
-  it('renders twelve cards for a plain account', async () => {
+  it('renders eleven cards for a plain account', async () => {
     const { container } = render(await DashboardHub())
     // Saved produces a card here too, because this hub is built from the same
     // nav model. Nine since 058 added Print for others, eleven since 061 and
     // 063 added My events and Recycle plastic, twelve with the board's Build
-    // for a family.
-    expect(container.querySelectorAll('a.card')).toHaveLength(12)
+    // for a family, eleven since me-rows-structure moved Recycle plastic to the
+    // public header.
+    expect(container.querySelectorAll('a.card')).toHaveLength(11)
+  })
+
+  it('draws Build for a family from the shared model, and no Recycle plastic card', async () => {
+    render(await DashboardHub())
+    expect(screen.getByRole('link', { name: /Build for a family/ })).toHaveAttribute('href', '/get-involved/makers-wanted')
+    expect(screen.queryByRole('link', { name: /Recycle plastic/ })).toBeNull()
   })
 
   // Tests: a signed-out visitor is sent to login rather than shown an empty hub
@@ -312,5 +326,10 @@ describe('DashboardHub', () => {
     money.current = null as never
     render(await DashboardHub())
     expect(screen.getByRole('heading', { name: /Welcome back/ })).toBeInTheDocument()
+  })
+
+  it('badges Build for a family from the counts call', async () => {
+    render(await DashboardHub())
+    expect(screen.getByRole('link', { name: /Build for a family/ })).toHaveTextContent('4')
   })
 })

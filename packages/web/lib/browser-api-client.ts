@@ -7,7 +7,7 @@
 'use client'
 
 import { createClient } from '@/lib/supabase/client'
-import { makeApiClient } from './api-core'
+import { makeApiClient } from '@splat-connect/types'
 
 async function getToken(): Promise<string | null> {
   const supabase = createClient()

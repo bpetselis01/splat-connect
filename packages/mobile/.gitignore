@@ -48,3 +48,5 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+dist-parity/
+.maestro/parity/_run-*.yaml

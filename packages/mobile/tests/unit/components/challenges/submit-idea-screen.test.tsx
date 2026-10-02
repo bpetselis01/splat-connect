@@ -10,9 +10,13 @@ jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 // exchanges/thread-screen.test.tsx.
 jest.mock('../../../../lib/auth-context', () => ({ useAuth: jest.fn() }))
 
+const mockPick = jest.fn()
+jest.mock('../../../../lib/upload', () => ({ pickAndUploadPhoto: (...a: unknown[]) => mockPick(...a) }))
+
 const mockPost = jest.fn()
+const mockGet = jest.fn()
 jest.mock('../../../../lib/api-client', () => ({
-  apiClient: { post: (...a: unknown[]) => mockPost(...a) },
+  apiClient: { post: (...a: unknown[]) => mockPost(...a), get: (...a: unknown[]) => mockGet(...a) },
 }))
 
 const mockPush = jest.fn()
@@ -27,7 +31,7 @@ const signedIn = {
     profile: { id: 'viewer1', name: 'Viewer', role: 'contributor' },
     isAdmin: false,
     ledOrgs: [],
-    unread: { tutorials: 0, exchanges: 0, challenges: 0, total: 0 },
+    unread: { tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 },
     exchangeActions: 0,
   },
   loading: false,
@@ -35,13 +39,11 @@ const signedIn = {
 }
 const signedOut = { caps: null, loading: false, refresh: jest.fn() }
 
-/** Fills every narrative field web's IdeaForm marks required. */
+/** The board's form: a title and a summary are all it requires. */
 function fillEverything() {
   fireEvent.changeText(screen.getByLabelText('Idea name'), 'A switch a toddler can hit')
   fireEvent.changeText(screen.getByLabelText('Summarise it in one sentence'), 'Too much force needed.')
-  fireEvent.changeText(screen.getByLabelText('Full description'), 'She swipes rather than presses.')
-  fireEvent.changeText(screen.getByLabelText('Intended use'), 'A bubble machine in therapy.')
-  fireEvent.changeText(screen.getByLabelText('Primary user'), 'A three-year-old with low tone.')
+  fireEvent.changeText(screen.getByLabelText('Why it matters'), 'She swipes rather than presses.')
 }
 
 beforeEach(() => {
@@ -63,11 +65,23 @@ describe('SubmitIdeaScreen', () => {
         title: 'A switch a toddler can hit',
         summary: 'Too much force needed.',
         description: 'She swipes rather than presses.',
-        intended_use: 'A bubble machine in therapy.',
-        primary_user: 'A three-year-old with low tone.',
+        kind: 'challenge',
         contact_prefs: ['co_design'],
+        photo_path: null,
+        anonymous: false,
       })
     )
+  })
+
+  // 078: a question is filed as one, so an admin can never graduate it.
+  it('files a question when that choice is picked', async () => {
+    render(<SubmitIdeaScreen />)
+    fillEverything()
+    fireEvent.press(screen.getByRole('radio', { name: 'A question for the community' }))
+    fireEvent.press(screen.getByRole('button', { name: 'Submit idea' }))
+
+    await waitFor(() => expect(mockPost).toHaveBeenCalled())
+    expect(mockPost.mock.calls[0][1]).toMatchObject({ kind: 'question' })
   })
 
   it('sends no contact prefs when none are picked', async () => {
@@ -93,11 +107,55 @@ describe('SubmitIdeaScreen', () => {
   it('refuses a whitespace-only field rather than spending the round trip', async () => {
     render(<SubmitIdeaScreen />)
     fillEverything()
-    fireEvent.changeText(screen.getByLabelText('Intended use'), '   ')
+    fireEvent.changeText(screen.getByLabelText('Summarise it in one sentence'), '   ')
     fireEvent.press(screen.getByRole('button', { name: 'Submit idea' }))
 
-    expect(await screen.findByText('All fields are required')).toBeTruthy()
+    expect(await screen.findByText('A title and a summary are required.')).toBeTruthy()
     expect(mockPost).not.toHaveBeenCalled()
+  })
+
+  it('sends an idea with only a title and a summary, and never asks for intended use or primary user', async () => {
+    render(<SubmitIdeaScreen />)
+    expect(screen.queryByLabelText('Intended use')).toBeNull()
+    expect(screen.queryByLabelText('Primary user')).toBeNull()
+    expect(screen.getByPlaceholderText('Who would use it, and what they cannot do today.')).toBeTruthy()
+    fireEvent.changeText(screen.getByLabelText('Idea name'), 'Bubbles')
+    fireEvent.changeText(screen.getByLabelText('Summarise it in one sentence'), 'One switch.')
+    fireEvent.press(screen.getByRole('button', { name: 'Submit idea' }))
+    await waitFor(() =>
+      expect(mockPost).toHaveBeenCalledWith('/api/ideas', {
+        title: 'Bubbles',
+        summary: 'One switch.',
+        description: null,
+        kind: 'challenge',
+        contact_prefs: [],
+        photo_path: null,
+        anonymous: false,
+      })
+    )
+  })
+
+  // 106: uploaded before the idea exists; the idea carries the path.
+  it('adds a photo, shows it, and sends its path with the idea', async () => {
+    mockPick.mockResolvedValue({ path: 'ideas/viewer1/a.jpg', url: 'https://x/toy-photos/ideas/viewer1/a.jpg' })
+    render(<SubmitIdeaScreen />)
+    fillEverything()
+    fireEvent.press(screen.getByRole('button', { name: 'Tap to add a photo' }))
+    await waitFor(() => expect(mockPick).toHaveBeenCalledWith('/api/upload/idea-photo', '', null))
+    expect(await screen.findByLabelText('Your photo')).toBeTruthy()
+    fireEvent.press(screen.getByRole('button', { name: 'Submit idea' }))
+    await waitFor(() =>
+      expect(mockPost).toHaveBeenCalledWith('/api/ideas', expect.objectContaining({ photo_path: 'ideas/viewer1/a.jpg' }))
+    )
+  })
+
+  it('says why a photo could not be added, and keeps the form', async () => {
+    mockPick.mockRejectedValue(new Error('Could not upload the photo. Please try again.'))
+    render(<SubmitIdeaScreen />)
+    fillEverything()
+    fireEvent.press(screen.getByRole('button', { name: 'Tap to add a photo' }))
+    expect(await screen.findByText('Could not upload the photo. Please try again.')).toBeTruthy()
+    expect(screen.getByLabelText('Idea name').props.value).toBe('A switch a toddler can hit')
   })
 
   it('lands on your ideas once it is sent', async () => {
@@ -134,5 +192,26 @@ describe('SubmitIdeaScreen', () => {
     expect(screen.getByText("What we can't take on")).toBeTruthy()
     // The bullet is part of the rendered line, so the assertion carries it.
     expect(screen.getByText('· Nothing that could be swallowed.')).toBeTruthy()
+  })
+
+  it('starts a revised idea from the rejected one', async () => {
+    mockGet.mockResolvedValue({
+      id: 'c1', title: 'Old title', summary: 'Old summary', description: 'Old why', kind: 'challenge',
+      contact_prefs: ['co_design'], photo_path: 'ideas/viewer1/p.png', photo_url: 'https://x/p.png', status: 'rejected',
+    })
+    render(<SubmitIdeaScreen from="c1" />)
+    expect(await screen.findByDisplayValue('Old title')).toBeTruthy()
+    expect(screen.getByDisplayValue('Old why')).toBeTruthy()
+    expect(mockGet).toHaveBeenCalledWith('/api/ideas/mine/c1')
+    fireEvent.press(screen.getByRole('button', { name: 'Submit idea' }))
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/ideas', expect.objectContaining({ title: 'Old title', photo_path: 'ideas/viewer1/p.png' })))
+  })
+
+  it('posts anonymously when asked to', async () => {
+    render(<SubmitIdeaScreen />)
+    fillEverything()
+    fireEvent.press(screen.getByRole('checkbox', { name: 'Post anonymously' }))
+    fireEvent.press(screen.getByRole('button', { name: 'Submit idea' }))
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/ideas', expect.objectContaining({ anonymous: true })))
   })
 })

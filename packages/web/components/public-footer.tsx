@@ -15,58 +15,11 @@
  * of another.
  */
 import { SealCheck, Heart } from '@phosphor-icons/react/dist/ssr'
-import { FOOTER_LEGAL } from '@/lib/public-nav'
+import { FOOTER_COLUMNS } from '@/lib/public-nav'
 import { BoundaryLink } from '@/components/boundary-link'
 import { BrandMark } from '@/components/auth-wordmark'
 
-type Row = { label: string; href: string }
-
-export const FOOTER_COLUMNS: { heading: string; rows: Row[] }[] = [
-  {
-    heading: 'Learn',
-    rows: [
-      { label: 'Toy adaptation 101', href: '/learn/toy-adaptation-101' },
-      { label: 'Switch types explained', href: '/learn/switch-types' },
-      { label: 'Choosing a toy', href: '/learn/choosing-a-toy' },
-      { label: 'Tools and materials', href: '/learn/tools-and-materials' },
-      { label: 'Safe handling', href: '/learn/safety-and-cleaning' },
-      { label: 'Ask an expert', href: '/learn/ask-an-expert' },
-    ],
-  },
-  {
-    heading: '3D Printing',
-    rows: [
-      { label: 'Find a printer', href: '/printing' },
-      { label: 'Printing basics', href: '/printing/basics' },
-    ],
-  },
-  {
-    heading: 'Get Involved',
-    rows: [
-      { label: 'For families', href: '/get-involved/families' },
-      { label: 'For contributors', href: '/get-involved/contributors' },
-      { label: 'For organisations', href: '/get-involved/organisations' },
-      { label: 'Submit an idea', href: '/get-involved/submit-an-idea' },
-      { label: 'Events', href: '/get-involved/events' },
-      { label: 'Makers wanted', href: '/get-involved/makers-wanted' },
-      { label: 'Submit a guide', href: '/get-involved/submit-a-tutorial' },
-      { label: 'Design challenges', href: '/get-involved/design-challenges' },
-    ],
-  },
-  {
-    heading: 'Impact and About',
-    rows: [
-      { label: 'Community impact', href: '/impact' },
-      { label: 'Organisations', href: '/organizations' },
-      { label: 'Deliveries map', href: '/impact/map' },
-      { label: 'Stories', href: '/about/stories' },
-      { label: 'About SPLAT', href: '/about' },
-      { label: 'Our team', href: '/about/team' },
-      { label: 'Contact', href: '/contact' },
-    ],
-  },
-  { heading: 'Legal', rows: FOOTER_LEGAL.map(({ label, href }) => ({ label, href })) },
-]
+export { FOOTER_COLUMNS }
 
 export function PublicFooter() {
   return (

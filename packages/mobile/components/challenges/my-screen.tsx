@@ -6,19 +6,19 @@
 //
 // Title comes from the native header (app/(my)/_layout.tsx).
 import { useCallback, useEffect, useState } from 'react'
-import { View, Text, ScrollView, StyleSheet } from 'react-native'
+import { View, ScrollView, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import type { ToyIdea, ToyIdeaStatus } from '@splat-connect/types'
+import { plural, type MyIdea, type ToyIdeaStatus } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
+import { shortDate } from './challenge-status'
 import { theme } from '../../lib/theme'
 import { Screen } from '../ui/Screen'
-import { Card } from '../ui/Card'
-import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
 import { EmptyState } from '../ui/EmptyState'
 import { SkeletonRow } from '../ui/Skeleton'
-import { AnimatedPressable } from '../ui/AnimatedPressable'
+import { ListIntro, ListRow, ListSection, RowThumb, StageFilter, StageNone, StagePill } from '../list/list-kit'
+import { stageOptions, type StageKey } from '../list/stage'
 
 /** Ported verbatim from web's components/badge.tsx — the author-facing
  *  wording for an idea's lifecycle, which is not the public wording the
@@ -30,49 +30,54 @@ const IDEA_LABEL: Record<ToyIdeaStatus, string> = {
   rejected: 'Not taken forward',
 }
 
-type Loaded = { items: ToyIdea[]; failed: boolean }
+type Loaded = { items: MyIdea[]; failed: boolean }
 const NOTHING: Loaded = { items: [], failed: false }
 
-function IdeaRow({ idea, onOpen }: { idea: ToyIdea; onOpen: () => void }) {
-  // Only a published challenge has a public page — GET
-  // /api/public/challenges/:id 404s a pending or rejected idea by design — so
-  // those rows stay unpressable rather than pointing at a dead route. Every
-  // joined idea is 'challenge' or 'graduated' by construction (038's join
-  // policy), so this always resolves true in that section.
-  const linkable = idea.status === 'challenge' || idea.status === 'graduated'
+/** The board's CSTAGE: an idea's lifecycle on the shared stage words. */
+const IDEA_STAGE: Record<ToyIdeaStatus, StageKey> = {
+  pending: 'waiting',
+  challenge: 'live',
+  graduated: 'waiting',
+  rejected: 'declined',
+}
 
-  const body = (
-    <Card style={styles.card}>
-      <View style={styles.cardTop}>
-        <Text style={styles.cardTitle} numberOfLines={1}>
-          {idea.title}
-        </Text>
-        <Badge status={idea.status} label={IDEA_LABEL[idea.status]} />
-      </View>
-      <Text style={styles.cardSummary} numberOfLines={2}>
-        {idea.summary}
-      </Text>
-      {/* review_note is the point of the rejected state — an admin's reason
-          for declining, never shown publicly, only to the author here.
-          Absent only when an admin rejected without one. */}
-      {idea.status === 'rejected' && idea.review_note ? (
-        <Text style={styles.note}>{idea.review_note}</Text>
-      ) : null}
-    </Card>
-  )
+/** The board's second line for each row (MB my_challenges). A rejected idea's
+ *  reason is read on the idea itself, never on the list. */
+export function ideaMeta(idea: MyIdea, joined: boolean): string {
+  const makers = idea.maker_count ?? 0
+  if (joined) {
+    const when = `Joined ${shortDate(idea.joined_at ?? idea.created_at)}`
+    return idea.status === 'graduated'
+      ? `${when} · being written up`
+      : `${when} · ${plural(makers, 'maker')} · ${plural(idea.answer_count ?? 0, 'post')}`
+  }
+  const submitted = `Your idea · submitted ${shortDate(idea.created_at)}`
+  switch (idea.status) {
+    case 'pending':
+      return `${submitted} · with an admin`
+    case 'challenge':
+      return `${submitted} · ${plural(makers, 'maker')} joined`
+    case 'graduated':
+      return `${submitted} · being written up`
+    case 'rejected':
+      return `Your idea · declined ${shortDate(idea.updated_at)}${idea.review_note ? ' — a reason is attached' : ''}`
+  }
+}
 
-  if (!linkable) return <View style={styles.rowWrap}>{body}</View>
+function IdeaRow({ idea, joined, onOpen }: { idea: MyIdea; joined: boolean; onOpen: () => void }) {
+  const meta = ideaMeta(idea, joined)
+
   return (
-    <AnimatedPressable
-      onPress={onOpen}
-      accessibilityRole="button"
-      accessibilityLabel={idea.title}
-      accessibilityHint="Opens the public challenge."
-      pressScale={0.985}
-      style={styles.rowWrap}
-    >
-      {body}
-    </AnimatedPressable>
+    <View style={styles.rowWrap}>
+      <ListRow
+        title={idea.title}
+        meta={meta}
+        thumb={<RowThumb glyph="bulb-outline" />}
+        pill={<StagePill stage={IDEA_STAGE[idea.status]} label={IDEA_LABEL[idea.status]} />}
+        onPress={onOpen}
+        accessibilityHint="Opens the challenge."
+      />
+    </View>
   )
 }
 
@@ -83,7 +88,11 @@ function Group({
   failureCopy,
   empty,
   onOpen,
+  stage,
+  joined,
 }: {
+  stage: 'all' | StageKey
+  joined: boolean
   title: string
   loaded: Loaded
   loading: boolean
@@ -91,9 +100,13 @@ function Group({
   empty: { title: string; hint: string; label: string; onPress: () => void; icon: React.ComponentProps<typeof Ionicons>['name'] }
   onOpen: (id: string) => void
 }) {
+  const shown = stage === 'all' ? loaded.items : loaded.items.filter((i) => IDEA_STAGE[i.status] === stage)
+  // A filtered-out group says nothing rather than an empty state that would
+  // invite submitting an idea someone already has.
+  if (stage !== 'all' && !loading && !loaded.failed && shown.length === 0) return null
   return (
     <View style={styles.group}>
-      <Text style={styles.groupTitle}>{title}</Text>
+      <ListSection>{title}</ListSection>
       {loading ? (
         <SkeletonRow />
       ) : loaded.failed ? (
@@ -110,8 +123,8 @@ function Group({
           <Button label={empty.label} variant="accent" onPress={empty.onPress} style={styles.emptyButton} />
         </EmptyState>
       ) : (
-        loaded.items.map((idea) => (
-          <IdeaRow key={idea.id} idea={idea} onOpen={() => onOpen(idea.id)} />
+        shown.map((idea) => (
+          <IdeaRow key={idea.id} idea={idea} joined={joined} onOpen={() => onOpen(idea.id)} />
         ))
       )}
     </View>
@@ -124,6 +137,7 @@ export function MyChallengesScreen() {
   const [joined, setJoined] = useState<Loaded>(NOTHING)
   const [loading, setLoading] = useState(true)
   const [reloadKey, setReloadKey] = useState(0)
+  const [stage, setStage] = useState<'all' | StageKey>('all')
 
   useEffect(() => {
     let ignore = false
@@ -131,7 +145,7 @@ export function MyChallengesScreen() {
     // being flaky must not blank the other section.
     const load = (path: string, set: (v: Loaded) => void) =>
       apiClient
-        .get<ToyIdea[]>(path)
+        .get<MyIdea[]>(path)
         .then((items) => {
           if (!ignore) set({ items, failed: false })
         })
@@ -159,17 +173,26 @@ export function MyChallengesScreen() {
 
   const openChallenge = (id: string) => router.push(`/explore/challenges/${id}`)
 
+  // One idea can be both yours and joined; count it once.
+  const all = [...new Map([...mine.items, ...joined.items].map((i) => [i.id, i])).values()]
+  const options = stageOptions(all, (i) => IDEA_STAGE[i.status], ['live', 'waiting', 'declined'])
+  const shownCount = stage === 'all' ? all.length : (options.find((o) => o.id === stage)?.n ?? 0)
+
   return (
     <Screen>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         {/* Persistent, not empty-state-only: once one idea exists the empty
             state's button is gone, and this is the only way back to the form. */}
-        <Button
-          label="+ Submit an idea"
-          variant="accent"
-          onPress={() => router.push('/explore/challenges/new')}
-          style={styles.submitPill}
+        <ListIntro
+          lead="Challenges you have joined as a maker, and ideas you have submitted at every stage of review."
+          cta="+ Submit an idea"
+          onCta={() => router.push('/explore/challenges/new')}
         />
+
+        {!loading && all.length > 0 ? (
+          <StageFilter label="Filter by stage" options={options} current={stage} onPick={setStage} />
+        ) : null}
+        {!loading && stage !== 'all' && shownCount === 0 ? <StageNone onClear={() => setStage('all')} /> : null}
 
         <Group
           title="Your ideas"
@@ -184,6 +207,8 @@ export function MyChallengesScreen() {
             onPress: () => router.push('/explore/challenges/new'),
           }}
           onOpen={openChallenge}
+          stage={stage}
+          joined={false}
         />
 
         <Group
@@ -199,6 +224,8 @@ export function MyChallengesScreen() {
             onPress: () => router.push('/explore/challenges'),
           }}
           onOpen={openChallenge}
+          stage={stage}
+          joined
         />
       </ScrollView>
     </Screen>
@@ -207,43 +234,7 @@ export function MyChallengesScreen() {
 
 const styles = StyleSheet.create({
   content: { paddingBottom: theme.spacing(6) },
-  submitPill: {
-    alignSelf: 'flex-start',
-    marginBottom: theme.spacing(4),
-    paddingVertical: theme.spacing(2),
-    paddingHorizontal: theme.spacing(4),
-  },
   group: { marginBottom: theme.spacing(4) },
-  groupTitle: {
-    fontFamily: theme.fonts.bold,
-    fontSize: theme.type.heading,
-    color: theme.colors.text,
-    marginBottom: theme.spacing(2),
-  },
   emptyButton: { marginTop: theme.spacing(5), paddingHorizontal: theme.spacing(6) },
   rowWrap: { marginBottom: theme.spacing(3) },
-  card: { padding: theme.spacing(3), gap: theme.spacing(1) },
-  cardTop: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2) },
-  cardTitle: {
-    flex: 1,
-    fontFamily: theme.fonts.bold,
-    fontSize: theme.type.label,
-    color: theme.colors.text,
-  },
-  cardSummary: {
-    fontFamily: theme.fonts.regular,
-    fontSize: theme.type.caption,
-    color: theme.colors.muted,
-    lineHeight: 18,
-  },
-  note: {
-    fontFamily: theme.fonts.regular,
-    fontSize: theme.type.caption,
-    color: theme.colors.muted,
-    lineHeight: 18,
-    borderTopWidth: theme.border.hairline,
-    borderTopColor: theme.colors.border,
-    paddingTop: theme.spacing(2),
-    marginTop: theme.spacing(1),
-  },
 })

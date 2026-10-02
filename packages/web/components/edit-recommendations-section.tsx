@@ -26,7 +26,7 @@ import { KIND_LABEL, type Recommendation, type Tutorial } from '@splat-connect/t
 
 /** Mirrors 048's `position between 1 and 3`; the constraint is the rule, this
  *  is what keeps the editor from ever offering a fourth slot. */
-export const MAX_RECOMMENDATIONS = 3
+const MAX_RECOMMENDATIONS = 3
 
 export function EditRecommendationsSection({
   tutorialId,

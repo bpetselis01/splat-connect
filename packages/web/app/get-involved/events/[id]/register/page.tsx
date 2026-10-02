@@ -19,7 +19,7 @@ import { KIND_TINT } from '@/components/event-card'
 import { apiClient } from '@/lib/api-client'
 import { getCapabilities } from '@/lib/capabilities'
 import { EventRegisterForm } from '@/components/event-register-form'
-import { dateBadge, formatTimeRange } from '@/lib/dates'
+import { dateBadge, formatTimeRange } from '@splat-connect/types'
 import type { EventListItem, OrgEventQuestion } from '@splat-connect/types'
 
 export const metadata = { title: 'Register for an event — SPLAT Connect' }

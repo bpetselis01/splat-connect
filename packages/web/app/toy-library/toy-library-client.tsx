@@ -11,6 +11,8 @@
  * layer of indirection over it.
  */
 import { useState } from 'react'
+import { BrowseFilters } from '@/components/browse-filters'
+import { useShowMore, ShowMoreButton } from '@/components/show-more'
 import type { Route } from 'next'
 import Link from 'next/link'
 import {
@@ -109,6 +111,8 @@ export function ToyLibraryClient({
         : sign * a.created_at.localeCompare(b.created_at)
     )
 
+  const { limit, more } = useShowMore(JSON.stringify([filters, sortKey, dir]))
+
   const adapted = toys.filter((t) => t.switch_adapted).length
   const fromOrgs = toys.filter((t) => t.owner_org_id).length
 
@@ -168,17 +172,7 @@ export function ToyLibraryClient({
       />
 
       <div id="toy-grid" className="browse-layout scroll-mt-24">
-        <aside aria-label="Filters" className="browse-filters">
-          <div className="flex items-center justify-between">
-            <h2 className="font-display text-xl font-extrabold text-ink">Filters</h2>
-            <button
-              type="button"
-              onClick={clearAll}
-              className="min-h-9 text-sm font-bold text-brand-deep"
-            >
-              Clear
-            </button>
-          </div>
+        <BrowseFilters onClear={clearAll}>
 
           {FACETS.map((f) => (
             <fieldset key={f.key}>
@@ -225,7 +219,7 @@ export function ToyLibraryClient({
               </Link>
             </span>
           </p>
-        </aside>
+        </BrowseFilters>
 
         <div>
           <div className="browse-head">
@@ -284,7 +278,7 @@ export function ToyLibraryClient({
             </div>
           ) : (
             <div className="browse-grid">
-              {filtered.map((t) => (
+              {filtered.slice(0, limit).map((t) => (
                 <ToyLibraryCard
                   key={t.id}
                   toy={t}
@@ -295,6 +289,12 @@ export function ToyLibraryClient({
               ))}
             </div>
           )}
+          <ShowMoreButton
+            shown={Math.min(limit, filtered.length)}
+            total={filtered.length}
+            noun="toys"
+            onMore={more}
+          />
         </div>
       </div>
     </div>

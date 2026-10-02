@@ -85,9 +85,16 @@ describe('DeleteEntityButton', () => {
 
   it('a backdrop click closes without deleting', () => {
     const dialog = openDialog()
-    fireEvent.click(dialog)
+    fireEvent.click(dialog, { clientX: -1, clientY: -1 })
     expect(dialog).not.toHaveAttribute('open')
     expect(browserApiClient.delete).not.toHaveBeenCalled()
+  })
+
+  // jsdom lays everything out at 0×0, so (0, 0) is on the dialog's own box — its padding.
+  it('a click in the dialog padding does not close it', () => {
+    const dialog = openDialog()
+    fireEvent.click(dialog, { clientX: 0, clientY: 0 })
+    expect(dialog).toHaveAttribute('open')
   })
 
   it('a click inside the dialog body does not close it', () => {
@@ -106,6 +113,20 @@ describe('DeleteEntityButton', () => {
     expect(push).not.toHaveBeenCalled()
     expect(dialog).toHaveAttribute('open')
     expect(screen.getByLabelText(/to confirm/i)).toHaveValue('confirm_delete_Child_1')
+  })
+
+  it("shows the API's reason when it refuses the delete", async () => {
+    vi.mocked(browserApiClient.delete).mockRejectedValue(
+      new Error("API DELETE /api/toys/t1 failed with status 409: This toy has handovers on record, so it can't be deleted.")
+    )
+    openDialog('toy', '/api/toys/t1', '/dashboard/toys')
+    fireEvent.change(screen.getByLabelText(/to confirm/i), { target: { value: 'confirm_delete_toy' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      "This toy has handovers on record, so it can't be deleted."
+    )
+    expect(push).not.toHaveBeenCalled()
   })
 
   it('deletes a toy via its own endpoint and label', async () => {

@@ -101,4 +101,11 @@ describe('ProfileForm', () => {
       }))
     )
   })
+
+  it('limits the postcode to four digits before it can be sent', () => {
+    render(<ProfileForm profile={PROFILE} />)
+    const input = screen.getByLabelText('Postcode')
+    expect(input.getAttribute('maxlength')).toBe('4')
+    expect(input.getAttribute('pattern')).toBe('\\d{4}')
+  })
 })

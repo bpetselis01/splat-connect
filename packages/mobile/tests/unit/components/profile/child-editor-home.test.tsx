@@ -19,7 +19,10 @@ jest.mock('../../../../lib/api-client', () => ({
 
 const mockPush = jest.fn()
 const mockBack = jest.fn()
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, back: mockBack }) }))
+jest.mock('expo-router', () => ({
+  useRouter: () => ({ push: mockPush, back: mockBack }),
+  Stack: { Screen: () => null },
+}))
 
 const child = (over: object = {}) => ({
   id: 'cp1',
@@ -37,11 +40,19 @@ const child = (over: object = {}) => ({
   grip_type: null,
   env_context: null,
   palm_width_mm: null,
+  enjoys: [],
+  reach_cm: null,
+  tray_mm: null,
   wrist_circ_mm: null,
   needs_arm_attachment: false,
   forearm_length_mm: null,
   hand_dominance: null,
   sensory_preferences: [],
+  working_hand: null,
+  press_force: null,
+  aim: null,
+  hold: null,
+  everyday_needs: [],
   created_at: '',
   updated_at: '',
   ...over,
@@ -53,27 +64,44 @@ beforeEach(() => {
 })
 
 describe('ChildEditorHome', () => {
-  it('opens each step scoped to this child', async () => {
+  it('asks the board questions on one page, and none of the retired ones', async () => {
     render(<ChildEditorHome childId="cp1" />)
-
-    fireEvent.press(await screen.findByRole('button', { name: 'Ability' }))
-    expect(mockPush).toHaveBeenCalledWith({ pathname: '/account/ability', params: { child: 'cp1' } })
-    fireEvent.press(screen.getByRole('button', { name: 'Everyday needs' }))
-    expect(mockPush).toHaveBeenCalledWith({
-      pathname: '/account/everyday-needs',
-      params: { child: 'cp1' },
-    })
+    expect(await screen.findByText('Which hand does most of the work?')).toBeTruthy()
+    for (const q of ['How much force can they apply?', 'Can they aim at a target?', 'How long can they hold a press?', 'Everyday needs']) {
+      expect(screen.getByText(q)).toBeTruthy()
+    }
+    expect(screen.getByText(/never shown to another person/)).toBeTruthy()
+    expect(screen.getByText('privacy policy')).toBeTruthy()
+    expect(screen.getByText(/not a medical/)).toBeTruthy()
+    expect(screen.queryByText(/MACS|BFMF|Grip|Palm width|Customi[sz]ation/)).toBeNull()
   })
 
-  it('marks a filled step done and an empty one with the gap dot', async () => {
-    mockGet.mockResolvedValue([child({ macs_level: 'II' })])
+  it('shows the stored answers as selected', async () => {
+    mockGet.mockResolvedValue([child({ working_hand: 'left', everyday_needs: ['wipeable'] })])
     render(<ChildEditorHome childId="cp1" />)
+    expect(await screen.findByRole('button', { name: 'Left', selected: true })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Wipeable', selected: true })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Quiet toys only', selected: false })).toBeTruthy()
+  })
 
-    // StepPills renders one tab per step; status carries via the pill's a11y.
-    const ability = await screen.findByRole('tab', { name: 'Ability' })
-    const needs = screen.getByRole('tab', { name: 'Everyday needs' })
-    expect(ability).toBeTruthy()
-    expect(needs).toBeTruthy()
+  it('saves only the field a chip changed, against this child', async () => {
+    mockPatch.mockResolvedValue({})
+    jest.useFakeTimers()
+    try {
+      render(<ChildEditorHome childId="cp1" />)
+      fireEvent.press(await screen.findByRole('button', { name: 'Moderate' }))
+      fireEvent.press(screen.getByRole('button', { name: 'Quiet toys only' }))
+      await waitFor(() => {})
+      jest.advanceTimersByTime(300)
+      await waitFor(() =>
+        expect(mockPatch).toHaveBeenCalledWith('/api/child-profiles/cp1', {
+          press_force: 'moderate',
+          everyday_needs: ['quiet'],
+        })
+      )
+    } finally {
+      jest.useRealTimers()
+    }
   })
 
   it('confirms before deleting, then deletes and goes back', async () => {
@@ -112,6 +140,55 @@ describe('ChildEditorHome', () => {
           '/api/child-profiles/cp1',
           expect.objectContaining({ name: 'Amara' })
         )
+      )
+    } finally {
+      jest.useRealTimers()
+    }
+  })
+
+  // 120: Play and the three measurements are editable here, not only in the wizard.
+  it('shows what the child enjoys and their measurements as stored', async () => {
+    mockGet.mockResolvedValue([child({ enjoys: ['water'], palm_width_mm: 62, reach_cm: 30, tray_mm: 15 })])
+    render(<ChildEditorHome childId="cp1" />)
+    expect(await screen.findByRole('button', { name: 'Bubbles and water', selected: true })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Lights', selected: false })).toBeTruthy()
+    expect(screen.getByDisplayValue('62')).toBeTruthy()
+    expect(screen.getByDisplayValue('30')).toBeTruthy()
+    expect(screen.getByDisplayValue('15')).toBeTruthy()
+  })
+
+  it('saves a Play chip against this child', async () => {
+    mockPatch.mockResolvedValue({})
+    jest.useFakeTimers()
+    try {
+      render(<ChildEditorHome childId="cp1" />)
+      fireEvent.press(await screen.findByRole('button', { name: 'Lights' }))
+      fireEvent.press(screen.getByRole('button', { name: 'Calm and sensory' }))
+      await waitFor(() => {})
+      jest.advanceTimersByTime(300)
+      await waitFor(() =>
+        expect(mockPatch).toHaveBeenCalledWith('/api/child-profiles/cp1', { enjoys: ['light', 'calm'] })
+      )
+    } finally {
+      jest.useRealTimers()
+    }
+  })
+
+  it('saves a measurement in range, clears a blank one, and says the range of one that is not', async () => {
+    mockGet.mockResolvedValue([child({ tray_mm: 15 })])
+    mockPatch.mockResolvedValue({})
+    jest.useFakeTimers()
+    try {
+      render(<ChildEditorHome childId="cp1" />)
+      fireEvent.changeText(await screen.findByPlaceholderText('e.g. 62'), '62')
+      fireEvent.changeText(screen.getByPlaceholderText('e.g. 30'), '400')
+      fireEvent.changeText(screen.getByPlaceholderText('e.g. 15'), '')
+      expect(screen.getByText('Between 5 and 150.')).toBeTruthy()
+      await waitFor(() => {})
+      jest.advanceTimersByTime(300)
+      // The reach is out of range, so it is not saved; the stored tray is cleared.
+      await waitFor(() =>
+        expect(mockPatch).toHaveBeenCalledWith('/api/child-profiles/cp1', { palm_width_mm: 62, tray_mm: null })
       )
     } finally {
       jest.useRealTimers()

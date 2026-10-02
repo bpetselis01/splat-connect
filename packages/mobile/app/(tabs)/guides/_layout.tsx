@@ -3,6 +3,11 @@ import { Stack } from 'expo-router'
 import { stackScreenOptions } from '../../../lib/nav-options'
 import { CloseButton } from '../../../components/ui/CloseButton'
 
+// A deep link or notification straight to a pushed screen still lands with
+// the list under it: without this the stack held that one screen, so there
+// was no back button and the tab bar showed as if it were a tab root.
+export const unstable_settings = { initialRouteName: 'index' }
+
 export default function GuidesStackLayout() {
   return (
     <Stack screenOptions={stackScreenOptions}>
@@ -24,6 +29,9 @@ export default function GuidesStackLayout() {
         options={{
           title: 'Add a guide',
           presentation: 'formSheet',
+          // An opaque header, so the form starts below it: on iOS the sheet's
+          // header floated over the top of the content.
+          headerTransparent: false,
           sheetGrabberVisible: true,
           // One detent, full height: this is a form, not a peek — a half-height
           // rest position would put Create draft under the fold.

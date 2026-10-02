@@ -2,7 +2,7 @@
 import { Pressable, ScrollView, Text, View, StyleSheet } from 'react-native'
 import { theme } from '../../lib/theme'
 
-export type StepPillStatus = 'done' | 'attention' | 'neutral'
+type StepPillStatus = 'done' | 'attention' | 'neutral'
 
 export interface StepPillItem {
   id: string

@@ -1,6 +1,6 @@
 /**
  * The account section's hub — the same shape as app/get-involved/page.tsx and
- * app/learn/page.tsx, for the same reason: a section's landing page lists what
+ * app/learn/(course)/page.tsx, for the same reason: a section's landing page lists what
  * is inside it, with a sentence per destination that a menu never had room for.
  *
  * It is not a duplicate of the rail. The rail says where you can go; this says
@@ -10,29 +10,22 @@
  * somewhere other than what it names.
  *
  * Related files:
- * - lib/nav-model.ts: the destination list, shared with the rail
+ * - @splat-connect/types nav-model.ts: the destination list, shared with the rail
  * - components/hub-grid.tsx: the grid, shared with every public hub
  */
 import { requireCapabilities } from '@/lib/require-capabilities'
-import { buildNav } from '@/lib/nav-model'
+import { buildNav } from '@splat-connect/types'
 import { HubGrid } from '@/components/hub-grid'
 import { ACCOUNT_NAV } from '@/lib/public-nav'
 import type { NavItem } from '@/lib/public-nav'
-import type { IconName } from '@/lib/nav-model'
+import type { IconName } from '@splat-connect/types'
 import Link from 'next/link'
 import type { Route } from 'next'
 import { Handshake, Tray } from '@phosphor-icons/react/dist/ssr'
 import { apiClient } from '@/lib/api-client'
 import { MoneyPanel, type OutstandingLine } from '@/components/money-panel'
 import { SplatMascot } from '@/components/splat-mascot'
-import { isPast } from '@/lib/dates'
-import type { OpenBuild } from '@/components/makers-wanted-board'
-import type {
-  PrinterWithOwner,
-  Tutorial,
-  TutorialOrg,
-  ToyTransactionSummary,
-} from '@splat-connect/types'
+import { isPast, type MeCounts } from '@splat-connect/types'
 
 export const metadata = {
   title: 'My SPLAT — SPLAT Connect',
@@ -51,7 +44,6 @@ const ORDER = [
   '/dashboard/print-requests',
   '/dashboard/events',
   '/dashboard/printers',
-  '/get-involved/recycling',
 ]
 
 /* The board gives every card its own icon-square colour rather than the
@@ -65,7 +57,6 @@ const TINTS: Record<string, string> = {
   '/dashboard/print-requests': 'var(--tviolet)',
   '/dashboard/events': 'var(--tamber)',
   '/dashboard/printers': 'var(--tmint)',
-  '/get-involved/recycling': 'var(--tmint)',
   '/dashboard/organisation/requests': 'var(--tcoral)',
   '/dashboard/organisation': 'var(--tamber)',
   '/dashboard/organisation/toys': 'var(--tok)',
@@ -86,6 +77,7 @@ const ICONS: Record<string, IconName> = {
 
 const LABELS: Record<string, string> = {
   '/dashboard/organisation/requests': 'Requests to your organisation',
+  [BUILD_HREF]: 'Build for a family',
 }
 
 const NUMBER_WORDS = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten']
@@ -115,8 +107,6 @@ export default async function DashboardHub() {
     [BUILD_HREF]:
       'Families nearby asking for a guide to be built. Claim one, post a working shot, hand it over.',
     '/dashboard/events': 'Build days you are going to, and whether the host is printing your parts.',
-    '/get-involved/recycling':
-      'Drop clean waste plastic at an organisation that can extrude it, and earn print credit on their machines.',
     '/dashboard/organisation': 'Projects waiting for your organisation to review.',
     '/dashboard/organisation/requests':
       'Families asking you to host a build day, print parts, or build a guide nearby. Accept or decline.',
@@ -127,6 +117,7 @@ export default async function DashboardHub() {
     '/dashboard/organisation/recycling':
       'Weigh the plastic that turns up, issue the credit, and publish what your machines can take.',
     '/dashboard/organisation/profile': 'Everything a family reads about you.',
+    '/dashboard/organisation/messages': 'Families writing to your organisation. Any leader can answer.',
     '/dashboard/profile': 'Your name, email, children and terms.',
     '/dashboard/saved': 'Tutorials, toys, challenges and organisations you have kept.',
     '/notifications': 'Everything SPLAT has told you.',
@@ -134,44 +125,22 @@ export default async function DashboardHub() {
   }
 
   /*
-   * The board badges every card that has something behind it. Each number here
-   * comes from the same endpoint the card's own page reads, filtered the same
-   * way, and each fetch degrades to "no badge" rather than failing the hub.
-   * Leaders also pay for the tutorial list, which is what their review queue is
-   * counted from (app/dashboard/organisation/page.tsx has the same rule).
+   * The board badges every card that has something behind it. The counts come
+   * from one call (me-count-badges, GET /api/me/counts), shared with mobile's
+   * Me; each fetch degrades to "no badge" rather than failing the hub.
    */
-  const viewerId = caps.profile.id
-  const isLeader = caps.ledOrgs.length > 0
-  const [builds, events, transactions, printers, tutorials] = await Promise.all([
-    apiClient.get<OpenBuild[]>('/api/toy-transactions/open-builds').catch(() => [] as OpenBuild[]),
+  const [meCounts, events, logged] = await Promise.all([
+    apiClient.get<MeCounts>('/api/me/counts').catch(() => undefined),
     apiClient
       .get<Array<{ event: { starts_at: string; ends_at: string | null } }>>('/api/events/mine')
       .catch(() => []),
-    apiClient
-      .get<ToyTransactionSummary[]>('/api/toy-transactions')
-      .catch(() => [] as ToyTransactionSummary[]),
-    apiClient.get<PrinterWithOwner[]>('/api/printers/mine').catch(() => [] as PrinterWithOwner[]),
-    isLeader
-      ? apiClient
-          .get<Array<Tutorial & { tutorial_orgs?: TutorialOrg[] }>>('/api/tutorials')
-          .catch(() => [])
-      : Promise.resolve([]),
+    apiClient.get<{ builds: number }>('/api/me/builds').catch(() => ({ builds: 0 })),
   ])
-  const myPrinterIds = new Set(printers.filter((p) => p.owner_id === viewerId).map((p) => p.id))
-  const ledOrgIds = new Set(caps.ledOrgs.map((o) => o.id))
-  const toReview = tutorials.reduce(
-    (n, t) =>
-      n +
-      (t.tutorial_orgs ?? []).filter(
-        (row) =>
-          ledOrgIds.has(row.org_id) &&
-          (row.status === 'pending' || (row.status === 'accepted' && t.status === 'pending'))
-      ).length,
-    0
-  )
+  const toReview = meCounts?.review ?? 0
 
   /*
-   * Unread for the three cards that have an unread count. Deliberately NOT
+   * Unread for the cards that clear on read; everything else is the model's
+   * count from /api/me/counts. Deliberately NOT
    * caps.exchangeActions on My exchanges: that is a needs-action count, it
    * clears when you act rather than when you read, and it already has its own
    * button in the header. Two numbers meaning different things on one card is
@@ -180,37 +149,17 @@ export default async function DashboardHub() {
   const counts: Record<string, number> = {
     '/dashboard/tutorials': caps.unread.tutorials,
     '/dashboard/exchanges': caps.unread.exchanges,
-    [BUILD_HREF]: builds.length,
     '/dashboard/challenges': caps.unread.challenges,
-    '/dashboard/print-requests': transactions.filter(
-      (tx) =>
-        tx.type === 'print' &&
-        tx.requester_id === viewerId &&
-        (tx.status === 'requested' || tx.status === 'accepted')
-    ).length,
     '/dashboard/events': events.filter((r) => !isPast(r.event.starts_at, r.event.ends_at)).length,
-    '/dashboard/printers': transactions.filter(
-      (tx) =>
-        tx.type === 'print' &&
-        tx.status === 'requested' &&
-        tx.printer_id !== null &&
-        myPrinterIds.has(tx.printer_id)
-    ).length,
-    '/dashboard/organisation': toReview,
     '/notifications': caps.unread.total,
   }
 
-  // Built from the same model the rail reads, so a destination cannot exist in
-  // one and not the other — with one subtraction and one addition. "Submit an
-  // idea" is a public route Design challenges already leads to, so it is a line
-  // on that card instead. "Build for a family" is the maker's side of an
-  // exchange, which the board puts beside My exchanges; its page is public, so
-  // the nav model does not carry it.
-  const rows = buildNav(caps)
+  // Built from the same model as mobile's Me, so a destination cannot exist in
+  // one and not the other. "Submit an idea" is a public route Design challenges
+  // already leads to, so it is a line on that card instead.
+  const rows = buildNav(caps, meCounts)
     .flatMap((g) => g.rows)
     .filter((row) => row.href !== '/get-involved/submit-an-idea')
-  const exchangesAt = rows.findIndex((row) => row.href === '/dashboard/exchanges')
-  rows.splice(exchangesAt + 1, 0, { href: BUILD_HREF, label: 'Build for a family', icon: 'wrench' })
 
   const items: NavItem[] = rows
     .map((row) => ({
@@ -218,7 +167,7 @@ export default async function DashboardHub() {
       label: LABELS[row.href] ?? row.label,
       state: row.soon ? ('soon' as const) : ('live' as const),
       blurb: blurbs[row.href] ?? '',
-      count: counts[row.href],
+      count: counts[row.href] ?? row.count,
       icon: ICONS[row.href] ?? row.icon,
       tint: TINTS[row.href],
     }))
@@ -298,6 +247,7 @@ export default async function DashboardHub() {
               Everything that belongs to you — what you have written, what you have lent, and what
               you have asked for.{waitingTotal > 0 && ` ${waitingSentence(waitingTotal)}`}
             </p>
+            {logged.builds > 0 && <p className="mt-2 text-sm font-bold text-ink">{logged.builds} builds logged</p>}
             {waiting.length > 0 && (
               <div className="mt-5 flex flex-wrap gap-2.5">
                 {waiting.map((w) => (

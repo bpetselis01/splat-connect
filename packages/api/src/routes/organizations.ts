@@ -12,6 +12,8 @@ import { randomUUID } from 'node:crypto'
 import { Hono, type Context } from 'hono'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { ledOrgIds } from '../toy-access.js'
+import { profileName } from '../profile-name.js'
+import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import {
   EVENT_KINDS,
   EVENT_TOOLS,
@@ -20,8 +22,14 @@ import {
   STORY_KINDS,
   DECLARATION_VERSION,
   MIN_DROPOFF_GRAMS,
+  ORG_DOOR_TARGETS,
+  PAYMENT_METHODS,
+  RECYCLING_MACHINES,
+  RECYCLING_FORMS,
+  RECYCLING_GIVES,
 } from '@splat-connect/types'
 import type { AuthVariables } from '../middleware/auth.js'
+import { sendEmail } from '../mailer.js'
 
 const organizations = new Hono<{ Variables: AuthVariables }>()
 
@@ -42,7 +50,33 @@ const organizations = new Hono<{ Variables: AuthVariables }>()
 // 059's public profile fields are in here and in that migration's grant. The
 // two have to move together, which is what the note above is about.
 export const ORG_COLUMNS =
-  'id, name, description, status, created_by, created_at, updated_at, about, suburb, state, capabilities, contact_email, contact_phone, website_url, rate_note, recycling_materials, recycling_note'
+  'id, name, description, status, created_by, created_at, updated_at, about, suburb, state, capabilities, contact_email, contact_phone, website_url, rate_note, recycling_materials, recycling_note, recycling_machines, recycling_forms, recycling_min_kg, recycling_max_kg, recycling_turnaround, recycling_gives, recycling_hours, recycling_door'
+
+/**
+ * 076's columns and 077's counts. Public by design, but 076 did not extend
+ * 033/059's grant, so the user client cannot select them and adding them to
+ * ORG_COLUMNS would fail every read that uses it. They are read here through
+ * the service-role client by name — the projection, not the grant, is what
+ * keeps the pickup columns out — and merged onto the user-client rows.
+ *
+ * verified_at is in this read list and in no write list a leader reaches: the
+ * profile PATCH below allowlists its fields, and only admin.ts sets it.
+ */
+const ORG_EXTRA_COLUMNS =
+  'id, kind, logo_url, cover_url, verified_at, visit_hours, service_area, payment_methods, org_thanks_count, org_follower_count'
+
+async function withExtras<T extends { id: string }>(rows: T[]): Promise<T[]> {
+  if (!rows.length) return rows
+  const { data } = await createAdminClient()
+    .from('organizations')
+    .select(ORG_EXTRA_COLUMNS)
+    .in(
+      'id',
+      rows.map((r) => r.id)
+    )
+  const byId = new Map((data ?? []).map((r) => [r.id as string, r]))
+  return rows.map((r) => ({ ...r, ...byId.get(r.id) }))
+}
 
 organizations.get('/', async (c) => {
   const supabase = createUserClient(c.get('token'))
@@ -54,7 +88,7 @@ organizations.get('/', async (c) => {
     .select(`${ORG_COLUMNS}, org_leaders(user_id, created_at)`)
     .order('name', { ascending: true })
   if (error) return c.json({ error: error.message }, 500)
-  return c.json(data)
+  return c.json(await withExtras(data ?? []))
 })
 
 // Declared before '/:id' so 'mine' is not swallowed as an id.
@@ -87,6 +121,126 @@ async function leadsOrg(c: Context<{ Variables: AuthVariables }>, orgId: string)
     .maybeSingle()
   return Boolean(data)
 }
+
+/**
+ * Leaders managing their own leadership. Until 2026-09-30 only an admin could
+ * add or remove one, which left a sole leader no way to hand over before
+ * deleting their account (Spec B).
+ *
+ * Adding is an invitation (084): leaders are public on the organisation's
+ * page, so nobody becomes one without accepting. The invitee is found by the
+ * exact email their account uses — never a pattern match, which would let
+ * `%@gmail.com` pick a stranger. Stepping down goes through
+ * step_down_as_leader(), which locks the organisation so two leaders leaving at
+ * once cannot leave it with none. Service-role throughout: 007's policies
+ * admit admins only, so authority is checked here.
+ */
+organizations.get('/invites/mine', async (c) => {
+  const { data, error } = await createAdminClient()
+    .from('org_leader_invites')
+    .select('id, org_id, created_at, organizations(name)')
+    .eq('invited_profile_id', c.get('userId'))
+    .order('created_at')
+  if (error) return c.json({ error: error.message }, 500)
+  return c.json(
+    (data ?? []).map((i) => ({
+      id: i.id,
+      org_id: i.org_id,
+      org_name: (i.organizations as unknown as { name: string } | null)?.name ?? '',
+    }))
+  )
+})
+
+async function myInvite(c: Context<{ Variables: AuthVariables }>) {
+  const { data } = await createAdminClient()
+    .from('org_leader_invites')
+    .select('id, org_id')
+    .eq('id', c.req.param('inviteId'))
+    .eq('invited_profile_id', c.get('userId'))
+    .maybeSingle()
+  return data
+}
+
+organizations.post('/invites/:inviteId/accept', async (c) => {
+  const invite = await myInvite(c)
+  if (!invite) return c.json({ error: 'Not found' }, 404)
+  const admin = createAdminClient()
+  const { error } = await admin.from('org_leaders').insert({ org_id: invite.org_id, user_id: c.get('userId') })
+  if (error && error.code !== '23505') return c.json({ error: error.message }, 500)
+  await admin.from('org_leader_invites').delete().eq('id', invite.id)
+  return c.json({ org_id: invite.org_id })
+})
+
+organizations.delete('/invites/:inviteId', async (c) => {
+  const invite = await myInvite(c)
+  if (!invite) return c.json({ error: 'Not found' }, 404)
+  await createAdminClient().from('org_leader_invites').delete().eq('id', invite.id)
+  return c.body(null, 204)
+})
+
+organizations.get('/:id/leaders', async (c) => {
+  const orgId = c.req.param('id')
+  if (!(await leadsOrg(c, orgId))) return c.json({ error: 'Not found' }, 404)
+  const admin = createAdminClient()
+  const [leaders, invites] = await Promise.all([
+    admin.from('org_leaders').select('user_id, created_at, profiles(name, email)').eq('org_id', orgId).order('created_at'),
+    admin.from('org_leader_invites').select('id, profiles:invited_profile_id(name, email)').eq('org_id', orgId).order('created_at'),
+  ])
+  if (leaders.error) return c.json({ error: leaders.error.message }, 500)
+  const person = (p: unknown) => (p as { name: string; email: string } | null) ?? { name: '', email: '' }
+  return c.json({
+    leaders: (leaders.data ?? []).map((l) => ({ user_id: l.user_id, ...person(l.profiles), you: l.user_id === c.get('userId') })),
+    invites: (invites.data ?? []).map((i) => ({ id: i.id, ...person(i.profiles) })),
+  })
+})
+
+organizations.post('/:id/leaders', async (c) => {
+  const orgId = c.req.param('id')
+  if (!(await leadsOrg(c, orgId))) return c.json({ error: 'Not found' }, 404)
+  const body = (await c.req.json().catch(() => null)) as { email?: unknown } | null
+  const email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : ''
+  if (!email) return c.json({ error: 'Add the email their SPLAT account uses.' }, 400)
+
+  const admin = createAdminClient()
+  const { data: person } = await admin.from('profiles').select('id, role, email').eq('email', email).maybeSingle()
+  if (!person) return c.json({ error: 'No SPLAT account uses that email. Ask them to sign up first.' }, 404)
+  if (person.role !== 'contributor' && person.role !== 'admin') {
+    return c.json({ error: 'That account cannot lead an organisation.' }, 400)
+  }
+  const { data: already } = await admin.from('org_leaders').select('id').eq('org_id', orgId).eq('user_id', person.id).maybeSingle()
+  if (already) return c.json({ error: 'They already lead this organisation.' }, 409)
+
+  const { error } = await admin
+    .from('org_leader_invites')
+    .insert({ org_id: orgId, invited_profile_id: person.id, invited_by: c.get('userId') })
+  if (error && error.code !== '23505') return c.json({ error: error.message }, 500)
+
+  const { data: org } = await admin.from('organizations').select('name').eq('id', orgId).single()
+  await sendEmail(
+    person.email,
+    `You're invited to lead ${org?.name ?? 'an organisation'} on SPLAT Connect`,
+    `${org?.name ?? 'An organisation'} has invited you to be one of its leaders.\n\nOpen SPLAT Connect and go to Account to accept or decline.`
+  )
+  return c.json({ ok: true }, 201)
+})
+
+organizations.delete('/:id/leaders/invites/:inviteId', async (c) => {
+  const orgId = c.req.param('id')
+  if (!(await leadsOrg(c, orgId))) return c.json({ error: 'Not found' }, 404)
+  await createAdminClient().from('org_leader_invites').delete().eq('id', c.req.param('inviteId')).eq('org_id', orgId)
+  return c.body(null, 204)
+})
+
+organizations.delete('/:id/leaders/me', async (c) => {
+  const { data, error } = await createAdminClient().rpc('step_down_as_leader', {
+    org: c.req.param('id'),
+    uid: c.get('userId'),
+  })
+  if (error) return c.json({ error: error.message }, 500)
+  if (data === 'not_leader') return c.json({ error: 'Not found' }, 404)
+  if (data === 'last_leader') return c.json({ error: 'Add another leader before you step down.' }, 409)
+  return c.body(null, 204)
+})
 
 const PICKUP_COLUMNS =
   'pickup_line1, pickup_suburb, pickup_state, pickup_postcode, pickup_instructions'
@@ -144,6 +298,7 @@ function readOrgPickup(body: Record<string, unknown>): Record<string, string | n
   return address
 }
 
+const MAX_UNDER_MIN = 'The maximum per drop cannot be under the minimum.'
 
 /**
  * PATCH /api/organizations/:id/profile
@@ -206,6 +361,36 @@ organizations.patch('/:id/profile', async (c) => {
     patch.name = name
   }
 
+  for (const [field, max] of [
+    ['kind', 60],
+    ['visit_hours', 120],
+    ['service_area', 120],
+    ['recycling_turnaround', 60],
+    ['recycling_hours', 80],
+    ['recycling_door', 120],
+  ] as const) {
+    const problem = text(field, max)
+    if (problem) return c.json({ error: problem }, 400)
+  }
+
+  if (Object.hasOwn(body, 'payment_methods')) {
+    const value = body.payment_methods
+    const allowed = PAYMENT_METHODS.map((m) => m.value as string)
+    if (!Array.isArray(value) || value.some((v) => typeof v !== 'string' || !allowed.includes(v))) {
+      return c.json({ error: 'payment_methods must come from the list' }, 400)
+    }
+    patch.payment_methods = [...new Set(value as string[])]
+  }
+
+  // The two pictures are written by POST /api/upload/org-image, which checks the
+  // file; here a leader can only take one down. Accepting a URL would let the
+  // page show any image off any host.
+  for (const field of ['logo_url', 'cover_url'] as const) {
+    if (!Object.hasOwn(body, field)) continue
+    if (body[field] !== null) return c.json({ error: `${field} can only be cleared here` }, 400)
+    patch[field] = null
+  }
+
   for (const field of ['capabilities', 'recycling_materials'] as const) {
     if (!Object.hasOwn(body, field)) continue
     const value = body[field]
@@ -215,15 +400,539 @@ organizations.patch('/:id/profile', async (c) => {
     patch[field] = (value as string[]).map((v) => v.trim()).slice(0, 20)
   }
 
+  // 113. Chips from the board's lists only; a leader cannot invent a machine.
+  for (const [field, allowed] of [
+    ['recycling_machines', RECYCLING_MACHINES],
+    ['recycling_forms', RECYCLING_FORMS],
+  ] as const) {
+    if (!Object.hasOwn(body, field)) continue
+    const value = body[field]
+    if (!Array.isArray(value) || value.some((v) => !(allowed as readonly unknown[]).includes(v))) {
+      return c.json({ error: `${field} must come from the list` }, 400)
+    }
+    patch[field] = [...new Set(value as string[])]
+  }
+
+  if (Object.hasOwn(body, 'recycling_gives')) {
+    if (!RECYCLING_GIVES.includes(body.recycling_gives as never)) {
+      return c.json({ error: 'recycling_gives must be credit, spool or either' }, 400)
+    }
+    patch.recycling_gives = body.recycling_gives
+  }
+
+  // 113. Kilos to one decimal; the minimum may only raise the platform floor.
+  for (const field of ['recycling_min_kg', 'recycling_max_kg'] as const) {
+    if (!Object.hasOwn(body, field)) continue
+    const value = body[field]
+    if (value === null) {
+      patch[field] = null
+      continue
+    }
+    if (typeof value !== 'number' || !/^\d{1,4}(\.\d)?$/.test(String(value)) || value > 1000) {
+      return c.json({ error: 'Per drop is between 2 and 1000 kg, to one decimal place.' }, 400)
+    }
+    if (value < MIN_DROPOFF_GRAMS / 1000) {
+      return c.json({ error: 'The platform floor is 2 kg. You can ask for more, never less.' }, 400)
+    }
+    patch[field] = value
+  }
+  if (Object.hasOwn(patch, 'recycling_min_kg') || Object.hasOwn(patch, 'recycling_max_kg')) {
+    const { data: current } = await createAdminClient()
+      .from('organizations')
+      .select('recycling_min_kg, recycling_max_kg')
+      .eq('id', orgId)
+      .maybeSingle()
+    const min = (Object.hasOwn(patch, 'recycling_min_kg') ? patch.recycling_min_kg : current?.recycling_min_kg) as number | null
+    const max = (Object.hasOwn(patch, 'recycling_max_kg') ? patch.recycling_max_kg : current?.recycling_max_kg) as number | null
+    if (max != null && max < (min ?? MIN_DROPOFF_GRAMS / 1000)) {
+      return c.json({ error: MAX_UNDER_MIN }, 400)
+    }
+  }
+
   const { data, error } = await createAdminClient()
     .from('organizations')
     .update(patch)
     .eq('id', orgId)
     .select(ORG_COLUMNS)
     .maybeSingle()
+  // Two editors saving min and max at once both pass the read above; 113's CHECK catches it.
+  if (error?.code === '23514' && error.message.includes('organizations_recycling_max_over_min')) {
+    return c.json({ error: MAX_UNDER_MIN }, 400)
+  }
   if (error) return c.json({ error: error.message }, 500)
   if (!data) return c.json({ error: 'Not found' }, 404)
+  return c.json((await withExtras([data]))[0])
+})
+
+/* --------------------------------- doors and rate lines, replaced wholesale --
+ *
+ * Both editors hand back the complete list in its final order, the same reason
+ * the event questions below are replaced rather than patched. Leadership is
+ * checked here first; 076's policies are the second layer under the user client.
+ */
+
+const DOOR_COLUMNS = 'id, org_id, position, title, body, target'
+const RATE_LINE_COLUMNS = 'id, org_id, position, description, amount_cents, claiming'
+
+organizations.put('/:id/doors', async (c) => {
+  const orgId = c.req.param('id')
+  if (!(await leadsOrg(c, orgId))) return c.json({ error: 'Not found' }, 404)
+  const body = (await c.req.json().catch(() => null)) as { doors?: unknown } | null
+  if (!body || !Array.isArray(body.doors)) return c.json({ error: 'Send the whole list of doors.' }, 400)
+  if (body.doors.length > 6) return c.json({ error: 'Six doors is the most a page shows.' }, 400)
+
+  const targets = ORG_DOOR_TARGETS.map((t) => t.value as string)
+  const rows: Array<Record<string, unknown>> = []
+  for (const [i, raw] of body.doors.entries()) {
+    const d = (raw ?? {}) as Record<string, unknown>
+    const title = typeof d.title === 'string' ? d.title.trim() : ''
+    if (!title || title.length > 60) return c.json({ error: 'Every door needs a short title.' }, 400)
+    const text = typeof d.body === 'string' ? d.body.trim() : ''
+    if (text.length > 200) return c.json({ error: `"${title}" says too much — 200 characters.` }, 400)
+    if (typeof d.target !== 'string' || !targets.includes(d.target)) {
+      return c.json({ error: `Say where "${title}" takes a family.` }, 400)
+    }
+    rows.push({ org_id: orgId, position: i + 1, title, body: text || null, target: d.target })
+  }
+
+  const supabase = createUserClient(c.get('token'))
+  const { error: clearError } = await supabase.from('org_doors').delete().eq('org_id', orgId)
+  if (clearError) return c.json({ error: clearError.message }, 500)
+  if (!rows.length) return c.json([])
+  const { data, error } = await supabase.from('org_doors').insert(rows).select(DOOR_COLUMNS).order('position')
+  if (error) return c.json({ error: error.message }, 500)
+  return c.json(data ?? [])
+})
+
+organizations.put('/:id/rate-lines', async (c) => {
+  const orgId = c.req.param('id')
+  if (!(await leadsOrg(c, orgId))) return c.json({ error: 'Not found' }, 404)
+  const body = (await c.req.json().catch(() => null)) as { lines?: unknown } | null
+  if (!body || !Array.isArray(body.lines)) return c.json({ error: 'Send the whole breakdown.' }, 400)
+  if (body.lines.length > 20) return c.json({ error: 'Twenty lines is the most a breakdown holds.' }, 400)
+
+  const rows: Array<Record<string, unknown>> = []
+  for (const [i, raw] of body.lines.entries()) {
+    const l = (raw ?? {}) as Record<string, unknown>
+    const description = typeof l.description === 'string' ? l.description.trim() : ''
+    if (!description || description.length > 80) {
+      return c.json({ error: 'Every line needs a short description.' }, 400)
+    }
+    // Integer cents from the wire, the cost panel's rule (costShape below).
+    const cents = l.amount_cents
+    if (typeof cents !== 'number' || !Number.isInteger(cents) || cents < 0 || cents > 10_000_000) {
+      return c.json({ error: `Give "${description}" an amount.` }, 400)
+    }
+    rows.push({ org_id: orgId, position: i + 1, description, amount_cents: cents, claiming: l.claiming !== false })
+  }
+
+  const supabase = createUserClient(c.get('token'))
+  const { error: clearError } = await supabase.from('org_rate_lines').delete().eq('org_id', orgId)
+  if (clearError) return c.json({ error: clearError.message }, 500)
+  if (!rows.length) return c.json([])
+  const { data, error } = await supabase
+    .from('org_rate_lines')
+    .insert(rows)
+    .select(RATE_LINE_COLUMNS)
+    .order('position')
+  if (error) return c.json({ error: error.message }, 500)
+  return c.json(data ?? [])
+})
+
+/* ------------------------------------------- follow, say thanks, message --
+ *
+ * 077. The three buttons beside an organisation's name. Each is one row per
+ * person per organisation, and each notifies the other side through the admin
+ * client — notifications have no insert policy for users.
+ */
+
+/** Every leader of an org, for a notification fan-out. */
+async function leaderIds(orgId: string): Promise<string[]> {
+  const { data } = await createAdminClient().from('org_leaders').select('user_id').eq('org_id', orgId)
+  return (data ?? []).map((r) => r.user_id as string)
+}
+
+async function orgName(orgId: string): Promise<string | null> {
+  const { data } = await createAdminClient().from('organizations').select('name').eq('id', orgId).maybeSingle()
+  return (data?.name as string | undefined) ?? null
+}
+
+/** Logged, never thrown: the write the notification is about has committed. */
+async function notify(rows: Array<Record<string, unknown>>, label: string) {
+  if (!rows.length) return
+  const { error } = await createAdminClient().from('notifications').insert(rows)
+  if (error) console.error(`[organizations] ${label} notify failed:`, error.message)
+}
+
+/**
+ * A followed organisation published. Called on the draft → published edge
+ * only, so saving an already-published event does not ping everyone again.
+ * The publisher is left out: they know.
+ */
+async function notifyFollowers(
+  orgId: string,
+  publisherId: string,
+  subject: { org_event_id: string } | { org_story_id: string },
+  title: string
+) {
+  const [{ data }, name] = await Promise.all([
+    createAdminClient().from('org_follows').select('profile_id').eq('org_id', orgId),
+    orgName(orgId),
+  ])
+  const type = 'org_event_id' in subject ? 'org_event_published' : 'org_story_published'
+  await notify(
+    (data ?? [])
+      .map((r) => r.profile_id as string)
+      .filter((id) => id !== publisherId)
+      .map((recipient_id) => ({
+        recipient_id,
+        type,
+        ...subject,
+        tutorial_title: title,
+        actor_name: name ?? 'An organisation',
+      })),
+    type
+  )
+}
+
+/** The status a row had before this request, for the publish edge. */
+async function statusBefore(table: 'org_events' | 'org_stories', id: string): Promise<string | null> {
+  const { data } = await createAdminClient().from(table).select('status').eq('id', id).maybeSingle()
+  return (data?.status as string | undefined) ?? null
+}
+
+/** Where the caller stands with one organisation: the three buttons' state. */
+organizations.get('/:id/me', async (c) => {
+  const orgId = c.req.param('id')
+  const supabase = createUserClient(c.get('token'))
+  const [leads, follow, thanks, conversation] = await Promise.all([
+    leadsOrg(c, orgId),
+    supabase.from('org_follows').select('org_id').eq('org_id', orgId).eq('profile_id', c.get('userId')).maybeSingle(),
+    supabase
+      .from('org_thanks')
+      .select('note, byline, show_note, created_at')
+      .eq('org_id', orgId)
+      .eq('profile_id', c.get('userId'))
+      .maybeSingle(),
+    supabase
+      .from('org_conversations')
+      .select('id')
+      .eq('org_id', orgId)
+      .eq('profile_id', c.get('userId'))
+      .maybeSingle(),
+  ])
+  return c.json({
+    leads,
+    following: !!follow.data,
+    thanks: thanks.data ?? null,
+    conversation_id: (conversation.data?.id as string | undefined) ?? null,
+  })
+})
+
+organizations.post('/:id/follow', async (c) => {
+  const { error } = await createUserClient(c.get('token'))
+    .from('org_follows')
+    .insert({ org_id: c.req.param('id'), profile_id: c.get('userId') })
+  // Already following is what the caller asked for.
+  if (error && error.code !== '23505') {
+    if (error.code === '23503' || error.code === INVALID_TEXT_REPRESENTATION) {
+      return c.json({ error: 'Not found' }, 404)
+    }
+    return c.json({ error: error.message }, 500)
+  }
+  return c.json({ following: true })
+})
+
+organizations.delete('/:id/follow', async (c) => {
+  const { error } = await createUserClient(c.get('token'))
+    .from('org_follows')
+    .delete()
+    .eq('org_id', c.req.param('id'))
+    .eq('profile_id', c.get('userId'))
+  if (error && error.code !== INVALID_TEXT_REPRESENTATION) return c.json({ error: error.message }, 500)
+  return c.json({ following: false })
+})
+
+/**
+ * Say thanks: once per person per organisation (077's primary key). The note
+ * is optional and shows publicly only when show_note is ticked; the byline is
+ * whatever they typed, never a name read off their profile.
+ */
+organizations.post('/:id/thanks', async (c) => {
+  const orgId = c.req.param('id')
+  if (await leadsOrg(c, orgId)) return c.json({ error: "You can't thank your own organisation" }, 403)
+  const body = ((await c.req.json().catch(() => null)) ?? {}) as Record<string, unknown>
+  const note = typeof body.note === 'string' ? body.note.trim() : ''
+  const byline = typeof body.byline === 'string' ? body.byline.trim() : ''
+  if (note.length > 200) return c.json({ error: 'Keep the note to 200 characters.' }, 400)
+  if (byline.length > 60) return c.json({ error: 'Keep the name to 60 characters.' }, 400)
+
+  const { error } = await createUserClient(c.get('token')).from('org_thanks').insert({
+    org_id: orgId,
+    profile_id: c.get('userId'),
+    note: note || null,
+    byline: byline || null,
+    // Nothing to show without a note.
+    show_note: !!note && body.show_note === true,
+  })
+  if (error?.code === '23505') return c.json({ error: 'You already thanked them' }, 409)
+  if (error?.code === '23503' || error?.code === INVALID_TEXT_REPRESENTATION) {
+    return c.json({ error: 'Not found' }, 404)
+  }
+  if (error) return c.json({ error: error.message }, 500)
+
+  // The byline they typed if they gave one — they chose to sign it — else
+  // nobody, the same reticence 066 applies to a guide's thanks.
+  await notify(
+    (await leaderIds(orgId)).map((recipient_id) => ({
+      recipient_id,
+      type: 'org_thanked',
+      org_id: orgId,
+      actor_name: byline || 'A family',
+    })),
+    'thanks'
+  )
+  const { data } = await createAdminClient()
+    .from('organizations')
+    .select('org_thanks_count')
+    .eq('id', orgId)
+    .single()
+  return c.json({ thanks_count: (data as { org_thanks_count: number } | null)?.org_thanks_count ?? 0 }, 201)
+})
+
+const THANKS_COLUMNS = 'org_id, profile_id, note, byline, show_note, hidden_at, created_at'
+
+/** The org's thanks, for its leaders to read and hide. */
+organizations.get('/:id/thanks', async (c) => {
+  const orgId = c.req.param('id')
+  if (!(await leadsOrg(c, orgId))) return c.json({ error: 'Not found' }, 404)
+  const { data, error } = await createUserClient(c.get('token'))
+    .from('org_thanks')
+    .select(THANKS_COLUMNS)
+    .eq('org_id', orgId)
+    .order('created_at', { ascending: false })
+  if (error) return c.json({ error: error.message }, 500)
+  return c.json(data ?? [])
+})
+
+/**
+ * Hide or unhide a note. hidden_at has no leader policy on purpose — 077's
+ * update policy is the author's — so this is the service role, after the
+ * leadership check, touching that one column.
+ */
+organizations.patch('/:id/thanks/:profileId', async (c) => {
+  const orgId = c.req.param('id')
+  if (!(await leadsOrg(c, orgId))) return c.json({ error: 'Not found' }, 404)
+  const body = ((await c.req.json().catch(() => null)) ?? {}) as { hidden?: unknown }
+  if (typeof body.hidden !== 'boolean') return c.json({ error: 'hidden must be true or false' }, 400)
+  const { data, error } = await createAdminClient()
+    .from('org_thanks')
+    .update({ hidden_at: body.hidden ? new Date().toISOString() : null })
+    .eq('org_id', orgId)
+    .eq('profile_id', c.req.param('profileId'))
+    .select(THANKS_COLUMNS)
+    .maybeSingle()
+  if (error && error.code !== INVALID_TEXT_REPRESENTATION) return c.json({ error: error.message }, 500)
+  if (!data) return c.json({ error: 'Not found' }, 404)
   return c.json(data)
+})
+
+/*
+ * Message. One conversation per person per organisation, addressed to the
+ * organisation: every leader reads it and any of them can answer. Reads go
+ * through the USER client, so 077's party policy is what keeps a third person
+ * out; names come from the admin client because profiles are not theirs to read.
+ */
+
+const CONVERSATION_COLUMNS = 'id, org_id, profile_id, created_at, updated_at'
+const MESSAGE_COLUMNS = 'id, conversation_id, sender_id, body, created_at'
+
+type Conversation = { id: string; org_id: string; profile_id: string; created_at: string; updated_at: string }
+
+function readMessage(body: unknown): string | null {
+  const raw = (body as { body?: unknown } | null)?.body
+  const text = typeof raw === 'string' ? raw.trim() : ''
+  return text && text.length <= 2000 ? text : null
+}
+
+async function thread(c: Context<{ Variables: AuthVariables }>, conversation: Conversation) {
+  const { data: messages } = await createUserClient(c.get('token'))
+    .from('org_messages')
+    .select(MESSAGE_COLUMNS)
+    .eq('conversation_id', conversation.id)
+    .order('created_at')
+  const rows = messages ?? []
+  const ids = [...new Set([conversation.profile_id, ...rows.map((m) => m.sender_id as string)])]
+  const [{ data: people }, name] = await Promise.all([
+    createAdminClient().from('profiles').select('id, name').in('id', ids),
+    orgName(conversation.org_id),
+  ])
+  const nameOf = new Map((people ?? []).map((p) => [p.id as string, p.name as string]))
+  return {
+    conversation,
+    org_name: name ?? '',
+    person_name: nameOf.get(conversation.profile_id) ?? 'Someone',
+    messages: rows.map((m) => ({
+      ...m,
+      sender_name: nameOf.get(m.sender_id as string) ?? 'Someone',
+      from_org: m.sender_id !== conversation.profile_id,
+    })),
+  }
+}
+
+/** Post one message and tell the other side. The caller is already a party. */
+async function post(c: Context<{ Variables: AuthVariables }>, conversation: Conversation, text: string) {
+  const userId = c.get('userId')
+  const { data, error } = await createUserClient(c.get('token'))
+    .from('org_messages')
+    .insert({ conversation_id: conversation.id, sender_id: userId, body: text })
+    .select(MESSAGE_COLUMNS)
+    .maybeSingle()
+  if (error) return c.json({ error: error.message }, 500)
+  if (!data) return c.json({ error: 'Not found' }, 404)
+
+  const admin = createAdminClient()
+  // No update policy on conversations; the leaders' list orders by this column
+  // and nothing else writes it, so it is bumped here rather than granted.
+  await admin.from('org_conversations').update({ updated_at: data.created_at }).eq('id', conversation.id)
+
+  const fromFamily = userId === conversation.profile_id
+  const [name, actor, leaders] = await Promise.all([
+    orgName(conversation.org_id),
+    fromFamily ? profileName(admin, userId, 'A family') : Promise.resolve(null),
+    fromFamily ? leaderIds(conversation.org_id) : Promise.resolve([]),
+  ])
+  // A family's message goes to every leader; a leader's reply goes to the
+  // family, signed with the organisation's name rather than their own.
+  // tutorial_title carries the org's name, the column every client already
+  // renders as a notification's subject line.
+  await notify(
+    (fromFamily ? leaders : [conversation.profile_id]).map((recipient_id) => ({
+      recipient_id,
+      type: 'org_message',
+      org_conversation_id: conversation.id,
+      tutorial_title: name,
+      actor_name: actor ?? name ?? 'An organisation',
+    })),
+    'message'
+  )
+  return c.json(data, 201)
+}
+
+organizations.get('/:id/conversations/mine', async (c) => {
+  const { data } = await createUserClient(c.get('token'))
+    .from('org_conversations')
+    .select(CONVERSATION_COLUMNS)
+    .eq('org_id', c.req.param('id'))
+    .eq('profile_id', c.get('userId'))
+    .maybeSingle()
+  return c.json(data ? await thread(c, data as Conversation) : null)
+})
+
+organizations.post('/:id/conversations/mine/messages', async (c) => {
+  const orgId = c.req.param('id')
+  // A leader writing to their own organisation would be talking to themselves.
+  if (await leadsOrg(c, orgId)) return c.json({ error: 'You lead this organisation' }, 403)
+  const text = readMessage(await c.req.json().catch(() => null))
+  if (!text) return c.json({ error: 'Write something, 2000 characters or fewer.' }, 400)
+
+  const supabase = createUserClient(c.get('token'))
+  const existing = await supabase
+    .from('org_conversations')
+    .select(CONVERSATION_COLUMNS)
+    .eq('org_id', orgId)
+    .eq('profile_id', c.get('userId'))
+    .maybeSingle()
+  let conversation = existing.data as Conversation | null
+  if (!conversation) {
+    const created = await supabase
+      .from('org_conversations')
+      .insert({ org_id: orgId, profile_id: c.get('userId') })
+      .select(CONVERSATION_COLUMNS)
+      .maybeSingle()
+    if (created.error?.code === '23503' || created.error?.code === INVALID_TEXT_REPRESENTATION) {
+      return c.json({ error: 'Not found' }, 404)
+    }
+    if (created.error) return c.json({ error: created.error.message }, 500)
+    conversation = created.data as Conversation
+  }
+  return post(c, conversation, text)
+})
+
+/** Leaders only: every conversation with the organisation, latest first. */
+organizations.get('/:id/conversations', async (c) => {
+  const orgId = c.req.param('id')
+  // Explicit, not left to RLS: the party policy would hand a non-leader their
+  // own conversation here, and this is the leaders' list.
+  if (!(await leadsOrg(c, orgId))) return c.json({ error: 'Not found' }, 404)
+  const supabase = createUserClient(c.get('token'))
+  const { data, error } = await supabase
+    .from('org_conversations')
+    .select(CONVERSATION_COLUMNS)
+    .eq('org_id', orgId)
+    .order('updated_at', { ascending: false })
+  if (error) return c.json({ error: error.message }, 500)
+  const rows = (data ?? []) as Conversation[]
+  if (!rows.length) return c.json([])
+
+  const [{ data: people }, { data: messages }] = await Promise.all([
+    createAdminClient()
+      .from('profiles')
+      .select('id, name')
+      .in('id', rows.map((r) => r.profile_id)),
+    // ponytail: reads every message to find each conversation's last; a
+    // latest-message view if an org's inbox grows past a few hundred.
+    supabase
+      .from('org_messages')
+      .select('conversation_id, body, sender_id, created_at')
+      .in('conversation_id', rows.map((r) => r.id))
+      .order('created_at', { ascending: false }),
+  ])
+  const nameOf = new Map((people ?? []).map((p) => [p.id as string, p.name as string]))
+  return c.json(
+    rows.map((r) => {
+      const last = (messages ?? []).find((m) => m.conversation_id === r.id)
+      return {
+        ...r,
+        person_name: nameOf.get(r.profile_id) ?? 'Someone',
+        last_message: last ? { body: last.body, sender_id: last.sender_id, created_at: last.created_at } : null,
+      }
+    })
+  )
+})
+
+/**
+ * One conversation by its id, if the caller is a party to it — RLS decides.
+ * Addressed without the org in the path because a notification carries only
+ * org_conversation_id (077's one-subject rule), and both sides open it from
+ * there.
+ *
+ * No clash with the '/:id/…' routes: each of those has a fixed second segment
+ * ('me', 'events', …), and a conversation id is never one of them.
+ */
+async function partyConversation(c: Context<{ Variables: AuthVariables }>) {
+  const { data } = await createUserClient(c.get('token'))
+    .from('org_conversations')
+    .select(CONVERSATION_COLUMNS)
+    .eq('id', c.req.param('cid') ?? '')
+    .maybeSingle()
+  return data as Conversation | null
+}
+
+organizations.get('/conversations/:cid', async (c) => {
+  const conversation = await partyConversation(c)
+  // 404 whether it does not exist or is not the caller's — RLS cannot tell
+  // them apart, and neither should the response.
+  if (!conversation) return c.json({ error: 'Not found' }, 404)
+  return c.json(await thread(c, conversation))
+})
+
+organizations.post('/conversations/:cid/messages', async (c) => {
+  const conversation = await partyConversation(c)
+  if (!conversation) return c.json({ error: 'Not found' }, 404)
+  const text = readMessage(await c.req.json().catch(() => null))
+  if (!text) return c.json({ error: 'Write something, 2000 characters or fewer.' }, 400)
+  return post(c, conversation, text)
 })
 
 /* ------------------------------------------------------ events and stories --
@@ -371,9 +1080,20 @@ organizations.post('/:id/events', async (c) => {
   if (format === 'in_person' && !location) return c.json({ error: 'Say where it is.' }, 400)
   if (format === 'online' && !onlineUrl) return c.json({ error: 'Give the joining link.' }, 400)
 
+  // The rest of the form — place, kind, bench, seats, cost — read the same way
+  // the PATCH below reads it. Without this a published in-person event failed
+  // 061's suburb-and-state check and a draft dropped everything past "who for".
+  const shape = eventShape(body, format)
+  if ('error' in shape) return c.json({ error: shape.error }, 400)
+  const status = body.status === 'published' ? 'published' : 'draft'
+  if (status === 'published' && format === 'in_person' && (!shape.suburb || !shape.state)) {
+    return c.json({ error: 'A published event needs a suburb and a state.' }, 400)
+  }
+
   const { data, error } = await supabase
     .from('org_events')
     .insert({
+      ...shape,
       org_id: orgId,
       title,
       summary: typeof body.summary === 'string' && body.summary.trim() ? body.summary.trim() : null,
@@ -384,7 +1104,7 @@ organizations.post('/:id/events', async (c) => {
       online_url: format === 'online' ? onlineUrl : null,
       audience:
         typeof body.audience === 'string' && body.audience.trim() ? body.audience.trim() : null,
-      status: body.status === 'published' ? 'published' : 'draft',
+      status,
       created_by: c.get('userId'),
     })
     .select(EVENT_COLUMNS)
@@ -393,6 +1113,9 @@ organizations.post('/:id/events', async (c) => {
   if (error) return c.json({ error: error.message }, 500)
   // RLS returns no row rather than refusing, so an absent row IS the refusal.
   if (!data) return c.json({ error: 'That organisation is not yours to publish for.' }, 403)
+  if (data.status === 'published') {
+    await notifyFollowers(orgId, c.get('userId'), { org_event_id: data.id }, data.title)
+  }
   return c.json(data, 201)
 })
 
@@ -454,6 +1177,7 @@ organizations.patch('/:orgId/events/:id', async (c) => {
     patch.ends_at = typeof body.ends_at === 'string' && body.ends_at ? body.ends_at : null
   }
 
+  const before = patch.status === 'published' ? await statusBefore('org_events', c.req.param('id')) : null
   const { data, error } = await supabase
     .from('org_events')
     .update(patch)
@@ -463,6 +1187,9 @@ organizations.patch('/:orgId/events/:id', async (c) => {
     .maybeSingle()
   if (error) return c.json({ error: error.message }, 500)
   if (!data) return c.json({ error: 'No such event of yours.' }, 404)
+  if (before === 'draft' && data.status === 'published') {
+    await notifyFollowers(data.org_id, c.get('userId'), { org_event_id: data.id }, data.title)
+  }
   return c.json(data)
 })
 
@@ -686,6 +1413,9 @@ organizations.post('/:id/stories', async (c) => {
 
   if (error) return c.json({ error: error.message }, 500)
   if (!data) return c.json({ error: 'That organisation is not yours to publish for.' }, 403)
+  if (data.status === 'published') {
+    await notifyFollowers(data.org_id as string, c.get('userId'), { org_story_id: data.id }, data.title)
+  }
   return c.json(data, 201)
 })
 
@@ -694,6 +1424,7 @@ organizations.patch('/:orgId/stories/:id', async (c) => {
   const body = (await c.req.json().catch(() => ({}))) as { status?: unknown }
   const status = body.status === 'published' ? 'published' : 'draft'
   const now = new Date().toISOString()
+  const before = status === 'published' ? await statusBefore('org_stories', c.req.param('id')) : null
 
   const { data, error } = await supabase
     .from('org_stories')
@@ -714,6 +1445,9 @@ organizations.patch('/:orgId/stories/:id', async (c) => {
     )
   }
   if (!data) return c.json({ error: 'No such story of yours.' }, 404)
+  if (before === 'draft') {
+    await notifyFollowers(data.org_id as string, c.get('userId'), { org_story_id: data.id }, data.title)
+  }
   return c.json(data)
 })
 
@@ -742,6 +1476,80 @@ organizations.delete('/:orgId/stories/:id', async (c) => {
 const DROPOFF_COLUMNS =
   'id, org_id, contributor_id, material, estimated_grams, condition_declared, declaration_version, photo_url, note, status, weighed_grams, credit_grams, decided_by, created_at, updated_at'
 
+/** 112's CHECK, said once more in the API so the answer is a sentence. */
+const ownPhotoPath = (userId: string) =>
+  new RegExp(`^${userId}/[0-9a-f-]{36}\\.(jpg|png|webp|avif|heic|heif)$`)
+
+/**
+ * The photo is a path in a private bucket; whoever may read the row gets a
+ * one-hour signed URL beside it. Signed with the service role because the
+ * caller already passed RLS on the row itself.
+ */
+async function withPhotoUrls<T extends { photo_url: string | null }>(rows: T[]) {
+  const paths = rows.map((r) => r.photo_url).filter((p): p is string => Boolean(p))
+  if (!paths.length) return rows.map((r) => ({ ...r, photo_signed_url: null }))
+  const { data } = await createAdminClient().storage.from('recycling-photos').createSignedUrls(paths, 3600)
+  const url = new Map((data ?? []).map((s) => [s.path, s.signedUrl]))
+  return rows.map((r) => ({ ...r, photo_signed_url: r.photo_url ? (url.get(r.photo_url) ?? null) : null }))
+}
+
+/**
+ * GET /api/organizations/recycling/mine — the caller's own drop-offs, at every
+ * organisation, newest first. RLS already limits a contributor to their own
+ * rows; this is the one read that does not start from an organisation.
+ */
+organizations.get('/recycling/mine', async (c) => {
+  const { data, error } = await createUserClient(c.get('token'))
+    .from('recycling_dropoffs')
+    .select(`${DROPOFF_COLUMNS}, organizations(name)`)
+    .eq('contributor_id', c.get('userId'))
+    .order('created_at', { ascending: false })
+  if (error) return c.json({ error: error.message }, 500)
+  return c.json(
+    await withPhotoUrls(
+      (data ?? []).map(({ organizations: org, ...row }: any) => ({ ...row, org_name: org?.name ?? null }))
+    )
+  )
+})
+
+/**
+ * GET /api/organizations/recycling/credit — the caller's unspent credit at
+ * each organisation (114). The balance is recycling_credit_balance(), the one
+ * place the arithmetic lives; it is service-role only, so this asks it for
+ * the caller and nobody else. Organisations with nothing left are omitted.
+ */
+organizations.get('/recycling/credit', async (c) => {
+  const admin = createAdminClient()
+  const userId = c.get('userId')
+  const { data: drops, error } = await admin
+    .from('recycling_dropoffs')
+    .select('org_id, weighed_grams')
+    .eq('contributor_id', userId)
+    .eq('status', 'received')
+  if (error) return c.json({ error: error.message }, 500)
+  const weighed = new Map<string, number>()
+  for (const d of drops ?? []) weighed.set(d.org_id, (weighed.get(d.org_id) ?? 0) + (d.weighed_grams ?? 0))
+  const orgIds = [...weighed.keys()]
+  if (!orgIds.length) return c.json([])
+  const [{ data: orgs }, balances] = await Promise.all([
+    admin.from('organizations').select('id, name').in('id', orgIds),
+    Promise.all(orgIds.map((org) => admin.rpc('recycling_credit_balance', { p_profile: userId, p_org: org }))),
+  ])
+  const failed = balances.find((b) => b.error)
+  if (failed) return c.json({ error: failed.error!.message }, 500)
+  const name = new Map((orgs ?? []).map((o) => [o.id as string, o.name as string]))
+  return c.json(
+    orgIds
+      .map((org_id, i) => ({
+        org_id,
+        org_name: name.get(org_id) ?? null,
+        grams: (balances[i].data as number | null) ?? 0,
+        weighed_grams: weighed.get(org_id)!,
+      }))
+      .filter((r) => r.grams > 0)
+  )
+})
+
 organizations.get('/:id/recycling', async (c) => {
   const supabase = createUserClient(c.get('token'))
   const { data, error } = await supabase
@@ -750,7 +1558,45 @@ organizations.get('/:id/recycling', async (c) => {
     .eq('org_id', c.req.param('id'))
     .order('created_at', { ascending: false })
   if (error) return c.json({ error: error.message }, 500)
-  return c.json(data ?? [])
+  const rows = data ?? []
+  // A leader receiving plastic at the door needs to know whose it is, whether
+  // or not that person shows a public profile. Names only, and only to leaders.
+  const admin = createAdminClient()
+  if (!rows.length || !(await ledOrgIds(admin, c.get('userId'))).includes(c.req.param('id'))) {
+    return c.json(await withPhotoUrls(rows))
+  }
+  const { data: people } = await admin
+    .from('profiles')
+    .select('id, name')
+    .in('id', [...new Set(rows.map((r) => r.contributor_id))])
+  const name = new Map((people ?? []).map((p) => [p.id, p.name]))
+  return c.json(await withPhotoUrls(rows.map((r) => ({ ...r, contributor_name: name.get(r.contributor_id) ?? null }))))
+})
+
+/**
+ * POST /api/organizations/:orgId/recycling/:id/cancel — the contributor calls
+ * off a booking that has not been received. Kept as a row with status
+ * 'cancelled' rather than deleted, so the organisation's list still shows it.
+ */
+organizations.post('/:orgId/recycling/:id/cancel', async (c) => {
+  const admin = createAdminClient()
+  const { data: row } = await admin
+    .from('recycling_dropoffs')
+    .select('id, contributor_id, status, org_id')
+    .eq('id', c.req.param('id'))
+    .eq('org_id', c.req.param('orgId'))
+    .maybeSingle()
+  if (!row || row.contributor_id !== c.get('userId')) return c.json({ error: 'Not found' }, 404)
+  if (row.status !== 'booked') return c.json({ error: 'Only a booking that is still waiting can be cancelled' }, 409)
+  const { data, error } = await admin
+    .from('recycling_dropoffs')
+    .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+    .eq('id', row.id)
+    .eq('status', 'booked')
+    .select(DROPOFF_COLUMNS)
+    .single()
+  if (error) return c.json({ error: error.message }, 500)
+  return c.json(data)
 })
 
 organizations.post('/:id/recycling', async (c) => {
@@ -768,6 +1614,20 @@ organizations.post('/:id/recycling', async (c) => {
   // Two kilos so a machine run is worth firing up — the artboard's minimum, and
   // the one number here that is a policy rather than a bound.
   if (grams < MIN_DROPOFF_GRAMS) return c.json({ error: 'Drop-offs start at two kilos.' }, 400)
+
+  // 113. The organisation's own limits, inside the platform's.
+  const { data: org } = await supabase
+    .from('organizations')
+    .select('name, recycling_min_kg, recycling_max_kg')
+    .eq('id', c.req.param('id'))
+    .maybeSingle()
+  if (!org) return c.json({ error: 'Not found' }, 404)
+  if (org.recycling_max_kg != null && grams > Math.round(org.recycling_max_kg * 1000)) {
+    return c.json({ error: `${org.name} takes at most ${org.recycling_max_kg} kg at once.` }, 400)
+  }
+  if (org.recycling_min_kg != null && grams < Math.round(org.recycling_min_kg * 1000)) {
+    return c.json({ error: `${org.name} takes at least ${org.recycling_min_kg} kg at once.` }, 400)
+  }
 
   if (body.condition_declared !== true) {
     return c.json({ error: 'Tick every line of the condition declaration first.' }, 400)
@@ -788,6 +1648,12 @@ organizations.post('/:id/recycling', async (c) => {
     )
   }
 
+  // 112: a path in the caller's own folder, from POST /api/upload/recycling-photo.
+  const photo = body.photo_url ?? null
+  if (photo !== null && (typeof photo !== 'string' || !ownPhotoPath(c.get('userId')).test(photo))) {
+    return c.json({ error: 'That photo is not one you uploaded.' }, 400)
+  }
+
   const { data, error } = await supabase
     .from('recycling_dropoffs')
     .insert({
@@ -797,6 +1663,7 @@ organizations.post('/:id/recycling', async (c) => {
       estimated_grams: grams,
       condition_declared: true,
       declaration_version: DECLARATION_VERSION,
+      photo_url: photo,
       note: typeof body.note === 'string' && body.note.trim() ? body.note.trim() : null,
     })
     .select(DROPOFF_COLUMNS)
@@ -811,9 +1678,9 @@ organizations.post('/:id/recycling', async (c) => {
  * PATCH /api/organizations/:orgId/recycling/:id
  *
  * Weighing it in. `weighed_grams` is what came through the door and
- * `credit_grams` is what it is worth as filament — both the leader's, and the
- * yield between them is theirs to apply rather than a constant here. About
- * three quarters is typical, and "typical" is not a number to put in a ledger.
+ * `credit_grams` is what it is worth as filament — both the leader's: the
+ * screens prefill the credit at about three quarters (intakeCredit) and send
+ * whatever the leader leaves in the box. Nothing under two kilos is credited.
  */
 organizations.patch('/:orgId/recycling/:id', async (c) => {
   const supabase = createUserClient(c.get('token'))
@@ -843,6 +1710,11 @@ organizations.patch('/:orgId/recycling/:id', async (c) => {
     if ((credit as number) > (weighed as number)) {
       return c.json({ error: 'Credit cannot be more than what was weighed.' }, 400)
     }
+    // The board's floor at the door, as at booking: under two kilos is not a
+    // drop-off to credit. A client that skips the screen's rule meets it here.
+    if ((weighed as number) < MIN_DROPOFF_GRAMS) {
+      return c.json({ error: 'Under the 2 kg minimum — log it as a donation or hand it back.' }, 400)
+    }
     patch.weighed_grams = weighed
     patch.credit_grams = credit
   }
@@ -852,10 +1724,23 @@ organizations.patch('/:orgId/recycling/:id', async (c) => {
     .update(patch)
     .eq('id', c.req.param('id'))
     .eq('org_id', c.req.param('orgId'))
+    // 115: once decided it is final. Credit may already be spent against it.
+    .eq('status', 'booked')
     .select(DROPOFF_COLUMNS)
     .maybeSingle()
   if (error) return c.json({ error: error.message }, 500)
-  if (!data) return c.json({ error: 'No such drop-off at your organisation.' }, 404)
+  if (!data) {
+    const { data: existing } = await supabase
+      .from('recycling_dropoffs')
+      .select('status')
+      .eq('id', c.req.param('id'))
+      .eq('org_id', c.req.param('orgId'))
+      .maybeSingle()
+    if (existing && existing.status !== 'booked') {
+      return c.json({ error: 'This drop-off has already been decided and cannot be changed.' }, 409)
+    }
+    return c.json({ error: 'No such drop-off at your organisation.' }, 404)
+  }
   return c.json(data)
 })
 
@@ -935,11 +1820,17 @@ organizations.get('/:id', async (c) => {
   const supabase = createUserClient(c.get('token'))
   const { data, error } = await supabase
     .from('organizations')
-    .select(`${ORG_COLUMNS}, org_leaders(user_id, created_at)`)
+    // The doors and the breakdown ride along for the profile editor; both are
+    // public under 076's policies.
+    .select(
+      `${ORG_COLUMNS}, org_leaders(user_id, created_at), doors:org_doors(${DOOR_COLUMNS}), rate_lines:org_rate_lines(${RATE_LINE_COLUMNS})`
+    )
     .eq('id', c.req.param('id'))
+    .order('position', { referencedTable: 'org_doors' })
+    .order('position', { referencedTable: 'org_rate_lines' })
     .single()
   if (error) return c.json({ error: error.message }, 404)
-  return c.json(data)
+  return c.json((await withExtras([data]))[0])
 })
 
 export default organizations

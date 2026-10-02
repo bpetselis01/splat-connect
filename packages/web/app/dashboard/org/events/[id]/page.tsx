@@ -29,7 +29,7 @@ import {
 } from '@phosphor-icons/react/dist/ssr'
 import { getCapabilities } from '@/lib/capabilities'
 import { apiClient } from '@/lib/api-client'
-import { longDate } from '@/lib/dates'
+import { longDate } from '@splat-connect/types'
 import { formatRelativeTime } from '@/lib/relative-time'
 import { EventPartQueue } from '@/components/event-part-queue'
 import { EventWithdrawActions } from '@/components/event-withdraw-actions'
@@ -111,7 +111,7 @@ export default async function ManageEventPage({ params }: { params: Promise<{ id
         aria-label="Event"
         className="mb-3.5 flex items-center gap-2 text-sm font-bold text-muted"
       >
-        <Link href="/dashboard/organisation/publish" className="text-muted hover:text-ink">
+        <Link href="/dashboard/organisation/publish" className="text-muted hover:text-ink max-sm:-my-3 max-sm:inline-flex max-sm:min-h-11 max-sm:items-center">
           Events and stories
         </Link>
         <CaretRight weight="bold" className="h-3 w-3" aria-hidden="true" />

@@ -85,7 +85,20 @@ async function provision(roles) {
     if (role === 'leader') {
       const { data, error } = await db
         .from('organizations')
-        .insert({ name: `Parity Org ${stamp()}`, status: 'active' })
+        // The board's sample org, by name and by what it offers: org headings
+        // and the queue lede quote the name, and the profile's service rows
+        // are tinted only when switched on. organizations.name is not unique,
+        // and cleanup deletes by id.
+        .insert({
+          name: 'Northside Therapy Collective',
+          status: 'active',
+          capabilities: ['Backs guides', 'Holds toys', 'Takes recycling', 'Has a printer'],
+          // The profile's Visit card draws only with a place or hours.
+          suburb: 'Newcastle',
+          state: 'NSW',
+          visit_hours: 'Switch clinic Thursdays 1–5 pm',
+          service_area: 'Hunter region and Central Coast',
+        })
         .select('id')
         .single()
       if (error) throw new Error(`org: ${error.message}`)
@@ -162,4 +175,40 @@ async function cleanup(users) {
   }
 }
 
-module.exports = { provision, signIn, cleanup, adminClient: admin }
+/**
+ * Sign in to the mobile app's web export through its real /sign-in form, as
+ * packages/mobile/tests/e2e/helpers.ts signIn does. The session lives in the
+ * app's storage, which only the app's own sign-in writes correctly.
+ */
+async function signInApp(context, appOrigin, user) {
+  const page = await context.newPage()
+  try {
+    await page.goto(`${appOrigin}/sign-in`, { waitUntil: 'domcontentloaded' })
+    await dismissIntro(page)
+    await page.getByLabel('Email', { exact: true }).fill(user.email)
+    await page.getByLabel('Password', { exact: true }).fill(user.password)
+    await page.getByTestId('auth-submit').click()
+    await page.waitForURL((url) => !new URL(url).pathname.startsWith('/sign-in'), { timeout: 30000 })
+    return { ok: true }
+  } catch (err) {
+    return { ok: false, reason: String(err.message || err).slice(0, 160) }
+  } finally {
+    await page.close()
+  }
+}
+
+/**
+ * The app plays an intro over everything on each cold start, and on the web
+ * export every page.goto is one. Wait for it to mount, then skip it: an
+ * isVisible() check does not wait, so it looked before hydration and every
+ * screen was measured under the intro.
+ */
+async function dismissIntro(page) {
+  const skip = page.getByLabel('Skip intro')
+  const shown = await skip.waitFor({ state: 'visible', timeout: 5000 }).then(() => true, () => false)
+  if (!shown) return
+  await skip.click().catch(() => {})
+  await skip.waitFor({ state: 'hidden', timeout: 10000 }).catch(() => {})
+}
+
+module.exports = { provision, signIn, signInApp, dismissIntro, cleanup, adminClient: admin }

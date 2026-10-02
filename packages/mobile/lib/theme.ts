@@ -18,6 +18,9 @@ export const theme = {
     surface: '#ffffff',
     surfaceSunken: '#f3f1ed',
     accentLight: '#dcf0fb',
+    // The board's --b50: the tint an unread inbox row and a selected menu
+    // option sit on — one step lighter than accentLight.
+    accentFaint: '#f0f9ff',
     text: '#1c2530',
     ink: '#1c2530',
     muted: '#5a6675',
@@ -34,7 +37,12 @@ export const theme = {
     // Carries white text, where #2f9e6b reaches only 3.37:1. Mirrors web's
     // --color-success-deep for the same reason.
     successDeep: '#237e51',
+    // The board's --tok: Easy, Backed and "Like new" pills.
+    successSoft: '#dff3ea',
     danger: '#e05252',
+    // Carries white text (the delete-account button), where #e05252 reaches
+    // only 3.82:1. Same move as successDeep.
+    dangerDeep: '#b83a3a',
     dangerSoft: '#fde3e3',
     // Badge tones — the same bg/fg pairs as web's badge.tsx. tone.test guards
     // contrast. Soft Pop inks every tint rather than using a per-hue deep
@@ -68,7 +76,9 @@ export const theme = {
   // One hairline. `thick` survives for the few places that need a real edge,
   // but Soft Pop separates with elevation rather than with borders.
   border: { hairline: 1 },
-  radii: { field: 14, panel: 18, card: 24, pill: 999 },
+  // card is 20 here, 24 on web: the mobile board draws its cards at 20
+  // (tokens radius.lg), the desktop board at 24.
+  radii: { field: 14, panel: 18, card: 20, pill: 999 },
   // Four elevations, matching web's --e1..--e4. iOS reads the shadow* fields
   // and Android reads `elevation`; both are given so neither platform falls
   // flat. There is no offset ladder any more — depth is blur and spread.

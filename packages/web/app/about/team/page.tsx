@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { Briefcase } from '@phosphor-icons/react/dist/ssr'
+import { initials } from '@splat-connect/types'
 
 export const metadata = { title: 'Our team — SPLAT Connect' }
 
@@ -16,6 +17,7 @@ export const TEAM_MEMBERS: Array<{
   day?: string
   photo: string | null
 }> = [
+  // PENDING(team-page): real names, roles and bios — the placeholders below stay until then.
   {
     name: 'TODO: full name',
     role: 'TODO: role',
@@ -23,16 +25,6 @@ export const TEAM_MEMBERS: Array<{
     photo: null,
   },
 ]
-
-function initials(name: string) {
-  return name
-    .split(/\s+/)
-    .map((part) => part[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join('')
-    .toUpperCase()
-}
 
 // The board tints each portrait slot and its role pill with the same colour,
 // in this order.

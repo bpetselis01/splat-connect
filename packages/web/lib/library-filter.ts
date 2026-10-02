@@ -9,7 +9,7 @@
  */
 import type { Difficulty, Tutorial, TutorialKind } from '@splat-connect/types'
 
-export type TimeBucket = 'u30' | 'u60' | 'print'
+type TimeBucket = 'u30' | 'u60' | 'print'
 export type Filters = { type?: TutorialKind; skill?: Difficulty; time?: TimeBucket }
 export type SortKey = 'new' | 'diff' | 'time'
 export type SortDir = 'asc' | 'desc'

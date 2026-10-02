@@ -19,15 +19,20 @@ appId: com.splatconnect.mobile
 - runFlow:
     when:
       visible:
-        id: "auth-tab-signin"
+        id: "welcome-sign-in"
     commands:
+      - tapOn:
+          id: "welcome-sign-in"
       - tapOn:
           id: "email-input"
       - inputText: ${DEVICE_EMAIL}
+      - tapOn: "Welcome back"  # the keyboard covers the password field
       - tapOn:
           id: "password-input"
       - inputText: ${DEVICE_PASSWORD}
-      - hideKeyboard
+      # hideKeyboard fails on the iOS 26 simulator; a tap outside a field
+      # dismisses it on device and simulator alike (ScrollView default).
+      - tapOn: "Welcome back"
       - tapOn:
           id: "auth-submit"
       # iOS offers to save the password a beat after sign-in, and the system
@@ -40,7 +45,7 @@ appId: com.splatconnect.mobile
 
 # Signed-in landing is Guides.
 - assertVisible:
-    text: "Step-by-step guides for switch-adapting toys and building assistive tech."
+    text: "Guide library"
 
 # The filter sheet is @expo/ui's native SwiftUI / Compose sheet — Playwright
 # only ever sees its vaul drawer, so this is the one layer that presents the
@@ -55,7 +60,7 @@ appId: com.splatconnect.mobile
 - tapOn:
     text: "Toys"
 - assertVisible:
-    text: "Adapted toys that families and organisations are giving away."
+    text: "Toy library"
 
 # Inbox must render an actual row, not just its header: rows are where
 # relativeTime runs, and the fixture seeds exactly one notification so this

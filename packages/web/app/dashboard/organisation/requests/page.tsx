@@ -113,8 +113,7 @@ export default async function OrgRequestsPage({
         declined family is told straight away, and nothing is left hanging.
       </p>
 
-      <div
-        role="tablist"
+      <nav
         aria-label="Kind of request"
         className="mb-[18px] inline-flex max-w-full flex-wrap rounded-full border-(length:--border-width) border-line bg-sunken p-1"
       >
@@ -124,8 +123,7 @@ export default async function OrgRequestsPage({
           return (
             <Link
               key={t.key}
-              role="tab"
-              aria-selected={on}
+              aria-current={on ? 'page' : undefined}
               href={`?tab=${t.key}`}
               scroll={false}
               className={`inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-sm font-extrabold ${
@@ -142,7 +140,7 @@ export default async function OrgRequestsPage({
             </Link>
           )
         })}
-      </div>
+      </nav>
 
       <p className="mb-3 text-sm text-muted">{current.lead}</p>
 

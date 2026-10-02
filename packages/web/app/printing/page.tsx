@@ -13,8 +13,8 @@
  *
  * Requests start from a guide (the parts come from its STL files, never an
  * upload), so this page browses; it does not send. The board's "pick up to
- * three, first to accept wins" needs a multi-printer request the API does not
- * take yet — see RequestAPrintPage for the one-printer form that exists.
+ * three, first to accept wins" happens on RequestAPrintPage, which is the one
+ * place that knows which guide the parts come from.
  */
 import Link from 'next/link'
 import {
@@ -44,8 +44,13 @@ const SKELETON_TINTS = ['var(--tmint)', 'var(--tviolet)', 'var(--tamber)']
 export default async function PrintingPage() {
   const caps = await getCapabilities()
 
+  // 099. Distance needs a viewer postcode the API will accept (4 digits).
+  const postcode = caps?.profile.pickup_postcode?.trim() ?? ''
+  const near = /^\d{4}$/.test(postcode) ? postcode : null
   const printers = caps
-    ? await apiClient.get<PrinterWithOwner[]>('/api/printers').catch(() => [] as PrinterWithOwner[])
+    ? await apiClient
+        .get<PrinterWithOwner[]>(near ? `/api/printers?near=${encodeURIComponent(near)}` : '/api/printers')
+        .catch(() => [] as PrinterWithOwner[])
     : []
 
   // The viewer's own machines are not somewhere they can send a job — the same
@@ -61,7 +66,7 @@ export default async function PrintingPage() {
       <BrowseHero
         eyebrow="3D Printing"
         title="You do not need a printer"
-        lede="Most assistive parts are small — a switch mount, an interrupter case — and someone nearby already owns a printer they would rather use for this. Pick one; they print it, and you cover the filament."
+        lede="Most assistive parts are small — a switch mount, an interrupter case — and someone nearby already owns a printer they would rather use for this. Pick up to three; the first to accept prints it, and you cover the filament."
         primary={{
           label: 'Find a printer',
           href: '#printer-grid',
@@ -98,7 +103,7 @@ export default async function PrintingPage() {
           <span aria-hidden="true" className="printing-guide-first__icon">
             <BookOpen size={34} weight="duotone" />
           </span>
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 max-sm:basis-full">
             <p className="font-display text-[22px] font-extrabold text-ink">
               Every request starts from a guide
             </p>
@@ -116,6 +121,7 @@ export default async function PrintingPage() {
         </div>
 
         <PrinterDirectory
+          hasPostcode={!!near}
           printers={caps ? theirs : null}
           gate={
             <div className="printing-gate">

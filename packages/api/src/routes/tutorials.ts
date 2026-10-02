@@ -6,9 +6,11 @@
  * must set ownership itself.
  */
 import { Hono } from 'hono'
+import { nameFormerContributors } from '../former-contributor.js'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { pickEditable } from './pick-editable.js'
 import { notifyTutorialSubmitted } from '../review-notifications.js'
+import { realignCaptions } from '@splat-connect/types'
 import { removeDroppedPhotos } from '../photo-storage.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
@@ -26,7 +28,7 @@ const tutorials = new Hono<{ Variables: AuthVariables }>()
 // to TypeScript, and visible in the browser only as React's missing-key
 // warning pointing at a <li> that plainly had a key.
 const LIST_SELECT =
-  '*, tutorial_contributors!inner(profile_id), tutorial_orgs(id, status, org_id, organizations(id, name))'
+  '*, tutorial_contributors!inner(profile_id), tutorial_orgs(id, status, org_id, requested_at, organizations(id, name))'
 
 // Every tutorial the caller may see, and the same list narrowed to the ones
 // they contribute to. RLS does the visibility work in both; /mine only adds
@@ -45,7 +47,9 @@ tutorials.get('/mine', async (c) => {
   const supabase = createUserClient(c.get('token'))
   const { data, error } = await supabase
     .from('tutorials')
-    .select(LIST_SELECT)
+    // Ids only: the My tutorials row counts sections the way the editor hub does
+    // (getMissingFields reads lengths), and nothing on the row needs more.
+    .select(`${LIST_SELECT}, view_count, parts(id), tools(id), stl_files(id), steps:tutorial_steps(id)`)
     .eq('tutorial_contributors.profile_id', c.get('userId'))
     .order('created_at', { ascending: false })
   if (error) return c.json({ error: error.message }, 500)
@@ -71,13 +75,15 @@ tutorials.get('/:id', async (c) => {
     // badges the ones a parent cannot see yet, and this route is the only one
     // that tells it which those are. The public route strips them instead.
     .select(
-      '*, parts(*), tools(*), stl_files(*), tutorial_contributors(*, profiles(id, name, role, created_at)), \
+      '*, parts(*), tools(*), stl_files(*), steps:tutorial_steps(*), safety_notes:tutorial_safety_notes(*), tutorial_contributors(*, profiles(id, name, role, created_at)), \
 tutorial_collaborator_invites(*, profiles:invited_profile_id(id, name, role, created_at)), \
 tutorial_recommendations!tutorial_id(position, recommended_id, tutorials!recommended_id(id, title, kind, difficulty, toy_photo_url, status, maturity)), \
 reviewer:reviewed_by(name), reviewed_for:reviewed_for_org_id(name)'
     )
     .eq('id', c.req.param('id'))
     .order('position', { referencedTable: 'tutorial_recommendations', ascending: true })
+    .order('position', { referencedTable: 'steps', ascending: true })
+    .order('position', { referencedTable: 'safety_notes', ascending: true })
     .single()
   if (error) return c.json({ error: error.message }, 404)
 
@@ -98,6 +104,8 @@ reviewer:reviewed_by(name), reviewed_for:reviewed_for_org_id(name)'
     const byId = new Map((targets ?? []).map((t) => [t.id, t]))
     for (const r of recs) if (r.tutorials === null) r.tutorials = byId.get(r.recommended_id) ?? null
   }
+
+  nameFormerContributors(data.tutorial_contributors)
 
   if (c.get('role') === 'admin' && data.tutorial_contributors?.length) {
     const admin = createAdminClient()
@@ -157,7 +165,7 @@ tutorials.post('/', async (c) => {
 /** Only these may be set through the generic edit endpoint. Unknown keys are
  *  dropped silently; the protected ones return 403 so a caller learns rather than
  *  wonders. */
-const EDITABLE = ['title', 'description', 'difficulty', 'kind', 'maturity', 'build_minutes', 'age_min', 'age_max', 'tutorial_pdf_url', 'photo_urls', 'status'] as const
+const EDITABLE = ['title', 'description', 'difficulty', 'kind', 'maturity', 'build_minutes', 'age_min', 'age_max', 'switch_target', 'switch_force', 'switch_hold', 'tutorial_pdf_url', 'photo_urls', 'photo_captions', 'prices_checked_on', 'layer_height_mm', 'infill_percent', 'material', 'print_minutes', 'toy_name', 'toy_brand', 'works_with', 'no_build_note', 'status'] as const
 const PROTECTED = ['reviewed_by', 'reviewed_for_org_id', 'reviewed_at', 'rejection_note']
 
 async function hasAcceptedContributorTerms(token: string, userId: string) {
@@ -168,6 +176,37 @@ async function hasAcceptedContributorTerms(token: string, userId: string) {
     .eq('agreement_type', 'contributor_terms')
     .limit(1)
   return (data ?? []).length > 0
+}
+
+/**
+ * The limits on the newer guide fields, as sentences (the CHECKs in 086+
+ * repeat them). Only fields present in the body are checked.
+ */
+export function fieldError(body: Record<string, unknown>): string | null {
+  const has = (k: string) => k in body && body[k] !== null
+  if (has('prices_checked_on') && !(typeof body.prices_checked_on === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.prices_checked_on) && !Number.isNaN(Date.parse(body.prices_checked_on)) && new Date(`${body.prices_checked_on}T00:00:00Z`).toISOString().slice(0, 10) === body.prices_checked_on)) {
+    return 'Prices checked must be a date'
+  }
+  if ('photo_captions' in body) {
+    const caps = body.photo_captions
+    if (!Array.isArray(caps) || caps.some((c) => c !== null && typeof c !== 'string')) return 'Captions must be a list'
+    if (caps.some((c) => typeof c === 'string' && c.trim().length > 60)) return 'A photo caption is over 60 characters'
+  }
+  const num = (k: string) => body[k] as number
+  if (has('layer_height_mm') && !(typeof body.layer_height_mm === 'number' && num('layer_height_mm') >= 0.05 && num('layer_height_mm') <= 1)) return 'Layer height must be between 0.05 and 1 mm'
+  if (has('infill_percent') && !(Number.isInteger(body.infill_percent) && num('infill_percent') >= 0 && num('infill_percent') <= 100)) return 'Infill must be a whole percent from 0 to 100'
+  if (has('material') && !(typeof body.material === 'string' && body.material.trim().length <= 40)) return 'Material is over 40 characters'
+  if (has('print_minutes') && !(Number.isInteger(body.print_minutes) && num('print_minutes') >= 1 && num('print_minutes') <= 6000)) return 'Print time must be 1 to 6000 minutes'
+  const LONG: [string, number, string][] = [
+    ['toy_name', 80, 'The toy’s name'],
+    ['toy_brand', 80, 'The toy’s maker'],
+    ['works_with', 300, 'Works with'],
+    ['no_build_note', 300, 'The note for people who would rather not build'],
+  ]
+  for (const [k, max, label] of LONG) {
+    if (has(k) && !(typeof body[k] === 'string' && (body[k] as string).trim().length <= max)) return `${label} is over ${max} characters`
+  }
+  return null
 }
 
 tutorials.patch('/:id', async (c) => {
@@ -200,7 +239,14 @@ tutorials.patch('/:id', async (c) => {
     return c.json({ error: 'updated_at is required' }, 400)
   }
 
+  const invalid = fieldError(body)
+  if (invalid) return c.json({ error: invalid }, 400)
+
   const update = pickEditable(body, EDITABLE)
+  // fieldError measured these trimmed; store what it measured so the CHECK agrees.
+  for (const k of ['material', 'toy_name', 'toy_brand', 'works_with', 'no_build_note']) {
+    if (typeof update[k] === 'string') update[k] = (update[k] as string).trim()
+  }
   // Not in EDITABLE because the client never chooses the timestamp: it affirms
   // the checklist (safety_declared: true) and the server stamps when.
   if (body.safety_declared === true) update.safety_declared_at = new Date().toISOString()
@@ -212,17 +258,19 @@ tutorials.patch('/:id', async (c) => {
   // pending is one event; a later save that happens to resend status 'pending'
   // (the editor sends the whole form) is not, and notifying on it would have
   // meant a leader's badge climbing every time an author fixed a typo.
-  // Read before the write, and only when photos are part of this save: the
-  // sweep below needs to know which URLs the row held a moment ago.
-  const photosBefore = Array.isArray(body.photo_urls)
-    ? (
-        await supabase
-          .from('tutorials')
-          .select('photo_urls')
-          .eq('id', c.req.param('id'))
-          .maybeSingle()
-      ).data?.photo_urls
-    : null
+  // Read before the write whenever photos or captions are part of this save:
+  // the sweep below needs the old URLs, and captions follow their photo (087).
+  const before =
+    Array.isArray(body.photo_urls) || 'photo_captions' in body
+      ? (
+          await supabase
+            .from('tutorials')
+            .select('photo_urls, photo_captions')
+            .eq('id', c.req.param('id'))
+            .maybeSingle()
+        ).data
+      : null
+  const photosBefore = Array.isArray(body.photo_urls) ? (before?.photo_urls ?? null) : null
 
   // A guide that has a photo keeps one — same transition rule as toys.ts, and
   // the same reason it is not a check constraint: a draft starts with none.
@@ -231,6 +279,16 @@ tutorials.patch('/:id', async (c) => {
       { error: 'Every guide needs at least one photo. Add another before removing this one.' },
       400
     )
+  }
+
+  if (Array.isArray(body.photo_urls) && !('photo_captions' in body)) {
+    update.photo_captions = realignCaptions(before?.photo_urls ?? [], before?.photo_captions ?? [], body.photo_urls as string[])
+  }
+  if ('photo_captions' in body) {
+    const photos = (Array.isArray(body.photo_urls) ? body.photo_urls : before?.photo_urls) ?? []
+    const caps = (body.photo_captions as (string | null)[]).map((c) => c?.trim() || null)
+    if (caps.length > photos.length) return c.json({ error: 'There are more captions than photos.' }, 400)
+    update.photo_captions = caps
   }
 
   const submitting = body.status === 'pending'
@@ -351,6 +409,107 @@ tutorials.post('/:id/thanks', async (c) => {
 
   const { data } = await admin.from('tutorials').select('thanks_count').eq('id', id).single()
   return c.json({ thanks_count: (data as { thanks_count: number } | null)?.thanks_count ?? 0 }, 201)
+})
+
+/**
+ * Mark this build done (091). Idempotent: a second tap is the same build.
+ * RLS's insert check is what refuses a guide that is not published.
+ */
+tutorials.post('/:id/build', async (c) => {
+  const { error } = await createUserClient(c.get('token'))
+    .from('tutorial_builds')
+    .upsert({ tutorial_id: c.req.param('id'), profile_id: c.get('userId') }, { onConflict: 'tutorial_id,profile_id', ignoreDuplicates: true })
+  // 42501: RLS refused (not published); 22P02: not a uuid; 23503: no such guide.
+  if (error && ['42501', '22P02', '23503'].includes(error.code)) return c.json({ error: 'Not found' }, 404)
+  if (error) return c.json({ error: error.message }, 500)
+  return c.json({ built: true }, 201)
+})
+
+tutorials.delete('/:id/build', async (c) => {
+  const { error } = await createUserClient(c.get('token'))
+    .from('tutorial_builds')
+    .delete()
+    .eq('tutorial_id', c.req.param('id'))
+    .eq('profile_id', c.get('userId'))
+  if (error) return c.json({ error: error.message }, 500)
+  return c.body(null, 204)
+})
+
+/**
+ * Steps (080): the whole list, replaced in order. The editor and the PDF import
+ * both hold the full list, so one PUT is simpler than per-step CRUD.
+ *
+ * New rows go in before the old ones are deleted: the table has no unique
+ * position, so the two coexist for a moment, and an insert that fails (RLS
+ * refusing a non-contributor, a bad value) leaves the old steps untouched.
+ */
+const MAX_STEPS = 60
+type StepInput = { title?: string | null; body: string; photo_url?: string | null }
+
+// A step's photo must live in this guide's own folder: the old URLs are later
+// fed to an admin-client delete, so a URL pointing at another guide's object
+// must never get into the table.
+const ownPhoto = (url: string, id: string) => url.includes(`/object/public/toy-photos/${id}/`)
+
+function stepsError(steps: unknown, id: string): string | null {
+  if (!Array.isArray(steps)) return 'steps must be an array'
+  if (steps.length > MAX_STEPS) return `A guide can have up to ${MAX_STEPS} steps`
+  for (const [i, s] of (steps as StepInput[]).entries()) {
+    const n = i + 1
+    if (!s || typeof s.body !== 'string' || !s.body.trim()) return `Step ${n} needs some instructions`
+    if (s.body.trim().length > 2000) return `Step ${n} is over 2000 characters`
+    if (s.title != null && (typeof s.title !== 'string' || s.title.trim().length > 120))
+      return `Step ${n}'s title is over 120 characters`
+    if (s.photo_url != null && (typeof s.photo_url !== 'string' || !ownPhoto(s.photo_url, id)))
+      return `Step ${n}'s photo was not uploaded to this guide`
+  }
+  return null
+}
+
+tutorials.put('/:id/steps', async (c) => {
+  const id = c.req.param('id')
+  const { steps } = await c.req.json<{ steps: unknown }>()
+  const invalid = stepsError(steps, id)
+  if (invalid) return c.json({ error: invalid }, 400)
+
+  const supabase = createUserClient(c.get('token'))
+  const { data: before, error: readError } = await supabase
+    .from('tutorial_steps')
+    .select('id, photo_url')
+    .eq('tutorial_id', id)
+  if (readError) return c.json({ error: readError.message }, 500)
+
+  const rows = (steps as StepInput[]).map((s, i) => ({
+    tutorial_id: id,
+    position: i + 1,
+    title: s.title?.trim() || null,
+    body: s.body.trim(),
+    photo_url: s.photo_url || null,
+  }))
+  let saved: unknown[] = []
+  if (rows.length) {
+    const { data, error } = await supabase.from('tutorial_steps').insert(rows).select()
+    // 42501 = RLS refused the insert: not a contributor to this guide.
+    if (error) return c.json({ error: error.message }, error.code === '42501' ? 403 : 400)
+    saved = data
+  } else {
+    // Clearing every step inserts nothing, so the contributor check RLS does
+    // on the insert has to be asked for here.
+    const { data: own } = await supabase.rpc('is_tutorial_contributor', { p_tutorial_id: id })
+    if (!own && c.get('role') !== 'admin') return c.json({ error: 'Not found' }, 404)
+  }
+
+  const oldIds = (before ?? []).map((s) => s.id)
+  if (oldIds.length) {
+    const { error } = await supabase.from('tutorial_steps').delete().in('id', oldIds)
+    if (error) return c.json({ error: error.message }, 500)
+  }
+  await removeDroppedPhotos(
+    'toy-photos',
+    (before ?? []).map((s) => s.photo_url).filter((u): u is string => !!u),
+    rows.map((r) => r.photo_url).filter((u): u is string => !!u)
+  )
+  return c.json((saved as { position: number }[]).sort((a, b) => a.position - b.position))
 })
 
 tutorials.delete('/:id', async (c) => {

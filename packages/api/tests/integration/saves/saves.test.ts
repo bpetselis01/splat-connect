@@ -102,13 +102,35 @@ describe('GET /api/saves/:slug', () => {
     expect(rows.map((r) => r.id)).not.toContain(draftId)
   })
 
-  // Chain: organisations was the example here until 2026-09-17, when it was
-  //        switched on — one line in SAVE_SLUGS and one in SOURCE, which is
-  //        exactly what the enum's own note promised. `parts` is the one left
-  //        in the enum with no source, so the property survives the move.
-  it('404s a slug that is in the enum but has no source', async () => {
+  it('serves saved parts, and only from approved guides', async () => {
+    const admin = adminClient()
+    const { data: g } = await admin
+      .from('tutorials')
+      .insert([
+        { title: 'Saved part guide', description: 'x', difficulty: 'easy', status: 'approved' },
+        { title: 'Saved part draft', description: 'x', difficulty: 'easy', status: 'draft' },
+      ])
+      .select('id, status')
+    const live = g!.find((t) => t.status === 'approved')!.id
+    const hidden = g!.find((t) => t.status === 'draft')!.id
+    const { data: f } = await admin
+      .from('stl_files')
+      .insert([
+        { tutorial_id: live, filename: 'kept.stl', file_url: `${live}/kept.stl` },
+        { tutorial_id: hidden, filename: 'hidden.stl', file_url: `${hidden}/hidden.stl` },
+      ])
+      .select('id, filename')
+    for (const file of f!) {
+      await app.request('/api/saves', {
+        method: 'POST',
+        headers: { ...as(owner).headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entity_type: 'printable_part', entity_id: file.id }),
+      })
+    }
     const res = await app.request('/api/saves/parts', as(owner))
-    expect(res.status).toBe(404)
+    expect(res.status).toBe(200)
+    expect(((await res.json()) as Array<{ filename: string }>).map((p) => p.filename)).toEqual(['kept.stl'])
+    await admin.from('tutorials').delete().in('id', [live, hidden])
   })
 
   it('serves a slug that was switched on', async () => {

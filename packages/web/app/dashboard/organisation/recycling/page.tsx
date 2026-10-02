@@ -3,8 +3,8 @@
  * drop-offs.
  *
  * The queue comes first, as the board has it: somebody is at the door. Then
- * what the machines take — 059 puts `recycling_materials` and
- * `recycling_note` on the organisation, and the board edits them here as well
+ * what the machines take — 059 and 113 put what the machines take on the
+ * organisation, and the board edits them here as well
  * as on the profile (see what-you-take.tsx).
  *
  * Credit is minted in the queue, by weighing, and never
@@ -55,7 +55,7 @@ export default async function OrgRecyclingPage() {
         aria-label="Recycling"
         className="mb-3.5 flex items-center gap-2 text-sm font-bold text-muted"
       >
-        <Link href="/get-involved/recycling" className="text-brand-deep hover:underline">
+        <Link href="/get-involved/recycling" className="text-brand-deep hover:underline max-sm:-my-3 max-sm:inline-flex max-sm:min-h-11 max-sm:items-center">
           Recycling
         </Link>
         <CaretRight weight="bold" className="h-3 w-3" aria-hidden="true" />
@@ -77,11 +77,7 @@ export default async function OrgRecyclingPage() {
           Contributors see this before they pack a box. Be specific — every unlisted item is one
           somebody has to pick out by hand.
         </p>
-        <WhatYouTake
-          orgId={orgId}
-          materials={org.recycling_materials ?? []}
-          note={org.recycling_note ?? null}
-        />
+        <WhatYouTake orgId={orgId} org={org} />
       </section>
     </div>
   )

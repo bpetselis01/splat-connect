@@ -5,14 +5,24 @@
 // no Save button here, and no local copy of the tutorial to fall out of sync
 // with the one the hub is reading.
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
+import { useRouter } from 'expo-router'
 import type { Difficulty, TutorialKind, TutorialMaturity } from '@splat-connect/types'
-import { BUILD_TIME_OPTIONS, KIND_LABEL, MATURITY_LABEL, formatBuildTime } from '@splat-connect/types'
+import {
+  BUILD_TIME_OPTIONS,
+  KIND_LABEL,
+  MATURITY_LABEL,
+  SWITCH_FORCE_LABEL,
+  SWITCH_HOLD_LABEL,
+  SWITCH_TARGET_LABEL,
+  formatBuildTime,
+} from '@splat-connect/types'
 import { useDraft } from '../../../lib/use-tutorial-draft'
 import { theme } from '../../../lib/theme'
 import { Screen } from '../../ui/Screen'
 import { TextField } from '../../ui/TextField'
+import { Button } from '../../ui/Button'
 import { Chip } from '../../ui/Chip'
-import { ErrorRow } from '../../auth-screen'
+import { ErrorRow } from '../../ui/ErrorRow'
 import { SectionFooter } from '../section-footer'
 
 const KIND_OPTIONS: { label: string; value: TutorialKind }[] = [
@@ -29,13 +39,24 @@ const MATURITY_OPTIONS = (Object.keys(MATURITY_LABEL) as TutorialMaturity[]).map
   value: m,
 }))
 
+// 080: what the switch asks of a child, in the fit line's own words. Tapping the
+// chosen chip clears it — every tag is optional.
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
+const SWITCH_ROWS = [
+  { field: 'switch_target', label: 'Target', labels: SWITCH_TARGET_LABEL },
+  { field: 'switch_force', label: 'Press', labels: SWITCH_FORCE_LABEL },
+  { field: 'switch_hold', label: 'Hold', labels: SWITCH_HOLD_LABEL },
+] as const
+
 export function DetailsSection() {
+  const router = useRouter()
   const { tutorial, save, saveError } = useDraft()
   if (!tutorial) return null
 
   return (
     <Screen>
       <ScrollView showsVerticalScrollIndicator={false} automaticallyAdjustKeyboardInsets>
+        <Text style={styles.lead}>What the toy is, who it suits, and who is backing the guide.</Text>
         <TextField
           label="Title"
           accessibilityLabel="Title"
@@ -125,6 +146,25 @@ export function DetailsSection() {
         </View>
         <Text style={styles.hint}>Only complete guides appear in the public library listing.</Text>
 
+        <Text style={styles.label}>What the switch asks</Text>
+        {SWITCH_ROWS.map((row) => (
+          <View key={row.field} style={styles.chipRow} accessibilityLabel={row.label}>
+            {Object.entries(row.labels).map(([value, label]) => (
+              <Chip
+                key={value}
+                label={cap(label)}
+                active={tutorial[row.field] === value}
+                onPress={() => save({ [row.field]: tutorial[row.field] === value ? null : value })}
+              />
+            ))}
+          </View>
+        ))}
+        <Text style={styles.hint}>
+          A parent whose child can manage all of these sees "Suits" their child on the guide.
+        </Text>
+
+        <Button label="Backing" variant="secondary" onPress={() => router.push(`/tutorials/${tutorial.id}/backing`)} />
+
         <ErrorRow message={saveError} />
       </ScrollView>
       <SectionFooter section="details" />
@@ -133,6 +173,14 @@ export function DetailsSection() {
 }
 
 const styles = StyleSheet.create({
+  // The board opens each section with what it is for.
+  lead: {
+    fontFamily: theme.fonts.regular,
+    fontSize: theme.type.label,
+    color: theme.colors.muted,
+    lineHeight: 20,
+    marginBottom: theme.spacing(3),
+  },
   label: {
     fontFamily: theme.fonts.bold,
     fontSize: theme.type.label,

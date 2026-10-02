@@ -28,12 +28,12 @@ describe('ContributorTermsDialog', () => {
     expect(onAccepted).not.toHaveBeenCalled()
   })
 
-  it('a click that lands on the dialog element itself (the backdrop) calls onClose only', () => {
+  it('a click that lands outside the dialog box (the backdrop) calls onClose only', () => {
     const onAccepted = vi.fn()
     const onClose = vi.fn()
     render(<ContributorTermsDialog open onClose={onClose} onAccepted={onAccepted} />)
 
-    fireEvent.click(screen.getByRole('dialog'))
+    fireEvent.click(screen.getByRole('dialog'), { clientX: -1, clientY: -1 })
 
     expect(onClose).toHaveBeenCalledTimes(1)
     expect(onAccepted).not.toHaveBeenCalled()

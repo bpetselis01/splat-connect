@@ -21,8 +21,7 @@ import { apiClient } from '@/lib/api-client'
 import { getCapabilities } from '@/lib/capabilities'
 import { OrgReviewBanner } from '@/components/org-review-banner'
 import { BoundaryLink } from '@/components/boundary-link'
-import { Inbox } from '@/components/icons'
-import { shortDate } from '@/lib/dates'
+import { shortDate } from '@splat-connect/types'
 import {
   BookOpen,
   Check,
@@ -93,7 +92,7 @@ export default async function OrganisationTabPage() {
       {waiting.length === 0 ? (
         <div className="flex flex-col items-center px-6 py-12 text-center">
           <span aria-hidden="true" className="empty-badge text-brand-dark">
-            <Inbox className="h-8 w-8" />
+            <Tray className="h-8 w-8" weight="bold" aria-hidden="true" />
           </span>
           <p className="mt-4 font-bold text-ink">Nothing waiting.</p>
           <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
@@ -120,7 +119,9 @@ export default async function OrganisationTabPage() {
                     <span aria-hidden="true" className="tint-tile" style={{ backgroundColor: tint }}>
                       <StateIcon weight="duotone" />
                     </span>
-                    <div className="min-w-0 flex-1">
+                    {/* On a phone the badge wraps below rather than
+                        squeezing the title into a one-word column. */}
+                    <div className="min-w-0 flex-1 max-sm:min-w-[12rem]">
                       <h2 className="row-card__title text-[19px]">{tutorial.title}</h2>
                       <p className="row-card__meta text-sm">
                         {caps.ledOrgs.length > 1 && (

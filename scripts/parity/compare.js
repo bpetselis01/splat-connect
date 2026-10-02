@@ -169,7 +169,8 @@ function compare(board, live, opts = {}) {
     if (Math.abs(b.weight - l.weight) >= 100)
       out.push(f('weight', 'low', `${where} weight`, b.weight, l.weight))
     if (b.colour !== l.colour) out.push(f('colour', 'low', `${where} colour`, b.colour, l.colour))
-    const isRecordTitle = opts.recordTitleH1 && b.level === 1
+    // recordTitleLevel: the mobile board titles a record with an h2.
+    const isRecordTitle = opts.recordTitleH1 && b.level === (opts.recordTitleLevel || 1)
     if (via === 'ordinal' && allowCopy && !isRecordTitle && b.text !== l.text)
       out.push(f('copy', 'medium', `h${b.level} wording`, b.text, l.text))
   }
@@ -263,19 +264,25 @@ function compare(board, live, opts = {}) {
   const SHARE = 0.25
   const share = (vals, pred) =>
     !vals || !vals.length ? 0 : vals.filter(pred).length / vals.length
-  for (const kind of ['card']) {
+  // Unless the board has only a card or two: then its card is one component
+  // (the challenges page's amber note), not a population, and the question is
+  // whether live draws it at all. A matching note among 24 challenge cards
+  // failed the quarter.
+  const few = (board.counts?.cards ?? Infinity) <= 2
+  const short = (s) => (few ? s === 0 : s < SHARE)
+  for (const kind of opts.shapes === false ? [] : ['card']) {
     const b = board.shapes[kind]
     const l = live.shapes[kind]
     if (!b || !l) continue
     const lv = l.values || { radius: [l.radius], shadow: [l.shadow], bg: [l.bg] }
     if (
       b.radius != null &&
-      share(lv.radius, (r) => Math.abs(r - b.radius) <= SIZE_TOLERANCE) < SHARE
+      short(share(lv.radius, (r) => Math.abs(r - b.radius) <= SIZE_TOLERANCE))
     )
       out.push(f('radius', 'medium', `${kind} radius`, b.radius + 'px', l.radius + 'px'))
-    if (b.shadow != null && share(lv.shadow, (x) => x === b.shadow) < SHARE)
+    if (b.shadow != null && short(share(lv.shadow, (x) => x === b.shadow)))
       out.push(f('shadow', 'low', `${kind} shadow`, b.shadow, l.shadow))
-    if (b.bg != null && share(lv.bg, (x) => x === b.bg) < SHARE)
+    if (b.bg != null && short(share(lv.bg, (x) => x === b.bg)))
       out.push(f('colour', 'low', `${kind} background`, b.bg, l.bg))
     // Card padding is deliberately NOT compared. The two sides put it in
     // different places — the board pads an inner wrapper and leaves the card
@@ -321,7 +328,9 @@ function compare(board, live, opts = {}) {
   const volumeSkew =
     skew(board.counts.cards, live.counts.cards) ||
     skew(board.counts.rows || 0, live.counts.rows || 0)
-  if (bh > 200 && lh > 200 && !volumeSkew) {
+  // opts.height false: a React Native web screen scrolls inside its own
+  // container, so its root is the viewport's height whatever it holds.
+  if (opts.height !== false && bh > 200 && lh > 200 && !volumeSkew) {
     const ratio = Math.min(bh, lh) / Math.max(bh, lh)
     if (ratio < HEIGHT_RATIO)
       out.push(f('missing-section', 'high', 'page height differs grossly', bh + 'px', lh + 'px'))
@@ -382,4 +391,32 @@ function compare(board, live, opts = {}) {
   return out
 }
 
-module.exports = { compare, matchHeadings }
+/**
+ * Move the findings a screen expects into `explained`. Each rule in a screen's
+ * `explained` list (screen-map.json) names a finding type, a substring of its
+ * `what`, and why it is not drift: `intended` (live has it on purpose),
+ * `fixture` (the board's sample data against ours), `harness` (a known limit
+ * of this measurement, named in the reason) or `pending` (a registry
+ * id in packages/types/src/pending.ts, still unbuilt). A rule that matches
+ * nothing is itself a finding, so an exemption cannot outlive its cause.
+ */
+function explain(findings, rules = []) {
+  const used = new Set()
+  const out = { findings: [], explained: [] }
+  for (const f of findings) {
+    const i = rules.findIndex((r) => r.type === f.type && f.what.includes(r.match))
+    if (i === -1) out.findings.push(f)
+    else {
+      used.add(i)
+      const { why, reason, pending } = rules[i]
+      out.explained.push({ ...f, why, reason, ...(pending && { pending }) })
+    }
+  }
+  rules.forEach((r, i) => {
+    if (!used.has(i))
+      out.findings.push({ type: 'stale-exemption', severity: 'medium', what: `${r.type} "${r.match}" no longer occurs`, board: null, live: null })
+  })
+  return out
+}
+
+module.exports = { compare, matchHeadings, explain }

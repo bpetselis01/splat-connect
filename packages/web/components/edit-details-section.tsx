@@ -9,21 +9,38 @@ import { PanelActions, useSaveOnLeave } from '@/components/panel-actions'
  */
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { BUILD_TIME_OPTIONS, KIND_LABEL, MATURITY_LABEL, SAFETY_CHECKLIST, formatBuildTime, type Tutorial, type Difficulty, type TutorialKind, type TutorialMaturity } from '@splat-connect/types'
+import { BUILD_TIME_OPTIONS, SWITCH_TARGET_LABEL, SWITCH_FORCE_LABEL, SWITCH_HOLD_LABEL, type PressForce, type Hold, KIND_LABEL, MATURITY_LABEL, SAFETY_CHECKLIST, formatBuildTime, type Tutorial, type Difficulty, type TutorialKind, type TutorialMaturity } from '@splat-connect/types'
 import { useToast } from '@/components/toast'
+
+type SwitchTarget = 'large' | 'small'
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
+/** 080's three tags, in the board's order, labelled in the fit line's own words. */
+const SWITCH_ROWS = [
+  { name: 'switch_target', legend: 'Target', labels: SWITCH_TARGET_LABEL },
+  { name: 'switch_force', legend: 'Press', labels: SWITCH_FORCE_LABEL },
+  { name: 'switch_hold', legend: 'Hold', labels: SWITCH_HOLD_LABEL },
+] as const
+type SwitchName = (typeof SWITCH_ROWS)[number]['name']
 
 export function EditDetailsSection({
   tutorial,
   onSave,
 }: {
   tutorial: Tutorial
-  onSave: (patch: { title: string; description: string | null; difficulty: Difficulty; build_minutes: number | null; age_min: number | null; age_max: number | null; kind: TutorialKind; maturity: TutorialMaturity; safety_declared?: true; updated_at: string }) => Promise<void>
+  onSave: (patch: { title: string; description: string | null; difficulty: Difficulty; build_minutes: number | null; age_min: number | null; age_max: number | null; kind: TutorialKind; maturity: TutorialMaturity; switch_target: SwitchTarget | null; switch_force: PressForce | null; switch_hold: Hold | null; safety_declared?: true; toy_name: string | null; toy_brand: string | null; works_with: string | null; no_build_note: string | null; layer_height_mm?: number | null; infill_percent?: number | null; material?: string | null; print_minutes?: number | null; updated_at: string }) => Promise<void>
 }) {
   const router = useRouter()
   const showToast = useToast()
   const [pending, setPending] = useState(false)
   const [conflict, setConflict] = useState(false)
   const [dirty, setDirty] = useState(false)
+  // Chips are buttons, which fire no form change, so the tags are state and
+  // ride into the FormData on hidden inputs. Tapping the chosen one clears it.
+  const [tags, setTags] = useState<Record<SwitchName, string>>({
+    switch_target: tutorial.switch_target ?? '',
+    switch_force: tutorial.switch_force ?? '',
+    switch_hold: tutorial.switch_hold ?? '',
+  })
 
   async function handleSubmit(formData: FormData) {
     setPending(true)
@@ -39,9 +56,24 @@ export function EditDetailsSection({
         age_max: formData.get('age_max') === '' ? null : Number(formData.get('age_max')),
         kind: formData.get('kind') as TutorialKind,
         maturity: formData.get('maturity') as TutorialMaturity,
+        switch_target: (formData.get('switch_target') as SwitchTarget) || null,
+        switch_force: (formData.get('switch_force') as PressForce) || null,
+        switch_hold: (formData.get('switch_hold') as Hold) || null,
         // Once declared, always declared — the timestamp on the row is the
         // record; the checkbox only exists until then.
         ...(formData.get('safety_declared') === 'on' ? { safety_declared: true as const } : {}),
+        toy_name: ((formData.get('toy_name') as string) ?? '').trim() || null,
+        toy_brand: ((formData.get('toy_brand') as string) ?? '').trim() || null,
+        works_with: ((formData.get('works_with') as string) ?? '').trim() || null,
+        no_build_note: ((formData.get('no_build_note') as string) ?? '').trim() || null,
+        ...(tutorial.kind === 'assistive_tech'
+          ? {
+              layer_height_mm: formData.get('layer_height_mm') === '' ? null : Number(formData.get('layer_height_mm')),
+              infill_percent: formData.get('infill_percent') === '' ? null : Number(formData.get('infill_percent')),
+              material: ((formData.get('material') as string) ?? '').trim() || null,
+              print_minutes: formData.get('print_minutes') === '' ? null : Number(formData.get('print_minutes')),
+            }
+          : {}),
         updated_at: tutorial.updated_at,
       })
       setDirty(false)
@@ -92,6 +124,29 @@ export function EditDetailsSection({
       <div>
         <label htmlFor="edit-description" className="field-label">Description</label>
         <textarea id="edit-description" name="description" defaultValue={tutorial.description ?? ''} rows={4} className="field" />
+      </div>
+      <fieldset>
+        <legend className="field-label">The toy you start with</legend>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <div>
+            <label htmlFor="edit-toy-name" className="text-sm">Toy</label>
+            <input id="edit-toy-name" name="toy_name" maxLength={80} defaultValue={tutorial.toy_name ?? ''} className="field" />
+          </div>
+          <div>
+            <label htmlFor="edit-toy-brand" className="text-sm">Made by (optional)</label>
+            <input id="edit-toy-brand" name="toy_brand" maxLength={80} defaultValue={tutorial.toy_brand ?? ''} placeholder="e.g. ZURU" className="field" />
+          </div>
+        </div>
+      </fieldset>
+      <div>
+        <label htmlFor="edit-works-with" className="field-label">Works with</label>
+        <input id="edit-works-with" name="works_with" maxLength={300} defaultValue={tutorial.works_with ?? ''} placeholder="Any 3.5mm switch — Jelly Bean, Big Red, or a printed lever switch." className="field" />
+        <p className="mt-1 text-xs leading-relaxed text-muted">The switches this build accepts. Shown as its own card in the guide sidebar — a parent checks it before they start.</p>
+      </div>
+      <div>
+        <label htmlFor="edit-no-build" className="field-label">If someone would rather not build it (optional)</label>
+        <input id="edit-no-build" name="no_build_note" maxLength={300} defaultValue={tutorial.no_build_note ?? ''} placeholder="e.g. Organisation 2 keeps printed mounts on the shelf if you would rather not print one." className="field" />
+        <p className="mt-1 text-xs leading-relaxed text-muted">Sits next to &ldquo;Get help with this build&rdquo; in the sidebar, before the link to the toy library. Leave blank and we just show the link.</p>
       </div>
       <div>
         <label htmlFor="edit-difficulty" className="field-label">Difficulty</label>
@@ -168,6 +223,50 @@ export function EditDetailsSection({
           wears its stage as a badge.
         </p>
       </div>
+      <fieldset>
+        {/* The board's "Suits Ollie — big button, light press, short hold":
+            what this guide's switch asks of a child, in the child profile's
+            own words so the two compare directly. All optional — an untagged
+            guide simply never claims to suit anyone. */}
+        <legend className="field-label">What the switch asks</legend>
+        <div className="flex flex-col gap-2.5">
+          {SWITCH_ROWS.map((row) => (
+            <div key={row.name} role="group" aria-label={row.legend} className="flex flex-wrap items-center gap-2">
+              <span className="w-14 text-sm font-bold text-muted">{row.legend}</span>
+              <input type="hidden" name={row.name} value={tags[row.name]} />
+              {Object.entries(row.labels).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  aria-pressed={tags[row.name] === value}
+                  onClick={() => {
+                    setTags((t) => ({ ...t, [row.name]: t[row.name] === value ? '' : value }))
+                    setDirty(true)
+                  }}
+                  className="chip"
+                >
+                  {cap(label)}
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+        <p className="mt-1 text-xs leading-relaxed text-muted">
+          A parent whose child can manage all of these sees &ldquo;Suits &lt;their child&gt;&rdquo;.
+        </p>
+      </fieldset>
+      {tutorial.kind === 'assistive_tech' && (
+        <fieldset>
+          <legend className="field-label">Print settings</legend>
+          <div className="grid grid-cols-2 gap-2">
+            <label className="text-sm">Layer height (mm)<input name="layer_height_mm" type="number" step="0.01" min={0.05} max={1} defaultValue={tutorial.layer_height_mm ?? ''} className="field" /></label>
+            <label className="text-sm">Infill (%)<input name="infill_percent" type="number" min={0} max={100} defaultValue={tutorial.infill_percent ?? ''} className="field" /></label>
+            <label className="text-sm">Material<input name="material" maxLength={40} defaultValue={tutorial.material ?? ''} placeholder="PETG" className="field" /></label>
+            <label className="text-sm">Print time (minutes)<input name="print_minutes" type="number" min={1} max={6000} defaultValue={tutorial.print_minutes ?? ''} className="field" /></label>
+          </div>
+          <p className="mt-1 text-xs leading-relaxed text-muted">What you sliced it at. A printer copies these; they never set their own.</p>
+        </fieldset>
+      )}
       <fieldset>
         <legend className="field-label">Safety declaration</legend>
         {tutorial.safety_declared_at ? (

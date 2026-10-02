@@ -10,6 +10,24 @@ const mockSignUp = jest.fn()
 const mockSignOut = jest.fn()
 const mockApiGet = jest.fn()
 const mockApiPost = jest.fn()
+const mockApiPatch = jest.fn()
+const mockVerifyOtp = jest.fn()
+const mockResend = jest.fn()
+const mockSignInWithOtp = jest.fn()
+const mockResetPasswordForEmail = jest.fn()
+const mockUpdateUser = jest.fn()
+const mockSignInWithIdToken = jest.fn()
+const mockAppleCredential = jest.fn()
+const mockGoogleIdToken = jest.fn()
+const mockGoogleSaved = jest.fn()
+const mockGoogleSignOut = jest.fn()
+
+jest.mock('../../../lib/social-auth', () => ({
+  appleCredential: () => mockAppleCredential(),
+  googleIdToken: () => mockGoogleIdToken(),
+  googleSavedIdToken: () => mockGoogleSaved(),
+  googleSignOut: () => mockGoogleSignOut(),
+}))
 
 jest.mock('../../../lib/supabase', () => ({
   supabase: {
@@ -19,6 +37,12 @@ jest.mock('../../../lib/supabase', () => ({
       signInWithPassword: (...args: unknown[]) => mockSignInWithPassword(...args),
       signUp: (...args: unknown[]) => mockSignUp(...args),
       signOut: (...args: unknown[]) => mockSignOut(...args),
+      verifyOtp: (...args: unknown[]) => mockVerifyOtp(...args),
+      resend: (...args: unknown[]) => mockResend(...args),
+      signInWithOtp: (...args: unknown[]) => mockSignInWithOtp(...args),
+      resetPasswordForEmail: (...args: unknown[]) => mockResetPasswordForEmail(...args),
+      updateUser: (...args: unknown[]) => mockUpdateUser(...args),
+      signInWithIdToken: (...args: unknown[]) => mockSignInWithIdToken(...args),
     },
   },
 }))
@@ -27,6 +51,7 @@ jest.mock('../../../lib/api-client', () => ({
   apiClient: {
     get: (...a: unknown[]) => mockApiGet(...a),
     post: (...a: unknown[]) => mockApiPost(...a),
+    patch: (...a: unknown[]) => mockApiPatch(...a),
   },
 }))
 
@@ -50,12 +75,22 @@ describe('useAuth', () => {
   })
 
   // Tests: signIn surfaces the Supabase error message on failure
-  it('signIn returns the error message on failed sign-in', async () => {
+  it('signIn maps bad credentials to the spec wording', async () => {
     mockSignInWithPassword.mockResolvedValue({ error: { message: 'Invalid login credentials' } })
     const { result } = renderHook(() => useAuth(), { wrapper })
     await waitFor(() => expect(result.current.loading).toBe(false))
-    const { error } = await act(() => result.current.signIn('a@b.com', 'wrong'))
-    expect(error).toBe('Invalid login credentials')
+    const { problem } = await act(() => result.current.signIn('a@b.com', 'wrong'))
+    expect(problem).toEqual({ kind: 'credentials', message: "That email and password don't match." })
+  })
+
+  it('signIn sends a fresh code when the email was never confirmed', async () => {
+    mockSignInWithPassword.mockResolvedValue({ error: { message: 'Email not confirmed', code: 'email_not_confirmed' } })
+    mockResend.mockResolvedValue({ error: null })
+    const { result } = renderHook(() => useAuth(), { wrapper })
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    const { problem } = await act(() => result.current.signIn('a@b.com', 'pw'))
+    expect(problem?.kind).toBe('unconfirmed')
+    expect(mockResend).toHaveBeenCalledWith({ type: 'signup', email: 'a@b.com' })
   })
 
   // Tests: signIn returns a null error on success
@@ -63,8 +98,8 @@ describe('useAuth', () => {
     mockSignInWithPassword.mockResolvedValue({ error: null })
     const { result } = renderHook(() => useAuth(), { wrapper })
     await waitFor(() => expect(result.current.loading).toBe(false))
-    const { error } = await act(() => result.current.signIn('a@b.com', 'correct'))
-    expect(error).toBeNull()
+    const { problem } = await act(() => result.current.signIn('a@b.com', 'correct'))
+    expect(problem).toBeNull()
   })
 
   // Tests: signOut delegates to Supabase
@@ -74,6 +109,7 @@ describe('useAuth', () => {
     await waitFor(() => expect(result.current.loading).toBe(false))
     await act(() => result.current.signOut())
     expect(mockSignOut).toHaveBeenCalled()
+    expect(mockGoogleSignOut).toHaveBeenCalled()
   })
 
   // Tests: signUp forwards name and the accepted contributor terms version in user
@@ -83,8 +119,8 @@ describe('useAuth', () => {
     mockSignUp.mockResolvedValue({ data: { user: { identities: [{ id: 'i1' }] } }, error: null })
     const { result } = renderHook(() => useAuth(), { wrapper })
     await waitFor(() => expect(result.current.loading).toBe(false))
-    const { error } = await act(() => result.current.signUp('p@b.com', 'pw', 'Pat'))
-    expect(error).toBeNull()
+    const { problem } = await act(() => result.current.signUp('p@b.com', 'pw', 'Pat'))
+    expect(problem).toBeNull()
     expect(mockSignUp).toHaveBeenCalledWith({
       email: 'p@b.com',
       password: 'pw',
@@ -100,8 +136,112 @@ describe('useAuth', () => {
     mockSignUp.mockResolvedValue({ data: { user: { identities: [] } }, error: null })
     const { result } = renderHook(() => useAuth(), { wrapper })
     await waitFor(() => expect(result.current.loading).toBe(false))
-    const { error } = await act(() => result.current.signUp('p@b.com', 'pw', 'Pat'))
-    expect(error).toBe('This email is already registered. Try signing in instead.')
+    const { problem } = await act(() => result.current.signUp('p@b.com', 'pw', 'Pat'))
+    expect(problem?.kind).toBe('registered')
+  })
+
+  it('sendSignInCode never creates an account', async () => {
+    mockSignInWithOtp.mockResolvedValue({ error: { message: 'Signups not allowed for otp', code: 'otp_disabled' } })
+    const { result } = renderHook(() => useAuth(), { wrapper })
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    const { problem } = await act(() => result.current.sendSignInCode('new@b.com'))
+    expect(mockSignInWithOtp).toHaveBeenCalledWith({ email: 'new@b.com', options: { shouldCreateUser: false } })
+    expect(problem?.kind).toBe('no-account')
+  })
+
+  it('verifyCode passes the code type through', async () => {
+    mockVerifyOtp.mockResolvedValue({ error: { message: 'Token has expired or is invalid' } })
+    const { result } = renderHook(() => useAuth(), { wrapper })
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    const { problem } = await act(() => result.current.verifyCode('a@b.com', '123456', 'email'))
+    expect(mockVerifyOtp).toHaveBeenCalledWith({ email: 'a@b.com', token: '123456', type: 'email' })
+    expect(problem?.kind).toBe('bad-code')
+  })
+
+  it('resetPassword verifies the recovery code, then sets the password', async () => {
+    mockVerifyOtp.mockResolvedValue({ error: null })
+    mockUpdateUser.mockResolvedValue({ error: null })
+    const { result } = renderHook(() => useAuth(), { wrapper })
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    const { problem } = await act(() => result.current.resetPassword('a@b.com', '123456', 'newpass'))
+    expect(problem).toBeNull()
+    expect(mockVerifyOtp).toHaveBeenCalledWith({ email: 'a@b.com', token: '123456', type: 'recovery' })
+    expect(mockUpdateUser).toHaveBeenCalledWith({ password: 'newpass' })
+  })
+
+  it('resetPassword sets no password when the code is wrong', async () => {
+    mockVerifyOtp.mockResolvedValue({ error: { code: 'otp_expired', message: 'x' } })
+    const { result } = renderHook(() => useAuth(), { wrapper })
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    const { problem } = await act(() => result.current.resetPassword('a@b.com', '000000', 'newpass'))
+    expect(problem?.kind).toBe('bad-code')
+    expect(mockUpdateUser).not.toHaveBeenCalled()
+  })
+
+  it('signInWithApple hands the identity token to Supabase and keeps the one-time name', async () => {
+    mockAppleCredential.mockResolvedValue({ ok: { idToken: 'apple-jwt', fullName: 'Sam Mitchell' } })
+    mockSignInWithIdToken.mockResolvedValue({ error: null })
+    const { result } = renderHook(() => useAuth(), { wrapper })
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    const res = await act(() => result.current.signInWithApple())
+    expect(res.problem).toBeNull()
+    expect(mockSignInWithIdToken).toHaveBeenCalledWith({ provider: 'apple', token: 'apple-jwt' })
+    expect(result.current.pendingName).toBe('Sam Mitchell')
+  })
+
+  it('a cancelled Google sheet is neither a problem nor a sign-in', async () => {
+    mockGoogleIdToken.mockResolvedValue({ cancelled: true })
+    const { result } = renderHook(() => useAuth(), { wrapper })
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    const res = await act(() => result.current.signInWithGoogle())
+    expect(res).toEqual({ problem: null, cancelled: true })
+    expect(mockSignInWithIdToken).not.toHaveBeenCalled()
+  })
+
+  it('a failed Google sign-in says so in words', async () => {
+    mockGoogleIdToken.mockResolvedValue({ failed: 'DEVELOPER_ERROR' })
+    const { result } = renderHook(() => useAuth(), { wrapper })
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    const res = await act(() => result.current.signInWithGoogle())
+    expect(res.problem?.message).toBe("Couldn't sign in with Google. Try again, or use your email.")
+  })
+
+  it('signs a saved Google account straight in (android-one-tap)', async () => {
+    mockGoogleSaved.mockResolvedValue('saved-jwt')
+    mockSignInWithIdToken.mockResolvedValue({ error: null })
+    const { result } = renderHook(() => useAuth(), { wrapper })
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    const res = await act(() => result.current.signInWithSavedGoogle())
+    expect(res).toEqual({ problem: null })
+    expect(mockSignInWithIdToken).toHaveBeenCalledWith({ provider: 'google', token: 'saved-jwt' })
+  })
+
+  it('does nothing when there is no saved Google account', async () => {
+    mockGoogleSaved.mockResolvedValue(null)
+    const { result } = renderHook(() => useAuth(), { wrapper })
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(await act(() => result.current.signInWithSavedGoogle())).toBeNull()
+    expect(mockSignInWithIdToken).not.toHaveBeenCalled()
+  })
+
+  it('setProfileName saves through the API and updates the profile', async () => {
+    mockApiPatch.mockResolvedValue({ id: 'u1', name: 'Sam' })
+    const { result } = renderHook(() => useAuth(), { wrapper })
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    const res = await act(() => result.current.setProfileName('Sam'))
+    expect(res.problem).toBeNull()
+    expect(mockApiPatch).toHaveBeenCalledWith('/api/contributors/me', { name: 'Sam' })
+    expect(result.current.profile?.name).toBe('Sam')
+  })
+
+  it('treats a failed agreements fetch as unknown, not unaccepted', async () => {
+    mockGetSession.mockResolvedValue({ data: { session: { access_token: 't', user: { id: 'u1' } } } })
+    mockApiGet.mockImplementation((path: string) =>
+      path === '/api/agreements/me' ? Promise.reject(new Error('offline')) : Promise.resolve({ id: 'u1', name: 'Ada' })
+    )
+    const { result } = renderHook(() => useAuth(), { wrapper })
+    await waitFor(() => expect(result.current.profile).not.toBeNull())
+    expect(result.current.hasContributorTerms).toBeNull()
   })
 
   // Tests: an active session triggers a profile fetch that carries the role

@@ -12,7 +12,7 @@ const mockFrom = vi.fn()
 const mockAdminFrom = vi.fn()
 function defaultAdminFrom(table: string) {
   if (table === 'profiles') {
-    return { select: () => ({ eq: () => ({ single: () => Promise.resolve({ data: { name: 'Jamie' }, error: null }) }) }) }
+    return { select: () => ({ eq: () => ({ maybeSingle: () => Promise.resolve({ data: { name: 'Jamie' }, error: null }) }) }) }
   }
   return { insert: () => Promise.resolve({ data: null, error: null }) }
 }
@@ -21,8 +21,11 @@ function defaultAdminFrom(table: string) {
 // Replaces the per-user Supabase client with one controlled fake so these tests
 // exercise validation and status codes only. RLS itself is covered by the
 // integration tests in tests/integration/toy-ideas/.
+// 108: loadIdea reads author_id through the admin client (authenticated can
+// no longer read it). Both clients' toy_ideas reads answer from mockFrom, so a
+// test describes the idea once.
 vi.mock('../../../src/supabase/client.js', () => ({
-  createAdminClient: () => ({ from: mockAdminFrom }),
+  createAdminClient: () => ({ from: (t: string) => (t === 'toy_ideas' ? mockFrom(t) : mockAdminFrom(t)) }),
   createUserClient: () => ({ from: mockFrom }),
 }))
 
@@ -68,14 +71,29 @@ describe('POST /ideas', () => {
   // How:   posts VALID minus one field at a time; checks 400
   // Chain: a half-filled idea reaches an admin with nothing to judge → reviewers
   //        reject blindly and authors never learn why
-  it.each(['title', 'summary', 'description', 'intended_use', 'primary_user'])(
-    'rejects a missing %s',
-    async (field) => {
-      const body: Record<string, unknown> = { ...VALID }
-      delete body[field]
-      expect((await post(body)).status).toBe(400)
-    }
-  )
+  it.each(['title', 'summary'])('rejects a missing %s', async (field) => {
+    const body: Record<string, unknown> = { ...VALID }
+    delete body[field]
+    expect((await post(body)).status).toBe(400)
+  })
+
+  // Tests: the three narrative fields after the summary are optional (103)
+  // How:   posts title + summary only; checks the insert carries nulls
+  // Chain: a required "Why it matters" kept families from sending half an idea
+  //        an admin could still judge
+  it('stores the optional fields as null when they are left out', async () => {
+    const single = vi.fn().mockResolvedValue({ data: { id: 'idea-1' }, error: null })
+    const insert = vi.fn().mockReturnValue({ select: () => ({ single }) })
+    mockFrom.mockReturnValue({ insert })
+    expect((await post({ title: 'T', summary: 'S' })).status).toBe(201)
+    expect(insert).toHaveBeenCalledWith(
+      expect.objectContaining({ description: null, intended_use: null, primary_user: null })
+    )
+  })
+
+  it('rejects an optional field that is not text', async () => {
+    expect((await post({ ...VALID, description: 42 })).status).toBe(400)
+  })
 
   // Tests: blank-but-present strings are rejected the same as missing ones
   // How:   posts a whitespace-only title
@@ -104,8 +122,22 @@ describe('POST /ideas', () => {
 
     expect(res.status).toBe(201)
     expect(insert).toHaveBeenCalledWith(
-      expect.objectContaining({ author_id: 'user-1', status: 'pending' })
+      expect.objectContaining({ author_id: 'user-1', status: 'pending', kind: 'challenge' })
     )
+  })
+
+  // Tests: kind is 'challenge' or 'question' (078) and nothing else
+  // How:   posts an unknown kind; then a question, and checks the insert payload
+  // Chain: a typo defaulting to 'challenge' would file a question as something
+  //        an admin can graduate into a guide
+  it('rejects an unknown kind and stores a question as one', async () => {
+    expect((await post({ ...VALID, kind: 'poll' })).status).toBe(400)
+
+    const single = vi.fn().mockResolvedValue({ data: { id: 'idea-1' }, error: null })
+    const insert = vi.fn().mockReturnValue({ select: () => ({ single }) })
+    mockFrom.mockReturnValue({ insert })
+    expect((await post({ ...VALID, kind: 'question' })).status).toBe(201)
+    expect(insert).toHaveBeenCalledWith(expect.objectContaining({ kind: 'question' }))
   })
 })
 
@@ -301,7 +333,7 @@ describe('DELETE /ideas/:id/participants/:profileId', () => {
         return {
           select: () => ({
             eq: (_col: string, id: string) => ({
-              single: () =>
+              maybeSingle: () =>
                 Promise.resolve({
                   data: { name: id === 'user-1' ? 'Alex the author' : 'Riley the removed' },
                   error: null,
@@ -643,9 +675,10 @@ describe('GET /ideas/joined', () => {
   //        themselves, not the participant rows the join goes through
   // How:   mocks the user-client chain and asserts .eq('profile_id', ...) is
   //        called with 'user-1', the id makeApp's auth stub puts on the
-  //        token, then checks the embedded toy_ideas row is unwrapped; also
-  //        asserts the admin mock is never touched, same as the messages
-  //        read test above
+  //        token, then checks the embedded toy_ideas row is unwrapped with its
+  //        joined_at and counts; the admin client reads only author_id (to
+  //        leave the author's replies out of posts) and the counts, never
+  //        the participant list itself
   // Chain: same integrity property as POST / ignoring a body-supplied
   //        author_id — this route reads no request field for whose list to
   //        return, only the authenticated identity, so a regression that let
@@ -654,30 +687,56 @@ describe('GET /ideas/joined', () => {
   //        RLS silently on a query that is supposed to be scoped by it.
   it("scopes to the token's own id and unwraps the joined idea", async () => {
     const idea = { id: 'idea-1', title: 'Big-button remote', status: 'challenge' }
-    const order = vi.fn().mockResolvedValue({ data: [{ toy_ideas: idea }], error: null })
+    const joined_at = '2026-07-12T02:00:00Z'
+    const order = vi.fn().mockResolvedValue({ data: [{ joined_at, toy_ideas: idea }], error: null })
     const is = vi.fn().mockReturnValue({ order })
     const eq = vi.fn().mockReturnValue({ is })
     const select = vi.fn().mockReturnValue({ eq })
-    mockFrom.mockReturnValue({ select })
+    // mockFrom answers both the user client's participant read and the admin
+    // client's toy_ideas read (see the vi.mock above).
+    mockFrom.mockImplementation((t: string) =>
+      t === 'toy_idea_participants'
+        ? { select }
+        : { select: () => ({ in: () => Promise.resolve({ data: [{ id: 'idea-1', author_id: 'author-1' }], error: null }) }) }
+    )
+    mockAdminFrom.mockImplementation((t: string) => {
+      if (t === 'toy_idea_participants') {
+        return { select: () => ({ in: () => ({ is: () => Promise.resolve({ data: [{ idea_id: 'idea-1' }], error: null }) }) }) }
+      }
+      if (t === 'toy_idea_messages') {
+        // The author's own reply is not a post; the maker's is.
+        const rows = [
+          { idea_id: 'idea-1', sender_id: 'author-1' },
+          { idea_id: 'idea-1', sender_id: 'maker-2' },
+        ]
+        return { select: () => ({ in: () => ({ eq: () => Promise.resolve({ data: rows, error: null }) }) }) }
+      }
+      return defaultAdminFrom(t)
+    })
 
     const res = await makeApp().request('/joined')
 
     expect(res.status).toBe(200)
-    expect(await res.json()).toEqual([idea])
+    const body = (await res.json()) as Record<string, unknown>[]
+    expect(body).toEqual([{ ...idea, photo_url: null, joined_at, maker_count: 1, answer_count: 1 }])
+    // 108: author_id is read to count, never returned to a maker.
+    expect(body[0]).not.toHaveProperty('author_id')
     expect(mockFrom).toHaveBeenCalledWith('toy_idea_participants')
     // Explicit columns, not toy_ideas!inner(*) — IMPORTANT 3 of the
     // whole-branch review: a participant is never entitled to review_note,
     // which the author's own private rejection reasoning.
     expect(select).toHaveBeenCalledWith(
-      'toy_ideas!inner(id, author_id, title, summary, description, intended_use, primary_user, contact_prefs, status, tutorial_id, created_at, updated_at)'
+      'joined_at, toy_ideas!inner(id, title, summary, description, intended_use, primary_user, contact_prefs, status, tutorial_id, kind, answer_message_id, answered_at, photo_path, created_at, updated_at)'
     )
     expect(select.mock.calls[0][0]).not.toContain('review_note')
+    expect(select.mock.calls[0][0]).not.toContain('author_id')
     expect(eq).toHaveBeenCalledWith('profile_id', 'user-1')
     // 042: a removed row must not keep showing the caller a challenge they
     // were excluded from — this is the only unit coverage of that filter.
     expect(is).toHaveBeenCalledWith('removed_at', null)
     expect(order).toHaveBeenCalledWith('created_at', { foreignTable: 'toy_ideas', ascending: false })
-    expect(mockAdminFrom).not.toHaveBeenCalled()
+    // The admin client counts; it never reads profiles or writes anything here.
+    expect(mockAdminFrom.mock.calls.map((c) => c[0]).sort()).toEqual(['toy_idea_messages', 'toy_idea_participants'])
   })
 
   // Tests: a Postgres error surfaces as 500 rather than a swallowed empty list

@@ -11,18 +11,23 @@ appId: com.splatconnect.mobile
 # would wipe the SecureStore entry this suite exists to test.
 - clearState
 - runFlow: ../subflows/launch.yaml
+# A signed-out launch opens on Welcome; its second door is Sign in.
 - assertVisible:
-    id: "auth-tab-signin"
-# Addressed by testID rather than text: "Sign in" is the card heading, a switch
-# tab AND the submit button, and TextField renders its label as a sibling <Text>
-# carrying the same string as the input's own accessibilityLabel.
+    id: "welcome-sign-in"
+- tapOn:
+    id: "welcome-sign-in"
+# Addressed by testID rather than text: TextField renders its label as a
+# sibling <Text> carrying the same string as the input's accessibilityLabel.
 - tapOn:
     id: "email-input"
 - inputText: ${DEVICE_EMAIL}
+- tapOn: "Welcome back"  # the keyboard covers the password field
 - tapOn:
     id: "password-input"
 - inputText: ${DEVICE_PASSWORD}
-- hideKeyboard
+# hideKeyboard fails on the iOS 26 simulator; a tap outside a field
+# dismisses it on device and simulator alike (ScrollView default).
+- tapOn: "Welcome back"
 - tapOn:
     id: "auth-submit"
 
@@ -35,14 +40,14 @@ appId: com.splatconnect.mobile
 - tapOn:
     text: "Sign Out"
 - assertVisible:
-    id: "auth-tab-signin"
+    id: "welcome-sign-in"
 
 # The point of the flow: the cleared state must be what persisted, not just what
 # is on screen. secureStoreAdapter.removeItem has to have actually deleted the key.
 - stopApp
 - runFlow: ../subflows/launch.yaml
-# No tab to tap first: a signed-out launch lands on the sign-in screen.
+# No tab to tap first: a signed-out launch lands on Welcome.
 - assertVisible:
-    id: "auth-tab-signin"
+    id: "welcome-sign-in"
 - assertNotVisible:
     text: "Child profile"

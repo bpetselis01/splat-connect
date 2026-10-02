@@ -38,14 +38,32 @@ describe('GET /api/public/organizations', () => {
 
     expect(found).toBeDefined()
     expect(Object.keys(found!).sort()).toEqual([
+      // 116. Counts only, read through the admin client.
+      'backed_count',
       'description',
+      'has_printer',
       'id',
+      // 099. Whole km, null without a signed-in `near`; never the postcode.
+      'km',
+      // 116. 081's anon grants.
+      'logo_url',
       'name',
+      // 113. What the recycler takes; public by design.
+      'recycling_door',
+      'recycling_forms',
+      'recycling_gives',
+      'recycling_hours',
+      'recycling_machines',
       'recycling_materials',
+      'recycling_max_kg',
+      'recycling_min_kg',
       'recycling_note',
+      'recycling_turnaround',
       'state',
       'status',
       'suburb',
+      'toy_count',
+      'verified_at',
     ])
   })
 

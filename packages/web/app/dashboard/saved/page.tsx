@@ -2,9 +2,8 @@
  * The saved hub: one card per type you can save, with how many you have kept.
  *
  * The board draws one group of four. It used to be "Ready now" and "Coming
- * soon"; organisations went live on 2026-09-17 and printable parts is still
- * enum-only, so the second group had shrunk to one card the board does not
- * draw. /dashboard/saved/parts still exists for anything that links there.
+ * soon"; organisations went live on 2026-09-17 and printable parts on
+ * 2026-10-01, so the second group is gone and parts is a fifth card.
  *
  * Related files:
  * - app/dashboard/saved/[type]/page.tsx: the lists these cards lead to
@@ -12,7 +11,7 @@
  * - packages/types/src/index.ts: SAVE_SLUGS, which decides what is live
  */
 import type { Route } from 'next'
-import { Buildings, ClipboardText, FileText, Package } from '@phosphor-icons/react/dist/ssr'
+import { Buildings, ClipboardText, Cube, FileText, Package } from '@phosphor-icons/react/dist/ssr'
 import { requireCapabilities } from '@/lib/require-capabilities'
 import { getSavedIds } from '@/lib/saves'
 import { BoundaryLink } from '@/components/boundary-link'
@@ -27,6 +26,7 @@ const CARDS: Array<{ slug: SaveSlug; label: string; blurb: string; tint: string;
   { slug: 'toys', label: 'Toys', blurb: 'Toys you are considering asking for.', tint: 'var(--tmint)', Icon: Package },
   { slug: 'challenges', label: 'Design challenges', blurb: 'Challenges you want to come back to.', tint: 'var(--tcoral)', Icon: ClipboardText },
   { slug: 'organisations', label: 'Organisations', blurb: 'Groups whose work you want to follow.', tint: 'var(--tamber)', Icon: Buildings },
+  { slug: 'parts', label: 'Printable parts', blurb: 'Printable parts you want to make or ask someone to print for you.', tint: 'var(--tviolet)', Icon: Cube },
 ]
 
 export default async function SavedHub() {

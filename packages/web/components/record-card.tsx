@@ -70,7 +70,9 @@ export function RecordCard({
       className="flex flex-col gap-3.5 rounded-[var(--radius-card)] border border-line bg-surface p-5"
       style={{ boxShadow: 'var(--shadow-e2), var(--shadow-hi)' }}
     >
-      <div className="flex items-start gap-3.5">
+      {/* On a phone the pill wraps below rather than squeezing the title
+          into a one-word column. */}
+      <div className="flex items-start gap-3.5 max-sm:flex-wrap">
         <span
           aria-hidden="true"
           className="grid h-12 w-12 shrink-0 place-items-center rounded-[var(--radius-inset)]"
@@ -78,7 +80,7 @@ export function RecordCard({
         >
           {icon}
         </span>
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 max-sm:min-w-[12rem]">
           <h3 className="font-display text-xl font-extrabold tracking-[-0.01em] text-ink">{title}</h3>
           <p className="mt-[3px] truncate text-sm font-semibold text-muted">{meta}</p>
           {sub ? <p className="mt-[3px] text-[13px] text-muted">{sub}</p> : null}

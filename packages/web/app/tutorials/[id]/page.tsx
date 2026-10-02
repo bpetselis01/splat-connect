@@ -4,10 +4,12 @@ import { CaretRight } from '@phosphor-icons/react/dist/ssr'
 import { ShareButton } from '@/components/share-button'
 import { SaveButton } from '@/components/save-button'
 import { ThanksButton } from '@/components/thanks-button'
+import { MarkBuildDoneButton } from '@/components/mark-build-done-button'
 import { apiClient } from '@/lib/api-client'
 import { getSavedIds } from '@/lib/saves'
+import { getMyChildren } from '@/lib/my-children'
 import { TutorialView } from '@/components/tutorial-view'
-import type { TutorialWithDetails, TutorialOrg } from '@splat-connect/types'
+import { fitLine, type GuideNote, type TutorialWithDetails, type TutorialOrg } from '@splat-connect/types'
 
 export default async function TutorialPage({
   params,
@@ -26,6 +28,11 @@ export default async function TutorialPage({
     reviewed_for?: { name: string } | null
   }
 
+  // 093. Public, like the guide; a failed read shows no revisions rather than no guide.
+  const notes = await fetch(`${process.env.API_URL}/api/public/tutorials/${id}/notes`, { cache: 'no-store' })
+    .then((r) => (r.ok ? (r.json() as Promise<GuideNote[]>) : []))
+    .catch(() => [] as GuideNote[])
+
   const saved = await getSavedIds()
   // Only asked when signed in; a signed-out visitor has thanked nothing. A
   // failed read degrades to "not yet" — the POST's 409 corrects it on tap.
@@ -37,19 +44,24 @@ export default async function TutorialPage({
           .catch(() => ({ thanked: false, own: false }))
 
   const signedIn = saved !== null
+  const fit = signedIn ? fitLine(tutorial, await getMyChildren()) : null
 
   return (
     <>
       {/* The board's trail. The layout's shared Breadcrumb draws nothing on a
           guide (it is not inside a nav section), so the page carries its own. */}
       <nav aria-label="Breadcrumb" className="mb-5 flex items-center gap-2 text-sm font-bold text-muted">
-        <Link href="/library">Guides</Link>
+        <Link href="/library" className="max-sm:inline-flex max-sm:min-h-10 max-sm:items-center">
+          Guides
+        </Link>
         <CaretRight aria-hidden="true" />
         <span aria-current="page" className="text-ink">{tutorial.title}</span>
       </nav>
       <TutorialView
         tutorial={tutorial}
         signedIn={signedIn}
+        fit={fit}
+        notes={notes}
         actions={
           /* The board gives a guest Share alone: saving and thanking both need
              an account, and the rail already says so under the button. */
@@ -70,6 +82,7 @@ export default async function TutorialPage({
                 own={thanks.own}
                 signedIn
               />
+              <MarkBuildDoneButton tutorialId={tutorial.id} />
             </>
           ) : (
             <ShareButton title={tutorial.title} />

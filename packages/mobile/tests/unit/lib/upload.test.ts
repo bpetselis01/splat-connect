@@ -25,7 +25,14 @@ const RealFormData = globalThis.FormData
 const fetchMock = jest.fn()
 globalThis.fetch = fetchMock as unknown as typeof fetch
 
-const { uploadFile } = require('../../../lib/upload')
+const mockPermission = jest.fn()
+const mockLaunch = jest.fn()
+jest.mock('expo-image-picker', () => ({
+  requestMediaLibraryPermissionsAsync: (...a: unknown[]) => mockPermission(...a),
+  launchImageLibraryAsync: (...a: unknown[]) => mockLaunch(...a),
+}))
+
+const { uploadFile, pickAndUploadPhoto } = require('../../../lib/upload')
 
 function okResponse(body: unknown) {
   return { ok: true, json: () => Promise.resolve(body) }
@@ -172,5 +179,59 @@ describe('uploadFile — web', () => {
 
     const opts = fetchMock.mock.calls[1][1]
     expect(opts.headers.Authorization).toBeUndefined()
+  })
+})
+
+describe('pickAndUploadPhoto', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    jest.replaceProperty(Platform, 'OS', 'ios')
+    ;(globalThis as unknown as { FormData: unknown }).FormData = FakeFormData
+    FakeFormData.instances = []
+    process.env.EXPO_PUBLIC_API_URL = 'http://localhost:3101'
+    mockGetToken.mockResolvedValue('test-token')
+    mockPermission.mockResolvedValue({ granted: true })
+  })
+
+  it('uploads the picked library photo and answers with the route’s result', async () => {
+    mockLaunch.mockResolvedValue({ canceled: false, assets: [{ uri: 'file:///toy.jpg', fileName: 'toy.jpg', mimeType: 'image/png' }] })
+    fetchMock.mockResolvedValue(okResponse({ url: 'https://x/t1/a.png' }))
+
+    const result = await pickAndUploadPhoto('/api/toy-transactions/t1/working-shot', 't1', null)
+
+    expect(mockLaunch).toHaveBeenCalledWith({ quality: 0.7, mediaTypes: ['images'] })
+    expect(fetchMock.mock.calls[0][0]).toBe('http://localhost:3101/api/toy-transactions/t1/working-shot')
+    expect(FakeFormData.instances[0]!.parts).toEqual([['file', { uri: 'file:///toy.jpg', name: 'toy.jpg', type: 'image/png' }]])
+    expect(result).toEqual({ url: 'https://x/t1/a.png' })
+  })
+
+  it('sends the id field the route reads, and defaults the name and type', async () => {
+    mockLaunch.mockResolvedValue({ canceled: false, assets: [{ uri: 'file:///p' }] })
+    fetchMock.mockResolvedValue(okResponse({ path: 'g/notes/a.jpg', url: 'u' }))
+
+    await pickAndUploadPhoto('/api/upload/note-photo', 'g')
+
+    expect(FakeFormData.instances[0]!.parts).toEqual([
+      ['file', { uri: 'file:///p', name: 'photo.jpg', type: 'image/jpeg' }],
+      ['tutorialId', 'g'],
+    ])
+  })
+
+  it('answers null when the picker is cancelled, and uploads nothing', async () => {
+    mockLaunch.mockResolvedValue({ canceled: true, assets: null })
+    expect(await pickAndUploadPhoto('/api/toy-transactions/t1/working-shot', 't1', null)).toBeNull()
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('throws the sentence to show when library access is refused', async () => {
+    mockPermission.mockResolvedValue({ granted: false })
+    await expect(pickAndUploadPhoto('/api/toy-transactions/t1/working-shot', 't1', null)).rejects.toThrow('Photo library access is needed to choose a photo.')
+    expect(mockLaunch).not.toHaveBeenCalled()
+  })
+
+  it('throws the sentence to show when the upload fails', async () => {
+    mockLaunch.mockResolvedValue({ canceled: false, assets: [{ uri: 'file:///p' }] })
+    fetchMock.mockResolvedValue({ ok: false, status: 500, json: () => Promise.resolve({ error: 'boom' }) })
+    await expect(pickAndUploadPhoto('/api/toy-transactions/t1/working-shot', 't1', null)).rejects.toThrow('Could not upload the photo. Please try again.')
   })
 })

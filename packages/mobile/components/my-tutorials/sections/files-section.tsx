@@ -12,17 +12,18 @@ import * as DocumentPicker from 'expo-document-picker'
 import { uploadFile } from '../../../lib/upload'
 import { supabase } from '../../../lib/supabase'
 import { useDraft } from '../../../lib/use-tutorial-draft'
-import { MAX_PHOTOS } from '@splat-connect/types'
+import { MAX_PHOTOS, realignCaptions } from '@splat-connect/types'
 import { theme } from '../../../lib/theme'
 import { Screen } from '../../ui/Screen'
 import { Button } from '../../ui/Button'
-import { ErrorRow } from '../../auth-screen'
+import { TextField } from '../../ui/TextField'
+import { ErrorRow } from '../../ui/ErrorRow'
 import { SectionFooter } from '../section-footer'
 import { PickerNote } from './picker-note'
 
 export function FilesSection() {
   const router = useRouter()
-  const { tutorial, saveNow, saveError } = useDraft()
+  const { tutorial, save, saveNow, saveError } = useDraft()
   const [photoUploading, setPhotoUploading] = useState(false)
   const [pdfUploading, setPdfUploading] = useState(false)
   const [broken, setBroken] = useState<Set<string>>(new Set())
@@ -35,6 +36,7 @@ export function FilesSection() {
   // Captured for the same reason the toy editor captures its own: TS does not
   // carry the `tutorial !== null` narrowing across a nested function boundary.
   const currentPhotoUrls = tutorial.photo_urls
+  const captions = tutorial.photo_captions ?? []
 
   async function pickPhoto(source: 'camera' | 'library') {
     if (photoUploading) return
@@ -76,7 +78,8 @@ export function FilesSection() {
         })
         urls.push(url)
       }
-      await saveNow({ photo_urls: [...currentPhotoUrls, ...urls] })
+      const next = [...currentPhotoUrls, ...urls]
+      await saveNow({ photo_urls: next, photo_captions: realignCaptions(currentPhotoUrls, captions, next) })
     } catch (err) {
       console.error('[FilesSection] photo upload failed:', err)
       setLocalError('Could not upload the photo. Please try again.')
@@ -92,7 +95,8 @@ export function FilesSection() {
     setLocalError(null)
     setPhotoUploading(true)
     try {
-      await saveNow({ photo_urls: currentPhotoUrls.filter((u) => u !== url) })
+      const next = currentPhotoUrls.filter((u) => u !== url)
+      await saveNow({ photo_urls: next, photo_captions: realignCaptions(currentPhotoUrls, captions, next) })
     } catch (err) {
       console.error('[FilesSection] photo remove failed:', err)
       setLocalError('Could not remove that photo. Please try again.')
@@ -106,7 +110,8 @@ export function FilesSection() {
     setLocalError(null)
     setPhotoUploading(true)
     try {
-      await saveNow({ photo_urls: [url, ...currentPhotoUrls.filter((u) => u !== url)] })
+      const next = [url, ...currentPhotoUrls.filter((u) => u !== url)]
+      await saveNow({ photo_urls: next, photo_captions: realignCaptions(currentPhotoUrls, captions, next) })
     } catch (err) {
       console.error('[FilesSection] cover change failed:', err)
       setLocalError('Could not change the cover. Please try again.')
@@ -221,6 +226,16 @@ export function FilesSection() {
                 >
                   <Ionicons name="close" size={15} color={theme.colors.ink} />
                 </Pressable>
+                <TextField
+                  accessibilityLabel={`Caption for photo ${i + 1}`}
+                  placeholder="Caption (optional)"
+                  maxLength={60}
+                  value={captions[i] ?? ''}
+                  onChangeText={(text) => {
+                    const next = currentPhotoUrls.map((_, k) => (k === i ? text || null : (captions[k] ?? null)))
+                    save({ photo_captions: realignCaptions(currentPhotoUrls, next, currentPhotoUrls) })
+                  }}
+                />
               </View>
             ))}
           </View>
@@ -279,10 +294,13 @@ export function FilesSection() {
 
 const styles = StyleSheet.create({
   body: { flex: 1 },
+  // The board's uppercase group label, as list-kit's ListSection draws it.
   heading: {
-    fontFamily: theme.fonts.bold,
-    fontSize: theme.type.label,
-    color: theme.colors.text,
+    fontFamily: theme.fonts.black,
+    fontSize: 12,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: theme.colors.muted,
     marginBottom: theme.spacing(2),
   },
   photoBroken: {

@@ -10,6 +10,8 @@ jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 const mockGet = jest.fn()
 jest.mock('../../../../lib/api-client', () => ({ apiClient: { get: (...a: unknown[]) => mockGet(...a) } }))
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }))
+let mockUser: string | null = null
+jest.mock('../../../../lib/auth-context', () => ({ useAuth: () => ({ session: mockUser ? { user: { id: mockUser } } : null }) }))
 
 const tutorial = (over: object) => ({
   id: 't1', title: 'Build a Robot Arm', description: null, difficulty: 'easy', kind: 'toy_adaptation',
@@ -26,9 +28,12 @@ const toy = (over: object) => ({
 const PERSON = {
   id: 'c1',
   name: 'Sam Taylor',
-  tutorials: [tutorial({ id: 't1', title: 'Build a Robot Arm' })],
+  tutorials: [tutorial({ id: 't1', title: 'Build a Robot Arm', build_minutes: 20, view_count: 2100 })],
   toysShared: [],
-  toysDelivered: [],
+  toysDelivered: [toy({ id: 'd1' }), toy({ id: 'd2' })],
+  bio: 'I run a switch clinic on Thursdays.',
+  thanks: 41,
+  created_at: '2025-03-10T00:00:00Z',
 }
 
 const ORG = {
@@ -44,6 +49,19 @@ const ORG = {
 describe('ShowcaseScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    mockUser = null
+  })
+
+  it('shows the next badge on your own profile only', async () => {
+    mockGet.mockResolvedValue(PERSON)
+    mockUser = 'c1'
+    const own = render(<ShowcaseScreen kind="person" id="c1" />)
+    expect(await screen.findByText('9 more guides for 10 guides')).toBeTruthy()
+    own.unmount()
+    mockUser = 'someone-else'
+    render(<ShowcaseScreen kind="person" id="c1" />)
+    await screen.findByText('Sam Taylor')
+    expect(screen.queryByText('9 more guides for 10 guides')).toBeNull()
   })
 
   it('renders a contributor profile with their guides and no toys section', async () => {
@@ -51,14 +69,17 @@ describe('ShowcaseScreen', () => {
     render(<ShowcaseScreen kind="person" id="c1" />)
     expect(await screen.findByText('Sam Taylor')).toBeTruthy()
     expect(mockGet).toHaveBeenCalledWith('/api/public/contributors/c1')
-    expect(screen.getByText('Guides by Sam')).toBeTruthy()
+    expect(screen.getByText('Published guides')).toBeTruthy()
     expect(screen.getByText('Build a Robot Arm')).toBeTruthy()
-    expect(screen.getByText('1 guides · 0 toys shared')).toBeTruthy()
+    expect(screen.getByText('Joined March 2025')).toBeTruthy()
+    expect(screen.getByText('1 guide')).toBeTruthy()
+    expect(screen.getByText('2 toys delivered')).toBeTruthy()
+    expect(screen.getByText('Thanked 41 times')).toBeTruthy()
+    expect(screen.getByText('I run a switch clinic on Thursdays.')).toBeTruthy()
+    expect(screen.getByText('Easy · 20 min · 2.1k views')).toBeTruthy()
     expect(screen.queryByText('Toys on their shelf')).toBeNull()
-    // Badges are hidden from the accessibility tree, same as library-screen's
-    // TutorialRow — the row's hint carries difficulty and kind instead.
-    expect(screen.queryByText('Easy')).toBeNull()
-    expect(screen.getAllByText('Easy', { includeHiddenElements: true }).length).toBe(1)
+    // A person's rows carry the board's meta line in place of the badges.
+    expect(screen.queryByText('Easy', { includeHiddenElements: true })).toBeNull()
     expect(screen.getByLabelText('Build a Robot Arm').props.accessibilityHint).toContain('Toy adaptation')
   })
 
@@ -73,11 +94,22 @@ describe('ShowcaseScreen', () => {
     expect(screen.getByText('Toys on their shelf')).toBeTruthy()
     expect(screen.getByText('Bubble machine')).toBeTruthy()
     expect(screen.getByText('3 available')).toBeTruthy()
+    // Badges are hidden from the accessibility tree, same as library-screen's
+    // TutorialRow — the row's hint carries difficulty and kind instead.
+    expect(screen.queryByText('Easy')).toBeNull()
+    expect(screen.getAllByText('Easy', { includeHiddenElements: true }).length).toBe(1)
   })
 
   it('shows an error message when apiClient.get rejects', async () => {
     mockGet.mockRejectedValue(new Error('API GET failed with status 500'))
     render(<ShowcaseScreen kind="person" id="c1" />)
     expect(await screen.findByText("Couldn't load this profile.")).toBeTruthy()
+  })
+
+  it('says nothing about a bio or a join date the profile does not have', async () => {
+    mockGet.mockResolvedValue({ ...PERSON, bio: null, created_at: undefined, thanks: 1 })
+    render(<ShowcaseScreen kind="person" id="c1" />)
+    expect(await screen.findByText('Thanked 1 time')).toBeTruthy()
+    expect(screen.queryByText(/^Joined/)).toBeNull()
   })
 })

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { TutorialView } from '@/components/tutorial-view'
 import type { TutorialWithDetails, Recommendation } from '@splat-connect/types'
 
@@ -60,6 +60,23 @@ describe('TutorialView', () => {
     expect(screen.getByText('bracket.stl')).toBeInTheDocument()
   })
 
+  // 080: numbered steps first, and the fit line above the tabs only when given.
+  it('numbers the steps in a Steps tab and draws the fit callout only when there is one', () => {
+    const steps = [
+      { id: 'a', tutorial_id: 't1', position: 1, title: 'Open it', body: 'Unscrew the lid.', photo_url: null },
+      { id: 'b', tutorial_id: 't1', position: 2, title: null, body: 'Fit the interrupter.', photo_url: null },
+    ]
+    const { unmount } = render(
+      <TutorialView tutorial={tutorial({ steps })} signedIn fit="Suits Ollie — big button, light press, short hold" />
+    )
+    expect(screen.getByText('Open it')).toBeInTheDocument()
+    expect(screen.getByText('Fit the interrupter.')).toBeInTheDocument()
+    expect(screen.getByTestId('fit-callout')).toHaveTextContent('Suits Ollie — big button, light press, short hold')
+    unmount()
+    render(<TutorialView tutorial={tutorial({ steps })} signedIn />)
+    expect(screen.queryByTestId('fit-callout')).toBeNull()
+  })
+
   it('names the kind in the header', () => {
     render(<TutorialView tutorial={tutorial({ kind: 'assistive_tech' })} signedIn={false} />)
     expect(screen.getByText('Assistive tech')).toBeInTheDocument()
@@ -116,6 +133,17 @@ describe('TutorialView', () => {
     render(<TutorialView tutorial={tutorial({ parts })} signedIn={false} />)
     expect(screen.getByRole('link', { name: 'Buy Switch from Jaycar' })).toHaveAttribute('href', 'https://shop.test/switch')
   })
+
+  it('shows each tool’s note and how to get it', () => {
+    render(
+      <TutorialView
+        signedIn
+        tutorial={tutorial({ tools: [{ id: 'x', tutorial_id: 't1', name: 'Hot glue gun', is_optional: false, buy_links: [], note: 'Anchoring the jack', get_by: 'borrow' }] })}
+      />
+    )
+    expect(screen.getByText('Anchoring the jack')).toBeInTheDocument()
+    expect(screen.getByText('Borrow')).toBeInTheDocument()
+  })
 })
 
 describe('TutorialView tabs', () => {
@@ -142,5 +170,48 @@ describe('TutorialView tabs', () => {
     render(<TutorialView tutorial={tutorial({ parts })} signedIn={false} />)
     expect(screen.queryByRole('tablist')).toBeNull()
     expect(screen.getByText('Switch')).toBeVisible()
+  })
+})
+
+describe('print settings', () => {
+  it('lists the guide’s print settings on the Files tab', () => {
+    // A second section, or the tab strip is not drawn.
+    const parts = [{ id: 'p1', tutorial_id: 't1', name: 'Switch', quantity: 1, is_optional: false, buy_links: [] }]
+    render(
+      <TutorialView
+        signedIn
+        tutorial={tutorial({ kind: 'assistive_tech', parts, stl_files: stl, layer_height_mm: 0.2, infill_percent: 25, material: 'PETG', print_minutes: 190 })}
+      />
+    )
+    fireEvent.click(screen.getByRole('tab', { name: 'Files & print settings' }))
+    expect(screen.getByText('Layer height')).toBeInTheDocument()
+    expect(screen.getByText('3 h 10')).toBeInTheDocument()
+  })
+})
+
+describe('safety notes', () => {
+  it('lists the author’s safety notes under the checklist', () => {
+    // A second section, or the tab strip is not drawn.
+    const parts = [{ id: 'p1', tutorial_id: 't1', name: 'Switch', quantity: 1, is_optional: false, buy_links: [] }]
+    render(
+      <TutorialView
+        signedIn
+        tutorial={tutorial({ parts, safety_declared_at: '2026-09-01T00:00:00Z', safety_notes: [{ id: 'n', tutorial_id: 't1', position: 1, title: 'Battery door must be screwed shut', detail: 'Add the screw.' }] })}
+      />
+    )
+    fireEvent.click(screen.getByRole('tab', { name: 'Safety' }))
+    expect(screen.getByText('Battery door must be screwed shut')).toBeInTheDocument()
+    expect(screen.getByText('Add the screw.')).toBeInTheDocument()
+  })
+})
+
+describe('community notes', () => {
+  it('warns of pinned revisions and lists them, read only', () => {
+    const pinned = { id: 'n', step_position: 2, author_id: 'p', author_name: 'Priya', body: 'Use two zip ties.', photo_url: null, photo_caption: null, pinned_at: '2026-09-02T00:00:00Z', pinned_by: 'a', pinned_by_name: 'Sam', created_at: '2026-09-01T00:00:00Z' }
+    render(<TutorialView signedIn tutorial={tutorial()} notes={[pinned, { ...pinned, id: 'o', pinned_at: null }]} />)
+    expect(screen.getByText(/1 pinned revision/)).toBeInTheDocument()
+    expect(screen.getByText(/since this was written — read before you build\./)).toBeInTheDocument()
+    expect(screen.getByText('Use two zip ties.')).toBeInTheDocument()
+    expect(screen.getAllByText('Use two zip ties.')).toHaveLength(1)
   })
 })

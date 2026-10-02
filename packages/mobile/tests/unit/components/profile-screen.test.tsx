@@ -54,10 +54,10 @@ describe('ProfileScreen', () => {
       hasContributorTerms: true,
     })
     render(<ProfileScreen />)
-    expect(screen.getByText('Signed in as parent@example.com')).toBeTruthy()
+    expect(screen.getByText('parent@example.com')).toBeTruthy()
   })
 
-  it('shows the account segment by default, with no role label', () => {
+  it('shows the identity card with initials, and no role label', () => {
     ;(useAuth as jest.Mock).mockReturnValue({
       session: { user: { email: 'contributor@example.com' } },
       profile: { id: '2', name: 'Cory', email: 'contributor@example.com', role: 'contributor', created_at: '' },
@@ -67,10 +67,12 @@ describe('ProfileScreen', () => {
     })
     render(<ProfileScreen />)
     expect(screen.getByText('Open Web Dashboard')).toBeTruthy()
+    expect(screen.getByText('Cory')).toBeTruthy()
+    expect(screen.getByText('C', { includeHiddenElements: true })).toBeTruthy()
     expect(screen.queryByText('Contributor')).toBeNull()
   })
 
-  it('switches to the child profile segment on tap', () => {
+  it('shows the child profiles and the profile detail on one page', () => {
     ;(useAuth as jest.Mock).mockReturnValue({
       session: { user: { email: 'contributor@example.com' } },
       profile: { id: '2', name: 'Cory', email: 'contributor@example.com', role: 'contributor', created_at: '' },
@@ -80,111 +82,23 @@ describe('ProfileScreen', () => {
     })
     render(<ProfileScreen />)
 
-    fireEvent.press(screen.getByText('Child Profile'))
-
-    // The segment now hosts the child list, whose own header line proves the
-    // switch; the sub-screens moved behind each child's editor.
-    expect(screen.getByText('+ Add child')).toBeTruthy()
-    expect(screen.queryByText('Open Web Dashboard')).toBeNull()
+    expect(screen.getByText('Child profiles')).toBeTruthy()
+    expect(screen.getByText('+ Add a child')).toBeTruthy()
+    expect(screen.getByText('Profile detail')).toBeTruthy()
+    expect(screen.getByText('Open Web Dashboard')).toBeTruthy()
   })
 
-  it('reaches the child profile segment even when contributor terms are unaccepted', () => {
+  // The terms gate moved to app/terms.tsx (use-auth-gate), so Me no longer
+  // carries one. What it gained is the HIG's "how you sign in" line.
+  it('says how the account signs in', () => {
     ;(useAuth as jest.Mock).mockReturnValue({
-      session: { user: { email: 'contributor@example.com' } },
-      profile: { id: '2', name: 'Cory', email: 'contributor@example.com', role: 'contributor', created_at: '' },
-      signIn: jest.fn(),
-      signOut: jest.fn(),
-      hasContributorTerms: false,
-      acceptContributorTerms: jest.fn(),
-    })
-    render(<ProfileScreen />)
-
-    fireEvent.press(screen.getByText('Child Profile'))
-
-    expect(screen.getByText('+ Add child')).toBeTruthy()
-    expect(screen.queryByText('Before you continue')).toBeNull()
-  })
-
-  it('blocks the profile view when contributor terms are unaccepted', () => {
-    ;(useAuth as jest.Mock).mockReturnValue({
-      session: { user: { email: 'parent@example.com' } },
+      session: { user: { email: 'parent@example.com', app_metadata: { providers: ['email', 'google'] } } },
       profile: { id: '2', name: 'Cory', email: 'parent@example.com', role: 'contributor', created_at: '' },
-      signIn: jest.fn(),
       signOut: jest.fn(),
-      hasContributorTerms: false,
-      acceptContributorTerms: jest.fn().mockResolvedValue({ error: null }),
     })
     render(<ProfileScreen />)
 
-    expect(screen.getByText('Before you continue')).toBeTruthy()
-  })
-
-  it('does not show the catch-up gate while hasContributorTerms is still null (unknown)', () => {
-    // null means "the /api/agreements/me fetch hasn't resolved yet", not "the
-    // server confirmed no acceptance". Treating it as unaccepted flashed this gate
-    // for every already-accepted user on every launch.
-    ;(useAuth as jest.Mock).mockReturnValue({
-      session: { user: { email: 'parent@example.com' } },
-      profile: { id: '2', name: 'Cory', email: 'parent@example.com', role: 'contributor', created_at: '' },
-      signIn: jest.fn(),
-      signOut: jest.fn(),
-      hasContributorTerms: null,
-      acceptContributorTerms: jest.fn(),
-    })
-    render(<ProfileScreen />)
-
-    expect(screen.queryByText('Before you continue')).toBeNull()
-    expect(screen.getByText('Signed in as parent@example.com')).toBeTruthy()
-  })
-
-  it('lets the user sign out from the catch-up gate', () => {
-    // Otherwise a user whose acceptance POST keeps failing (offline, API down)
-    // has no reachable Sign Out button at all — the signed-in view sits behind
-    // this gate's early return.
-    const signOut = jest.fn()
-    ;(useAuth as jest.Mock).mockReturnValue({
-      session: { user: { email: 'parent@example.com' } },
-      profile: { id: '2', name: 'Cory', email: 'parent@example.com', role: 'contributor', created_at: '' },
-      signIn: jest.fn(),
-      signOut,
-      hasContributorTerms: false,
-      acceptContributorTerms: jest.fn().mockResolvedValue({ error: null }),
-    })
-    render(<ProfileScreen />)
-
-    fireEvent.press(screen.getByText('Sign Out'))
-    expect(signOut).toHaveBeenCalled()
-  })
-
-  it('links the gate checkbox label to the contributor terms page', () => {
-    ;(useAuth as jest.Mock).mockReturnValue({
-      session: { user: { email: 'parent@example.com' } },
-      profile: { id: '2', name: 'Cory', email: 'parent@example.com', role: 'contributor', created_at: '' },
-      signIn: jest.fn(),
-      signOut: jest.fn(),
-      hasContributorTerms: false,
-      acceptContributorTerms: jest.fn().mockResolvedValue({ error: null }),
-    })
-    const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(true)
-    render(<ProfileScreen />)
-
-    fireEvent.press(screen.getByText('Read the terms'))
-    expect(openURL).toHaveBeenCalledWith(expect.stringContaining('/legal/contributor-terms'))
-  })
-
-  it('shows the profile once terms are accepted', () => {
-    ;(useAuth as jest.Mock).mockReturnValue({
-      session: { user: { email: 'parent@example.com' } },
-      profile: { id: '2', name: 'Cory', email: 'parent@example.com', role: 'contributor', created_at: '' },
-      signIn: jest.fn(),
-      signOut: jest.fn(),
-      hasContributorTerms: true,
-      acceptContributorTerms: jest.fn(),
-    })
-    render(<ProfileScreen />)
-
-    expect(screen.queryByText('Before you continue')).toBeNull()
-    expect(screen.getByText('Signed in as parent@example.com')).toBeTruthy()
+    expect(screen.getByText('Signed in with email and Google')).toBeTruthy()
   })
 
   describe('the account panel additions', () => {
@@ -198,6 +112,23 @@ describe('ProfileScreen', () => {
         expect(mockPatch).toHaveBeenCalledWith('/api/contributors/me', { name: 'New Name' })
       )
       expect(await screen.findByText('Saved')).toBeTruthy()
+    })
+
+    it('saves a postcode, for everything that measures distance', async () => {
+      mockUseAuth.mockReturnValue(auth({}))
+      mockGet.mockResolvedValue([])
+      mockPatch.mockResolvedValue({})
+      render(<ProfileScreen />)
+      fireEvent(await screen.findByLabelText('Postcode'), 'endEditing', { nativeEvent: { text: '2042' } })
+      await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/api/contributors/me', { pickup_postcode: '2042' }))
+    })
+
+    it('refuses a postcode that is not four digits, inline', async () => {
+      mockUseAuth.mockReturnValue(auth({}))
+      render(<ProfileScreen />)
+      fireEvent(await screen.findByLabelText('Postcode'), 'endEditing', { nativeEvent: { text: '12' } })
+      expect(await screen.findByText('A postcode is four digits.')).toBeTruthy()
+      expect(mockPatch).not.toHaveBeenCalled()
     })
 
     it('does not save an unchanged or empty name', async () => {

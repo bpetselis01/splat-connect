@@ -24,7 +24,7 @@
  */
 import { useState, useTransition } from 'react'
 import { Bank, Pencil, Quotes, Receipt, Trash } from '@phosphor-icons/react/dist/ssr'
-import { formatCents } from '@splat-connect/types'
+import { dollarsToCents, formatCents } from '@splat-connect/types'
 import { Disclosure } from '@/components/disclosure'
 import { browserApiClient } from '@/lib/browser-api-client'
 
@@ -45,20 +45,8 @@ export interface Settlement {
   receipt_path: string | null
 }
 
-/**
- * Dollars as typed into a text field, as integer cents.
- *
- * Returns null for anything that is not a plain amount. Never parseFloat into
- * cents by multiplying — `12.10 * 100` is 1209.9999999999998, and a cent lost
- * to binary floating point in a number two families agreed between them is an
- * argument rather than a display bug.
- */
-export function dollarsToCents(input: string): number | null {
-  const match = /^\s*\$?\s*(\d{1,9})(?:\.(\d{1,2}))?\s*$/.exec(input)
-  if (!match) return null
-  const cents = (match[2] ?? '').padEnd(2, '0')
-  return Number(match[1]) * 100 + Number(cents)
-}
+// Lives in @splat-connect/types now: the mobile event form parses the same amounts.
+export { dollarsToCents }
 
 function AddCostForm({
   onAdd,

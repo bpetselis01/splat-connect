@@ -18,10 +18,16 @@
  * the rail's primary button, as the board does, and a reviewer has nothing to
  * save.
  *
- * The board's guide has a Steps tab and a Community notes tab. Neither exists
- * in this schema — the steps live in the PDF — so the tabs drawn here are the
- * ones the data can fill: Parts & tools, Files (assistive tech only) and
- * Safety (once the author has affirmed the checklist).
+ * The board's guide has a Steps tab and a Community notes tab. Steps exist
+ * since 080 (alongside the PDF, which stays the printable download), so the
+ * tabs are the ones the data can fill: Steps (when the guide has any), Parts &
+ * tools, Files (assistive tech only) and Safety (once the author has affirmed
+ * the checklist). Community notes' pinned revisions (093) show here, read
+ * only, with the banner above the tabs; notes are posted from the app.
+ *
+ * `fit` is the board's "Suits Ollie — big button, light press, short hold",
+ * worked out by the caller (suitsChild) and drawn above the tabs: a parent
+ * should know it suits their child before reading a single step.
  *
  * Related files:
  * - app/tutorials/[id]/page.tsx: the public page this was lifted from
@@ -30,24 +36,28 @@
  * - app/files/[bucket]/[...path]/route.ts: where the file links go
  */
 import type { ReactNode } from 'react'
+import Image from 'next/image'
+import { safePhotoSrc } from '@/lib/photo-src'
 import { NotMedicalNote } from '@/components/not-medical-note'
 import { PhotoCarousel } from '@/components/photo-carousel'
 import { SectionTabs } from '@/components/section-tabs'
 import { DIFFICULTY } from '@/components/tutorial-card'
 import { tintFor } from '@/components/card-photo'
 import { BoundaryLink } from '@/components/boundary-link'
-import { FileText } from '@/components/icons'
 import Link from 'next/link'
 import {
   ArrowSquareOut,
   CheckCircle,
   Cube,
   DownloadSimple,
+  FileText,
   HandHeart,
   HandTap,
   Lifebuoy,
   Printer,
+  PushPin,
   SealCheck,
+  ShoppingBag,
   ShieldCheck,
   Wrench,
 } from '@phosphor-icons/react/dist/ssr'
@@ -55,14 +65,16 @@ import {
   KIND_LABEL,
   MATURITY_LABEL,
   SAFETY_CHECKLIST,
+  TOOL_GET_BY_LABEL,
   formatAgeRange,
   formatBuildTime,
   type BuyLink,
+  type GuideNote,
   type TutorialWithDetails,
   type TutorialOrg,
 } from '@splat-connect/types'
 import { agoInWords } from '@/lib/relative-time'
-import { longDate } from '@/lib/dates'
+import { checkedOn, formatCents, initials, longDate, partsTotalCents, printSettingRows } from '@splat-connect/types'
 
 type Viewable = TutorialWithDetails & {
   tutorial_orgs?: TutorialOrg[]
@@ -73,15 +85,6 @@ type Viewable = TutorialWithDetails & {
 /** "A, B and C" — the board's byline joins names the way a person would. */
 function listNames(names: string[]): string {
   return names.length <= 1 ? (names[0] ?? '') : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`
-}
-
-function initials(name: string): string {
-  return name
-    .split(/\s+/)
-    .map((w) => w[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase()
 }
 
 function BuyLinks({ item, links }: { item: string; links: BuyLink[] }) {
@@ -109,6 +112,8 @@ export function TutorialView({
   backing,
   actions,
   signedIn,
+  fit,
+  notes,
 }: {
   tutorial: Viewable
   /** The leader page fetches backing separately; everyone else has it embedded. */
@@ -121,6 +126,10 @@ export function TutorialView({
    * are three callers.
    */
   signedIn: boolean
+  /** "Suits Ollie — big button, …", or nothing. Never an assessment of the child. */
+  fit?: string | null
+  /** 093. Pinned revisions show here; posting is on the app. */
+  notes?: GuideNote[]
 }) {
   const contributors = tutorial.tutorial_contributors ?? []
   const primaryContributor = contributors.find((c) => c.role === 'primary')
@@ -149,19 +158,22 @@ export function TutorialView({
     .filter((name): name is string => Boolean(name))
 
   const diff = DIFFICULTY[tutorial.difficulty]
+  const steps = tutorial.steps ?? []
+  const pinned = (notes ?? []).filter((n) => n.pinned_at)
+  const total = partsTotalCents(tutorial.parts)
 
   /*
-   * The three figures at the top of the rail. The board's are time / parts
-   * cost / steps; this schema has the time but no part prices and no steps
-   * (they live in the PDF), so the other two count what the page lists
-   * instead of inventing a total a parent would plan an evening around.
+   * The three figures at the top of the rail: time / parts cost / steps. The
+   * cost shows only once every required part has a price (partsTotalCents);
+   * until then it counts the parts instead of a total a parent would plan an
+   * evening around and find wrong.
    */
   const stats: Array<[string, string | number]> = [
     ...(tutorial.build_minutes != null
       ? ([['time', formatBuildTime(tutorial.build_minutes)]] as Array<[string, string]>)
       : []),
-    ['parts', tutorial.parts.length],
-    ['tools', tutorial.tools.length],
+    total != null ? ['cost', formatCents(total)] : ['parts', tutorial.parts.length],
+    steps.length > 0 ? ['steps', steps.length] : ['tools', tutorial.tools.length],
   ]
 
   // The board's review line names who checked it and when. The person is named
@@ -189,6 +201,7 @@ export function TutorialView({
               <tr>
                 <th>Part</th>
                 <th>Qty</th>
+                <th>Approx.</th>
                 <th>Where to buy</th>
               </tr>
             </thead>
@@ -200,14 +213,29 @@ export function TutorialView({
                     {p.is_optional && <span className="pill-tag ml-2 text-muted">Optional</span>}
                   </td>
                   <td className="font-mono text-sm">{p.quantity}</td>
+                  <td className="font-mono text-sm">{p.price_cents != null ? formatCents(p.price_cents) : '—'}</td>
                   <td>
                     <BuyLinks item={p.name} links={p.buy_links} />
                   </td>
                 </tr>
               ))}
             </tbody>
+            {total != null && (
+              <tfoot>
+                <tr>
+                  <td colSpan={2} className="font-extrabold">Total</td>
+                  <td className="font-mono text-sm font-extrabold">{formatCents(total)}</td>
+                  <td />
+                </tr>
+              </tfoot>
+            )}
           </table>
         </div>
+      )}
+      {tutorial.prices_checked_on && total != null && (
+        <p className="m-0 -mt-4 text-[13px] text-muted">
+          Prices last checked {checkedOn(tutorial.prices_checked_on)} · Prices change. Treat these as a guide, not a quote — and look online for better before you buy.
+        </p>
       )}
       {tutorial.tools.length > 0 && (
         <div className="flex flex-col gap-3.5">
@@ -236,6 +264,12 @@ export function TutorialView({
                     {t.name}
                     {t.is_optional && <span className="pill-tag ml-2 text-muted">Optional</span>}
                   </span>
+                  {(t.note || t.get_by) && (
+                    <span className="flex flex-wrap items-center gap-2 text-sm text-muted">
+                      {t.note && <span>{t.note}</span>}
+                      {t.get_by && <span className="pill-tag">{TOOL_GET_BY_LABEL[t.get_by]}</span>}
+                    </span>
+                  )}
                   <span className="text-xs">
                     <BuyLinks item={t.name} links={t.buy_links} />
                   </span>
@@ -250,6 +284,16 @@ export function TutorialView({
 
   const files = (
     <div className="flex flex-col gap-4">
+      {printSettingRows(tutorial).length > 0 && (
+        <dl className="m-0 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {printSettingRows(tutorial).map((r) => (
+            <div key={r.k} className="rounded-[var(--radius-field)] bg-sunken p-2.5">
+              <dt className="text-xs font-bold text-muted">{r.k}</dt>
+              <dd className="m-0 font-mono text-sm font-extrabold text-ink">{r.v}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {tutorial.stl_files.map((f) => (
           <div key={f.id} className="guide-row guide-row--file">
@@ -284,23 +328,69 @@ export function TutorialView({
     </div>
   )
 
+  const safetyNotes = tutorial.safety_notes ?? []
   const safety = (
-    <ul className="m-0 flex list-none flex-col gap-3 rounded-[var(--radius-inset)] border border-line bg-surface p-5 shadow-e2">
-      {SAFETY_CHECKLIST.map((s) => (
-        <li key={s} className="flex items-start gap-3 font-semibold text-ink">
-          <CheckCircle size={24} weight="fill" className="flex-none text-success" aria-hidden="true" />
-          {s}
+    <>
+      {tutorial.safety_declared_at && (
+        <ul className="m-0 flex list-none flex-col gap-3 rounded-[var(--radius-inset)] border border-line bg-surface p-5 shadow-e2">
+          {SAFETY_CHECKLIST.map((s) => (
+            <li key={s} className="flex items-start gap-3 font-semibold text-ink">
+              <CheckCircle size={24} weight="fill" className="flex-none text-success" aria-hidden="true" />
+              {s}
+            </li>
+          ))}
+        </ul>
+      )}
+      {safetyNotes.length > 0 && (
+        <ul className="m-0 mt-4 flex list-none flex-col gap-3 p-0">
+          {safetyNotes.map((n) => (
+            <li key={n.id} className="rounded-[var(--radius-inset)] border border-line bg-surface p-4">
+              <p className="m-0 font-extrabold text-ink">{n.title}</p>
+              {n.detail && <p className="m-0 mt-1 text-sm leading-[1.55] text-ink">{n.detail}</p>}
+            </li>
+          ))}
+        </ul>
+      )}
+    </>
+  )
+
+  const stepList = (
+    <ol className="m-0 flex list-none flex-col gap-4 p-0">
+      {steps.map((st) => (
+        <li key={st.id} className="flex gap-4 rounded-[var(--radius-inset)] border border-line bg-surface p-[18px] shadow-e2">
+          <span
+            aria-hidden="true"
+            className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-brand-tint font-display text-lg font-extrabold text-ink"
+          >
+            {st.position}
+          </span>
+          <div className="flex min-w-0 flex-1 flex-col gap-2">
+            {st.title && <h3 className="m-0 text-[17px] font-extrabold leading-[1.3] text-ink">{st.title}</h3>}
+            <p className="m-0 whitespace-pre-line text-[15px] leading-[1.55] text-ink">{st.body}</p>
+            {st.photo_url && safePhotoSrc(st.photo_url) && (
+              <div className="relative mt-1 aspect-[4/3] w-full max-w-[460px] overflow-hidden rounded-[var(--radius-inset)] bg-sunken">
+                <Image
+                  src={safePhotoSrc(st.photo_url)!}
+                  alt={st.title ? `Step ${st.position}: ${st.title}` : `Step ${st.position}`}
+                  fill
+                  sizes="(min-width: 1024px) 460px, 100vw"
+                  className="object-cover"
+                />
+              </div>
+            )}
+          </div>
         </li>
       ))}
-    </ul>
+    </ol>
   )
 
   const tabs = [
+    ...(steps.length > 0 ? [{ key: 'steps', label: 'Steps', content: stepList }] : []),
     ...(tutorial.parts.length + tutorial.tools.length > 0
       ? [{ key: 'parts', label: 'Parts & tools', content: partsAndTools }]
       : []),
     ...(showFiles ? [{ key: 'files', label: 'Files & print settings', content: files }] : []),
-    ...(tutorial.safety_declared_at ? [{ key: 'safety', label: 'Safety', content: safety }] : []),
+    ...(tutorial.safety_declared_at || safetyNotes.length > 0 ? [{ key: 'safety', label: 'Safety', content: safety }] : []),
   ]
 
   const recs = tutorial.tutorial_recommendations ?? []
@@ -358,7 +448,45 @@ export function TutorialView({
 
         <PhotoCarousel urls={tutorial.photo_urls} alt={tutorial.title} />
 
+        {fit && (
+          <p
+            data-testid="fit-callout"
+            className="m-0 flex items-center gap-2 rounded-[var(--radius-inset)] border border-line bg-mint-soft px-4 py-3.5 text-[15px] font-bold text-ink"
+          >
+            <CheckCircle size={20} weight="fill" className="flex-none text-success" aria-hidden="true" />
+            {fit}
+          </p>
+        )}
+
+        {pinned.length > 0 && (
+          <a href="#tut-revisions" className="flex items-center gap-2.5 rounded-[var(--radius-inset)] bg-honey-soft px-4 py-3 text-sm font-bold text-ink no-underline">
+            <PushPin size={20} weight="fill" aria-hidden="true" />
+            <span className="flex-1">
+              <strong>{pinned.length} pinned revision{pinned.length === 1 ? '' : 's'}</strong> since this was written — read before you build.
+            </span>
+          </a>
+        )}
+
         <SectionTabs label="Guide sections" tabs={tabs} />
+
+        {pinned.length > 0 && (
+          <section id="tut-revisions" aria-labelledby="tut-revisions-h" className="flex flex-col gap-3">
+            <h2 id="tut-revisions-h" className="m-0 font-display text-[22px] font-extrabold text-ink">
+              Revisions <span className="text-muted">{pinned.length} pinned</span>
+            </h2>
+            <ol className="m-0 flex list-none flex-col gap-2.5 p-0">
+              {pinned.map((n) => (
+                <li key={n.id} className="rounded-[var(--radius-inset)] border border-line bg-surface p-4">
+                  <p className="m-0 text-xs font-bold text-muted">
+                    {n.step_position && n.step_position <= steps.length ? `Step ${n.step_position}` : 'Missing step'} · {n.author_name}
+                  </p>
+                  <p className="m-0 mt-1 text-[15px] leading-[1.55] text-ink">{n.body}</p>
+                  <p className="m-0 mt-2 text-xs font-bold text-ink">Pinned by {n.pinned_by_name ?? 'Deleted member'}</p>
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
 
         {/* Where the creator points next. The public route has already dropped
             anything a parent could not open, so on the public page every card
@@ -428,7 +556,7 @@ export function TutorialView({
               {...newTab}
               className="btn btn-primary btn-block no-underline"
             >
-              <FileText />
+              <FileText weight="bold" aria-hidden="true" />
               {signedIn ? 'Download guide (PDF)' : 'Sign in to download'}
             </a>
           )}
@@ -472,12 +600,31 @@ export function TutorialView({
             Get help with this build
           </Link>
           <p className="m-0 text-[13px] leading-[1.5]">
-            Or skip the build — somebody nearby may have already made one.{' '}
+            {tutorial.no_build_note ?? 'Or skip the build — somebody nearby may have already made one.'}{' '}
             <Link href="/toy-library" className="font-extrabold text-ink underline">
               Toy library →
             </Link>
           </p>
         </div>
+        {tutorial.toy_name && (
+          <div className="flex items-center gap-3 rounded-card border border-line bg-surface p-[18px] text-ink">
+            <ShoppingBag size={28} weight="duotone" className="flex-none" aria-hidden="true" />
+            <div>
+              <p className="m-0 text-xs font-extrabold uppercase tracking-[.08em] text-muted">The toy you start with</p>
+              <p className="m-0 font-extrabold leading-[1.3]">{tutorial.toy_name}</p>
+              {tutorial.toy_brand && <p className="m-0 text-sm text-muted">by {tutorial.toy_brand}</p>}
+            </div>
+          </div>
+        )}
+        {tutorial.works_with && (
+          <div className="flex items-start gap-3 rounded-card border border-line bg-mint-soft p-[18px] text-ink">
+            <HandTap size={28} weight="duotone" className="flex-none" aria-hidden="true" />
+            <div>
+              <p className="m-0 font-extrabold">Works with</p>
+              <p className="m-0 text-sm leading-[1.5]">{tutorial.works_with}</p>
+            </div>
+          </div>
+        )}
       </aside>
     </div>
   )

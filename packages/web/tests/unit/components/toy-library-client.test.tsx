@@ -89,8 +89,7 @@ describe('ToyLibraryClient', () => {
         signedIn={false}
       />
     )
-    fireEvent.click(screen.getByRole('button', { name: /Newest first/ }))
-    fireEvent.click(screen.getByRole('option', { name: /Condition/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Condition/ }))
     expect(names()).toEqual(['Mint', 'Worn'])
     fireEvent.click(screen.getByRole('button', { name: 'Switch to needs a fix first' }))
     expect(names()).toEqual(['Worn', 'Mint'])

@@ -16,7 +16,9 @@ import { Lightbulb } from '@phosphor-icons/react/dist/ssr'
 import Link from 'next/link'
 import type { Route } from 'next'
 import { apiClient } from '@/lib/api-client'
-import { shortDate } from '@/lib/dates'
+import { paginate } from '@/lib/paginate'
+import { Pager } from '@/components/pager'
+import { shortDate } from '@splat-connect/types'
 import type { ToyIdea, ToyIdeaStatus } from '@splat-connect/types'
 
 // The board's four words for where an idea stands, on its tints.
@@ -29,7 +31,10 @@ const STATUS: Record<ToyIdeaStatus, { label: string; tint: string }> = {
 
 type Queued = ToyIdea & { profiles: { name: string } | null }
 
-export default async function AdminIdeasPage() {
+export default async function AdminIdeasPage({
+  searchParams,
+}: { searchParams?: Promise<{ page?: string }> } = {}) {
+  const { page: pageParam } = (await searchParams) ?? {}
   const all = await apiClient.get<Queued[]>('/api/admin/ideas')
 
   // Pending first — everything else is already decided and is here for
@@ -39,6 +44,7 @@ export default async function AdminIdeasPage() {
     if (a.status !== 'pending' && b.status === 'pending') return 1
     return 0
   })
+  const { items: pageIdeas, page, pages } = paginate(ideas, pageParam, 30)
 
   const header = (
     <>
@@ -70,7 +76,7 @@ export default async function AdminIdeasPage() {
     <div className="max-w-[960px]">
       {header}
       <ul className="flex list-none flex-col gap-3">
-        {ideas.map((idea) => (
+        {pageIdeas.map((idea) => (
           <li key={idea.id}>
             <Link
               href={`/admin/ideas/${idea.id}` as Route<string>}
@@ -96,6 +102,7 @@ export default async function AdminIdeasPage() {
           </li>
         ))}
       </ul>
+      <Pager page={page} pages={pages} />
     </div>
   )
 }

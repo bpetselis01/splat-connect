@@ -32,7 +32,7 @@ import {
 import { apiClient } from '@/lib/api-client'
 import { getCapabilities } from '@/lib/capabilities'
 import { InvolvedIntro, SECONDARY_BTN, TintNote } from '@/components/involved-page'
-import { RECYCLING_DECLARATION } from '@splat-connect/types'
+import { initials, RECYCLING_DECLARATION, type RecyclingCredit } from '@splat-connect/types'
 
 export const metadata = {
   title: 'Recycling — SPLAT Connect',
@@ -87,9 +87,12 @@ export default async function RecyclingPage() {
   const takers = orgs.filter((o) => (o.recycling_materials ?? []).length > 0).length
 
   if (caps) {
-    // The board's signed-in page leads with your own totals — kilos diverted,
-    // credit held, badges, your drop-offs. There is no cross-organisation read
-    // of a contributor's own drop-offs yet, so those panels are not drawn.
+    // The board's signed-in page leads with your own totals. Unspent credit per
+    // organisation is drawn (114); kilos diverted, badges and the drop-off list
+    // are not yet on web.
+    const credit = await apiClient
+      .get<RecyclingCredit[]>('/api/organizations/recycling/credit')
+      .catch(() => [] as RecyclingCredit[])
     return (
       <div>
         <div className="flex flex-wrap items-end justify-between gap-5">
@@ -111,6 +114,24 @@ export default async function RecyclingPage() {
         </div>
 
         <OrgsPanel takers={takers} />
+
+        {credit.length > 0 && (
+          <div className="mt-6 flex flex-col gap-2 rounded-card bg-[var(--tmint)] px-[26px] py-[22px] text-[var(--tink)]">
+            <p className="text-xs font-extrabold uppercase tracking-[.1em] opacity-75">Print credit, unspent</p>
+            {credit.map((c) => (
+              <span key={c.org_id} className="flex items-center gap-2.5">
+                <span aria-hidden="true" className="grid h-8 w-8 flex-none place-items-center rounded-[14px] bg-[var(--surface)] text-xs font-extrabold">
+                  {initials(c.org_name ?? '')}
+                </span>
+                <span className="flex-1 font-bold">{c.org_name}</span>
+                <span className="font-display text-[17px] font-extrabold tabular-nums">{`${c.grams} g`}</span>
+              </span>
+            ))}
+            <p className="mt-0.5 text-[13px] leading-[1.45] opacity-80">
+              Spendable on filament at that organisation only. It comes off the cost panel when they take your print job.
+            </p>
+          </div>
+        )}
 
         <h2 className="mb-3.5 mt-[38px] font-display text-[26px] font-extrabold text-ink">How it works</h2>
         <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(260px,1fr))]">

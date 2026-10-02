@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { FilesSection } from '../../../../components/my-tutorials/sections/files-section'
 import { StlSection } from '../../../../components/my-tutorials/sections/stl-section'
+import { apiClient } from '../../../../lib/api-client'
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 jest.mock('../../../../lib/auth-context', () => ({ useAuth: jest.fn() }))
@@ -91,7 +92,22 @@ it('uploads a chosen photo and appends it to the guide immediately', async () =>
   fireEvent.press(screen.getByText('Choose from library'))
 
   await waitFor(() =>
-    expect(mockDraft.saveNow).toHaveBeenCalledWith({ photo_urls: ['photos/a.jpg'] })
+    expect(mockDraft.saveNow).toHaveBeenCalledWith({ photo_urls: ['photos/a.jpg'], photo_captions: [] })
+  )
+})
+
+it('captions a photo, and the caption follows it to the cover', async () => {
+  mockDraft.tutorial = { ...mockDraft.tutorial, photo_urls: ['a', 'b'], photo_captions: [null, 'The jack'] }
+  mockDraft.save.mockImplementation((f: Record<string, unknown>) => {
+    mockDraft.tutorial = { ...mockDraft.tutorial, ...f }
+  })
+  const view = render(<FilesSection />)
+  fireEvent.changeText(screen.getByLabelText('Caption for photo 1'), 'The drum')
+  expect(mockDraft.save).toHaveBeenLastCalledWith({ photo_captions: ['The drum', 'The jack'] })
+  view.rerender(<FilesSection />)
+  fireEvent.press(screen.getByLabelText('Make photo 2 the cover'))
+  await waitFor(() =>
+    expect(mockDraft.saveNow).toHaveBeenLastCalledWith({ photo_urls: ['b', 'a'], photo_captions: ['The jack', 'The drum'] })
   )
 })
 
@@ -165,4 +181,45 @@ it('appends an uploaded STL to the replace-set', async () => {
       ],
     })
   )
+})
+
+it('carries part sizes through the replace-set, and saves them per file', async () => {
+  const sized = { id: 's1', filename: 'old.stl', file_url: 'stl/old.stl', print_minutes: 60, filament_grams: 10, material: 'PETG', size_x_mm: 40, size_y_mm: 30, size_z_mm: 20 }
+  mockDraft.tutorial = { ...mockDraft.tutorial, stl_files: [sized] }
+  ;(apiClient.patch as jest.Mock).mockResolvedValue({ ...sized, size_x_mm: 45 })
+  render(<StlSection />)
+  fireEvent.changeText(screen.getByLabelText('Width (mm) for old.stl'), '45')
+  fireEvent.press(screen.getByText('Save sizes'))
+  await waitFor(() =>
+    // Only the sizes: the PATCH writes what it is sent, and this button edits sizes.
+    expect(apiClient.patch).toHaveBeenCalledWith('/api/tutorials/t1/stl-files/s1', {
+      size_x_mm: 45, size_y_mm: 30, size_z_mm: 20,
+    })
+  )
+
+  mockGetDocument.mockResolvedValue({ canceled: false, assets: [{ uri: 'file://n.stl', name: 'n.stl' }] })
+  mockUploadFile.mockResolvedValue({ url: 'stl/n.stl', filename: 'n.stl' })
+  mockPost.mockResolvedValue([])
+  fireEvent.press(screen.getByText('Choose STL from Files'))
+  await waitFor(() =>
+    expect(mockPost).toHaveBeenCalledWith('/api/tutorials/t1/stl-files', {
+      stl_files: [
+        { filename: 'old.stl', file_url: 'stl/old.stl', print_minutes: 60, filament_grams: 10, material: 'PETG', size_x_mm: 45, size_y_mm: 30, size_z_mm: 20 },
+        { filename: 'n.stl', file_url: 'stl/n.stl' },
+      ],
+    })
+  )
+})
+
+it('holds Save sizes busy while the save is in flight', async () => {
+  const sized = { id: 's1', filename: 'old.stl', file_url: 'stl/old.stl', size_x_mm: 40, size_y_mm: 30, size_z_mm: 20 }
+  mockDraft.tutorial = { ...mockDraft.tutorial, stl_files: [sized] }
+  let resolve: (v: unknown) => void = () => {}
+  ;(apiClient.patch as jest.Mock).mockReturnValue(new Promise((r) => (resolve = r)))
+  render(<StlSection />)
+  fireEvent.press(screen.getByLabelText('Save sizes'))
+  fireEvent.press(screen.getByLabelText('Save sizes'))
+  expect(apiClient.patch).toHaveBeenCalledTimes(1)
+  resolve(sized)
+  await waitFor(() => expect(screen.getByText('Save sizes')).toBeTruthy())
 })

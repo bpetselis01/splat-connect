@@ -2,7 +2,8 @@
 
 /**
  * Per-file print settings on the editor's STL step (068): minutes on the bed,
- * grams of filament and the material, as the author sliced one copy. What a
+ * grams of filament, the material and the part's size (097), as the author
+ * sliced one copy. What a
  * family's request form sums into "3 h 10 min printing · 41 g PETG filament".
  *
  * One PATCH per changed row, never the replace-set POST: that deletes and
@@ -14,15 +15,21 @@ import type { StlFile, StlMaterial } from '@splat-connect/types'
 import { PanelActions } from '@/components/panel-actions'
 import { useToast } from '@/components/toast'
 
-export type StlSettings = Pick<StlFile, 'print_minutes' | 'filament_grams' | 'material'>
+export type StlSettings = Pick<
+  StlFile,
+  'print_minutes' | 'filament_grams' | 'material' | 'size_x_mm' | 'size_y_mm' | 'size_z_mm'
+>
 
 const settingsOf = (f: StlFile): StlSettings => ({
   print_minutes: f.print_minutes ?? null,
   filament_grams: f.filament_grams ?? null,
   material: f.material ?? null,
+  size_x_mm: f.size_x_mm ?? null,
+  size_y_mm: f.size_y_mm ?? null,
+  size_z_mm: f.size_z_mm ?? null,
 })
 const same = (a: StlSettings, b: StlSettings) =>
-  a.print_minutes === b.print_minutes && a.filament_grams === b.filament_grams && a.material === b.material
+  (Object.keys(a) as (keyof StlSettings)[]).every((k) => a[k] === b[k])
 
 export function StlSettingsForm({
   files,
@@ -104,6 +111,27 @@ export function StlSettingsForm({
                   ))}
                 </select>
               </label>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {(
+                [
+                  ['size_x_mm', 'Width (mm)'],
+                  ['size_y_mm', 'Depth (mm)'],
+                  ['size_z_mm', 'Height (mm)'],
+                ] as const
+              ).map(([key, label]) => (
+                <label key={key} className="flex flex-col gap-1 text-xs font-bold text-muted">
+                  {label}
+                  <input
+                    type="number"
+                    min={1}
+                    max={2000}
+                    className={field}
+                    value={s[key] ?? ''}
+                    onChange={(e) => set(f.id, { [key]: num(e.target.value) })}
+                  />
+                </label>
+              ))}
             </div>
           </li>
         )

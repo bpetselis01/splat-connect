@@ -8,8 +8,8 @@ export type SaveState = 'idle' | 'saving' | 'saved'
  * @param childId Pin the hook to one child. With it, the write chain PATCHes
  * that row and never creates — a missing row is an error, not an invitation.
  * Without it, the original single-child behaviour: edit the oldest child,
- * creating one on the first save. The no-arg form remains only for the
- * questionnaire-era flows; every list-driven screen passes the id.
+ * creating one on the first save. The no-arg form is the onboarding wizard's
+ * (components/profile/child-wizard.tsx); every list-driven screen passes the id.
  */
 export function useChildProfile(childId?: string) {
   const [profile, setProfile] = useState<ChildProfile | null>(null)

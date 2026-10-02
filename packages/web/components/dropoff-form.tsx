@@ -17,6 +17,8 @@
  * condition question instead of seven and had no way to choose who to take it
  * to. That page links here with ?org= now.
  *
+ * The photo is uploaded first (112) and the booking sends its storage path, never a URL.
+ *
  * Related files:
  * - packages/api/src/routes/organizations.ts: POST /:id/recycling
  * - supabase/migrations/063_recycling_declaration.sql: the versioned wording
@@ -42,6 +44,7 @@ import {
   DECLARATION_VERSION,
   MIN_DROPOFF_GRAMS,
   estimatedCreditGrams,
+  kgToGrams,
 } from '@splat-connect/types'
 
 // The board's glyph for each declaration line, in RECYCLING_DECLARATION's order.
@@ -55,14 +58,8 @@ export type DropoffOrg = {
   state: string | null
   recycling_materials: string[]
   recycling_note: string | null
-}
-
-/** Kilograms as typed, in whole grams. Null for anything that is not a weight. */
-export function kgToGrams(input: string): number | null {
-  const match = /^\s*(\d{1,4})(?:\.(\d{1,3}))?\s*$/.exec(input)
-  if (!match) return null
-  const fraction = (match[2] ?? '').padEnd(3, '0')
-  return Number(match[1]) * 1000 + Number(fraction)
+  recycling_min_kg?: number | null
+  recycling_max_kg?: number | null
 }
 
 export function DropoffForm({ orgs, initialOrgId }: { orgs: DropoffOrg[]; initialOrgId?: string }) {
@@ -76,11 +73,33 @@ export function DropoffForm({ orgs, initialOrgId }: { orgs: DropoffOrg[]; initia
   const [note, setNote] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [photo, setPhoto] = useState<{ path: string; url: string | null } | null>(null)
+  const [uploading, setUploading] = useState(false)
+
+  async function pickPhoto(file: File | undefined) {
+    if (!file) return
+    setUploading(true)
+    setError(null)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      setPhoto(await browserApiClient.postFormData<{ path: string; url: string | null }>('/api/upload/recycling-photo', fd))
+    } catch {
+      setError('Could not upload the photo. Please try again.')
+    } finally {
+      setUploading(false)
+    }
+  }
 
   const grams = kgToGrams(amount)
   const allTicked = ticked.length === RECYCLING_DECLARATION.length
-  const heavyEnough = grams !== null && grams >= MIN_DROPOFF_GRAMS
-  const valid = !!org && material !== '' && heavyEnough && allTicked
+  // 113: the organisation's own per-drop limits, inside the platform floor.
+  const minGrams = Math.max(MIN_DROPOFF_GRAMS, org?.recycling_min_kg != null ? Math.round(org.recycling_min_kg * 1000) : 0)
+  const maxGrams = org?.recycling_max_kg != null ? Math.round(org.recycling_max_kg * 1000) : null
+  const tooHeavy = grams !== null && maxGrams !== null && grams > maxGrams
+  const overMax = `${org?.name} can take at most ${maxGrams! / 1000} kg in one drop. Split it across two.`
+  const heavyEnough = grams !== null && grams >= minGrams
+  const valid = !!org && material !== '' && heavyEnough && !tooHeavy && allTicked
 
   const toggle = (line: string) =>
     setTicked((prev) => (prev.includes(line) ? prev.filter((l) => l !== line) : [...prev, line]))
@@ -107,6 +126,7 @@ export function DropoffForm({ orgs, initialOrgId }: { orgs: DropoffOrg[]; initia
         // exactly when somebody needs to know.
         declaration_version: DECLARATION_VERSION,
         note: note.trim(),
+        ...(photo ? { photo_url: photo.path } : {}),
       })
       router.push('/dashboard')
       router.refresh()
@@ -133,7 +153,7 @@ export function DropoffForm({ orgs, initialOrgId }: { orgs: DropoffOrg[]; initia
       onSubmit={submit}
       className="mt-[26px] flex flex-col gap-6 rounded-card border border-line bg-[var(--surface)] p-7 shadow-[var(--e2)]"
     >
-      <fieldset>
+      <fieldset className="min-w-0">
         <legend className="mb-[9px] flex w-full items-center justify-between gap-2.5">
           <span className={LABEL}>Who are you taking it to?</span>
           <span className="text-[13px] font-bold text-muted">
@@ -199,8 +219,13 @@ export function DropoffForm({ orgs, initialOrgId }: { orgs: DropoffOrg[]; initia
             <span className="text-base font-extrabold text-muted">kg</span>
           </span>
           <span id="weight-help" className="mt-[7px] block text-[13px] leading-[1.45] text-muted">
-            At least {MIN_DROPOFF_GRAMS / 1000} kg. They weigh it again at the door — this is
-            just so they can plan.
+            {grams !== null && grams > 0 && grams < MIN_DROPOFF_GRAMS
+              ? `Under the ${MIN_DROPOFF_GRAMS / 1000} kg minimum — hold on to it until you have ${MIN_DROPOFF_GRAMS / 1000} kg.`
+              : tooHeavy
+                ? overMax
+                : maxGrams !== null
+                  ? `Between ${minGrams / 1000} and ${maxGrams / 1000} kg. They weigh it again at the door — this is just so they can plan.`
+                  : `At least ${minGrams / 1000} kg. They weigh it again at the door — this is just so they can plan.`}
           </span>
         </label>
 
@@ -270,6 +295,30 @@ export function DropoffForm({ orgs, initialOrgId }: { orgs: DropoffOrg[]; initia
         </p>
       </fieldset>
 
+      <div>
+        <label htmlFor="dropoff-photo" className={`${LABEL} mb-1 block`}>
+          Photo of what you are bringing
+        </label>
+        <p className="mb-2.5 text-[13px] text-muted">
+          Sorted, in the bag or box you will carry it in. It saves an argument at the door.
+        </p>
+        <div className="relative grid h-[180px] place-items-center overflow-hidden rounded-[18px] border border-dashed border-[var(--brand)] bg-[var(--b50)] text-sm font-bold text-muted">
+          {photo?.url ? (
+            // eslint-disable-next-line @next/next/no-img-element -- a signed URL from a private bucket
+            <img src={photo.url} alt="Photo of the sorted plastic" className="h-full w-full object-cover" />
+          ) : (
+            'Drop a photo of the sorted plastic'
+          )}
+          <input
+            id="dropoff-photo"
+            type="file"
+            accept="image/*"
+            onChange={(e) => pickPhoto(e.target.files?.[0])}
+            className="absolute inset-0 cursor-pointer opacity-0"
+          />
+        </div>
+      </div>
+
       <label className="block">
         <span className={`${LABEL} mb-[7px] block`}>
           Anything they should know <span className="font-semibold text-muted">(optional)</span>
@@ -295,7 +344,7 @@ export function DropoffForm({ orgs, initialOrgId }: { orgs: DropoffOrg[]; initia
           <p className="mt-2 text-sm leading-[1.5]">
             {heavyEnough
               ? `An estimate at about three quarters yield. ${org?.name} issues print credit you spend on their machines, from the weight they record.`
-              : `Enter a weight of at least ${MIN_DROPOFF_GRAMS / 1000} kg to see what it is worth.`}
+              : `Enter a weight of at least ${minGrams / 1000} kg to see what it is worth.`}
           </p>
         </div>
       </div>
@@ -307,7 +356,7 @@ export function DropoffForm({ orgs, initialOrgId }: { orgs: DropoffOrg[]; initia
       )}
 
       <div className="flex flex-wrap items-center gap-3 border-t border-line pt-2">
-        <button type="submit" disabled={!valid || saving} className="btn btn-primary mt-4 px-[26px]">
+        <button type="submit" disabled={!valid || saving || uploading} className="btn btn-primary mt-4 px-[26px]">
           <CalendarCheck weight="bold" aria-hidden="true" />
           {saving ? 'Booking…' : 'Book the drop-off'}
         </button>
@@ -320,8 +369,10 @@ export function DropoffForm({ orgs, initialOrgId }: { orgs: DropoffOrg[]; initia
         <span className="mt-4 max-w-[32ch] text-[13px] leading-[1.45] text-muted">
           {valid
             ? 'Booking tells them to expect you. No credit exists until they weigh it.'
-            : !heavyEnough
-              ? `A drop needs to be at least ${MIN_DROPOFF_GRAMS / 1000} kg.`
+            : tooHeavy
+              ? overMax
+              : !heavyEnough
+              ? `A drop needs to be at least ${minGrams / 1000} kg.`
               : `${left} declaration line${left === 1 ? '' : 's'} still to tick.`}
         </span>
       </div>

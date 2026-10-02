@@ -14,7 +14,6 @@ import Link from 'next/link'
 import { LockSimple } from '@phosphor-icons/react/dist/ssr'
 import { getCapabilities } from '@/lib/capabilities'
 import { apiClient } from '@/lib/api-client'
-import { BackLink } from '@/components/back-link'
 import { OrgRequestForm } from '@/components/org-request-form'
 import type { OrganizationRequest } from '@splat-connect/types'
 
@@ -56,7 +55,6 @@ export default async function RequestAnOrganisationPage() {
 
   return (
     <div className="max-w-[760px]">
-      <BackLink href="/get-involved/organisations" label="For organisations" />
       <h1 className="font-display text-[clamp(30px,3.4vw,42px)] font-extrabold leading-[1.08] tracking-[-.02em] text-ink">
         Request to bring your organisation in
       </h1>

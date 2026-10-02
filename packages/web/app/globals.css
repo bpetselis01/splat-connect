@@ -126,15 +126,6 @@
   /* Overshoots and settles. The site is about switches; its controls should
      feel like one is being pressed rather than merely recoloured. */
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-  /* A damped oscillator sampled into linear() — duration included, so it is
-     used whole: `transition: transform var(--spring-photo)`.
-     --ease-spring above stays right for a control that snaps back on its own;
-     this one is for a rail released mid-drag, where the settle after the
-     overshoot is most of what you feel. A cubic-bezier cannot describe that
-     tail: it has one hump and then stops. Only the photo carousel wants it. */
-  --spring-photo: 0.58s
-    linear(0, 0.041, 0.138, 0.26, 0.39, 0.514, 0.624, 0.719, 0.797, 0.859, 0.907, 0.943, 0.969,
-      0.986, 0.998, 1.005, 1.009, 1.011, 1.011, 1.01, 1.009, 1.008, 1.006, 1.005, 1.004, 1.003, 1);
 
   --font-sans: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
   /* Numerics, with tabular-nums at the call site. Replaces IBM Plex Mono. */
@@ -143,6 +134,35 @@
      one is not numerals-only and not opt-in per page. */
   --font-display: var(--font-baloo), var(--font-sans);
 }
+
+/* shadcn/ui's colour names (components.json, components/ui), pointed at the
+   Soft Pop tokens. `inline`, so a utility emits var(--color-surface) itself and
+   resolves on the element — that is what lets body[data-mode='dark'|'hc'] below
+   reach it, where shadcn's own :root/.dark pair would not. shadcn's `muted` is
+   a background and Soft Pop's --color-muted is text, so bg-muted is not
+   mapped: a shadcn component that uses it needs a class swap. */
+@theme inline {
+  --color-background: var(--color-canvas);
+  --color-foreground: var(--color-ink);
+  --color-card: var(--color-surface);
+  --color-card-foreground: var(--color-ink);
+  --color-popover: var(--color-surface);
+  --color-popover-foreground: var(--color-ink);
+  --color-primary: var(--color-brand);
+  --color-primary-foreground: var(--onbrand);
+  --color-secondary: var(--color-sunken);
+  --color-secondary-foreground: var(--color-ink);
+  --color-muted-foreground: var(--color-muted);
+  --color-accent: var(--color-brand-50);
+  --color-accent-foreground: var(--color-ink);
+  --color-destructive: var(--color-danger);
+  --color-border: var(--color-line);
+  --color-input: var(--color-line);
+  --color-ring: var(--color-brand);
+}
+
+/* shadcn's `dark:` variant, keyed to the header's mode toggle, not a .dark class. */
+@custom-variant dark (&:where(body[data-mode="dark"], body[data-mode="dark"] *));
 @layer base {
   /* The artboard's own token names, aliased onto the @theme values above.
      Prototype markup is written against these — var(--surface), var(--e2),
@@ -292,15 +312,6 @@
     transition-duration: 0.01ms !important;
   }
 
-  /* The carousel sets `transition: transform var(--spring-photo)` inline, where
-     a rule cannot outrank it — so the token itself is what gets collapsed.
-     Redefined rather than removed: the rail must still arrive at the photo it
-     was released towards, just without travelling there. */
-  @media (prefers-reduced-motion: reduce) {
-    :root {
-      --spring-photo: 1ms linear;
-    }
-  }
 
   /*
    * The display face, and the reason the app never looked like the board.
@@ -2546,6 +2557,13 @@
     padding: 72px 0 56px;
   }
 
+  /* On a phone the 72 left a blank first screen above the badge. */
+  @media (max-width: 639px) {
+    .hero {
+      padding-top: 32px;
+    }
+  }
+
   @media (min-width: 900px) {
     .hero {
       grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
@@ -3125,6 +3143,13 @@
     .sw-scene__body {
       font-size: 16px;
     }
+
+    /* A flatter card, so the longest scene (the printer's) fits a phone's
+       screen: at 4:3 its CTA fell off the bottom and its art ran under the
+       kicker. */
+    .sw-scene__art {
+      aspect-ratio: 2 / 1;
+    }
   }
 
   /* ---- bands below the flight ---- */
@@ -3177,6 +3202,13 @@
     align-items: baseline;
     justify-content: space-between;
     gap: 16px;
+  }
+
+  /* "View all" is the band's only way on; a 23px line is hard to hit. */
+  @media (max-width: 639px) {
+    .band__head .door__cta {
+      min-height: 44px;
+    }
   }
 
   .band__body {
@@ -3635,6 +3667,21 @@
     }
   }
 
+  /* The phone fold — components/browse-filters.tsx. */
+  .browse-filters__toggle {
+    display: none;
+  }
+
+  @media (max-width: 639px) {
+    .browse-filters__toggle {
+      display: inline-flex;
+    }
+
+    .browse-filters:not([data-open]) > :not(:first-child) {
+      display: none;
+    }
+  }
+
   .browse-filters fieldset {
     margin: 0;
     padding: 0;
@@ -3685,7 +3732,7 @@
   /* The board's sort pair: a 44px pill that opens the field menu, and a 44px
      disc that flips direction. Values are the board's #library inline styles. */
   .sort-control {
-    position: relative;
+    anchor-name: --sort-control;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -3739,12 +3786,21 @@
     outline-offset: 2px;
   }
 
+  /* A popover, so it sits in the top layer and is placed by anchor rather than
+     by a positioned parent. `inset: auto` and `margin: 0` undo the UA popover
+     centring; display lives on :popover-open because an author display beats
+     the UA's display: none for a closed popover. A top-layer popover is fixed,
+     so a menu that runs off the bottom cannot be scrolled to: flip-block opens
+     it above the trigger instead when the trigger sits low in the viewport. */
   .sort-control__menu {
-    position: absolute;
-    top: 52px;
-    right: 0;
-    z-index: 40;
-    display: flex;
+    position-anchor: --sort-control;
+    inset: auto;
+    top: anchor(bottom);
+    right: anchor(right);
+    margin: 8px 0 0;
+    position-try-fallbacks: flip-block;
+    overflow: visible;
+    color: inherit;
     flex-direction: column;
     gap: 2px;
     min-width: 250px;
@@ -3754,6 +3810,10 @@
     background: var(--surface);
     box-shadow: var(--e3);
     animation: pixel-rise 0.18s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  .sort-control__menu:popover-open {
+    display: flex;
   }
 
   .sort-control__option {
@@ -3775,7 +3835,7 @@
     background: var(--surface2);
   }
 
-  .sort-control__option[aria-selected='true'] {
+  .sort-control__option[aria-pressed='true'] {
     background: var(--b50);
   }
 
@@ -4144,7 +4204,7 @@
   }
 
   .nav-tab:hover,
-  .nav-tab[aria-expanded='true'],
+  .nav-more:has(:popover-open) .nav-tab,
   .nav-tab[data-current] {
     background: var(--color-sunken);
   }
@@ -4154,17 +4214,21 @@
   }
 
   .nav-more {
-    position: relative;
+    anchor-name: --nav-more;
   }
 
+  /* A popover in the top layer, placed by anchor — see .sort-control__menu
+     for why inset, margin and display are spelled out. */
   .nav-more__menu {
-    position: absolute;
-    top: 52px;
-    right: 0;
-    z-index: 50;
+    position-anchor: --nav-more;
+    inset: auto;
+    top: calc(anchor(top) + 52px);
+    right: anchor(right);
+    margin: 0;
+    overflow: visible;
+    color: inherit;
     width: 520px;
     max-width: calc(100vw - 40px);
-    display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 6px;
     padding: 16px;
@@ -4175,20 +4239,20 @@
     animation: pixel-rise 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
+  .nav-more__menu:popover-open {
+    display: grid;
+  }
+
   /* On a phone More lands wherever the tab row wraps it, so a menu anchored
-     to the button opens off one edge or the other. Fixed instead, inset from
-     the header's own edges: the header's backdrop-filter makes it the
-     containing block for a fixed child, so left/right resolve against the bar,
-     and top: auto keeps the menu at its place in the flow, under the button. */
+     to the button's edge opens off one side or the other. Inset from the
+     viewport's edges instead, and only the top follows the button. */
   @media (max-width: 639px) {
     .nav-more__menu {
-      position: fixed;
-      top: auto;
+      top: calc(anchor(bottom) + 8px);
       left: 16px;
       right: 16px;
       width: auto;
       max-width: none;
-      margin-top: 8px;
       grid-template-columns: 1fr;
     }
   }
@@ -4389,6 +4453,98 @@
     .nav-signin:hover,
     .nav-signin:active {
       transform: none;
+    }
+  }
+
+  /* The phone fold. Unfolded, the bar wraps to four rows — brand, tabs,
+     search and toggles, account — about 275px before any content. Folded it is
+     one row: brand, account, Menu. .nav-tools steps out of the way
+     (display: contents) so its children can be ordered around the tabs. */
+  .nav-menu-toggle {
+    display: none;
+  }
+
+  @media (max-width: 639px) {
+    .brand-link {
+      margin-right: auto;
+      padding-inline: 0;
+    }
+
+    .nav-tools {
+      display: contents;
+    }
+
+    .nav-account,
+    .nav-signin {
+      order: 1;
+    }
+
+    .nav-menu-toggle {
+      order: 2;
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      border: var(--border-width) solid var(--color-line);
+      border-radius: var(--radius-pill);
+      background: var(--color-surface);
+      color: var(--color-ink);
+      box-shadow: var(--shadow-e1);
+      cursor: pointer;
+    }
+
+    .nav-menu-toggle > svg {
+      font-size: 22px;
+    }
+
+    /* The label stays for screen readers; the badge and initials say it. */
+    .nav-account__label {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+
+    .nav-account {
+      padding-left: 6px;
+      gap: 6px;
+    }
+
+    .site-nav:not([data-open]) :is(.nav-tabs, .nav-search, .mode-group, .motion-toggle) {
+      display: none;
+    }
+
+    .site-nav[data-open] .nav-search {
+      order: 3;
+      flex-basis: 100%;
+    }
+
+    .site-nav[data-open] .nav-search input {
+      width: 100%;
+      font-size: 16px;
+    }
+
+    .site-nav[data-open] .nav-tabs {
+      order: 4;
+      flex-basis: 100%;
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .site-nav[data-open] .nav-tab {
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .site-nav[data-open] .mode-group,
+    .site-nav[data-open] .motion-toggle {
+      order: 5;
+    }
+
+    .site-nav[data-open] .mode-group {
+      margin-right: auto;
     }
   }
 }
@@ -5157,6 +5313,13 @@ body[data-motion='reduced'] :is(.sw-kicker__hint, .sw-progress, .sw-rail) {
     border-top: var(--bw) solid var(--line);
     background: var(--surface);
   }
+  /* The signed-in dock floats bottom-right; on a phone it would sit on the
+     copyright line for good. Room for it under the last line. */
+  @media (max-width: 639px) {
+    .site-footer {
+      padding-bottom: 72px;
+    }
+  }
   .site-footer__grid {
     display: grid;
     grid-template-columns: 1.5fr 2.6fr;
@@ -5615,18 +5778,6 @@ body[data-motion='reduced'] :is(.sw-kicker__hint, .sw-progress, .sw-rail) {
     padding-top: 6px;
     border-top: var(--bw) solid var(--line);
   }
-  .form-trail {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 14px;
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--muted);
-  }
-  .form-trail a {
-    color: var(--b700);
-  }
 
   /* The board's form screens sink their inputs into --canvas at 50px, a step
      taller than the site-wide .field; scoped here rather than changed there. */
@@ -5685,6 +5836,14 @@ body[data-motion='reduced'] :is(.sw-kicker__hint, .sw-progress, .sw-rail) {
     background: var(--tamber);
     box-shadow: var(--e3), var(--hi);
     color: var(--tink);
+  }
+
+  /* On a phone the copy takes a row of its own (max-sm:basis-full on it);
+     this just trims the padding to match. */
+  @media (max-width: 639px) {
+    .printing-guide-first {
+      padding: 20px;
+    }
   }
 
   .printing-guide-first__icon {
@@ -5954,6 +6113,52 @@ body[data-motion='reduced'] :is(.sw-kicker__hint, .sw-progress, .sw-rail) {
     color: var(--muted);
   }
 
+  /* On a phone each row becomes a card: the first cell takes the full width,
+     the rest flow under it, and a cell whose value needs its column name
+     carries it as data-label. The header stays for screen readers. */
+  @media (max-width: 639px) {
+    .admin-table,
+    .admin-table tbody {
+      display: block;
+    }
+    .admin-table thead {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+    .admin-table tbody tr {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px 16px;
+      padding: 14px 18px;
+    }
+    .admin-table td,
+    .admin-table td:first-child,
+    .admin-table td:last-child {
+      display: block;
+      padding: 0;
+    }
+    .admin-table td:first-child {
+      flex-basis: 100%;
+    }
+    .admin-table td:last-child:not([data-label]) {
+      margin-left: auto;
+    }
+    .admin-table td[data-label]::before {
+      content: attr(data-label);
+      margin-right: 6px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+  }
+
   /* The decision card on the two review screens. */
   .admin-panel {
     padding: 24px;
@@ -6212,6 +6417,12 @@ body[data-motion='reduced'] :is(.sw-kicker__hint, .sw-progress, .sw-rail) {
     max-height: min(560px, 64vh);
     background: var(--surface);
   }
+  /* On a phone an empty thread was a screen of blank card above the composer. */
+  @media (max-width: 639px) {
+    .chat-panel--board .chat-log {
+      min-height: 200px;
+    }
+  }
   .chat-panel--board .chat-daymark {
     align-self: stretch;
     display: flex;
@@ -6412,6 +6623,16 @@ body[data-motion='reduced'] :is(.sw-kicker__hint, .sw-progress, .sw-rail) {
   flex-direction: column;
   gap: 4px;
 }
+/* A phone stacks the rail above the card; as a column its nine rows pushed the
+   open section a screen down, so there the tabs wrap as chips instead. */
+@media (max-width: 639px) {
+  .editor-rail__nav {
+    flex-flow: row wrap;
+  }
+  .editor-rail__nav > div:not(.contents) {
+    flex-basis: 100%;
+  }
+}
 .editor-rail__tab {
   display: flex;
   align-items: center;
@@ -6592,5 +6813,18 @@ body[data-motion='reduced'] :is(.sw-kicker__hint, .sw-progress, .sw-rail) {
     color: var(--muted);
     font-size: 13.5px;
     font-weight: 700;
+  }
+}
+
+/*
+ * iOS Safari zooms the whole page when a field under 16px takes focus, and
+ * does not zoom back out. Most of this site's fields are set at 14-15px, so on
+ * a phone every search box and form did it. Unlayered, so it outranks the
+ * layered component and utility rules that set those sizes; max() so a field
+ * already set larger keeps its size.
+ */
+@media (max-width: 639px) {
+  :is(input:not([type='checkbox'], [type='radio'], [type='range'], [type='file'], [type='color']), select, textarea) {
+    font-size: max(16px, 1em);
   }
 }

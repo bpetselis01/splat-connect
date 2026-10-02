@@ -3,7 +3,7 @@ import { createUserClient } from '../supabase/client.js'
 import { STL_MATERIALS } from '@splat-connect/types'
 import type { StlFile } from '@splat-connect/types'
 
-type PrintSettings = Pick<StlFile, 'print_minutes' | 'filament_grams' | 'material'>
+type PrintSettings = Pick<StlFile, 'print_minutes' | 'filament_grams' | 'material' | 'size_x_mm' | 'size_y_mm' | 'size_z_mm'>
 type StlFileInput = { filename: string; file_url: string } & Partial<PrintSettings>
 
 // Blank, absent and garbage all land as null; the column checks (068) refuse
@@ -13,6 +13,9 @@ const settings = (f: Partial<PrintSettings>): PrintSettings => ({
   print_minutes: int(f.print_minutes),
   filament_grams: int(f.filament_grams),
   material: (STL_MATERIALS as readonly unknown[]).includes(f.material) ? f.material! : null,
+  size_x_mm: int(f.size_x_mm),
+  size_y_mm: int(f.size_y_mm),
+  size_z_mm: int(f.size_z_mm),
 })
 
 const CHECK_VIOLATION = '23514'
@@ -35,10 +38,17 @@ const router = subResourceRoutes<StlFileInput>({
 router.patch('/:id/stl-files/:fileId', async (c) => {
   const body = await c.req.json<Partial<PrintSettings>>().catch(() => null)
   if (body === null || typeof body !== 'object') return c.json({ error: 'Body must be an object' }, 400)
+  // 097. Checked here as well as by the column, so the answer is a sentence.
+  const sizes = [body.size_x_mm, body.size_y_mm, body.size_z_mm]
+  if (sizes.some((v) => v != null && !(Number.isInteger(v) && (v as number) >= 1 && (v as number) <= 2000))) {
+    return c.json({ error: 'Part sizes are whole millimetres, 1 to 2000.' }, 400)
+  }
   const supabase = createUserClient(c.get('token'))
   const { data, error } = await supabase
     .from('stl_files')
-    .update(settings(body))
+    // Only the keys sent: a client that edits sizes alone (the phone's Save
+    // sizes) must not null the grams, minutes and material it never sent.
+    .update(Object.fromEntries(Object.entries(settings(body)).filter(([k]) => Object.hasOwn(body, k))))
     .eq('id', c.req.param('fileId'))
     .eq('tutorial_id', c.req.param('id'))
     .select()

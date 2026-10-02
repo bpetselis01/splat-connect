@@ -26,7 +26,7 @@ import {
 } from '@phosphor-icons/react/dist/ssr'
 import type { Toy, OfferType } from '@splat-connect/types'
 import { Stepper } from '@/components/stepper'
-import { ToyDetailsForm } from '@/components/toy-details-form'
+import { ToyDetailsForm, type ToyDetailsInput } from '@/components/toy-details-form'
 import { ToyPhotosSection } from '@/components/toy-photos-section'
 import { DeleteEntityButton } from '@/components/delete-entity-button'
 import { ToastProvider } from '@/components/toast'
@@ -38,8 +38,9 @@ import {
   SubmitButton,
 } from '@/components/editor-status'
 import { browserApiClient } from '@/lib/browser-api-client'
+import { ToyPicksEditor } from '@/components/toy-picks-editor'
 import { formatRelativeTime } from '@/lib/relative-time'
-import { computeToyStepStatuses, getMissingToyFields } from '@/lib/toy-steps'
+import { computeToyStepStatuses, getMissingToyFields } from '@splat-connect/types'
 
 const OFFERS: { value: OfferType; label: string; sub: string; tint: string; Icon: typeof Gift }[] = [
   { value: 'donation', label: 'Donation', sub: 'They keep it for good', tint: 'var(--tmint)', Icon: Gift },
@@ -58,10 +59,20 @@ const OFFER_PILL: Record<OfferType, string> = { donation: 'Gift', exchange: 'Swa
 const fullDay = (iso: string) =>
   new Date(iso).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })
 
-export function ToyEditor({ toy: initialToy }: { toy: Toy }) {
+export function ToyEditor({
+  toy: initialToy,
+  guides = [],
+  ownToys = [],
+}: {
+  toy: Toy
+  /** Approved guides, for the Details step's "Built from a guide?". */
+  guides?: { id: string; title: string }[]
+  /** The holder's other toys, for Also worth a look. */
+  ownToys?: Toy[]
+}) {
   const [toy, setToy] = useState<Toy>(initialToy)
 
-  async function saveDetails(form: { name: string; description: string | null; condition: number }) {
+  async function saveDetails(form: ToyDetailsInput) {
     const updated = await browserApiClient.patch<Toy>(`/api/toys/${toy.id}`, form)
     setToy(updated)
   }
@@ -83,6 +94,15 @@ export function ToyEditor({ toy: initialToy }: { toy: Toy }) {
   // Throws on failure: SubmitButton owns the error state and needs the rejection.
   async function publish() {
     setToy(await browserApiClient.patch<Toy>(`/api/toys/${toy.id}/publish`, {}))
+  }
+
+  // Throws on failure, like publish(): SubmitButton shows the error.
+  async function togglePaused() {
+    setToy(
+      await browserApiClient.patch<Toy>(`/api/toys/${toy.id}`, {
+        paused_at: toy.paused_at ? null : new Date().toISOString(),
+      })
+    )
   }
 
   const statuses = computeToyStepStatuses(toy)
@@ -175,6 +195,10 @@ export function ToyEditor({ toy: initialToy }: { toy: Toy }) {
         </div>
       )}
 
+      {live && (
+        <ToyPicksEditor toy={toy} ownToys={ownToys} guides={guides} onSaved={(t) => setToy((prev) => ({ ...prev, ...t }))} />
+      )}
+
       {!live && (
         <EditorChecklist
           title="Before you list it"
@@ -211,6 +235,15 @@ export function ToyEditor({ toy: initialToy }: { toy: Toy }) {
 
       <div className="flex flex-wrap gap-2.5 border-t border-line pt-[18px]">
         {primary}
+        {/* A retired toy takes no requests either way: no pause to toggle. */}
+        {live && !toy.retired_at && (
+          <SubmitButton
+            label={toy.paused_at ? 'Take requests again' : 'Mark unavailable'}
+            busyLabel="Saving…"
+            errorMessage="Could not save that. Please try again."
+            onSubmit={togglePaused}
+          />
+        )}
         <DeleteEntityButton
           endpoint={`/api/toys/${toy.id}`}
           redirectTo={'/dashboard/toys' as Route<string>}
@@ -287,7 +320,7 @@ export function ToyEditor({ toy: initialToy }: { toy: Toy }) {
             hint: 'What it is and what a family needs to know before they ask for it.',
             content: (
               <div className="panel pt-5">
-                <ToyDetailsForm toy={toy} onSave={saveDetails} />
+                <ToyDetailsForm toy={toy} guides={guides} onSave={saveDetails} />
               </div>
             ),
           },

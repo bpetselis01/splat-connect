@@ -8,7 +8,7 @@
 import 'server-only'
 import { cache } from 'react'
 import { createServerSupabase } from '@/lib/supabase/server'
-import { makeApiClient } from './api-core'
+import { makeApiClient } from '@splat-connect/types'
 
 // cache(): a single page render calls apiClient 4-5x (profile, tutorial,
 // backing, orgs); without this, each call re-verifies the session against

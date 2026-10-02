@@ -2,9 +2,12 @@ import { MagnifyingGlass, UsersThree } from '@phosphor-icons/react/dist/ssr'
 import Link from 'next/link'
 import type { Route } from 'next'
 import { apiClient } from '@/lib/api-client'
+import { paginate } from '@/lib/paginate'
+import { Pager } from '@/components/pager'
 import { revalidatePath } from 'next/cache'
 import { tintFor } from '@/components/card-photo'
 import type { AdminAccountsResponse, Organization, OrgLeader } from '@splat-connect/types'
+import { initials } from '@splat-connect/types'
 
 async function deleteContributor(id: string) {
   'use server'
@@ -15,14 +18,6 @@ async function deleteContributor(id: string) {
 
 type Cap = 'all' | 'contributors' | 'leaders'
 
-const initials = (name: string) =>
-  name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0].toUpperCase())
-    .join('') || '?'
-
 // `Mar 2025` — the board's JOINED cell.
 const joined = (iso: string) =>
   new Intl.DateTimeFormat('en-AU', { month: 'short', year: 'numeric', timeZone: 'Australia/Sydney' })
@@ -32,9 +27,9 @@ const joined = (iso: string) =>
 export default async function ContributorsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ cap?: string; q?: string }>
+  searchParams: Promise<{ cap?: string; q?: string; page?: string }>
 }) {
-  const { cap: capParam, q = '' } = await searchParams
+  const { cap: capParam, q = '', page: pageParam } = await searchParams
   const [{ accounts: all, total }, orgs] = await Promise.all([
     apiClient.get<AdminAccountsResponse>('/api/admin/contributors'),
     // Leadership is the one capability the data knows. It rides on the
@@ -77,6 +72,7 @@ export default async function ContributorsPage({
       (cap === 'all' || (cap === 'leaders') === leaders.has(p.id)) &&
       (!needle || `${p.name} ${p.email}`.toLowerCase().includes(needle))
   )
+  const { items: pageRows, page, pages } = paginate(shown, pageParam, 50)
   const href = (c: Cap) => {
     const params = new URLSearchParams()
     if (c !== 'all') params.set('cap', c)
@@ -148,7 +144,7 @@ export default async function ContributorsPage({
               </tr>
             </thead>
             <tbody>
-              {shown.map((p) => {
+              {pageRows.map((p) => {
                 const leader = leaders.has(p.id)
                 return (
                   <tr key={p.id} data-testid="contributor-row">
@@ -159,7 +155,7 @@ export default async function ContributorsPage({
                           className="grid h-10 w-10 flex-none place-items-center rounded-full text-sm font-extrabold text-ink"
                           style={{ background: tintFor(p.id) }}
                         >
-                          {initials(p.name || p.email)}
+                          {initials(p.name || p.email, '?')}
                         </span>
                         <span className="min-w-0">
                           <span className="block font-extrabold">{p.name}</span>
@@ -175,7 +171,7 @@ export default async function ContributorsPage({
                         {leader ? 'Leader' : 'Contributor'}
                       </span>
                     </td>
-                    <td className="whitespace-nowrap text-muted">{joined(p.created_at)}</td>
+                    <td className="whitespace-nowrap text-muted" data-label="Joined">{joined(p.created_at)}</td>
                     <td className="text-right">
                       <form action={deleteContributor.bind(null, p.id)}>
                         <button type="submit" className="btn btn-danger btn-sm font-bold shadow-none">
@@ -195,6 +191,7 @@ export default async function ContributorsPage({
           </p>
         )}
       </div>
+      <Pager page={page} pages={pages} params={{ cap: capParam, q }} />
     </div>
   )
 }

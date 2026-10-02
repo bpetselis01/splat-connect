@@ -12,6 +12,7 @@
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react'
 import { CheckCircle, PaperPlaneRight } from '@phosphor-icons/react/dist/ssr'
 import type { ThreadMessage } from '@splat-connect/types'
+import { initials } from '@splat-connect/types'
 
 /*
  * ponytail: locale and timezone are pinned rather than read from the browser.
@@ -84,6 +85,8 @@ export function ExchangeChat({
   onSend,
   variant,
   head,
+  highlightId,
+  afterMessage,
 }: {
   messages: ThreadMessage[]
   viewerId: string
@@ -102,6 +105,12 @@ export function ExchangeChat({
   variant?: 'board'
   /** The board variant's header row: who this conversation is with. */
   head?: ReactNode
+  /** A question's marked answer (078), drawn in the answered tint. Default
+   *  variant only — the challenge thread is its one user. */
+  highlightId?: string | null
+  /** A control under one message, e.g. the asker's "Mark as the answer".
+   *  Default variant only, for the same reason. */
+  afterMessage?: (m: ThreadMessage) => ReactNode
 }) {
   const board = variant === 'board'
   const [draft, setDraft] = useState('')
@@ -160,12 +169,6 @@ export function ExchangeChat({
           const last = group.messages[group.messages.length - 1]
 
           if (board) {
-            const initials = name
-              .split(/\s+/)
-              .map((w) => w[0])
-              .join('')
-              .slice(0, 2)
-              .toUpperCase()
             return (
               <Fragment key={first.id}>
                 {daymark}
@@ -173,7 +176,7 @@ export function ExchangeChat({
                   <div key={m.id} className={`chat-row${mine ? ' chat-row-mine' : ''}`}>
                     {!mine && (
                       <span aria-hidden="true" className="chat-avatar">
-                        {initials}
+                        {initials(name)}
                       </span>
                     )}
                     <div className="chat-stack">
@@ -210,9 +213,16 @@ export function ExchangeChat({
                     </span>
                   )}
                   {group.messages.map((m) => (
-                    <p key={m.id} className={`chat-bubble ${mine ? 'chat-bubble-mine' : 'chat-bubble-theirs'}`}>
-                      {m.body}
-                    </p>
+                    <Fragment key={m.id}>
+                      <p
+                        className={`chat-bubble ${mine ? 'chat-bubble-mine' : 'chat-bubble-theirs'}`}
+                        style={m.id === highlightId ? { background: 'var(--tok)', color: 'var(--tink)' } : undefined}
+                      >
+                        {m.id === highlightId && <span className="sr-only">The answer: </span>}
+                        {m.body}
+                      </p>
+                      {afterMessage?.(m)}
+                    </Fragment>
                   ))}
                   <time className="chat-stamp" dateTime={last.created_at}>
                     {timeFormat.format(new Date(last.created_at))}
@@ -286,12 +296,6 @@ export function ChatHead({
   sub?: string
   badge?: ReactNode
 }) {
-  const initials = name
-    .split(/\s+/)
-    .map((w) => w[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase()
   return (
     <header className="chat-head">
       <span
@@ -299,7 +303,7 @@ export function ChatHead({
         className="grid h-10 w-10 flex-none place-items-center rounded-full text-sm font-extrabold"
         style={{ background: 'var(--tmint)', color: 'var(--tink)' }}
       >
-        {initials}
+        {initials(name)}
       </span>
       <span className="min-w-0 flex-1">
         <span className="block font-display text-base font-extrabold text-ink">{name}</span>

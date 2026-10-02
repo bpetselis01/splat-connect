@@ -17,6 +17,7 @@ import { Hono } from 'hono'
 import { chunk } from '../chunk.js'
 import { SAVE_SLUGS, type SaveSlug, type SavedIds } from '@splat-connect/types'
 import { createUserClient } from '../supabase/client.js'
+import { primaryAuthorNames } from '../profile-name.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
 const saves = new Hono<{ Variables: AuthVariables }>()
@@ -27,12 +28,13 @@ const saves = new Hono<{ Variables: AuthVariables }>()
  * The Supabase client here carries no generated Database types — the same as
  * every other route in this package — so inferring the builder's type from it
  * bottoms out in "type instantiation is excessively deep". Naming only the
- * three things SOURCE actually uses is shorter and more honest about what a
+ * methods SOURCE actually uses is shorter and more honest about what a
  * filter is allowed to do.
  */
 type EntityQuery = {
   eq(column: string, value: string): EntityQuery
   is(column: string, value: null): EntityQuery
+  in(column: string, values: string[]): EntityQuery
   then: PromiseLike<{ data: unknown; error: { message: string } | null }>['then']
 }
 
@@ -41,9 +43,8 @@ type EntityQuery = {
  *
  * The selects are copied from routes/public.ts on purpose: a saved list returns
  * the same shape the public list does, so TutorialCard and ToyLibraryCard
- * render it with no changes at all. 'printable_part' is in the enum and
- * deliberately absent here, so its route 404s until someone adds a line —
- * placeholder-ness lives in one place rather than five conditionals.
+ * render it with no changes at all. Every enum member has a line here now;
+ * a new member 404s until it gets one.
  */
 const SOURCE = {
   tutorials: {
@@ -58,8 +59,11 @@ const SOURCE = {
   },
   challenges: {
     table: 'toy_ideas',
-    select: '*',
-    filter: (q: EntityQuery) => q.eq('status', 'challenge'),
+    // GET /public/challenges' columns, never '*': review_note is an admin's
+    // private rejection reasoning, and a saved list is no wider than its page.
+    select: 'id, title, summary, contact_prefs, status, kind, answered_at, created_at',
+    // Graduated too: "Follow the write-up" is a save on a graduated challenge.
+    filter: (q: EntityQuery) => q.in('status', ['challenge', 'graduated']),
   },
   organisations: {
     table: 'organizations',
@@ -68,6 +72,13 @@ const SOURCE = {
     // the save came from.
     select: 'id, name, description, status, suburb, state',
     filter: (q: EntityQuery) => q.eq('status', 'active'),
+  },
+  parts: {
+    table: 'stl_files',
+    // The catalogue's shape (GET /public/printable-parts). The inner join is
+    // what drops a part whose guide went back to draft.
+    select: 'id, filename, material, filament_grams, print_minutes, tutorial_id, tutorials!inner(id, title, status)',
+    filter: (q: EntityQuery) => q.eq('tutorials.status', 'approved'),
   },
 } satisfies Record<SaveSlug, { table: string; select: string; filter: (q: EntityQuery) => EntityQuery }>
 
@@ -140,7 +151,15 @@ saves.get('/:slug', async (c) => {
   const byId = new Map(
     results.flatMap((r) => (r.data ?? []) as { id: string }[]).map((e) => [e.id, e])
   )
-  return c.json(ids.map((id) => byId.get(id)).filter(Boolean))
+  const entities = ids.map((id) => byId.get(id)).filter(Boolean) as Array<{ id: string }>
+  // saved-list-meta: a guide row names its author. Resolved by id, not
+  // embedded — see primaryAuthorNames.
+  if (slug === 'tutorials') {
+    const names = await primaryAuthorNames(entities.map((e) => e.id))
+    if (!names) return c.json({ error: 'Failed to load saved guides' }, 500)
+    return c.json(entities.map((e) => ({ ...e, author_name: names.get(e.id) ?? null })))
+  }
+  return c.json(entities)
 })
 
 saves.post('/', async (c) => {

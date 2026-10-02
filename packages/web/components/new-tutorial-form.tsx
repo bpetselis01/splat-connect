@@ -17,8 +17,9 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Route } from 'next'
-import { ArrowRight, Cube, Dog, Image as ImageIcon } from '@phosphor-icons/react/dist/ssr'
+import { ArrowRight, Cube, Dog, FilePdf, Image as ImageIcon, PencilSimple } from '@phosphor-icons/react/dist/ssr'
 import { browserApiClient } from '@/lib/browser-api-client'
+import { PdfImportFlow } from '@/components/pdf-import-flow'
 import type { Difficulty, Tutorial, TutorialKind } from '@splat-connect/types'
 
 const KINDS: { kind: TutorialKind; label: string; sub: string; Icon: typeof Cube }[] = [
@@ -32,7 +33,40 @@ const KIND_NOTE: Record<TutorialKind, string> = {
   assistive_tech: 'Assistive tech guides get an STL step for the files you printed with.',
 }
 
-export function NewTutorialForm({ kind: initialKind = 'toy_adaptation' }: { kind?: TutorialKind }) {
+const STARTS = [
+  { start: 'blank', label: 'Start blank', sub: 'Type the guide in yourself', Icon: PencilSimple },
+  { start: 'pdf', label: 'Start from a PDF', sub: 'Fill in what we can read from your guide’s PDF', Icon: FilePdf },
+] as const
+
+/** The first choice on /upload: a blank draft, or one filled in from a PDF (pdf-import-flow.tsx). */
+export function NewTutorialForm({ kind }: { kind?: TutorialKind }) {
+  const [start, setStart] = useState<'blank' | 'pdf'>('blank')
+  return (
+    <div className="flex flex-col gap-5">
+      <div role="radiogroup" aria-label="How do you want to start?" className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {STARTS.map((s) => (
+          <button
+            key={s.start}
+            type="button"
+            role="radio"
+            aria-checked={start === s.start}
+            onClick={() => setStart(s.start)}
+            className="kind-card"
+          >
+            <s.Icon size={26} weight="duotone" aria-hidden="true" className="flex-none text-brand-dark" />
+            <span>
+              <span className="block text-[15px] font-extrabold">{s.label}</span>
+              <span className="mt-0.5 block text-[13px] leading-[1.4] text-muted">{s.sub}</span>
+            </span>
+          </button>
+        ))}
+      </div>
+      {start === 'pdf' ? <PdfImportFlow /> : <BlankTutorialForm kind={kind} />}
+    </div>
+  )
+}
+
+function BlankTutorialForm({ kind: initialKind = 'toy_adaptation' }: { kind?: TutorialKind }) {
   const router = useRouter()
   const [kind, setKind] = useState<TutorialKind>(initialKind)
   const [title, setTitle] = useState('')

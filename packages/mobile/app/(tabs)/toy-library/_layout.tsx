@@ -2,6 +2,11 @@
 import { Stack } from 'expo-router'
 import { stackScreenOptions } from '../../../lib/nav-options'
 
+// A deep link or notification straight to a pushed screen still lands with
+// the list under it: without this the stack held that one screen, so there
+// was no back button and the tab bar showed as if it were a tab root.
+export const unstable_settings = { initialRouteName: 'index' }
+
 export default function ToyLibraryStackLayout() {
   return (
     <Stack screenOptions={stackScreenOptions}>

@@ -16,10 +16,10 @@ test("the contributor page lists that contributor's guides and opens one", async
   await page.goto(`/guides/contributor/${contributor.id}`)
 
   await expect(page.getByText(author)).toBeVisible()
-  await expect(page.getByText(`Guides by ${author.split(' ')[0]}`)).toBeVisible()
-  await expect(page.getByText(title)).toBeVisible()
+  await expect(page.getByText('Published guides')).toBeVisible()
+  await expect(page.getByRole('button', { name: title })).toBeVisible()
 
-  await page.getByText(title).click()
+  await page.getByRole('button', { name: title }).click()
   await expect(page).toHaveURL(new RegExp(`/guides/${id}$`))
 })
 
@@ -40,10 +40,13 @@ test('the organisation page lists the guides it backs', async ({ page }) => {
 
   await page.goto(`/guides/organisation/${data.id}`)
 
-  await expect(page.getByText(org)).toBeVisible()
+  // A heading: the page also has "Say thanks to <org>" (077).
+  await expect(page.getByRole('heading', { name: org })).toBeVisible()
   await expect(page.getByText('Guides they back')).toBeVisible()
-  await expect(page.getByText(title)).toBeVisible()
+  // The list stays mounted (hidden) under a deep-linked screen, so the title
+  // matches twice on web: the visible one is the one on this screen.
+  await expect(page.getByText(title).filter({ visible: true })).toBeVisible()
 
-  await page.getByText(title).click()
+  await page.getByText(title).filter({ visible: true }).click()
   await expect(page).toHaveURL(new RegExp(`/guides/${id}$`))
 })

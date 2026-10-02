@@ -106,7 +106,7 @@ describe('leader project page', () => {
     expect(screen.getByText('M3 bolt')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: "Tools you'll need" })).toBeInTheDocument()
     expect(screen.getByText('Hex key')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('tab', { name: /Files & print settings/ }))
+    fireEvent.mouseDown(screen.getByRole('tab', { name: /Files & print settings/ }))
     expect(screen.getByRole('link', { name: /mount\.stl/ })).toBeInTheDocument()
   })
 })

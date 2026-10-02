@@ -26,15 +26,9 @@
  * - packages/web/components/notifications-list.tsx: the copy and the link
  */
 import { createAdminClient } from './supabase/client.js'
+import { profileName } from './profile-name.js'
 
 type Admin = ReturnType<typeof createAdminClient>
-
-/** The display name to stamp on the row. Denormalised at insert time, as 013's
-    actor_name comment explains. Falls back rather than failing the notify. */
-async function actorName(admin: Admin, userId: string): Promise<string> {
-  const { data } = await admin.from('profiles').select('name').eq('id', userId).maybeSingle()
-  return (data?.name as string | undefined) ?? 'A contributor'
-}
 
 /**
  * Leaders of these organisations, minus `exclude`.
@@ -104,7 +98,7 @@ export async function notifyBackingRequested(opts: {
     type: 'backing_requested',
     tutorial_id: opts.tutorialId,
     tutorial_title: (tutorial?.title as string | undefined) ?? '',
-    actor_name: await actorName(admin, opts.actorId),
+    actor_name: await profileName(admin, opts.actorId, 'A contributor'),
   })
 }
 
@@ -144,6 +138,6 @@ export async function notifyTutorialSubmitted(opts: {
     type: 'tutorial_submitted',
     tutorial_id: opts.tutorialId,
     tutorial_title: opts.tutorialTitle,
-    actor_name: await actorName(admin, opts.actorId),
+    actor_name: await profileName(admin, opts.actorId, 'A contributor'),
   })
 }

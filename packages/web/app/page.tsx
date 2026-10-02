@@ -18,6 +18,7 @@
  * - components/splat-mascot.tsx: the bear, lifted from the board
  * - globals.css: .hero-*, .sw-*, .door-* live there
  */
+import { Fragment } from 'react'
 import Link from 'next/link'
 import type { Route } from 'next'
 import {
@@ -25,7 +26,7 @@ import {
   BookOpen,
   BookOpenText,
   Gift,
-  UsersThree,
+  Buildings,
   MagnifyingGlass,
   Wrench,
   Receipt,
@@ -38,6 +39,7 @@ import { ScrollWorld } from '@/components/scroll-world'
 import { SplatMascot } from '@/components/splat-mascot'
 import { StatChips } from '@/components/stat-chips'
 import { CountUp } from '@/components/count-up'
+import { heroHeadline, homeHero, homeNumbers, type HomeNumberKey } from '@/lib/home-content'
 import type { Tutorial, ImpactSummary, ToyWithOwner } from '@splat-connect/types'
 
 const EMPTY_TOTALS: ImpactSummary['totals'] = {
@@ -59,7 +61,7 @@ async function getJson<T>(path: string, fallback: T): Promise<T> {
 }
 
 export default async function HomePage() {
-  const [tutorials, toys, impact] = await Promise.all([
+  const [tutorials, toys, impact, content] = await Promise.all([
     getJson<Tutorial[]>('/api/public/tutorials', []),
     getJson<ToyWithOwner[]>('/api/public/toys', []),
     getJson<ImpactSummary>('/api/public/impact', {
@@ -69,14 +71,28 @@ export default async function HomePage() {
       organisations: [],
       deliveriesByMonth: [],
     }),
+    // What an admin saved in Site content; each blank field keeps the copy in
+    // lib/home-content.
+    getJson<{ hero: unknown; numbers: unknown; scenes: unknown }>('/api/public/content/home', {
+      hero: null,
+      numbers: null,
+      scenes: null,
+    }),
   ])
   const { totals } = impact
+  const hero = homeHero(content.hero)
+  const headline = heroHeadline(hero.headline)
 
-  const stats = [
-    { icon: BookOpen, value: totals.tutorials, label: 'guides', tint: 'var(--color-brand-soft)' },
-    { icon: Gift, value: totals.toysDelivered, label: 'toys delivered', tint: 'var(--color-mint-soft)' },
-    { icon: UsersThree, value: totals.contributors, label: 'contributors', tint: 'var(--color-apricot-soft)' },
-  ]
+  const look: Record<HomeNumberKey, { icon: typeof BookOpen; tint: string }> = {
+    guides: { icon: BookOpen, tint: 'var(--color-brand-soft)' },
+    organisations: { icon: Buildings, tint: 'var(--color-apricot-soft)' },
+    toys: { icon: Gift, tint: 'var(--color-mint-soft)' },
+  }
+  const stats = homeNumbers(content.numbers, {
+    guides: totals.tutorials,
+    organisations: totals.organisations,
+    toys: totals.toysDelivered,
+  }).map(({ key, label, value }) => ({ ...look[key], label, value }))
 
   const doors = [
     {
@@ -123,25 +139,26 @@ export default async function HomePage() {
         <div className="hero__copy">
           <p className="hero__badge">
             <SealCheck weight="fill" className="h-[18px] w-[18px] text-success" aria-hidden="true" />
-            Free to read, reviewed guides for switch-adapted play
+            {hero.eyebrow}
           </p>
           <h1 className="hero__title">
-            Press it.
-            <br />
-            Watch it <span className="hero__accent">go.</span>
+            {headline.lines.map((line, i) => (
+              <Fragment key={i}>
+                {i > 0 && <br />}
+                {line}
+              </Fragment>
+            ))}{' '}
+            <span className="hero__accent">{headline.accent}</span>
           </h1>
-          <p className="hero__lede">
-            We help families turn ordinary toys into ones that answer to one big switch — so
-            every child gets the part that matters: making something happen.
-          </p>
+          <p className="hero__lede">{hero.subhead}</p>
           <div className="hero__actions">
             <Link href="/library" className="btn btn-primary btn-hero no-underline">
               <BookOpenText weight="bold" className="h-5 w-5" aria-hidden="true" />
-              Find a guide
+              {hero.primary_label}
             </Link>
             <Link href="/toy-library" className="btn btn-quiet btn-hero no-underline">
               <Gift weight="bold" className="h-5 w-5 text-apricot" aria-hidden="true" />
-              Borrow a toy
+              {hero.secondary_label}
             </Link>
           </div>
           <StatChips
@@ -160,7 +177,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <ScrollWorld />
+      <ScrollWorld copy={content.scenes} />
 
       <section className="band band--doors" aria-label="Where to start">
         <ul className="door-grid">

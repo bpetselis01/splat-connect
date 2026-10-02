@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { createContributor, createTutorial, createPublishedToy, deleteUser, uniqueTitle } from './helpers'
+import { createContributor, createTutorial, createPublishedToy, deleteUser, uniqueTitle, pageUntilVisible } from './helpers'
 
 /**
  * The public showcase journey: /impact (no login) links to a contributor's
@@ -31,6 +31,7 @@ test.describe('Impact wall and contributor profile', () => {
       // The contributor's own card — matched by its profile link, since the
       // display name ("E2E Contributor") is shared by every fixture contributor.
       const card = page.locator(`[data-testid="impact-card"][href="/contributors/${contributor.id}"]`)
+      await pageUntilVisible(page, card)
       await expect(card).toBeVisible()
       await expect(card).toContainText(contributor.name)
 
@@ -39,9 +40,10 @@ test.describe('Impact wall and contributor profile', () => {
       await expect(page.getByRole('heading', { level: 1, name: contributor.name })).toBeVisible()
 
       // Guides and toys are sections of one page now, the board's profile
-      // shape, rather than two tabs.
-      await expect(page.getByText(tutorialTitle)).toBeVisible()
-      await expect(page.getByText(toyName)).toBeVisible()
+      // shape, rather than two tabs. Exact: the Recent activity list (1a3d8180)
+      // names both again, inside "Published a guide — …" / "Put a toy on the shelf — …".
+      await expect(page.getByText(tutorialTitle, { exact: true })).toBeVisible()
+      await expect(page.getByText(toyName, { exact: true })).toBeVisible()
     } finally {
       await deleteUser(contributor.id)
     }

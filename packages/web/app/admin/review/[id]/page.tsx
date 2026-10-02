@@ -1,11 +1,11 @@
 import { notFound, redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { apiClient } from '@/lib/api-client'
+import { approveTutorial, rejectTutorial } from '../actions'
 import type { ReactNode } from 'react'
-import { CheckCircle, Clock, WarningCircle, XCircle } from '@phosphor-icons/react/dist/ssr'
+import { Check, CheckCircle, Clock, DownloadSimple, FileText, WarningCircle, X, XCircle } from '@phosphor-icons/react/dist/ssr'
 import { adminActions } from '@/components/project-actions'
 import { PhotoCarousel } from '@/components/photo-carousel'
-import { Check, X, Download, FileText } from '@/components/icons'
 import { KIND_LABEL, SAFETY_CHECKLIST, formatAgeRange, type TutorialWithDetails } from '@splat-connect/types'
 
 // `28 August` — the pill's date, in Sydney time like every other date here.
@@ -17,28 +17,6 @@ const dayMonth = (iso: string) =>
 type Reviewed = TutorialWithDetails & {
   reviewer?: { name: string } | null
   reviewed_for?: { name: string } | null
-}
-
-async function approveTutorial(id: string) {
-  'use server'
-  await apiClient.patch(`/api/admin/tutorials/${id}/status`, { status: 'approved' })
-  revalidatePath('/admin')
-  revalidatePath('/admin/review')
-  revalidatePath(`/admin/review/${id}`)
-  revalidatePath('/library')
-}
-
-async function rejectTutorial(formData: FormData) {
-  'use server'
-  const id = formData.get('id') as string
-  const note = formData.get('note') as string
-  await apiClient.patch(`/api/admin/tutorials/${id}/status`, {
-    status: 'rejected',
-    rejection_note: note || null,
-  })
-  revalidatePath('/admin')
-  revalidatePath('/admin/review')
-  revalidatePath(`/admin/review/${id}`)
 }
 
 /**
@@ -165,7 +143,7 @@ export default async function ReviewTutorialPage({
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 font-semibold text-brand-dark hover:underline"
             >
-              <FileText /> The guide (PDF)
+              <FileText weight="bold" aria-hidden="true" /> The guide (PDF)
             </a>
           ) : (
             'The step-by-step guide has not been uploaded.'
@@ -177,7 +155,7 @@ export default async function ReviewTutorialPage({
                 href={`/files/stl-files/${f.file_url}`}
                 className="inline-flex items-center gap-2 font-semibold text-brand-dark hover:underline"
               >
-                <Download /> {f.filename}
+                <DownloadSimple weight="bold" aria-hidden="true" /> {f.filename}
               </a>
             ))}
         </span>
@@ -239,7 +217,7 @@ export default async function ReviewTutorialPage({
             {actions.includes('approve') && (
               <form action={approveTutorial.bind(null, t.id)}>
                 <button type="submit" className="btn btn-primary btn-ok btn-block">
-                  <Check /> Approve and publish
+                  <Check weight="bold" aria-hidden="true" /> Approve and publish
                 </button>
               </form>
             )}
@@ -264,7 +242,7 @@ export default async function ReviewTutorialPage({
                   </span>
                 </label>
                 <button type="submit" className="btn btn-danger btn-block">
-                  <X /> Send back to the author
+                  <X weight="bold" aria-hidden="true" /> Send back to the author
                 </button>
               </form>
             )}

@@ -5,7 +5,7 @@
  * pinned down here rather than by re-running 119 screens through a browser.
  */
 const assert = require('node:assert')
-const { compare } = require('./compare')
+const { compare, explain } = require('./compare')
 
 const h = (level, text, extra = {}) => ({
   level,
@@ -79,4 +79,50 @@ console.log('compare: 4 checks passed')
   // Same row count, same height gap: still a real finding.
   const short = fp([h(1, 'review queue')], { counts: counts(5), page: { ...fp([]).page, height: 12242 } })
   assert.strictEqual(types(compare(board, short), 'missing-section').length, 1, 'real height gap lost')
+}
+
+// An explained finding leaves the count but stays in the report; a rule whose
+// finding is gone becomes a finding itself.
+{
+  const f = (type, what) => ({ type, severity: 'medium', what, board: null, live: null })
+  const rules = [
+    { type: 'extra-section', match: 'pickup details', why: 'intended', reason: 'where to collect' },
+    { type: 'copy', match: 'wording', why: 'fixture', reason: 'sample org name' },
+  ]
+  const out = explain([f('extra-section', 'live has an extra h2: "pickup details"'), f('shadow', 'card shadow')], rules)
+  assert.deepStrictEqual(out.findings.map((x) => x.type), ['shadow', 'stale-exemption'])
+  assert.strictEqual(out.explained[0].why, 'intended')
+  assert.deepStrictEqual(explain([f('shadow', 'card shadow')]).findings.length, 1, 'no rules must change nothing')
+}
+
+// A board with one card asks whether live draws it, not whether a quarter of
+// live's cards look like it.
+{
+  const note = { radius: 18, shadow: 'none', bg: 'rgb(255,240,204)' }
+  const white = { radius: 18, shadow: 'set', bg: 'rgb(255,255,255)' }
+  const cards = (n, values) => ({ card: { ...values[0], values: { radius: values.map((v) => v.radius), shadow: values.map((v) => v.shadow), bg: values.map((v) => v.bg) } }, button: shape, input: shape })
+  const counts = (n) => ({ cards: n, buttons: 0, inputs: 0, images: 0, tables: 0, lists: 0, rows: 0 })
+  const board = fp([], { counts: counts(1), shapes: { card: note, button: shape, input: shape } })
+  const live = fp([], { counts: counts(25), shapes: cards(25, [note, ...Array(24).fill(white)]) })
+  assert.deepStrictEqual(compare(board, live).filter((x) => /card/.test(x.what)), [], 'lone board card read as a population')
+  const none = fp([], { counts: counts(24), shapes: cards(24, Array(24).fill(white)) })
+  assert.ok(compare(board, none).some((x) => x.what === 'card background'), 'missing lone card not reported')
+}
+
+// A React Native web screen scrolls inside its own container, so its root is
+// the viewport's height whatever the content; height is not comparable there.
+{
+  const board = fp([h(1, 'guides')], { page: { ...fp([]).page, height: 2400 } })
+  const live = fp([h(1, 'guides')], { page: { ...fp([]).page, height: 844 } })
+  assert.ok(compare(board, live).some((x) => x.what === 'page height differs grossly'), 'height check lost')
+  assert.ok(!compare(board, live, { height: false }).some((x) => /page height/.test(x.what)), 'height: false ignored')
+}
+
+// The mobile board's record title is an h2: compared for how it is set, never
+// for what it says, like a desktop record's h1.
+{
+  const board = fp([h(2, 'bubble machine')])
+  const live = fp([h(2, 'parity swap toy')])
+  assert.ok(compare(board, live, { recordTitleH1: true }).some((x) => x.type === 'copy'), 'h2 title wording lost by default')
+  assert.deepStrictEqual(compare(board, live, { recordTitleH1: true, recordTitleLevel: 2 }).filter((x) => x.type === 'copy'), [], 'recordTitleLevel ignored')
 }

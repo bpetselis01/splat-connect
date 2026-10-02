@@ -238,8 +238,17 @@ export function EventForm({
   if (format === 'online' && !onlineUrl.trim()) missing.push('a joining link')
   if (!audience.trim()) missing.push('who it is for')
   if (costCents === null) missing.push('a cost written as dollars, like 12 or 12.50')
+  // Checked before anything is sent: the event is written first and the
+  // questions second, so a refusal at the second step would leave a new event
+  // saved and the next press would publish it twice.
+  const blankQuestion = questions.some((q) => !q.prompt.trim())
+  if (blankQuestion) missing.push('something to ask in every question')
 
   async function save(status: 'draft' | 'published') {
+    if (blankQuestion) {
+      setError('Every question needs something to ask. Fill it in or remove it.')
+      return
+    }
     setError(null)
     setSaving(status)
     try {

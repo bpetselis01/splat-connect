@@ -6,9 +6,9 @@ import type { Capabilities, Organization, Profile, UnreadCounts } from '@splat-c
 import { apiClient } from './api-client'
 import { useAuth } from './auth-context'
 
-const NO_UNREAD: UnreadCounts = { tutorials: 0, exchanges: 0, challenges: 0, total: 0 }
+const NO_UNREAD: UnreadCounts = { tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 }
 
-export async function fetchCapabilities(): Promise<Capabilities | null> {
+async function fetchCapabilities(): Promise<Capabilities | null> {
   let profile: Profile
   try {
     profile = await apiClient.get<Profile>('/api/contributors/me')

@@ -43,9 +43,9 @@ export function uniqueTitle(prefix: string) {
  * about the list behind it should be asserted with the sheet away.
  */
 export async function pickFilter(page: Page, chip: string) {
-  await page.getByRole('button', { name: /^Filters/ }).click()
+  // The chips sit on the screen in a scrolling row (no sheet since the
+  // 2026-09-23 board pass); Playwright scrolls a clipped one into view.
   await page.getByRole('button', { name: chip, exact: true }).click()
-  await page.getByRole('button', { name: 'Done' }).click()
 }
 
 export async function createContributor() {
@@ -75,7 +75,7 @@ export async function signInAsNewContributor(page: Page) {
 }
 
 /** Record contributor-terms acceptance for a service-role-provisioned user. */
-export async function acceptTerms(userId: string) {
+async function acceptTerms(userId: string) {
   const { error } = await adminClient()
     .from('user_agreements')
     .insert({ user_id: userId, agreement_type: 'contributor_terms', version: 'v0-todo' })
@@ -192,7 +192,7 @@ export async function createTutorial(
 }
 
 /** Best-effort teardown. No assertion may depend on this having run. */
-export async function deleteUser(id: string) {
+async function deleteUser(id: string) {
   await adminClient().auth.admin.deleteUser(id)
 }
 
@@ -207,46 +207,52 @@ export async function deleteUser(id: string) {
  * for it with openChildProfile().
  */
 export async function signUpNewAccount(page: Page, email: string) {
-  await page.goto('/sign-in')
-  await page.getByTestId('auth-tab-signup').click()
-  await page.getByLabel('Full name', { exact: true }).fill('E2E Contributor')
+  await page.goto('/create-account')
+  await page.getByLabel('Your name', { exact: true }).fill('E2E Contributor')
   await page.getByLabel('Email', { exact: true }).fill(email)
   await page.getByLabel('Password', { exact: true }).fill(PASSWORD)
-  await page.getByLabel('Confirm password', { exact: true }).fill(PASSWORD)
   await page.getByTestId('accept-contributor-terms').click()
-
-  const [signupResponse] = await Promise.all([
-    page.waitForResponse(
-      (res) => res.url().includes('/auth/v1/signup') && res.request().method() === 'POST'
-    ),
-    page.getByTestId('auth-submit').click(),
-  ])
-  const body = await signupResponse.json()
-  const userId = body.user?.id ?? body.id
-  await adminClient().auth.admin.updateUserById(userId, { email_confirm: true })
-
-  await page.getByText('Back to sign in').click()
-  await page.getByLabel('Email', { exact: true }).fill(email)
-  await page.getByLabel('Password', { exact: true }).fill(PASSWORD)
   await page.getByTestId('auth-submit').click()
+  await enterEmailedCode(page, email)
   await expect(page).toHaveURL(/\/guides$/)
 }
 
+// Local Supabase's mail catcher. The e2e reads the real 6-digit code out of
+// the email rather than confirming through the admin API, so the template and
+// the code screen are both under test.
+const MAILPIT = 'http://127.0.0.1:54324'
+
+/** The newest 6-digit code emailed to `email`, polled until it arrives. When
+ *  `after` is given, only a message sent after that moment counts. */
+export async function latestCode(email: string, after = 0): Promise<string> {
+  for (let i = 0; i < 40; i++) {
+    const res = await fetch(`${MAILPIT}/api/v1/search?query=${encodeURIComponent(`to:"${email}"`)}`)
+    const { messages } = (await res.json()) as { messages: { ID: string; Created: string }[] }
+    const fresh = messages.find((m) => Date.parse(m.Created) >= after)
+    if (fresh) {
+      const msg = (await (await fetch(`${MAILPIT}/api/v1/message/${fresh.ID}`)).json()) as { Text: string }
+      const code = msg.Text.match(/\b(\d{6})\b/)?.[1]
+      if (code) return code
+    }
+    await new Promise((r) => setTimeout(r, 250))
+  }
+  throw new Error(`No code emailed to ${email}`)
+}
+
+/** On the code screen: waits for it, then types the emailed code. */
+export async function enterEmailedCode(page: Page, email: string, after = 0) {
+  await expect(page.getByText('Check your email')).toBeVisible()
+  await page.getByTestId('code-input').fill(await latestCode(email, after))
+}
+
 /**
- * Open Account on its Child Profile segment. Account is a (my) modal route,
- * reachable from any tab, so going straight to the URL is the same thing the
- * MY SPLAT popover does — with none of the popover's animation to wait on.
- */
-/**
- * From /account, land inside ONE child's editor home. The segment lists every
- * child now; a fresh account has none, so this creates the first through the
- * same + Add child a parent would use and waits for its editor.
+ * From /account, land inside ONE child's profile page. Account lists every
+ * child; a fresh account has none, so this creates the first through the
+ * same + Add a child a parent would use and waits for its editor.
  */
 export async function openChildProfile(page: Page) {
   await page.goto('/account')
-  // Account is the default segment on first visit.
-  await page.getByText('Child Profile').click()
-  await page.getByRole('button', { name: '+ Add child' }).click()
+  await page.getByRole('button', { name: '+ Add a child' }).click()
   await expect(page.getByText('Delete profile')).toBeVisible()
 }
 
@@ -258,20 +264,8 @@ export async function signIn(page: Page, email: string, password: string) {
   await page.getByTestId('auth-submit').click()
 }
 
-/** From a fresh sign-in, reach one of the three step screens of a new child. */
-export async function openSubScreen(page: Page, label: 'Ability Profile' | 'Everyday Needs' | 'Customization Metrics') {
-  await openChildProfile(page)
-  // The editor home's rows carry the short step names.
-  const row: Record<typeof label, string> = {
-    'Ability Profile': 'Ability',
-    'Everyday Needs': 'Everyday needs',
-    'Customization Metrics': 'Customisation',
-  }
-  await page.getByRole('button', { name: row[label], exact: true }).click()
-}
-
 /**
- * Tap a Dropdown/ChipGroup option and wait for its optimistic selection to
+ * Tap a ChoiceChips/NeedsChips option and wait for its optimistic selection to
  * commit before returning. Back-to-back programmatic taps can otherwise outrun
  * React's re-render — feeding a stale value to the next tap, or (for a tap that
  * reveals a conditional field) racing that field's mount/unmount.
@@ -368,7 +362,7 @@ export async function createChallenge(
   overrides: Partial<{
     title: string
     summary: string
-    /** 'graduated' puts it under "Solved · became guides" instead. */
+    /** 'graduated' lists it after the open ones, with a Solved pill. */
     status: 'challenge' | 'graduated' | 'pending' | 'rejected'
     contact_prefs: ('clarification' | 'co_design' | 'user_testing')[]
   }> = {}

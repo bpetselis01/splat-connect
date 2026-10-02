@@ -27,9 +27,10 @@ export function PicksRow({
 
   return (
     <View style={styles.wrap}>
-      <Text style={styles.eyebrow}>
-        ALSO WORTH A LOOK · {firstName.toUpperCase()}'S PICKS
+      <Text style={styles.heading} accessibilityRole="header">
+        Also worth a look
       </Text>
+      <Text style={styles.hint}>Up to three guides {firstName} points you at next.</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.content}>
         {picks.map(({ tutorials: t }) => (
           <AnimatedPressable
@@ -60,13 +61,9 @@ export function PicksRow({
 
 const styles = StyleSheet.create({
   wrap: { marginTop: theme.spacing(6) },
-  eyebrow: {
-    fontFamily: theme.fonts.bold,
-    fontSize: theme.type.caption,
-    color: theme.colors.muted,
-    letterSpacing: 0.6,
-    marginBottom: theme.spacing(2),
-  },
+  // The board's section heading and its muted hint.
+  heading: { fontFamily: theme.fonts.display, fontSize: 18, color: theme.colors.text },
+  hint: { fontFamily: theme.fonts.regular, fontSize: 13, color: theme.colors.muted, marginBottom: theme.spacing(2) },
   content: { gap: 10, paddingRight: 6, paddingBottom: 8, paddingLeft: 2 },
   card: {
     width: 124,

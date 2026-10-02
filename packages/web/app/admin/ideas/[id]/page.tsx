@@ -38,10 +38,9 @@ import { revalidatePath } from 'next/cache'
 import Link from 'next/link'
 import type { Route } from 'next'
 import { apiClient } from '@/lib/api-client'
-import { isApiError } from '@/lib/api-core'
-import { CheckCircle, Clock, Megaphone, XCircle, PencilLine } from '@phosphor-icons/react/dist/ssr'
-import { X } from '@/components/icons'
-import { shortDate } from '@/lib/dates'
+import { isApiError } from '@splat-connect/types'
+import { CheckCircle, Clock, Megaphone, XCircle, PencilLine, X } from '@phosphor-icons/react/dist/ssr'
+import { shortDate } from '@splat-connect/types'
 import type { ToyIdea, ContactPref } from '@splat-connect/types'
 
 type Admin = ToyIdea & { profiles: { name: string } | null }
@@ -131,15 +130,27 @@ export default async function AdminIdeaPage({ params }: { params: Promise<{ id: 
         <h1 className="title-hub mt-3">{idea.title}</h1>
         <p className="mt-3 max-w-[58ch] text-lg text-muted">{idea.summary}</p>
 
-        <h2 className="mt-7 mb-2 font-display text-[22px] font-extrabold text-ink">Why it matters</h2>
-        <p className="max-w-[62ch] text-ink">{idea.description}</p>
+        {idea.description && (
+          <>
+            <h2 className="mt-7 mb-2 font-display text-[22px] font-extrabold text-ink">Why it matters</h2>
+            <p className="max-w-[62ch] text-ink">{idea.description}</p>
+          </>
+        )}
 
         <h2 className="mt-7 mb-3 font-display text-[22px] font-extrabold text-ink">Details given</h2>
         <dl className="grid max-w-[520px] grid-cols-[auto_1fr] gap-x-5 gap-y-2.5 text-[15px]">
-          <dt className="font-semibold text-muted">Intended use</dt>
-          <dd className="font-extrabold text-ink">{idea.intended_use}</dd>
-          <dt className="font-semibold text-muted">Who it&apos;s for</dt>
-          <dd className="font-extrabold text-ink">{idea.primary_user}</dd>
+          {idea.intended_use && (
+            <>
+              <dt className="font-semibold text-muted">Intended use</dt>
+              <dd className="font-extrabold text-ink">{idea.intended_use}</dd>
+            </>
+          )}
+          {idea.primary_user && (
+            <>
+              <dt className="font-semibold text-muted">Who it&apos;s for</dt>
+              <dd className="font-extrabold text-ink">{idea.primary_user}</dd>
+            </>
+          )}
           {idea.contact_prefs.length > 0 && (
             <>
               <dt className="font-semibold text-muted">Happy to be contacted for</dt>
@@ -211,7 +222,7 @@ export default async function AdminIdeaPage({ params }: { params: Promise<{ id: 
                   />
                 </label>
                 <button type="submit" className="btn btn-danger btn-block">
-                  <X /> Reject
+                  <X weight="bold" aria-hidden="true" /> Reject
                 </button>
               </form>
             </div>
@@ -219,15 +230,23 @@ export default async function AdminIdeaPage({ params }: { params: Promise<{ id: 
 
           {idea.status === 'challenge' && (
             <div className="flex flex-col gap-3">
-              <form action={graduateIdea.bind(null, idea.id)}>
-                <p className="mb-3 text-sm leading-relaxed text-muted">
-                  Graduating starts a draft guide from this brief and copies every participant
-                  across as a contributor. It only happens once.
+              {/* A question (078) is answered, never graduated — the API 409s it. */}
+              {idea.kind === 'question' ? (
+                <p className="text-sm leading-relaxed text-muted">
+                  This is a question. It is resolved when the asker marks an answer, so it has no
+                  guide to graduate into.
                 </p>
-                <button type="submit" className="btn btn-primary btn-ok btn-block">
-                  Graduate to draft guide
-                </button>
-              </form>
+              ) : (
+                <form action={graduateIdea.bind(null, idea.id)}>
+                  <p className="mb-3 text-sm leading-relaxed text-muted">
+                    Graduating starts a draft guide from this brief and copies every participant
+                    across as a contributor. It only happens once.
+                  </p>
+                  <button type="submit" className="btn btn-primary btn-ok btn-block">
+                    Graduate to draft guide
+                  </button>
+                </form>
+              )}
 
               <form action={rejectIdea} className="mt-1 flex flex-col gap-3">
                 <input type="hidden" name="id" value={idea.id} />
@@ -245,7 +264,7 @@ export default async function AdminIdeaPage({ params }: { params: Promise<{ id: 
                   />
                 </label>
                 <button type="submit" className="btn btn-danger btn-block">
-                  <X /> Unpublish
+                  <X weight="bold" aria-hidden="true" /> Unpublish
                 </button>
               </form>
             </div>

@@ -1,14 +1,16 @@
 // packages/mobile/components/challenges/submit-idea-screen.tsx
 // Mobile's half of web's app/get-involved/submit-an-idea/page.tsx +
-// components/idea-form.tsx: the same six fields, the same labels, the same
-// required-ness, posting to the same POST /api/ideas.
+// components/idea-form.tsx: the board's fields: a title and a summary are
+// required, why it matters is optional, posting to the same POST /api/ideas.
 //
 // Title comes from the native header (app/(tabs)/explore/_layout.tsx).
-import { useState } from 'react'
-import { View, Text, ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native'
+import { useEffect, useState } from 'react'
+import { View, Text, Image, Pressable, ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native'
 import { useRouter } from 'expo-router'
-import { CONTACT_PREFS, type ContactPref, type ToyIdea } from '@splat-connect/types'
+import { Ionicons } from '@expo/vector-icons'
+import { apiMessage, CONTACT_PREFS, type ContactPref, type ToyIdea, type ToyIdeaKind } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
+import { pickAndUploadPhoto, type UploadResult } from '../../lib/upload'
 import { theme } from '../../lib/theme'
 import { useCapabilities } from '../../lib/capabilities'
 import { Screen } from '../ui/Screen'
@@ -17,7 +19,13 @@ import { Chip } from '../ui/Chip'
 import { Button } from '../ui/Button'
 import { TextField } from '../ui/TextField'
 import { EmptyState } from '../ui/EmptyState'
-import { ErrorRow } from '../auth-screen'
+import { ErrorRow } from '../ui/ErrorRow'
+
+// Web's idea-form.tsx tiles, same words (078).
+const KINDS: { kind: ToyIdeaKind; label: string }[] = [
+  { kind: 'challenge', label: 'A toy worth adapting' },
+  { kind: 'question', label: 'A question for the community' },
+]
 
 const CONTACT_PREF_LABELS: Record<ContactPref, string> = {
   clarification: 'Clarification',
@@ -39,66 +47,83 @@ const SCOPE_EXCLUSIONS = [
   'Nothing beyond what a volunteer can build with their own tools.',
 ]
 
-// label is the accessibility name the tests and a screen reader both use;
-// multiline mirrors web's textarea-vs-input split field for field.
+// label is the accessibility name the tests and a screen reader both use.
 const FIELDS = [
-  { key: 'title', label: 'Idea name', multiline: false },
-  { key: 'summary', label: 'Summarise it in one sentence', multiline: false },
-  { key: 'description', label: 'Full description', multiline: true },
-  { key: 'intended_use', label: 'Intended use', multiline: true },
-  { key: 'primary_user', label: 'Primary user', multiline: true },
+  { key: 'title', label: 'Idea name', multiline: false, placeholder: undefined },
+  { key: 'summary', label: 'Summarise it in one sentence', multiline: false, placeholder: undefined },
+  // The board's label and placeholder (MB #challenge_new). Optional (103).
+  { key: 'description', label: 'Why it matters', multiline: true, placeholder: 'Who would use it, and what they cannot do today.' },
 ] as const
 
 type FieldKey = (typeof FIELDS)[number]['key']
 type Draft = Record<FieldKey, string>
 
-const EMPTY: Draft = {
-  title: '',
-  summary: '',
-  description: '',
-  intended_use: '',
-  primary_user: '',
-}
+const EMPTY: Draft = { title: '', summary: '', description: '' }
 
-/**
- * The API writes its 4xx bodies for humans and api-client folds them into the
- * thrown Error's message; 5xx keeps the fallback. Same helper, same reasoning,
- * as exchanges/thread-screen.tsx.
- */
-function apiMessage(err: unknown, fallback: string): string {
-  const match = /failed with status 4\d\d: (.+)$/.exec(err instanceof Error ? err.message : '')
-  return match ? match[1] : fallback
-}
-
-export function SubmitIdeaScreen() {
+export function SubmitIdeaScreen({ from }: { from?: string } = {}) {
   const router = useRouter()
   const { caps } = useCapabilities()
   const [draft, setDraft] = useState<Draft>(EMPTY)
   const [prefs, setPrefs] = useState<ContactPref[]>([])
+  const [kind, setKind] = useState<ToyIdeaKind>('challenge')
+  // 106: the upload's path is what the idea takes; its url is the preview.
+  const [photo, setPhoto] = useState<UploadResult | null>(null)
+  const [anonymous, setAnonymous] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [sent, setSent] = useState(false)
+
+  // "Submit a revised idea" (challenge-author-states): start from the
+  // rejected one. A new idea is filed; the old one stays as it was judged.
+  useEffect(() => {
+    if (!from) return
+    apiClient
+      .get<ToyIdea>(`/api/ideas/mine/${from}`)
+      .then((idea) => {
+        setDraft({ title: idea.title, summary: idea.summary, description: idea.description ?? '' })
+        setKind(idea.kind ?? 'challenge')
+        setPrefs(idea.contact_prefs)
+        setPhoto(idea.photo_path && idea.photo_url ? { path: idea.photo_path, url: idea.photo_url } : null)
+        setAnonymous(idea.anonymous ?? false)
+      })
+      .catch(() => {})
+  }, [from])
 
   function togglePref(pref: ContactPref) {
     setPrefs((cur) => (cur.includes(pref) ? cur.filter((p) => p !== pref) : [...cur, pref]))
   }
 
+  async function addPhoto() {
+    setError(null)
+    try {
+      const uploaded = await pickAndUploadPhoto('/api/upload/idea-photo', '', null)
+      if (uploaded) setPhoto(uploaded)
+    } catch (err) {
+      setError((err as Error).message)
+    }
+  }
+
   async function submit() {
-    // Mirrors readIdeaBody in packages/api/src/routes/toy-ideas.ts: every
-    // narrative field is required and whitespace-only is rejected. The server
-    // enforces this regardless — this only saves a round trip on an empty form.
-    const trimmed = Object.fromEntries(
-      FIELDS.map((f) => [f.key, draft[f.key].trim()])
-    ) as Draft
-    if (Object.values(trimmed).some((v) => !v)) {
-      setError('All fields are required')
+    // Mirrors readIdeaBody: a title and a summary, trimmed, are required.
+    const title = draft.title.trim()
+    const summary = draft.summary.trim()
+    if (!title || !summary) {
+      setError('A title and a summary are required.')
       return
     }
 
     setBusy(true)
     setError(null)
     try {
-      await apiClient.post<ToyIdea>('/api/ideas', { ...trimmed, contact_prefs: prefs })
+      await apiClient.post<ToyIdea>('/api/ideas', {
+        title,
+        summary,
+        description: draft.description.trim() || null,
+        kind,
+        contact_prefs: prefs,
+        photo_path: photo?.path ?? null,
+        anonymous,
+      })
       setSent(true)
     } catch (err) {
       // The draft stays: a 400 for a field the server would not take must not
@@ -134,9 +159,9 @@ export function SubmitIdeaScreen() {
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Screen>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+          {/* The board's words, and web's (submit-an-idea/page.tsx). */}
           <Text style={styles.intro}>
-            You do not have to be able to build something to be the person who thought of it.
-            Parents and therapists spot the need long before a maker does.
+            Suggest a toy worth adapting, even if you cannot build it. An admin reads every idea.
           </Text>
 
           <Card style={styles.scope}>
@@ -154,6 +179,18 @@ export function SubmitIdeaScreen() {
 
           {caps ? (
             <View style={styles.form}>
+              <Text style={styles.legend}>What are you sharing?</Text>
+              <View accessibilityRole="radiogroup" style={styles.prefRow}>
+                {KINDS.map((k) => (
+                  <Chip key={k.kind} role="radio" label={k.label} active={kind === k.kind} onPress={() => setKind(k.kind)} />
+                ))}
+              </View>
+              <Text style={styles.scopeHint}>
+                {kind === 'question'
+                  ? 'No build needed. People answer in the thread, and you mark the answer that helped.'
+                  : 'Becomes a build challenge makers can pick up.'}
+              </Text>
+
               {FIELDS.map((field) => (
                 <TextField
                   key={field.key}
@@ -162,6 +199,7 @@ export function SubmitIdeaScreen() {
                   value={draft[field.key]}
                   onChangeText={(text) => setDraft((cur) => ({ ...cur, [field.key]: text }))}
                   multiline={field.multiline}
+                  placeholder={field.placeholder}
                   style={field.multiline ? styles.multiline : undefined}
                 />
               ))}
@@ -177,6 +215,36 @@ export function SubmitIdeaScreen() {
                   />
                 ))}
               </View>
+
+              {/* The board's words (MB #challenge_new). */}
+              <Text style={styles.legend}>Photo</Text>
+              <Pressable
+                onPress={() => void addPhoto()}
+                accessibilityRole="button"
+                accessibilityLabel="Tap to add a photo"
+                style={styles.photoSlot}
+              >
+                {photo ? (
+                  <Image
+                    source={{ uri: photo.url }}
+                    style={styles.photo}
+                    accessibilityLabel="Your photo"
+                    accessibilityIgnoresInvertColors
+                  />
+                ) : (
+                  <Text style={styles.scopeHint}>Tap to add a photo</Text>
+                )}
+              </Pressable>
+              <Pressable
+                onPress={() => setAnonymous((v) => !v)}
+                accessibilityRole="checkbox"
+                accessibilityLabel="Post anonymously"
+                accessibilityState={{ checked: anonymous }}
+                style={styles.checkRow}
+              >
+                <Ionicons name={anonymous ? 'checkbox' : 'square-outline'} size={22} color={theme.colors.ink} />
+                <Text style={styles.checkText}>Post anonymously</Text>
+              </Pressable>
 
               <ErrorRow message={error} />
 
@@ -240,6 +308,20 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing(2),
   },
   prefRow: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2), marginBottom: theme.spacing(2) },
+  photoSlot: {
+    height: 130,
+    borderRadius: theme.radii.field,
+    borderWidth: theme.border.hairline,
+    borderStyle: 'dashed',
+    borderColor: theme.colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    marginBottom: theme.spacing(2),
+  },
+  photo: { width: '100%', height: '100%' },
+  checkRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2), minHeight: 44 },
+  checkText: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.text },
   submit: { alignSelf: 'flex-start', marginTop: theme.spacing(3), paddingHorizontal: theme.spacing(6) },
   sentButton: { marginTop: theme.spacing(5), paddingHorizontal: theme.spacing(6) },
 })

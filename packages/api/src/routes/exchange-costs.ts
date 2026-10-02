@@ -17,7 +17,9 @@
  * - packages/types/src/index.ts: ExchangeCost, and formatCents
  */
 import { Hono } from 'hono'
-import { createUserClient } from '../supabase/client.js'
+import { createUserClient, createAdminClient } from '../supabase/client.js'
+import { costSummary } from '@splat-connect/types'
+import type { MoneyThread, ToyTransactionType } from '@splat-connect/types'
 import type { AuthVariables } from '../middleware/auth.js'
 
 const exchangeCosts = new Hono<{ Variables: AuthVariables }>()
@@ -84,6 +86,72 @@ exchangeCosts.get('/outstanding', async (c) => {
     // lines on one exchange is "across 1 exchange".
     exchange_count: new Set(rows.map((r) => r.transaction_id)).size,
   })
+})
+
+type MineRow = {
+  transaction_id: string
+  description: string
+  amount_cents: number
+  claiming: boolean
+  payer_id: string
+  payee_id: string
+  settled_at: string | null
+  toy_transactions: { type: ToyTransactionType } | null
+}
+
+/**
+ * GET /api/exchange-costs/mine
+ *
+ * The Me tab's money panel: every thread with money on it — what the caller
+ * pays and what they are paid, settled or not — one row per thread, named by
+ * the other person and the kind of thread. Registered before /:transactionId
+ * for the same reason as /outstanding.
+ *
+ * /outstanding stays as it is: web's dashboard panel reads its shape.
+ * The sums are costSummary's (packages/types): directions are never netted,
+ * and the headline counts only what the caller owes.
+ */
+exchangeCosts.get('/mine', async (c) => {
+  const supabase = createUserClient(c.get('token'))
+  const userId = c.get('userId')
+  const { data, error } = await supabase
+    .from('exchange_costs')
+    .select('transaction_id, description, amount_cents, claiming, payer_id, payee_id, settled_at, created_at, toy_transactions(type)')
+    .or(`payer_id.eq.${userId},payee_id.eq.${userId}`)
+    .order('created_at', { ascending: false })
+  if (error) return c.json({ error: error.message }, 500)
+  const rows = (data ?? []) as unknown as MineRow[]
+
+  // Names through the admin client, never an embed (033/045 grants).
+  const otherOf = (r: MineRow) => (r.payer_id === userId ? r.payee_id : r.payer_id)
+  const otherIds = [...new Set(rows.map(otherOf))]
+  const names = new Map<string, string>()
+  if (otherIds.length) {
+    const { data: people } = await createAdminClient().from('profiles').select('id, name').in('id', otherIds)
+    for (const p of (people ?? []) as { id: string; name: string }[]) names.set(p.id, p.name)
+  }
+
+  const byThread = new Map<string, MineRow[]>()
+  for (const r of rows) byThread.set(r.transaction_id, [...(byThread.get(r.transaction_id) ?? []), r])
+  const threads: MoneyThread[] = []
+  let owed_cents = 0
+  for (const [transaction_id, lines] of byThread) {
+    const s = costSummary(lines, userId)
+    if (s.amount_cents === 0) continue
+    owed_cents += s.owed_cents
+    threads.push({
+      transaction_id,
+      type: lines[0].toy_transactions?.type ?? 'exchange',
+      other_name: names.get(otherOf(lines[0])) ?? '',
+      what: s.what,
+      amount_cents: s.amount_cents,
+      you_pay: s.you_pay,
+      settled: s.settled,
+    })
+  }
+  threads.sort((a, b) => Number(a.settled) - Number(b.settled))
+
+  return c.json({ threads, owed_cents, unsettled_count: threads.filter((t) => !t.settled).length })
 })
 
 /**

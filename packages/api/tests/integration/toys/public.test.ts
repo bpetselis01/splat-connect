@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
-import { createTestUser, deleteTestUser, type TestUser } from '../../helpers/auth.js'
+import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
+import { createProject } from '../../helpers/orgs.js'
 
 const BASE = 'http://localhost'
 
@@ -80,6 +81,26 @@ describe('GET /api/public/toys', () => {
     const body = (await res.json()) as { name: string; profiles: { name: string } | null }
     expect(body.name).toBe('Fire truck')
     expect(body.profiles).not.toBeNull()
+  })
+
+  it('serves the facts, the guide only while approved, and the holder given count', async () => {
+    const guide = await createProject({ authorId: owner.id, status: 'approved', title: 'Guide C' })
+    try {
+      await req(`/${published1}`, owner.token, {
+        method: 'PATCH',
+        body: JSON.stringify({ batteries: '2 × AA', tutorial_id: guide }),
+      })
+      const res = await app.request(`/api/public/toys/${published1}`)
+      const body = (await res.json()) as Record<string, unknown>
+      expect(body).toMatchObject({ batteries: '2 × AA', guide: { id: guide, title: 'Guide C' }, holder_given: 0 })
+
+      // Unapproved after linking: the column still names it, the page must not.
+      await adminClient().from('tutorials').update({ status: 'pending' }).eq('id', guide)
+      const after = (await (await app.request(`/api/public/toys/${published1}`)).json()) as { guide: unknown }
+      expect(after.guide).toBeNull()
+    } finally {
+      await adminClient().from('tutorials').delete().eq('id', guide)
+    }
   })
 
   // The archived_at exclusion test retired with migration 050: a completed

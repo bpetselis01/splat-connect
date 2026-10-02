@@ -9,6 +9,9 @@
  * bottleneck went away, which was the point of the whole feature. It defaults to
  * off: seeing everything is the safe default, and hiding is a deliberate act.
  *
+ * Selecting a row opens the side pane (?selected=<id>) on the same page; the
+ * row is still a link to the full review page, so nothing depends on it.
+ *
  * Related files:
  * - packages/api/src/routes/admin.ts: GET /api/admin/tutorials, which embeds tutorial_orgs
  * - app/organizations/[id]: where a leader handles the ones marked accepted here
@@ -22,9 +25,19 @@ import {
 } from '@phosphor-icons/react/dist/ssr'
 import Link from 'next/link'
 import { apiClient } from '@/lib/api-client'
+import { paginate } from '@/lib/paginate'
+import { Pager } from '@/components/pager'
 import { tintFor } from '@/components/card-photo'
 import { ReviewTabs } from '@/components/admin-review-tabs'
-import type { Tutorial, TutorialOrg, AdminAccountsResponse, ToyIdea } from '@splat-connect/types'
+import { AdminReviewPane } from '@/components/admin-review-pane'
+import { ReviewRowLink } from '@/components/admin-review-row-link'
+import type {
+  Tutorial,
+  TutorialOrg,
+  TutorialWithDetails,
+  AdminAccountsResponse,
+  ToyIdea,
+} from '@splat-connect/types'
 
 type Queued = Tutorial & {
   tutorial_orgs?: TutorialOrg[]
@@ -43,9 +56,9 @@ function waiting(iso: string, now: number = Date.now()): { text: string; days: n
 export default async function ReviewListPage({
   searchParams,
 }: {
-  searchParams: Promise<{ mine?: string }>
+  searchParams: Promise<{ mine?: string; selected?: string; page?: string; q?: string }>
 }) {
-  const { mine } = await searchParams
+  const { mine, selected, page: pageParam, q: rawQ } = await searchParams
   const [all, accounts, ideas] = await Promise.all([
     apiClient.get<Queued[]>('/api/admin/tutorials?status=pending'),
     // Names for the CONTRIBUTOR column. Resolved here rather than embedded:
@@ -57,26 +70,61 @@ export default async function ReviewListPage({
   ])
   const nameOf = new Map((accounts?.accounts ?? []).map((a) => [a.id, a.name || a.email]))
   const pendingIdeas = Array.isArray(ideas) ? ideas.filter((i) => i.status === 'pending').length : 0
+  const namesOf = (t: Queued) =>
+    (t.tutorial_contributors ?? []).map((c) => nameOf.get(c.profile_id)).filter(Boolean) as string[]
+
+  // Search runs over the queue this page already loaded — a title or any
+  // credited contributor's name, case-insensitive. A GET form, so it needs no
+  // client code and survives a refresh.
+  const q = (rawQ ?? '').trim().toLowerCase()
+  const searched = q
+    ? all.filter((t) => t.title.toLowerCase().includes(q) || namesOf(t).some((n) => n.toLowerCase().includes(q)))
+    : all
 
   const acceptedFor = (t: Queued) =>
     (t.tutorial_orgs ?? []).filter((b) => b.status === 'accepted')
   const hidingHandled = mine === '1'
-  const unhandled = all.filter((t) => acceptedFor(t).length === 0)
-  const tutorials = hidingHandled ? unhandled : all
-  const handledCount = all.length - unhandled.length
+  const unhandled = searched.filter((t) => acceptedFor(t).length === 0)
+  const tutorials = hidingHandled ? unhandled : searched
+  const handledCount = all.filter((t) => acceptedFor(t).length > 0).length
+
+  // The pane, only for a row that is on screen: once a guide is approved or
+  // sent back it leaves the pending list and the pane closes with it.
+  // The page rides along on the pane's links, so opening a row keeps it.
+  const { items: pageRows, page, pages } = paginate(tutorials, pageParam, 50)
+  const baseQuery = new URLSearchParams()
+  if (hidingHandled) baseQuery.set('mine', '1')
+  if (page > 1) baseQuery.set('page', String(page))
+  if (q) baseQuery.set('q', rawQ!.trim())
+  const qs = baseQuery.toString()
+  const base = qs ? `/admin/review?${qs}` : '/admin/review'
+  const paneHref = (id: string) => `${base}${qs ? '&' : '?'}selected=${id}`
+  const picked = tutorials.find((t) => t.id === selected) ?? null
+  const detail = picked
+    ? await apiClient.get<TutorialWithDetails>(`/api/tutorials/${picked.id}`).catch(() => null)
+    : null
 
   const header = (
-    <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
-      <div>
-        <span className="text-[13px] font-extrabold uppercase tracking-[0.1em] text-muted">
-          Admin
-        </span>
-        <h1 className="mt-1 font-display text-4xl font-extrabold leading-[1.1] text-ink">
-          Review queue
-        </h1>
+    <>
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <span className="text-[13px] font-extrabold uppercase tracking-[0.1em] text-muted">Admin</span>
+          <h1 className="mt-1 font-display text-4xl font-extrabold leading-[1.1] text-ink">Review queue</h1>
+        </div>
+        <ReviewTabs current="guides" guides={all.length} ideas={pendingIdeas} />
       </div>
-      <ReviewTabs current="guides" guides={all.length} ideas={pendingIdeas} />
-    </div>
+      <form role="search" action="/admin/review" className="mb-4 max-w-[420px]">
+        {hidingHandled && <input type="hidden" name="mine" value="1" />}
+        <input
+          type="search"
+          name="q"
+          defaultValue={rawQ ?? ''}
+          aria-label="Search by guide or contributor name"
+          placeholder="Search by guide or contributor name"
+          className="field h-[46px] bg-surface"
+        />
+      </form>
+    </>
   )
 
   if (tutorials.length === 0) {
@@ -88,20 +136,25 @@ export default async function ReviewListPage({
             <CheckCircle className="h-8 w-8" />
           </span>
           <p className="mt-4 font-bold text-ink">
-            {hidingHandled && handledCount > 0
-              ? 'Nothing left for you.'
-              : 'No tutorials pending review.'}
+            {q
+              ? 'No guide or contributor matches that search.'
+              : hidingHandled && handledCount > 0
+                ? 'Nothing left for you.'
+                : 'No tutorials pending review.'}
           </p>
-          <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
-            {hidingHandled && handledCount > 0 ? (
-              <>
-                {handledCount} {handledCount === 1 ? 'tutorial is' : 'tutorials are'} with an
-                organisation. <Link href="/admin/review">Show everything</Link>.
-              </>
-            ) : (
-              'Submissions land here the moment a contributor sends one for review.'
-            )}
-          </p>
+          {!q && (
+            <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
+              {hidingHandled && handledCount > 0 ? (
+                <>
+                  {handledCount} {handledCount === 1 ? 'tutorial is' : 'tutorials are'} with an
+                  organisation. <Link href="/admin/review">Show everything</Link>.
+                </>
+              ) : (
+                'Submissions land here the moment a contributor sends one for review.'
+              )}
+            </p>
+          )}
+          {q && <Link href="/admin/review">Show everything</Link>}
         </div>
       </div>
     )
@@ -110,6 +163,7 @@ export default async function ReviewListPage({
   return (
     <div>
       {header}
+      <div className={detail ? 'grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]' : ''}>
       {/*
         GUIDE | CONTRIBUTOR | BACKING | WAITING | SAFETY, as the board draws
         it. SAFETY reads the contributor's declaration — the one safety fact a
@@ -128,17 +182,21 @@ export default async function ReviewListPage({
               </tr>
             </thead>
             <tbody>
-              {tutorials.map((t) => {
+              {pageRows.map((t) => {
                 const accepted = acceptedFor(t)
-                const who = (t.tutorial_contributors ?? [])
-                  .map((c) => nameOf.get(c.profile_id))
-                  .filter(Boolean)
+                const who = namesOf(t)
                 const wait = waiting(t.created_at)
+                const on = t.id === picked?.id
                 return (
-                  <tr key={t.id} className="transition-colors hover:bg-[var(--surface2)]">
+                  <tr
+                    key={t.id}
+                    className="transition-colors hover:bg-[var(--surface2)]"
+                    style={on ? { background: 'var(--b50)' } : undefined}
+                  >
                     <td>
-                      <Link
+                      <ReviewRowLink
                         href={`/admin/review/${t.id}`}
+                        paneHref={paneHref(t.id)}
                         className="flex items-center gap-3 font-extrabold text-ink no-underline"
                       >
                         <span
@@ -149,10 +207,10 @@ export default async function ReviewListPage({
                           <BookOpenText size={22} weight="duotone" />
                         </span>
                         {t.title}
-                      </Link>
+                      </ReviewRowLink>
                     </td>
-                    <td className="font-semibold">{who.length ? who.join(', ') : '—'}</td>
-                    <td>
+                    <td className="font-semibold" data-label="Contributor">{who.length ? who.join(', ') : '—'}</td>
+                    <td data-label="Backing">
                       <span
                         className="admin-tag gap-1 px-2.5 py-[3px]"
                         style={{ background: accepted.length ? 'var(--tok)' : 'var(--surface2)' }}
@@ -168,6 +226,7 @@ export default async function ReviewListPage({
                       </span>
                     </td>
                     <td
+                      data-label="Waiting"
                       className="whitespace-nowrap font-bold"
                       style={{
                         color: wait.days >= 7 ? 'var(--bad)' : wait.days >= 5 ? 'var(--warn)' : 'var(--ink)',
@@ -175,7 +234,7 @@ export default async function ReviewListPage({
                     >
                       {wait.text}
                     </td>
-                    <td>
+                    <td data-label="Safety">
                       <span
                         className="inline-flex items-center gap-1 text-sm font-bold"
                         style={{ color: t.safety_declared_at ? 'var(--ok)' : 'var(--warn)' }}
@@ -202,13 +261,25 @@ export default async function ReviewListPage({
               hiding the org-handled rows is a deliberate act, off by default. */}
           {handledCount > 0 &&
             (hidingHandled ? (
-              <Link href="/admin/review">Show the {handledCount} an organisation is handling</Link>
+              <Link href="/admin/review" className="max-sm:inline-block max-sm:py-2.5">
+                Show the {handledCount} an organisation is handling
+              </Link>
             ) : (
-              <Link href="/admin/review?mine=1">
+              <Link href="/admin/review?mine=1" className="max-sm:inline-block max-sm:py-2.5">
                 Hide the {handledCount} an organisation is handling
               </Link>
             ))}
         </div>
+      </div>
+      <Pager page={page} pages={pages} params={{ mine: hidingHandled ? '1' : undefined, q: q ? rawQ!.trim() : undefined }} />
+      {detail && picked && (
+        <AdminReviewPane
+          tutorial={detail}
+          contributor={namesOf(picked).join(', ') || 'Unknown contributor'}
+          submitted={waiting(picked.created_at).text}
+          closeHref={base}
+        />
+      )}
       </div>
     </div>
   )

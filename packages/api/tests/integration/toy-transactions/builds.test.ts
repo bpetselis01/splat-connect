@@ -132,10 +132,10 @@ describe('asking for a build', () => {
     expect(res.status).toBe(404)
   })
 
-  it('refuses an empty brief and a maker who is both a person and an org', async () => {
+  it('refuses an over-long brief and a maker who is both a person and an org', async () => {
     const blank = await app.request(
       '/api/toy-transactions/build',
-      json(family.token, { tutorial_id: tutorialId, maker_id: maker.id, build_brief: '  ' })
+      json(family.token, { tutorial_id: tutorialId, maker_id: maker.id, build_brief: 'x'.repeat(2001) })
     )
     expect(blank.status).toBe(400)
 

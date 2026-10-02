@@ -3,12 +3,18 @@
  * client, so RLS enforces status='approved'/'published' as a second, database-level
  * backstop behind each query's own explicit filter.
  */
-import { Hono } from 'hono'
+import { Hono, type Context } from 'hono'
+import { nameFormerContributors } from '../former-contributor.js'
 import { chunk } from '../chunk.js'
+import { challengeCounts } from '../challenge-counts.js'
+import { primaryAuthorNames, profileName } from '../profile-name.js'
 import { createAnonClient, createAdminClient } from '../supabase/client.js'
 import { atCapacityToyIds } from '../toy-access.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
-import { contributorBadges, readMinutes } from '@splat-connect/types'
+import { toyPhotoUrl } from '../photo-storage.js'
+import { withPhotoUrl } from './toy-ideas.js'
+import { readNear, byDistance, pickupPostcodes, type Near } from '../distance.js'
+import { autoPicks, buildCalendar, contributorBadges, gradeOf, mergeLearnCourse, partsTotalCents, readMinutes } from '@splat-connect/types'
 import type {
   ImpactSummary,
   ImpactEntity,
@@ -16,6 +22,10 @@ import type {
   ImpactRecent,
   ContributorProfile,
   OrgPublicProfile,
+  PrinterStats,
+  CataloguePart,
+  ToyPick,
+  LearnCourse,
 } from '@splat-connect/types'
 
 const publicRoutes = new Hono()
@@ -29,7 +39,7 @@ publicRoutes.get('/tutorials', async (c) => {
     // The alternative is a request per card on the busiest page on the site.
     // thanks_count and has_stl are 066's computed fields — a count and a flag,
     // never the rows behind them.
-    .select('*, thanks_count, has_stl, tutorial_orgs(status, organizations(id, name))')
+    .select('*, thanks_count, has_stl, parts(name), tutorial_orgs(status, organizations(id, name))')
     .eq('status', 'approved')
     // The default public listing carries only finished designs; anything less
     // mature stays reachable by direct link, wearing its maturity badge.
@@ -92,7 +102,7 @@ publicRoutes.get('/tutorials/:id', async (c) => {
     // points at tutorials twice, and PostgREST refuses an ambiguous embed
     // outright rather than guessing. See the same select in tutorials.ts.
     .select(
-      '*, thanks_count, parts(*), tools(*), stl_files(*), tutorial_contributors(profile_id, role, profiles(name)), ' +
+      '*, thanks_count, parts(*), tools(*), stl_files(*), steps:tutorial_steps(*), safety_notes:tutorial_safety_notes(*), tutorial_contributors(profile_id, role, former_names, former_count, profiles(name)), ' +
         'tutorial_orgs(status, organizations(id, name)), ' +
         'tutorial_recommendations!tutorial_id(position, tutorials!recommended_id(id, title, kind, difficulty, toy_photo_url, status, maturity)), ' +
         'reviewer:reviewed_by(name), reviewed_for:reviewed_for_org_id(name)'
@@ -100,8 +110,18 @@ publicRoutes.get('/tutorials/:id', async (c) => {
     .eq('id', c.req.param('id'))
     .eq('status', 'approved')
     .order('position', { referencedTable: 'tutorial_recommendations', ascending: true })
+    .order('position', { referencedTable: 'steps', ascending: true })
+    .order('position', { referencedTable: 'safety_notes', ascending: true })
     .single()
   if (error) return c.json({ error: error.message }, 404)
+  // 092. Counted, never awaited into a failure: a view that cannot be counted
+  // is not a reason to refuse the guide.
+  try {
+    const { error: viewError } = await createAdminClient().rpc('bump_tutorial_view', { p_tutorial_id: c.req.param('id') })
+    if (viewError) console.error('[public guide] view not counted:', viewError.message)
+  } catch (err) {
+    console.error('[public guide] view not counted:', err)
+  }
   // Filter the embed here rather than in the select: PostgREST cannot constrain an
   // embedded relation's rows from the parent query, and an organisation's mark must
   // never appear on a request it did not accept. This route uses the admin client,
@@ -113,11 +133,13 @@ publicRoutes.get('/tutorials/:id', async (c) => {
   // cannot open. Dropping the row is the whole design — there is no "not yet
   // approved" page to send them to.
   const tutorial = data as unknown as Record<string, unknown> & {
+    tutorial_contributors?: Array<{ profile_id: string; former_names: string[]; former_count: number; profiles: { name: string } | null }>
     tutorial_orgs?: Array<{ status: string }>
     tutorial_recommendations?: Array<{ tutorials: { status: string } | null }>
   }
   return c.json({
     ...tutorial,
+    tutorial_contributors: nameFormerContributors(tutorial.tutorial_contributors),
     tutorial_orgs: (tutorial.tutorial_orgs ?? []).filter((b) => b.status === 'accepted'),
     tutorial_recommendations: (tutorial.tutorial_recommendations ?? []).filter(
       (r) => r.tutorials?.status === 'approved'
@@ -125,7 +147,124 @@ publicRoutes.get('/tutorials/:id', async (c) => {
   })
 })
 
+/**
+ * A published guide's community notes (093), oldest first, with names. The
+ * anon client reads (RLS: approved guides only); names come from the admin
+ * client, never a profiles embed (033/045 grants). A pinner who has since left
+ * is named the way 083's placeholder is.
+ */
+publicRoutes.get('/tutorials/:id/notes', async (c) => {
+  const { data, error } = await createAnonClient()
+    .from('tutorial_notes')
+    .select('id, step_position, author_id, body, photo_path, photo_caption, pinned_at, pinned_by, created_at')
+    .eq('tutorial_id', c.req.param('id'))
+    .order('created_at', { ascending: true })
+  if (error?.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
+  if (error) return c.json({ error: error.message }, 500)
+  const ids = [...new Set(data.flatMap((n) => [n.author_id, n.pinned_by]).filter((x): x is string => !!x))]
+  const { data: people } = ids.length
+    ? await createAdminClient().from('profiles').select('id, name').in('id', ids)
+    : { data: [] as { id: string; name: string }[] }
+  const name = new Map((people ?? []).map((p) => [p.id, p.name as string]))
+  return c.json(
+    data.map(({ photo_path, ...n }) => ({
+      ...n,
+      photo_url: toyPhotoUrl(photo_path),
+      author_name: name.get(n.author_id) || 'A member',
+      pinned_by_name: n.pinned_at ? (n.pinned_by && name.get(n.pinned_by)) || 'Deleted member' : null,
+    }))
+  )
+})
+
+/**
+ * `near` and `within` for a public list (099), or the 400's sentence. Honoured
+ * only for a signed-in caller: these routes take no session, and a radius
+ * answered for anyone lets a stranger narrow it until a member's toy drops out
+ * — bisecting their postcode. Signed out, the list is what it was before.
+ */
+async function publicNear(c: Context): Promise<Near | string> {
+  const near = readNear((key) => c.req.query(key))
+  if (typeof near === 'string' || !near.near) return near
+  const header = c.req.header('Authorization')
+  const { data } = header?.startsWith('Bearer ')
+    ? await createAdminClient().auth.getUser(header.slice(7))
+    : { data: { user: null } }
+  return data.user ? near : { near: null, within: null }
+}
+
+type ListedToy = {
+  id: string
+  name: string
+  cover_photo_url: string | null
+  condition: number
+  created_at: string
+  owner_id: string | null
+  owner_org_id: string | null
+}
+const LISTED_TOY = 'id, name, cover_photo_url, condition, created_at, owner_id, owner_org_id'
+/**
+ * A delivered toy on a public profile: what ShelfToyCard draws and no more.
+ * Read through the admin client (the toy may now be retired or a draft), so
+ * naming columns is what keeps a leader's retired_note off the public page.
+ */
+const DELIVERED_TOY = `${LISTED_TOY}, offer_type`
+
+/**
+ * "Also worth a look" (102). Automatic: up to three of the holder's other
+ * listed toys, newest first, skipping any already spoken for (`hidden`, the
+ * same set the library hides — such a toy 404s, so its card would lead
+ * nowhere). Hand-picked: the holder's choices in their order, under the same
+ * filter. Through the anon client, so RLS drops anything not public — a draft
+ * or retired toy, a guide not approved — behind the explicit filters, and a
+ * pick that went private shows nothing.
+ */
+async function holderPicks(
+  sb: ReturnType<typeof createAnonClient>,
+  toy: { id: string; owner_id: string | null; owner_org_id: string | null; picks_mode?: string | null },
+  hidden: Set<string>
+): Promise<ToyPick[]> {
+  const toyPick = (t: ListedToy): ToyPick => ({
+    kind: 'toy',
+    id: t.id,
+    title: t.name,
+    photo_url: t.cover_photo_url,
+    meta: gradeOf(t.condition).label,
+  })
+  // The holder's own listed toys, not spoken for. Hand-picked toys pass the
+  // same filter: a picked toy that changed hands, or a row written straight
+  // through PostgREST naming a stranger's toy, is not this holder's to show.
+  const holderToys = () =>
+    sb
+      .from('toys')
+      .select(LISTED_TOY)
+      .eq('status', 'published')
+      .is('retired_at', null)
+      .eq(toy.owner_org_id ? 'owner_org_id' : 'owner_id', (toy.owner_org_id ?? toy.owner_id) as string)
+  const listed = (data: unknown) => ((data ?? []) as ListedToy[]).filter((t) => !hidden.has(t.id))
+  if (toy.picks_mode !== 'picked') {
+    const { data } = await holderToys()
+    return autoPicks(toy, listed(data)).map(toyPick)
+  }
+  const { data: rows } = await sb.from('toy_picks').select('entity_type, entity_id').eq('toy_id', toy.id).order('position')
+  const picks = (rows ?? []) as { entity_type: 'toy' | 'tutorial'; entity_id: string }[]
+  const ids = (type: 'toy' | 'tutorial') => picks.filter((p) => p.entity_type === type).map((p) => p.entity_id)
+  const [toys, guides] = await Promise.all([
+    ids('toy').length ? holderToys().in('id', ids('toy')) : null,
+    ids('tutorial').length
+      ? sb.from('tutorials').select('id, title, kind, toy_photo_url').in('id', ids('tutorial')).eq('status', 'approved')
+      : null,
+  ])
+  const found = new Map<string, ToyPick>()
+  for (const t of listed(toys?.data)) found.set(`toy:${t.id}`, toyPick(t))
+  for (const g of (guides?.data ?? []) as { id: string; title: string; kind: 'toy_adaptation' | 'assistive_tech'; toy_photo_url: string | null }[]) {
+    found.set(`tutorial:${g.id}`, { kind: g.kind, id: g.id, title: g.title, photo_url: g.toy_photo_url, meta: null })
+  }
+  return picks.map((p) => found.get(`${p.entity_type}:${p.entity_id}`)).filter((p): p is ToyPick => !!p)
+}
+
 publicRoutes.get('/toys', async (c) => {
+  const near = await publicNear(c)
+  if (typeof near === 'string') return c.json({ error: near }, 400)
   const supabase = createAnonClient()
   const { data, error } = await supabase
     .from('toys')
@@ -139,7 +278,15 @@ publicRoutes.get('/toys', async (c) => {
   const unavailable = await atCapacityToyIds(createAdminClient(), null, true)
   if (unavailable === null) return c.json({ error: 'Failed to load toys' }, 500)
   const hidden = new Set(unavailable)
-  return c.json((data ?? []).filter((t) => !hidden.has(t.id)))
+  const shown = (data ?? []).filter((t) => !hidden.has(t.id))
+  // Postcodes are read only when somebody asked for distance.
+  const postcodes = near.near
+    ? await pickupPostcodes(
+        shown.map((t) => t.owner_id).filter((id): id is string => !!id),
+        shown.map((t) => t.owner_org_id).filter((id): id is string => !!id)
+      )
+    : new Map<string, string | null>()
+  return c.json(await byDistance(shown, (t) => postcodes.get(t.owner_org_id ?? t.owner_id) ?? null, near))
 })
 
 publicRoutes.get('/toys/:id', async (c) => {
@@ -158,7 +305,86 @@ publicRoutes.get('/toys/:id', async (c) => {
   if (unavailable === null) return c.json({ error: 'Failed to load toys' }, 500)
   const hidden = new Set(unavailable)
   if (hidden.has(data.id)) return c.json({ error: 'Not found' }, 404)
-  return c.json(data)
+
+  // 075's "Built from" card: the guide only while it is approved, which the
+  // anon client's RLS enforces as well as the filter. A separate read, not an
+  // embed — an embed that RLS refuses can take the whole row with it.
+  // The holder's "N toys given" is completed handovers they gave; that table
+  // has no anon policy, so the admin client counts, and returns only a count.
+  const giver = data.owner_org_id ? 'owner_org_id' : 'owner_id'
+  const admin = createAdminClient()
+  const [guide, given, place, picks] = await Promise.all([
+    data.tutorial_id
+      ? supabase
+          .from('tutorials')
+          .select('id, title')
+          .eq('id', data.tutorial_id)
+          .eq('status', 'approved')
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    admin
+      .from('toy_transactions')
+      .select('id', { count: 'exact', head: true })
+      .eq(giver, data.owner_org_id ?? data.owner_id)
+      .eq('status', 'completed')
+      .not('toy_id', 'is', null),
+    // Where the toy is, to the suburb and never closer. An organisation's
+    // public suburb is anon-readable (059's grant); a person's lives on their
+    // pickup columns, which no anon grant reaches, so the admin client reads
+    // exactly those two and nothing beside them.
+    data.owner_org_id
+      ? supabase.from('organizations').select('suburb, state').eq('id', data.owner_org_id).maybeSingle()
+      : admin.from('profiles').select('suburb:pickup_suburb, state:pickup_state').eq('id', data.owner_id).maybeSingle(),
+    holderPicks(supabase, data, hidden),
+  ])
+  const where = place.data as { suburb: string | null; state: string | null } | null
+  return c.json({
+    ...data,
+    guide: guide.data ?? null,
+    holder_given: given.count ?? 0,
+    holder_suburb: where?.suburb ?? null,
+    holder_state: where?.state ?? null,
+    picks,
+  })
+})
+
+/**
+ * The home page's editable copy (065's site_content), as the admin editor
+ * saved it. Raw values, null for a section never saved: the page checks each
+ * field and falls back to its own copy, so a half-filled row cannot blank it.
+ */
+publicRoutes.get('/content/home', async (c) => {
+  const { data, error } = await createAnonClient()
+    .from('site_content')
+    .select('key, value')
+    .in('key', ['home-hero', 'home-numbers', 'home-scenes'])
+  if (error) return c.json({ error: error.message }, 500)
+  const byKey = new Map((data ?? []).map((r) => [r.key, r.value]))
+  return c.json({
+    hero: byKey.get('home-hero') ?? null,
+    numbers: byKey.get('home-numbers') ?? null,
+    scenes: byKey.get('home-scenes') ?? null,
+  })
+})
+
+/**
+ * site-content-learn-legal-editing: the Learn course outline, merged over the
+ * code's default. Web Learn and mobile Learn both read this; with nothing
+ * saved it is the code's course exactly. A hidden course serves no outline at
+ * all — an admin previews it from the saved row (GET /api/admin/content).
+ */
+publicRoutes.get('/learn-course', async (c) => {
+  const { data, error } = await createAnonClient()
+    .from('site_content')
+    .select('value')
+    .eq('key', 'learn-course')
+    .maybeSingle()
+  if (error) return c.json({ error: error.message }, 500)
+  const course = mergeLearnCourse(data?.value ?? null)
+  if (course.shown_as === 'hidden') {
+    return c.json({ title: null, outcome: null, shown_as: 'hidden', units: [] } satisfies LearnCourse)
+  }
+  return c.json(course)
 })
 
 /**
@@ -414,6 +640,18 @@ publicRoutes.get('/impact', async (c) => {
 })
 
 /**
+ * impact-map: completed handovers by suburb. impact_map() (121) holds every
+ * rule — suburb level only, three or more, postcode centres not addresses —
+ * so the rows go out exactly as it returns them (Controller ruling 4). It is
+ * service-role only, hence the admin client.
+ */
+publicRoutes.get('/impact/map', async (c) => {
+  const { data, error } = await createAdminClient().rpc('impact_map')
+  if (error) return c.json({ error: 'Failed to load the map' }, 500)
+  return c.json(data ?? [])
+})
+
+/**
  * The organisations directory, for logged-out visitors.
  *
  * Separate from GET /api/organizations rather than an auth-state branch inside
@@ -425,22 +663,47 @@ publicRoutes.get('/impact', async (c) => {
  * comment on packages/web/app/organizations/page.tsx.
  */
 publicRoutes.get('/organizations', async (c) => {
+  const near = await publicNear(c)
+  if (typeof near === 'string') return c.json({ error: near }, 400)
   const supabase = createAnonClient()
   const { data, error } = await supabase
     .from('organizations')
     // The recycling columns join the list because /get-involved/recycling and
     // its booking form both filter on "who can take what" — the alternative was
     // a fetch per organisation to answer a question the directory already knows.
-    // All four are public by design and granted in 059; the street address is
+    // All are public by design and granted in 059 and 113; the street address is
     // not among them and stays on the pickup columns.
-    .select('id, name, description, status, suburb, state, recycling_materials, recycling_note')
+    // 116: logo and verified are 081's anon grants. The three counts are below.
+    .select(
+      'id, name, description, status, suburb, state, logo_url, verified_at, recycling_materials, recycling_note, recycling_machines, recycling_forms, recycling_min_kg, recycling_max_kg, recycling_turnaround, recycling_gives, recycling_hours, recycling_door'
+    )
     .order('name')
 
   if (error) {
     console.error('[public/organizations] read failed:', error.message)
     return c.json([], 200)
   }
-  return c.json(data ?? [])
+  // 116. The counts are computed fields, which take the whole row, and anon
+  // holds only named columns of organizations — so they come through the admin
+  // client, three numbers per id and nothing else. A failed count read leaves
+  // the directory up with zeros rather than empty.
+  const { data: countRows, error: countError } = await createAdminClient()
+    .from('organizations')
+    .select('id, org_backed_count, org_toy_count, org_has_printer')
+  if (countError) console.error('[public/organizations] counts failed:', countError.message)
+  const counts = new Map(
+    ((countRows ?? []) as Array<{ id: string; org_backed_count: number; org_toy_count: number; org_has_printer: boolean }>).map(
+      (r) => [r.id, r]
+    )
+  )
+  const orgs = (data ?? []).map((o) => ({
+    ...o,
+    backed_count: counts.get(o.id)?.org_backed_count ?? 0,
+    toy_count: counts.get(o.id)?.org_toy_count ?? 0,
+    has_printer: counts.get(o.id)?.org_has_printer ?? false,
+  }))
+  const postcodes = near.near ? await pickupPostcodes([], orgs.map((o) => o.id)) : new Map<string, string | null>()
+  return c.json(await byDistance(orgs, (o) => postcodes.get(o.id) ?? null, near))
 })
 
 /**
@@ -469,7 +732,7 @@ publicRoutes.get('/contributors/:id', async (c) => {
 
   const { data: profile } = await admin
     .from('profiles')
-    .select('id, name, public_showcase, bio, featured_tutorial_id, created_at')
+    .select('id, name, public_showcase, bio, featured_tutorial_id, created_at, profile_thanks_count')
     .eq('id', id)
     .maybeSingle()
   if (!profile || !profile.public_showcase) return c.json({ error: 'Not found' }, 404)
@@ -481,7 +744,7 @@ publicRoutes.get('/contributors/:id', async (c) => {
   ] = await Promise.all([
     sb
       .from('tutorial_contributors')
-      .select('tutorials!inner(*, thanks_count)')
+      .select('tutorials!inner(*, thanks_count, builds_count, view_count)')
       .eq('profile_id', id)
       .eq('tutorials.status', 'approved'),
     sb.from('toys').select('*').eq('owner_id', id).eq('status', 'published'),
@@ -489,7 +752,9 @@ publicRoutes.get('/contributors/:id', async (c) => {
       .from('toy_transactions')
       .select('toy_id, owner_id, updated_at')
       .eq('owner_id', id)
-      .eq('status', 'completed'),
+      .eq('status', 'completed')
+      // A completed build or print job has no toy; .in('id', [null]) 500s the page.
+      .not('toy_id', 'is', null),
   ])
   if (tutorialsError || toysError || deliveredError) {
     return c.json({ error: 'Failed to load contributor profile' }, 500)
@@ -501,7 +766,7 @@ publicRoutes.get('/contributors/:id', async (c) => {
   let toysDelivered: unknown[] = []
   if (deliveredToyIds.length > 0) {
     const results = await Promise.all(
-      chunk(deliveredToyIds).map((ids) => admin.from('toys').select('*').in('id', ids))
+      chunk(deliveredToyIds).map((ids) => admin.from('toys').select(DELIVERED_TOY).in('id', ids))
     )
     const data = results.flatMap((r) => r.data ?? [])
     const error = results.find((r) => r.error)?.error
@@ -527,7 +792,11 @@ publicRoutes.get('/contributors/:id', async (c) => {
     )
     orgBacked = backed.some((r) => (r.data?.length ?? 0) > 0)
   }
-  const thanks = guides.reduce((n, t) => n + (t.thanks_count ?? 0), 0)
+  // Guide thanks (066) and thanks to the person (117): "Thanked {n} times".
+  const thanks =
+    guides.reduce((n, t) => n + (t.thanks_count ?? 0), 0) +
+    ((profile as { profile_thanks_count?: number }).profile_thanks_count ?? 0)
+  const builds = guides.reduce((n, t) => n + (t.builds_count ?? 0), 0)
 
   const result: ContributorProfile = {
     id: profile.id,
@@ -540,7 +809,8 @@ publicRoutes.get('/contributors/:id', async (c) => {
     // that has since lost approval, and that one is nobody's showcase.
     featured: guides.find((t) => t.id === profile.featured_tutorial_id) ?? null,
     thanks,
-    badges: contributorBadges({ guides: guides.length, thanks, orgBacked, since: profile.created_at }),
+    builds,
+    badges: contributorBadges({ guides: guides.length, builds, orgBacked, since: profile.created_at }),
     created_at: profile.created_at,
   }
   return c.json(result)
@@ -605,10 +875,10 @@ publicRoutes.get('/organizations/:id', async (c) => {
 
   const { data: org } = await sb
     .from('organizations')
-    // 059's profile fields. Public by design and granted in that migration —
+    // 059's and 113's profile fields. Public by design and granted there —
     // the street address is NOT among them and stays on the pickup columns.
     .select(
-      'id, name, status, description, about, suburb, state, capabilities, contact_email, contact_phone, website_url, rate_note, recycling_materials, recycling_note'
+      'id, name, status, description, about, suburb, state, capabilities, contact_email, contact_phone, website_url, rate_note, recycling_materials, recycling_note, recycling_machines, recycling_forms, recycling_min_kg, recycling_max_kg, recycling_turnaround, recycling_gives, recycling_hours, recycling_door'
     )
     .eq('id', id)
     .maybeSingle()
@@ -622,11 +892,11 @@ publicRoutes.get('/organizations/:id', async (c) => {
   ] = await Promise.all([
     sb
       .from('tutorial_orgs')
-      .select('tutorials!inner(*)')
+      .select('tutorials!inner(*, parts(is_optional, price_cents))')
       .eq('org_id', id)
       .eq('status', 'accepted')
       .eq('tutorials.status', 'approved'),
-    sb.from('tutorials').select('*').eq('reviewed_for_org_id', id).eq('status', 'approved'),
+    sb.from('tutorials').select('*, parts(is_optional, price_cents)').eq('reviewed_for_org_id', id).eq('status', 'approved'),
     sb
       .from('toys')
       .select('*')
@@ -636,7 +906,8 @@ publicRoutes.get('/organizations/:id', async (c) => {
       .from('toy_transactions')
       .select('toy_id, owner_org_id, updated_at')
       .eq('owner_org_id', id)
-      .eq('status', 'completed'),
+      .eq('status', 'completed')
+      .not('toy_id', 'is', null),
   ])
 
   /*
@@ -671,11 +942,27 @@ publicRoutes.get('/organizations/:id', async (c) => {
     (r) => r.tutorials
   )
 
+  const extras = await orgProfileExtras(id, tutorialsBacked as Array<{ id: string }>)
+  if (!extras) return c.json({ error: 'Failed to load organisation profile' }, 500)
+
+  // Each guide row's author (by id, admin client) and parts
+  // total (null unless every required part is priced — partsTotalCents).
+  type Row = { id: string; parts?: { is_optional: boolean; price_cents: number | null }[] }
+  const allGuides = [...(tutorialsBacked as Row[]), ...((tutorialsApproved ?? []) as Row[])]
+  const authors = await primaryAuthorNames([...new Set(allGuides.map((t) => t.id))])
+  if (!authors) return c.json({ error: 'Failed to load organisation profile' }, 500)
+  const withRowFacts = (rows: Row[]) =>
+    rows.map(({ parts, ...t }) => ({
+      ...t,
+      author_name: authors.get(t.id) ?? null,
+      parts_total_cents: partsTotalCents(parts ?? []),
+    }))
+
   const deliveredToyIds = [...new Set((deliveredTx ?? []).map((tx) => tx.toy_id))]
   let toysDelivered: unknown[] = []
   if (deliveredToyIds.length > 0) {
     const results = await Promise.all(
-      chunk(deliveredToyIds).map((ids) => admin.from('toys').select('*').in('id', ids))
+      chunk(deliveredToyIds).map((ids) => admin.from('toys').select(DELIVERED_TOY).in('id', ids))
     )
     const data = results.flatMap((r) => r.data ?? [])
     const error = results.find((r) => r.error)?.error
@@ -690,13 +977,151 @@ publicRoutes.get('/organizations/:id', async (c) => {
     status: org.status,
     events: (events ?? []) as OrgPublicProfile['events'],
     stories: (stories ?? []) as OrgPublicProfile['stories'],
-    tutorialsBacked: tutorialsBacked as OrgPublicProfile['tutorialsBacked'],
-    tutorialsApproved: (tutorialsApproved ?? []) as OrgPublicProfile['tutorialsApproved'],
+    tutorialsBacked: withRowFacts(tutorialsBacked as Row[]) as OrgPublicProfile['tutorialsBacked'],
+    tutorialsApproved: withRowFacts((tutorialsApproved ?? []) as Row[]) as OrgPublicProfile['tutorialsApproved'],
     toysShared: (toysShared ?? []) as OrgPublicProfile['toysShared'],
     toysDelivered: toysDelivered as OrgPublicProfile['toysDelivered'],
+    ...extras,
+    counts: { ...extras.counts, guidesBacked: tutorialsBacked.length, toysDelivered: toysDelivered.length },
   }
   return c.json(result)
 })
+
+/**
+ * Everything 076 and 077 added to the public profile.
+ *
+ * All of it through the ADMIN client with named columns, and that is the
+ * point to check when this changes. 076 added its organizations columns without
+ * extending 059's anon/authenticated grant, so the anon client cannot read
+ * them; they are public by design, so the projection here is what keeps the
+ * pickup columns out, exactly as the hand-written select above does. The
+ * thanks and conversations tables are private under RLS, so their public
+ * halves — shown notes, counts — are chosen here, row by row.
+ */
+async function orgProfileExtras(id: string, backed: Array<{ id: string }>) {
+  const admin = createAdminClient()
+  const [org, doors, rates, printers, thanks, quotes, leaders, done] = await Promise.all([
+    admin
+      .from('organizations')
+      .select(
+        'kind, logo_url, cover_url, verified_at, visit_hours, service_area, payment_methods, created_at, org_thanks_count, org_follower_count'
+      )
+      .eq('id', id)
+      .single(),
+    admin.from('org_doors').select('id, org_id, position, title, body, target').eq('org_id', id).order('position'),
+    admin
+      .from('org_rate_lines')
+      .select('id, org_id, position, description, amount_cents, claiming')
+      .eq('org_id', id)
+      .order('position'),
+    admin
+      .from('printers')
+      .select('id, name, materials, filament_cents_per_g')
+      .eq('owner_org_id', id)
+      .eq('accepting', true),
+    // Shown and not hidden: the author ticked "show this on their page" and no
+    // leader took it down. Byline only — never a name read off a profile.
+    admin
+      .from('org_thanks')
+      .select('note, byline, created_at')
+      .eq('org_id', id)
+      .eq('show_note', true)
+      .is('hidden_at', null)
+      .not('note', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(6),
+    admin
+      .from('org_stories')
+      .select('pull_quote, pull_quote_by, published_at')
+      .eq('org_id', id)
+      .eq('status', 'published')
+      .eq('kind', 'family')
+      .not('pull_quote', 'is', null)
+      .order('published_at', { ascending: false })
+      .limit(6),
+    admin.from('org_leaders').select('user_id').eq('org_id', id),
+    // Completed handoffs this org gave, for parts printed and families helped.
+    admin
+      .from('toy_transactions')
+      .select('type, requester_id, part_sets')
+      .eq('owner_org_id', id)
+      .eq('status', 'completed'),
+  ])
+  const failed = [org, doors, rates, printers, thanks, quotes, leaders, done].find((r) => r.error)
+  if (failed) {
+    console.error('[public/organizations/:id] extras failed:', failed.error?.message)
+    return null
+  }
+
+  // Turnaround and Fit (095), over every machine the organisation owns — the
+  // accepting filter above is for the "They print" card, not for its record.
+  const { data: machines } = await admin.from('printers').select('id').eq('owner_org_id', id)
+  const machineIds = (machines ?? []).map((m) => m.id as string)
+  const { data: printStats } = machineIds.length
+    ? await admin.rpc('print_job_stats', { p_printer_ids: machineIds })
+    : { data: null }
+
+  // Leaders agreed to the org-leader terms, which say their names go on the
+  // guides they back. Name and that count, nothing else.
+  const leaderIds = (leaders.data ?? []).map((l) => l.user_id as string)
+  const backedIds = backed.map((t) => t.id)
+  const [{ data: people }, { data: responded }] = await Promise.all([
+    leaderIds.length
+      ? admin.from('profiles').select('id, name').in('id', leaderIds)
+      : Promise.resolve({ data: [] as Array<{ id: string; name: string }> }),
+    leaderIds.length && backedIds.length
+      ? admin
+          .from('tutorial_orgs')
+          .select('responded_by')
+          .eq('org_id', id)
+          .eq('status', 'accepted')
+          .in('tutorial_id', backedIds)
+      : Promise.resolve({ data: [] as Array<{ responded_by: string | null }> }),
+  ])
+  const backedBy = (userId: string) => (responded ?? []).filter((r) => r.responded_by === userId).length
+
+  const row = org.data as Record<string, unknown>
+  const completed = (done.data ?? []) as Array<{ type: string; requester_id: string; part_sets: number | null }>
+
+  return {
+    kind: row.kind as string | null,
+    logo_url: row.logo_url as string | null,
+    cover_url: row.cover_url as string | null,
+    verified_at: row.verified_at as string | null,
+    visit_hours: row.visit_hours as string | null,
+    service_area: row.service_area as string | null,
+    payment_methods: row.payment_methods as OrgPublicProfile['payment_methods'],
+    created_at: row.created_at as string,
+    thanks_count: row.org_thanks_count as number,
+    follower_count: row.org_follower_count as number,
+    doors: (doors.data ?? []) as OrgPublicProfile['doors'],
+    rate_lines: (rates.data ?? []) as OrgPublicProfile['rate_lines'],
+    printers: (printers.data ?? []) as OrgPublicProfile['printers'],
+    print_stats: (printStats as PrinterStats | null) ?? null,
+    fromFamilies: [
+      ...(thanks.data ?? []).map((t) => ({
+        quote: t.note as string,
+        by: (t.byline as string | null) ?? 'A family',
+        source: 'thanks' as const,
+        at: t.created_at as string,
+      })),
+      ...(quotes.data ?? []).map((q) => ({
+        quote: q.pull_quote as string,
+        by: q.pull_quote_by as string,
+        source: 'story' as const,
+        at: q.published_at as string,
+      })),
+    ].sort((a, b) => (a.at < b.at ? 1 : -1)),
+    leaders: (people ?? [])
+      .map((p) => ({ name: p.name as string, guides_backed: backedBy(p.id as string) }))
+      .sort((a, b) => b.guides_backed - a.guides_backed),
+    counts: {
+      // A print job counts its part sets, one when it did not say.
+      partsPrinted: completed.filter((t) => t.type === 'print').reduce((n, t) => n + (t.part_sets ?? 1), 0),
+      familiesHelped: new Set(completed.map((t) => t.requester_id)).size,
+    },
+  }
+}
 
 /**
  * Published design challenges for the anonymous listing page.
@@ -707,14 +1132,18 @@ publicRoutes.get('/organizations/:id', async (c) => {
  * free-text description of a specific disabled child's needs, unreviewed.
  */
 publicRoutes.get('/challenges', async (c) => {
-  const { data, error } = await createAdminClient()
+  const admin = createAdminClient()
+  const { data, error } = await admin
     .from('toy_ideas')
-    .select('id, title, summary, contact_prefs, status, created_at')
+    .select('id, author_id, title, summary, contact_prefs, status, kind, answered_at, photo_path, created_at')
     .in('status', ['challenge', 'graduated'])
     .order('created_at', { ascending: false })
 
   if (error) return c.json({ error: error.message }, 500)
-  return c.json(data ?? [])
+  const ideas = data ?? []
+  const counts = await challengeCounts(ideas)
+  // author_id was read to count answers only; the card has no use for it.
+  return c.json(ideas.map(({ author_id: _author, ...idea }) => ({ ...withPhotoUrl(idea), ...counts.get(idea.id)! })))
 })
 
 /**
@@ -725,6 +1154,28 @@ publicRoutes.get('/challenges', async (c) => {
  * private even on a public challenge. A pending/rejected idea 404s rather
  * than 403ing: indistinguishable from one that never existed.
  */
+/**
+ * Who is writing a graduated challenge up: the draft guide's primary
+ * contributor, and when the draft was made. Graduation (admin.ts) makes the
+ * idea's author primary, so today this names the author.
+ */
+async function writingUp(
+  admin: ReturnType<typeof createAdminClient>,
+  idea: { status: string; tutorial_id: string | null; author_id: string },
+  hideAuthor: boolean
+): Promise<{ profile_id: string; name: string; started_at: string } | null> {
+  if (idea.status !== 'graduated' || !idea.tutorial_id) return null
+  const [{ data: primary }, { data: guide }] = await Promise.all([
+    admin.from('tutorial_contributors').select('profile_id').eq('tutorial_id', idea.tutorial_id).eq('role', 'primary').limit(1).maybeSingle(),
+    admin.from('tutorials').select('created_at').eq('id', idea.tutorial_id).maybeSingle(),
+  ])
+  if (!primary || !guide) return null
+  const id = primary.profile_id as string
+  // An anonymous author is not named here either (108).
+  if (hideAuthor && id === idea.author_id) return null
+  return { profile_id: id, name: await profileName(admin, id, 'A maker'), started_at: guide.created_at as string }
+}
+
 publicRoutes.get('/challenges/:id', async (c) => {
   const admin = createAdminClient()
   // Explicit columns, never select('*'). review_note holds an admin's private
@@ -735,7 +1186,7 @@ publicRoutes.get('/challenges/:id', async (c) => {
   const { data: idea, error } = await admin
     .from('toy_ideas')
     .select(
-      'id, author_id, title, summary, description, intended_use, primary_user, contact_prefs, status, tutorial_id, created_at, updated_at, profiles!toy_ideas_author_id_fkey(name)'
+      'id, author_id, title, summary, description, intended_use, primary_user, contact_prefs, status, tutorial_id, kind, answer_message_id, answered_at, photo_path, created_at, updated_at, save_count, anonymous, profiles!toy_ideas_author_id_fkey(name)'
     )
     .eq('id', c.req.param('id'))
     .in('status', ['challenge', 'graduated'])
@@ -752,7 +1203,7 @@ publicRoutes.get('/challenges/:id', async (c) => {
     // ambiguous ever since — PostgREST answers "more than one relationship was
     // found" with a 500, which this route hands to web's challenge detail page
     // as a notFound(). Every public challenge brief was unreachable.
-    .select('idea_id, profile_id, joined_at, profiles!toy_idea_participants_profile_id_fkey(name)')
+    .select('idea_id, profile_id, joined_at, profiles!toy_idea_participants_profile_id_fkey(name, role)')
     .eq('idea_id', idea.id)
     // Reads via the admin client, so RLS is not what keeps a removed person
     // off this public list -- this filter is. Without it a removed person
@@ -760,16 +1211,62 @@ publicRoutes.get('/challenges/:id', async (c) => {
     .is('removed_at', null)
   if (participantsError) return c.json({ error: participantsError.message }, 500)
 
+  // 110. Never added_by: on an anonymous challenge that is the author's id.
+  const { data: constraints, error: constraintsError } = await admin
+    .from('toy_idea_constraints')
+    .select('id, label, note')
+    .eq('idea_id', idea.id)
+    .order('created_at', { ascending: true })
+  if (constraintsError) return c.json({ error: constraintsError.message }, 500)
+
   const { profiles, ...rest } = idea as Record<string, any>
+  const counts = await challengeCounts([idea])
+  const hidden = rest.anonymous === true
   // Messages are deliberately absent: the brief recruits, the conversation is private.
   return c.json({
-    ...rest,
-    author_name: profiles?.name ?? null,
+    ...withPhotoUrl(rest),
+    ...counts.get(idea.id),
+    // 108: no name and no id for an anonymous author — the id is a name one
+    // call away. The author recognises their own through /api/ideas/mine/:id.
+    author_id: hidden ? null : rest.author_id,
+    author_name: hidden ? null : profiles?.name ?? null,
     participants: (participants ?? []).map((p: any) => ({
       idea_id: p.idea_id, profile_id: p.profile_id, joined_at: p.joined_at,
       name: p.profiles?.name ?? null,
+      role: p.profiles?.role ?? 'contributor',
     })),
+    constraints: constraints ?? [],
+    writing_up: await writingUp(admin, idea as { status: string; tutorial_id: string | null; author_id: string }, hidden),
   })
+})
+
+const PARTS_PAGE = 24
+
+/**
+ * GET /api/public/printable-parts?q=&page=
+ *
+ * The parts catalogue: every STL file of an approved guide, searched by
+ * filename and by the guide's title, 24 a page. Anon client — 001's "Anyone
+ * can read stl_files of approved tutorials" admits the rows, and the explicit
+ * filter repeats it.
+ */
+publicRoutes.get('/printable-parts', async (c) => {
+  const q = (c.req.query('q') ?? '').trim().toLowerCase()
+  const asked = Number.parseInt(c.req.query('page') ?? '', 10)
+  const { data, error } = await createAnonClient()
+    .from('stl_files')
+    .select('id, filename, material, filament_grams, print_minutes, tutorial_id, tutorials!inner(id, title, status)')
+    .eq('tutorials.status', 'approved')
+    .order('filename')
+    .order('id')
+  if (error) return c.json({ error: error.message }, 500)
+  // ponytail: searches and pages in memory over one unranged read, which PostgREST caps at max_rows (1000; supabase/config.toml sets none), so past 1000 approved STLs search misses parts and total/pages are wrong. Upgrade: page with .range() + count, search with ilike.
+  const rows = ((data ?? []) as unknown as CataloguePart[]).filter(
+    (p) => !q || p.filename.toLowerCase().includes(q) || p.tutorials.title.toLowerCase().includes(q)
+  )
+  const pages = Math.max(1, Math.ceil(rows.length / PARTS_PAGE))
+  const page = Number.isFinite(asked) ? Math.min(Math.max(asked, 1), pages) : 1
+  return c.json({ items: rows.slice((page - 1) * PARTS_PAGE, page * PARTS_PAGE), page, pages, total: rows.length })
 })
 
 /**
@@ -788,10 +1285,8 @@ const NOTIFY_FEATURE_KEYS = new Set([
   'ask-an-expert',
   'requests',
   'printing',
-  'printing-parts',
   'news',
   'events',
-  'map',
   'partners',
   'support',
 ])
@@ -938,6 +1433,60 @@ publicRoutes.get('/events', async (c) => {
       }
     }),
   )
+})
+
+/**
+ * Every published, not-cancelled event as one subscribable calendar — the
+ * board's "Subscribe to calendar". A calendar app polls this, so it answers
+ * with the whole list rather than a page of it.
+ *
+ * The same public columns as the list, so the same two things never cross:
+ * an online event's joining link (its URL here is the event PAGE, where a
+ * registrant is given the link), and anything a registrant answered.
+ *
+ * Links point at the web app: CORS_ORIGIN is its origin, the same value
+ * app.ts trusts, with the same local default.
+ */
+publicRoutes.get('/events.ics', async (c) => {
+  const web = process.env.CORS_ORIGIN ?? `http://localhost:${process.env.PORT ?? '3100'}`
+  const { data: rows, error } = await createAnonClient()
+    .from('org_events')
+    .select(EVENT_PUBLIC_COLUMNS)
+    .eq('status', 'published')
+    .is('cancelled_at', null)
+    .order('starts_at', { ascending: true })
+  if (error) return c.json({ error: error.message }, 500)
+
+  const events = rows ?? []
+  // Names through the admin client, never an embed — see GET /events.
+  const { data: orgs } = await createAdminClient()
+    .from('organizations')
+    .select('id, name')
+    .in('id', [...new Set(events.map((e) => e.org_id as string))])
+  const orgName = new Map((orgs ?? []).map((o) => [o.id as string, o.name as string]))
+
+  const body = buildCalendar(
+    events.map((e) => {
+      const page = `${web}/get-involved/events/${e.id}`
+      const online = e.format === 'online'
+      return {
+        uid: `${e.id}@splat-connect`,
+        starts_at: e.starts_at as string,
+        ends_at: e.ends_at as string | null,
+        summary: e.title as string,
+        location: online ? 'Online' : [e.location, e.suburb, e.state].filter(Boolean).join(', '),
+        url: page,
+        description: [
+          `Hosted by ${orgName.get(e.org_id as string) ?? 'an organisation on SPLAT'}.`,
+          (e.summary as string | null) ?? '',
+          page,
+        ].filter(Boolean).join('\n\n'),
+      }
+    }),
+    { name: 'SPLAT Connect events' },
+  )
+
+  return c.body(body, 200, { 'Content-Type': 'text/calendar; charset=utf-8' })
 })
 
 publicRoutes.get('/events/:id', async (c) => {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildNav } from '@/lib/nav-model'
+import { buildNav } from '@splat-connect/types'
 import type { Capabilities } from '@/lib/capabilities'
 import type { Profile, Organization } from '@splat-connect/types'
 
@@ -27,7 +27,7 @@ function caps(over: Partial<Capabilities> = {}): Capabilities {
     profile,
     isAdmin: false,
     ledOrgs: [],
-    unread: { tutorials: 0, exchanges: 0, challenges: 0, total: 0 },
+    unread: { tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 },
     exchangeActions: 0,
     ...over,
   }
@@ -90,12 +90,13 @@ describe('buildNav', () => {
 
   // Same total as before Child profiles moved to the Account page: it left
   // and Submit an idea arrived in its place.
-  it('builds twenty linked rows for a leader-admin', () => {
+  it('builds twenty-one linked rows for a leader-admin', () => {
     const rows = buildNav(caps({ ledOrgs: [org], isAdmin: true })).flatMap((g) => g.rows)
     // Fourteen after 058 added Print for others; seventeen after 059 added the
     // organisation's own three — events and stories, recycling intake, and the
-    // profile editor.
-    expect(rows).toHaveLength(20)
+    // profile editor; twenty-one after 077 added the organisation's messages.
+    // Still twenty-one after me-rows-structure: Makers wanted in, Recycle plastic out.
+    expect(rows).toHaveLength(21)
   })
 
   it('includes a Design challenges row for every account', () => {
@@ -116,7 +117,7 @@ describe('buildNav', () => {
   })
 
   it('carries the unread count when there are unread notifications', () => {
-    const row = buildNav(caps({ unread: { tutorials: 1, exchanges: 1, challenges: 1, total: 3 } }))
+    const row = buildNav(caps({ unread: { tutorials: 1, exchanges: 1, challenges: 1, organisations: 0, total: 3 } }))
       .flatMap((g) => g.rows)
       .find((r) => r.href === '/notifications')
     expect(row?.count).toBe(3)
@@ -162,11 +163,10 @@ describe('buildNav', () => {
   // How:   asserts each other row href sits under /dashboard, /admin or /notifications
   // Chain: this model is the hub's door list; a row outside the account section
   //        is navigating out of it, which needs a reason each time. Submit an
-  //        idea has one (the idea form is public), and so does Recycle plastic
-  //        — recycling has no "mine" screen at all, because a drop-off is a
-  //        booking with one organisation
+  //        idea has one (the idea form is public). Makers wanted has one too
+  //        — the open requests board is public (me-rows-structure, 2026-09-30).
   it('keeps only account destinations, aside from two named public ones', () => {
-    const outward = ['/get-involved/submit-an-idea', '/get-involved/recycling']
+    const outward = ['/get-involved/submit-an-idea', '/get-involved/makers-wanted']
     const rows = buildNav(caps()).flatMap((g) => g.rows)
     for (const row of rows) {
       if (outward.includes(row.href)) continue
@@ -183,5 +183,33 @@ describe('buildNav', () => {
     const account = buildNav(caps()).find((g) => g.heading === 'Account')!
     expect(account.rows.map((r) => r.label)).toEqual(['Saved', 'Notifications', 'Account'])
     expect(account.rows[0].href).toBe('/dashboard/saved')
+  })
+
+  // Decided 2026-09-30 (me-rows-structure): the board's Me puts Makers wanted
+  // under Give us a challenge, and Recycling under Explore — not in the model.
+  it('lists Makers wanted under Give us a challenge, and no recycling row', () => {
+    const challenge = buildNav(caps()).find((g) => g.heading === 'Give us a challenge')!
+    expect(challenge.rows.map((r) => r.label)).toEqual(['Design challenges', 'Submit an idea', 'Makers wanted'])
+    expect(challenge.rows[2].href).toBe('/get-involved/makers-wanted')
+    expect(hrefs(buildNav(caps()))).not.toContain('/get-involved/recycling')
+  })
+
+  it('puts each count on its row, and none where the count is zero', () => {
+    const rows = buildNav(caps({ ledOrgs: [org] }), {
+      tutorials: 2, challenges: 1, makers: 3, printRequests: 1, printJobs: 0, review: 5, intake: 2, orgOrders: 1,
+    }).flatMap((g) => g.rows)
+    const at = (href: string) => rows.find((r) => r.href === href)?.count
+    expect(at('/dashboard/tutorials')).toBe(2)
+    expect(at('/dashboard/challenges')).toBe(1)
+    expect(at('/get-involved/makers-wanted')).toBe(3)
+    expect(at('/dashboard/print-requests')).toBe(1)
+    expect(at('/dashboard/printers')).toBeUndefined()
+    expect(at('/dashboard/organisation')).toBe(5)
+    expect(at('/dashboard/organisation/recycling')).toBe(2)
+    expect(at('/dashboard/organisation/orders')).toBe(1)
+  })
+
+  it('leaves every row uncounted when no counts are given', () => {
+    expect(buildNav(caps({ ledOrgs: [org] })).flatMap((g) => g.rows).filter((r) => r.count !== undefined).map((r) => r.href)).toEqual([])
   })
 })

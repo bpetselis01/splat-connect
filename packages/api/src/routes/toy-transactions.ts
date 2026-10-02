@@ -1,12 +1,13 @@
 import { chunk } from '../chunk.js'
 import { Hono, type Context } from 'hono'
-import { randomInt } from 'node:crypto'
-import { needsAction, isOwnerSide } from '@splat-connect/types'
-import type { PrintJobFile } from '@splat-connect/types'
+import { randomInt, randomUUID } from 'node:crypto'
+import { needsAction, isOwnerSide, answerBy, printRequestExpired, shortDate, fitNotesProblem, partsTotalCents, notificationBody } from '@splat-connect/types'
+import type { PrintJobFile, PrintSettings, BuildQuestion, BuildQuestions } from '@splat-connect/types'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { ledOrgIds, atCapacityToyIds } from '../toy-access.js'
 import { profileName } from '../profile-name.js'
+import { readNear, byDistance, pickupPostcodes } from '../distance.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
 const toyTransactions = new Hono<{ Variables: AuthVariables }>()
@@ -89,11 +90,79 @@ async function notifyOwnerSide(
     .insert(recipients.map((recipient_id) => ({ ...payload, recipient_id })))
 }
 
+/**
+ * The other printers a request went to (074). Once one accepts, the rest are
+ * withdrawn for the family — "so nobody prints it twice" — each with a line in
+ * its own thread and a notification to whoever was going to print it.
+ */
+async function withdrawPrintSiblings(
+  admin: ReturnType<typeof createAdminClient>,
+  tx: { id: string; print_group_id: string; requester_id: string; tutorial_id: string | null }
+) {
+  const { data: siblings } = await admin
+    .from('toy_transactions')
+    .update({ status: 'withdrawn', updated_at: new Date().toISOString() })
+    .eq('print_group_id', tx.print_group_id)
+    .neq('id', tx.id)
+    .eq('status', 'requested')
+    .select('id, owner_id, owner_org_id, tutorial_id, type, toy_id')
+  if (!siblings?.length) return
+  const requesterName = await profileName(admin, tx.requester_id, 'The family')
+  for (const sib of siblings) {
+    await admin.from('toy_transaction_messages').insert({
+      transaction_id: sib.id,
+      sender_id: tx.requester_id,
+      kind: 'system',
+      body: 'Another printer took this job, so it was withdrawn here. Nothing to do.',
+    })
+    await notifyOwnerSide(admin, sib, {
+      type: 'toy_withdrawn',
+      toy_transaction_id: sib.id,
+      toy_name: await subjectName(admin, sib as any),
+      actor_name: requesterName,
+    })
+  }
+}
+
 type MessagePreview = { body: string; sender_id: string; kind: string; created_at: string }
 
 // Newest message per transaction, for the list preview. PostgREST has no clean
 // "latest per group", so this reads the caller's messages in order and keeps the
 // last of each — RLS already limits the rows to threads they are part of.
+type BoardGuide = {
+  id: string
+  title: string
+  difficulty: string | null
+  status: string
+  build_minutes: number | null
+  parts_total_cents: number | null
+}
+
+/**
+ * The guide half of a Makers wanted row: what it is, how hard, how long, and
+ * roughly what the parts cost (makers-row-meta). The total is batch 1's
+ * partsTotalCents — null unless every required part is priced. Named columns
+ * only, and every one checked against the table: a select naming a column
+ * that does not exist fails whole and returns null — which rendered every card
+ * on the board as "a guide that is no longer published", with no error anywhere.
+ */
+async function boardGuides(
+  admin: ReturnType<typeof createAdminClient>,
+  tutorialIds: string[]
+): Promise<{ guides: Map<string, BoardGuide> } | { error: { message: string } }> {
+  const { data, error } = await admin
+    .from('tutorials')
+    .select('id, title, difficulty, status, build_minutes, parts(is_optional, price_cents)')
+    .in('id', tutorialIds)
+  if (error) return { error }
+  type Row = Omit<BoardGuide, 'parts_total_cents'> & { parts: { is_optional: boolean; price_cents: number | null }[] | null }
+  return {
+    guides: new Map(
+      ((data ?? []) as Row[]).map(({ parts, ...g }) => [g.id, { ...g, parts_total_cents: partsTotalCents(parts ?? []) }])
+    ),
+  }
+}
+
 /**
  * GET /api/toy-transactions/open-builds
  *
@@ -108,6 +177,8 @@ type MessagePreview = { body: string; sender_id: string; kind: string; created_a
  * that is the whole of what a maker gets before they claim.
  */
 toyTransactions.get('/open-builds', async (c) => {
+  const near = readNear((key) => c.req.query(key))
+  if (typeof near === 'string') return c.json({ error: near }, 400)
   const supabase = createUserClient(c.get('token'))
   const { data, error } = await supabase
     .from('toy_transactions')
@@ -122,21 +193,22 @@ toyTransactions.get('/open-builds', async (c) => {
   if (error) return c.json({ error: error.message }, 500)
 
   const rows = data ?? []
-  const admin = createAdminClient()
-  // Named columns only, and every one checked against the table. A select
-  // naming a column that does not exist fails the whole query and returns null
-  // — which rendered every card on the board as "a guide that is no longer
-  // published", with no error anywhere.
-  const { data: guides, error: guideError } = await admin
-    .from('tutorials')
-    .select('id, title, difficulty, status')
-    .in('id', rows.map((r) => r.tutorial_id as string))
-  if (guideError) return c.json({ error: guideError.message }, 500)
-  const guide = new Map((guides ?? []).map((g) => [g.id as string, g]))
+  const found = await boardGuides(createAdminClient(), rows.map((r) => r.tutorial_id as string))
+  if ('error' in found) return c.json({ error: found.error.message }, 500)
+  const guide = found.guides
 
   const userId = c.get('userId')
+  // Nearest first with `near` (099), from each family's profile postcode, read
+  // here through the admin client and never stored on the request: 064 lets
+  // any member select an open build row, so a column there would be public.
+  // Only the km leaves; the card says "Family in Newtown", and that stays the
+  // whole of it.
+  const postcodes = near.near
+    ? await pickupPostcodes(rows.map((r) => r.requester_id as string), [])
+    : new Map<string, string | null>()
+  const ranked = await byDistance(rows, (r) => postcodes.get(r.requester_id as string), near)
   return c.json(
-    rows.map((r) => {
+    ranked.map((r) => {
       const { requester_id, ...rest } = r as Record<string, unknown>
       return {
         ...rest,
@@ -149,6 +221,69 @@ toyTransactions.get('/open-builds', async (c) => {
   )
 })
 
+const BOARD_PAGE = 20
+
+/**
+ * GET /api/toy-transactions/builds-board?tab=live|done&page=N
+ *
+ * Makers wanted's Live and Done tabs (makers-live-done-tabs): claimed builds
+ * still open, and handed-over ones, most recently changed first, 20 a page.
+ * Read with the admin client — 064's policy admits only unclaimed rows — so
+ * this route is the filter. Never requester_id; the maker is named, since the
+ * board says who is building it. km is always null: no postcode is read here.
+ *
+ * A row says only what is being built, by whom and when (on Done, updated_at
+ * is the hand-over): 064 hid the child, suburb and note once a build was
+ * claimed. Only on Live, the build's two parties still get them, as their own
+ * row's RLS already lets them read.
+ *
+ * ponytail: "came from the board" is read off travel_km, which only the open
+ * form sends (POST /build requires it there; ask-for-build-form never sends
+ * it). A from_board column if an addressed request ever starts sending one.
+ */
+toyTransactions.get('/builds-board', async (c) => {
+  const tab = c.req.query('tab')
+  if (tab !== 'live' && tab !== 'done') return c.json({ error: 'tab must be live or done' }, 400)
+  const page = Math.max(0, Number.parseInt(c.req.query('page') ?? '0', 10) || 0)
+
+  const admin = createAdminClient()
+  const { data, error } = await admin
+    .from('toy_transactions')
+    .select(
+      'id, tutorial_id, build_brief, travel_km, urgency, child_label, requester_suburb, family_has_toy, requester_id, owner_id, owner_org_id, created_at, updated_at'
+    )
+    .eq('type', 'build')
+    .eq('status', tab === 'live' ? 'accepted' : 'completed')
+    .not('travel_km', 'is', null)
+    .order('updated_at', { ascending: false })
+    .range(page * BOARD_PAGE, page * BOARD_PAGE + BOARD_PAGE - 1)
+  if (error) return c.json({ error: error.message }, 500)
+
+  const rows = data ?? []
+  const found = await boardGuides(admin, rows.map((r) => r.tutorial_id as string))
+  if ('error' in found) return c.json({ error: found.error.message }, 500)
+
+  const userId = c.get('userId')
+  return c.json(
+    await Promise.all(
+      rows.map(async ({ requester_id, owner_id, owner_org_id, ...rest }) => {
+        const party = requester_id === userId || owner_id === userId
+        return {
+          ...rest,
+          ...(tab === 'done' || !party
+            ? { build_brief: null, travel_km: null, urgency: null, child_label: null, requester_suburb: null, family_has_toy: false }
+            : {}),
+          km: null,
+          tutorial: found.guides.get(rest.tutorial_id as string) ?? null,
+          maker_name: await ownerSideName(admin, { owner_id, owner_org_id }, 'A maker'),
+          mine: requester_id === userId,
+          party,
+        }
+      })
+    )
+  )
+})
+
 /**
  * What this record is about, for a notification's `toy_name`.
  *
@@ -157,7 +292,7 @@ toyTransactions.get('/open-builds', async (c) => {
  * sites, all of which did `.eq('id', tx.toy_id).single()` and would now throw
  * on a null id.
  */
-async function subjectName(
+export async function subjectName(
   admin: ReturnType<typeof createAdminClient>,
   tx: { type: string; toy_id: string | null; tutorial_id: string | null }
 ): Promise<string> {
@@ -201,7 +336,7 @@ type LoadResult =
   | { status: 404 }
   | { status: 500; message: string }
 
-export async function loadForParty(c: Context<{ Variables: AuthVariables }>): Promise<LoadResult> {
+async function loadForParty(c: Context<{ Variables: AuthVariables }>): Promise<LoadResult> {
   const supabase = createUserClient(c.get('token'))
   const { data, error } = await supabase
     .from('toy_transactions')
@@ -230,7 +365,7 @@ toyTransactions.get('/', async (c) => {
   const { data, error } = await supabase
     .from('toy_transactions')
     .select(
-      '*, toy:toys!toy_transactions_toy_id_fkey(name, cover_photo_url), offered:toys!toy_transactions_offered_toy_id_fkey(name, cover_photo_url), owner:profiles!toy_transactions_owner_id_fkey(name), requester:profiles!toy_transactions_requester_id_fkey(name), org:organizations!toy_transactions_owner_org_id_fkey(name), tutorial:tutorials(title), print_job_files(quantity, stl_files(id, filename, print_minutes, filament_grams, material))'
+      '*, toy:toys!toy_transactions_toy_id_fkey(name, cover_photo_url), offered:toys!toy_transactions_offered_toy_id_fkey(name, cover_photo_url), owner:profiles!toy_transactions_owner_id_fkey(name), requester:profiles!toy_transactions_requester_id_fkey(name), org:organizations!toy_transactions_owner_org_id_fkey(name), tutorial:tutorials(title, layer_height_mm, infill_percent, material, print_minutes), print_job_files(quantity, stl_files(id, filename, print_minutes, filament_grams, material))'
     )
     .order('updated_at', { ascending: false })
   if (error) return c.json({ error: error.message }, 500)
@@ -238,22 +373,29 @@ toyTransactions.get('/', async (c) => {
   const userId = c.get('userId')
   const admin = createAdminClient()
   const ledOrgs = await ledOrgIds(admin, userId)
-  const rows = (data ?? []) as unknown as Array<
+  const rows = ((data ?? []) as unknown as Array<
     Record<string, unknown> & {
       id: string
       toy_id: string | null
       status: string
+      requester_id: string
       owner_id: string | null
       owner_org_id: string | null
       toy: { name: string; cover_photo_url: string | null } | null
-      tutorial: { title: string } | null
+      tutorial: ({ title: string } & PrintSettings) | null
       offered: { name: string; cover_photo_url: string | null } | null
       owner: { name: string } | null
       requester: { name: string } | null
       org: { name: string } | null
       print_job_files: PrintJobFileRow[] | null
     }
-  >
+  >).filter(
+    // The caller's own records only. RLS also lets a maker read every open
+    // build request so they can claim it (064), and returning those here put a
+    // stranger's request — name and id included, which GET /open-builds
+    // deliberately withholds — on every maker's exchange list and inbox.
+    (r) => r.requester_id === userId || r.owner_id === userId || (!!r.owner_org_id && ledOrgs.includes(r.owner_org_id))
+  )
   // Advisory, and fail-open by design: a failed scan must not blank the list.
   const blockedToyIds =
     (await atCapacityToyIds(
@@ -268,11 +410,22 @@ toyTransactions.get('/', async (c) => {
     supabase,
     rows.map((r) => r.id)
   )
+  // How many printers each request went to (074), counted across the whole
+  // group — the caller may be one printer and not see the others' rows.
+  const groupIds = [...new Set(rows.map((r) => r.print_group_id as string | null).filter((g): g is string => !!g))]
+  const groupSize = new Map<string, number>()
+  if (groupIds.length) {
+    const { data: members } = await admin.from('toy_transactions').select('print_group_id').in('print_group_id', groupIds)
+    for (const m of members ?? []) groupSize.set(m.print_group_id, (groupSize.get(m.print_group_id) ?? 0) + 1)
+  }
   return c.json(
     rows.map((r) => ({
       ...sanitizeCodes(r, userId, ledOrgs),
       toy_name: r.toy?.name ?? '',
       tutorial_title: r.tutorial?.title ?? null,
+      tutorial_print_settings: r.tutorial
+        ? { layer_height_mm: r.tutorial.layer_height_mm, infill_percent: r.tutorial.infill_percent, material: r.tutorial.material, print_minutes: r.tutorial.print_minutes }
+        : null,
       // Both embeds survive a completed handoff for either party: 025's
       // "Transaction parties can view each other's toy" policy has no end date,
       // which is what lets a giver still see the toy they handed over.
@@ -295,6 +448,7 @@ toyTransactions.get('/', async (c) => {
         r.status === 'requested' && r.toy_id !== null && blockedToyIds.has(r.toy_id),
       last_message: previews.get(r.id) ?? null,
       print_files: flattenPrintFiles(r.print_job_files),
+      print_group_size: r.print_group_id ? groupSize.get(r.print_group_id as string) ?? 1 : null,
     }))
   )
 })
@@ -311,7 +465,7 @@ toyTransactions.get('/action-count', async (c) => {
       // stage alternates sides before the handover (057): without them the
       // badge tells the maker to confirm a handover the family has not
       // approved yet.
-      'id, toy_id, status, type, owner_id, owner_org_id, owner_confirmed_at, requester_confirmed_at, working_photo_url, work_approved_at, printing_started_at, ready_at'
+      'id, toy_id, status, type, owner_id, owner_org_id, owner_confirmed_at, requester_confirmed_at, working_photo_url, work_approved_at, printing_started_at, ready_at, created_at'
     )
     .in('status', ['requested', 'accepted'])
   if (error) return c.json({ error: error.message }, 500)
@@ -346,7 +500,7 @@ toyTransactions.get('/:id', async (c) => {
   const { data, error } = await supabase
     .from('toy_transactions')
     .select(
-      '*, toy:toys!toy_transactions_toy_id_fkey(name, status), offered:toys!toy_transactions_offered_toy_id_fkey(name, status), owner:profiles!toy_transactions_owner_id_fkey(name), requester:profiles!toy_transactions_requester_id_fkey(name), org:organizations!toy_transactions_owner_org_id_fkey(name), tutorial:tutorials(title), printer:printers(id, name, suburb, state, materials), print_job_files(quantity, stl_files(id, filename, print_minutes, filament_grams, material))'
+      '*, toy:toys!toy_transactions_toy_id_fkey(name, status, cover_photo_url), offered:toys!toy_transactions_offered_toy_id_fkey(name, status), owner:profiles!toy_transactions_owner_id_fkey(name), requester:profiles!toy_transactions_requester_id_fkey(name), org:organizations!toy_transactions_owner_org_id_fkey(name), tutorial:tutorials(title, layer_height_mm, infill_percent, material, print_minutes), printer:printers(id, name, suburb, state, materials), print_job_files(quantity, stl_files(id, filename, print_minutes, filament_grams, material))'
     )
     .eq('id', c.req.param('id'))
     .maybeSingle()
@@ -365,12 +519,12 @@ toyTransactions.get('/:id', async (c) => {
 
   const userId = c.get('userId')
   const row = data as unknown as Record<string, any> & {
-    toy: { name: string; status: 'draft' | 'published' } | null
+    toy: { name: string; status: 'draft' | 'published'; cover_photo_url: string | null } | null
     offered: { name: string; status: 'draft' | 'published' } | null
     owner: { name: string } | null
     requester: { name: string } | null
     org: { name: string } | null
-    tutorial: { title: string } | null
+    tutorial: ({ title: string } & PrintSettings) | null
     printer: { id: string; name: string; suburb: string | null; state: string | null; materials: string[] } | null
     print_job_files: PrintJobFileRow[] | null
   }
@@ -399,10 +553,28 @@ toyTransactions.get('/:id', async (c) => {
           ? { id: row.offered_toy_id, name: row.offered.name, status: row.offered.status }
           : null
 
+  // How many printers the request went to (074) — "Asked 2 printers" on the
+  // family's side, "Also asked 1 other" on the printer's.
+  const printGroupSize = row.print_group_id
+    ? (
+        await admin
+          .from('toy_transactions')
+          .select('id', { count: 'exact', head: true })
+          .eq('print_group_id', row.print_group_id)
+      ).count ?? 1
+    : null
+
   return c.json({
     ...sanitizeCodes(row, userId, ledOrgs),
+    print_group_size: printGroupSize,
     toy_name: row.toy?.name ?? '',
+    // 025's "parties can view each other's toy" policy outlives the handoff,
+    // so the giver still sees what they gave.
+    toy_cover_photo_url: row.toy?.cover_photo_url ?? null,
     tutorial_title: row.tutorial?.title ?? null,
+    tutorial_print_settings: row.tutorial
+        ? { layer_height_mm: row.tutorial.layer_height_mm, infill_percent: row.tutorial.infill_percent, material: row.tutorial.material, print_minutes: row.tutorial.print_minutes }
+        : null,
     printer: row.printer ?? null,
     print_files: flattenPrintFiles(row.print_job_files),
     offered_toy_name: row.offered?.name ?? null,
@@ -427,20 +599,26 @@ toyTransactions.post('/', async (c) => {
 
   const { data: toy, error: toyError } = await admin
     .from('toys')
-    .select('id, owner_id, owner_org_id, quantity, offer_type, status')
+    .select('id, owner_id, owner_org_id, quantity, offer_type, status, paused_at, retired_at')
     .eq('id', body.toy_id)
     .maybeSingle()
   if (toyError) {
     if (toyError.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
     return c.json({ error: toyError.message }, 500)
   }
-  if (!toy || toy.status !== 'published') return c.json({ error: 'Not found' }, 404)
+  // Retired (101) reads as gone, like a draft: this admin read skips RLS.
+  if (!toy || toy.status !== 'published' || toy.retired_at) return c.json({ error: 'Not found' }, 404)
   if (toy.owner_id === userId) return c.json({ error: 'You cannot request your own toy' }, 400)
   // A leader asking their own organisation for stock would be approving their
   // own request — the org side of "you cannot request your own toy".
   if (toy.owner_org_id && (await ledOrgIds(admin, userId)).includes(toy.owner_org_id)) {
     return c.json({ error: "You cannot request your own organisation's toy" }, 400)
   }
+
+  // Marked unavailable (100): still listed and readable, but no new asks.
+  // A 409 rather than the capacity check's 404 — the toy is plainly there,
+  // the holder has said not now.
+  if (toy.paused_at) return c.json({ error: 'This toy is not taking requests right now' }, 409)
 
   // Every unit already spoken for. A toy mid-handoff stays 'published', so
   // the status check above doesn't catch it. Hide it the same
@@ -512,7 +690,7 @@ toyTransactions.post('/', async (c) => {
     .single()
   if (insertError) return c.json({ error: insertError.message }, 500)
 
-  const { data: requesterProfile } = await admin.from('profiles').select('name').eq('id', userId).single()
+  const requesterName = await profileName(admin, userId, 'A contributor')
   const { data: toyRow } = await admin.from('toys').select('name').eq('id', toy.id).single()
 
   await admin.from('toy_transaction_messages').insert({
@@ -545,7 +723,7 @@ toyTransactions.post('/', async (c) => {
     type: 'toy_request',
     toy_transaction_id: tx.id,
     toy_name: toyRow?.name ?? 'a toy',
-    actor_name: requesterProfile?.name ?? 'A contributor',
+    actor_name: requesterName,
   })
 
   return c.json(tx, 201)
@@ -587,12 +765,14 @@ toyTransactions.post('/:id/messages', async (c) => {
   if (tx) {
     const userId = c.get('userId')
     const ledOrgs = await ledOrgIds(admin, userId)
-    const { data: sender } = await admin.from('profiles').select('name').eq('id', userId).single()
     const payload = {
       type: 'toy_message',
       toy_transaction_id: c.req.param('id'),
       toy_name: await subjectName(admin, tx as any),
-      actor_name: sender?.name ?? 'A contributor',
+      actor_name: await profileName(admin, userId, 'A contributor'),
+      // 119: the message itself. Every recipient below is a party to this
+      // transaction (the requester, or the owner side via notifyOwnerSide).
+      body: notificationBody(body.body),
     }
     // A leader posting notifies the family; the family posting notifies every
     // leader, so whoever picks the thread up next has it in their inbox.
@@ -617,6 +797,9 @@ toyTransactions.post('/:id/accept', async (c) => {
     return c.json({ error: 'Only the owner may accept' }, 403)
   }
   if (tx.status !== 'requested') return c.json({ error: 'This request is no longer open' }, 409)
+  if (printRequestExpired({ status: tx.status, type: tx.type, created_at: tx.created_at })) {
+    return c.json({ error: `This request expired on ${shortDate(answerBy(tx.created_at))}; ask again.` }, 409)
+  }
 
   // An organisation's pickup point is fixed, so the body is ignored entirely
   // and accept_toy_transaction() reads the org's own columns. The rule is
@@ -626,6 +809,32 @@ toyTransactions.post('/:id/accept', async (c) => {
   const pickup = tx.owner_org_id ? null : readPickupAddress(body)
   if (!tx.owner_org_id && !pickup) {
     return c.json({ error: 'Pickup address is required to accept' }, 400)
+  }
+
+  // An organisation with several printers picks which one takes the job, and
+  // the choice is stamped on it (the board's "Accept on Bambu P1S"). Only a
+  // machine of the same organisation that is open and has room.
+  const bench = typeof body?.printer_id === 'string' ? body.printer_id : null
+  if (bench && tx.type === 'print' && tx.owner_org_id && bench !== tx.printer_id) {
+    const { data: machine } = await admin
+      .from('printers')
+      .select('id, owner_org_id, accepting, capacity')
+      .eq('id', bench)
+      .maybeSingle()
+    if (!machine || machine.owner_org_id !== tx.owner_org_id) return c.json({ error: 'Not found' }, 404)
+    if (!machine.accepting) return c.json({ error: 'That printer is not taking new jobs' }, 409)
+    const { count: busy } = await admin
+      .from('toy_transactions')
+      .select('id', { count: 'exact', head: true })
+      .eq('printer_id', machine.id)
+      .eq('status', 'accepted')
+    if ((busy ?? 0) >= machine.capacity) return c.json({ error: 'That printer is full right now' }, 409)
+    const { error: benchError } = await admin
+      .from('toy_transactions')
+      .update({ printer_id: machine.id })
+      .eq('id', tx.id)
+      .eq('status', 'requested')
+    if (benchError) return c.json({ error: benchError.message }, 500)
   }
 
   // The atomic take. Two leaders pressing Accept in the same moment would both
@@ -640,6 +849,17 @@ toyTransactions.post('/:id/accept', async (c) => {
     p_pickup_state: pickup?.pickup_state ?? null,
     p_pickup_postcode: pickup?.pickup_postcode ?? null,
   })
+  // 074's one-taker index: another printer in the same request got there first.
+  // The winner's sibling sweep may not have reached this row yet, so the loser
+  // withdraws its own job rather than leave it open on a request already taken.
+  if (error?.code === '23505') {
+    await admin
+      .from('toy_transactions')
+      .update({ status: 'withdrawn', updated_at: new Date().toISOString() })
+      .eq('id', tx.id)
+      .eq('status', 'requested')
+    return c.json({ error: 'Another printer has already taken this job.' }, 409)
+  }
   if (error) return c.json({ error: error.message }, 500)
 
   const outcome = (result as { outcome: string }).outcome
@@ -676,6 +896,19 @@ toyTransactions.post('/:id/accept', async (c) => {
     toy_name: await subjectName(admin, tx as any),
     actor_name: await ownerSideName(admin, tx as any, 'The owner'),
   })
+
+  // 114: the RPC spent the credit, or found the balance short and accepted
+  // without it. Short is said in the thread, where both sides will see it.
+  if ((result as { credit?: string | null }).credit === 'short') {
+    await admin.from('toy_transaction_messages').insert({
+      transaction_id: tx.id,
+      sender_id: userId,
+      kind: 'system',
+      body: `There was not enough recycling credit left at ${await ownerSideName(admin, tx as any, 'the organisation')} for this job, so it was accepted without credit.`,
+    })
+  }
+
+  if (tx.type === 'print' && tx.print_group_id) await withdrawPrintSiblings(admin, tx as any)
 
   // Rival requests are deliberately left open here. An accepted handoff can
   // still fall through — if it is withdrawn, the giving side should be able to
@@ -734,6 +967,8 @@ toyTransactions.post('/:id/reject', async (c) => {
     toy_transaction_id: tx.id,
     toy_name: await subjectName(admin, tx as any),
     actor_name: await ownerSideName(admin, tx as any, 'The owner'),
+    // 119: the decline reason, to the requester's row only.
+    body: notificationBody(reason),
   })
 
   return c.json(sanitizeCodes(updated, userId, ledOrgs))
@@ -768,14 +1003,40 @@ toyTransactions.post('/:id/withdraw', async (c) => {
     body: 'Request withdrawn.',
   })
 
-  const { data: actor } = await admin.from('profiles').select('name').eq('id', userId).single()
+  // A family withdrawing a request sent to several printers withdraws it from
+  // all of them (074) — they asked once, so they withdraw once.
+  if (tx.type === 'print' && tx.print_group_id && userId === tx.requester_id) {
+    const { data: siblings } = await admin
+      .from('toy_transactions')
+      .update({ status: 'withdrawn', updated_at: now })
+      .eq('print_group_id', tx.print_group_id)
+      .neq('id', tx.id)
+      .in('status', ['requested', 'accepted'])
+      .select('id, owner_id, owner_org_id, tutorial_id, type, toy_id')
+    const familyName = await profileName(admin, userId, 'The family')
+    for (const sib of siblings ?? []) {
+      await admin.from('toy_transaction_messages').insert({
+        transaction_id: sib.id,
+        sender_id: userId,
+        kind: 'system',
+        body: 'Request withdrawn.',
+      })
+      await notifyOwnerSide(admin, sib as any, {
+        type: 'toy_withdrawn',
+        toy_transaction_id: sib.id,
+        toy_name: await subjectName(admin, sib as any),
+        actor_name: familyName,
+      })
+    }
+  }
+
   const payload = {
     type: 'toy_withdrawn',
     toy_transaction_id: tx.id,
     toy_name: await subjectName(admin, tx as any),
     actor_name: fromOwnerSide
       ? await ownerSideName(admin, tx as any, 'The other party')
-      : actor?.name ?? 'The other party',
+      : await profileName(admin, userId, 'The other party'),
   }
   if (fromOwnerSide) {
     await admin.from('notifications').insert({ ...payload, recipient_id: tx.requester_id })
@@ -865,6 +1126,8 @@ toyTransactions.post('/:id/confirm', async (c) => {
   // home. (archived_at, 025's earlier answer to the same problem, is gone —
   // migration 050.)
   //
+  // And un-paused (100): a pause is the old holder's choice, not the toy's.
+  //
   // The giver needs no update: My Toys filters on owner_id, so their list
   // clears itself.
   //
@@ -877,10 +1140,18 @@ toyTransactions.post('/:id/confirm', async (c) => {
   // stuck 'completed' with a toy that never moved and a guard that can never
   // let it back in.
   async function transferToy(toyId: string, to: { owner_id: string | null; owner_org_id: string | null }) {
-    return admin
+    const moved = await admin
       .from('toys')
-      .update({ ...to, status: 'draft', updated_at: now })
+      .update({ ...to, status: 'draft', paused_at: null, picks_mode: 'auto', updated_at: now })
       .eq('id', toyId)
+    if (moved.error) return moved
+    // The old holder's hand-picked "Also worth a look" points at their shelf,
+    // not the new one's, and their other toys' picks of this one no longer
+    // point at their own shelf (102).
+    return admin
+      .from('toy_picks')
+      .delete()
+      .or(`toy_id.eq.${toyId},and(entity_type.eq.toy,entity_id.eq.${toyId})`)
   }
 
   // An organisation gives ONE OF its units, so its row cannot move — it is the
@@ -1027,6 +1298,42 @@ toyTransactions.post('/:id/confirm', async (c) => {
 })
 
 /**
+ * POST /api/toy-transactions/:id/new-code
+ *
+ * A fresh code for the CALLER only, for when theirs was overheard or sent to
+ * the wrong person. Your code is the one the other side types in, so once they
+ * have confirmed it is spent and cannot be replaced. The counterparty's code is
+ * never touched, and sanitizeCodes keeps it out of the answer as everywhere else.
+ */
+toyTransactions.post('/:id/new-code', async (c) => {
+  const loaded = await loadForParty(c)
+  if ('status' in loaded) return c.json({ error: 'message' in loaded ? loaded.message : 'Not found' }, loaded.status)
+  const tx = loaded.data
+  const userId = c.get('userId')
+  const admin = createAdminClient()
+  const ledOrgs = await ledOrgIds(admin, userId)
+  const isOwner = isOwnerSide(tx as any, userId, ledOrgs)
+  if (!isOwner && userId !== tx.requester_id) return c.json({ error: 'Not found' }, 404)
+  if (tx.status !== 'accepted') return c.json({ error: 'A code is only given once the request is accepted.' }, 409)
+  const spent = isOwner ? tx.requester_confirmed_at : tx.owner_confirmed_at
+  if (spent) return c.json({ error: 'Your code has already been used, so it cannot be changed.' }, 409)
+
+  const field = isOwner ? 'owner_code' : 'requester_code'
+  const { data: updated, error } = await admin
+    .from('toy_transactions')
+    .update({ [field]: generateCode(), updated_at: new Date().toISOString() })
+    .eq('id', tx.id)
+    .eq('status', 'accepted')
+    // The other side may have typed the old code in since the read above.
+    .is(isOwner ? 'requester_confirmed_at' : 'owner_confirmed_at', null)
+    .select()
+    .maybeSingle()
+  if (error) return c.json({ error: error.message }, 500)
+  if (!updated) return c.json({ error: 'This handover is no longer open.' }, 409)
+  return c.json(sanitizeCodes(updated, userId, ledOrgs))
+})
+
+/**
  * POST /api/toy-transactions/build
  *
  * A family asks somebody to build them an adapted toy from a published guide.
@@ -1048,9 +1355,11 @@ toyTransactions.post('/build', async (c) => {
   const userId = c.get('userId')
   const admin = createAdminClient()
 
+  // Optional since 104 — the board's note to the maker is "(optional)". When
+  // present it is still capped, here and by toy_transactions_subject.
   const brief = typeof body.build_brief === 'string' ? body.build_brief.trim() : ''
-  if (brief.length < 1 || brief.length > 2000) {
-    return c.json({ error: 'Say what you need built, in 2000 characters or fewer.' }, 400)
+  if (brief.length > 2000) {
+    return c.json({ error: 'Keep the note to the maker to 2000 characters or fewer.' }, 400)
   }
 
   const { data: tutorial, error: tutorialError } = await admin
@@ -1163,7 +1472,7 @@ toyTransactions.post('/build', async (c) => {
       toy_id: null,
       offered_toy_id: null,
       tutorial_id: tutorial.id,
-      build_brief: brief,
+      build_brief: brief || null,
       type: 'build',
       status: 'requested',
       requester_id: userId,
@@ -1175,7 +1484,7 @@ toyTransactions.post('/build', async (c) => {
     .single()
   if (insertError) return c.json({ error: insertError.message }, 500)
 
-  const { data: requesterProfile } = await admin.from('profiles').select('name').eq('id', userId).single()
+  const requesterName = await profileName(admin, userId, 'A contributor')
 
   await admin.from('toy_transaction_messages').insert({
     transaction_id: tx.id,
@@ -1192,7 +1501,7 @@ toyTransactions.post('/build', async (c) => {
       type: 'toy_request',
       toy_transaction_id: tx.id,
       toy_name: tutorial.title,
-      actor_name: requesterProfile?.name ?? 'A contributor',
+      actor_name: requesterName,
     })
   }
 
@@ -1253,16 +1562,30 @@ toyTransactions.post('/:id/claim', async (c) => {
   if (claimError) return c.json({ error: claimError.message }, 500)
   if (!claimed) return c.json({ error: 'Somebody has already claimed this one.' }, 409)
 
-  const [{ data: maker }, { data: tutorial }] = await Promise.all([
-    admin.from('profiles').select('name').eq('id', userId).maybeSingle(),
+  const [makerName, { data: tutorial }] = await Promise.all([
+    profileName(admin, userId, 'A maker'),
     admin.from('tutorials').select('title').eq('id', tx.tutorial_id as string).maybeSingle(),
   ])
+
+  // What this maker asked first stays with the build (makers-ask-first): their
+  // thread is copied in with its own times, so it reads ahead of the claim.
+  const { data: asked } = await admin
+    .from('build_request_questions')
+    .select('sender_id, body, created_at')
+    .eq('transaction_id', tx.id)
+    .eq('maker_id', userId)
+    .order('created_at', { ascending: true })
+  if (asked?.length) {
+    await admin.from('toy_transaction_messages').insert(
+      asked.map((q) => ({ transaction_id: tx.id, sender_id: q.sender_id, kind: 'user', body: q.body, created_at: q.created_at }))
+    )
+  }
 
   await admin.from('toy_transaction_messages').insert({
     transaction_id: tx.id,
     sender_id: userId,
     kind: 'system',
-    body: `${maker?.name ?? 'A maker'} claimed this build.`,
+    body: `${makerName} claimed this build.`,
   })
 
   await admin.from('notifications').insert({
@@ -1270,10 +1593,115 @@ toyTransactions.post('/:id/claim', async (c) => {
     type: 'toy_accepted',
     toy_transaction_id: tx.id,
     toy_name: tutorial?.title ?? 'your build request',
-    actor_name: maker?.name ?? 'A maker',
+    actor_name: makerName,
   })
 
   return c.json(sanitizeCodes(claimed, userId, []))
+})
+
+/** The build row the two question routes decide by, read past RLS. */
+async function loadBuild(admin: ReturnType<typeof createAdminClient>, id: string) {
+  const { data, error } = await admin
+    .from('toy_transactions')
+    .select('id, type, status, requester_id, owner_id, owner_org_id, tutorial_id, toy_id, requester_suburb')
+    .eq('id', id)
+    .maybeSingle()
+  if (error && error.code !== INVALID_TEXT_REPRESENTATION) return { error }
+  if (!data || data.type !== 'build') return { missing: true as const }
+  return { tx: data, open: data.status === 'requested' && !data.owner_id && !data.owner_org_id }
+}
+
+/**
+ * GET /api/toy-transactions/:id/questions — Ask first (makers-ask-first).
+ * RLS (111) picks the rows: every thread for the family, a maker's own for a
+ * maker. Somebody with no thread on a build that is no longer open learns
+ * nothing about it.
+ */
+toyTransactions.get('/:id/questions', async (c) => {
+  const userId = c.get('userId')
+  const admin = createAdminClient()
+  const loaded = await loadBuild(admin, c.req.param('id'))
+  if ('error' in loaded) return c.json({ error: loaded.error!.message }, 500)
+  if ('missing' in loaded) return c.json({ error: 'Not found' }, 404)
+  const { tx, open } = loaded
+  const family = tx.requester_id === userId
+
+  const { data: rows, error } = await createUserClient(c.get('token'))
+    .from('build_request_questions')
+    .select('id, maker_id, sender_id, body, created_at')
+    .eq('transaction_id', tx.id)
+    .order('created_at', { ascending: true })
+  if (error) return c.json({ error: error.message }, 500)
+  if (!family && !open && !(rows ?? []).length) return c.json({ error: 'Not found' }, 404)
+
+  const makerIds = [...new Set((rows ?? []).map((r) => r.maker_id as string))]
+  const names = new Map(await Promise.all(makerIds.map(async (m) => [m, await profileName(admin, m, 'A maker')] as const)))
+  const body: BuildQuestions = {
+    transaction_id: tx.id,
+    tutorial_title: await subjectName(admin, tx as { type: string; toy_id: string | null; tutorial_id: string | null }),
+    requester_suburb: tx.requester_suburb,
+    open,
+    family,
+    threads: makerIds.map((m) => ({
+      maker_id: m,
+      maker_name: names.get(m)!,
+      messages: (rows ?? []).filter((r) => r.maker_id === m).map(({ maker_id: _m, ...q }) => q as BuildQuestion),
+    })),
+  }
+  return c.json(body)
+})
+
+/**
+ * POST /api/toy-transactions/:id/questions — body: { body, maker_id? }.
+ * A maker always writes into their own thread (any maker_id they send is
+ * ignored); the family names the thread, and only a maker who asked has one.
+ * The insert runs as the caller, so 111's policy is the last word.
+ */
+toyTransactions.post('/:id/questions', async (c) => {
+  const parsed = await c.req.json().catch(() => null)
+  const text = typeof parsed?.body === 'string' ? parsed.body.trim() : ''
+  if (text.length < 1 || text.length > 1000) return c.json({ error: 'Write a question of up to 1000 characters.' }, 400)
+
+  const userId = c.get('userId')
+  const admin = createAdminClient()
+  const loaded = await loadBuild(admin, c.req.param('id'))
+  if ('error' in loaded) return c.json({ error: loaded.error!.message }, 500)
+  if ('missing' in loaded) return c.json({ error: 'Not found' }, 404)
+  const { tx, open } = loaded
+  if (!open) return c.json({ error: 'Somebody has already claimed this one.' }, 409)
+
+  const family = tx.requester_id === userId
+  let makerId = userId
+  if (family) {
+    makerId = typeof parsed?.maker_id === 'string' ? parsed.maker_id : ''
+    const { data: asked } = await admin
+      .from('build_request_questions')
+      .select('id')
+      .eq('transaction_id', tx.id)
+      .eq('maker_id', makerId)
+      .eq('sender_id', makerId)
+      .limit(1)
+      .maybeSingle()
+    if (!asked) return c.json({ error: 'That maker has not asked about this request.' }, 404)
+  }
+
+  const { data, error } = await createUserClient(c.get('token'))
+    .from('build_request_questions')
+    .insert({ transaction_id: tx.id, maker_id: makerId, sender_id: userId, body: text })
+    .select('id, sender_id, body, created_at')
+    .single()
+  if (error?.code === RLS_VIOLATION) return c.json({ error: 'You cannot ask about this request.' }, 403)
+  if (error) return c.json({ error: error.message }, 500)
+
+  await admin.from('notifications').insert({
+    recipient_id: family ? makerId : tx.requester_id,
+    type: 'build_question',
+    toy_transaction_id: tx.id,
+    toy_name: await subjectName(admin, tx as { type: string; toy_id: string | null; tutorial_id: string | null }),
+    // The family is "Family in Newtown" to a maker until a claim, as on the card.
+    actor_name: family ? `Family in ${tx.requester_suburb ?? 'your area'}` : await profileName(admin, userId, 'A maker'),
+  })
+  return c.json(data, 201)
 })
 
 /**
@@ -1389,9 +1817,7 @@ toyTransactions.post('/:id/approve-work', async (c) => {
     type: 'build_approved',
     toy_transaction_id: tx.id,
     toy_name: await subjectName(admin, tx as any),
-    actor_name: (
-      await admin.from('profiles').select('name').eq('id', userId).single()
-    ).data?.name ?? 'The family',
+    actor_name: await profileName(admin, userId, 'The family'),
   })
 
   return c.json(sanitizeCodes(updated, userId, ledOrgs))
@@ -1419,41 +1845,80 @@ toyTransactions.post('/print', async (c) => {
 
   const note = typeof body.note === 'string' ? body.note.trim() : ''
   if (note.length > 1000) return c.json({ error: 'The note is longer than 1000 characters.' }, 400)
+  const colour = typeof body.colour === 'string' && body.colour.trim() ? body.colour.trim() : null
+  if (colour && colour.length > 30) return c.json({ error: 'Name the colour in 30 characters or fewer.' }, 400)
+  const delivery = body.delivery ?? null
+  if (delivery !== null && delivery !== 'collect' && delivery !== 'post') {
+    return c.json({ error: 'Choose collect or post.' }, 400)
+  }
+  // 096. Optional, and only the board's options (printing.ts).
+  const fitNotes = (body.fit_notes ?? null) as Record<string, string> | null
+  const fitProblem = fitNotes === null ? null : fitNotesProblem(fitNotes)
+  if (fitProblem) return c.json({ error: fitProblem }, 400)
 
-  const fileIds = Array.isArray(body.stl_file_ids) ? body.stl_file_ids : []
-  if (fileIds.length === 0 || !fileIds.every((id: unknown) => typeof id === 'string')) {
+  // `files` carries a quantity per part (058's print_job_files.quantity,
+  // 1–20). `stl_file_ids` is the form every client sent before, and still
+  // means one of each.
+  const wanted: Array<{ id: unknown; quantity: unknown }> = Array.isArray(body.files)
+    ? body.files.map((f: { stl_file_id?: unknown; quantity?: unknown } | null) => ({
+        id: f?.stl_file_id,
+        quantity: f?.quantity ?? 1,
+      }))
+    : (Array.isArray(body.stl_file_ids) ? body.stl_file_ids : []).map((id: unknown) => ({ id, quantity: 1 }))
+  if (wanted.length === 0 || !wanted.every((f) => typeof f.id === 'string')) {
     return c.json({ error: 'Tick at least one part to print.' }, 400)
   }
+  if (!wanted.every((f) => Number.isInteger(f.quantity) && (f.quantity as number) >= 1 && (f.quantity as number) <= 20)) {
+    return c.json({ error: 'Ask for between 1 and 20 of each part.' }, 400)
+  }
+  const quantityOf = new Map(wanted.map((f) => [f.id as string, f.quantity as number]))
+  // print_job_files' primary key is (transaction, file): a part named twice
+  // would be a 500 from the insert, so it is a sentence here.
+  if (quantityOf.size !== wanted.length) return c.json({ error: 'Name each part once.' }, 400)
+  const fileIds = [...quantityOf.keys()]
 
-  const { data: printer, error: printerError } = await admin
+  // Up to three printers (074). `printer_id` is the single-printer form every
+  // client sent before, and still means a group of one.
+  const printerIds: unknown[] = Array.isArray(body.printer_ids)
+    ? [...new Set(body.printer_ids)]
+    : body.printer_id !== undefined
+      ? [body.printer_id]
+      : []
+  if (printerIds.length === 0 || printerIds.length > 3 || !printerIds.every((id) => typeof id === 'string')) {
+    return c.json({ error: 'Pick between one and three printers.' }, 400)
+  }
+
+  const { data: printers, error: printerError } = await admin
     .from('printers')
-    .select('id, owner_id, owner_org_id, accepting, capacity')
-    .eq('id', body.printer_id)
-    .maybeSingle()
+    .select('id, name, owner_id, owner_org_id, accepting, capacity')
+    .in('id', printerIds as string[])
   if (printerError) {
     if (printerError.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
     return c.json({ error: printerError.message }, 500)
   }
-  if (!printer) return c.json({ error: 'Not found' }, 404)
+  if ((printers ?? []).length !== printerIds.length) return c.json({ error: 'Not found' }, 404)
 
-  if (printer.owner_id === userId) {
-    return c.json({ error: 'You cannot send a job to your own printer' }, 400)
-  }
-  if (printer.owner_org_id && (await ledOrgIds(admin, userId)).includes(printer.owner_org_id)) {
-    return c.json({ error: "You cannot send a job to your own organisation's printer" }, 400)
-  }
-
-  // Either closes the machine, and both are checked: the toggle is the
-  // deliberate act and the capacity is the honest one. A machine at capacity
-  // that still reads "accepting" would take a job it cannot start.
-  if (!printer.accepting) return c.json({ error: 'That printer is not taking new jobs' }, 409)
-  const { count: openJobs } = await admin
-    .from('toy_transactions')
-    .select('id', { count: 'exact', head: true })
-    .eq('printer_id', printer.id)
-    .eq('status', 'accepted')
-  if ((openJobs ?? 0) >= printer.capacity) {
-    return c.json({ error: 'That printer is full right now' }, 409)
+  const ledOrgs = await ledOrgIds(admin, userId)
+  for (const printer of printers!) {
+    const which = printers!.length > 1 ? ` (${printer.name})` : ''
+    if (printer.owner_id === userId) {
+      return c.json({ error: `You cannot send a job to your own printer${which}` }, 400)
+    }
+    if (printer.owner_org_id && ledOrgs.includes(printer.owner_org_id)) {
+      return c.json({ error: `You cannot send a job to your own organisation's printer${which}` }, 400)
+    }
+    // Either closes the machine, and both are checked: the toggle is the
+    // deliberate act and the capacity is the honest one. A machine at capacity
+    // that still reads "accepting" would take a job it cannot start.
+    if (!printer.accepting) return c.json({ error: `That printer is not taking new jobs${which}` }, 409)
+    const { count: openJobs } = await admin
+      .from('toy_transactions')
+      .select('id', { count: 'exact', head: true })
+      .eq('printer_id', printer.id)
+      .eq('status', 'accepted')
+    if ((openJobs ?? 0) >= printer.capacity) {
+      return c.json({ error: `That printer is full right now${which}` }, 409)
+    }
   }
 
   // Every file must belong to the guide named. Without this a request could
@@ -1461,10 +1926,10 @@ toyTransactions.post('/print', async (c) => {
   // guide nobody in the conversation has read.
   const { data: files, error: filesError } = await admin
     .from('stl_files')
-    .select('id, tutorial_id')
+    .select('id, tutorial_id, filament_grams')
     .in('id', fileIds)
   if (filesError) return c.json({ error: filesError.message }, 500)
-  const rows = (files ?? []) as Array<{ id: string; tutorial_id: string }>
+  const rows = (files ?? []) as Array<{ id: string; tutorial_id: string; filament_grams: number | null }>
   if (rows.length !== fileIds.length || rows.some((f) => f.tutorial_id !== body.tutorial_id)) {
     return c.json({ error: 'Those parts do not all belong to that guide' }, 400)
   }
@@ -1476,62 +1941,120 @@ toyTransactions.post('/print', async (c) => {
     .maybeSingle()
   if (!tutorial || tutorial.status !== 'approved') return c.json({ error: 'Not found' }, 404)
 
-  const { data: existing, error: existingError } = await admin
-    .from('toy_transactions')
-    .select('id')
-    .eq('requester_id', userId)
-    .eq('printer_id', printer.id)
-    .eq('tutorial_id', tutorial.id)
-    .in('status', ['requested', 'accepted'])
-    .maybeSingle()
-  if (existingError) return c.json({ error: existingError.message }, 500)
-  if (existing) return c.json({ error: 'You already have an open job on that printer for this guide' }, 409)
-
-  const { data: tx, error: insertError } = await admin
-    .from('toy_transactions')
-    .insert({
-      toy_id: null,
-      offered_toy_id: null,
-      tutorial_id: tutorial.id,
-      printer_id: printer.id,
-      print_note: note || null,
-      type: 'print',
-      status: 'requested',
-      requester_id: userId,
-      owner_id: printer.owner_id,
-      owner_org_id: printer.owner_org_id,
+  // 114: recycling credit, at one organisation being asked. Grams, never
+  // money; spent only if that organisation's printer is the one that accepts.
+  let credit: { org_id: string; grams: number } | null = null
+  if (body.print_credit != null) {
+    const asked = body.print_credit as { org_id?: unknown; grams?: unknown }
+    if (typeof asked.org_id !== 'string' || !Number.isInteger(asked.grams) || (asked.grams as number) < 1) {
+      return c.json({ error: 'Say how many grams of credit, in whole grams.' }, 400)
+    }
+    // 114's column and ledger both stop at a tonne; past it the insert would 500.
+    if ((asked.grams as number) > 1000000) {
+      return c.json({ error: 'One job can use at most 1,000,000 g of credit.' }, 400)
+    }
+    if (!printers!.some((p) => p.owner_org_id === asked.org_id)) {
+      return c.json({ error: 'Credit can only be spent at the organisation that issued it.' }, 400)
+    }
+    const needed = rows.some((f) => f.filament_grams == null)
+      ? null
+      : rows.reduce((n, f) => n + f.filament_grams! * (quantityOf.get(f.id) ?? 1), 0)
+    if (needed === null) {
+      return c.json({ error: 'This guide does not say how much filament its parts take, so credit cannot be used on it.' }, 400)
+    }
+    if ((asked.grams as number) > needed) {
+      return c.json({ error: `This job needs ${needed} g of filament, so that is the most credit it can use.` }, 400)
+    }
+    const { data: balance, error: balanceError } = await admin.rpc('recycling_credit_balance', {
+      p_profile: userId,
+      p_org: asked.org_id,
     })
-    .select()
-    .single()
-  if (insertError) return c.json({ error: insertError.message }, 500)
-
-  const { error: linkError } = await admin.from('print_job_files').insert(
-    rows.map((f) => ({ transaction_id: tx.id, stl_file_id: f.id }))
-  )
-  // The files ARE the request. A job with none is a job nobody can fill, so it
-  // is rolled back rather than left as a row that looks fine and is not.
-  if (linkError) {
-    await admin.from('toy_transactions').delete().eq('id', tx.id)
-    return c.json({ error: linkError.message }, 500)
+    if (balanceError) return c.json({ error: balanceError.message }, 500)
+    if ((asked.grams as number) > (balance as number)) {
+      return c.json({ error: `You have ${balance} g of credit there.` }, 400)
+    }
+    credit = { org_id: asked.org_id, grams: asked.grams as number }
   }
 
-  const { data: requesterProfile } = await admin.from('profiles').select('name').eq('id', userId).single()
+  const { data: existing, error: existingError } = await admin
+    .from('toy_transactions')
+    .select('id, status, type, created_at')
+    .eq('requester_id', userId)
+    .in('printer_id', printerIds as string[])
+    .eq('tutorial_id', tutorial.id)
+    .in('status', ['requested', 'accepted'])
+  if (existingError) return c.json({ error: existingError.message }, 500)
+  // An expired request is over ("ask again"), so it does not block a new one.
+  if ((existing ?? []).some((r) => !printRequestExpired(r))) {
+    return c.json({ error: 'You already have an open job on one of those printers for this guide' }, 409)
+  }
 
-  await admin.from('toy_transaction_messages').insert({
-    transaction_id: tx.id,
-    sender_id: userId,
-    kind: 'system',
-    body: `Asked for ${rows.length} part${rows.length === 1 ? '' : 's'} from this guide.`,
-  })
+  const groupId = randomUUID()
+  const created: Array<Record<string, any>> = []
+  const rollback = () =>
+    created.length ? admin.from('toy_transactions').delete().in('id', created.map((t) => t.id)) : null
+  for (const printer of printers!) {
+    const { data: tx, error: insertError } = await admin
+      .from('toy_transactions')
+      .insert({
+        toy_id: null,
+        offered_toy_id: null,
+        tutorial_id: tutorial.id,
+        printer_id: printer.id,
+        print_note: note || null,
+        print_colour: colour,
+        print_delivery: delivery,
+        print_fit_notes: fitNotes && Object.keys(fitNotes).length ? fitNotes : null,
+        print_group_id: groupId,
+        type: 'print',
+        status: 'requested',
+        requester_id: userId,
+        owner_id: printer.owner_id,
+        owner_org_id: printer.owner_org_id,
+        // Only this organisation's rows carry it, so any other printer accepting spends nothing.
+        print_credit_grams: credit && printer.owner_org_id === credit.org_id ? credit.grams : null,
+      })
+      .select()
+      .single()
+    if (insertError) {
+      await rollback()
+      return c.json({ error: insertError.message }, 500)
+    }
+    created.push(tx)
+    const { error: linkError } = await admin
+      .from('print_job_files')
+      .insert(rows.map((f) => ({ transaction_id: tx.id, stl_file_id: f.id, quantity: quantityOf.get(f.id) ?? 1 })))
+    // The files ARE the request. A job with none is a job nobody can fill, so
+    // the whole request is rolled back rather than left half-sent.
+    if (linkError) {
+      await rollback()
+      return c.json({ error: linkError.message }, 500)
+    }
+  }
 
-  await notifyOwnerSide(admin, tx, {
-    type: 'toy_request',
-    toy_transaction_id: tx.id,
-    toy_name: tutorial.title,
-    actor_name: requesterProfile?.name ?? 'A contributor',
-  })
+  const requesterName = await profileName(admin, userId, 'A contributor')
+  const count = rows.reduce((n, f) => n + (quantityOf.get(f.id) ?? 1), 0)
+  const parts = `${count} part${count === 1 ? '' : 's'}`
+  for (const tx of created) {
+    await admin.from('toy_transaction_messages').insert({
+      transaction_id: tx.id,
+      sender_id: userId,
+      kind: 'system',
+      body:
+        created.length > 1
+          ? `Asked ${created.length} printers for ${parts} from this guide. The first to accept takes it.`
+          : `Asked for ${parts} from this guide.`,
+    })
+    await notifyOwnerSide(admin, tx as any, {
+      type: 'toy_request',
+      toy_transaction_id: tx.id,
+      toy_name: tutorial.title,
+      actor_name: requesterName,
+    })
+  }
 
-  return c.json(tx, 201)
+  // The first job answers for the request; `transactions` lists all of them.
+  return c.json({ ...created[0], transactions: created }, 201)
 })
 
 /**
@@ -1665,7 +2188,7 @@ toyTransactions.post('/print-at-event', async (c) => {
     return c.json({ error: linkError.message }, 500)
   }
 
-  const { data: requesterProfile } = await admin.from('profiles').select('name').eq('id', userId).single()
+  const requesterName = await profileName(admin, userId, 'A contributor')
 
   await admin.from('toy_transaction_messages').insert({
     transaction_id: tx.id,
@@ -1678,7 +2201,7 @@ toyTransactions.post('/print-at-event', async (c) => {
     type: 'toy_request',
     toy_transaction_id: tx.id,
     toy_name: tutorial.title,
-    actor_name: requesterProfile?.name ?? 'A contributor',
+    actor_name: requesterName,
   })
 
   return c.json(tx, 201)
@@ -1790,6 +2313,60 @@ toyTransactions.post('/:id/print-ready', async (c) => {
   })
 
   return c.json(sanitizeCodes(updated, userId, ledOrgs))
+})
+
+/**
+ * POST /api/toy-transactions/:id/print-fit
+ *
+ * "Did it fit?" — the family who asked answers once, after collecting. A
+ * reprint tells the printer in the thread and the inbox; a fit needs no
+ * message. updated_at is left alone: the job page reads it as the day the
+ * parts were collected.
+ */
+toyTransactions.post('/:id/print-fit', async (c) => {
+  const body = (await c.req.json().catch(() => null)) as { fit?: unknown } | null
+  const fit = body?.fit
+  if (fit !== 'fitted' && fit !== 'reprint') return c.json({ error: 'Say fitted or reprint.' }, 400)
+
+  const loaded = await loadForParty(c)
+  if ('status' in loaded) return c.json({ error: 'message' in loaded ? loaded.message : 'Not found' }, loaded.status)
+  const tx = loaded.data
+  const userId = c.get('userId')
+  if (tx.type !== 'print') return c.json({ error: 'Only a print job is asked whether it fitted' }, 400)
+  if (userId !== tx.requester_id) return c.json({ error: 'Only the family who asked says whether it fitted' }, 403)
+  if (tx.status !== 'completed') return c.json({ error: 'Say whether it fitted once you have collected it' }, 409)
+  if (tx.print_fit) return c.json({ error: 'You already said how it fitted.' }, 409)
+
+  const admin = createAdminClient()
+  const { data: updated, error } = await admin
+    .from('toy_transactions')
+    .update({ print_fit: fit, print_fit_at: new Date().toISOString() })
+    .eq('id', tx.id)
+    .is('print_fit', null)
+    .select()
+    .maybeSingle()
+  if (error) return c.json({ error: error.message }, 500)
+  if (!updated) return c.json({ error: 'You already said how it fitted.' }, 409)
+
+  if (fit === 'reprint') {
+    await admin.from('toy_transaction_messages').insert({
+      transaction_id: tx.id,
+      sender_id: userId,
+      kind: 'system',
+      body: 'Needs a reprint.',
+    })
+    // The guide's title by hand: subjectName() reads a print job's null toy_id
+    // as "a toy".
+    const { data: guide } = await admin.from('tutorials').select('title').eq('id', tx.tutorial_id).maybeSingle()
+    await notifyOwnerSide(admin, tx as any, {
+      type: 'toy_message',
+      toy_transaction_id: tx.id,
+      toy_name: (guide as { title: string } | null)?.title ?? 'a print job',
+      actor_name: await profileName(admin, userId, 'The family'),
+    })
+  }
+
+  return c.json(sanitizeCodes(updated, userId, await ledOrgIds(admin, userId)))
 })
 
 export default toyTransactions

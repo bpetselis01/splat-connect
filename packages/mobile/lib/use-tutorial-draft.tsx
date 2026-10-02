@@ -13,13 +13,13 @@
 // 250ms: writes queue on one promise chain so a second save always sees the
 // updated_at the first established, rather than racing it into a 400.
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
-import type { BuyLink, Part, Tool, TutorialWithDetails } from '@splat-connect/types'
+import type { BuyLink, Part, Tool, ToolGetBy, TutorialSafetyNote, TutorialStep, TutorialWithDetails } from '@splat-connect/types'
 import { apiClient } from './api-client'
 
 // GET /api/tutorials/:id embeds this join (reviewer/reviewed_for name); it is
 // only on that one contributor-facing route, not on the shared type — see
 // packages/api/src/routes/tutorials.ts.
-export type EditorTutorial = TutorialWithDetails & { reviewed_for?: { name: string } | null }
+type EditorTutorial = TutorialWithDetails & { reviewed_for?: { name: string } | null }
 
 /** One editable row of the parts/tools replace-set. `quantity` is only ever
  *  read for parts — tools leave it undefined and the stepper never renders. */
@@ -28,6 +28,24 @@ export interface ItemRow {
   quantity?: number
   is_optional: boolean
   buy_links: BuyLink[]
+  /** Parts only (086). The line at its quantity, in cents. */
+  price_cents?: number | null
+  /** Tools only (085). Carried through postItems, or a save erases them. */
+  note?: string | null
+  get_by?: ToolGetBy | null
+}
+
+/** One editable step (080). Blank-bodied rows are never sent, like blank names. */
+export interface StepRow {
+  title: string | null
+  body: string
+  photo_url: string | null
+}
+
+/** One editable safety note (090). Blank-titled rows are never sent. */
+export interface SafetyNoteRow {
+  title: string
+  detail: string | null
 }
 
 export type DraftSaveState = 'idle' | 'saving' | 'saved' | 'error'
@@ -49,12 +67,16 @@ export interface TutorialDraft {
   saveNow: (fields: Record<string, unknown>) => Promise<void>
   /** Debounced replace-set POST. Blank-named rows are never sent. */
   replaceItems: (noun: 'parts' | 'tools', rows: ItemRow[]) => void
+  /** Debounced PUT of the whole step list, in order. */
+  replaceSteps: (rows: StepRow[]) => void
+  /** Debounced replace-set POST of the author's safety notes. */
+  replaceSafetyNotes: (rows: SafetyNoteRow[]) => void
   /** Send anything pending now — called when a section screen is left. */
   flush: () => Promise<void>
   reload: () => void
 }
 
-export function useTutorialDraft(id: string): TutorialDraft {
+function useTutorialDraft(id: string): TutorialDraft {
   const [tutorial, setTutorial] = useState<EditorTutorial | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
@@ -64,6 +86,8 @@ export function useTutorialDraft(id: string): TutorialDraft {
 
   const pendingFields = useRef<Record<string, unknown>>({})
   const pendingItems = useRef<Partial<Record<'parts' | 'tools', ItemRow[]>>>({})
+  const pendingSteps = useRef<StepRow[] | null>(null)
+  const pendingSafety = useRef<SafetyNoteRow[] | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const writes = useRef<Promise<unknown>>(Promise.resolve())
@@ -119,22 +143,39 @@ export function useTutorialDraft(id: string): TutorialDraft {
 
   async function postItems(noun: 'parts' | 'tools', rows: ItemRow[]) {
     const clean = rows.filter((r) => r.name.trim())
+    // A link is sent only once it has an address: a half-typed row must not reach the web as a dead link.
+    const links = (r: ItemRow) => r.buy_links.filter((l) => l.url.trim())
     if (noun === 'parts') {
       const saved = await apiClient.post<Part[]>(`/api/tutorials/${id}/parts`, {
-        parts: clean.map(({ name, quantity, is_optional, buy_links }) => ({
-          name,
-          quantity: quantity ?? 1,
-          is_optional,
-          buy_links,
+        parts: clean.map((r) => ({
+          name: r.name,
+          quantity: r.quantity ?? 1,
+          is_optional: r.is_optional,
+          buy_links: links(r),
+          price_cents: r.price_cents ?? null,
         })),
       })
       setTutorial((prev) => (prev ? { ...prev, parts: saved } : prev))
     } else {
       const saved = await apiClient.post<Tool[]>(`/api/tutorials/${id}/tools`, {
-        tools: clean.map(({ name, is_optional, buy_links }) => ({ name, is_optional, buy_links })),
+        tools: clean.map((r) => ({ name: r.name, is_optional: r.is_optional, buy_links: links(r), note: r.note ?? null, get_by: r.get_by ?? null })),
       })
       setTutorial((prev) => (prev ? { ...prev, tools: saved } : prev))
     }
+  }
+
+  async function putSteps(rows: StepRow[]) {
+    const steps = rows
+      .filter((r) => r.body.trim())
+      .map((r) => ({ title: r.title?.trim() || null, body: r.body, photo_url: r.photo_url }))
+    const saved = await apiClient.put<TutorialStep[]>(`/api/tutorials/${id}/steps`, { steps })
+    setTutorial((prev) => (prev ? { ...prev, steps: saved } : prev))
+  }
+
+  async function postSafetyNotes(rows: SafetyNoteRow[]) {
+    const safety_notes = rows.filter((r) => r.title.trim()).map((r) => ({ title: r.title, detail: r.detail }))
+    const saved = await apiClient.post<TutorialSafetyNote[]>(`/api/tutorials/${id}/safety-notes`, { safety_notes })
+    setTutorial((prev) => (prev ? { ...prev, safety_notes: saved } : prev))
   }
 
   /** Drain whatever is queued, on the one write chain. */
@@ -143,9 +184,13 @@ export function useTutorialDraft(id: string): TutorialDraft {
     const items = pendingItems.current
     pendingFields.current = {}
     pendingItems.current = {}
+    const steps = pendingSteps.current
+    pendingSteps.current = null
+    const safety = pendingSafety.current
+    pendingSafety.current = null
     const hasFields = Object.keys(fields).length > 0
     const nouns = Object.keys(items) as ('parts' | 'tools')[]
-    if (!hasFields && nouns.length === 0) return writes.current as Promise<void>
+    if (!hasFields && nouns.length === 0 && !steps && !safety) return writes.current as Promise<void>
 
     writes.current = writes.current
       .then(async () => {
@@ -153,6 +198,8 @@ export function useTutorialDraft(id: string): TutorialDraft {
         setSaveError(null)
         if (hasFields) await patchNow(fields)
         for (const noun of nouns) await postItems(noun, items[noun] as ItemRow[])
+        if (steps) await putSteps(steps)
+        if (safety) await postSafetyNotes(safety)
         setSaveState('saved')
         // "Saved" is news, and news goes stale. One provider serves the hub and
         // all six sections, so a chip left reading Saved followed the
@@ -191,6 +238,16 @@ export function useTutorialDraft(id: string): TutorialDraft {
     schedule()
   }
 
+  function replaceSteps(rows: StepRow[]) {
+    pendingSteps.current = rows
+    schedule()
+  }
+
+  function replaceSafetyNotes(rows: SafetyNoteRow[]) {
+    pendingSafety.current = rows
+    schedule()
+  }
+
   async function saveNow(fields: Record<string, unknown>) {
     pendingFields.current = { ...pendingFields.current, ...fields }
     if (timer.current) clearTimeout(timer.current)
@@ -218,6 +275,8 @@ export function useTutorialDraft(id: string): TutorialDraft {
     save,
     saveNow,
     replaceItems,
+    replaceSteps,
+    replaceSafetyNotes,
     flush,
     reload: () => setReloadKey((k) => k + 1),
   }

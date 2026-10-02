@@ -3,9 +3,7 @@
  *
  * It was a `panel` holding a four-row <dl> — Name / Condition / Description /
  * Switch-adapted — which is a form's review step, not the page a stranger reads
- * to decide whether to ask for a child's toy. ToySummary still draws that <dl>,
- * and still should: it is exactly right for the owner checking their own
- * listing, which is its other caller.
+ * to decide whether to ask for a child's toy.
  *
  * The board's shape is the same one the tutorial detail uses, and for the same
  * reason: the facts belong to the whole page, the photographs take the wide
@@ -24,14 +22,15 @@ import {
 import { PhotoCarousel } from '@/components/photo-carousel'
 import { ToyTransactionRequest } from '@/components/toy-transaction-request'
 import { SaveButton } from '@/components/save-button'
-import { BoundaryLink } from '@/components/boundary-link'
-import { tintFor } from '@/components/card-photo'
+import { ToyPicks } from '@/components/toy-picks'
 import { getSavedIds } from '@/lib/saves'
 import { getCapabilities } from '@/lib/capabilities'
 import { apiClient } from '@/lib/api-client'
 import { gradeOf } from '@/lib/toy-grade'
 import { agoInWords } from '@/lib/relative-time'
-import { toyHolderName, type OfferType, type Toy, type ToyWithOwner } from '@splat-connect/types'
+import { ToyFacts, ToySignInGate } from '@/components/toy-facts'
+import { ReportLink } from '@/components/report-link'
+import { toyHolderName, type OfferType, type Toy, type ToyDetail, type ToyWithOwner, initials } from '@splat-connect/types'
 
 /** The board's three offers: the chip's word and tint, and the rail's sentence. */
 const OFFER: Record<OfferType, { label: string; tint: string; Icon: typeof Gift; note: (holder: string) => string }> = {
@@ -64,15 +63,6 @@ function Chip({ tint, icon, children }: { tint: string; icon: ReactNode; childre
   )
 }
 
-function initials(name: string): string {
-  return name
-    .split(/\s+/)
-    .map((w) => w[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase()
-}
-
 export default async function ToyLibraryDetailPage({
   params,
 }: {
@@ -82,7 +72,7 @@ export default async function ToyLibraryDetailPage({
   const res = await fetch(`${process.env.API_URL}/api/public/toys/${id}`, { cache: 'no-store' })
   if (!res.ok) notFound()
 
-  const toy = (await res.json()) as ToyWithOwner
+  const toy = (await res.json()) as ToyDetail
 
   const caps = await getCapabilities()
   const [rawMyToys, listed, saved] = await Promise.all([
@@ -96,6 +86,8 @@ export default async function ToyLibraryDetailPage({
     getSavedIds(),
   ])
   const myToys = rawMyToys.filter((t) => t.status === 'published')
+  const isHolder =
+    !!caps && (caps.profile.id === toy.owner_id || caps.ledOrgs.some((o) => o.id === toy.owner_org_id))
 
   const holder = toyHolderName(toy)
   const grade = gradeOf(toy.condition)
@@ -103,13 +95,6 @@ export default async function ToyLibraryDetailPage({
   const sameHolder = listed.filter((t) =>
     toy.owner_org_id ? t.owner_org_id === toy.owner_org_id : t.owner_id === toy.owner_id
   )
-  // The board's "Also worth a look" is what else the holder has listed. A
-  // holder with one toy would leave the section blank, so the rest of the
-  // library stands in — the page always has somewhere to go next.
-  const holderOthers = sameHolder.filter((t) => t.id !== toy.id)
-  const others = (holderOthers.length > 0 ? holderOthers : listed.filter((t) => t.id !== toy.id)).slice(0, 3)
-  const othersNote =
-    holderOthers.length > 0 && holder ? `What else ${holder} has listed.` : 'More toys in the library right now.'
 
   return (
     <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
@@ -175,35 +160,14 @@ export default async function ToyLibraryDetailPage({
           </section>
         )}
 
-        {others.length > 0 && (
-          <section aria-labelledby="toy-rec-h" className="flex flex-col gap-4 border-t border-line pt-[26px]">
-            <div>
-              <h2 id="toy-rec-h" className="m-0 font-display text-[26px] font-extrabold text-ink">
-                Also worth a look
-              </h2>
-              <p className="m-0 mt-1.5 max-w-[58ch] text-[15px] leading-[1.5] text-muted">{othersNote}</p>
-            </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              {others.map((t) => (
-                <BoundaryLink key={t.id} href={`/toy-library/${t.id}`} className="rec-card">
-                  <span aria-hidden="true" className="rec-card__band" style={{ background: tintFor(t.id) }}>
-                    <Gift size={46} weight="duotone" />
-                  </span>
-                  <span className="rec-card__body">
-                    <span className="eyebrow text-muted">Toy in the library</span>
-                    <span className="text-[17px] font-extrabold leading-[1.3] text-ink">{t.name}</span>
-                    {t.description && (
-                      <span className="line-clamp-2 text-[13px] leading-[1.45] text-muted">{t.description}</span>
-                    )}
-                    <span className="mt-auto pt-2 text-[13px] font-extrabold text-brand-deep">
-                      {gradeOf(t.condition).label}
-                    </span>
-                  </span>
-                </BoundaryLink>
-              ))}
-            </div>
-          </section>
-        )}
+        <ToyFacts toy={toy} />
+
+        {/* The board's guest gate. Nothing behind it is withheld yet — the
+            box, safety and handover sections have no columns — so it says
+            what signing in is for rather than blurring stand-in text. */}
+        {!caps && <ToySignInGate toyId={toy.id} />}
+
+        <ToyPicks picks={toy.picks ?? []} holder={holder} />
       </div>
 
       <aside className="flex flex-col gap-4 lg:sticky lg:top-24">
@@ -248,11 +212,23 @@ export default async function ToyLibraryDetailPage({
             <div className="min-w-0 flex-1">
               <p className="m-0 text-[15px] font-extrabold text-ink">{holder}</p>
               <p className="m-0 mt-0.5 text-[13px] text-muted">
+                {`${toy.holder_given} toy${toy.holder_given === 1 ? '' : 's'} given · `}
                 {sameHolder.length > 0 &&
                   `${sameHolder.length} toy${sameHolder.length === 1 ? '' : 's'} listed · `}
                 {toy.owner_org_id ? 'an organisation' : 'a family'}
               </p>
             </div>
+          </div>
+        )}
+        {!isHolder && (
+          <div className="flex justify-end px-1.5">
+            <ReportLink
+              subjectKind="toy"
+              subjectId={toy.id}
+              subjectLabel={toy.name}
+              who={holder}
+              signedIn={!!caps}
+            />
           </div>
         )}
       </aside>

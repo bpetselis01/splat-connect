@@ -43,6 +43,7 @@ vi.mock('@/components/tutorial-review-panel', () => ({
 // Reads ?created= through hooks this test does not mock, and announces the
 // redirect out of /upload rather than anything the page computes.
 vi.mock('@/components/created-toast', () => ({ CreatedToast: () => null }))
+vi.mock('@/components/pdf-import-banner', () => ({ PdfImportBanner: () => null }))
 vi.mock('@/components/stepper', () => ({
   // Renders each step's content, which is how the review panel above is
   // reached. Every section component is mocked to null, so this stays cheap.
@@ -120,7 +121,7 @@ describe('EditTutorialPage', () => {
       profile: mockProfile,
       isAdmin: false,
       ledOrgs: [],
-      unread: { tutorials: 0, exchanges: 0, challenges: 0, total: 0 },
+      unread: { tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 },
       exchangeActions: 0,
     })
   })

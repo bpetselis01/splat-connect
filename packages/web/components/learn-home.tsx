@@ -29,14 +29,14 @@ import {
 } from '@phosphor-icons/react/dist/ssr'
 import { SplatMascot } from '@/components/splat-mascot'
 import { useLearnProgress } from '@/lib/learn-progress'
-import { UNITS, LESSONS, COURSE_HOURS, type LessonKind } from '@/lib/learn-course'
+import { learnLessons, courseHours, LESSON_KIND_LABEL, type LessonKind } from '@splat-connect/types'
+import { useLearnCourse } from '@/components/learn-course-context'
 
 const KIND_ICON: Record<LessonKind, typeof BookOpen> = {
   read: BookOpen,
   build: Wrench,
   quiz: SealCheck,
 }
-const KIND_LABEL: Record<LessonKind, string> = { read: 'Read', build: 'Build', quiz: 'Checkpoint' }
 // Each kind keeps one colour everywhere it appears: the legend, and every row.
 const KIND_COLOR: Record<LessonKind, string> = {
   read: 'var(--b600)',
@@ -72,6 +72,12 @@ const OUTCOMES = [
 ]
 
 export function LearnHome() {
+  // The outline an admin saved over the code's (site-content-learn-legal-editing).
+  // Same names as the module constants these replaced, so the body is unchanged.
+  const course = useLearnCourse()
+  const UNITS = course.units
+  const LESSONS = learnLessons(course)
+  const COURSE_HOURS = courseHours(course)
   const { ready, done } = useLearnProgress()
   const finished = LESSONS.filter((l) => done[l.slug]).length
   const next = LESSONS.find((l) => !done[l.slug])
@@ -98,16 +104,20 @@ export function LearnHome() {
           <div className="min-w-0">
             <p className="eyebrow text-muted">Learn · A free course</p>
             <h1 className="learn-hero__title">
-              Switch adapting toys, from first switch to handover.
+              {course.title ?? 'Switch adapting toys, from first switch to handover.'}
             </h1>
             <p className="mt-4 max-w-[54ch] text-lg leading-[1.6] text-muted [text-wrap:pretty]">
-              Six short units. You will learn what a switch does, set up a bench without wasting
-              money, master the one soldering job every adaptation needs, then adapt three real toys
-              and build a switch of your own. For instructions on one particular toy, head to the{' '}
-              <Link href="/library" className="text-brand-deep hover:underline">
-                Guides
-              </Link>
-              .
+              {course.outcome ?? (
+                <>
+                  Six short units. You will learn what a switch does, set up a bench without wasting
+                  money, master the one soldering job every adaptation needs, then adapt three real toys
+                  and build a switch of your own. For instructions on one particular toy, head to the{' '}
+                  <Link href="/library" className="text-brand-deep hover:underline">
+                    Guides
+                  </Link>
+                  .
+                </>
+              )}
             </p>
 
             <ul className="mt-5 flex list-none flex-wrap gap-2 p-0">
@@ -244,7 +254,7 @@ export function LearnHome() {
             return (
               <span key={k} className="inline-flex items-center gap-1.5">
                 <Icon weight="bold" style={{ color: KIND_COLOR[k] }} aria-hidden="true" />
-                {KIND_LABEL[k]}
+                {LESSON_KIND_LABEL[k]}
               </span>
             )
           })}
@@ -264,11 +274,11 @@ export function LearnHome() {
                 : 'todo'
           const mins = u.lessons.reduce((n, l) => n + l.minutes, 0)
           return (
-            <li key={u.n} className="grid grid-cols-[56px_minmax(0,1fr)] gap-4">
+            <li key={u.n} className="grid grid-cols-[56px_minmax(0,1fr)] gap-4 max-sm:grid-cols-[36px_minmax(0,1fr)] max-sm:gap-2.5">
               <div className="flex flex-col items-center">
                 <span
                   aria-hidden="true"
-                  className="grid h-12 w-12 flex-none place-items-center rounded-full border border-line font-display text-[19px] font-extrabold shadow-[var(--e1)]"
+                  className="grid h-12 w-12 flex-none place-items-center rounded-full border border-line font-display text-[19px] max-sm:h-9 max-sm:w-9 max-sm:text-base font-extrabold shadow-[var(--e1)]"
                   style={{
                     background:
                       status === 'done' ? 'var(--ok)' : status === 'current' ? 'var(--b600)' : 'var(--surface)',
@@ -288,7 +298,7 @@ export function LearnHome() {
 
               <section className="mb-[22px] overflow-hidden rounded-card border border-line bg-surface shadow-[var(--e2),var(--hi)]">
                 <div
-                  className="flex items-start justify-between gap-4 px-[22px] pb-4 pt-5 text-[var(--tink)]"
+                  className="flex items-start justify-between gap-4 px-[22px] pb-4 pt-5 text-[var(--tink)] max-sm:flex-col-reverse max-sm:gap-2 max-sm:px-4"
                   style={{ background: u.tint }}
                 >
                   <div className="min-w-0">
@@ -321,7 +331,7 @@ export function LearnHome() {
                       <li key={l.slug}>
                         <Link
                           href={`/learn/${l.slug}` as Route}
-                          className={`grid min-h-14 grid-cols-[32px_minmax(0,1fr)_auto_28px] items-center gap-3.5 border-t border-line px-[22px] py-[13px] text-ink no-underline transition-colors hover:bg-sunken ${
+                          className={`grid min-h-14 grid-cols-[32px_minmax(0,1fr)_auto_28px] items-center gap-3.5 border-t border-line px-[22px] py-[13px] max-sm:grid-cols-[20px_minmax(0,1fr)_auto_24px] max-sm:gap-2.5 max-sm:px-4 text-ink no-underline transition-colors hover:bg-sunken ${
                             isNext ? 'bg-brand-50' : ''
                           }`}
                         >
@@ -329,7 +339,7 @@ export function LearnHome() {
                           <span className="min-w-0">
                             <span className="block text-base font-extrabold">{l.title}</span>
                             <span className="mt-px block text-[13px] text-muted">
-                              {KIND_LABEL[l.kind]} · {l.minutes} min
+                              {LESSON_KIND_LABEL[l.kind]} · {l.minutes} min
                             </span>
                           </span>
                           {/* No placeholder when absent, as on the board: the

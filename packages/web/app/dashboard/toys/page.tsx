@@ -1,12 +1,11 @@
 import Link from 'next/link'
 import { apiClient } from '@/lib/api-client'
 import { requireCapabilities } from '@/lib/require-capabilities'
-import { Plus, Gift } from '@phosphor-icons/react/dist/ssr'
+import { Plus, Gift, Package } from '@phosphor-icons/react/dist/ssr'
 import { CardPhoto, tintFor } from '@/components/card-photo'
 import { OFFER, GRADE_ICON } from '@/components/toy-library-card'
 import { StageFilter, StageNone, StagePill, STAGE, type StageKey } from '@/components/stage'
 import { gradeOf } from '@/lib/toy-grade'
-import { Box } from '@/components/icons'
 import { BoundaryLink } from '@/components/boundary-link'
 import { givenAway } from '@splat-connect/types'
 import type { Toy, ToyTransactionSummary, GivenAwayToy, OfferType } from '@splat-connect/types'
@@ -152,7 +151,7 @@ export default async function ToyListPage({
       {toys.length === 0 ? (
         <div className="flex flex-col items-center px-6 py-12 text-center">
           <span aria-hidden="true" className="empty-badge text-brand-dark">
-            <Box className="h-8 w-8" />
+            <Package className="h-8 w-8" weight="bold" aria-hidden="true" />
           </span>
           <p className="mt-4 font-bold text-ink">You haven&apos;t added any toys yet.</p>
           <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">

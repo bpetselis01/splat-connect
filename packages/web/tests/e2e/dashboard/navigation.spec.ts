@@ -1,7 +1,9 @@
 import { test, expect } from '@playwright/test'
 import { signIn, createContributor, createAdmin, acceptTerms, createTutorial } from '../helpers'
 
-const PUBLIC_LABELS = ['Guides', 'Toy Library', '3D Printing', 'Learn', 'Get Involved', 'Impact', 'About']
+// The board's NAV5 (859eee42): five tabs, and Learn and Impact behind More.
+const TAB_LABELS = ['Guides', 'Toy Library', '3D Printing', 'Get Involved', 'About']
+const MORE_LABELS = ['Learn', 'Impact']
 
 /**
  * The reported defect: signing in deleted the whole public navigation, so
@@ -50,9 +52,14 @@ test.describe('signed-in navigation', () => {
     // public site — with no "go back to My SPLAT first" step in between.
     for (const path of ['/dashboard', '/dashboard/challenges', '/admin', '/admin/review', '/library']) {
       await page.goto(path)
-      await expect(page.getByRole('banner')).toBeVisible()
-      for (const label of PUBLIC_LABELS) {
-        await expect(page.getByRole('link', { name: new RegExp(label) }).first()).toBeVisible()
+      const banner = page.getByRole('banner')
+      await expect(banner).toBeVisible()
+      for (const label of TAB_LABELS) {
+        await expect(banner.getByRole('link', { name: label, exact: true })).toBeVisible()
+      }
+      await banner.getByRole('button', { name: 'More' }).click()
+      for (const label of MORE_LABELS) {
+        await expect(banner.getByRole('link', { name: new RegExp(`^${label}\\b`) })).toBeVisible()
       }
     }
   })
@@ -122,7 +129,8 @@ test.describe('signed-in navigation', () => {
     await page.getByRole('link', { name: 'Browse the guide library' }).click()
 
     await expect(page).toHaveURL(/\/library$/)
-    await expect(page.getByRole('heading', { name: 'Toy Adaptation Library', level: 1 })).toBeVisible()
+    // The library's heading since the Soft Pop browse screens (4ad89618).
+    await expect(page.getByRole('heading', { name: 'Adapt a toy in an evening', level: 1 })).toBeVisible()
   })
 
   // The final review round's headline gap: components/public-footer.tsx
@@ -136,11 +144,12 @@ test.describe('signed-in navigation', () => {
     await page.waitForURL('**/dashboard')
     await page.goto('/dashboard/toys')
 
-    // Scoped to <footer>: "Guides" also appears as a nav pill and (via
-    // hub-grid.tsx) a hub tile, and the whole point here is the footer's own
-    // link, the site's largest unguarded surface before this fix.
-    await page.locator('footer').getByRole('link', { name: 'Guides' }).click()
-    await expect(page).toHaveURL(/\/library$/)
-    await expect(page.getByRole('heading', { name: 'Toy Adaptation Library', level: 1 })).toBeVisible()
+    // Scoped to <footer>: the whole point here is the footer's own link, the
+    // site's largest unguarded surface before this fix. The footer lost its
+    // "Guides" row when it became the board's curated columns (859eee42), so
+    // this crosses via "Find a printer" instead.
+    await page.locator('footer').getByRole('link', { name: 'Find a printer' }).click()
+    await expect(page).toHaveURL(/\/printing$/)
+    await expect(page.getByRole('heading', { name: 'You do not need a printer', level: 1 })).toBeVisible()
   })
 })

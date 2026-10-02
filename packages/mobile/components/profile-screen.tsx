@@ -1,8 +1,9 @@
 // packages/mobile/components/profile-screen.tsx
-import { useState, useEffect } from 'react'
-import { View, Text, Pressable, StyleSheet, Linking } from 'react-native'
+import { useState, useEffect, type ComponentProps } from 'react'
+import { View, Text, ScrollView, StyleSheet, Linking } from 'react-native'
 import { useRouter } from 'expo-router'
 import type { UserAgreement } from '@splat-connect/types'
+import { apiMessage, initials } from '@splat-connect/types'
 import { useAuth } from '../lib/auth-context'
 import { apiClient } from '../lib/api-client'
 import { theme } from '../lib/theme'
@@ -11,50 +12,36 @@ import { Screen } from './ui/Screen'
 import { Card } from './ui/Card'
 import { TextField } from './ui/TextField'
 import { ChildProfileHome } from './profile/child-profile-home'
-import { resolveAuthStorage } from '../lib/supabase-storage'
-import { TermsCheckbox, ErrorRow } from './auth-screen'
+import { ListRow, ListSection } from './list/list-kit'
+import { Ionicons } from '@expo/vector-icons'
+import { OrgInvites } from './organisation/org-invites'
 
 /** "12 Aug 2026" — the terms row's date. */
 function acceptedDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-const PROFILE_SEGMENT_KEY = 'profile-tab-segment'
-type ProfileSegment = 'account' | 'child-profile'
+/** "Sam Mitchell" → "SM"; an email when there is no name yet. */
+const initialsOf = (name: string | null | undefined, email: string | undefined) =>
+  initials(name) || (email ?? '?')[0]!.toUpperCase()
 
-function useProfileSegment() {
-  const [segment, setSegment] = useState<ProfileSegment>('account')
-  const storage = resolveAuthStorage()
+function RowIcon({ name }: { name: ComponentProps<typeof Ionicons>['name'] }) {
+  return <Ionicons name={name} size={21} color={theme.colors.primaryDark} />
+}
 
-  useEffect(() => {
-    // Storage is a convenience here, not a source of truth: a failed read
-    // leaves the default segment rather than an unhandled rejection.
-    storage
-      .getItem(PROFILE_SEGMENT_KEY)
-      .then((saved) => {
-        if (saved === 'child-profile') setSegment('child-profile')
-      })
-      .catch((err) => console.error('[useProfileSegment] could not read segment:', err))
-  }, [])
+const PROVIDER: Record<string, string> = { apple: 'Apple', google: 'Google', email: 'email' }
 
-  function select(next: ProfileSegment) {
-    setSegment(next)
-    storage
-      .setItem(PROFILE_SEGMENT_KEY, next)
-      .catch((err) => console.error('[useProfileSegment] could not save segment:', err))
-  }
-
-  return { segment, select }
+export function signedInWith(providers: unknown): string {
+  const names = (Array.isArray(providers) ? providers : ['email']).map((p) => PROVIDER[p] ?? p)
+  return `Signed in with ${names.join(' and ')}`
 }
 
 export function ProfileScreen() {
   const router = useRouter()
-  const { session, profile, signOut, hasContributorTerms, acceptContributorTerms } = useAuth()
-  const { segment, select: selectSegment } = useProfileSegment()
-  const [gateTicked, setGateTicked] = useState(false)
-  const [gateError, setGateError] = useState<string | null>(null)
+  const { session, profile, signOut } = useAuth()
   // The display name is the one profile field editable here. Committed on end
   // of editing rather than per keystroke — a name is typed once, not streamed.
+  const [postcodeError, setPostcodeError] = useState<string | null>(null)
   const [nameState, setNameState] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle')
   const [terms, setTerms] = useState<UserAgreement | null>(null)
 
@@ -85,121 +72,152 @@ export function ProfileScreen() {
     }
   }
 
+  // 099. Distance on Find a printer, Makers wanted and the toy library is
+  // measured from here. Four digits or nothing; anything else saves and simply
+  // measures nothing.
+  async function savePostcode(raw: string) {
+    const postcode = raw.trim()
+    if (postcode === (profile?.pickup_postcode ?? '')) return
+    if (postcode && !/^\d{4}$/.test(postcode)) {
+      setPostcodeError('A postcode is four digits.')
+      return
+    }
+    setPostcodeError(null)
+    try {
+      await apiClient.patch('/api/contributors/me', { pickup_postcode: postcode || null })
+    } catch (err) {
+      console.error('[ProfileScreen] postcode save failed:', err)
+      setPostcodeError(apiMessage(err, 'Could not save your postcode. Please try again.'))
+    }
+  }
+
   // Reached only through the (my) group, whose layout redirects to sign-in
   // without a session — by the time this renders, one is guaranteed to exist.
   const user = session!.user
 
   return (
     <Screen>
-      <View style={styles.segmented}>
-        <Pressable
-          onPress={() => selectSegment('account')}
-          style={[styles.segment, segment === 'account' && styles.segmentActive]}
-        >
-          <Text style={[styles.segmentText, segment === 'account' && styles.segmentTextActive]}>
-            Account
-          </Text>
-        </Pressable>
-        <Pressable
-          onPress={() => selectSegment('child-profile')}
-          style={[styles.segment, segment === 'child-profile' && styles.segmentActive]}
-        >
-          <Text style={[styles.segmentText, segment === 'child-profile' && styles.segmentTextActive]}>
-            Child Profile
-          </Text>
-        </Pressable>
-      </View>
-      {segment === 'child-profile' ? (
-        <ChildProfileHome />
-      ) : // Catch-up gate for accounts created before terms were part of signup.
-      // Strict `=== false`: hasContributorTerms is null until the /api/agreements/me
-      // fetch resolves. Treating null as "unaccepted" flashed this gate for every
-      // already-accepted user on every app launch, for as long as that fetch was in
-      // flight.
-      hasContributorTerms === false ? (
-        <Card>
-          <Text style={styles.heading}>Before you continue</Text>
-          <Text style={styles.checkEmailText}>
-            Your account was created before we asked contributors to accept terms.
-            These terms have not been written yet, and anything you accept now is not
-            binding.
-          </Text>
-          <TermsCheckbox
-            testID="gate-accept-checkbox"
-            checked={gateTicked}
-            onPress={() => setGateTicked((v) => !v)}
-          />
-          <ErrorRow message={gateError} />
-          <Button
-            label="Accept and continue"
-            disabled={!gateTicked}
-            onPress={async () => {
-              const res = await acceptContributorTerms()
-              setGateError(res.error)
-            }}
-          />
-          {/* Escape hatch: if acceptance keeps failing (offline, API down), the user
-              is stuck on this screen with no other nav — they must still be able to
-              sign out or switch accounts. */}
-          <Button label="Sign Out" onPress={() => signOut()} variant="ghost" />
-        </Card>
-      ) : (
-        <View>
-          <Card style={styles.panel}>
-            <Text style={styles.signedInText}>Signed in as {user.email}</Text>
-            <Text style={styles.frozenHint}>Your email can&apos;t be changed here.</Text>
-            <TextField
-              label="Display name"
-              accessibilityLabel="Display name"
-              defaultValue={profile?.name ?? ''}
-              onEndEditing={(e) => void saveName(e.nativeEvent.text)}
-            />
-            <Text accessibilityLiveRegion="polite" style={styles.nameStatus}>
-              {nameState === 'saving'
-                ? 'Saving…'
-                : nameState === 'saved'
-                  ? 'Saved'
-                  : nameState === 'failed'
-                    ? 'Could not save your name. Please try again.'
-                    : ' '}
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+        {/* The board's account page is one scroll: who you are, your
+            children, then the profile detail. It used to be two segments. */}
+        <View style={styles.idCard}>
+          <View style={styles.avatar} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+            <Text style={styles.avatarText}>{initialsOf(profile?.name, user.email)}</Text>
+          </View>
+          <View style={styles.idBody}>
+            <Text style={styles.idName} numberOfLines={1}>
+              {profile?.name?.trim() || 'Your account'}
             </Text>
+            <Text style={styles.idEmail} numberOfLines={1}>
+              {user.email}
+            </Text>
+          </View>
+        </View>
 
-            {terms ? (
-              <Text style={styles.termsRow}>
-                {`Contributor terms · accepted ${terms.version} · ${acceptedDate(terms.accepted_at)}`}
+        <OrgInvites />
+        <ListSection>Child profiles</ListSection>
+        <ChildProfileHome />
+
+        <ListSection style={styles.sectionGap}>Profile detail</ListSection>
+        <View style={styles.detail}>
+            <View style={styles.nameCard}>
+              <TextField
+                label="Display name"
+                accessibilityLabel="Display name"
+                defaultValue={profile?.name ?? ''}
+                onEndEditing={(e) => void saveName(e.nativeEvent.text)}
+              />
+              <Text accessibilityLiveRegion="polite" style={styles.nameStatus}>
+                {nameState === 'saving'
+                  ? 'Saving…'
+                  : nameState === 'saved'
+                    ? 'Saved'
+                    : nameState === 'failed'
+                      ? 'Could not save your name. Please try again.'
+                      : ' '}
               </Text>
-            ) : null}
+              <TextField
+                label="Postcode"
+                accessibilityLabel="Postcode"
+                inputMode="numeric"
+                maxLength={4}
+                defaultValue={profile?.pickup_postcode ?? ''}
+                onEndEditing={(e) => void savePostcode(e.nativeEvent.text)}
+              />
+              {postcodeError ? <Text accessibilityLiveRegion="polite" style={styles.nameStatus}>{postcodeError}</Text> : null}
+              <Text style={styles.frozenHint}>Your email can&apos;t be changed here.</Text>
+              {/* HIG: say how this account signs in, so an Apple user knows
+                  why there is no password to change. */}
+              <Text style={styles.frozenHint}>{signedInWith(session?.user.app_metadata?.providers)}</Text>
+              {terms ? (
+                <Text style={styles.termsRow}>
+                  {`Contributor terms · accepted ${terms.version} · ${acceptedDate(terms.accepted_at)}`}
+                </Text>
+              ) : null}
+            </View>
 
             {profile ? (
-              <Button
-                label="Open Web Dashboard"
+              <ListRow
+                title="Open Web Dashboard"
+                thumb={<RowIcon name="desktop-outline" />}
                 onPress={() => Linking.openURL(`${process.env.EXPO_PUBLIC_WEB_URL}/dashboard`)}
-                variant="secondary"
-                style={styles.stackedButton}
               />
             ) : null}
-            <Button
-              label="About SPLAT"
+            <ListRow
+              title="About SPLAT"
+              thumb={<RowIcon name="information-circle-outline" />}
               onPress={() => router.push('/explore/about')}
-              variant="secondary"
-              style={styles.stackedButton}
             />
             <Button label="Sign Out" onPress={() => signOut()} variant="ghost" />
-          </Card>
-        </View>
-      )}
+            {/* Apple 5.1.1(v): deletion in the app, easy to find in account settings. */}
+            <Button label="Delete account" variant="danger" onPress={() => router.push('/account/delete')} />
+          </View>
+      </ScrollView>
     </Screen>
   )
 }
 
 const styles = StyleSheet.create({
-  panel: { alignItems: 'stretch' },
+  scroll: { paddingBottom: theme.spacing(8) },
+  // The board's identity card: initials, name, email in the mono face.
+  idCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    padding: 18,
+    marginBottom: 18,
+    borderRadius: theme.radii.panel + 4,
+    borderWidth: theme.border.hairline,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
+    ...theme.shadow(2),
+  },
+  avatar: {
+    width: 56,
+    height: 56,
+    borderRadius: theme.radii.pill,
+    backgroundColor: theme.colors.mintSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: { fontFamily: theme.fonts.display, fontSize: 19, color: theme.colors.ink },
+  idBody: { flex: 1, minWidth: 0 },
+  idName: { fontFamily: theme.fonts.display, fontSize: 18, color: theme.colors.ink },
+  idEmail: { fontFamily: theme.fonts.numeral, fontSize: 12, color: theme.colors.muted },
+  sectionGap: { marginTop: 18 },
+  detail: { gap: 9 },
+  nameCard: {
+    padding: 14,
+    borderRadius: theme.radii.panel,
+    borderWidth: theme.border.hairline,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
+    ...theme.shadow(1),
+  },
   frozenHint: {
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.caption,
     color: theme.colors.muted,
-    textAlign: 'center',
-    marginBottom: theme.spacing(3),
   },
   nameStatus: {
     fontFamily: theme.fonts.regular,
@@ -207,13 +225,13 @@ const styles = StyleSheet.create({
     color: theme.colors.muted,
     minHeight: 16,
     marginTop: -theme.spacing(2),
-    marginBottom: theme.spacing(2),
+    marginBottom: theme.spacing(1),
   },
   termsRow: {
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.caption,
     color: theme.colors.muted,
-    marginBottom: theme.spacing(3),
+    marginTop: theme.spacing(1),
   },
   heading: {
     fontFamily: theme.fonts.bold,
@@ -221,43 +239,11 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     marginBottom: theme.spacing(4),
   },
-  stackedButton: { marginBottom: theme.spacing(2), alignSelf: 'stretch' },
   checkEmailText: {
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.label,
     color: theme.colors.muted,
     textAlign: 'center',
     lineHeight: 21,
-  },
-  signedInText: {
-    fontFamily: theme.fonts.bold,
-    fontSize: theme.type.body,
-    color: theme.colors.text,
-    marginBottom: theme.spacing(1),
-    textAlign: 'center',
-  },
-  segmented: {
-    flexDirection: 'row',
-    backgroundColor: theme.colors.surfaceSunken,
-    borderRadius: theme.radii.field,
-    padding: 3,
-    marginBottom: theme.spacing(4),
-  },
-  segment: {
-    flex: 1,
-    paddingVertical: theme.spacing(2),
-    alignItems: 'center',
-    borderRadius: theme.radii.field,
-  },
-  segmentActive: {
-    backgroundColor: theme.colors.surface,
-  },
-  segmentText: {
-    fontFamily: theme.fonts.semiBold,
-    fontSize: theme.type.caption,
-    color: theme.colors.muted,
-  },
-  segmentTextActive: {
-    color: theme.colors.primary,
   },
 })

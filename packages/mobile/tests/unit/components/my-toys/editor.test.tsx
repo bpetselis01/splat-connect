@@ -6,8 +6,9 @@ import { Editor } from '../../../../components/my-toys/editor'
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 
 const mockBack = jest.fn()
+const mockDismissTo = jest.fn()
 const mockPush = jest.fn()
-jest.mock('expo-router', () => ({ useRouter: () => ({ back: mockBack, push: mockPush }) }))
+jest.mock('expo-router', () => ({ useRouter: () => ({ back: mockBack, push: mockPush, dismissTo: mockDismissTo }) }))
 
 // The editor pulls ErrorRow in from components/auth-screen, which imports
 // useAuth from lib/auth-context — and that module's real implementation
@@ -54,7 +55,7 @@ function caps(over: object) {
       profile: { id: 'viewer1', name: 'Viewer', role: 'contributor' },
       isAdmin: false,
       ledOrgs: [],
-      unread: { tutorials: 0, exchanges: 0, challenges: 0, total: 0 },
+      unread: { tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 },
       exchangeActions: 0,
       ...over,
     },
@@ -117,6 +118,8 @@ function mockGetRouting(toys: object[], transactions: object[] = []) {
   mockGet.mockImplementation((path: string) => {
     if (path === '/api/toys') return Promise.resolve(toys)
     if (path === '/api/toy-transactions') return Promise.resolve(transactions)
+    if (path === '/api/public/tutorials') return Promise.resolve([{ id: 'g1', title: 'Bubble Blower', status: 'approved' }])
+    if (path === '/api/toys/inventory') return Promise.resolve([])
     return Promise.reject(new Error(`unexpected GET ${path}`))
   })
 }
@@ -162,7 +165,34 @@ describe('Editor', () => {
         description: null,
         condition: 9,
         switch_adapted: true,
+        age_min: null,
+        age_max: null,
+        batteries: null,
+        switch_fitting: null,
+        volume: null,
+        tutorial_id: null,
       })
+    )
+  })
+
+  it('saves the facts and the guide it was built from', async () => {
+    mockGetRouting([toy({ volume: 'Loud' })])
+    mockPatch.mockResolvedValue(toy({}))
+    render(<Editor id="toy1" />)
+
+    await screen.findByPlaceholderText('Name')
+    fireEvent.changeText(screen.getByLabelText('From age'), '2')
+    fireEvent.changeText(screen.getByLabelText('To age'), '6')
+    fireEvent.changeText(screen.getByPlaceholderText('e.g. 2 × AA, included'), ' 2 × AA ')
+    fireEvent.changeText(screen.getByPlaceholderText('e.g. Loud, half-taped'), '')
+    fireEvent.press(await screen.findByLabelText('Bubble Blower'))
+    fireEvent.press(screen.getByLabelText('Save details'))
+
+    await waitFor(() =>
+      expect(mockPatch).toHaveBeenCalledWith(
+        '/api/toys/toy1',
+        expect.objectContaining({ age_min: 2, age_max: 6, batteries: '2 × AA', volume: null, tutorial_id: 'g1' })
+      )
     )
   })
 
@@ -481,7 +511,7 @@ describe('Editor', () => {
 
       expect(alertSpy).toHaveBeenCalled()
       await waitFor(() => expect(mockDelete).toHaveBeenCalledWith('/api/toys/toy1'))
-      expect(mockBack).toHaveBeenCalled()
+      expect(mockDismissTo).toHaveBeenCalledWith('/toys')
     })
 
     it('surfaces a failed delete instead of silently staying put', async () => {
@@ -497,7 +527,28 @@ describe('Editor', () => {
 
       await waitFor(() => expect(mockDelete).toHaveBeenCalledWith('/api/toys/toy1'))
       await waitFor(() => expect(alertSpy).toHaveBeenCalledWith('Could not delete this toy', 'Please try again.'))
-      expect(mockBack).not.toHaveBeenCalled()
+      expect(mockDismissTo).not.toHaveBeenCalled()
+    })
+
+    it('says why when the toy has handovers on record', async () => {
+      mockGetRouting([toy({})])
+      mockDelete.mockRejectedValue(
+        new Error("API DELETE /api/toys/toy1 failed with status 409: This toy has handovers on record, so it can't be deleted.")
+      )
+      const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => {
+        buttons?.find((b) => b.text === 'Delete')?.onPress?.()
+      })
+
+      render(<Editor id="toy1" />)
+      fireEvent.press(await screen.findByLabelText('Delete toy'))
+
+      await waitFor(() =>
+        expect(alertSpy).toHaveBeenCalledWith(
+          'Could not delete this toy',
+          "This toy has handovers on record, so it can't be deleted."
+        )
+      )
+      expect(mockDismissTo).not.toHaveBeenCalled()
     })
 
     it('leaves the toy alone when the delete alert is cancelled', async () => {
@@ -509,7 +560,7 @@ describe('Editor', () => {
       fireEvent.press(screen.getByLabelText('Delete toy'))
 
       expect(mockDelete).not.toHaveBeenCalled()
-      expect(mockBack).not.toHaveBeenCalled()
+      expect(mockDismissTo).not.toHaveBeenCalled()
     })
   })
 })

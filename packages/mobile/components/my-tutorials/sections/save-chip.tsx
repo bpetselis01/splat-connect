@@ -9,7 +9,7 @@ import { useDraft } from '../../../lib/use-tutorial-draft'
 import { theme } from '../../../lib/theme'
 import type { DraftSaveState } from '../../../lib/use-tutorial-draft'
 
-const LABEL: Record<DraftSaveState, string | null> = {
+export const SAVE_CHIP_LABEL: Record<DraftSaveState, string | null> = {
   idle: null,
   saving: 'Saving...',
   saved: 'Saved',
@@ -20,7 +20,7 @@ const LABEL: Record<DraftSaveState, string | null> = {
 
 export function SaveChip() {
   const { saveState } = useDraft()
-  const label = LABEL[saveState]
+  const label = SAVE_CHIP_LABEL[saveState]
   if (!label) return null
   return (
     <Text testID="save-chip" style={styles.chip}>

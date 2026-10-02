@@ -21,7 +21,7 @@ import Link from 'next/link'
 import { Lightbulb, Warning, Wrench, Copyright, Confetti } from '@phosphor-icons/react/dist/ssr'
 import { KitTable, LessonH2, PhotoSlot } from '@/components/lesson-kit'
 
-export type BuildStep = {
+type BuildStep = {
   title: string
   body: string
   tip?: string
@@ -31,7 +31,7 @@ export type BuildStep = {
   slotPh?: string
 }
 
-export type BuildMaterial = {
+type BuildMaterial = {
   item: string
   why: string
   shop: string
@@ -145,11 +145,11 @@ export function BuildLesson({ lesson }: { lesson: BuildLesson }) {
           {lesson.steps.map((step, i) => (
             <li
               key={step.title}
-              className="grid grid-cols-[52px_minmax(0,1fr)] gap-4 rounded-card border border-line bg-surface px-6 pb-6 pt-[22px] shadow-[var(--e2),var(--hi)]"
+              className="grid grid-cols-[52px_minmax(0,1fr)] gap-4 rounded-card border border-line bg-surface px-6 pb-6 pt-[22px] shadow-[var(--e2),var(--hi)] max-sm:grid-cols-[36px_minmax(0,1fr)] max-sm:gap-3 max-sm:px-4"
             >
               <span
                 aria-hidden="true"
-                className="grid h-11 w-11 place-items-center rounded-full bg-brand-dark font-display text-lg font-extrabold text-white shadow-[var(--glow)]"
+                className="grid h-11 w-11 place-items-center rounded-full bg-brand-dark font-display text-lg max-sm:h-9 max-sm:w-9 max-sm:text-base font-extrabold text-white shadow-[var(--glow)]"
               >
                 {i + 1}
               </span>

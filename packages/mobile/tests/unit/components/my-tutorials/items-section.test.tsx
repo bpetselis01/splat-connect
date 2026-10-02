@@ -41,6 +41,18 @@ beforeEach(() => {
   }
 })
 
+// Opened cold (a deep link, a reload on web) the section mounts before the
+// draft arrives. Seeding rows at mount left them empty for good, and since the
+// list saves as a replace-set, adding one part then deleted the rest.
+it('shows the parts once a draft that was still loading arrives', () => {
+  const loaded = mockDraft.tutorial
+  mockDraft.tutorial = null as unknown as Record<string, unknown>
+  const view = render(<ItemsSection noun="parts" />)
+  mockDraft.tutorial = loaded
+  view.rerender(<ItemsSection noun="parts" />)
+  expect(screen.getByLabelText('Part 1 name').props.value).toBe('Switch')
+})
+
 it('seeds its rows from the tutorial', () => {
   render(<ItemsSection noun="parts" />)
   expect(screen.getByLabelText('Part 1 name').props.value).toBe('Switch')
@@ -50,7 +62,7 @@ it('saves a renamed row through the replace-set', () => {
   render(<ItemsSection noun="parts" />)
   fireEvent.changeText(screen.getByLabelText('Part 1 name'), 'Micro switch')
   expect(mockDraft.replaceItems).toHaveBeenCalledWith('parts', [
-    { name: 'Micro switch', quantity: 2, is_optional: false, buy_links: [] },
+    { name: 'Micro switch', quantity: 2, is_optional: false, buy_links: [], price_cents: null },
   ])
 })
 
@@ -61,7 +73,7 @@ it('adds and removes rows', () => {
 
   fireEvent.press(screen.getByTestId('item-remove-0'))
   expect(mockDraft.replaceItems).toHaveBeenLastCalledWith('parts', [
-    { name: '', quantity: 1, is_optional: false, buy_links: [] },
+    { name: '', quantity: 1, is_optional: false, buy_links: [], price_cents: null },
   ])
 })
 
@@ -69,7 +81,7 @@ it('steps a part quantity but never below one', () => {
   render(<ItemsSection noun="parts" />)
   fireEvent.press(screen.getByTestId('item-qty-up-0'))
   expect(mockDraft.replaceItems).toHaveBeenLastCalledWith('parts', [
-    { name: 'Switch', quantity: 3, is_optional: false, buy_links: [] },
+    { name: 'Switch', quantity: 3, is_optional: false, buy_links: [], price_cents: null },
   ])
 
   fireEvent.press(screen.getByTestId('item-qty-down-0'))
@@ -83,7 +95,7 @@ it('toggles optional', () => {
   render(<ItemsSection noun="parts" />)
   fireEvent.press(screen.getByTestId('item-optional-0'))
   expect(mockDraft.replaceItems).toHaveBeenLastCalledWith('parts', [
-    { name: 'Switch', quantity: 2, is_optional: true, buy_links: [] },
+    { name: 'Switch', quantity: 2, is_optional: true, buy_links: [], price_cents: null },
   ])
 })
 
@@ -95,7 +107,7 @@ it('gives tools no quantity stepper', () => {
   expect(screen.queryByTestId('item-qty-up-0')).toBeNull()
   fireEvent.changeText(screen.getByLabelText('Tool 1 name'), 'Screwdriver')
   expect(mockDraft.replaceItems).toHaveBeenLastCalledWith('tools', [
-    { name: 'Screwdriver', quantity: undefined, is_optional: false, buy_links: [] },
+    { name: 'Screwdriver', quantity: undefined, is_optional: false, buy_links: [], note: null, get_by: null },
   ])
 })
 
@@ -108,4 +120,47 @@ it('flags a row that cannot be saved yet rather than silently dropping it', () =
 it('offers an empty state when there is nothing yet', () => {
   render(<ItemsSection noun="tools" />)
   expect(screen.getByText('No tools yet.')).toBeTruthy()
+})
+
+// A draft that failed to load showed an empty screen under the header, with
+// no way to try again: the hub's message and a retry instead.
+it('says the guide did not load, and retries, when the draft fails', () => {
+  mockDraft.tutorial = null as unknown as Record<string, unknown>
+  mockDraft.loadError = true
+  render(<ItemsSection noun="parts" />)
+  expect(screen.getByText("Couldn't load this guide.")).toBeTruthy()
+  fireEvent.press(screen.getByRole('button', { name: 'Try again' }))
+  expect(mockDraft.reload).toHaveBeenCalled()
+  mockDraft.loadError = false
+})
+
+it('edits a part\u2019s buy links on the phone', () => {
+  render(<ItemsSection noun="parts" />)
+  fireEvent.press(screen.getByRole('button', { name: 'Buy links for part 1' }))
+  fireEvent.press(screen.getByRole('button', { name: '+ Add a buy link' }))
+  fireEvent.changeText(screen.getByLabelText('Part 1 link 1 shop'), 'Jaycar')
+  fireEvent.changeText(screen.getByLabelText('Part 1 link 1 address'), 'https://jaycar.com.au/x')
+  expect(mockDraft.replaceItems).toHaveBeenLastCalledWith('parts', [
+    expect.objectContaining({ name: 'Switch', buy_links: [{ label: 'Jaycar', url: 'https://jaycar.com.au/x' }] }),
+  ])
+})
+
+it('keeps a tool’s note through a rename and sets how to get it', () => {
+  mockDraft.tutorial = { ...mockDraft.tutorial, tools: [{ id: 't', name: 'Iron', is_optional: false, buy_links: [], note: 'Borrow one', get_by: null }] }
+  render(<ItemsSection noun="tools" />)
+  fireEvent.changeText(screen.getByLabelText('Tool 1 name'), 'Soldering iron')
+  expect(mockDraft.replaceItems).toHaveBeenLastCalledWith('tools', [expect.objectContaining({ name: 'Soldering iron', note: 'Borrow one' })])
+  fireEvent.press(screen.getByText('Borrow'))
+  expect(mockDraft.replaceItems).toHaveBeenLastCalledWith('tools', [expect.objectContaining({ get_by: 'borrow' })])
+})
+
+it('takes a part’s price in dollars and keeps it through a rename', () => {
+  mockDraft.tutorial = { ...mockDraft.tutorial, parts: [{ id: 'p1', name: 'Switch', quantity: 2, is_optional: false, buy_links: [], price_cents: 600 }] }
+  render(<ItemsSection noun="parts" />)
+  fireEvent.changeText(screen.getByLabelText('Part 1 name'), 'Big switch')
+  expect(mockDraft.replaceItems).toHaveBeenLastCalledWith('parts', [expect.objectContaining({ name: 'Big switch', price_cents: 600 })])
+  fireEvent.changeText(screen.getByLabelText('Part 1 price'), '7.')
+  fireEvent.changeText(screen.getByLabelText('Part 1 price'), '7.25')
+  expect(mockDraft.replaceItems).toHaveBeenLastCalledWith('parts', [expect.objectContaining({ price_cents: 725 })])
+  expect(screen.getByDisplayValue('7.25')).toBeTruthy()
 })

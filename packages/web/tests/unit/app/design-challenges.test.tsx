@@ -93,4 +93,22 @@ describe('design challenges listing page', () => {
     expect(screen.getByText(/could not load design challenges/i)).toBeInTheDocument()
     expect(screen.queryByText(/no challenges are open yet/i)).not.toBeInTheDocument()
   })
+
+  // 078: the board's question card and its filter chips.
+  it('draws a question with its answered pill and answer count, and filters to questions', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse([
+        { ...idea('a', 'challenge'), kind: 'challenge', maker_count: 2, answer_count: 0 },
+        { ...idea('q', 'challenge'), kind: 'question', answered_at: '2026-09-01', maker_count: 1, answer_count: 1 },
+      ])
+    )
+    const { default: Page } = await import('@/app/get-involved/design-challenges/page')
+    render(await Page({ searchParams: Promise.resolve({ filter: 'questions' }) }))
+
+    expect(screen.getByText('Idea q')).toBeInTheDocument()
+    expect(screen.queryByText('Idea a')).not.toBeInTheDocument()
+    expect(screen.getByText('Answered')).toBeInTheDocument()
+    expect(screen.getByText('1 answer')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Questions' })).toHaveAttribute('href', '/get-involved/design-challenges?filter=questions')
+  })
 })

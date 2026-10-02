@@ -31,7 +31,7 @@ jest.mock('../../../../lib/saves', () => ({
 // useAuth from lib/auth-context — and that module's real implementation
 // reaches all the way to the live supabase client. Mocking auth-context here
 // (unused by this screen itself) is what keeps that import inert.
-jest.mock('../../../../lib/auth-context', () => ({ useAuth: jest.fn() }))
+jest.mock('../../../../lib/auth-context', () => ({ useAuth: () => ({ session: { user: { id: 'signed-in' } } }) }))
 
 const mockUseCapabilities = jest.fn()
 jest.mock('../../../../lib/capabilities', () => ({
@@ -44,7 +44,7 @@ function caps(over: object) {
       profile: { id: 'viewer1', name: 'Viewer', role: 'contributor' },
       isAdmin: false,
       ledOrgs: [],
-      unread: { tutorials: 0, exchanges: 0, challenges: 0, total: 0 },
+      unread: { tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 },
       exchangeActions: 0,
       ...over,
     },
@@ -111,6 +111,20 @@ beforeEach(() => {
 })
 
 describe('ToyDetailScreen', () => {
+  it('shows the facts and opens the guide it was built from', async () => {
+    mockEndpoints({
+      detail: Promise.resolve(
+        toy({ age_min: 2, age_max: 6, batteries: '2 × AA', guide: { id: 'g1', title: 'Bubble Blower' }, holder_given: 0 })
+      ),
+    })
+    render(<ToyDetailScreen id="toy1" />)
+    expect(await screen.findByText('2–6')).toBeTruthy()
+    expect(screen.getByText('Batteries')).toBeTruthy()
+    expect(screen.queryByText('Volume')).toBeNull()
+    fireEvent.press(screen.getByLabelText('Built from Bubble Blower. Open the guide'))
+    expect(mockPush).toHaveBeenCalledWith('/guides/g1')
+  })
+
   it('renders the toy fetched from the public detail endpoint', async () => {
     render(<ToyDetailScreen id="toy1" />)
     expect(await screen.findByText('Bubble machine')).toBeTruthy()
@@ -147,19 +161,44 @@ describe('ToyDetailScreen', () => {
     expect(mockPush).toHaveBeenCalledWith('/toy-library/organisation/org1')
   })
 
-  it('shows the condition meter score and the switch-adapted fact', async () => {
+  it('shows the offer, condition and switch-adapted pills', async () => {
     mockEndpoints({ detail: Promise.resolve(toy({ condition: 7, switch_adapted: true })) })
     render(<ToyDetailScreen id="toy1" />)
     await screen.findByText('Bubble machine')
-    expect(screen.getByText('7 / 10')).toBeTruthy()
-    expect(screen.getByText('Yes · 3.5mm jack')).toBeTruthy()
+    expect(screen.getByText('Gift — nothing comes back')).toBeTruthy()
+    expect(screen.getByText('Good condition')).toBeTruthy()
+    expect(screen.queryByText('Condition 7 / 10')).toBeNull()
+    expect(screen.getByText('Switch-adapted')).toBeTruthy()
+    expect(screen.getByText('Notes from the holder')).toBeTruthy()
   })
 
-  it('shows "No" for switch-adapted when the toy is not adapted', async () => {
+  it('draws no switch-adapted pill when the toy is not adapted', async () => {
     mockEndpoints({ detail: Promise.resolve(toy({ switch_adapted: false })) })
     render(<ToyDetailScreen id="toy1" />)
     await screen.findByText('Bubble machine')
-    expect(screen.getByText('No')).toBeTruthy()
+    expect(screen.queryByText('Switch-adapted')).toBeNull()
+  })
+
+  it('thanks an organisation holder, and offers no thanks to a person', async () => {
+    mockEndpoints({
+      detail: Promise.resolve(
+        toy({ owner_id: null, owner_org_id: 'org1', profiles: null, organizations: { name: 'TAD Australia' } })
+      ),
+    })
+    mockPost.mockResolvedValue({})
+    render(<ToyDetailScreen id="toy1" />)
+    fireEvent.press(await screen.findByRole('button', { name: 'Thank TAD Australia' }))
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/organizations/org1/thanks', {}))
+    expect(await screen.findByRole('button', { name: 'Thanked TAD Australia' })).toBeTruthy()
+  })
+
+  // thank-people: a person holder is thanked directly.
+  it('thanks a person holder directly', async () => {
+    render(<ToyDetailScreen id="toy1" />)
+    await screen.findByText('Bubble machine')
+    fireEvent.press(screen.getByRole('button', { name: /^Thank/ }))
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith(expect.stringMatching(/^\/api\/contributors\/.+\/thanks$/), {}))
+    expect(screen.getByRole('button', { name: 'Report a problem' })).toBeTruthy()
   })
 
   it('hides the request block for the toy owner', async () => {
@@ -167,7 +206,7 @@ describe('ToyDetailScreen', () => {
     mockEndpoints({ detail: Promise.resolve(toy({ owner_id: 'owner1' })) })
     render(<ToyDetailScreen id="toy1" />)
     await screen.findByText('Bubble machine')
-    expect(screen.queryByRole('button', { name: 'Arrange pickup' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Ask to collect it' })).toBeNull()
     expect(mockGet).not.toHaveBeenCalledWith('/api/toys')
   })
 
@@ -178,7 +217,7 @@ describe('ToyDetailScreen', () => {
     })
     render(<ToyDetailScreen id="toy1" />)
     await screen.findByText('Bubble machine')
-    expect(screen.queryByRole('button', { name: 'Arrange pickup' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Ask to collect it' })).toBeNull()
     expect(mockGet).not.toHaveBeenCalledWith('/api/toys')
   })
 
@@ -252,7 +291,7 @@ describe('ToyDetailScreen', () => {
     render(<ToyDetailScreen id="toy1" />)
     await screen.findByText('Bubble machine')
 
-    fireEvent.press(screen.getByRole('button', { name: 'Arrange pickup' }))
+    fireEvent.press(screen.getByRole('button', { name: 'Ask to collect it' }))
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/exchanges/tx1'))
     expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions', { toy_id: 'toy1', type: 'donation' })
   })
@@ -262,5 +301,54 @@ describe('ToyDetailScreen', () => {
     await screen.findByText('Bubble machine')
     fireEvent.press(screen.getByLabelText('Save'))
     expect(mockToggle).toHaveBeenCalledWith('toys', 'toy1')
+  })
+
+  it("puts the holder's suburb beside their name", async () => {
+    mockEndpoints({ detail: Promise.resolve(toy({ holder_suburb: 'Newcastle', holder_state: 'NSW' })) })
+    render(<ToyDetailScreen id="toy1" />)
+    expect(await screen.findByText('Held by Jamie · Newcastle, NSW')).toBeTruthy()
+  })
+
+  it('says only the name when there is no suburb', async () => {
+    mockEndpoints({ detail: Promise.resolve(toy({ holder_suburb: null, holder_state: null })) })
+    render(<ToyDetailScreen id="toy1" />)
+    expect(await screen.findByText('Held by Jamie')).toBeTruthy()
+  })
+
+  it("puts an organisation's suburb after the stock", async () => {
+    mockEndpoints({
+      detail: Promise.resolve(
+        toy({ owner_id: null, owner_org_id: 'org1', quantity: 4, profiles: null, organizations: { name: 'TAD Australia' }, holder_suburb: 'Newcastle', holder_state: 'NSW' })
+      ),
+    })
+    render(<ToyDetailScreen id="toy1" />)
+    expect(await screen.findByText('· Newcastle, NSW')).toBeTruthy()
+  })
+
+  it('hides the request button on a paused toy and says why', async () => {
+    mockEndpoints({ detail: Promise.resolve(toy({ paused_at: '2026-09-30T00:00:00Z' })) })
+    render(<ToyDetailScreen id="toy1" />)
+    expect(await screen.findByText('Not taking requests right now')).toBeTruthy()
+    expect(screen.queryByText('Ask to collect it')).toBeNull()
+  })
+
+  it("shows the holder's picks and opens each one", async () => {
+    mockEndpoints({
+      detail: Promise.resolve(
+        toy({
+          picks: [
+            { kind: 'toy', id: 't9', title: 'Light-up drum', photo_url: null, meta: 'Good' },
+            { kind: 'toy_adaptation', id: 'g1', title: 'Bubble machine, four-second burst', photo_url: null, meta: null },
+          ],
+        })
+      ),
+    })
+    render(<ToyDetailScreen id="toy1" />)
+    expect(await screen.findByText('Picked by Jamie — what else they have listed, and the guides behind it.')).toBeTruthy()
+    expect(screen.getByText('Toy adaptation guide')).toBeTruthy()
+    fireEvent.press(screen.getByText('Light-up drum'))
+    expect(mockPush).toHaveBeenCalledWith('/toy-library/t9')
+    fireEvent.press(screen.getByText('Bubble machine, four-second burst'))
+    expect(mockPush).toHaveBeenCalledWith('/guides/g1')
   })
 })

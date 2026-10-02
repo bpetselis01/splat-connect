@@ -42,11 +42,11 @@ describe('tutorial recommendations', () => {
   })
 
   it('refuses a fourth', async () => {
-    expect((await post([...approved, pending])).status).toBe(500)
+    expect((await post([...approved, pending])).status).toBe(400)
   })
 
   it('refuses a self-reference', async () => {
-    expect((await post([ownerTutorial])).status).toBe(500)
+    expect((await post([ownerTutorial])).status).toBe(400)
   })
 
   it('shows a parent only the approved targets, in position order', async () => {

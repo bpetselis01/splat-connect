@@ -1,12 +1,14 @@
 // packages/mobile/components/my-toys/editor.tsx
 import { useEffect, useState } from 'react'
-import { View, Text, ScrollView, Alert, Image, Pressable, Switch, StyleSheet } from 'react-native'
+import { View, Text, ScrollView, Image, Pressable, Switch, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import * as ImagePicker from 'expo-image-picker'
 import type { OfferType, Toy, ToyTransactionSummary } from '@splat-connect/types'
-import { isOwnerSide, MAX_PHOTOS } from '@splat-connect/types'
+import { apiMessage, computeToyStepStatuses, getMissingToyFields, isOwnerSide, MAX_PHOTOS, type ToyStepId } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
+import { loadOwnedToy } from '../../lib/my-toy'
+import { confirmDestructive, notify } from '../../lib/confirm'
 import { uploadFile } from '../../lib/upload'
 import { theme } from '../../lib/theme'
 import { useCapabilities } from '../../lib/capabilities'
@@ -15,50 +17,11 @@ import { ScreenHeader } from '../ui/ScreenHeader'
 import { TextField } from '../ui/TextField'
 import { Chip } from '../ui/Chip'
 import { Button } from '../ui/Button'
-import { StepPills, type StepPillItem, type StepPillStatus } from '../ui/StepPills'
+import { StepPills, type StepPillItem } from '../ui/StepPills'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
-import { ErrorRow } from '../auth-screen'
-
-type ToyStepId = 'details' | 'photos' | 'review'
-
-interface Gap {
-  step: ToyStepId
-  label: string
-}
-
-/**
- * Ported verbatim from web's lib/toy-steps.ts getMissingToyFields — same
- * porting rule as the tutorial editor's getMissingFields (P2's bring-along
- * comment). A change there is the reminder to bring this copy along. The only
- * change here is the return type name (Gap, not Gap<ToyStepId>) — this file
- * has no generic Gap/Step/StepStatus module to import from, so it keeps its
- * own local shape, the same way the tutorial editor does.
- */
-function getMissingToyFields(toy: {
-  photo_urls: string[]
-  switch_adapted: boolean
-  switch_photo_url: string | null
-  offer_type: OfferType | null
-}): Gap[] {
-  const missing: Gap[] = []
-  if (toy.photo_urls.length === 0) missing.push({ step: 'photos', label: 'A photo' })
-  if (toy.switch_adapted && !toy.switch_photo_url)
-    missing.push({ step: 'photos', label: 'A photo showing the switch' })
-  if (!toy.offer_type) missing.push({ step: 'review', label: 'How it is offered' })
-  return missing
-}
-
-/** Ported verbatim from web's lib/toy-steps.ts computeToyStepStatuses. */
-function computeToyStepStatuses(toy: Toy): Record<ToyStepId, StepPillStatus> {
-  const photosMissing =
-    toy.photo_urls.length === 0 || (toy.switch_adapted && !toy.switch_photo_url)
-  return {
-    details: 'done',
-    photos: photosMissing ? 'attention' : 'done',
-    review: toy.status === 'published' ? 'done' : 'neutral',
-  }
-}
+import { ErrorRow } from '../ui/ErrorRow'
+import { PicksEditor } from './picks-editor'
 
 /** Mirrors 053's file_size_limit on the photo buckets. */
 const MAX_PHOTO_BYTES = 10 * 1024 * 1024
@@ -76,6 +39,7 @@ export function Editor({ id }: { id: string }) {
   const router = useRouter()
   const { caps } = useCapabilities()
   const [toy, setToy] = useState<Toy | null>(null)
+  const [shelf, setShelf] = useState<Toy[]>([])
   const [transactions, setTransactions] = useState<ToyTransactionSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
@@ -85,6 +49,15 @@ export function Editor({ id }: { id: string }) {
   const [description, setDescription] = useState('')
   const [condition, setCondition] = useState(5)
   const [switchAdapted, setSwitchAdapted] = useState(false)
+  // 075's facts, as typed. Ages stay strings until save so a cleared box is
+  // "no answer" rather than 0.
+  const [ageMin, setAgeMin] = useState('')
+  const [ageMax, setAgeMax] = useState('')
+  const [batteries, setBatteries] = useState('')
+  const [switchFitting, setSwitchFitting] = useState('')
+  const [volume, setVolume] = useState('')
+  const [guideId, setGuideId] = useState<string | null>(null)
+  const [guides, setGuides] = useState<{ id: string; title: string }[]>([])
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
 
@@ -105,21 +78,28 @@ export function Editor({ id }: { id: string }) {
     setLoading(true)
     setLoadError(false)
     Promise.all([
-      apiClient.get<Toy[]>('/api/toys'),
+      loadOwnedToy(id),
       apiClient.get<ToyTransactionSummary[]>('/api/toy-transactions'),
     ])
-      .then(([toys, tx]) => {
+      .then(([owned, tx]) => {
         if (ignore) return
-        const found = toys.find((t) => t.id === id) ?? null
+        const found = owned?.toy ?? null
         if (!found) {
           setLoadError(true)
           return
         }
         setToy(found)
+        setShelf(owned!.shelf)
         setName(found.name)
         setDescription(found.description ?? '')
         setCondition(found.condition)
         setSwitchAdapted(found.switch_adapted)
+        setAgeMin(found.age_min == null ? '' : String(found.age_min))
+        setAgeMax(found.age_max == null ? '' : String(found.age_max))
+        setBatteries(found.batteries ?? '')
+        setSwitchFitting(found.switch_fitting ?? '')
+        setVolume(found.volume ?? '')
+        setGuideId(found.tutorial_id ?? null)
         setTransactions(tx)
       })
       .catch((err) => {
@@ -129,6 +109,14 @@ export function Editor({ id }: { id: string }) {
       .finally(() => {
         if (!ignore) setLoading(false)
       })
+    // "Built from a guide?" picks from the approved guides — the public list.
+    // Its own fetch: a failure empties the picker, never the editor.
+    apiClient
+      .get<{ id: string; title: string }[]>('/api/public/tutorials')
+      .then((all) => {
+        if (!ignore) setGuides(all.map((g) => ({ id: g.id, title: g.title })))
+      })
+      .catch(() => {})
     return () => {
       ignore = true
     }
@@ -160,6 +148,9 @@ export function Editor({ id }: { id: string }) {
   // function boundary — same reason the tutorial editor captures
   // loadedUpdatedAt/currentPdfPath ahead of its own closures.
   const currentPhotoUrls = toy.photo_urls
+  // Where Delete lands: the list this toy came from. The summary behind the
+  // editor would only say the toy is gone.
+  const shelfHref = toy.owner_org_id ? '/organisation/toys' : '/toys'
   const currentSwitchPhotoUrl = toy.switch_photo_url
 
   const missing = getMissingToyFields(toy)
@@ -190,6 +181,12 @@ export function Editor({ id }: { id: string }) {
         description: description.trim() ? description : null,
         condition,
         switch_adapted: switchAdapted,
+        age_min: ageMin.trim() ? Number(ageMin) : null,
+        age_max: ageMax.trim() ? Number(ageMax) : null,
+        batteries: batteries.trim() || null,
+        switch_fitting: switchFitting.trim() || null,
+        volume: volume.trim() || null,
+        tutorial_id: guideId,
       })
       setToy((prev) => (prev ? { ...prev, ...updated } : updated))
     } catch (err) {
@@ -365,22 +362,15 @@ export function Editor({ id }: { id: string }) {
   }
 
   function handleDelete() {
-    Alert.alert('Delete this toy?', 'This cannot be undone.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await apiClient.delete(`/api/toys/${id}`)
-            router.back()
-          } catch (err) {
-            console.error('[Editor] delete failed:', err)
-            Alert.alert('Could not delete this toy', 'Please try again.')
-          }
-        },
-      },
-    ])
+    confirmDestructive('Delete this toy?', 'This cannot be undone.', 'Delete', async () => {
+      try {
+        await apiClient.delete(`/api/toys/${id}`)
+        router.dismissTo(shelfHref)
+      } catch (err) {
+        console.error('[Editor] delete failed:', err)
+        notify('Could not delete this toy', apiMessage(err, 'Please try again.'))
+      }
+    })
   }
 
   return (
@@ -435,6 +425,33 @@ export function Editor({ id }: { id: string }) {
                 trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
                 thumbColor="#ffffff"
               />
+            </View>
+
+            <Text style={styles.label}>Ages it suits</Text>
+            <View style={styles.pairRow}>
+              <View style={styles.pairCell}>
+                <TextField placeholder="From age" accessibilityLabel="From age" value={ageMin} onChangeText={setAgeMin} keyboardType="number-pad" maxLength={2} />
+              </View>
+              <View style={styles.pairCell}>
+                <TextField placeholder="To age" accessibilityLabel="To age" value={ageMax} onChangeText={setAgeMax} keyboardType="number-pad" maxLength={2} />
+              </View>
+            </View>
+            <TextField label="Batteries" placeholder="e.g. 2 × AA, included" value={batteries} onChangeText={setBatteries} maxLength={60} />
+            <TextField label="Switch fitting" placeholder="e.g. 3.5 mm mono socket" value={switchFitting} onChangeText={setSwitchFitting} maxLength={60} />
+            <TextField label="Volume" placeholder="e.g. Loud, half-taped" value={volume} onChangeText={setVolume} maxLength={40} />
+
+            <Text style={styles.label}>Built from a guide? (optional)</Text>
+            <Text style={styles.photoHint}>Linked, so a family can see how it was made — and make their own.</Text>
+            <View accessibilityRole="radiogroup" style={styles.chipRow}>
+              <Chip role="radio" label="No guide" active={guideId === null} onPress={() => setGuideId(null)} />
+              {/* A linked guide that has left the library keeps its chip, so a
+                  save does not silently unlink it. */}
+              {guideId && !guides.some((g) => g.id === guideId) ? (
+                <Chip role="radio" label="A guide no longer in the library" active onPress={() => {}} />
+              ) : null}
+              {guides.map((g) => (
+                <Chip key={g.id} role="radio" label={g.title} active={guideId === g.id} onPress={() => setGuideId(g.id)} />
+              ))}
             </View>
 
             <ErrorRow message={saveError} />
@@ -600,6 +617,14 @@ export function Editor({ id }: { id: string }) {
                 />
               </>
             )}
+            {toy.status === 'published' ? (
+              <PicksEditor
+                toy={toy}
+                ownToys={shelf}
+                guides={guides}
+                onSaved={(t) => setToy((prev) => (prev ? { ...prev, ...t } : t))}
+              />
+            ) : null}
           </View>
         )}
       </ScrollView>
@@ -631,6 +656,8 @@ const styles = StyleSheet.create({
   footer: { borderTopWidth: theme.border.hairline, borderTopColor: theme.colors.border, paddingTop: theme.spacing(3) },
 
   detailsForm: { paddingBottom: theme.spacing(6) },
+  pairRow: { flexDirection: 'row', gap: theme.spacing(3) },
+  pairCell: { flex: 1 },
 
   photosForm: { paddingBottom: theme.spacing(6) },
   photoHint: {

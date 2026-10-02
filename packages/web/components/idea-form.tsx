@@ -16,9 +16,10 @@
  * always readable.
  */
 import { useState, type FormEvent } from 'react'
+import { ChatsCircle, Lightbulb } from '@phosphor-icons/react/dist/ssr'
 import { useRouter } from 'next/navigation'
 import { browserApiClient } from '@/lib/browser-api-client'
-import { CONTACT_PREFS, type ContactPref, type ToyIdea } from '@splat-connect/types'
+import { CONTACT_PREFS, type ContactPref, type ToyIdea, type ToyIdeaKind } from '@splat-connect/types'
 
 const CONTACT_PREF_LABELS: Record<ContactPref, string> = {
   clarification: 'Clarification',
@@ -26,27 +27,52 @@ const CONTACT_PREF_LABELS: Record<ContactPref, string> = {
   user_testing: 'User testing',
 }
 
+/** The board's two tiles (078): what the idea becomes once an admin opens it. */
+const KINDS: { kind: ToyIdeaKind; label: string; sub: string; Icon: typeof Lightbulb }[] = [
+  { kind: 'challenge', label: 'A toy worth adapting', sub: 'Becomes a build challenge makers can pick up.', Icon: Lightbulb },
+  {
+    kind: 'question',
+    label: 'A question for the community',
+    sub: 'No build needed. Makers and OTs answer in the thread; you mark the answer that helped.',
+    Icon: ChatsCircle,
+  },
+]
+
 type Fields = {
+  kind: ToyIdeaKind
   title: string
   summary: string
   description: string
-  intended_use: string
-  primary_user: string
   contact_prefs: ContactPref[]
 }
 
 const EMPTY_FIELDS: Fields = {
+  kind: 'challenge',
   title: '',
   summary: '',
   description: '',
-  intended_use: '',
-  primary_user: '',
   contact_prefs: [],
 }
 
-export function IdeaForm() {
+/** `initial`: the rejected idea a revised one starts from (challenge-author-states). */
+export function IdeaForm({ initial }: { initial?: ToyIdea } = {}) {
   const router = useRouter()
-  const [fields, setFields] = useState<Fields>(EMPTY_FIELDS)
+  const [fields, setFields] = useState<Fields>(
+    initial
+      ? {
+          kind: initial.kind ?? 'challenge',
+          title: initial.title,
+          summary: initial.summary,
+          description: initial.description ?? '',
+          contact_prefs: initial.contact_prefs,
+        }
+      : EMPTY_FIELDS
+  )
+  // 106: the upload's path is what the idea takes; its url is the preview.
+  const [photo, setPhoto] = useState<{ path: string; url: string } | null>(
+    initial?.photo_path && initial.photo_url ? { path: initial.photo_path, url: initial.photo_url } : null
+  )
+  const [anonymous, setAnonymous] = useState(initial?.anonymous ?? false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -66,20 +92,11 @@ export function IdeaForm() {
   async function submit(e: FormEvent) {
     e.preventDefault()
 
-    // Mirrors readIdeaBody in packages/api/src/routes/toy-ideas.ts: every
-    // narrative field is required and whitespace-only is rejected. The
-    // server enforces this regardless — this just saves a round trip for the
-    // ordinary case of an empty textarea, per the brief: never rely on the
-    // client check alone.
-    const trimmed = {
-      title: fields.title.trim(),
-      summary: fields.summary.trim(),
-      description: fields.description.trim(),
-      intended_use: fields.intended_use.trim(),
-      primary_user: fields.primary_user.trim(),
-    }
-    if (Object.values(trimmed).some((v) => !v)) {
-      setError('All fields are required')
+    // Mirrors readIdeaBody: a title and a summary are required (103).
+    const title = fields.title.trim()
+    const summary = fields.summary.trim()
+    if (!title || !summary) {
+      setError('A title and a summary are required.')
       return
     }
 
@@ -87,8 +104,13 @@ export function IdeaForm() {
     setError(null)
     try {
       await browserApiClient.post<ToyIdea>('/api/ideas', {
-        ...trimmed,
+        title,
+        summary,
+        description: fields.description.trim() || null,
+        kind: fields.kind,
         contact_prefs: fields.contact_prefs,
+        photo_path: photo?.path ?? null,
+        anonymous,
       })
       router.push('/dashboard/challenges')
     } catch (err) {
@@ -99,9 +121,42 @@ export function IdeaForm() {
 
   return (
     <form onSubmit={submit} className="card mt-[30px] flex flex-col gap-5 p-7">
+      <fieldset>
+        <legend className="field-label">What are you sharing?</legend>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {KINDS.map(({ kind, label, sub, Icon }) => {
+            const on = fields.kind === kind
+            return (
+              <label
+                key={kind}
+                className="flex cursor-pointer items-start gap-3 rounded-[18px] border-2 p-4 has-[:focus-visible]:outline has-[:focus-visible]:outline-[3px] has-[:focus-visible]:outline-[var(--focus)]"
+                style={{
+                  borderColor: on ? 'var(--b600)' : 'var(--line)',
+                  background: on ? 'var(--b50)' : 'var(--surface)',
+                }}
+              >
+                <input
+                  type="radio"
+                  name="idea-kind"
+                  value={kind}
+                  checked={on}
+                  onChange={() => set('kind', kind)}
+                  className="sr-only"
+                />
+                <Icon weight="duotone" aria-hidden="true" className="shrink-0 text-2xl text-[var(--b600)]" />
+                <span>
+                  <span className="block text-[15px] font-extrabold text-ink">{label}</span>
+                  <span className="mt-0.5 block text-[13px] leading-[1.5] text-muted">{sub}</span>
+                </span>
+              </label>
+            )
+          })}
+        </div>
+      </fieldset>
+
       <div>
         <label htmlFor="idea-title" className="field-label">
-          Title
+          {fields.kind === 'question' ? 'Your question' : 'Title'}
         </label>
         <input
           id="idea-title"
@@ -133,44 +188,47 @@ export function IdeaForm() {
 
       <div>
         <label htmlFor="idea-description" className="field-label">
-          Full description
+          Why it matters
         </label>
         <textarea
           id="idea-description"
-          required
           rows={4}
+          placeholder="Who would use it, and what they cannot do today."
           value={fields.description}
           onChange={(e) => set('description', e.target.value)}
           className="field"
         />
       </div>
 
+      {/* The board's words (WB submit-an-idea). */}
       <div>
-        <label htmlFor="idea-intended-use" className="field-label">
-          Intended use
+        <span className="field-label">Photos (optional)</span>
+        <label className="grid min-h-[150px] cursor-pointer place-items-center overflow-hidden rounded-[18px] border border-dashed border-line text-sm font-bold text-muted has-[:focus-visible]:outline has-[:focus-visible]:outline-[3px] has-[:focus-visible]:outline-[var(--focus)]">
+          {photo ? (
+            // eslint-disable-next-line @next/next/no-img-element -- a just-uploaded preview, not a page image
+            <img src={photo.url} alt="Your photo" className="h-[150px] w-full object-cover" />
+          ) : (
+            'Drop a photo of the toy'
+          )}
+          <input
+            type="file"
+            accept="image/*"
+            aria-label="Drop a photo of the toy"
+            className="sr-only"
+            onChange={async (e) => {
+              const file = e.target.files?.[0]
+              if (!file) return
+              const fd = new FormData()
+              fd.append('file', file)
+              setError(null)
+              try {
+                setPhoto(await browserApiClient.postFormData<{ path: string; url: string }>('/api/upload/idea-photo', fd))
+              } catch {
+                setError('Could not upload the photo. Please try again.')
+              }
+            }}
+          />
         </label>
-        <textarea
-          id="idea-intended-use"
-          required
-          rows={3}
-          value={fields.intended_use}
-          onChange={(e) => set('intended_use', e.target.value)}
-          className="field"
-        />
-      </div>
-
-      <div>
-        <label htmlFor="idea-primary-user" className="field-label">
-          Primary user
-        </label>
-        <textarea
-          id="idea-primary-user"
-          required
-          rows={3}
-          value={fields.primary_user}
-          onChange={(e) => set('primary_user', e.target.value)}
-          className="field"
-        />
       </div>
 
       <fieldset>
@@ -194,6 +252,11 @@ export function IdeaForm() {
           ))}
         </div>
       </fieldset>
+
+      <label className="flex items-start gap-3 text-sm text-ink">
+        <input type="checkbox" className="field-check mt-0.5" checked={anonymous} onChange={(e) => setAnonymous(e.target.checked)} />
+        Post this anonymously. Your name will not appear on the challenge.
+      </label>
 
       {error && (
         <p role="alert" className="alert alert-danger">

@@ -1,11 +1,12 @@
-import { useState } from 'react'
-import { View, Text, Image, StyleSheet, useWindowDimensions, type ViewStyle } from 'react-native'
+import { useEffect, useRef, useState } from 'react'
+import { View, Text, Image, StyleSheet, useWindowDimensions, type ScrollView, type ViewStyle } from 'react-native'
 import Animated, {
   useAnimatedScrollHandler,
   useAnimatedStyle,
   useSharedValue,
   interpolate,
   Extrapolation,
+  runOnJS,
   type SharedValue,
 } from 'react-native-reanimated'
 import { Ionicons } from '@expo/vector-icons'
@@ -32,12 +33,18 @@ export function PhotoCarousel({
   switchUrl,
   height = 220,
   emptyIcon = 'cube-outline',
+  onIndexChange,
+  index,
 }: {
   urls: string[]
   /** Which photo shows the accessibility switch, flagged as it comes past. */
   switchUrl?: string | null
   height?: number
   emptyIcon?: keyof typeof Ionicons.glyphMap
+  /** The photo now in view, once per change — for a "2/5" beside the carousel. */
+  onIndexChange?: (index: number) => void
+  /** Scroll to this photo — the thumbnail strip's tap. */
+  index?: number
 }) {
   const { width: screenWidth } = useWindowDimensions()
   // Measured rather than assumed: this sits inside padded screens as well as
@@ -45,10 +52,25 @@ export function PhotoCarousel({
   // a fraction of a photo every time.
   const [width, setWidth] = useState(screenWidth)
   const x = useSharedValue(0)
+  const scroller = useRef<ScrollView>(null)
+  useEffect(() => {
+    if (index != null) scroller.current?.scrollTo({ x: index * width, animated: true })
+  }, [index, width])
+  const page = useSharedValue(0)
 
-  const onScroll = useAnimatedScrollHandler((e) => {
-    x.value = e.contentOffset.x
-  })
+  // From the scroll handler rather than onMomentumScrollEnd, which
+  // react-native-web never fires.
+  const onScroll = useAnimatedScrollHandler(
+    (e) => {
+      x.value = e.contentOffset.x
+      const now = Math.round(e.contentOffset.x / width)
+      if (now !== page.value) {
+        page.value = now
+        if (onIndexChange) runOnJS(onIndexChange)(now)
+      }
+    },
+    [width, onIndexChange]
+  )
 
   if (urls.length === 0) {
     return (
@@ -61,6 +83,7 @@ export function PhotoCarousel({
   return (
     <View onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
       <Animated.ScrollView
+        ref={scroller as never}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}

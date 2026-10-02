@@ -7,13 +7,15 @@
  * Four states, all decided by the server page: signed out (goes to /signup
  * with the reason, like SaveButton), your own guide (the count, read-only —
  * a contributor cannot thank themselves), already thanked, and ready.
+ *
+ * The result shows inline beside the button: the public guide page mounts no
+ * ToastProvider, so a toast here was silent.
  */
 import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { HandHeart } from '@phosphor-icons/react/dist/ssr'
 import { browserApiClient } from '@/lib/browser-api-client'
-import { isApiError } from '@/lib/api-core'
-import { useToast } from '@/components/toast'
+import { isApiError } from '@splat-connect/types'
 
 export function ThanksButton({
   tutorialId,
@@ -33,7 +35,7 @@ export function ThanksButton({
   const [pending, setPending] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
-  const showToast = useToast()
+  const [said, setSaid] = useState<{ ok: boolean; text: string } | null>(null)
 
   const heart = <HandHeart weight="fill" className="text-apricot" aria-hidden="true" />
 
@@ -53,34 +55,40 @@ export function ThanksButton({
     }
     setPending(true)
     try {
-      const res = await browserApiClient.post<{ thanks_count: number }>(
-        `/api/tutorials/${tutorialId}/thanks`,
-        {}
-      )
+      const res = await browserApiClient.post<{ thanks_count: number }>(`/api/tutorials/${tutorialId}/thanks`, {})
       setCount(res.thanks_count)
       setThanked(true)
-      showToast('Thanks sent — they will see it in their notifications')
+      setSaid({ ok: true, text: 'Thanks sent — they will see it in their notifications' })
     } catch (err) {
-      // 409: thanked already, from another tab. The button should say so
-      // rather than invite a retry that can never succeed.
-      if (isApiError(err) && err.status === 409) setThanked(true)
-      else showToast('Could not send that. Try again.')
+      // 409: thanked already, from another tab. Say so rather than invite a
+      // retry that can never succeed.
+      if (isApiError(err) && err.status === 409) {
+        setThanked(true)
+        setSaid({ ok: true, text: 'You already thanked them' })
+      } else setSaid({ ok: false, text: 'Could not send that. Try again.' })
     } finally {
       setPending(false)
     }
   }
 
   return (
-    <button
-      type="button"
-      onClick={thank}
-      disabled={thanked || pending}
-      aria-label={thanked ? `Thanked. ${count} thanks` : `Say thanks. ${count} thanks so far`}
-      className="btn btn-quiet btn-sm gap-2"
-    >
-      {heart}
-      {thanked ? 'Thanked' : 'Say thanks'}
-      <span className="tabular-nums text-muted">{count}</span>
-    </button>
+    <span className="inline-flex flex-wrap items-center gap-2">
+      <button
+        type="button"
+        onClick={thank}
+        disabled={thanked || pending}
+        aria-label={thanked ? `Thanked. ${count} thanks` : `Say thanks. ${count} thanks so far`}
+        className="btn btn-quiet btn-sm gap-2"
+      >
+        {heart}
+        {thanked ? 'Thanked' : 'Say thanks'}
+        <span className="tabular-nums text-muted">{count}</span>
+      </button>
+      {said && (
+        <span role={said.ok ? 'status' : 'alert'} className={`text-sm font-semibold ${said.ok ? 'text-muted' : 'text-[var(--bad)]'}`}>
+          {said.text}
+        </span>
+      )}
+    </span>
   )
 }

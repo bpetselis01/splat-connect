@@ -3,6 +3,11 @@ import { render, screen } from '@testing-library/react'
 
 const get = vi.fn()
 vi.mock('@/lib/api-client', () => ({ apiClient: { get: (...a: unknown[]) => get(...a) } }))
+// The row link is a client island (it opens the pane); the pane's buttons are
+// server actions. Neither runs here — they only have to import.
+const push = vi.fn()
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }))
+vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 
 const org = (id: string, name: string) => ({
   id, name, description: null, status: 'active' as const,
@@ -67,5 +72,79 @@ describe('admin review queue', () => {
     render(await Page({ searchParams: Promise.resolve({}) }))
 
     expect(screen.queryByText(/Hide the/)).not.toBeInTheDocument()
+  })
+
+  // Tests: ?selected= opens the side pane for that row, and the row link still
+  //        points at the full review page
+  // How:   selects t2; the detail fetch answers with a guide missing its PDF and
+  //        with a co-author invite still pending
+  // Chain: the pane is a progressive enhancement — without JS the row must
+  //        still reach /admin/review/[id]; with it, the marks come from data
+  it('opens the side pane for the selected row, marks computed from the guide', async () => {
+    get.mockImplementation(async (path: string) =>
+      path === '/api/tutorials/t2'
+        ? {
+            ...unhandled, kind: 'toy_adaptation', photo_urls: ['a.jpg'], safety_declared_at: '2026-07-01T00:00:00Z',
+            parts: [{ id: 'p', name: 'Jack', quantity: 1 }], tools: [], stl_files: [],
+            tutorial_pdf_url: null, tutorial_contributors: [],
+            tutorial_collaborator_invites: [{ id: 'i', status: 'pending' }],
+          }
+        : path.startsWith('/api/admin/tutorials')
+          ? [handled, unhandled]
+          : []
+    )
+    const { default: Page } = await import('@/app/admin/review/page')
+    render(await Page({ searchParams: Promise.resolve({ selected: 't2' }) }))
+
+    const pane = screen.getByRole('complementary', { name: /reviewing platform project/i })
+    expect(pane).toHaveTextContent('No guide PDF')
+    expect(pane).toHaveTextContent('Co-authors not confirmed')
+    expect(pane).toHaveTextContent('At least one photo')
+    expect(screen.getByRole('link', { name: /open full preview/i })).toHaveAttribute('href', '/admin/review/t2')
+    expect(screen.getAllByRole('link', { name: 'Platform project' })[0]).toHaveAttribute('href', '/admin/review/t2')
+  })
+
+  // Tests: ?q= narrows the queue to titles containing it, case-insensitive
+  // How:   q=PLATFORM over three guides; only 'Platform project' remains, box keeps the text
+  // Chain: a GET form over the list already loaded — refresh-safe, no client code
+  it('filters the queue by guide title, ignoring case', async () => {
+    get.mockResolvedValue([handled, unhandled, askedOnly])
+    const { default: Page } = await import('@/app/admin/review/page')
+    render(await Page({ searchParams: Promise.resolve({ q: 'PLATFORM' }) }))
+    expect(screen.getByText('Platform project')).toBeInTheDocument()
+    expect(screen.queryByText('Backed project')).toBeNull()
+    expect(screen.queryByText('Asked but unanswered')).toBeNull()
+    expect(screen.getByRole('searchbox', { name: 'Search by guide or contributor name' })).toHaveValue('PLATFORM')
+  })
+
+  // Tests: ?q= also matches a credited contributor's name
+  // How:   p1 resolves to Rachel Kaur via /api/admin/contributors; q=rachel keeps only her guide
+  // Chain: names come from the admin contributors list, never a profiles embed
+  it('filters by contributor name', async () => {
+    get.mockImplementation(async (path: string) =>
+      path === '/api/admin/contributors'
+        ? { accounts: [{ id: 'p1', name: 'Rachel Kaur', email: 'r@x' }], total: 1 }
+        : path === '/api/admin/ideas'
+          ? []
+          : [
+              { ...handled, tutorial_contributors: [{ profile_id: 'p1' }] },
+              { ...unhandled, tutorial_contributors: [] },
+            ]
+    )
+    const { default: Page } = await import('@/app/admin/review/page')
+    render(await Page({ searchParams: Promise.resolve({ q: 'rachel' }) }))
+    expect(screen.getByText('Backed project')).toBeInTheDocument()
+    expect(screen.queryByText('Platform project')).toBeNull()
+  })
+
+  // Tests: a search with no match says so and keeps the box to search again
+  // How:   q=zzz over two guides
+  // Chain: the empty state must not claim the queue is empty when only the search is
+  it('says so when nothing matches, and keeps the search box', async () => {
+    get.mockResolvedValue([handled, unhandled])
+    const { default: Page } = await import('@/app/admin/review/page')
+    render(await Page({ searchParams: Promise.resolve({ q: 'zzz' }) }))
+    expect(screen.getByText('No guide or contributor matches that search.')).toBeInTheDocument()
+    expect(screen.getByRole('searchbox')).toBeInTheDocument()
   })
 })

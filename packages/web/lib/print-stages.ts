@@ -15,10 +15,12 @@
  */
 import type { Stage } from '@/components/stage-rail'
 import type { ToyTransaction, ToyTransactionDetail } from '@splat-connect/types'
+import { answerBy, printRequestExpired, shortDate } from '@splat-connect/types'
 
 type Row = Pick<
   ToyTransaction,
   | 'status'
+  | 'type'
   | 'owner_confirmed_at'
   | 'requester_confirmed_at'
   | 'printing_started_at'
@@ -27,10 +29,6 @@ type Row = Pick<
   | 'created_at'
   | 'updated_at'
 >
-
-function shortDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })
-}
 
 export function printStages(tx: Row): Stage[] {
   const ended = shortDate(tx.updated_at)
@@ -43,10 +41,22 @@ export function printStages(tx: Row): Stage[] {
   const reachedHandover = Boolean(tx.owner_confirmed_at || tx.requester_confirmed_at)
 
   switch (tx.status) {
+    // Asking is the stage in progress until a printer answers, as the board draws it.
     case 'requested':
+      // Nobody answered in seven days. Read off created_at, so no job has to
+      // run for it to happen.
+      if (printRequestExpired(tx)) {
+        return [
+          asked,
+          { key: 'accepted', label: 'Accepted', caption: 'Expired', state: 'stop' },
+          { key: 'printing', label: 'Printing', caption: 'Never got here', state: 'todo' },
+          { key: 'ready', label: 'Ready', caption: 'Never got here', state: 'todo' },
+          { key: 'collected', label: 'Collected', caption: 'Never got here', state: 'todo' },
+        ]
+      }
       return [
-        asked,
-        { key: 'accepted', label: 'Accepted', caption: 'Waiting on the printer', state: 'now' },
+        { ...asked, state: 'now' },
+        { key: 'accepted', label: 'Accepted', caption: 'Waiting on the printer', state: 'todo' },
         { key: 'printing', label: 'Printing', caption: 'Once they take it on', state: 'todo' },
         { key: 'ready', label: 'Ready', caption: 'They post a photo', state: 'todo' },
         { key: 'collected', label: 'Collected', caption: 'Once you both confirm', state: 'todo' },
@@ -184,11 +194,16 @@ export function printStageFacts(
 
   if (tx.status === 'requested') {
     return {
-      title: 'Waiting on the printer',
+      title: viewerIsPrinter ? 'What they asked for' : 'What you asked for',
       facts: [
         { label: 'Parts', value: partsLine },
         { label: 'Printer', value: tx.printer?.name ?? 'Not recorded' },
-        { label: 'Sent', value: new Date(tx.created_at).toLocaleDateString('en-AU') },
+        {
+          label: 'Answer by',
+          value: printRequestExpired(tx)
+            ? `Expired ${shortDate(answerBy(tx.created_at))}`
+            : shortDate(answerBy(tx.created_at)),
+        },
         {
           label: 'Next',
           value: viewerIsPrinter ? 'Take the job, or decline with a reason' : 'They answer here',

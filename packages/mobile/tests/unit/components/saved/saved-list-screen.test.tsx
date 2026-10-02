@@ -20,7 +20,7 @@ const mockToggle = jest.fn()
 const mockIsSaved = jest.fn(() => true)
 jest.mock('../../../../lib/saves', () => ({
   useSaves: () => ({
-    savedIds: { tutorials: [], toys: [], challenges: [] },
+    savedIds: { tutorials: [], toys: [], challenges: [], organisations: [], parts: [] },
     isSaved: (...a: unknown[]) => mockIsSaved(...(a as [])),
     toggle: mockToggle,
   }),
@@ -61,6 +61,14 @@ describe('SavedListScreen', () => {
     expect(mockPush).toHaveBeenCalledWith('/explore/challenges/c1')
   })
 
+  it('lists saved parts and opens their guide', async () => {
+    mockGet.mockResolvedValue([{ id: 'f1', filename: 'cradle-65mm.stl', tutorial_id: 'g1', tutorials: { id: 'g1', title: 'Switch mount' } }])
+    render(<SavedListScreen slug="parts" />)
+    fireEvent.press(await screen.findByText('cradle-65mm.stl'))
+    expect(mockPush).toHaveBeenCalledWith('/guides/g1')
+    expect(screen.getByText('Switch mount')).toBeTruthy()
+  })
+
   it('unsaves in place through the bookmark', async () => {
     mockGet.mockResolvedValue([{ id: 't1', title: 'Bubble machine' }])
     render(<SavedListScreen slug="tutorials" />)
@@ -85,5 +93,21 @@ describe('SavedListScreen', () => {
     mockGet.mockResolvedValue([{ id: 't1', title: 'Back online' }])
     fireEvent.press(screen.getByRole('button', { name: 'Try again' }))
     expect(await screen.findByText('Back online')).toBeTruthy()
+  })
+
+  it("shows a saved guide's difficulty, time and author", async () => {
+    mockGet.mockResolvedValue([
+      { id: 't1', title: 'Light-up drum', difficulty: 'easy', build_minutes: 20, author_name: 'Rachel Kaur', toy_photo_url: null },
+    ])
+    render(<SavedListScreen slug="tutorials" />)
+    expect(await screen.findByText('Easy · 20 min · Rachel Kaur')).toBeTruthy()
+  })
+
+  it("shows a saved toy's grade and holder", async () => {
+    mockGet.mockResolvedValue([
+      { id: 'y1', name: 'Bubble machine', condition: 9, cover_photo_url: null, organizations: { name: 'Northside Therapy' }, profiles: null },
+    ])
+    render(<SavedListScreen slug="toys" />)
+    expect(await screen.findByText('Like new · Northside Therapy')).toBeTruthy()
   })
 })

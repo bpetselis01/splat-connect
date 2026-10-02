@@ -3,13 +3,12 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import type { Tutorial, ToyWithOwner, Organization } from '@splat-connect/types'
+import type { Tutorial, ToyWithOwner, Organization, ImpactSummary } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { useLearnProgress } from '../../lib/learn'
 import { LEARN_ARTICLES } from '../../lib/learn-content'
 import { Screen } from '../ui/Screen'
-import { ScreenHeader } from '../ui/ScreenHeader'
 import { TextField } from '../ui/TextField'
 import { Card } from '../ui/Card'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
@@ -41,6 +40,10 @@ function ResultGroup({ eyebrow, children }: { eyebrow: string; children: ReactNo
   )
 }
 
+/**
+ * The board's Explore row (#explore): a white card, a 52px tinted icon tile,
+ * a Baloo title over one line of blurb, and a caret.
+ */
 function DoorCard({
   title,
   blurb,
@@ -62,24 +65,20 @@ function DoorCard({
       accessibilityRole="button"
       accessibilityLabel={title}
       accessibilityHint={blurb}
-      pressScale={0.985}
-      style={styles.doorPress}
+      pressScale={0.98}
+      style={styles.door}
     >
-      <Card style={[styles.doorCard, { backgroundColor: tint }]}>
-        <View style={styles.doorIcon}>
-          <Ionicons name={icon} size={22} color={theme.colors.primaryDeep} />
+      <View style={[styles.doorIcon, { backgroundColor: tint }]}>
+        <Ionicons name={icon} size={26} color={theme.colors.ink} />
+      </View>
+      <View style={styles.doorBody}>
+        <View style={styles.doorTitleRow}>
+          <Text style={styles.doorTitle}>{title}</Text>
+          {extra}
         </View>
-        <View style={styles.doorBody}>
-          <View style={styles.doorTitleRow}>
-            <Text style={styles.doorTitle}>{title}</Text>
-            {extra}
-          </View>
-          <Text style={styles.doorBlurb} numberOfLines={2}>
-            {blurb}
-          </Text>
-        </View>
-        <Ionicons name="chevron-forward" size={18} color={theme.colors.primary} />
-      </Card>
+        <Text style={styles.doorBlurb}>{blurb}</Text>
+      </View>
+      <Ionicons name="chevron-forward" size={16} color={theme.colors.muted} />
     </AnimatedPressable>
   )
 }
@@ -96,6 +95,22 @@ export function ExploreScreen() {
   // Bumping this re-runs the fetch — the retry button's handle, same as
   // toy-library-screen's reloadKey.
   const [reloadKey, setReloadKey] = useState(0)
+  // The board's "This community so far". Its own fetch, apart from the three
+  // search sources: a failed count hides the block and nothing else — it is
+  // not something to retry for, so it never raises the error row.
+  const [totals, setTotals] = useState<ImpactSummary['totals'] | null>(null)
+  useEffect(() => {
+    let ignore = false
+    apiClient
+      .get<ImpactSummary>('/api/public/impact')
+      .then((s) => {
+        if (!ignore) setTotals(s.totals)
+      })
+      .catch((err) => console.error('[ExploreScreen] impact fetch failed:', err))
+    return () => {
+      ignore = true
+    }
+  }, [reloadKey])
 
   // Fetched once per reload, not once per keystroke — every source is small
   // enough to load whole and filter client-side as the query changes.
@@ -133,13 +148,9 @@ export function ExploreScreen() {
   const matchedOrgs = q ? orgs.filter((o) => o.name.toLowerCase().includes(q)) : []
 
   return (
-    <Screen ownHeader>
+    // The native header draws "Explore" and the back button (explore/_layout).
+    <Screen>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        <ScreenHeader
-          title="Explore"
-          subtitle="Search everything, plus Learn, Get Involved and About."
-          showLogo
-        />
 
         <TextField
           icon="search"
@@ -147,6 +158,7 @@ export function ExploreScreen() {
           value={search}
           onChangeText={setSearch}
           boxStyle={styles.searchBar}
+          search
         />
 
         {searchError ? (
@@ -192,28 +204,78 @@ export function ExploreScreen() {
           </View>
         ) : null}
 
+        {/* The board's seven, in its order. Every destination the old doors
+            had is here: Get Involved was the challenges list, and is now
+            named for what it opens. */}
         <DoorCard
           title="Learn"
-          blurb="Toy adaptation 101 → Switch types → Choosing a toy → …"
+          blurb="How switch adaptation works, first switch to safe finish."
           tint={theme.colors.honeySoft}
-          icon="book-outline"
+          icon="school-outline"
           extra={<Text style={styles.progressChip}>{`${count}/${LEARN_ARTICLES.length}`}</Text>}
           onPress={() => router.push('/explore/learn')}
         />
         <DoorCard
-          title="Get Involved"
-          blurb="Design challenges · Submit an idea"
-          tint={theme.colors.mintSoft}
-          icon="hand-left-outline"
+          title="Design challenges"
+          blurb="Problems nobody has solved yet, open to anyone."
+          tint={theme.colors.violetSoft}
+          icon="extension-puzzle-outline"
           onPress={() => router.push('/explore/challenges')}
         />
         <DoorCard
+          title="Makers wanted"
+          blurb="Families who found the guide but cannot build it. Claim one."
+          tint={theme.colors.mintSoft}
+          icon="hammer-outline"
+          onPress={() => router.push('/explore/makers-wanted')}
+        />
+        <DoorCard
+          title="Organisations"
+          blurb="The services standing behind the work."
+          tint={theme.colors.mintSoft}
+          icon="business-outline"
+          onPress={() => router.push('/toy-library/organisations')}
+        />
+        <DoorCard
+          title="3D printing"
+          blurb="Someone nearby prints the parts; you cover the filament. Or offer your printer."
+          tint={theme.colors.apricotSoft}
+          icon="cube-outline"
+          onPress={() => router.push('/printing')}
+        />
+        <DoorCard
+          title="Recycle plastic"
+          blurb="Drop clean waste plastic at an organisation that can extrude it. Earn print credit on their machines."
+          tint={theme.colors.mintSoft}
+          icon="leaf-outline"
+          onPress={() => router.push('/explore/recycling')}
+        />
+        <DoorCard
           title="About SPLAT"
-          blurb="Who we are · Partners · Contact · Safety"
-          tint={theme.colors.surfaceSunken}
+          blurb="Who runs this, and how to reach us."
+          tint={theme.colors.accentLight}
           icon="information-circle-outline"
           onPress={() => router.push('/explore/about')}
         />
+
+        {totals ? (
+          <View style={styles.stats}>
+            <Text style={styles.eyebrow}>This community so far</Text>
+            <View style={styles.statGrid}>
+              {[
+                { k: 'Guides', v: totals.tutorials },
+                { k: 'Toys delivered', v: totals.toysDelivered },
+                { k: 'Contributors', v: totals.contributors },
+                { k: 'Organisations', v: totals.organisations },
+              ].map((s) => (
+                <View key={s.k} style={styles.stat}>
+                  <Text style={styles.statValue}>{String(s.v)}</Text>
+                  <Text style={styles.statLabel}>{s.k}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        ) : null}
       </ScrollView>
     </Screen>
   )
@@ -222,7 +284,7 @@ export function ExploreScreen() {
 const styles = StyleSheet.create({
   content: { paddingBottom: theme.spacing(6) },
   searchBar: {
-    borderRadius: theme.radii.field,
+    borderRadius: theme.radii.pill,
     borderWidth: theme.border.hairline,
     paddingHorizontal: theme.spacing(4),
     ...theme.shadow(2),
@@ -255,42 +317,60 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing(2),
   },
   resultLabel: { flex: 1, fontFamily: theme.fonts.semiBold, fontSize: theme.type.label, color: theme.colors.text },
-  doorPress: { marginBottom: theme.spacing(3) },
-  doorCard: {
+  door: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing(3),
-    padding: theme.spacing(3),
-  },
-  doorIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: theme.radii.field,
+    gap: 14,
+    padding: 18,
+    marginBottom: theme.spacing(3),
+    borderRadius: theme.radii.card,
     borderWidth: theme.border.hairline,
     borderColor: theme.colors.border,
     backgroundColor: theme.colors.surface,
+    ...theme.shadow(2),
+  },
+  doorIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
   },
   doorBody: { flex: 1 },
   doorTitleRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2) },
-  doorTitle: { fontFamily: theme.fonts.bold, fontSize: theme.type.heading, color: theme.colors.text },
+  doorTitle: { fontFamily: theme.fonts.display, fontSize: 18, lineHeight: 24, color: theme.colors.ink },
   progressChip: {
     fontFamily: theme.fonts.numeral,
-    fontSize: 17,
+    fontSize: 13,
     color: theme.colors.primaryDeep,
-    borderWidth: theme.border.hairline,
-    borderColor: theme.colors.border,
-    borderRadius: theme.radii.field,
-    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radii.pill,
+    backgroundColor: theme.colors.accentLight,
     paddingHorizontal: theme.spacing(2),
     lineHeight: 20,
+    overflow: 'hidden',
   },
   doorBlurb: {
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.caption,
     color: theme.colors.muted,
-    marginTop: theme.spacing(1),
-    lineHeight: 18,
+    lineHeight: 19,
   },
+  stats: {
+    marginTop: theme.spacing(5),
+    padding: theme.spacing(5),
+    borderRadius: theme.radii.card,
+    borderWidth: theme.border.hairline,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.accentFaint,
+  },
+  statGrid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 14, marginTop: theme.spacing(3) },
+  stat: { width: '50%' },
+  statValue: {
+    fontFamily: theme.fonts.display,
+    fontSize: 26,
+    lineHeight: 30,
+    color: theme.colors.primaryDeep,
+    fontVariant: ['tabular-nums'],
+  },
+  statLabel: { fontFamily: theme.fonts.bold, fontSize: 12, color: theme.colors.muted, marginTop: 3 },
 })

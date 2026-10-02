@@ -18,12 +18,12 @@ jest.mock('expo-router', () => {
 
 beforeEach(() => {
   jest.clearAllMocks()
-  mockGet.mockResolvedValue({ tutorials: [], toys: [], challenges: [], organisations: [] })
+  mockGet.mockResolvedValue({ tutorials: [], toys: [], challenges: [], organisations: [], parts: [] })
 })
 
 describe('SavedScreen', () => {
   it('counts each type on its tile', async () => {
-    mockGet.mockResolvedValue({ tutorials: ['t1', 't2'], toys: ['y1'], challenges: [], organisations: ['o1'] })
+    mockGet.mockResolvedValue({ tutorials: ['t1', 't2'], toys: ['y1'], challenges: [], organisations: ['o1'], parts: ['f1'] })
     render(<SavedScreen />)
 
     expect(await screen.findByText('Guides')).toBeTruthy()
@@ -32,6 +32,8 @@ describe('SavedScreen', () => {
     expect(screen.getByRole('button', { name: 'Toys' }).props.accessibilityHint).toContain('1 saved')
     expect(screen.getByRole('button', { name: 'Challenges' }).props.accessibilityHint).toContain('Nothing saved')
     expect(screen.getByRole('button', { name: 'Organisations' }).props.accessibilityHint).toContain('1 saved')
+    expect(await screen.findByText('1 part you kept')).toBeTruthy()
+    expect(screen.queryByText('Not built yet')).toBeNull()
     expect(tiles.length).toBeGreaterThanOrEqual(4)
     expect(mockGet).toHaveBeenCalledWith('/api/saves/ids')
   })
@@ -54,7 +56,7 @@ describe('SavedScreen', () => {
 
     expect(await screen.findByText("Couldn't load what you've saved.")).toBeTruthy()
 
-    mockGet.mockResolvedValue({ tutorials: ['t1'], toys: [], challenges: [], organisations: [] })
+    mockGet.mockResolvedValue({ tutorials: ['t1'], toys: [], challenges: [], organisations: [], parts: [] })
     fireEvent.press(screen.getByRole('button', { name: 'Try again' }))
     await waitFor(() =>
       expect(screen.getByRole('button', { name: 'Guides' }).props.accessibilityHint).toContain('1 saved')

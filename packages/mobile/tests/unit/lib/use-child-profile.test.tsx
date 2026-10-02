@@ -30,11 +30,11 @@ describe('useChildProfile', () => {
     mockPatch.mockResolvedValue({})
     const { result } = renderHook(() => useChildProfile())
     await waitFor(() => expect(result.current.loading).toBe(false))
-    act(() => { result.current.save({ age: 7 }); result.current.save({ macs_level: 'II' }) })
-    expect(result.current.profile).toMatchObject({ age: 7, macs_level: 'II' }) // optimistic
+    act(() => { result.current.save({ age: 7 }); result.current.save({ press_force: 'light' }) })
+    expect(result.current.profile).toMatchObject({ age: 7, press_force: 'light' }) // optimistic
     await act(async () => { jest.advanceTimersByTime(300) })
     expect(mockPatch).toHaveBeenCalledTimes(1) // debounced
-    expect(mockPatch).toHaveBeenCalledWith('/api/child-profiles/cp1', expect.objectContaining({ age: 7, macs_level: 'II' }))
+    expect(mockPatch).toHaveBeenCalledWith('/api/child-profiles/cp1', expect.objectContaining({ age: 7, press_force: 'light' }))
     expect(mockPost).not.toHaveBeenCalled()
     expect(result.current.saveState).toBe('saved') // confirmed to the user
   })

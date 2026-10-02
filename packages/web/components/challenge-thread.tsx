@@ -42,7 +42,8 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { browserApiClient } from '@/lib/browser-api-client'
-import { isApiError } from '@/lib/api-core'
+import { isApiError } from '@splat-connect/types'
+import { CheckCircle } from '@phosphor-icons/react/dist/ssr'
 import { ExchangeChat } from '@/components/exchange-chat'
 import type { ToyIdeaMessage, ToyIdeaParticipant } from '@splat-connect/types'
 
@@ -53,6 +54,8 @@ export function ChallengeThread({
   authorId,
   authorName,
   participants,
+  question = false,
+  answerMessageId = null,
 }: {
   ideaId: string
   /** Only 'challenge' or 'graduated' reach here — the public endpoint 404s
@@ -62,12 +65,16 @@ export function ChallengeThread({
   authorId: string
   authorName: string | null
   participants: ToyIdeaParticipant[]
+  /** A question (078): the asker may mark one reply as its answer. */
+  question?: boolean
+  answerMessageId?: string | null
 }) {
   const router = useRouter()
   const [messages, setMessages] = useState<ToyIdeaMessage[]>([])
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [answerId, setAnswerId] = useState<string | null>(answerMessageId)
 
   const isAuthor = viewerId !== null && viewerId === authorId
   const isParticipant = viewerId !== null && participants.some((p) => p.profile_id === viewerId)
@@ -152,6 +159,22 @@ export function ChallengeThread({
     }
   }
 
+  // POST /api/ideas/:id/answer — author only, question only; null clears.
+  // router.refresh() re-runs the server page so the pill and history agree.
+  async function markAnswer(messageId: string | null) {
+    setBusy(true)
+    setError(null)
+    try {
+      await browserApiClient.post(`/api/ideas/${ideaId}/answer`, { message_id: messageId })
+      setAnswerId(messageId)
+      router.refresh()
+    } catch {
+      setError('Could not mark the answer. Please try again.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function join() {
     setBusy(true)
     setError(null)
@@ -211,7 +234,9 @@ export function ChallengeThread({
         {status === 'challenge' ? (
           <>
             <p className="text-sm leading-relaxed text-muted">
-              Join this challenge to read and take part in the conversation.
+              {question
+                ? 'Join to read the answers and add your own.'
+                : 'Join this challenge to read and take part in the conversation.'}
             </p>
             <button
               type="button"
@@ -219,7 +244,7 @@ export function ChallengeThread({
               onClick={join}
               className="btn btn-accent self-start"
             >
-              {busy ? 'Joining…' : 'Join this challenge'}
+              {busy ? 'Joining…' : question ? 'Join to answer' : 'Join this challenge'}
             </button>
           </>
         ) : (
@@ -234,6 +259,8 @@ export function ChallengeThread({
   if (loading) {
     return <p className="text-sm text-muted">Loading the conversation…</p>
   }
+
+  const answer = question ? messages.find((m) => m.id === answerId) : undefined
 
   return (
     <div>
@@ -275,7 +302,46 @@ export function ChallengeThread({
         </div>
       )}
 
+      {answer && (
+        <div className="mb-3 rounded-card border border-line bg-[var(--tok)] px-5 py-4 text-[var(--tink)]">
+          <p className="text-xs font-extrabold uppercase tracking-[.1em]">
+            <CheckCircle weight="fill" aria-hidden="true" className="mr-1 inline" />
+            The answer · marked by the asker
+          </p>
+          <p className="mt-2 leading-[1.6]">{answer.body}</p>
+          <p className="mt-2 flex flex-wrap items-center justify-between gap-2 text-sm font-bold">
+            {nameFor(answer.sender_id)}
+            {isAuthor && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => markAnswer(null)}
+                className="text-xs font-semibold underline"
+              >
+                Unmark
+              </button>
+            )}
+          </p>
+        </div>
+      )}
+
       <ExchangeChat
+        highlightId={answer?.id ?? null}
+        afterMessage={
+          question && isAuthor
+            ? (m) =>
+                m.kind === 'user' && m.sender_id !== authorId && m.id !== answerId ? (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => markAnswer(m.id)}
+                    className="self-start text-xs font-semibold text-ink underline"
+                  >
+                    Mark as the answer
+                  </button>
+                ) : null
+            : undefined
+        }
         messages={messages}
         viewerId={viewerId}
         otherPartyName="the group"

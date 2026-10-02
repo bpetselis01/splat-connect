@@ -30,13 +30,11 @@ import {
   ShieldCheck,
   ShoppingCart,
 } from '@phosphor-icons/react/dist/ssr'
-import { formatBuildTime, KIND_LABEL, type Difficulty, type TutorialKind } from '@splat-connect/types'
+import { formatBuildTime, KIND_LABEL, BUILD_URGENCIES, type Difficulty, type TutorialKind } from '@splat-connect/types'
 import { browserApiClient } from '@/lib/browser-api-client'
 
 /** The ranges the board filters by, so a family picks one it can be found under. */
 const RANGES = [5, 10, 15, 25, 50]
-
-const URGENCIES = ['No rush', 'Before school holidays', 'Within a month', 'As soon as someone can']
 
 export type AskGuide = {
   id: string
@@ -91,7 +89,7 @@ export function AskOpenlyForm({
   const [childLabel, setChildLabel] = useState('')
   const [suburb, setSuburb] = useState('')
   const [travelKm, setTravelKm] = useState(10)
-  const [urgency, setUrgency] = useState(URGENCIES[0])
+  const [urgency, setUrgency] = useState<string>(BUILD_URGENCIES[0])
   const [hasToy, setHasToy] = useState(false)
   const [brief, setBrief] = useState('')
   const [covers, setCovers] = useState(false)
@@ -108,7 +106,7 @@ export function AskOpenlyForm({
     )
   }, [tutorials, query, kind])
 
-  const ready = tutorialId && suburb.trim() && brief.trim() && covers
+  const ready = tutorialId && suburb.trim() && covers
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -118,7 +116,7 @@ export function AskOpenlyForm({
     try {
       const tx = await browserApiClient.post<{ id: string }>('/api/toy-transactions/build', {
         tutorial_id: tutorialId,
-        build_brief: brief.trim(),
+        build_brief: brief.trim() || null,
         child_label: childLabel.trim(),
         requester_suburb: suburb.trim(),
         travel_km: travelKm,
@@ -293,7 +291,7 @@ export function AskOpenlyForm({
         </fieldset>
 
         <label className="block">
-          <span className={LABEL}>A note to the maker</span>
+          <span className={LABEL}>A note to the maker <span className="font-semibold text-muted">(optional)</span></span>
           <textarea
             value={brief}
             onChange={(e) => setBrief(e.target.value)}
@@ -329,7 +327,7 @@ export function AskOpenlyForm({
         <fieldset>
           <legend className={`${LABEL} mb-[9px]`}>How soon?</legend>
           <div className="flex flex-wrap gap-2">
-            {URGENCIES.map((u) => (
+            {BUILD_URGENCIES.map((u) => (
               <button
                 key={u}
                 type="button"

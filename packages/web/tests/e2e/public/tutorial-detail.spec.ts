@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { createContributor, createTutorial, uniqueTitle } from '../helpers'
+import { adminClient, createContributor, createTutorial, uniqueTitle } from '../helpers'
 
 test('the detail page renders a tutorial in full', async ({ page }) => {
   const contributor = await createContributor()
@@ -13,12 +13,13 @@ test('the detail page renders a tutorial in full', async ({ page }) => {
   await expect(page.getByText(contributor.name)).toBeVisible()
 
   // Signed out: the file links are the gate (049). The download itself is
-  // covered in tutorial-downloads.spec.ts.
+  // covered in tutorial-downloads.spec.ts. The rail's PDF button says what it
+  // costs to a signed-out reader since 1909fb6a.
   const detour = `/signup?next=%2Ftutorials%2F${tutorialId}&reason=download`
-  await expect(page.getByRole('link', { name: 'Download Tutorial PDF' })).toHaveAttribute('href', detour)
+  await expect(page.getByRole('link', { name: 'Sign in to download' })).toHaveAttribute('href', detour)
 
   // Parts & tools is the first tab; the files sit behind the second.
-  await expect(page.getByRole('cell', { name: 'E2E part' })).toBeVisible()
+  await expect(page.getByRole('cell', { name: 'E2E part', exact: true })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Buy E2E part from Jaycar' })).toBeVisible()
   await expect(page.getByRole('heading', { name: "Tools you'll need" })).toBeVisible()
   await expect(page.getByText('E2E tool')).toBeVisible()
@@ -34,15 +35,19 @@ test('an unknown tutorial id renders a 404', async ({ page }) => {
 
 test('a tutorial with no photo shows the placeholder', async ({ page }) => {
   const contributor = await createContributor()
+  const title = uniqueTitle('E2E Detail No Photo')
   const id = await createTutorial(contributor.id, {
-    title: uniqueTitle('E2E Detail No Photo'),
+    title,
     status: 'approved',
     toyPhotoUrl: null,
   })
 
   await page.goto(`/tutorials/${id}`)
 
-  await expect(page.getByText('🧸')).toBeVisible()
+  // The 🧸 became a decorative duotone glyph in 30251713, so the box is found
+  // by test id; the photo it stands in for must be absent.
+  await expect(page.getByTestId('photo-placeholder')).toBeVisible()
+  await expect(page.getByRole('img', { name: title })).toHaveCount(0)
 })
 
 test('optional parts and tools are badged and buy links open in a new tab', async ({ page }) => {
@@ -75,5 +80,37 @@ test('a tutorial with no STL files omits the 3D-print section', async ({ page })
   await page.goto(`/tutorials/${id}`)
 
   await expect(page.getByRole('tab', { name: 'Files & print settings' })).toHaveCount(0)
-  await expect(page.getByRole('link', { name: 'Download Tutorial PDF' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Sign in to download' })).toBeVisible()
+})
+
+test('the parts tab totals the prices once every part has one', async ({ page }) => {
+  const contributor = await createContributor()
+  const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Prices'), status: 'approved' })
+  const admin = adminClient()
+  await admin.from('parts').update({ price_cents: 1250 }).eq('tutorial_id', id)
+  await admin.from('tutorials').update({ prices_checked_on: '2026-08-02' }).eq('id', id)
+
+  await page.goto(`/tutorials/${id}`)
+  await expect(page.getByRole('cell', { name: 'Total' })).toBeVisible()
+  await expect(page.getByRole('cell', { name: '$12.50' }).last()).toBeVisible()
+  await expect(page.getByText('Prices last checked 2 Aug 2026')).toBeVisible()
+})
+
+test('the rail names the starting toy, what it works with and the no-build note', async ({ page }) => {
+  const contributor = await createContributor()
+  const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Works With'), status: 'approved' })
+  await adminClient().from('tutorials').update({
+    toy_name: 'Plush barking dog',
+    toy_brand: 'ZURU',
+    works_with: 'Any 3.5mm switch',
+    no_build_note: 'Two adapted copies are in the library right now.',
+  }).eq('id', id)
+
+  await page.goto(`/tutorials/${id}`)
+  await expect(page.getByText('The toy you start with')).toBeVisible()
+  await expect(page.getByText('Plush barking dog')).toBeVisible()
+  await expect(page.getByText('by ZURU')).toBeVisible()
+  await expect(page.getByText('Works with', { exact: true })).toBeVisible()
+  await expect(page.getByText('Any 3.5mm switch')).toBeVisible()
+  await expect(page.getByText('Two adapted copies are in the library right now.')).toBeVisible()
 })

@@ -19,13 +19,14 @@ import type { Route } from 'next'
 import { notFound } from 'next/navigation'
 import { BoundaryLink } from '@/components/boundary-link'
 import { SAVE_SLUGS, type SaveSlug } from '@splat-connect/types'
-import type { Tutorial, ToyWithOwner, ToyIdea } from '@splat-connect/types'
+import type { CataloguePart, Tutorial, ToyWithOwner, ToyIdea } from '@splat-connect/types'
 import { requireCapabilities } from '@/lib/require-capabilities'
 import { apiClient } from '@/lib/api-client'
 import {
   BookOpen,
   Buildings,
   CircleHalf,
+  Cube,
   Fire,
   Gift,
   Smiley,
@@ -34,7 +35,6 @@ import {
 import { CardPhoto, tintFor } from '@/components/card-photo'
 import { SaveButton } from '@/components/save-button'
 import { gradeOf } from '@/lib/toy-grade'
-import type { OrgCardOrg } from '@/components/org-card'
 
 /** Title and the way out, per slug. The empty state is the only copy that
     differs between the three lists. */
@@ -62,6 +62,12 @@ const VIEW = {
     lead: 'Organisations whose work you want to follow.',
     browse: '/organizations',
     browseLabel: 'Browse organisations',
+  },
+  parts: {
+    title: 'Saved parts',
+    lead: 'Printable parts you want to make or ask someone to print for you.',
+    browse: '/printing/parts',
+    browseLabel: 'Browse printable parts',
   },
   // `satisfies`, not a cast: it is what turned switching organisations on into
   // a compile error here rather than a 404 somebody found later.
@@ -120,7 +126,7 @@ function shown(slug: SaveSlug, item: { id: string }): Shown {
     }
   }
   if (slug === 'organisations') {
-    const o = item as OrgCardOrg & { suburb?: string | null; state?: string | null }
+    const o = item as { id: string; name: string; description: string | null; suburb?: string | null; state?: string | null }
     return {
       href: `/organizations/${o.id}/public`,
       title: o.name,
@@ -129,6 +135,18 @@ function shown(slug: SaveSlug, item: { id: string }): Shown {
       tag: 'Organisation',
       note: o.description ?? null,
       by: [o.suburb, o.state].filter(Boolean).join(', ') || null,
+    }
+  }
+  if (slug === 'parts') {
+    const p = item as CataloguePart
+    return {
+      href: `/tutorials/${p.tutorial_id}`,
+      title: p.filename,
+      photo: null,
+      Icon: Cube,
+      tag: 'Part',
+      note: [p.material, p.filament_grams != null ? `${p.filament_grams} g` : null].filter(Boolean).join(' · ') || null,
+      by: p.tutorials.title,
     }
   }
   const i = item as ToyIdea

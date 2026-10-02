@@ -48,14 +48,17 @@ const PAGE_CLASSES = [
 ]
 
 test.describe('the public shell', () => {
-  test('keeps the bar, the content and the footer on one left edge', async ({ page }) => {
-    // Pinned to 1920 for the same reason the measure test is. At Playwright's
-    // default 1280 the shell computes to 1024px, which is byte-identical to
-    // Tailwind's max-w-5xl — so a bar that had drifted onto its own fixed width
-    // would line up by coincidence and this test would wave it through.
-    // Confirmed by mutation: giving the nav max-w-5xl passes at 1280, fails here.
+  test('keeps the content and the footer on one edge, and the bar identical everywhere', async ({ page }) => {
+    // Since the parity pass (105d3b5d) the bar is the board's own "unified
+    // chrome" — a 1400px row with 28px of padding — and no longer shares the
+    // 1216px content column; the footer still does. What must not happen is
+    // what this guarded in the first place: the chrome moving between pages.
+    //
+    // Pinned to 1920, where the bar's 1400 cap and the column's 1216 cap both
+    // bite, so a bar or footer that drifted onto another width shows.
     await page.setViewportSize({ width: 1920, height: 1080 })
 
+    const bars = new Set<string>()
     for (const { path, kind } of PAGE_CLASSES) {
       await page.goto(path)
       const { nav, main, footer } = await shellBoxes(page)
@@ -64,22 +67,22 @@ test.describe('the public shell', () => {
       expect(main, `${path} should render a content column`).not.toBeNull()
       expect(footer, `${path} should render a footer`).not.toBeNull()
 
-      expect(nav!.left, `${kind} (${path}): bar and content must start together`).toBe(main!.left)
       expect(footer!.left, `${kind} (${path}): footer and content must start together`).toBe(
         main!.left
       )
-      expect(nav!.width, `${kind} (${path}): bar and content must be the same width`).toBe(
+      expect(footer!.width, `${kind} (${path}): footer and content must be the same width`).toBe(
         main!.width
       )
+      bars.add(`${nav!.left}:${nav!.width}`)
     }
+    expect([...bars], 'the bar must sit in the same place on every page').toEqual(['260:1400'])
   })
 
   test('uses the same measure on every page, so the chrome never jumps', async ({ page }) => {
     // 1920, deliberately, and this is the whole reason the test is credible.
-    // The shell is 80% of the viewport capped at 110rem; an article cap of
-    // 72rem only bites once 80% exceeds 1152px. At the default 1280 the two
-    // rules agree by coincidence — 80% is 1024px — so the regression this
-    // guards is invisible below roughly 1440 and the test would pass through it.
+    // The shell is min(100% - 4rem, 1216px); an article cap narrower than
+    // that only bites once the window is wide enough, so the regression this
+    // guards can hide at small widths and the test would pass through it.
     await page.setViewportSize({ width: 1920, height: 1080 })
 
     const measures = new Map<string, string>()
@@ -101,19 +104,16 @@ test.describe('the public shell', () => {
     ).toBe(1)
   })
 
-  test('gives the content a tenth of the viewport on each side at desktop width', async ({
-    page,
-  }) => {
+  test('puts the content where the board does at desktop width', async ({ page }) => {
+    // The board's outermost section is `max-width:1280px; padding: 0 32px`
+    // under border-box: 1216px of content at x=112 in a 1440 window, measured
+    // on ten screens. It replaced the proportional 80% column this used to
+    // assert (globals.css .public-shell, landed in 105d3b5d).
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/')
 
     const { main } = await shellBoxes(page)
-    const viewport = await page.evaluate(() => document.documentElement.clientWidth)
-
-    // 80% wide and centred. Asserted as a ratio rather than a pixel count so the
-    // test does not have to be rewritten every time the cap or a breakpoint moves.
-    expect(main!.left / viewport).toBeCloseTo(0.1, 2)
-    expect(main!.width / viewport).toBeCloseTo(0.8, 2)
+    expect(main).toEqual({ left: 112, width: 1216 })
   })
 
   test('never scrolls sideways, at a phone width or a desktop one', async ({ page }) => {

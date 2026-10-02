@@ -86,7 +86,7 @@ describe('parts and tools RLS', () => {
         }),
       })
     )
-    expect(res.status).toBe(500)
+    expect(res.status).toBe(403)
 
     // The route deletes-then-inserts; RLS must have blocked the delete too —
     // the owner's part is still there.

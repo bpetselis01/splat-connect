@@ -70,21 +70,21 @@ describe('RequestBlock', () => {
   it('shows the not-offered line and no buttons when offer_type is null', () => {
     render(<RequestBlock toy={toy({ offer_type: null })} myToys={[]} myToysLoaded={true} myToysError={null} onStarted={mockOnStarted} />)
     expect(screen.getByText('Not currently offered for donation or exchange.')).toBeTruthy()
-    expect(screen.queryByRole('button', { name: 'Arrange pickup' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Ask to collect it' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Arrange exchange' })).toBeNull()
   })
 
   it('shows the donation-only explainer and only the pickup button', () => {
     render(<RequestBlock toy={toy({ offer_type: 'donation' })} myToys={[]} myToysLoaded={true} myToysError={null} onStarted={mockOnStarted} />)
     expect(screen.getByText('Ask to collect this toy. This starts a conversation with the owner.')).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Arrange pickup' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Ask to collect it' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Arrange exchange' })).toBeNull()
   })
 
   it('shows the exchange-only explainer and only the exchange button', () => {
     render(<RequestBlock toy={toy({ offer_type: 'exchange' })} myToys={[]} myToysLoaded={true} myToysError={null} onStarted={mockOnStarted} />)
     expect(screen.getByText('Offer one of your toys in exchange. This starts a conversation with the owner.')).toBeTruthy()
-    expect(screen.queryByRole('button', { name: 'Arrange pickup' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Ask to collect it' })).toBeNull()
     expect(screen.getByRole('button', { name: 'Arrange exchange' })).toBeTruthy()
   })
 
@@ -95,14 +95,14 @@ describe('RequestBlock', () => {
         'Ask to collect this toy, or offer one of yours in exchange. Either way it starts a conversation with the owner.'
       )
     ).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Arrange pickup' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Ask to collect it' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Arrange exchange' })).toBeTruthy()
   })
 
   it('posts a donation request and calls onStarted with the transaction id', async () => {
     mockPost.mockResolvedValue({ id: 'tx1', toy_id: 'toy1', type: 'donation' })
     render(<RequestBlock toy={toy({ offer_type: 'donation' })} myToys={[]} myToysLoaded={true} myToysError={null} onStarted={mockOnStarted} />)
-    fireEvent.press(screen.getByRole('button', { name: 'Arrange pickup' }))
+    fireEvent.press(screen.getByRole('button', { name: 'Ask to collect it' }))
     await waitFor(() => expect(mockOnStarted).toHaveBeenCalledWith('tx1'))
     expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions', { toy_id: 'toy1', type: 'donation' })
   })
@@ -165,7 +165,7 @@ describe('RequestBlock', () => {
   it('shows a generic error when the request fails', async () => {
     mockPost.mockRejectedValue(new Error('API POST failed with status 500'))
     render(<RequestBlock toy={toy({ offer_type: 'donation' })} myToys={[]} myToysLoaded={true} myToysError={null} onStarted={mockOnStarted} />)
-    fireEvent.press(screen.getByRole('button', { name: 'Arrange pickup' }))
+    fireEvent.press(screen.getByRole('button', { name: 'Ask to collect it' }))
     expect(await screen.findByText('Could not start this request. Please try again.')).toBeTruthy()
     expect(mockOnStarted).not.toHaveBeenCalled()
   })

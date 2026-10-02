@@ -1,78 +1,27 @@
 import { render, screen, fireEvent } from '@testing-library/react-native'
-import { Dropdown, ChipGroup, NumberField } from '../../../../components/profile/fields'
+import { CHILD_MEASURES } from '@splat-connect/types'
+import { MeasureField } from '../../../../components/profile/fields'
 
-const OPTS = [
-  { label: 'A', value: 'a' },
-  { label: 'B', value: 'b' },
-  { label: 'C', value: 'c' },
-]
+jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 
-describe('selection accessibility state', () => {
-  it('marks the active dropdown option as selected', () => {
-    render(<Dropdown label="Pick" value="b" options={OPTS} onChange={jest.fn()} />)
-    expect(screen.getByRole('button', { name: 'B', selected: true })).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'A', selected: false })).toBeTruthy()
+const hand = CHILD_MEASURES[0]
+
+describe('MeasureField', () => {
+  it('follows a stored value that changes while it is not being edited', () => {
+    const { rerender } = render(<MeasureField measure={hand} value={null} onChange={() => {}} />)
+    expect(screen.getByPlaceholderText('e.g. 62').props.value).toBe('')
+    rerender(<MeasureField measure={hand} value={62} onChange={() => {}} />)
+    expect(screen.getByPlaceholderText('e.g. 62').props.value).toBe('62')
   })
 
-  it('marks selected chips as selected', () => {
-    render(<ChipGroup label="Tags" values={['a']} options={OPTS} onChange={jest.fn()} />)
-    expect(screen.getByRole('button', { name: 'A', selected: true })).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'B', selected: false })).toBeTruthy()
-  })
-})
-
-describe('Dropdown', () => {
-  it('renders the label and emits the chosen value', () => {
-    const onChange = jest.fn()
-    render(<Dropdown label="Pick one" value={null} options={OPTS} onChange={onChange} />)
-    expect(screen.getByText('Pick one')).toBeTruthy()
-    fireEvent.press(screen.getByText('B'))
-    expect(onChange).toHaveBeenCalledWith('b')
-  })
-})
-
-describe('ChipGroup', () => {
-  it('adds a value on tap', () => {
-    const onChange = jest.fn()
-    render(<ChipGroup label="Tags" values={[]} options={OPTS} onChange={onChange} />)
-    fireEvent.press(screen.getByText('A'))
-    expect(onChange).toHaveBeenCalledWith(['a'])
-  })
-
-  it('removes an already-selected value', () => {
-    const onChange = jest.fn()
-    render(<ChipGroup label="Tags" values={['a']} options={OPTS} onChange={onChange} />)
-    fireEvent.press(screen.getByText('A'))
-    expect(onChange).toHaveBeenCalledWith([])
-  })
-
-  it('blocks selecting beyond max', () => {
-    const onChange = jest.fn()
-    render(<ChipGroup label="Tags" values={['a', 'b']} options={OPTS} max={2} onChange={onChange} />)
-    fireEvent.press(screen.getByText('C'))
-    expect(onChange).not.toHaveBeenCalled()
-  })
-})
-
-describe('NumberField', () => {
-  it('emits a number for numeric input', () => {
-    const onChange = jest.fn()
-    render(<NumberField label="Palm width" value={null} unit="mm" onChange={onChange} />)
-    fireEvent.changeText(screen.getByPlaceholderText('Palm width'), '62')
-    expect(onChange).toHaveBeenCalledWith(62)
-  })
-
-  it('emits null when cleared', () => {
-    const onChange = jest.fn()
-    render(<NumberField label="Palm width" value={62} unit="mm" onChange={onChange} />)
-    fireEvent.changeText(screen.getByPlaceholderText('Palm width'), '')
-    expect(onChange).toHaveBeenCalledWith(null)
-  })
-
-  it('ignores non-numeric input', () => {
-    const onChange = jest.fn()
-    render(<NumberField label="Palm width" value={null} onChange={onChange} />)
-    fireEvent.changeText(screen.getByPlaceholderText('Palm width'), 'abc')
-    expect(onChange).not.toHaveBeenCalled()
+  it('keeps what the parent is typing while focused', () => {
+    const { rerender } = render(<MeasureField measure={hand} value={62} onChange={() => {}} />)
+    const input = screen.getByPlaceholderText('e.g. 62')
+    fireEvent(input, 'focus')
+    fireEvent.changeText(input, '400')
+    // The wizard turns an out-of-range answer into null; the text must stay.
+    rerender(<MeasureField measure={hand} value={null} onChange={() => {}} />)
+    expect(screen.getByPlaceholderText('e.g. 62').props.value).toBe('400')
+    expect(screen.getByText('Between 20 and 250.')).toBeTruthy()
   })
 })

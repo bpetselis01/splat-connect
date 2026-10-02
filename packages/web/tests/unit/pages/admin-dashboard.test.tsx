@@ -16,8 +16,8 @@ function mockGet(ideas: ToyIdea[]) {
     Promise.resolve(
       path === '/api/admin/tutorials?status=pending' ? []
         : path === '/api/admin/contributors' ? { accounts: [], total: 0 }
-        : path === '/api/organizations' ? []
-        : path === '/api/admin/spot-check' ? []
+        : path === '/api/admin/counts'
+          ? { tutorials: 0, reports: 0, ideas: ideas.filter((i) => i.status === 'pending').length, spotCheck: 0, accounts: 0, organisations: 0 }
         : path === '/api/admin/ideas' ? ideas
         : []
     )

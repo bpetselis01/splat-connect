@@ -53,7 +53,7 @@ async function partyPage(
 /** Request the toy as a donation and return the thread's transaction id. */
 async function requestPickup(page: Page, toyId: string): Promise<string> {
   await page.goto(`/toy-library/${toyId}`)
-  await page.getByRole('button', { name: 'Arrange pickup', exact: true }).click()
+  await page.getByRole('button', { name: 'Ask to collect it', exact: true }).click()
   await page.waitForURL(/\/exchanges\/[0-9a-f-]{36}/)
   return page.url().split('/exchanges/')[1]
 }
@@ -82,7 +82,8 @@ test('a donation runs from request to handoff, and the toy changes hands', async
     await expect(ownerPage.getByLabel('Postcode')).toHaveValue(PICKUP.pickup_postcode)
     await ownerPage.getByRole('button', { name: 'Accept request', exact: true }).click()
     await expect(ownerPage.getByText('12 Seeded St, Testville, VIC, 3000')).toBeVisible()
-    await expect(ownerPage.getByText('ACCEPTED', { exact: true })).toBeVisible()
+    // Once accepted, the rail marks Accepted done and Handover as the step now open.
+    await expect(ownerPage.getByTestId('stage-Handover-current')).toBeVisible()
 
     // The requester's page has not been touched since it sent the request; the
     // 10s poll brings the acceptance to it. Their own code shows here, and the
@@ -90,11 +91,11 @@ test('a donation runs from request to handoff, and the toy changes hands', async
     // donation protocol.
     const codes = await handoffCodes(txId)
     await expect(requesterPage.getByText(codes.requester_code)).toBeVisible()
-    await expect(ownerPage.getByText('Your handoff code:')).toHaveCount(0)
+    await expect(ownerPage.getByText('Your handoff code', { exact: true })).toHaveCount(0)
 
     await ownerPage.getByLabel('Enter their code').fill(codes.requester_code)
     await ownerPage.getByRole('button', { name: 'Confirm handoff', exact: true }).click()
-    await expect(ownerPage.getByText('COMPLETED', { exact: true })).toBeVisible()
+    await expect(ownerPage.getByText('Completed', { exact: true })).toBeVisible()
 
     // The toy is out of the library — it belongs to someone who never asked
     // for it to be listed.
@@ -125,7 +126,11 @@ test('a donation runs from request to handoff, and the toy changes hands', async
 
     await requesterPage.goto('/toys')
     await expect(requesterPage.getByText(toyName)).toBeVisible()
-    await expect(requesterPage.getByText('DRAFT', { exact: true })).toBeVisible()
+    // A received toy lands as a draft, which the list pattern calls Hidden
+    // (web's rule); scoped to the row, since the stage filter has a Hidden too.
+    await expect(
+      requesterPage.getByRole('button', { name: new RegExp(toyName) }).getByText('Hidden', { exact: true })
+    ).toBeVisible()
   } finally {
     await requesterPage.context().close()
     await ownerPage.context().close()
@@ -160,9 +165,9 @@ test('either side can withdraw while the handoff is still open', async ({ browse
     // people are trapped and the toy stays locked against every rival request
     // — the reason Withdraw is live on 'accepted' and not just 'requested'.
     await requesterPage.goto(`/exchanges/${txId}`)
-    await expect(requesterPage.getByText('ACCEPTED', { exact: true })).toBeVisible()
+    await expect(requesterPage.getByTestId('stage-Handover-current')).toBeVisible()
     await requesterPage.getByRole('button', { name: 'Withdraw', exact: true }).click()
-    await expect(requesterPage.getByText('WITHDRAWN', { exact: true })).toBeVisible()
+    await expect(requesterPage.getByText('Withdrawn', { exact: true })).toBeVisible()
     // Nothing left to say or do: the composer and the withdraw button both go
     // with the transaction closing.
     await expect(requesterPage.getByRole('button', { name: 'Withdraw', exact: true })).toHaveCount(0)
@@ -201,5 +206,5 @@ test('an exchange request names both toys in the thread', async ({ page }) => {
   // offered toy reached the transaction rather than being dropped at the POST.
   await expect(page.getByText(`${theirToy} ⇄ ${myToy}`)).toBeVisible()
   await expect(page.getByText(`Exchange with ${ownerName}`)).toBeVisible()
-  await expect(page.getByText('REQUESTED', { exact: true })).toBeVisible()
+  await expect(page.getByTestId('stage-Requested-current')).toBeVisible()
 })

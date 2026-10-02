@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { signIn, createContributor, createAdmin, createTutorial, uniqueTitle, acceptTerms, adminClient } from '../helpers'
+import { signIn, createContributor, createAdmin, createTutorial, uniqueTitle, acceptTerms, adminClient, pageUntilVisible } from '../helpers'
 
 /**
  * Wait for the review action to land in the database, not for the network to
@@ -28,11 +28,19 @@ test('an admin approves a pending tutorial and it appears in the public library'
   await signIn(page, admin.email, admin.password)
   await page.waitForURL('**/admin')
 
-  await page.goto('/admin/review')
+  // The queue is oldest first and paged; a page past the end clamps to the
+  // last, which is where a guide submitted seconds ago sits.
+  await page.goto('/admin/review?page=9999')
+  // A plain click opens the side pane on the queue (39672abf); the row is still
+  // a link to the full page, which is what a click before hydration follows —
+  // so let the page settle first.
+  await page.waitForLoadState('networkidle')
+  await pageUntilVisible(page, page.getByRole('link', { name: new RegExp(title) }))
   await page.getByRole('link', { name: new RegExp(title) }).click()
-  await page.waitForURL(`**/admin/review/${tutorialId}`)
+  await page.waitForURL(new RegExp(`/admin/review\\?(page=\\d+&)?selected=${tutorialId}$`))
 
-  await page.getByRole('button', { name: 'Approve and publish' }).click()
+  const pane = page.getByRole('complementary', { name: `Reviewing ${title}` })
+  await pane.getByRole('button', { name: 'Approve', exact: true }).click()
   await expectStatus(tutorialId, 'approved')
 
   await page.goto('/library')
@@ -58,11 +66,14 @@ test('an admin rejects a pending tutorial with a note visible to the contributor
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL('**/dashboard')
   await page.goto('/dashboard/tutorials')
-  await expect(page.getByText('Needs clearer photos.')).toBeVisible()
-  await expect(page.getByText('REJECTED', { exact: true })).toBeVisible()
+  // The card's stage pill says what the contributor must do, not the raw status
+  // (ac7791e2): a rejected guide is "Needs you".
+  const card = page.getByTestId('tutorial-row').filter({ hasText: title })
+  await expect(card.getByText('Needs clearer photos.')).toBeVisible()
+  await expect(card.getByText('Needs you', { exact: true })).toBeVisible()
 })
 
-test('the review queue lists a pending tutorial with its submitted date', async ({ page }) => {
+test('the review queue lists a pending tutorial with how long it has waited', async ({ page }) => {
   const contributor = await createContributor()
   const admin = await createAdmin()
   const title = uniqueTitle('E2E Queue Listed')
@@ -70,11 +81,14 @@ test('the review queue lists a pending tutorial with its submitted date', async 
 
   await signIn(page, admin.email, admin.password)
   await page.waitForURL('**/admin')
-  await page.goto('/admin/review')
+  await page.goto('/admin/review?page=9999')
 
-  const row = page.getByRole('link', { name: new RegExp(title) })
-  await expect(row).toBeVisible()
-  await expect(row).toContainText('Submitted')
+  // The queue is the board's table since ac0e9ff7: the submitted date became
+  // its WAITING cell, an age ("0 hours", "3 days") rather than a date.
+  const row = page.getByRole('row', { name: new RegExp(title) })
+  await pageUntilVisible(page, row)
+  await expect(row.getByRole('link', { name: title })).toBeVisible()
+  await expect(row.getByRole('cell', { name: /^\d+ (hour|day)s?$/ })).toBeVisible()
 })
 
 test('the review detail page renders parts, tools, STL files and the PDF link', async ({ page }) => {
@@ -89,16 +103,18 @@ test('the review detail page renders parts, tools, STL files and the PDF link', 
   await page.waitForURL('**/admin')
   await page.goto(`/admin/review/${id}`)
 
-  // The same TutorialView a parent sees (4a56d8c0), so the assertions are the
-  // public page's: the admin is signed in, so the file links go through /files.
-  await expect(page.getByRole('link', { name: 'Download Tutorial PDF' })).toHaveAttribute(
+  // The board's review sheet since a1535727 — one card per section, each with
+  // its own state — rather than the public TutorialView. File links still go
+  // through /files.
+  const section = (name: string) =>
+    page.locator('section').filter({ has: page.getByRole('heading', { name, exact: true }) })
+  await expect(section('Parts')).toContainText('E2E part × 2')
+  await expect(section('Tools')).toContainText('E2E tool')
+  await expect(page.getByRole('link', { name: 'The guide (PDF)' })).toHaveAttribute(
     'href',
     `/files/tutorial-pdfs/${id}/tutorial.pdf`
   )
-  await expect(page.getByRole('cell', { name: 'E2E part' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: "Tools you'll need" })).toBeVisible()
-  await page.getByRole('tab', { name: 'Files & print settings' }).click()
-  await expect(page.getByRole('link', { name: 'Download e2e-mount.stl' })).toHaveAttribute(
+  await expect(page.getByRole('link', { name: 'e2e-mount.stl' })).toHaveAttribute(
     'href',
     `/files/stl-files/${id}/e2e-mount.stl`
   )

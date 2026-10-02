@@ -5,10 +5,12 @@
  */
 import { Hono } from 'hono'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
+import { deleteAccount } from '../account-deletion.js'
+import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { ORG_COLUMNS } from './organizations.js'
-import { systemMessage } from './toy-ideas.js'
+import { systemMessage, withPhotoUrl } from './toy-ideas.js'
 import type { AuthVariables } from '../middleware/auth.js'
-import type { TutorialStatus } from '@splat-connect/types'
+import { notificationBody, readLearnCourse, type AdminCounts, type TutorialStatus } from '@splat-connect/types'
 
 const admin = new Hono<{ Variables: AuthVariables }>()
 
@@ -70,6 +72,8 @@ admin.patch('/tutorials/:id/status', async (c) => {
           tutorial_id: c.req.param('id'),
           tutorial_title: data.title,
           actor_name: 'SPLAT',
+          // 119: the reason a guide came back, to its contributors only.
+          body: body.status === 'approved' ? null : notificationBody(body.rejection_note),
         }))
       )
     if (notifyError) console.error('[admin.status] notification insert failed:', notifyError.message)
@@ -106,10 +110,12 @@ admin.get('/contributors', async (c) => {
   return c.json({ accounts: data ?? [], total: count ?? 0 })
 })
 
+// The same 083 deletion a person runs on themselves: a bare deleteUser failed
+// outright for some accounts and cascaded away other members' exchanges.
 admin.delete('/contributors/:id', async (c) => {
-  const supabase = createAdminClient()
-  const { error } = await supabase.auth.admin.deleteUser(c.req.param('id'))
-  if (error) return c.json({ error: error.message }, 500)
+  const out = await deleteAccount(createAdminClient(), c.req.param('id'), false)
+  if (out.error === 'sole_leader') return c.json({ error: 'Hand over their organisation first.' }, 409)
+  if (out.error) return c.json({ error: out.error }, 500)
   return c.body(null, 204)
 })
 
@@ -181,9 +187,12 @@ admin.post('/organizations', async (c) => {
 })
 
 admin.patch('/organizations/:id', async (c) => {
-  const body = await c.req.json<{ status?: string; name?: string; description?: string }>()
+  const body = await c.req.json<{ status?: string; name?: string; description?: string; verified?: unknown }>()
   if (body.status !== undefined && body.status !== 'active' && body.status !== 'suspended') {
     return c.json({ error: "status must be 'active' or 'suspended'" }, 400)
+  }
+  if (body.verified !== undefined && typeof body.verified !== 'boolean') {
+    return c.json({ error: 'verified must be true or false' }, 400)
   }
 
   const supabase = createUserClient(c.get('token'))
@@ -193,6 +202,9 @@ admin.patch('/organizations/:id', async (c) => {
       ...(body.status !== undefined ? { status: body.status } : {}),
       ...(body.name !== undefined ? { name: body.name } : {}),
       ...(body.description !== undefined ? { description: body.description } : {}),
+      // 076's "Verified by SPLAT". This route is the only writer: the leaders'
+      // profile PATCH allowlists its fields and this is not among them.
+      ...(body.verified !== undefined ? { verified_at: body.verified ? new Date().toISOString() : null } : {}),
       updated_at: new Date().toISOString(),
     })
     .eq('id', c.req.param('id'))
@@ -250,12 +262,12 @@ admin.get('/ideas', async (c) => {
     // future private column from leaking here by default the way it did on
     // the public detail endpoint.
     .select(
-      'id, author_id, title, summary, description, intended_use, primary_user, contact_prefs, status, review_note, tutorial_id, created_at, updated_at, profiles!toy_ideas_author_id_fkey(name)'
+      'id, author_id, title, summary, description, intended_use, primary_user, contact_prefs, status, review_note, tutorial_id, kind, answer_message_id, answered_at, photo_path, created_at, updated_at, profiles!toy_ideas_author_id_fkey(name)'
     )
     .order('created_at', { ascending: false })
 
   if (error) return c.json({ error: error.message }, 500)
-  return c.json(data ?? [])
+  return c.json((data ?? []).map(withPhotoUrl))
 })
 
 // Only the review transition lives here. Graduation is its own endpoint because
@@ -306,6 +318,8 @@ admin.patch('/ideas/:id/status', async (c) => {
     type: status === 'challenge' ? 'idea_approved' : 'idea_rejected',
     idea_id: data.id,
     actor_name: 'SPLAT',
+    // 119: review_note is private to the author — their row alone carries it.
+    body: status === 'challenge' ? null : notificationBody(reviewNote),
   })
   if (notifyError) console.error('[admin.ideas.status] notification insert failed:', notifyError.message)
 
@@ -355,9 +369,12 @@ admin.post('/ideas/:id/graduate', async (c) => {
   const id = c.req.param('id')
 
   const { data: exists, error: existsError } = await client
-    .from('toy_ideas').select('id').eq('id', id).maybeSingle()
+    .from('toy_ideas').select('id, kind').eq('id', id).maybeSingle()
   if (existsError) return c.json({ error: existsError.message }, 500)
   if (!exists) return c.json({ error: 'Not found' }, 404)
+  // A question is resolved by an answer, never a guide (078's check says the
+  // same of the rows; this is the readable refusal in front of it).
+  if (exists.kind === 'question') return c.json({ error: 'A question cannot graduate' }, 409)
 
   // Claim the graduation atomically. A read-then-act guard lets two concurrent
   // calls both pass, both mint a tutorial, and both attach contributors — an
@@ -427,6 +444,39 @@ admin.post('/ideas/:id/graduate', async (c) => {
   return c.json({ tutorial_id: tutorial.id }, 201)
 })
 
+/** How many approved guides one spot-check draws (decision 14). */
+const SPOT_CHECK_SAMPLE = 10
+
+/**
+ * admin-counts: the board's six in one call, as head counts. Spot-check is the
+ * sample's size (what web's card always showed), not a backlog — it never
+ * drains by an admin working through it. A count whose query fails is logged
+ * and reads 0, as /api/me/counts does: one bad table must not take the
+ * dashboard down.
+ */
+admin.get('/counts', async (c) => {
+  const sb = createAdminClient()
+  const head = { count: 'exact', head: true } as const
+  const n = async (label: string, q: PromiseLike<{ count: number | null; error: { message: string } | null }>) => {
+    const { count, error } = await q
+    if (error) {
+      console.error(`[admin/counts] ${label} failed:`, error.message)
+      return 0
+    }
+    return count ?? 0
+  }
+  const [tutorials, reports, ideas, spot, accounts, organisations] = await Promise.all([
+    n('tutorials', sb.from('tutorials').select('id', head).eq('status', 'pending')),
+    n('reports', sb.from('member_reports').select('id', head).neq('status', 'resolved')),
+    n('ideas', sb.from('toy_ideas').select('id', head).eq('status', 'pending')),
+    n('spot-check', sb.from('tutorials').select('id', head).eq('status', 'approved').not('reviewed_by', 'is', null).neq('reviewed_by', c.get('userId'))),
+    n('accounts', sb.from('profiles').select('id', head).neq('role', 'admin')),
+    n('organisations', sb.from('organizations').select('id', head)),
+  ])
+  const counts: AdminCounts = { tutorials, reports, ideas, spotCheck: Math.min(spot, SPOT_CHECK_SAMPLE), accounts, organisations }
+  return c.json(counts)
+})
+
 /**
  * GET /api/admin/spot-check
  *
@@ -436,7 +486,7 @@ admin.post('/ideas/:id/graduate', async (c) => {
  * detection half of a control whose other half is reactive.
  */
 admin.get('/spot-check', async (c) => {
-  const limit = Number(c.req.query('limit') ?? 10)
+  const limit = Number(c.req.query('limit') ?? SPOT_CHECK_SAMPLE)
   const supabase = createAdminClient()
   const { data, error } = await supabase
     .from('tutorials')
@@ -858,28 +908,155 @@ admin.get('/print-jobs', async (c) => {
 })
 
 /**
- * Site content. One row per section, read by key.
+ * GET /api/admin/test-prints
+ *
+ * The verification queue (098): every submitted test print, waiting first,
+ * with a signed photo and whose machine it is. The stored path never leaves
+ * the API. Names via the admin client.
+ */
+admin.get('/test-prints', async (c) => {
+  const supabase = createAdminClient()
+  const { data, error } = await supabase
+    .from('printer_test_prints')
+    .select('id, printer_id, photo_path, submitted_at, verdict, note')
+    .order('submitted_at', { ascending: false })
+  if (error) return c.json({ error: error.message }, 500)
+  const rows = data ?? []
+  if (rows.length === 0) return c.json([])
+
+  const { data: machines } = await supabase
+    .from('printers')
+    .select('id, name, owner_id, owner_org_id')
+    .in('id', [...new Set(rows.map((r) => r.printer_id as string))])
+  const machine = new Map((machines ?? []).map((m) => [m.id as string, m]))
+  const personIds = (machines ?? []).map((m) => m.owner_id).filter((id): id is string => !!id)
+  const orgIds = (machines ?? []).map((m) => m.owner_org_id).filter((id): id is string => !!id)
+  const [{ data: people }, { data: orgs }, { data: signed, error: signError }] = await Promise.all([
+    personIds.length ? supabase.from('profiles').select('id, name').in('id', personIds) : Promise.resolve({ data: [] }),
+    orgIds.length ? supabase.from('organizations').select('id, name').in('id', orgIds) : Promise.resolve({ data: [] }),
+    supabase.storage.from('printer-test-prints').createSignedUrls(rows.map((r) => r.photo_path as string), 600),
+  ])
+  if (signError) console.error('[admin/test-prints] signing photos failed:', signError.message)
+  const nameOf = new Map(
+    [...(people ?? []), ...(orgs ?? [])].map((x) => [(x as { id: string }).id, (x as { name: string }).name])
+  )
+  const photoOf = new Map((signed ?? []).map((s) => [s.path, s.signedUrl]))
+
+  const out = rows.map((r) => {
+    const m = machine.get(r.printer_id as string)
+    return {
+      id: r.id,
+      printer_id: r.printer_id,
+      printer_name: m?.name ?? null,
+      owner_name: m ? (nameOf.get((m.owner_org_id ?? m.owner_id) as string) ?? null) : null,
+      photo: photoOf.get(r.photo_path as string) || null,
+      submitted_at: r.submitted_at,
+      verdict: r.verdict,
+      note: r.note,
+    }
+  })
+  out.sort((a, b) => Number(a.verdict !== null) - Number(b.verdict !== null))
+  return c.json(out)
+})
+
+/**
+ * PATCH /api/admin/test-prints/:id
+ *
+ * Pass or fail, with a note the owner reads. Half of Verified; the other half
+ * is the printer's completed jobs, which nobody sets.
+ */
+admin.patch('/test-prints/:id', async (c) => {
+  const body = (await c.req.json().catch(() => ({}))) as { verdict?: unknown; note?: unknown }
+  if (body.verdict !== 'pass' && body.verdict !== 'fail') return c.json({ error: 'A test print passes or fails.' }, 400)
+  const note = typeof body.note === 'string' ? body.note.trim() : ''
+  if (note.length > 500) return c.json({ error: 'The note is 500 characters or fewer.' }, 400)
+  const { data, error } = await createAdminClient()
+    .from('printer_test_prints')
+    .update({ verdict: body.verdict, note: note || null, reviewed_by: c.get('userId'), reviewed_at: new Date().toISOString() })
+    .eq('id', c.req.param('id'))
+    // Decided once: verified() reads the latest reviewed_at, so re-deciding an
+    // old print would override a newer verdict. Atomic, not read-then-write.
+    .is('verdict', null)
+    .select('id, verdict, note')
+    .maybeSingle()
+  if (error && error.code !== INVALID_TEXT_REPRESENTATION) return c.json({ error: error.message }, 500)
+  if (data) return c.json(data)
+  const { data: exists } = error
+    ? { data: null }
+    : await createAdminClient().from('printer_test_prints').select('id').eq('id', c.req.param('id')).maybeSingle()
+  if (exists) return c.json({ error: 'This test print has already been decided.' }, 409)
+  return c.json({ error: 'No such test print' }, 404)
+})
+
+/**
+ * Site content. One row per section, read by key. Each row carries who saved it
+ * last, by name through the admin client (never a profiles(...) embed).
  */
 admin.get('/content', async (c) => {
-  const { data, error } = await createAdminClient().from('site_content').select('key, value, updated_at')
+  const sb = createAdminClient()
+  const { data, error } = await sb.from('site_content').select('key, value, updated_at, updated_by')
   if (error) return c.json({ error: error.message }, 500)
-  return c.json(data ?? [])
+  const ids = [...new Set((data ?? []).map((r) => r.updated_by as string | null).filter((id): id is string => !!id))]
+  const { data: people } = ids.length ? await sb.from('profiles').select('id, name').in('id', ids) : { data: [] }
+  const name = new Map((people ?? []).map((p) => [p.id as string, p.name as string]))
+  return c.json(
+    (data ?? []).map((r) => ({ ...r, updated_by_name: (r.updated_by && name.get(r.updated_by as string)) || null }))
+  )
 })
+
+/**
+ * Keys whose save must name the version it was loaded at
+ * (`expected_updated_at`: the row's updated_at, or null when there was no
+ * row). Several admins may edit the course; the second save over a changed
+ * row is refused, never silently laid over the first.
+ */
+const VERSIONED_KEYS = new Set(['learn-course'])
+const STALE = 'Someone else saved this course since you opened it. Reload to see their changes.'
 
 admin.put('/content/:key', async (c) => {
   const key = c.req.param('key')
   if (!/^[a-z][a-z0-9-]{1,60}$/.test(key)) return c.json({ error: 'Not a content key' }, 400)
-  const body = (await c.req.json().catch(() => null)) as { value?: unknown } | null
+  const body = (await c.req.json().catch(() => null)) as { value?: unknown; expected_updated_at?: unknown } | null
   if (!body || typeof body.value !== 'object' || body.value === null || Array.isArray(body.value)) {
     return c.json({ error: 'Send the section as an object.' }, 400)
   }
+  // site-content-learn-legal-editing: the course outline is checked, not just
+  // stored — every Learn page reads it. The trimmed value is what is saved.
+  let value: unknown = body.value
+  if (key === 'learn-course') {
+    const read = readLearnCourse(body.value)
+    if ('error' in read) return c.json({ error: read.error }, 400)
+    value = read.value
+  }
 
-  const { data, error } = await createAdminClient()
+  const sb = createAdminClient()
+  const row = { key, value, updated_by: c.get('userId'), updated_at: new Date().toISOString() }
+
+  if (VERSIONED_KEYS.has(key)) {
+    const expected = body.expected_updated_at
+    if (expected !== null && (typeof expected !== 'string' || Number.isNaN(Date.parse(expected)))) {
+      return c.json({ error: 'Reload the page and save again.' }, 400)
+    }
+    // Atomic either way: the update matches only the version the form loaded,
+    // and the insert fails on the primary key if someone saved first.
+    const { data, error } =
+      expected === null
+        ? await sb.from('site_content').insert(row).select('key, value, updated_at').maybeSingle()
+        : await sb
+            .from('site_content')
+            .update(row)
+            .eq('key', key)
+            .eq('updated_at', expected)
+            .select('key, value, updated_at')
+            .maybeSingle()
+    if (error?.code === '23505' || (!error && !data)) return c.json({ error: STALE }, 409)
+    if (error) return c.json({ error: error.message }, 500)
+    return c.json(data)
+  }
+
+  const { data, error } = await sb
     .from('site_content')
-    .upsert(
-      { key, value: body.value, updated_by: c.get('userId'), updated_at: new Date().toISOString() },
-      { onConflict: 'key' }
-    )
+    .upsert(row, { onConflict: 'key' })
     .select('key, value, updated_at')
     .maybeSingle()
   if (error) return c.json({ error: error.message }, 500)

@@ -8,9 +8,11 @@
 // other rule is the same eight lines in the same order — a change there is the
 // reminder to bring this copy along.
 import type { Difficulty, TutorialKind, TutorialWithDetails } from '@splat-connect/types'
-import { KIND_LABEL } from '@splat-connect/types'
+import { KIND_LABEL, formatCents, partsTotalCents } from '@splat-connect/types'
 
-export type SectionId = 'details' | 'safety' | 'parts' | 'tools' | 'files' | 'stl'
+// 'steps' (080) is optional: no gap ever names it, so it never blocks submit
+// and Next never lands on it — a contributor opens it from the hub.
+export type SectionId = 'details' | 'steps' | 'safety' | 'parts' | 'tools' | 'files' | 'stl'
 
 export interface Gap {
   section: SectionId
@@ -19,6 +21,7 @@ export interface Gap {
 
 export const SECTION_LABEL: Record<SectionId, string> = {
   details: 'Details',
+  steps: 'Steps',
   safety: 'Safety',
   parts: 'Parts',
   tools: 'Tools',
@@ -50,8 +53,17 @@ export function getMissingFields(tutorial: TutorialWithDetails): Gap[] {
 
 /** The rows this tutorial's kind shows, in hub order. */
 export function sectionsFor(kind: TutorialKind): SectionId[] {
-  const base: SectionId[] = ['details', 'safety', 'parts', 'tools', 'files']
+  // The board's order: what it is, how to build it, what to buy, what to use,
+  // what could hurt, then the files.
+  const base: SectionId[] = ['details', 'steps', 'parts', 'tools', 'safety', 'files']
   return kind === 'assistive_tech' ? [...base, 'stl'] : base
+}
+
+/** The hub's "{ready} of {total} sections complete", shared with My tutorials. */
+export function sectionProgress(t: TutorialWithDetails): { ready: number; total: number } {
+  const sections = sectionsFor(t.kind)
+  const incomplete = new Set(getMissingFields(t).map((g) => g.section))
+  return { ready: sections.filter((s) => !incomplete.has(s)).length, total: sections.length }
 }
 
 /**
@@ -95,12 +107,22 @@ const count = (n: number, noun: string) => `${n} ${noun}${n === 1 ? '' : 's'}`
  */
 export function sectionSummary(section: SectionId, t: TutorialWithDetails): string {
   switch (section) {
-    case 'details':
-      return `${KIND_LABEL[t.kind]} - ${DIFFICULTY_LABEL[t.difficulty] ?? 'No difficulty'}`
+    case 'details': {
+      const base = `${KIND_LABEL[t.kind]} - ${DIFFICULTY_LABEL[t.difficulty] ?? 'No difficulty'}`
+      // The one details gap the row's other words cannot show (066): without
+      // it the hub says "1 thing still needed" and every row reads finished.
+      return t.build_minutes == null ? `${base} - no build time yet` : base
+    }
+    case 'steps': {
+      const n = t.steps?.length ?? 0
+      return n ? count(n, 'step') : '0 steps - nothing yet'
+    }
     case 'safety':
       return t.safety_declared_at ? 'Declared' : 'Not declared yet'
-    case 'parts':
-      return t.parts.length ? count(t.parts.length, 'part') : 'None yet - at least one'
+    case 'parts': {
+      const total = partsTotalCents(t.parts)
+      return t.parts.length ? `${count(t.parts.length, 'part')}${total != null ? `, ${formatCents(total)} total` : ''}` : 'None yet - at least one'
+    }
     case 'tools':
       return t.tools.length ? count(t.tools.length, 'tool') : 'None yet - at least one'
     case 'files': {

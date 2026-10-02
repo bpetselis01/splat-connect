@@ -1,25 +1,21 @@
 'use client'
 /**
- * The child profile as five questions, all skippable.
+ * The child profile as six short steps, all skippable: name and age, the four
+ * switch questions, then the room it is used in.
  *
  * Different from the editor at /dashboard/child/[id], and deliberately so. The
- * editor is four tabs you can move between in any order, which is right for
- * coming back to a profile you already have. This is the first run: one
- * question at a time, a progress rail, and Skip beside Continue on every step —
- * because the thing that stops a parent finishing is a form that looks like an
- * assessment, and the fastest way to make it not look like one is to make every
- * answer optional and say so.
+ * editor is one page with one save, which is right for coming back to a profile
+ * you already have. This is the first run: one question at a time, a progress
+ * rail, and Skip beside Continue on every step — because the thing that stops a
+ * parent finishing is a form that looks like an assessment, and the fastest way
+ * to make it not look like one is to make every answer optional and say so.
  *
- * Each step saves as it advances rather than at the end. A parent who stops
- * after two questions keeps two answers, and the page says "Saved automatically
- * · nothing is shared" from the first screen rather than after the last.
+ * Continue saves the step's answer as it advances; Skip does not. A parent who
+ * stops after two questions keeps two answers, and the page says "Saved
+ * automatically · nothing is shared" from the first screen.
  *
- * Reuses the editor's own form sections for four of the five steps. Two sets of
- * fields for one table would drift, and the sections already know their own
- * validation. Step one is the exception and is owned here: the artboard asks
- * only for a first name and an age, and the editor's Ability section carries
- * those alongside the clinical scores — which is the one thing a first screen
- * must not open with.
+ * The questions and their words come from CHILD_QUESTIONS in
+ * @splat-connect/types, the same list the editor draws, so the two cannot drift.
  *
  * Related files:
  * - components/child-editor.tsx: the same data, for somebody coming back to it
@@ -29,20 +25,11 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, ArrowRight, CheckCircle, Minus, Plus } from '@phosphor-icons/react/dist/ssr'
 import { browserApiClient } from '@/lib/browser-api-client'
-import { ChildAbilityForm } from '@/components/child-ability-form'
-import { ChildEverydayNeedsForm } from '@/components/child-everyday-needs-form'
-import { ChildCustomizationForm } from '@/components/child-customization-form'
-import { ChildSurveyForm } from '@/components/child-survey-form'
+import { ChoiceChips, NeedsChips, answersOf } from '@/components/child-editor'
 import { SplatMascot, type MascotPose } from '@/components/splat-mascot'
-import type { ChildProfile } from '@splat-connect/types'
+import { CHILD_QUESTIONS, type ChildAnswers, type ChildProfile } from '@splat-connect/types'
 
-/**
- * Step one, owned here rather than borrowed.
- *
- * A name and an age, and nothing else. The editor's Ability section has these
- * two fields alongside MACS and BFMF, and opening a parent's first screen with
- * a clinical scale is the thing the whole wizard is shaped to avoid.
- */
+/** Step one: a name and an age, and nothing else. */
 function AboutStep({
   profile,
   onChange,
@@ -121,32 +108,39 @@ const STEPS = [
     heading: 'Who are we finding toys for?',
     help: 'A name helps us talk about them naturally. It is never shared.',
   },
-  { id: 'hands', label: 'Hands', heading: 'How do they use their hands?' },
-  { id: 'movement', label: 'Movement', heading: 'Do you have their MACS or BFMF?' },
-  { id: 'play', label: 'Play', heading: 'What gets in the way of playing?' },
-  { id: 'measurements', label: 'Measurements', heading: 'Anything you have measured?' },
-] as const
+  ...CHILD_QUESTIONS.map((q) => ({
+    id: q.field,
+    label: { working_hand: 'Hand', press_force: 'Force', aim: 'Aim', hold: 'Hold' }[q.field],
+    heading: q.prompt,
+  })),
+  { id: 'needs', label: 'Room', heading: 'What matters in the room?', help: 'Rather than in the hand. Pick any that apply.' },
+]
 
 /** The mascot's pose per step, as the board poses it. */
-const POSE: MascotPose[] = ['wave', 'think', 'hold', 'party', 'think']
+const POSE: MascotPose[] = ['wave', 'think', 'hold', 'think', 'hold', 'party']
 
 /** What the mascot says on each step. Short, and never about the child. */
 const MASCOT = [
-  'Hi! Five quick questions. Skip any you like.',
-  'However they hold things is the right answer.',
-  'Only if a clinician has given you one. The last step guessed otherwise.',
-  'What is annoying is more useful than what is wrong.',
-  'Only if you have a tape measure handy.',
+  'Hi! A few quick questions. Skip any you like.',
+  'Whichever hand they reach with first is the right answer.',
+  'This decides how easy a switch needs to be to press.',
+  'Big targets are easier. Either answer helps.',
+  'Some switches want a tap, some a hold.',
+  'Almost done. This one is fine to skip.',
 ] as const
+
+/** The fields each step writes on Continue. */
+const STEP_FIELDS: (keyof ChildAnswers)[][] = [
+  ['name', 'age'],
+  ...CHILD_QUESTIONS.map((q) => [q.field]),
+  ['everyday_needs'],
+]
 
 export function ChildWizard({ child: initial }: { child: ChildProfile | null }) {
   const router = useRouter()
   const [child, setChild] = useState<ChildProfile | null>(initial)
   const [step, setStep] = useState(0)
-  const [about, setAbout] = useState<{ name: string | null; age: number | null }>({
-    name: initial?.name ?? null,
-    age: initial?.age ?? null,
-  })
+  const [answers, setAnswers] = useState<ChildAnswers>(() => answersOf(initial))
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -155,7 +149,7 @@ export function ChildWizard({ child: initial }: { child: ChildProfile | null }) 
    * same rule the editor follows — there is no step that must come before
    * another, because every field is a plain column.
    */
-  async function save(fields: Partial<ChildProfile>) {
+  async function save(fields: Partial<ChildAnswers>) {
     setError(null)
     setSaving(true)
     try {
@@ -172,12 +166,20 @@ export function ChildWizard({ child: initial }: { child: ChildProfile | null }) 
   }
 
   async function advance() {
-    // Only step one saves on Continue. The four borrowed sections have Save
-    // buttons of their own and have already written by the time somebody moves
-    // on — pressing Continue is not a second save, it is a page turn.
-    if (step === 0 && (about.name !== null || about.age !== null)) {
+    // Save only what this step asked, and only if it was answered — an empty
+    // step is the same as a skip. The one exception is needs a parent has just
+    // unticked: an empty list then is an answer, and must reach the database.
+    const answered = (f: keyof ChildAnswers) => {
+      const v = answers[f]
+      if (Array.isArray(v)) return v.length > 0 || (child?.everyday_needs.length ?? 0) > 0
+      return v !== null
+    }
+    const fields = Object.fromEntries(
+      STEP_FIELDS[step].filter(answered).map((f) => [f, answers[f]])
+    ) as Partial<ChildAnswers>
+    if (Object.keys(fields).length > 0) {
       try {
-        await save(about)
+        await save(fields)
       } catch {
         return
       }
@@ -187,8 +189,7 @@ export function ChildWizard({ child: initial }: { child: ChildProfile | null }) 
       return
     }
     // Finished. To the guides rather than to the profile: the point of the
-    // wizard is what it unlocks, and a parent who has just answered five
-    // questions about their child wants to see what changed.
+    // wizard is what it unlocks.
     router.push('/library')
   }
 
@@ -209,7 +210,7 @@ export function ChildWizard({ child: initial }: { child: ChildProfile | null }) 
 
       {/* The board's segmented rail: a bar per step, green once passed, brand
           on the current one, with its label underneath. */}
-      <ol aria-label="Progress" className="m-0 mb-7 grid list-none grid-cols-5 gap-2 p-0">
+      <ol aria-label="Progress" className="m-0 mb-7 grid list-none grid-cols-6 gap-2 p-0">
         {STEPS.map((s, i) => (
           <li key={s.id} aria-current={i === step ? 'step' : undefined} className="flex flex-col gap-2">
             <span
@@ -246,17 +247,28 @@ export function ChildWizard({ child: initial }: { child: ChildProfile | null }) 
           )}
 
           <div className="mt-6">
-            {/* The editor's own sections, so one table has one set of fields.
-                Each takes the child it has so far and hands back what changed. */}
-            {step === 0 && <AboutStep profile={child} onChange={setAbout} />}
-            {/* Hands: the quiz that ESTIMATES a hand score from what a parent
-                sees, rather than asking for one they may not have. */}
-            {step === 1 && <ChildSurveyForm profile={child} onSave={save} />}
-            {/* Movement: the same two scales, entered directly, for a parent
-                who has them from a clinician. */}
-            {step === 2 && <ChildAbilityForm profile={child} onSave={save} />}
-            {step === 3 && <ChildEverydayNeedsForm profile={child} onSave={save} />}
-            {step === 4 && <ChildCustomizationForm profile={child} onSave={save} />}
+            {step === 0 && (
+              <AboutStep profile={child} onChange={(f) => setAnswers((a) => ({ ...a, ...f }))} />
+            )}
+            {CHILD_QUESTIONS.map(
+              (q, i) =>
+                step === i + 1 && (
+                  <ChoiceChips
+                    key={q.field}
+                    legend={q.prompt}
+                    hideLegend
+                    options={q.options}
+                    value={answers[q.field]}
+                    onChange={(v) => setAnswers((a) => ({ ...a, [q.field]: v }))}
+                  />
+                )
+            )}
+            {step === STEPS.length - 1 && (
+              <NeedsChips
+                value={answers.everyday_needs}
+                onChange={(v) => setAnswers((a) => ({ ...a, everyday_needs: v }))}
+              />
+            )}
           </div>
 
           {error && (

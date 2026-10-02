@@ -284,6 +284,54 @@ describe('recycling intake', () => {
     expect(body.credit_grams).toBe(2850)
     expect(body.decided_by).toBe(leader.id)
   })
+
+  it("names the contributor for the organisation's leaders, and for nobody else", async () => {
+    const asLeader = (await (
+      await app.request(`/api/organizations/${orgId}/recycling`, json(leader.token, 'GET', undefined))
+    ).json()) as Array<{ contributor_name?: string | null }>
+    expect(asLeader[0]).toHaveProperty('contributor_name')
+    const asContributor = (await (
+      await app.request(`/api/organizations/${orgId}/recycling`, json(contributor.token, 'GET', undefined))
+    ).json()) as Array<{ contributor_name?: string | null }>
+    expect(asContributor[0].contributor_name).toBeUndefined()
+  })
+
+  it("lists a contributor's own drop-offs across organisations, and cancels one still booked", async () => {
+    const booked = (await (
+      await app.request(
+        `/api/organizations/${orgId}/recycling`,
+        json(contributor.token, 'POST', {
+          material: 'PETG',
+          estimated_grams: 2500,
+          condition_declared: true,
+          declaration_version: DECLARATION_VERSION,
+        })
+      )
+    ).json()) as { id: string }
+
+    const mine = (await (
+      await app.request('/api/organizations/recycling/mine', json(contributor.token, 'GET', undefined))
+    ).json()) as Array<{ id: string; org_name: string | null }>
+    expect(mine.map((d) => d.id)).toEqual(expect.arrayContaining([dropoffId, booked.id]))
+    expect(mine[0].org_name).toBeTruthy()
+
+    const notTheirs = await app.request(
+      `/api/organizations/${orgId}/recycling/${booked.id}/cancel`,
+      json(leader.token, 'POST', {})
+    )
+    expect(notTheirs.status).toBe(404)
+    const received = await app.request(
+      `/api/organizations/${orgId}/recycling/${dropoffId}/cancel`,
+      json(contributor.token, 'POST', {})
+    )
+    expect(received.status).toBe(409)
+    const ok = await app.request(
+      `/api/organizations/${orgId}/recycling/${booked.id}/cancel`,
+      json(contributor.token, 'POST', {})
+    )
+    expect(ok.status).toBe(200)
+    expect(((await ok.json()) as { status: string }).status).toBe('cancelled')
+  })
 })
 
 describe('asking for an organisation', () => {

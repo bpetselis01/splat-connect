@@ -3,17 +3,18 @@
  * The printer directory under /printing's hero: a filter rail beside a grid of
  * machines, in the browse shape /library and /toy-library use.
  *
- * The board's rail has five facets. Three are here, because three are things a
- * printer row stores: whether it is taking jobs, which filaments it holds, and
- * whether a person or an organisation runs it. "Distance from you" and
- * "Verified only" need a requester location and a verified flag the API does
- * not return, and a facet that filters on nothing is worse than no facet.
+ * The board's rail has five facets. Four are here: whether it is taking jobs,
+ * which filaments it holds, who runs it, and the distance from you (099, from
+ * the profile postcode). "Verified only" is not — the web directory does not
+ * draw the badge yet.
  *
  * Browsing only. A request is sent from a guide (/printing/requests?guide=…),
- * so the cards carry no Pick button — the board's pick-up-to-three tray needs
- * a multi-printer request the API does not accept yet.
+ * so the cards carry no Pick button — the pick-up-to-three choice is made on
+ * that form, where the guide is known, not in a tray here that would have to
+ * carry picks through a guide and back.
  */
 import { useState } from 'react'
+import { BrowseFilters } from '@/components/browse-filters'
 import Link from 'next/link'
 import {
   CheckCircle,
@@ -29,14 +30,19 @@ import {
   MoonStars,
   X,
   MagnifyingGlass,
+  Car,
+  GlobeHemisphereWest,
+  PersonSimpleWalk,
 } from '@phosphor-icons/react/dist/ssr'
 import type { PrinterWithOwner } from '@splat-connect/types'
 import { filamentRate } from '@/lib/filament-rate'
+import { initials } from '@splat-connect/types'
 
 type Filters = {
   avail?: 'open' | 'noq' | 'any'
   mat?: string
   who?: 'person' | 'org'
+  dist?: 'd5' | 'd25' | 'anyd'
 }
 
 const FACETS = [
@@ -69,39 +75,46 @@ const FACETS = [
       ['org', 'An organisation', Buildings],
     ],
   },
+  {
+    key: 'dist',
+    label: 'Distance from you',
+    icon: MapPin,
+    opts: [
+      ['d5', 'Within 5 km', PersonSimpleWalk],
+      ['d25', 'Within 25 km', Car],
+      ['anyd', 'Anywhere', GlobeHemisphereWest],
+    ],
+  },
 ] as const
 
 // The board's card tints, rotated so a row of three never repeats one.
 const TINTS = ['var(--tmint)', 'var(--b100)', 'var(--tamber)', 'var(--tviolet)', 'var(--tcoral)']
 
-function initials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0]!.toUpperCase())
-    .join('')
-}
-
 const isOpen = (p: PrinterWithOwner) => p.accepting && p.open_jobs < p.capacity
 
-export function matches(p: PrinterWithOwner, f: Filters) {
+function matches(p: PrinterWithOwner, f: Filters) {
   if (f.avail === 'open' && !isOpen(p)) return false
   if (f.avail === 'noq' && !(isOpen(p) && p.open_jobs === 0)) return false
   if (f.mat && !p.materials.includes(f.mat)) return false
   if (f.who === 'org' && !p.owner_org_id) return false
   if (f.who === 'person' && p.owner_org_id) return false
+  // 099. A printer with no distance is "Anywhere" only.
+  if (f.dist === 'd5' && !(p.km != null && p.km <= 5)) return false
+  if (f.dist === 'd25' && !(p.km != null && p.km <= 25)) return false
   return true
 }
 
 export function PrinterDirectory({
   printers,
   gate,
+  hasPostcode = false,
 }: {
   /** Null for a guest: /api/printers needs a session. */
   printers: PrinterWithOwner[] | null
   /** What stands in the grid's place when `printers` is null. */
   gate: React.ReactNode
+  /** The viewer has a valid profile postcode, so distance means something. */
+  hasPostcode?: boolean
 }) {
   const [filters, setFilters] = useState<Filters>({})
 
@@ -110,7 +123,9 @@ export function PrinterDirectory({
   }
 
   const shown = (printers ?? []).filter((p) => matches(p, filters))
-  const chips = FACETS.flatMap((facet) =>
+  // Distance is for signed-in viewers: a guest gets no km from the API.
+  const facets = FACETS.filter((f) => f.key !== 'dist' || printers)
+  const chips = facets.flatMap((facet) =>
     facet.opts
       .filter(([v]) => filters[facet.key] === v)
       .map(([v, label]) => ({ label, clear: () => toggle(facet.key, v) }))
@@ -118,19 +133,9 @@ export function PrinterDirectory({
 
   return (
     <div className="browse-layout">
-      <aside aria-label="Filters" className="browse-filters">
-        <div className="flex items-center justify-between">
-          <h2 className="font-display text-xl font-extrabold text-ink">Filters</h2>
-          <button
-            type="button"
-            onClick={() => setFilters({})}
-            className="min-h-9 text-sm font-bold text-brand-deep"
-          >
-            Clear
-          </button>
-        </div>
+      <BrowseFilters onClear={() => setFilters({})}>
 
-        {FACETS.map((facet) => (
+        {facets.map((facet) => (
           <fieldset key={facet.key}>
             <legend>
               <facet.icon
@@ -142,18 +147,25 @@ export function PrinterDirectory({
               {facet.label}
             </legend>
             <div className="flex flex-wrap gap-2">
-              {facet.opts.map(([value, label, Icon]) => (
-                <button
-                  key={value}
-                  type="button"
-                  aria-pressed={filters[facet.key] === value}
-                  onClick={() => toggle(facet.key, value)}
-                  className="chip gap-1.5"
-                >
-                  <Icon size={14} weight="bold" className="text-brand-dark" aria-hidden="true" />
-                  {label}
-                </button>
-              ))}
+              {facet.key === 'dist' && !hasPostcode ? (
+                <Link href="/dashboard/profile" className="chip gap-1.5">
+                  <MapPin size={14} weight="bold" className="text-brand-dark" aria-hidden="true" />
+                  Add your postcode
+                </Link>
+              ) : (
+                facet.opts.map(([value, label, Icon]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    aria-pressed={filters[facet.key] === value}
+                    onClick={() => toggle(facet.key, value)}
+                    className="chip gap-1.5"
+                  >
+                    <Icon size={14} weight="bold" className="text-brand-dark" aria-hidden="true" />
+                    {label}
+                  </button>
+                ))
+              )}
             </div>
           </fieldset>
         ))}
@@ -178,14 +190,14 @@ export function PrinterDirectory({
             </Link>
           </span>
         </p>
-      </aside>
+      </BrowseFilters>
 
       <div className="min-w-0">
         <div className="browse-head">
           <div>
             <h2>Printers near you</h2>
             <p className="mt-1 text-[15px] text-muted">
-              Open a guide to send one of them its parts. They print it; you cover the filament.
+              Open a guide to ask up to three of them. The first to accept takes the job; the others step back automatically.
             </p>
           </div>
           {printers && (
@@ -291,6 +303,7 @@ function PrinterCard({ printer: p, tint }: { printer: PrinterWithOwner; tint: st
                 {' · '}
                 <MapPin weight="fill" className="mr-0.5 inline text-apricot" aria-hidden="true" />
                 {where}
+                {p.km != null && <> · {p.km} km</>}
               </>
             )}
           </p>
@@ -302,6 +315,7 @@ function PrinterCard({ printer: p, tint }: { printer: PrinterWithOwner; tint: st
           <avail.Icon weight="fill" aria-hidden="true" />
           {avail.label}
         </span>
+        {/* PENDING(web-printer-directory-stats): the phone's find card shows each printer's track record (statsLine); this card does not yet. */}
         {p.materials.length > 0 && (
           <span className="printer-card__pill bg-sunken">
             <Cube aria-hidden="true" />

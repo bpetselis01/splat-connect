@@ -156,4 +156,36 @@ describe('ChallengeThread', () => {
       expect(screen.getByText(/that person is not part of this challenge/i)).toBeInTheDocument()
     )
   })
+
+  // Tests: 078 — the asker marks one reply to a question as the answer
+  // How:   author views a question with a reply from Casey and their own
+  //        follow-up; only Casey's reply offers the control; clicking posts it
+  // Chain: an asker marking their own message would make "Answered" mean
+  //        nothing — the API refuses it too, but the button must not offer it
+  it('lets the asker of a question mark a reply as the answer, and then pins it', async () => {
+    const messages: ToyIdeaMessage[] = [
+      { id: 'm1', idea_id: 'idea-1', sender_id: 'p2', kind: 'user', body: 'A zip pocket', created_at: '2026-08-01T00:00:00Z' },
+      { id: 'm2', idea_id: 'idea-1', sender_id: 'author-1', kind: 'user', body: 'Thanks', created_at: '2026-08-01T00:01:00Z' },
+    ]
+    vi.spyOn(browserApiClient, 'get').mockResolvedValue(messages)
+    const post = vi.spyOn(browserApiClient, 'post').mockResolvedValue({})
+
+    render(<ChallengeThread {...baseProps({ viewerId: 'author-1', question: true })} />)
+    await waitFor(() => expect(screen.getAllByRole('button', { name: /mark as the answer/i })).toHaveLength(1))
+
+    fireEvent.click(screen.getByRole('button', { name: /mark as the answer/i }))
+
+    await waitFor(() => expect(post).toHaveBeenCalledWith('/api/ideas/idea-1/answer', { message_id: 'm1' }))
+    expect(await screen.findByText(/marked by the asker/i)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /mark as the answer/i })).not.toBeInTheDocument()
+  })
+
+  it('offers no marking control to anyone but the asker', async () => {
+    vi.spyOn(browserApiClient, 'get').mockResolvedValue([
+      { id: 'm1', idea_id: 'idea-1', sender_id: 'p2', kind: 'user', body: 'A zip pocket', created_at: '2026-08-01T00:00:00Z' },
+    ])
+    render(<ChallengeThread {...baseProps({ viewerId: 'p1', question: true, answerMessageId: 'm1' })} />)
+    expect(await screen.findByText(/marked by the asker/i)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /mark as the answer|unmark/i })).not.toBeInTheDocument()
+  })
 })

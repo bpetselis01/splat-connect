@@ -123,7 +123,7 @@ export default function DesignSystemPage() {
 
       <div>
         <h2 className="mb-3.5 font-display text-2xl font-extrabold text-ink">Buttons</h2>
-        <div className="card grid grid-cols-[120px_repeat(5,minmax(0,1fr))] items-center gap-3 p-6">
+        <div className="card grid grid-cols-[120px_repeat(5,minmax(0,1fr))] items-center gap-3 p-6 max-sm:grid-cols-[80px_repeat(5,max-content)] max-sm:overflow-x-auto">
           <span />
           {COLS.map((c) => (
             <span key={c} className="text-xs font-extrabold uppercase tracking-[0.08em] text-muted">

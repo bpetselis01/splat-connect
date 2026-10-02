@@ -40,13 +40,33 @@ const notification = (over: Partial<Notification>): Notification => ({
   ...over,
 })
 
-function respond(notifications: unknown[], invites: unknown[] = []) {
+// Transactions default to none, which is also what a failed exchanges fetch
+// degrades to: every exchange notification is then drawn as its own row.
+function respond(notifications: unknown[], invites: unknown[] = [], transactions: unknown[] = []) {
   mockGet.mockImplementation((path: string) => {
     if (path === '/api/notifications/me') return Promise.resolve(notifications)
     if (path === '/api/collaborators/me/invites') return Promise.resolve(invites)
+    if (path === '/api/toy-transactions') return Promise.resolve(transactions)
     return Promise.reject(new Error(`unexpected GET ${path}`))
   })
 }
+
+const tx = (over: object) => ({
+  id: 'tx1',
+  type: 'exchange',
+  status: 'accepted',
+  toy_name: 'Switch car',
+  tutorial_title: null,
+  requester_id: 'viewer1',
+  owner_id: 'owner1',
+  owner_org_id: null,
+  other_party_name: 'Northside Therapy',
+  requester_name: 'Viewer',
+  last_message: null,
+  created_at: '2026-08-30T12:00:00Z',
+  updated_at: '2026-08-30T12:00:00Z',
+  ...over,
+})
 
 beforeEach(() => {
   jest.clearAllMocks()
@@ -56,7 +76,7 @@ beforeEach(() => {
 })
 
 describe('InboxScreen', () => {
-  it('groups rows into the three buckets and counts what is unread in each', async () => {
+  it('splits exchanges from notifications, and counts what is unread in each group', async () => {
     respond([
       notification({ id: 'n1', type: 'toy_request', toy_transaction_id: 'tx1' }),
       notification({ id: 'n2', type: 'toy_message', toy_transaction_id: 'tx2' }),
@@ -78,16 +98,69 @@ describe('InboxScreen', () => {
     ])
     render(<InboxScreen />)
 
-    expect(await screen.findByText('Exchanges')).toBeTruthy()
+    // Exchanges first: two of its three rows are unread.
+    expect(await screen.findByText('2 unread')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Mark Exchanges read' })).toBeTruthy()
+    expect(screen.queryByText('Tutorials')).toBeNull()
+
+    fireEvent.press(screen.getByRole('tab', { name: 'Notifications' }))
     expect(screen.getByText('Tutorials')).toBeTruthy()
     expect(screen.getByText('Challenges')).toBeTruthy()
-    // Two of the three exchange rows are unread; one of one tutorial row is.
-    expect(screen.getByText('2 unread')).toBeTruthy()
     expect(screen.getByText('1 unread')).toBeTruthy()
     // The challenges bucket is fully read, so it offers no count and nothing
     // to mark — a "Mark read" on an already-read group is a no-op button.
     expect(screen.queryByRole('button', { name: 'Mark Challenges read' })).toBeNull()
-    expect(screen.getByRole('button', { name: 'Mark Exchanges read' })).toBeTruthy()
+    expect(screen.queryByText('Sam requested Switch car')).toBeNull()
+  })
+
+  it('draws an exchange as its thread: who, their last message, and a dot while unread', async () => {
+    respond(
+      [notification({ id: 'n1', type: 'toy_message', toy_transaction_id: 'tx1' })],
+      [],
+      [
+        tx({
+          id: 'tx1',
+          last_message: { body: 'Thursday after three works', sender_id: 'owner1', kind: 'user', created_at: '2026-08-31T12:00:00Z' },
+        }),
+        tx({
+          id: 'tx2',
+          type: 'build',
+          tutorial_title: 'Bubble machine',
+          other_party_name: 'Eastwood School',
+          last_message: { body: 'Where do I drop it?', sender_id: 'viewer1', kind: 'user', created_at: '2026-08-20T12:00:00Z' },
+        }),
+      ]
+    )
+    render(<InboxScreen />)
+
+    expect(await screen.findByText('Northside Therapy')).toBeTruthy()
+    expect(screen.getByText('Thursday after three works')).toBeTruthy()
+    // The viewer's own last word is marked as theirs.
+    expect(screen.getByText('You: Where do I drop it?')).toBeTruthy()
+    // The notification lights the thread rather than repeating it as a row.
+    expect(screen.queryByText('Sam sent a message about Switch car')).toBeNull()
+    expect(screen.getByLabelText('Switch car with Northside Therapy').props.accessibilityHint).toMatch(/^Unread/)
+
+    fireEvent.press(screen.getByLabelText('Switch car with Northside Therapy'))
+    await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/api/notifications/n1', { read: true }))
+    expect(mockPush).toHaveBeenCalledWith('/exchanges/tx1')
+
+    // A build opens its own thread.
+    fireEvent.press(screen.getByLabelText('Bubble machine with Eastwood School'))
+    expect(mockPush).toHaveBeenCalledWith('/exchanges/build/tx2')
+  })
+
+  it('opens on Notifications when there are no exchanges, and where it is told to', async () => {
+    const note = notification({ id: 'n4', type: 'tutorial_approved', tutorial_id: 't1', tutorial_title: 'Bubble machine', toy_transaction_id: null })
+    respond([note])
+    const { unmount } = render(<InboxScreen showHeader />)
+    expect(await screen.findByText('"Bubble machine" was approved and is now published')).toBeTruthy()
+    unmount()
+
+    respond([note], [], [tx({})])
+    render(<InboxScreen initialSegment="notifications" />)
+    expect(await screen.findByText('"Bubble machine" was approved and is now published')).toBeTruthy()
+    expect(screen.queryByText('Northside Therapy')).toBeNull()
   })
 
   it("renders web's copy for a row", async () => {
@@ -218,11 +291,11 @@ describe('InboxScreen', () => {
 
   it('draws its own header only where there is no native one', async () => {
     const { unmount } = render(<InboxScreen showHeader />)
-    expect(await screen.findByText('Everything waiting on you, newest first.')).toBeTruthy()
+    expect(await screen.findByText('Inbox')).toBeTruthy()
     unmount()
 
     render(<InboxScreen />)
     await waitFor(() => expect(mockGet).toHaveBeenCalled())
-    expect(screen.queryByText('Everything waiting on you, newest first.')).toBeNull()
+    expect(screen.queryByText('Inbox')).toBeNull()
   })
 })

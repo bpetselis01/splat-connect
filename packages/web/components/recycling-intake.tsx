@@ -3,16 +3,14 @@
 /**
  * The recycling intake queue.
  *
- * Credit is minted here, by weighing — never by the contributor. That is the
- * artboard's rule and it is enforced in three places rather than one: 059 splits
+ * Credit is minted here, by weighing — never by the contributor. 059 splits
  * the insert policy from the update policy so a contributor cannot write
- * `credit_grams` at all, the API refuses a credit larger than the weight, and
- * this form asks for both numbers rather than computing one from the other.
+ * `credit_grams` at all; the API refuses a credit larger than the weight and
+ * anything under two kilos.
  *
- * The yield is the leader's to apply. About three quarters of what comes in
- * becomes filament, and "about" is not a number to put in a ledger — so where
- * the board computes the credit from the weight, this row keeps a second box
- * somebody types themselves, with the typical figure as a hint beside it.
+ * One weight box; the credit box is prefilled at about three quarters and is
+ * the leader's to change (decided 2026-09-30). intakeCredit
+ * (@splat-connect/types) is the rule, shared with the phone.
  */
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
@@ -20,39 +18,36 @@ import { Scales } from '@phosphor-icons/react/dist/ssr'
 import type { RecyclingDropoff } from '@splat-connect/types'
 import { Badge } from '@/components/badge'
 import { browserApiClient } from '@/lib/browser-api-client'
+import { initials, intakeCredit, weighedInLine } from '@splat-connect/types'
 
 const kg = (grams: number) => `${(grams / 1000).toFixed(1)} kg`
 
 const TINTS = ['bg-honey-soft', 'bg-violet-soft', 'bg-mint-soft', 'bg-brand-tint']
 
-const initials = (name: string) =>
-  name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase() ?? '')
-    .join('')
-
-/** The board's inline kg box: mono, 46px, on the canvas. */
-function KgInput({
+/** The board's inline number box: mono, 46px, on the canvas. */
+function NumberInput({
   label,
+  unit,
   value,
   onChange,
 }: {
   label: string
+  unit: 'kg' | 'g'
   value: string
   onChange: (v: string) => void
 }) {
   return (
-    <label className="inline-flex flex-none items-center gap-2 text-sm font-extrabold text-ink">
+    <label className="inline-flex flex-none items-center gap-2 text-sm font-extrabold text-ink max-sm:gap-1.5">
       {label}
       <input
-        className="h-[46px] w-[88px] rounded-field border-(length:--border-width) border-line bg-canvas px-3 font-mono text-[15px] font-bold tabular-nums text-ink"
-        inputMode="decimal"
-        placeholder="0.0"
+        aria-label={`${label}, in ${unit === 'kg' ? 'kilograms' : 'grams'}`}
+        className="h-[46px] w-[88px] max-sm:w-[72px] rounded-field border-(length:--border-width) border-line bg-canvas px-3 font-mono text-[15px] font-bold tabular-nums text-ink"
+        inputMode={unit === 'kg' ? 'decimal' : 'numeric'}
+        placeholder={unit === 'kg' ? '0.0' : '0'}
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
-      kg
+      {unit}
     </label>
   )
 }
@@ -68,21 +63,16 @@ function BookedRow({
   dropoff: RecyclingDropoff
   name: string
   tint: string
-  onDone: () => void
+  onDone: (line?: string) => void
 }) {
   const [weighed, setWeighed] = useState('')
-  const [credit, setCredit] = useState('')
+  // null until the leader types in the credit box: until then it follows the weight.
+  const [credit, setCredit] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
-  const weighedGrams = Math.round(Number(weighed) * 1000)
-  const creditGrams = Math.round(Number(credit) * 1000)
-  const valid =
-    Number.isFinite(weighedGrams) &&
-    Number.isFinite(creditGrams) &&
-    weighedGrams >= 0 &&
-    creditGrams >= 0 &&
-    creditGrams <= weighedGrams
+  const check = intakeCredit(weighed, credit)
+  const shownCredit = credit ?? (check.ok ? String(check.credit_grams) : '')
 
   function decide(status: 'received' | 'declined') {
     setError(null)
@@ -90,11 +80,11 @@ function BookedRow({
       try {
         await browserApiClient.patch(`/api/organizations/${orgId}/recycling/${dropoff.id}`, {
           status,
-          ...(status === 'received'
-            ? { weighed_grams: weighedGrams, credit_grams: creditGrams }
+          ...(status === 'received' && check.ok
+            ? { weighed_grams: check.weighed_grams, credit_grams: check.credit_grams }
             : {}),
         })
-        onDone()
+        onDone(status === 'received' && check.ok ? weighedInLine(check.weighed_grams, check.credit_grams, name) : undefined)
       } catch (err) {
         const detail = err instanceof Error ? /\{"error":"(.+?)"\}/.exec(err.message)?.[1] : null
         setError(detail ?? 'That did not save. Check your connection and try again.')
@@ -117,12 +107,18 @@ function BookedRow({
           {new Date(dropoff.created_at).toLocaleDateString('en-AU')}
         </span>
         {dropoff.note && <span className="mt-1 block text-sm text-muted">{dropoff.note}</span>}
+        {dropoff.photo_signed_url && (
+          // eslint-disable-next-line @next/next/no-img-element -- a signed URL from a private bucket
+          <img
+            src={dropoff.photo_signed_url}
+            alt="Photo of the sorted plastic"
+            className="mt-2 h-[120px] w-auto rounded-[14px] object-cover"
+          />
+        )}
       </span>
-      <KgInput label="Actual" value={weighed} onChange={setWeighed} />
-      <KgInput label="Credit" value={credit} onChange={setCredit} />
-      <span className="flex-[1_1_150px] text-[13px] font-bold text-muted">
-        About three quarters becomes filament — the credit is the number you decide.
-      </span>
+      <NumberInput label="Actual" unit="kg" value={weighed} onChange={setWeighed} />
+      <NumberInput label="Credit" unit="g" value={shownCredit} onChange={setCredit} />
+      <span className="flex-[1_1_150px] text-[13px] font-bold text-muted">{check.line}</span>
       <span className="flex flex-none gap-2">
         <button
           type="button"
@@ -135,7 +131,7 @@ function BookedRow({
         <button
           type="button"
           className="btn btn-primary min-h-11 px-4 text-sm"
-          disabled={pending || !valid || weighed === '' || credit === ''}
+          disabled={pending || !check.ok}
           onClick={() => decide('received')}
         >
           <Scales weight="bold" aria-hidden="true" />
@@ -163,6 +159,7 @@ export function RecyclingIntake({
   names: Record<string, string>
 }) {
   const router = useRouter()
+  const [done, setDone] = useState<string | null>(null)
 
   const booked = dropoffs.filter((d) => d.status === 'booked')
   const settled = dropoffs.filter((d) => d.status !== 'booked')
@@ -179,6 +176,11 @@ export function RecyclingIntake({
           Weigh it on your scale, enter the real number, and the credit is issued against that. If
           it turns up contaminated, refuse it.
         </p>
+        {done && (
+          <p role="status" className="mb-4 text-sm font-bold text-ink">
+            {done}
+          </p>
+        )}
         {booked.length === 0 ? (
           <div className="browse-empty p-9 text-muted">Nothing booked in right now.</div>
         ) : (
@@ -190,7 +192,10 @@ export function RecyclingIntake({
                 dropoff={dropoff}
                 name={nameOf(dropoff)}
                 tint={TINTS[i % TINTS.length]}
-                onDone={() => router.refresh()}
+                onDone={(line) => {
+                  setDone(line ?? null)
+                  router.refresh()
+                }}
               />
             ))}
           </ul>

@@ -8,10 +8,19 @@ const ROUTES: Record<string, string> = {
   // Was '/explore' while the form did not exist yet — a hub row that landed
   // on the tab and left you to find it. Now it names its own screen.
   '/get-involved/submit-an-idea': '/explore/challenges/new',
+  // The open build requests: a public page on web, an Explore screen here.
+  '/get-involved/makers-wanted': '/explore/makers-wanted',
+  '/dashboard/events': '/events',
   '/dashboard/print-requests': '/print-requests',
+  '/dashboard/printers': '/print-for-others',
   '/dashboard/organisation': '/organisation',
+  '/dashboard/organisation/requests': '/organisation/requests',
   '/dashboard/organisation/toys': '/organisation/toys',
   '/dashboard/organisation/orders': '/organisation/orders',
+  '/dashboard/organisation/recycling': '/organisation/recycling',
+  '/dashboard/organisation/publish': '/organisation/publish',
+  '/dashboard/organisation/profile': '/organisation/profile',
+  '/dashboard/organisation/messages': '/organisation/messages',
   '/dashboard/saved': '/saved',
   '/notifications': '/notifications',
   '/dashboard/profile': '/account',

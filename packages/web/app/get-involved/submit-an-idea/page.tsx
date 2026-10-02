@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { Bell, Eye, Lightbulb, PuzzlePiece } from '@phosphor-icons/react/dist/ssr'
 import { IdeaForm } from '@/components/idea-form'
 import { getCapabilities } from '@/lib/capabilities'
+import { apiClient } from '@/lib/api-client'
+import type { ToyIdea } from '@splat-connect/types'
 import {
   FlowSteps,
   FreeForever,
@@ -50,17 +52,23 @@ function Exclusions() {
   )
 }
 
-export default async function SubmitAnIdea() {
+export default async function SubmitAnIdea({ searchParams }: { searchParams: Promise<{ from?: string }> }) {
   // getCapabilities is cached and the root layout already ran it, so this is
   // free — and only its truthiness matters here.
   const signedIn = !!(await getCapabilities())
 
   if (signedIn) {
+    // "Submit a revised idea": start from the author's own rejected one. Not
+    // theirs, or gone, and the form simply starts empty.
+    const { from } = await searchParams
+    const initial = from
+      ? await apiClient.get<ToyIdea>(`/api/ideas/mine/${encodeURIComponent(from)}`).catch(() => undefined)
+      : undefined
     return (
       <div className="max-w-[720px]">
         <InvolvedIntro title="Submit an idea" lead={LEAD} />
         <Exclusions />
-        <IdeaForm />
+        <IdeaForm initial={initial} />
       </div>
     )
   }

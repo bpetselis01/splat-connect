@@ -21,7 +21,7 @@ import { MagnifyingGlass, BookOpenText } from '@phosphor-icons/react/dist/ssr'
 import Image from 'next/image'
 import Link from 'next/link'
 import { apiClient } from '@/lib/api-client'
-import { shortDate } from '@/lib/dates'
+import { shortDate } from '@splat-connect/types'
 import { safePhotoSrc } from '@/lib/photo-src'
 import { tintFor } from '@/components/card-photo'
 import type { Tutorial, TutorialOrg, AdminAccountsResponse } from '@splat-connect/types'
@@ -93,7 +93,7 @@ export default async function SpotCheckPage({
                     <BookOpenText size={26} weight="duotone" />
                   )}
                 </span>
-                <span className="min-w-0 flex-1">
+                <span className="min-w-0 flex-1 max-sm:basis-[calc(100%-72px)]">
                   <Link
                     href={`/admin/review/${t.id}`}
                     className="block text-base font-extrabold text-ink no-underline hover:underline"

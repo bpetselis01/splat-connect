@@ -37,6 +37,8 @@ export function ToyTransactionRequest({
   // Your own toy, or your organisation's. The API refuses either; saying so
   // here is what stops somebody pressing a button that will refuse itself.
   if (viewerId && viewerId === toy.owner_id) return null
+  // Marked unavailable (100). The words are the board's printer card's.
+  if (toy.paused_at) return <p className="m-0 text-sm font-bold text-muted">Not taking requests right now</p>
   if (!toy.offer_type) {
     return <p className="m-0 text-sm text-muted">Not currently offered for donation or exchange.</p>
   }

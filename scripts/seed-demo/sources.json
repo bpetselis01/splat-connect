@@ -1,0 +1,32 @@
+{
+  "_note": "Real open-hardware designs from Makers Making Change (Neil Squire Society). Downloaded at seed time, never committed. Every URL returned 200 on 2026-09-23.",
+  "base": "https://raw.githubusercontent.com/makersmakingchange/",
+  "files": {
+    "lts_base": "Light-Touch-Switch/main/Build_Files/3D_Printing_Files/LTS_Base_v1.0.stl",
+    "lts_cap": "Light-Touch-Switch/main/Build_Files/3D_Printing_Files/LTS_Cap_v1.0.stl",
+    "lts_pdf": "Light-Touch-Switch/main/Documentation/Light_Touch_Switch_Maker_Guide.pdf",
+    "lts_photo": "Light-Touch-Switch/main/Photos/Light_Touch_Switch.jpg",
+    "lps_top": "Low-Profile-Switch/main/Build_Files/Low_Profile_Switch_Top.stl",
+    "lps_bottom": "Low-Profile-Switch/main/Build_Files/Low_Profile_Switch_Bottom.stl",
+    "lps_pdf": "Low-Profile-Switch/main/Documentation/Low_Profile_Switch_Assembly_Guide_v1.0.pdf",
+    "lps_photo": "Low-Profile-Switch/main/Photos/Low-Profile-Switch.jpg",
+    "lps_photo2": "Low-Profile-Switch/main/Photos/Low-Profile-Switch_A00.jpg",
+    "bubble_pdf": "Switch-Adapted-Bubble-Blower/main/Documentation/Switch_Adapted_Bubble_Blower_Assembly_Guide.pdf",
+    "bubble_photo": "Switch-Adapted-Bubble-Blower/main/Photos/Step%2022.jpg",
+    "bubble_photo2": "Switch-Adapted-Bubble-Blower/main/Photos/Required%20Components.jpg",
+    "book_stl": "one-handed-book-holder/main/Build_Files/3D_Printing_Files/One_Handed_Book_Holder.stl",
+    "book_pdf": "one-handed-book-holder/main/Documentation/One_Handed_Book_Holder_User_Guide.pdf",
+    "book_photo": "one-handed-book-holder/main/Photos/Book%20Holder%20in%20use.jpg",
+    "book_photo2": "one-handed-book-holder/main/Photos/Book%20Holder%20Front.jpg",
+    "rumble_base": "Rumble-Plate-Dice-Roller/main/Build_Files/3D_Print_Files/Rumble_Plate_STLs/Rumble_Plate_Base.stl",
+    "rumble_lid": "Rumble-Plate-Dice-Roller/main/Build_Files/3D_Print_Files/Rumble_Plate_STLs/Rumble_Plate_Lid.stl",
+    "rumble_pdf": "Rumble-Plate-Dice-Roller/main/Documentation/Rumble_Plate_Assembly_Guide.pdf",
+    "sst_top": "Simple-Switch-Tester/main/Build_Files/3D_Printing/SST_Enclosure_Top.stl",
+    "sst_bottom": "Simple-Switch-Tester/main/Build_Files/3D_Printing/SST_Enclosure_Bottom.stl",
+    "sst_pdf": "Simple-Switch-Tester/main/Documentation/SST_Assembly_Guide_v0.1.pdf",
+    "sst_photo": "Simple-Switch-Tester/main/Photos/SST_500.jpg",
+    "penguin_pdf": "Penguin-Switch-Adapted-Toy/main/Documentation/Penguin_Switch_Adapted_Toy_Assembly_Guide.pdf",
+    "penguin_photo": "Penguin-Switch-Adapted-Toy/main/Photos/penguin.jpg",
+    "penguin_jack": "Penguin-Switch-Adapted-Toy/main/Photos/wire%20and%20jack%20for%20BOM.jpg"
+  }
+}

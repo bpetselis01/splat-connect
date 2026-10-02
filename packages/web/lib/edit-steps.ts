@@ -12,6 +12,10 @@ import { getMissingFields } from '@/lib/validation'
 
 export type EditStepId =
   | 'details'
+  /* A guide's numbered steps (080), alongside the PDF. Optional, like
+     Recommended: guides written before steps existed have none, and the
+     submit gate never asks for them. */
+  | 'steps'
   | 'files'
   | 'parts'
   | 'tools'
@@ -41,8 +45,8 @@ export type EditStep = Step<EditStepId>
  */
 export function stepsFor(kind: TutorialKind): EditStepId[] {
   return kind === 'assistive_tech'
-    ? ['details', 'files', 'parts', 'tools', 'stl', 'recommended', 'review', 'team']
-    : ['details', 'files', 'parts', 'tools', 'recommended', 'review', 'team']
+    ? ['details', 'steps', 'files', 'parts', 'tools', 'stl', 'recommended', 'review', 'team']
+    : ['details', 'steps', 'files', 'parts', 'tools', 'recommended', 'review', 'team']
 }
 
 /**
@@ -62,6 +66,7 @@ export function computeStepStatuses(
   const missing = getMissingFields(tutorial)
   return {
     details: fieldStatus(missing, 'details'),
+    steps: (tutorial.steps?.length ?? 0) > 0 ? 'done' : 'neutral',
     files: fieldStatus(missing, 'files'),
     parts: fieldStatus(missing, 'parts'),
     tools: fieldStatus(missing, 'tools'),

@@ -7,12 +7,16 @@ import { EditFilesSection } from '@/components/edit-files-section'
 import { AddStlForm } from '@/components/add-stl-form'
 import { StlSettingsForm, type StlSettings } from '@/components/stl-settings-form'
 import { EditItemsSection, type ItemInput } from '@/components/edit-items-section'
+import { PricesCheckedField } from '@/components/prices-checked-field'
 import { EditBackingSection } from '@/components/edit-backing-section'
 import { EditDetailsSection } from '@/components/edit-details-section'
+import { EditSafetyNotesSection } from '@/components/edit-safety-notes-section'
+import { EditStepsSection, type StepInput } from '@/components/edit-steps-section'
 import { EditCollaboratorsSection } from '@/components/edit-collaborators-section'
 import { EditRecommendationsSection } from '@/components/edit-recommendations-section'
 import { Stepper } from '@/components/stepper'
 import { CreatedToast } from '@/components/created-toast'
+import { PdfImportBanner } from '@/components/pdf-import-banner'
 import { ToastProvider } from '@/components/toast'
 import { computeStepStatuses, stepsFor, type EditStep, type EditStepId } from '@/lib/edit-steps'
 import type { Step } from '@/lib/steps'
@@ -27,6 +31,7 @@ import {
   FlagBanner,
   FloppyDisk,
   Info,
+  ListNumbers,
   Nut,
   PaperPlaneTilt,
   Plus,
@@ -48,7 +53,7 @@ import { formatRelativeTime } from '@/lib/relative-time'
 import { TutorialView } from '@/components/tutorial-view'
 import { getMissingFields } from '@/lib/validation'
 import { DeleteEntityButton } from '@/components/delete-entity-button'
-import type { Tutorial, Part, Tool, StlFile, TutorialWithDetails, Difficulty, TutorialKind, BuyLink, TutorialOrg, Organization , TutorialMaturity } from '@splat-connect/types'
+import type { Tutorial, Part, Tool, StlFile, TutorialWithDetails, Difficulty, TutorialKind, BuyLink, TutorialOrg, Organization, TutorialMaturity, TutorialStep, PressForce, Hold } from '@splat-connect/types'
 
 /**
  * The body both file-saving actions share. A plain function at module scope,
@@ -134,7 +139,7 @@ export default async function EditTutorialPage({
     revalidatePath('/dashboard')
   }
 
-  async function saveDetails(patch: { title: string; description: string | null; difficulty: Difficulty; build_minutes: number | null; age_min: number | null; age_max: number | null; kind: TutorialKind; maturity: TutorialMaturity; safety_declared?: true; updated_at: string }) {
+  async function saveDetails(patch: { title: string; description: string | null; difficulty: Difficulty; build_minutes: number | null; age_min: number | null; age_max: number | null; kind: TutorialKind; maturity: TutorialMaturity; switch_target: 'large' | 'small' | null; switch_force: PressForce | null; switch_hold: Hold | null; safety_declared?: true; toy_name: string | null; toy_brand: string | null; works_with: string | null; no_build_note: string | null; layer_height_mm?: number | null; infill_percent?: number | null; material?: string | null; print_minutes?: number | null; updated_at: string }) {
     'use server'
     const body: Record<string, unknown> = { ...patch }
     if (tutorial.status === 'approved' || tutorial.status === 'rejected') {
@@ -190,7 +195,25 @@ export default async function EditTutorialPage({
     revalidatePath(`/tutorials/${id}/edit`)
   }
 
-  async function saveTools(newTools: { name: string; is_optional: boolean; buy_links: BuyLink[] }[]) {
+  async function savePricesChecked(date: string | null) {
+    'use server'
+    await patchTutorialFiles(id, { prices_checked_on: date })
+    revalidatePath(`/tutorials/${id}/edit`)
+  }
+
+  async function saveSteps(steps: StepInput[]) {
+    'use server'
+    await apiClient.put(`/api/tutorials/${id}/steps`, { steps })
+    revalidatePath(`/tutorials/${id}/edit`)
+  }
+
+  async function saveSafetyNotes(notes: { title: string; detail: string | null }[]) {
+    'use server'
+    await apiClient.post(`/api/tutorials/${id}/safety-notes`, { safety_notes: notes })
+    revalidatePath(`/tutorials/${id}/edit`)
+  }
+
+  async function saveTools(newTools: ItemInput[]) {
     'use server'
     await apiClient.post(`/api/tutorials/${id}/tools`, { tools: newTools })
     revalidatePath(`/tutorials/${id}/edit`)
@@ -245,6 +268,19 @@ export default async function EditTutorialPage({
       content: (
         <div className="panel pt-5">
           <EditDetailsSection tutorial={tutorial!} onSave={saveDetails} />
+          <EditSafetyNotesSection notes={(tutorial!.safety_notes ?? []).map((n) => ({ title: n.title, detail: n.detail }))} onSave={saveSafetyNotes} />
+        </div>
+      ),
+    },
+    {
+      id: 'steps',
+      label: 'Steps',
+      icon: <ListNumbers size={19} weight="duotone" aria-hidden="true" />,
+      hint: 'One photo and one instruction per action, in order. Optional — the PDF still carries the guide.',
+      status: stepStatuses.steps,
+      content: (
+        <div className="panel pt-5">
+          <EditStepsSection tutorialId={id} steps={tutorial.steps ?? []} onSave={saveSteps} />
         </div>
       ),
     },
@@ -270,7 +306,7 @@ export default async function EditTutorialPage({
       id: 'parts',
       label: 'Parts',
       icon: <Nut size={19} weight="duotone" aria-hidden="true" />,
-      hint: 'Everything a family has to buy, and where to buy it.',
+      hint: 'Everything a family has to buy, with a rough price.',
       status: stepStatuses.parts,
       content: (
         <div className="panel pt-5">
@@ -282,6 +318,7 @@ export default async function EditTutorialPage({
             initialItems={parts}
             onSave={saveParts}
           />
+          <PricesCheckedField value={tutorial.prices_checked_on ?? null} onSave={savePricesChecked} />
         </div>
       ),
     },
@@ -293,7 +330,7 @@ export default async function EditTutorialPage({
       status: stepStatuses.tools,
       content: (
         <div className="panel pt-5">
-          <EditItemsSection noun="tool" initialItems={tools} onSave={saveTools} />
+          <EditItemsSection noun="tool" withNotes initialItems={tools} onSave={saveTools} />
         </div>
       ),
     },
@@ -391,15 +428,18 @@ export default async function EditTutorialPage({
   const byStep = (step: EditStepId) => missing.filter((m) => m.step === step).map((m) => m.label)
   const checklist = walk.map((step) => {
     const gaps = byStep(step)
-    const optional = step === 'recommended'
-    const done = optional ? stepStatuses.recommended === 'done' : gaps.length === 0
+    // Steps are optional too (080): guides written before them have none.
+    const optional = step === 'recommended' || step === 'steps'
+    const done = optional ? stepStatuses[step] === 'done' : gaps.length === 0
     return {
       step,
       label: allSteps.find((s) => s.id === step)!.label,
       note: done
         ? 'Done'
         : optional
-          ? 'Nothing picked yet — optional'
+          ? step === 'steps'
+            ? 'No steps yet — optional'
+            : 'Nothing picked yet — optional'
           : `Still needs ${gaps.map((g) => g.charAt(0).toLowerCase() + g.slice(1)).join(', ')}`,
       done,
     }
@@ -411,7 +451,7 @@ export default async function EditTutorialPage({
       meta: `Draft · saved ${formatRelativeTime(tutorial.updated_at)}`,
       head: 'Only you can see this',
       body: 'A draft is invisible to everyone — families, organisations, even us. It stays here as long as you like, and nothing is checked until you ask for it to be.',
-      progress: `${filled} of ${checklist.length} sections filled in. Worth a look is optional — Steps and Safety are not.`,
+      progress: `${filled} of ${checklist.length} sections filled in. Steps and Worth a look are optional — Safety is not.`,
       privacyLead: 'Nothing here is public.',
       privacy: 'A draft is visible only to you. Submitting shows it to your reviewer, and nobody else, until it is approved.',
     },
@@ -510,7 +550,7 @@ export default async function EditTutorialPage({
         {tutorial.status === 'draft' && (
           <EditorChecklist
             title="What is left before you can submit"
-            sub="Everything but Worth a look has to be filled in before a reviewer can read it."
+            sub="Everything but Steps and Worth a look has to be filled in before a reviewer can read it."
             rows={checklist}
           />
         )}
@@ -588,6 +628,7 @@ export default async function EditTutorialPage({
       <Suspense>
         <ToastProvider>
           <CreatedToast />
+          <PdfImportBanner />
           <Stepper steps={steps} label="Tutorial sections" layout="rail" railFoot={copy.progress} />
         </ToastProvider>
       </Suspense>

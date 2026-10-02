@@ -1,7 +1,7 @@
 /**
  * Organisation-level facts shared by /about and /contact.
  *
- * REPLACE BEFORE LAUNCH. tests/unit/app/about.test.tsx guards `legalName` and
+ * PENDING(org-facts): REPLACE BEFORE LAUNCH. tests/unit/app/about.test.tsx guards `legalName` and
  * `basedIn` — both still start with "TODO" and the corresponding guard tests
  * are `it.todo` until real values are supplied. Do not invent them.
  */

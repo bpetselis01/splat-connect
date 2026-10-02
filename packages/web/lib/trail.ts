@@ -89,6 +89,8 @@ const SCREENS: Record<string, Screen> = {
   // them to the account section for the same reason.
   '/dashboard/organisation': { label: 'Org review queue', parent: '/dashboard', icon: 'tray' },
   '/dashboard/organisation/profile': { label: 'Organisation profile', parent: '/dashboard/organisation' },
+  '/dashboard/organisation/messages': { label: 'Messages', parent: '/dashboard/organisation' },
+  '/dashboard/messages/[x]': { label: 'Conversation', parent: '/dashboard' },
   '/dashboard/organisation/toys': { label: 'Toy inventory', parent: '/dashboard/organisation' },
   '/dashboard/organisation/publish': {
     label: 'Events and stories',
@@ -112,6 +114,7 @@ const SCREENS: Record<string, Screen> = {
   '/admin/ideas/[x]': { label: 'Review an idea', parent: '/admin/ideas' },
   '/admin/build-requests': { label: 'Build requests', parent: '/admin' },
   '/admin/print-jobs': { label: 'Print jobs', parent: '/admin' },
+  '/admin/test-prints': { label: 'Test prints', parent: '/admin' },
   '/admin/reports': { label: 'Reports', parent: '/admin' },
   '/admin/content': { label: 'Site content', parent: '/admin' },
   '/admin/spot-check': { label: 'Spot-check', parent: '/admin' },

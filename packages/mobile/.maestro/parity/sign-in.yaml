@@ -1,0 +1,64 @@
+# Parity picture pass: land signed in as ${EMAIL}, whoever was signed in
+# before. iOS keeps the session in the Keychain across clearState, so sign out
+# first when the tabs are showing.
+appId: com.splatconnect.mobile
+---
+- clearState
+# A Release simulator build with the local stack baked in: a dev bundle
+# reads packages/mobile/.env.local at runtime, which names the hosted
+# project. launch.yaml skips the intro.
+- runFlow: ../subflows/launch.yaml
+# Decide signed in or out only once a screen has rendered: checked straight
+# after the intro, the welcome gate was not up yet and a signed-out app took
+# the sign-out branch.
+- extendedWaitUntil:
+    visible:
+      id: "welcome-sign-in"
+    # A cold launch plus the intro can take this long.
+    timeout: 60000
+    optional: true
+- runFlow:
+    when:
+      notVisible:
+        id: "welcome-sign-in"
+    commands:
+      # Straight to Account, whose Sign Out ends the Keychain session.
+      - openLink: "splatconnect://account"
+      - runFlow: confirm-open.yaml
+      - scrollUntilVisible:
+          element:
+            text: "Sign Out"
+          direction: DOWN
+      - tapOn:
+          text: "Sign Out"
+      - extendedWaitUntil:
+          visible:
+            id: "welcome-sign-in"
+          timeout: 15000
+# A guest pass (the sign-in screen itself) stops at the welcome gate.
+- runFlow:
+    when:
+      true: ${EMAIL != ''}
+    commands:
+      - tapOn:
+          id: "welcome-sign-in"
+      - tapOn:
+          id: "email-input"
+      - inputText: ${EMAIL}
+      # The keyboard covers the password field and hideKeyboard is flaky on
+      # the simulator. A tap outside a field dismisses it (ScrollView's
+      # default), so tap the heading between fields and before submitting.
+      - tapOn: "Welcome back"
+      - tapOn:
+          id: "password-input"
+      - inputText: ${PASSWORD}
+      - tapOn: "Welcome back"
+      - tapOn:
+          id: "auth-submit"
+      - extendedWaitUntil:
+          notVisible:
+            id: "auth-submit"
+          timeout: 20000
+      - tapOn:
+          text: "Not Now"
+          optional: true

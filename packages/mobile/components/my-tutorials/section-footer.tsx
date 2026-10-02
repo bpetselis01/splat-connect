@@ -56,7 +56,7 @@ export function SectionFooter({ section }: { section: SectionId }) {
       <Button
         testID="section-next"
         label={next ? `Next: ${SECTION_LABEL[next]}` : 'Review and submit'}
-        variant="accent"
+        variant="primary"
         style={styles.next}
         onPress={() => (next ? toSection(next) : toHub())}
       />
@@ -75,6 +75,6 @@ const styles = StyleSheet.create({
   },
   // Fixed and narrow so the destination name in "Next" gets the room — "Next:
   // 3D print files" is the longest label this footer ever carries.
-  back: { flex: 0, minWidth: 118, paddingHorizontal: theme.spacing(3) },
-  next: { flex: 1, paddingHorizontal: theme.spacing(3) },
+  back: { flex: 0, minWidth: 118, paddingHorizontal: theme.spacing(3), borderRadius: theme.radii.pill, minHeight: 50 },
+  next: { flex: 1, paddingHorizontal: theme.spacing(3), borderRadius: theme.radii.pill, minHeight: 50 },
 })

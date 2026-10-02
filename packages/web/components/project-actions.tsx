@@ -22,9 +22,4 @@
 // The matrices themselves moved to @splat-connect/types when mobile's review
 // detail became their second consumer; this module stays as the import path
 // web already uses everywhere.
-export {
-  leaderActions,
-  adminActions,
-  type LeaderAction,
-  type AdminAction,
-} from '@splat-connect/types'
+export { leaderActions, adminActions } from '@splat-connect/types'

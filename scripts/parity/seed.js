@@ -61,6 +61,9 @@ async function seedExchange(db, parentId) {
       pickup_state: 'NSW',
       pickup_postcode: '2300',
       pickup_instructions: 'Thursday after three, Newcastle clinic',
+      // The board's thread is at the handover, codes issued.
+      requester_code: '482913',
+      owner_code: '173650',
     })
     .select('id')
     .single()
@@ -163,6 +166,8 @@ async function seedBuild(db, parentId) {
       build_brief: 'A 100 mm button, standard 3.5 mm. Whenever suits.',
       child_label: 'Leo, 3',
       requester_suburb: 'Glebe',
+      // The board's build has a working shot up; the page only links the path.
+      working_photo_url: 'parity/shot.jpg',
     })
     .select('id')
     .single()
@@ -188,7 +193,8 @@ async function seedBuild(db, parentId) {
  * cascade, so they are undone.
  */
 async function seedOrgQueue(db, leaderId, orgId) {
-  if (!orgId) return
+  if (!orgId) return null
+  let submitted = null
   const guides = [
     { title: 'Parity guide asking to be backed', status: 'draft', backing: 'pending' },
     { title: 'Parity guide submitted for review', status: 'pending', backing: 'accepted' },
@@ -205,7 +211,9 @@ async function seedOrgQueue(db, leaderId, orgId) {
       db.from('tutorial_contributors').insert({ tutorial_id: t.id, profile_id: leaderId, role: 'primary' })
     )
     await swallow(db.from('tutorial_orgs').insert({ tutorial_id: t.id, org_id: orgId, status: g.backing }))
+    if (g.status === 'pending') submitted = t.id
   }
+  return submitted
 }
 
 /**
@@ -260,7 +268,18 @@ async function seedOrgRequests(db, familyId, orgId) {
  * each job. printer_id RESTRICTs, so jobs and printer are undone in that order.
  */
 async function seedPrinterWithJobs(db, owner, requesterId) {
-  const tutorial_id = await approvedGuide(db)
+  // A guide with STL files: the job card lists the files it asks for, and a
+  // guide without any drew a card with no files line against the board's.
+  const { data: stls } = await db
+    .from('stl_files')
+    .select('id, tutorial_id, tutorials!inner(status)')
+    .eq('tutorials.status', 'approved')
+    // Files with estimates: the job card prints "3 h 10 · ~42 g PETG" off them.
+    .not('print_minutes', 'is', null)
+    .not('filament_grams', 'is', null)
+    .not('material', 'is', null)
+    .limit(20)
+  const tutorial_id = stls?.[0]?.tutorial_id || (await approvedGuide(db))
   if (!tutorial_id || !requesterId) return
   const { data: printer } = await db
     .from('printers')
@@ -281,6 +300,21 @@ async function seedPrinterWithJobs(db, owner, requesterId) {
     await d.from('toy_transactions').delete().eq('printer_id', printer.id)
     await d.from('printers').delete().eq('id', printer.id)
   })
+  // An organisation with two machines: the offer screen draws its machine
+  // picker only when there is a choice. Cascades with the organisation.
+  if (owner.owner_org_id)
+    await swallow(
+      db.from('printers').insert({
+        ...owner,
+        name: 'Parity fixture printer 2',
+        materials: ['PLA', 'TPU'],
+        bed_x: 256,
+        bed_y: 256,
+        bed_z: 256,
+        suburb: 'Newtown',
+        state: 'NSW',
+      })
+    )
   const job = (status, print_note) => ({
     ...owner,
     printer_id: printer.id,
@@ -292,15 +326,24 @@ async function seedPrinterWithJobs(db, owner, requesterId) {
     requester_suburb: 'Ashfield',
     ...(status === 'accepted' ? { printing_started_at: new Date().toISOString() } : {}),
   })
-  await swallow(
-    // Three waiting, the board's count, and one on the bed.
-    db.from('toy_transactions').insert([
+  // Three waiting, the board's count, and one on the bed.
+  const { data: jobs } = await db
+    .from('toy_transactions')
+    .insert([
       job('requested', 'For a cot rail — the round one, about 25 mm across.'),
       job('requested', 'Our old one snapped at the hinge. Same size is fine.'),
       job('requested', 'For a client trial on Thursday. Two sizes if you can manage it.'),
       job('accepted', null),
     ])
-  )
+    .select('id')
+  // Cascades with the job.
+  const files = (stls || []).filter((f) => f.tutorial_id === tutorial_id)
+  if (jobs?.length && files.length)
+    await swallow(
+      db.from('print_job_files').insert(
+        jobs.flatMap((j) => files.map((f) => ({ transaction_id: j.id, stl_file_id: f.id })))
+      )
+    )
 }
 
 /**
@@ -364,12 +407,13 @@ async function seedPrintRequest(db, parentId) {
   if (!printer) return null
   // toy_transactions_subject requires a print to name the guide its parts come
   // from — "parts come from the guide, never uploaded" enforced in the schema.
-  const { data: tut } = await db
-    .from('tutorials')
-    .select('id')
-    .eq('status', 'approved')
-    .limit(1)
-    .maybeSingle()
+  // A guide with STL files, so the job names the parts it asks for.
+  const { data: stls } = await db
+    .from('stl_files')
+    .select('id, tutorial_id, tutorials!inner(status)')
+    .eq('tutorials.status', 'approved')
+    .limit(20)
+  const tut = stls?.[0] ? { id: stls[0].tutorial_id } : null
   if (!tut) return null
   const { data, error } = await db
     .from('toy_transactions')
@@ -383,7 +427,13 @@ async function seedPrintRequest(db, parentId) {
     })
     .select('id')
     .single()
-  return error ? null : data.id
+  if (error) return null
+  await swallow(
+    db.from('print_job_files').insert(
+      stls.filter((f) => f.tutorial_id === tut.id).map((f) => ({ transaction_id: data.id, stl_file_id: f.id }))
+    )
+  )
+  return data.id
 }
 
 /** A tutorial the contributor owns — /tutorials/[id]/edit. */
@@ -402,7 +452,35 @@ async function seedOwnedTutorial(db, contributorId) {
   const { error: cErr } = await db
     .from('tutorial_contributors')
     .insert({ tutorial_id: data.id, profile_id: contributorId, role: 'primary' })
-  return cErr ? null : data.id
+  if (cErr) return null
+  // The board's editor sections each hold rows; empty ones draw no fields.
+  // All cascade with the guide.
+  await swallow(
+    db.from('tutorial_steps').insert({
+      tutorial_id: data.id,
+      position: 1,
+      body: 'Open the base and find the two wires running to the pump motor.',
+    })
+  )
+  await swallow(
+    db.from('parts').insert(
+      ['Relay module, 5 V', 'Timer board (555 or similar)', 'Big button switch'].map((name) => ({ tutorial_id: data.id, name }))
+    )
+  )
+  await swallow(
+    db.from('tools').insert(['Soldering iron', 'Wire strippers'].map((name) => ({ tutorial_id: data.id, name })))
+  )
+  // The author's own safety notes (090): the editor draws one title and one
+  // detail field per note, and none at all for a guide without.
+  await swallow(
+    db.from('tutorial_safety_notes').insert({
+      tutorial_id: data.id,
+      position: 1,
+      title: 'Battery door must be screwed shut',
+      detail: 'The base clips by default. Add the screw.',
+    })
+  )
+  return data.id
 }
 
 /** An event on the leader's organisation — /dashboard/org/events/[id]. */
@@ -430,10 +508,27 @@ async function seedOrgEvent(db, leaderId, orgId) {
       // check constraint alongside the flag.
       prints_parts: true,
       part_sets_max: 10,
+      // The board's event detail and register draw each of these; the page
+      // hides a section with nothing in it, and a bare event measured as
+      // four missing sections and a third of the height.
+      description: 'A morning of adapting toys together. Bring a toy, leave with it switch-ready.',
+      audience: 'Families, therapists and makers',
+      what_to_bring: 'A battery toy you want adapted',
+      accessibility_note: 'Step-free entry and a quiet room.',
+      cost_cents: 1500,
+      cost_note: 'Covers the switch parts. Free if that is hard this month.',
     })
     .select('id')
     .single()
   if (error) return null
+  // The register form asks the host's questions.
+  await swallow(
+    db.from('org_event_questions').insert([
+      { event_id: data.id, position: 1, prompt: 'Which toy are you bringing?', answer_type: 'short', required: true },
+      { event_id: data.id, position: 2, prompt: 'Anything we should know about access?', answer_type: 'paragraph' },
+      { event_id: data.id, position: 3, prompt: 'How many in your group?', answer_type: 'number' },
+    ])
+  )
   // And one already over. Without it every seeded event is in the future, so
   // /get-involved/events never draws the board's "Past events (n)" disclosure
   // or a second month heading, and both were reported missing on a page that
@@ -449,6 +544,65 @@ async function seedOrgEvent(db, leaderId, orgId) {
     state: 'NSW',
     status: 'published',
     created_by: leaderId,
+  })
+  return data.id
+}
+
+/**
+ * The leader org's public profile as the board draws it — doors, a guide it
+ * backs, a family's thanks. Each section hides when empty, so a bare org
+ * measured as four missing sections. All cascade with the organisation.
+ */
+async function seedOrgPublic(db, orgId, familyId) {
+  if (!orgId) return
+  await swallow(
+    db.from('org_doors').insert([
+      { org_id: orgId, position: 1, title: 'Borrow a toy', body: 'Off the shelf, back when you are done.', target: 'toy_library' },
+      { org_id: orgId, position: 2, title: 'Come to a build day', body: 'Monthly, free, bring a toy.', target: 'events' },
+      { org_id: orgId, position: 3, title: 'Get a part printed', body: 'Our printer takes requests.', target: 'print' },
+    ])
+  )
+  const tutorial_id = await approvedGuide(db)
+  if (tutorial_id)
+    await swallow(db.from('tutorial_orgs').insert({ tutorial_id, org_id: orgId, status: 'accepted' }))
+  if (familyId)
+    await swallow(
+      db.from('org_thanks').insert({
+        org_id: orgId,
+        profile_id: familyId,
+        note: 'They adapted three toys for Leo in one morning.',
+        byline: 'A family in Newtown',
+        show_note: true,
+      })
+    )
+}
+
+/**
+ * A toy someone else offers to give or swap — /toy-library/[id] and its
+ * request form. The first library link was the org's donation-only shelf toy,
+ * which correctly hides "Pick a toy to offer"; the parent's own toy fills it.
+ */
+async function seedSwapToy(db, parentId) {
+  const owner = await someoneElse(db, parentId)
+  if (!owner) return null
+  const { data } = await db
+    .from('toys')
+    .insert({
+      owner_id: owner,
+      name: 'Parity swap toy',
+      // The board's "Notes from the holder" card draws only with notes.
+      description: 'Interrupter fitted, fluid tank clean, four-second burst. Bring your own switch.',
+      condition: 8,
+      photo_urls: [],
+      status: 'published',
+      offer_type: 'both',
+    })
+    .select('id')
+    .single()
+  if (!data) return null
+  undo.push(async (d) => {
+    await d.from('toy_transactions').delete().eq('toy_id', data.id)
+    await d.from('toys').delete().eq('id', data.id)
   })
   return data.id
 }
@@ -582,6 +736,8 @@ async function seed(db, users) {
     if (pj) routes.print_job = `/dashboard/print-requests/${pj}`
     const toy = await seedOwnedToy(db, parent.id)
     if (toy) routes.toy_detail = `/dashboard/toys/${toy}`
+    const swap = await seedSwapToy(db, parent.id)
+    if (swap) routes.toy_public = `/toy-library/${swap}`
     await seedSavesAndIdeas(db, parent.id)
     await seedReport(db, parent.id)
     await seedPrinterWithJobs(db, { owner_id: parent.id }, await someoneElse(db, parent.id))
@@ -594,12 +750,18 @@ async function seed(db, users) {
     const ev = await seedOrgEvent(db, leader.id, leader.orgId)
     if (ev) {
       routes.org_event_manage = `/dashboard/org/events/${ev}`
+      routes.event_detail = `/get-involved/events/${ev}`
       await seedEventParts(db, ev, leader.orgId, family)
     }
-    await seedOrgQueue(db, leader.id, leader.orgId)
+    const queued = await seedOrgQueue(db, leader.id, leader.orgId)
+    // The app's org review screen, keyed by its app screen id: the leader's
+    // queue is pressables, and no web screen shows this record.
+    if (queued) routes['app:org_review'] = `/organisation/${queued}`
     await seedOrgRequests(db, family, leader.orgId)
     await seedPrinterWithJobs(db, { owner_org_id: leader.orgId }, family)
     await seedDropoffs(db, leader.orgId, family)
+    await seedOrgPublic(db, leader.orgId, family)
+    routes.org_public = `/organizations/${leader.orgId}/public`
   }
   return routes
 }
@@ -612,6 +774,44 @@ async function seed(db, users) {
  * unmeasured forever. (That it is orphaned is worth knowing on its own.)
  */
 const DB_SAMPLES = {
+  // The app's print request is a modal fed by its route: a guide whose files
+  // carry estimates, and the printers the family picked (up to three).
+  'app:print_request': async (db) => {
+    const { data: stl } = await db
+      .from('stl_files')
+      .select('tutorial_id, tutorials!inner(status)')
+      .eq('tutorials.status', 'approved')
+      .not('print_minutes', 'is', null)
+      .not('filament_grams', 'is', null)
+      .not('material', 'is', null)
+      .limit(1)
+      .single()
+    const { data: printers } = await db.from('printers').select('id').limit(2)
+    return stl && printers?.length
+      ? `/printing/request?guide=${stl.tutorial_id}&printers=${printers.map((p) => p.id).join(',')}`
+      : null
+  },
+  // The app's challenge list is pressables, not links, so nothing scrapes it.
+  challenge_detail: async (db) => {
+    const { data } = await db
+      .from('toy_ideas')
+      .select('id')
+      .eq('status', 'challenge')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+    return data ? `/get-involved/design-challenges/${data.id}` : null
+  },
+  // The board draws the queue with a guide selected and its pane open.
+  admin_review: async (db) => {
+    const { data } = await db
+      .from('tutorials')
+      .select('id')
+      .eq('status', 'pending')
+      .limit(1)
+      .single()
+    return data ? `/admin/review?selected=${data.id}` : null
+  },
   // The endpoint 404s on zero public contributions, so a showcased profile is
   // not enough — it has to be one that actually has an approved guide.
   contributor: async (db) => {
@@ -632,6 +832,10 @@ const DB_SAMPLES = {
       .from('stl_files')
       .select('tutorial_id, tutorials!inner(status)')
       .eq('tutorials.status', 'approved')
+      // The summary tiles read "3 h 10 min" and "40 g PETG" off the files.
+      .not('print_minutes', 'is', null)
+      .not('filament_grams', 'is', null)
+      .not('material', 'is', null)
       .limit(1)
       .single()
     return data ? `/printing/requests?guide=${data.tutorial_id}` : null
@@ -662,17 +866,34 @@ const DB_SAMPLES = {
       .eq('host.status', 'approved')
       .eq('rec.status', 'approved')
       .limit(1)
-    if (has?.[0]) return `/tutorials/${has[0].tutorial_id}`
-    const { data: guides } = await db.from('tutorials').select('id').eq('status', 'approved').limit(3)
-    if (!guides || guides.length < 2) return null
-    const [host, ...recs] = guides
-    const { error } = await db
-      .from('tutorial_recommendations')
-      .insert(recs.map((r, i) => ({ tutorial_id: host.id, recommended_id: r.id, position: i + 1 })))
-    if (error) return null
-    undo.push((d) => d.from('tutorial_recommendations').delete().eq('tutorial_id', host.id))
-    return `/tutorials/${host.id}`
+    let hostId = has?.[0]?.tutorial_id
+    if (!hostId) {
+      const { data: guides } = await db.from('tutorials').select('id').eq('status', 'approved').limit(3)
+      if (!guides || guides.length < 2) return null
+      const [host, ...recs] = guides
+      const { error } = await db
+        .from('tutorial_recommendations')
+        .insert(recs.map((r, i) => ({ tutorial_id: host.id, recommended_id: r.id, position: i + 1 })))
+      if (error) return null
+      undo.push((d) => d.from('tutorial_recommendations').delete().eq('tutorial_id', host.id))
+      hostId = host.id
+    }
+    // And steps, lent the same way: no approved guide has any, and a stepless
+    // sample left Steps unmeasured and paired its heading with the title.
+    const { count } = await db.from('tutorial_steps').select('id', { count: 'exact', head: true }).eq('tutorial_id', hostId)
+    if (!count) {
+      const { data: lent } = await db
+        .from('tutorial_steps')
+        .insert([
+          { tutorial_id: hostId, position: 1, body: 'Open the base and find the two wires running to the motor.' },
+          { tutorial_id: hostId, position: 2, body: 'Solder the interrupter across them and close the base.' },
+        ])
+        .select('id')
+      if (lent?.length) undo.push((d) => d.from('tutorial_steps').delete().in('id', lent.map((x) => x.id)))
+    }
+    return `/tutorials/${hostId}`
   },
+
 }
 
 async function dbSample(db, screenId) {

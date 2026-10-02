@@ -48,6 +48,17 @@ describe('GET /api/public/contributors/:id', () => {
       owner_id: maker.id,
     })
 
+    // maker: a completed build too. It has no toy_id, and the delivered-toys
+    // lookup once passed that null to .in('id', …) and 500ed the whole page.
+    await admin.from('toy_transactions').insert({
+      type: 'build',
+      status: 'completed',
+      tutorial_id: tut!.id,
+      build_brief: 'A switch for Leo.',
+      requester_id: empty.id,
+      owner_id: maker.id,
+    })
+
     // hidden: opts out but has a published toy (would otherwise be eligible).
     await admin.from('profiles').update({ public_showcase: false }).eq('id', hidden.id)
     await admin
@@ -70,7 +81,7 @@ describe('GET /api/public/contributors/:id', () => {
     expect(body.id).toBe(maker.id)
     expect(body.tutorials.length).toBeGreaterThanOrEqual(1)
     expect(body.toysShared.length).toBeGreaterThanOrEqual(1)
-    expect(body.toysDelivered.length).toBeGreaterThanOrEqual(1)
+    expect(body.toysDelivered.length).toBe(1)
 
     const gone = await app.request(`${BASE}/api/public/contributors/${hidden.id}`)
     expect(gone.status).toBe(404)

@@ -1,0 +1,889 @@
+[
+ {
+  "id": "guides",
+  "name": "Guides",
+  "group": "tabs",
+  "boardRoute": "(tabs)/guides",
+  "route": "/guides",
+  "role": "parent",
+  "explained": [
+   {
+    "type": "missing-section",
+    "match": "suits ollie",
+    "why": "fixture",
+    "reason": "The board's child Ollie fits a guide, so a Suits Ollie heading draws; the parity child has no name or fit answers."
+   }
+  ]
+ },
+ {
+  "id": "guide_detail",
+  "name": "Guide detail",
+  "group": "push",
+  "boardRoute": "guides/[id]",
+  "route": "/guides/[id]",
+  "idFrom": "tutorial",
+  "role": "parent"
+ },
+ {
+  "id": "guide_preview",
+  "name": "Guide preview",
+  "group": "push",
+  "boardRoute": "guides/[id]/preview",
+  "route": "/guides/[id]/preview",
+  "idFrom": "tutorial",
+  "role": "contributor",
+  "explained": [
+   {
+    "type": "missing-section",
+    "match": "board lists cards",
+    "why": "intended",
+    "reason": "Decided 2026-09-30 (guide-draft-preview): Preview opens the reader view; the editor hub is the summary."
+   },
+   {
+    "type": "missing-section",
+    "match": "board has cards",
+    "why": "intended",
+    "reason": "Decided 2026-09-30 (guide-draft-preview): Preview opens the reader view; the editor hub is the summary."
+   }
+  ]
+ },
+ {
+  "id": "guide_new",
+  "name": "New guide",
+  "group": "push",
+  "boardRoute": "guides/new",
+  "route": "/guides/new",
+  "role": "parent",
+  "explained": [
+   {
+    "type": "radius",
+    "match": "card radius",
+    "why": "intended",
+    "reason": "The cover-photo drop zone is a dashed field (the field radius, no fill, no shadow) - the harness reads any bordered rounded box as a card, and the board's cards are the 20px white sheet cards."
+   },
+   {
+    "type": "shadow",
+    "match": "card shadow",
+    "why": "intended",
+    "reason": "The cover-photo drop zone is a dashed field (the field radius, no fill, no shadow) - the harness reads any bordered rounded box as a card, and the board's cards are the 20px white sheet cards."
+   },
+   {
+    "type": "colour",
+    "match": "card background",
+    "why": "intended",
+    "reason": "The cover-photo drop zone is a dashed field (the field radius, no fill, no shadow) - the harness reads any bordered rounded box as a card, and the board's cards are the 20px white sheet cards."
+   },
+   {
+    "type": "picture",
+    "match": "form sheet",
+    "why": "intended",
+    "reason": "Add a guide opens as a sheet you pull back down (guides/_layout.tsx): a one-shot form over the library, not a push."
+   }
+  ]
+ },
+ {
+  "id": "contributor",
+  "name": "Contributor",
+  "group": "push",
+  "boardRoute": "guides/contributor/[id]",
+  "route": "/guides/contributor/[id]",
+  "idFrom": "contributor",
+  "role": "parent"
+ },
+ {
+  "id": "guide_org",
+  "name": "Organisation",
+  "group": "push",
+  "boardRoute": "guides/organisation/[id]",
+  "route": "/guides/organisation/[id]",
+  "idFrom": "org_public",
+  "seedRole": "leader",
+  "role": "parent"
+ },
+ {
+  "id": "print_find",
+  "name": "Find a printer",
+  "group": "push",
+  "boardRoute": "printing",
+  "route": "/printing?guide=[id]",
+  "role": "parent",
+  "idFrom": "print_request_new",
+  "explained": [
+   {
+    "type": "font",
+    "match": "card title font",
+    "why": "harness",
+    "reason": "The board's first card text is its aria-hidden initials disc; the printer names match (Nunito 15 on both)."
+   }
+  ]
+ },
+ {
+  "id": "print_request",
+  "name": "Request a print",
+  "group": "modal",
+  "boardRoute": "printing/request",
+  "route": "/printing/request",
+  "role": "parent"
+ },
+ {
+  "id": "print_job",
+  "name": "Print job",
+  "group": "push",
+  "boardRoute": "printing/jobs/[id]",
+  "route": "/printing/jobs/[id]",
+  "idFrom": "print_job",
+  "role": "parent",
+  "explained": [
+   {
+    "type": "shadow",
+    "match": "card shadow",
+    "why": "harness",
+    "reason": "The board nests its cards (a bordered box inside the card), so its leaf cards are inner boxes without shadow; the app's are the outer cards. Counting every card fixes it here and breaks nine web screens."
+   }
+  ]
+ },
+ {
+  "id": "print_basics",
+  "name": "Printing basics",
+  "group": "push",
+  "boardRoute": "printing/basics",
+  "route": "/printing/basics",
+  "role": "parent"
+ },
+ {
+  "id": "loading",
+  "name": "Loading state",
+  "group": "tabs",
+  "boardRoute": "guides (loading)",
+  "route": "/guides",
+  "role": "parent",
+  "stall": "**/api/public/tutorials**",
+  "explained": [
+   {
+    "type": "picture",
+    "match": "loaded Guides list",
+    "why": "harness",
+    "reason": "The stall that holds Loading's request open is a Playwright route; the simulator's request is not held, so the shot is the loaded list. The web export measures the skeleton."
+   }
+  ]
+ },
+ {
+  "id": "toy_library",
+  "name": "Toy library",
+  "group": "tabs",
+  "boardRoute": "(tabs)/toy-library",
+  "route": "/toy-library",
+  "role": "parent",
+  "explained": [
+   {
+    "type": "picture",
+    "match": "search field",
+    "why": "intended",
+    "reason": "Decided 2026-10-01 (mobile-extra-affordances): the app keeps its search, Continue card and challenge filters."
+   },
+   {
+    "type": "missing-section",
+    "match": "nearest first",
+    "why": "intended",
+    "reason": "Nearest first is a filter chip, off until tapped; the board draws it already switched on, so its heading shows only in that state."
+   }
+  ]
+ },
+ {
+  "id": "lib_toy",
+  "name": "Toy detail",
+  "group": "push",
+  "boardRoute": "toy-library/[id]",
+  "route": "/toy-library/[id]",
+  "idFrom": "toy_public",
+  "seedRole": "parent",
+  "role": "parent",
+  "explained": [
+   {
+    "type": "missing-section",
+    "match": "also worth a look",
+    "why": "intended",
+    "reason": "Built (toy-holder-picks); the seed's swap-toy holder has nothing else listed and no picks, so the section rightly draws nothing."
+   },
+   {
+    "type": "font",
+    "match": "card title font",
+    "why": "harness",
+    "reason": "The board's only card is Notes from the holder (a Nunito label); the app's card is the same panel plus its pickup tiles, whose titles are Baloo."
+   }
+  ]
+ },
+ {
+  "id": "org_list",
+  "name": "Organisations",
+  "group": "push",
+  "boardRoute": "toy-library/organisations",
+  "route": "/toy-library/organisations",
+  "role": "parent"
+ },
+ {
+  "id": "lib_org",
+  "name": "Organisation",
+  "group": "push",
+  "boardRoute": "toy-library/organisation/[id]",
+  "route": "/toy-library/organisation/[id]",
+  "idFrom": "org_public",
+  "seedRole": "leader",
+  "role": "parent"
+ },
+ {
+  "id": "explore",
+  "name": "Explore",
+  "group": "push",
+  "boardRoute": "(tabs)/explore",
+  "route": "/explore",
+  "role": "parent"
+ },
+ {
+  "id": "learn_list",
+  "name": "Learn",
+  "group": "push",
+  "boardRoute": "explore/learn",
+  "route": "/explore/learn",
+  "role": "parent"
+ },
+ {
+  "id": "article",
+  "name": "Learn article",
+  "group": "push",
+  "boardRoute": "explore/learn/[slug]",
+  "route": "/explore/learn/toy-adaptation-101",
+  "role": "parent",
+  "explained": [
+   {
+    "type": "missing-section",
+    "match": "the whole trick",
+    "why": "intended",
+    "reason": "The app ships the six real Learn articles; the board has short sample ones."
+   },
+   {
+    "type": "missing-section",
+    "match": "you are not modifying",
+    "why": "intended",
+    "reason": "The app ships the six real Learn articles; the board has short sample ones."
+   },
+   {
+    "type": "copy",
+    "match": "board paragraphs absent",
+    "why": "intended",
+    "reason": "Real article copy against the board's sample."
+   }
+  ]
+ },
+ {
+  "id": "challenges",
+  "name": "Challenges",
+  "group": "push",
+  "boardRoute": "explore/challenges",
+  "route": "/explore/challenges",
+  "role": "parent",
+  "explained": [
+   {
+    "type": "picture",
+    "match": "filter chips",
+    "why": "intended",
+    "reason": "Decided 2026-10-01 (mobile-extra-affordances): the app keeps its search, Continue card and challenge filters."
+   }
+  ]
+ },
+ {
+  "id": "challenge_detail",
+  "name": "Challenge",
+  "group": "push",
+  "boardRoute": "explore/challenges/[id]",
+  "route": "/explore/challenges/[id]",
+  "idFrom": "challenge_detail",
+  "role": "parent",
+  "explained": [
+   {
+    "type": "radius",
+    "match": "card radius",
+    "why": "harness",
+    "reason": "The board nests its cards (a bordered box inside the card), so its leaf cards are inner boxes without shadow; the app's are the outer cards. Counting every card fixes it here and breaks nine web screens. The 16px leaf is the status box, which the app draws at 16 in the same tint inside its card."
+   },
+   {
+    "type": "shadow",
+    "match": "card shadow",
+    "why": "harness",
+    "reason": "The board nests its cards (a bordered box inside the card), so its leaf cards are inner boxes without shadow; the app's are the outer cards. Counting every card fixes it here and breaks nine web screens."
+   },
+   {
+    "type": "colour",
+    "match": "card background",
+    "why": "harness",
+    "reason": "The board nests its cards (a bordered box inside the card), so its leaf cards are inner boxes without shadow; the app's are the outer cards. Counting every card fixes it here and breaks nine web screens."
+   }
+  ]
+ },
+ {
+  "id": "challenge_new",
+  "name": "Submit an idea",
+  "group": "push",
+  "boardRoute": "explore/challenges/new",
+  "route": "/explore/challenges/new",
+  "role": "parent"
+ },
+ {
+  "id": "makers_wanted",
+  "name": "Makers wanted",
+  "group": "push",
+  "boardRoute": "explore/makers-wanted",
+  "route": "/explore/makers-wanted",
+  "role": "parent"
+ },
+ {
+  "id": "mw_new",
+  "name": "Ask for a build",
+  "group": "modal",
+  "boardRoute": "explore/makers-wanted/new",
+  "route": "/explore/makers-wanted/new",
+  "role": "parent"
+ },
+ {
+  "id": "build_thread",
+  "name": "Build thread",
+  "group": "push",
+  "boardRoute": "(my)/exchanges/build/[id]",
+  "route": "/exchanges/build/[id]",
+  "idFrom": "build_thread",
+  "role": "parent",
+  "explained": [
+   {
+    "type": "shadow",
+    "match": "card shadow",
+    "why": "harness",
+    "reason": "The board nests its cards (a bordered box inside the card), so its leaf cards are inner boxes without shadow; the app's are the outer cards. Counting every card fixes it here and breaks nine web screens."
+   }
+  ]
+ },
+ {
+  "id": "recycling",
+  "name": "Recycling",
+  "group": "push",
+  "boardRoute": "explore/recycling",
+  "route": "/explore/recycling",
+  "role": "parent",
+  "explained": [
+   {
+    "type": "copy",
+    "match": "h1 wording",
+    "why": "harness",
+    "reason": "The board sets the 44px number and its kg unit in separate elements, so its h1 reads '#'; the app's reads '# kg'. Both are 44px Baloo."
+   }
+  ]
+ },
+ {
+  "id": "org_recycling",
+  "name": "Recycling intake",
+  "group": "push",
+  "boardRoute": "(org)/recycling",
+  "route": "/organisation/recycling",
+  "role": "leader"
+ },
+ {
+  "id": "about",
+  "name": "About",
+  "group": "push",
+  "boardRoute": "explore/about",
+  "route": "/explore/about",
+  "role": "parent",
+  "explained": [
+   {
+    "type": "copy",
+    "match": "board paragraphs absent",
+    "why": "pending",
+    "pending": "about-content-mobile"
+   }
+  ]
+ },
+ {
+  "id": "inbox",
+  "name": "Inbox",
+  "group": "tabs",
+  "boardRoute": "(tabs)/inbox",
+  "route": "/inbox",
+  "role": "parent"
+ },
+ {
+  "id": "exchange",
+  "name": "Exchange thread",
+  "group": "push",
+  "boardRoute": "(my)/exchanges/[id]",
+  "route": "/exchanges/[id]",
+  "idFrom": "thread",
+  "role": "parent",
+  "explained": [
+   {
+    "type": "shadow",
+    "match": "card shadow",
+    "why": "harness",
+    "reason": "The board nests its cards (a bordered box inside the card), so its leaf cards are inner boxes without shadow; the app's are the outer cards. Counting every card fixes it here and breaks nine web screens."
+   },
+   {
+    "type": "missing-section",
+    "match": "thursday after three",
+    "why": "harness",
+    "reason": "The board nests its cards (a bordered box inside the card), so its leaf cards are inner boxes without shadow; the app's are the outer cards. Counting every card fixes it here and breaks nine web screens. The pickup line is in the app's leaf card, so it is compared as a card title, not a heading."
+   }
+  ]
+ },
+ {
+  "id": "my_splat",
+  "name": "Me",
+  "group": "tabs",
+  "boardRoute": "(my)/my-splat",
+  "route": "/me",
+  "role": "parent",
+  "liveExclude": "[data-testid=\"screen-header\"]"
+ },
+ {
+  "id": "my_tutorials",
+  "name": "My tutorials",
+  "group": "push",
+  "boardRoute": "(my)/tutorials",
+  "route": "/tutorials",
+  "role": "contributor"
+ },
+ {
+  "id": "editor",
+  "name": "Editor hub",
+  "group": "push",
+  "boardRoute": "(my)/tutorials/[id]",
+  "route": "/tutorials/[id]",
+  "idFrom": "editor",
+  "role": "contributor",
+  "explained": [
+   {
+    "type": "picture",
+    "match": "menu",
+    "why": "intended",
+    "reason": "The hub's menu is the author's way out of a guide reached by router.replace from Add a guide, which leaves nothing behind it (hub.tsx)."
+   }
+  ]
+ },
+ {
+  "id": "ed_details",
+  "name": "Editor \u00b7 details",
+  "group": "push",
+  "boardRoute": "tutorials/[id]/details",
+  "route": "/tutorials/[id]/details",
+  "idFrom": "editor",
+  "role": "contributor",
+  "explained": [
+   {
+    "type": "colour",
+    "match": "input background",
+    "why": "intended",
+    "reason": "The board fills a field with canvas only inside its white section card; the app's section fields sit on the page and take the surface, as the board's other 26 inputs do."
+   },
+   {
+    "type": "picture",
+    "match": "footer",
+    "why": "intended",
+    "reason": "Every editor section ends with Checklist and Next, so an author moves on without going back to the hub (section-footer.tsx)."
+   }
+  ]
+ },
+ {
+  "id": "ed_steps",
+  "name": "Editor \u00b7 steps",
+  "group": "push",
+  "boardRoute": "tutorials/[id]/steps",
+  "route": "/tutorials/[id]/steps",
+  "idFrom": "editor",
+  "role": "contributor",
+  "explained": [
+   {
+    "type": "colour",
+    "match": "input background",
+    "why": "intended",
+    "reason": "The board fills a field with canvas only inside its white section card; the app's fields sit on the page and take the surface."
+   },
+   {
+    "type": "picture",
+    "match": "footer",
+    "why": "intended",
+    "reason": "Every editor section ends with Checklist and Next, so an author moves on without going back to the hub (section-footer.tsx)."
+   }
+  ]
+ },
+ {
+  "id": "ed_parts",
+  "name": "Editor \u00b7 parts",
+  "group": "push",
+  "boardRoute": "tutorials/[id]/parts",
+  "route": "/tutorials/[id]/parts",
+  "idFrom": "editor",
+  "role": "contributor",
+  "explained": [
+   {
+    "type": "colour",
+    "match": "input background",
+    "why": "intended",
+    "reason": "The board fills a field with canvas only inside its white section card; the app's fields sit on the page and take the surface."
+   },
+   {
+    "type": "picture",
+    "match": "footer",
+    "why": "intended",
+    "reason": "Every editor section ends with Checklist and Next, so an author moves on without going back to the hub (section-footer.tsx)."
+   }
+  ]
+ },
+ {
+  "id": "ed_tools",
+  "name": "Editor \u00b7 tools",
+  "group": "push",
+  "boardRoute": "tutorials/[id]/tools",
+  "route": "/tutorials/[id]/tools",
+  "idFrom": "editor",
+  "role": "contributor",
+  "explained": [
+   {
+    "type": "colour",
+    "match": "input background",
+    "why": "intended",
+    "reason": "The board fills a field with canvas only inside its white section card; the app's fields sit on the page and take the surface."
+   },
+   {
+    "type": "picture",
+    "match": "footer",
+    "why": "intended",
+    "reason": "Every editor section ends with Checklist and Next, so an author moves on without going back to the hub (section-footer.tsx)."
+   }
+  ]
+ },
+ {
+  "id": "ed_safety",
+  "name": "Editor \u00b7 safety",
+  "group": "push",
+  "boardRoute": "tutorials/[id]/safety",
+  "route": "/tutorials/[id]/safety",
+  "idFrom": "editor",
+  "role": "contributor",
+  "explained": [
+   {
+    "type": "colour",
+    "match": "input background",
+    "why": "intended",
+    "reason": "The board fills a field with canvas only inside its white section card; the app's fields sit on the page and take the surface."
+   }
+  ]
+ },
+ {
+  "id": "ed_stl",
+  "name": "Editor \u00b7 STL",
+  "group": "push",
+  "boardRoute": "tutorials/[id]/stl",
+  "route": "/tutorials/[id]/stl",
+  "idFrom": "editor",
+  "role": "contributor",
+  "explained": [
+   {
+    "type": "missing-section",
+    "match": "stl files",
+    "why": "intended",
+    "reason": "The board draws STL upload as Not built yet; the app has built it (3D print files), so a maker attaches printable parts from the phone."
+   }
+  ]
+ },
+ {
+  "id": "my_toys",
+  "name": "My toys",
+  "group": "push",
+  "boardRoute": "(my)/toys",
+  "route": "/toys",
+  "role": "parent"
+ },
+ {
+  "id": "toy_new",
+  "name": "Add a toy",
+  "group": "push",
+  "boardRoute": "(my)/toys/new",
+  "route": "/toys/new",
+  "role": "parent",
+  "explained": [
+   {
+    "type": "missing-section",
+    "match": "board lists cards",
+    "why": "intended",
+    "reason": "Create first, then edit: a family saves a toy in two taps (name, condition) and adds photos and notes in the editor."
+   },
+   {
+    "type": "missing-section",
+    "match": "board has cards",
+    "why": "intended",
+    "reason": "Create first, then edit: a family saves a toy in two taps and adds the rest in the editor."
+   },
+   {
+    "type": "copy",
+    "match": "board paragraphs absent",
+    "why": "intended",
+    "reason": "The lead says what this first step asks for: a name and a condition."
+   }
+  ]
+ },
+ {
+  "id": "toy_detail",
+  "name": "Toy detail",
+  "group": "push",
+  "boardRoute": "(my)/toys/[id]",
+  "route": "/toys/[id]",
+  "idFrom": "toy_detail",
+  "role": "parent"
+ },
+ {
+  "id": "exchanges",
+  "name": "My exchanges",
+  "group": "push",
+  "boardRoute": "(my)/exchanges",
+  "route": "/exchanges",
+  "role": "parent"
+ },
+ {
+  "id": "my_challenges",
+  "name": "My challenges",
+  "group": "push",
+  "boardRoute": "(my)/challenges",
+  "route": "/challenges",
+  "role": "parent"
+ },
+ {
+  "id": "saved",
+  "name": "Saved",
+  "group": "push",
+  "boardRoute": "(my)/saved",
+  "route": "/saved",
+  "role": "parent"
+ },
+ {
+  "id": "saved_slug",
+  "name": "Saved list",
+  "group": "push",
+  "boardRoute": "(my)/saved/[slug]",
+  "route": "/saved/tutorials",
+  "role": "parent"
+ },
+ {
+  "id": "notifications",
+  "name": "Notifications",
+  "group": "push",
+  "boardRoute": "(my)/notifications",
+  "route": "/notifications",
+  "role": "parent",
+  "explained": [
+   {
+    "type": "picture",
+    "match": "segmented switch",
+    "why": "intended",
+    "reason": "Exchanges and notifications share one inbox on the board (mobile-design-notes); the screen reuses the inbox with its switch."
+   }
+  ]
+ },
+ {
+  "id": "print_requests",
+  "name": "Print requests",
+  "group": "push",
+  "boardRoute": "(my)/print-requests",
+  "route": "/print-requests",
+  "role": "parent"
+ },
+ {
+  "id": "print_offer",
+  "name": "Print for others",
+  "group": "push",
+  "boardRoute": "(my)/print-for-others",
+  "route": "/print-for-others",
+  "role": "parent"
+ },
+ {
+  "id": "print_add",
+  "name": "Add a printer",
+  "group": "push",
+  "boardRoute": "(my)/print-for-others/add",
+  "route": "/print-for-others/add",
+  "role": "parent",
+  "explained": [
+   {
+    "type": "picture",
+    "match": "sticky footer",
+    "why": "intended",
+    "reason": "On a long form the primary action stays in reach as a sticky footer."
+   },
+   {
+    "type": "missing-section",
+    "match": "$#",
+    "why": "intended",
+    "reason": "The board's rates card lists per-item prices (small part, postage satchel); the model is one dollars-per-gram rate (070), so there is no price heading."
+   },
+   {
+    "type": "radius",
+    "match": "card radius",
+    "why": "intended",
+    "reason": "The rates card holds the dollars-per-gram field, not the board's per-item price rows."
+   },
+   {
+    "type": "colour",
+    "match": "card background",
+    "why": "intended",
+    "reason": "The rates card holds the dollars-per-gram field, not the board's per-item price rows."
+   }
+  ]
+ },
+ {
+  "id": "account",
+  "name": "Account",
+  "group": "push",
+  "boardRoute": "(my)/account",
+  "route": "/account",
+  "role": "parent"
+ },
+ {
+  "id": "ability",
+  "name": "Ability profile",
+  "group": "push",
+  "boardRoute": "account/ability",
+  "route": "/account/child/[id]",
+  "idFrom": "child",
+  "role": "parent"
+ },
+ {
+  "id": "needs",
+  "name": "Everyday needs",
+  "group": "push",
+  "boardRoute": "account/everyday-needs",
+  "route": "/account/child/[id]",
+  "idFrom": "child",
+  "role": "parent"
+ },
+ {
+  "id": "customization",
+  "name": "Customization",
+  "group": "push",
+  "boardRoute": "account/customization",
+  "route": "/account/customization",
+  "skip": "Pending customization-metrics: decided 2026-09-30 to ask these per print request, so no account screen will exist.",
+  "role": "parent"
+ },
+ {
+  "id": "child",
+  "name": "Child profile",
+  "group": "push",
+  "boardRoute": "account/child/[id]",
+  "route": "/account/child/[id]",
+  "idFrom": "child",
+  "role": "parent"
+ },
+ {
+  "id": "org_queue",
+  "name": "Review queue",
+  "group": "push",
+  "boardRoute": "(my)/organisation",
+  "route": "/organisation",
+  "role": "leader"
+ },
+ {
+  "id": "org_review",
+  "name": "Review a guide",
+  "group": "push",
+  "boardRoute": "organisation/[tutorialId]",
+  "route": "/organisation/[tutorialId]",
+  "role": "leader",
+  "explained": [
+   {
+    "type": "copy",
+    "match": "board paragraphs absent",
+    "why": "intended",
+    "reason": "The board runs title, author, difficulty and minutes into one sentence; the app draws them as the title, badges and byline above the description, so no single paragraph matches."
+   }
+  ]
+ },
+ {
+  "id": "org_toys",
+  "name": "Toy inventory",
+  "group": "push",
+  "boardRoute": "organisation/toys",
+  "route": "/organisation/toys",
+  "role": "leader",
+  "explained": [
+   {
+    "type": "copy",
+    "match": "board paragraphs absent",
+    "why": "intended",
+    "reason": "Decided 2026-09-30: no lending, so no 'out with families' or 'need cleaning'; the lead counts listings and units."
+   }
+  ]
+ },
+ {
+  "id": "org_orders",
+  "name": "Print orders",
+  "group": "push",
+  "boardRoute": "organisation/orders",
+  "route": "/organisation/orders",
+  "role": "leader",
+  "explained": [
+   {
+    "type": "copy",
+    "match": "board paragraphs absent",
+    "why": "fixture",
+    "reason": "The board's sample files and its 'other printers asked' group; the card draws each when the data has them."
+   }
+  ]
+ },
+ {
+  "id": "admin",
+  "name": "Admin",
+  "group": "push",
+  "boardRoute": "(my)/admin",
+  "route": "/admin",
+  "role": "admin"
+ },
+ {
+  "id": "wizard",
+  "name": "Child profile wizard",
+  "group": "push",
+  "boardRoute": "(onboarding)/child",
+  "route": "/child",
+  "role": "parent",
+  "explained": [
+   {
+    "type": "copy",
+    "match": "board paragraphs absent",
+    "why": "intended",
+    "reason": "The wizard keeps 079's six questions before the board's Play and Measurements; the board's Hands and Movement have no columns. So the bear says web's \"Hi! A few quick questions\" (eight steps, not five), and the About step carries no help sentence."
+   },
+   {
+    "type": "picture",
+    "match": "extra Skip",
+    "why": "intended",
+    "reason": "Every wizard question is optional; Skip moves on without saving an answer."
+   }
+  ]
+ },
+ {
+  "id": "sign_in",
+  "name": "Sign in",
+  "group": "bare",
+  "boardRoute": "(auth)/sign-in",
+  "route": "/sign-in",
+  "explained": [
+   {
+    "type": "missing-section",
+    "match": "splat connect",
+    "why": "intended",
+    "reason": "The sign-in spec (2026-09-30-mobile-sign-in-design) sets back, bear and Welcome back in place of the wordmark."
+   },
+   {
+    "type": "copy",
+    "match": "board paragraphs absent",
+    "why": "intended",
+    "reason": "The sign-in spec gives the auth screens the foot line No paid tier. Not a medical device."
+   }
+  ]
+ }
+]

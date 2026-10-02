@@ -19,7 +19,15 @@
   "group": "Public site",
   "boardRoute": "/tutorials/[id]",
   "route": "/tutorials/[id]",
-  "sampleFrom": "/library"
+  "sampleFrom": "/library",
+  "explained": [
+   {
+    "type": "size",
+    "match": "h1",
+    "why": "intended",
+    "reason": "The page-title token is clamp(28px,3.2vw,40px), 40px at this width; the board's 44px is hand-drawn off-token."
+   }
+  ]
  },
  {
   "id": "toys_public",
@@ -34,7 +42,22 @@
   "group": "Public site",
   "boardRoute": "/toys/[id]",
   "route": "/toy-library/[id]",
-  "sampleFrom": "/toy-library"
+  "sampleFrom": "/toy-library",
+  "explained": [
+   {
+    "type": "size",
+    "match": "h1",
+    "why": "intended",
+    "reason": "The page-title token is clamp(28px,3.2vw,40px), 40px at this width; the board's 44px is hand-drawn off-token."
+   },
+   {
+    "type": "missing-section",
+    "match": "also worth a look",
+    "why": "intended",
+    "reason": "Built (toy-holder-picks); the seed's swap-toy holder has nothing else listed and no picks, so the section rightly draws nothing."
+   }
+  ],
+  "seedRole": "parent"
  },
  {
   "id": "toy_request",
@@ -53,7 +76,15 @@
   "group": "My SPLAT",
   "boardRoute": "/onboarding/child",
   "route": "/onboarding/child",
-  "role": "parent"
+  "role": "parent",
+  "explained": [
+   {
+    "type": "colour",
+    "match": "input background",
+    "why": "intended",
+    "reason": "The Input component fills with canvas on a white card (globals .field, the board's own majority); this board screen hand-sets surface."
+   }
+  ]
  },
  {
   "id": "learn",
@@ -285,7 +316,21 @@
   "name": "Design challenges",
   "group": "Get involved",
   "boardRoute": "/get-involved/design-challenges",
-  "route": "/get-involved/design-challenges"
+  "route": "/get-involved/design-challenges",
+  "explained": [
+   {
+    "type": "missing-section",
+    "match": "page height",
+    "why": "intended",
+    "reason": "Guests see the open challenges listed below the explainer; the board shows only the explainer (an access decision, design-challenges/page.tsx)."
+   },
+   {
+    "type": "extra-section",
+    "match": "open challenges",
+    "why": "intended",
+    "reason": "Challenges are listed publicly, so makers can find one without an account."
+   }
+  ]
  },
  {
   "id": "challenge_detail",
@@ -315,7 +360,8 @@
   "group": "Impact",
   "boardRoute": "/organizations/[id]/public",
   "route": "/organizations/[id]/public",
-  "sampleFrom": "/organizations"
+  "sampleFrom": "/organizations",
+  "seedRole": "leader"
  },
  {
   "id": "contributor",
@@ -323,14 +369,36 @@
   "group": "Impact",
   "boardRoute": "/contributors/[id]",
   "route": "/contributors/[id]",
-  "sampleFrom": "/get-involved/contributors"
+  "sampleFrom": "/get-involved/contributors",
+  "explained": [
+   {
+    "type": "extra-section",
+    "match": "builds logged",
+    "why": "intended",
+    "reason": "The board predates build logging (091); the count of builds sits above the thanks line once a family has marked one done."
+   }
+  ]
  },
  {
   "id": "impact_events",
   "name": "Events",
   "group": "Get involved",
   "boardRoute": "/get-involved/events",
-  "route": "/get-involved/events"
+  "route": "/get-involved/events",
+  "explained": [
+   {
+    "type": "missing-section",
+    "match": "september",
+    "why": "fixture",
+    "reason": "The board hardcodes September and November; seeded events fall in whatever months the run is in."
+   },
+   {
+    "type": "missing-section",
+    "match": "november",
+    "why": "fixture",
+    "reason": "The board hardcodes September and November; seeded events fall in whatever months the run is in."
+   }
+  ]
  },
  {
   "id": "event_detail",
@@ -338,7 +406,8 @@
   "group": "Get involved",
   "boardRoute": "/get-involved/events/[id]",
   "route": "/get-involved/events/[id]",
-  "sampleFrom": "/get-involved/events"
+  "sampleFrom": "/get-involved/events",
+  "seedRole": "leader"
  },
  {
   "id": "event_register",
@@ -349,7 +418,8 @@
   "sampleFrom": "/get-involved/events",
   "derivedFrom": "event_detail",
   "suffix": "/register",
-  "role": "parent"
+  "role": "parent",
+  "seedRole": "leader"
  },
  {
   "id": "recycling",
@@ -394,7 +464,21 @@
   "name": "Deliveries map",
   "group": "Impact",
   "boardRoute": "/impact/map",
-  "route": "/impact/map"
+  "route": "/impact/map",
+  "explained": [
+   {
+    "type": "missing-section",
+    "match": "page height",
+    "why": "intended",
+    "reason": "The board draws its own Not built yet scaffold here; the map is built from story s4 (WB:9958)."
+   },
+   {
+    "type": "missing-section",
+    "match": "no inputs",
+    "why": "intended",
+    "reason": "The board draws its own Not built yet scaffold here; the map is built from story s4 (WB:9958)."
+   }
+  ]
  },
  {
   "id": "about",
@@ -408,7 +492,15 @@
   "name": "Our team",
   "group": "About",
   "boardRoute": "/about/team",
-  "route": "/about/team"
+  "route": "/about/team",
+  "explained": [
+   {
+    "type": "size",
+    "match": "card title size",
+    "why": "pending",
+    "pending": "team-page"
+   }
+  ]
  },
  {
   "id": "contact",
@@ -423,7 +515,15 @@
   "group": "Organisation",
   "boardRoute": "/dashboard/organisation/requests",
   "route": "/dashboard/organisation/requests",
-  "role": "leader"
+  "role": "leader",
+  "explained": [
+   {
+    "type": "copy",
+    "match": "h1 wording",
+    "why": "fixture",
+    "reason": "The board shortens its sample org's name in the heading; live prints the org's full name."
+   }
+  ]
  },
  {
   "id": "my_events",
@@ -577,7 +677,15 @@
   "boardRoute": "/dashboard/toys/[id]",
   "route": "/dashboard/toys/[id]",
   "role": "parent",
-  "sampleFrom": "/dashboard/toys"
+  "sampleFrom": "/dashboard/toys",
+  "explained": [
+   {
+    "type": "extra-section",
+    "match": "also worth a look",
+    "why": "intended",
+    "reason": "Decided 2026-09-30 (toy-holder-picks): the holder chooses automatic or hand-picked; no board draws the chooser."
+   }
+  ]
  },
  {
   "id": "exchanges",
@@ -724,7 +832,15 @@
   "group": "Organisation",
   "boardRoute": "/dashboard/organisation/profile",
   "route": "/dashboard/organisation/profile",
-  "role": "leader"
+  "role": "leader",
+  "explained": [
+   {
+    "type": "extra-section",
+    "match": "thanks from families",
+    "why": "intended",
+    "reason": "Where a leader hides a family's thanks note from the public profile (077); the board draws the notes but not their moderation."
+   }
+  ]
  },
  {
   "id": "org_toys",
@@ -732,7 +848,15 @@
   "group": "Organisation",
   "boardRoute": "/dashboard/organisation/toys",
   "route": "/dashboard/organisation/toys",
-  "role": "leader"
+  "role": "leader",
+  "explained": [
+   {
+    "type": "extra-section",
+    "match": "pickup details",
+    "why": "intended",
+    "reason": "The org's pickup address; no toy request can be accepted without one, and the banner above says so."
+   }
+  ]
  },
  {
   "id": "org_posts",
@@ -764,7 +888,15 @@
   "group": "Organisation",
   "boardRoute": "/dashboard/organisation/orders",
   "route": "/dashboard/organisation/orders",
-  "role": "leader"
+  "role": "leader",
+  "explained": [
+   {
+    "type": "copy",
+    "match": "board paragraphs absent",
+    "why": "fixture",
+    "reason": "The board's sample files, its 'other printers asked' group and a second bench; the card draws each when the data has them."
+   }
+  ]
  },
  {
   "id": "admin_content",
@@ -788,7 +920,8 @@
   "group": "Admin",
   "boardRoute": "/admin/review",
   "route": "/admin/review",
-  "role": "admin"
+  "role": "admin",
+  "sampleFrom": "/admin/review"
  },
  {
   "id": "admin_review_detail",

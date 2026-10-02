@@ -113,4 +113,17 @@ describe('PATCH /api/contributors/me', () => {
     )
     expect(res.status).toBe(400)
   })
+
+  it('takes a four-digit postcode or none, and says what is wrong otherwise', async () => {
+    const patch = (pickup_postcode: string) =>
+      app.request('/api/contributors/me', authed(user.token, { method: 'PATCH', body: JSON.stringify({ pickup_postcode }) }))
+    const bad = await patch('12')
+    expect(bad.status).toBe(400)
+    expect(((await bad.json()) as { error: string }).error).toBe('A postcode is four digits.')
+    expect((await patch('2042')).status).toBe(200)
+    expect((await patch(' 2042')).status).toBe(200)
+    const { data } = await adminClient().from('profiles').select('pickup_postcode').eq('id', user.id).single()
+    expect(data?.pickup_postcode).toBe('2042')
+    expect((await patch('')).status).toBe(200)
+  })
 })

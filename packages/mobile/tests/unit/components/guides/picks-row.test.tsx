@@ -29,7 +29,8 @@ it('renders up to three titles and fires onOpen on press', () => {
   expect(screen.getByText('Big Button Blaster')).toBeTruthy()
   expect(screen.getByText('Rolling Ramp')).toBeTruthy()
   expect(screen.queryByText('Fourth Pick')).toBeNull()
-  expect(screen.getByText("ALSO WORTH A LOOK · SAM'S PICKS")).toBeTruthy()
+  expect(screen.getByText('Also worth a look')).toBeTruthy()
+  expect(screen.getByText('Up to three guides Sam points you at next.')).toBeTruthy()
 
   fireEvent.press(screen.getByText('Switch Car'))
   expect(onOpen).toHaveBeenCalledWith('1')

@@ -18,7 +18,7 @@ beforeEach(() => {
   mockGet.mockImplementation((path: string) => {
     if (path === '/api/contributors/me') return Promise.resolve(profile)
     if (path === '/api/organizations/mine') return Promise.resolve([{ id: 'o1', name: 'Alpha' }])
-    if (path === '/api/notifications/me/unread-counts') return Promise.resolve({ tutorials: 1, exchanges: 2, challenges: 0, total: 3 })
+    if (path === '/api/notifications/me/unread-counts') return Promise.resolve({ tutorials: 1, exchanges: 2, challenges: 0, organisations: 0, total: 3 })
     if (path === '/api/toy-transactions/action-count') return Promise.resolve({ count: 4 })
     return Promise.reject(new Error(path))
   })
@@ -29,7 +29,7 @@ it('assembles capabilities from the four rail endpoints', async () => {
   await waitFor(() => expect(result.current.loading).toBe(false))
   expect(result.current.caps).toEqual({
     profile, isAdmin: false, ledOrgs: [{ id: 'o1', name: 'Alpha' }],
-    unread: { tutorials: 1, exchanges: 2, challenges: 0, total: 3 }, exchangeActions: 4,
+    unread: { tutorials: 1, exchanges: 2, challenges: 0, organisations: 0, total: 3 }, exchangeActions: 4,
   })
 })
 
