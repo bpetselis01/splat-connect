@@ -339,6 +339,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["api"],
     needs: "Deleting a printer removes its test-print photos from storage",
+    shipped: true,
   },
   'message-printer': {
     title: "Message the printer",

@@ -494,13 +494,17 @@ printers.patch('/:id', async (c) => {
  * So the check is any job at all, not only open ones — the FK would refuse the
  * rest anyway, as a 500 with a Postgres message in it, and "close it instead"
  * is the answer in both cases.
+ *
+ * The row's test prints cascade away with it (098); their photos are storage
+ * objects the cascade cannot reach, so they are removed here once the delete
+ * has gone through.
  */
-// PENDING(test-print-photo-cleanup): the row's test prints cascade away, but their photos stay in storage.
 printers.delete('/:id', async (c) => {
   const supabase = createUserClient(c.get('token'))
+  const admin = createAdminClient()
   const id = c.req.param('id')
 
-  const { data: anyJob } = await createAdminClient()
+  const { data: anyJob } = await admin
     .from('toy_transactions')
     .select('id')
     .eq('printer_id', id)
@@ -515,6 +519,7 @@ printers.delete('/:id', async (c) => {
     )
   }
 
+  const { data: photos } = await admin.from('printer_test_prints').select('photo_path').eq('printer_id', id)
   const { data, error } = await supabase
     .from('printers')
     .delete()
@@ -523,6 +528,10 @@ printers.delete('/:id', async (c) => {
     .maybeSingle()
   if (error) return c.json({ error: error.message }, 500)
   if (!data) return c.json({ error: 'No such printer of yours.' }, 404)
+  if (photos?.length) {
+    const { error: removeError } = await admin.storage.from('printer-test-prints').remove(photos.map((p) => p.photo_path))
+    if (removeError) console.error('[printers] test-print photos left in storage:', removeError.message)
+  }
   return c.json({ id: (data as { id: string }).id })
 })
 
