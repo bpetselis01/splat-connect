@@ -1,6 +1,6 @@
 /**
  * The account section's hub — the same shape as app/get-involved/page.tsx and
- * app/learn/page.tsx, for the same reason: a section's landing page lists what
+ * app/learn/(course)/page.tsx, for the same reason: a section's landing page lists what
  * is inside it, with a sentence per destination that a menu never had room for.
  *
  * It is not a duplicate of the rail. The rail says where you can go; this says

@@ -1,14 +1,18 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { render, screen, within, fireEvent } from '@testing-library/react'
 import type { ReactElement } from 'react'
-import Adaptation101 from '@/app/learn/toy-adaptation-101/page'
-import SwitchTypes from '@/app/learn/switch-types/page'
-import ChoosingAToy from '@/app/learn/choosing-a-toy/page'
-import ToolsAndMaterials from '@/app/learn/tools-and-materials/page'
-import SafetyAndCleaning from '@/app/learn/safety-and-cleaning/page'
+import Adaptation101 from '@/app/learn/(course)/toy-adaptation-101/page'
+import SwitchTypes from '@/app/learn/(course)/switch-types/page'
+import ChoosingAToy from '@/app/learn/(course)/choosing-a-toy/page'
+import ToolsAndMaterials from '@/app/learn/(course)/tools-and-materials/page'
+import SafetyAndCleaning from '@/app/learn/(course)/safety-and-cleaning/page'
 // Moved out of Learn on 2026-08-20 when 3D printing became a product pillar.
 // Still a long-form article, so it keeps the shared assertions below.
 import PrintingBasics from '@/app/printing/basics/page'
+
+// Rendered past the gate: components/learn-gate.tsx is tested on its own
+// (tests/unit/app/learn-gate.test.tsx); here it only passes the lesson through.
+vi.mock('@/components/learn-gate', () => ({ LearnGate: ({ children }: { children: React.ReactNode }) => children }))
 
 /**
  * The lesson body, not the page.

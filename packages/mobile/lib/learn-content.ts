@@ -13,7 +13,7 @@ export type LearnArticle = {
 // not reach here — if a web learn page changes, this file drifts and needs a
 // manual re-transcription.
 export const LEARN_ARTICLES: LearnArticle[] = [
-  // Source: packages/web/app/learn/toy-adaptation-101/page.tsx
+  // Source: packages/web/app/learn/(course)/toy-adaptation-101/page.tsx
   // Edits there don't reach here — re-transcribe by hand if that page changes.
   {
     slug: 'toy-adaptation-101',
@@ -61,7 +61,7 @@ export const LEARN_ARTICLES: LearnArticle[] = [
     ],
   },
 
-  // Source: packages/web/app/learn/switch-types/page.tsx
+  // Source: packages/web/app/learn/(course)/switch-types/page.tsx
   // Edits there don't reach here — re-transcribe by hand if that page changes.
   {
     slug: 'switch-types',
@@ -118,7 +118,7 @@ export const LEARN_ARTICLES: LearnArticle[] = [
     ],
   },
 
-  // Source: packages/web/app/learn/choosing-a-toy/page.tsx
+  // Source: packages/web/app/learn/(course)/choosing-a-toy/page.tsx
   // Edits there don't reach here — re-transcribe by hand if that page changes.
   {
     slug: 'choosing-a-toy',
@@ -162,7 +162,7 @@ export const LEARN_ARTICLES: LearnArticle[] = [
     ],
   },
 
-  // Source: packages/web/app/learn/tools-and-materials/page.tsx
+  // Source: packages/web/app/learn/(course)/tools-and-materials/page.tsx
   // Edits there don't reach here — re-transcribe by hand if that page changes.
   {
     slug: 'tools-and-materials',
@@ -219,7 +219,7 @@ export const LEARN_ARTICLES: LearnArticle[] = [
     ],
   },
 
-  // Source: packages/web/app/learn/safety-and-cleaning/page.tsx
+  // Source: packages/web/app/learn/(course)/safety-and-cleaning/page.tsx
   // Edits there don't reach here — re-transcribe by hand if that page changes.
   {
     slug: 'safety-and-cleaning',
