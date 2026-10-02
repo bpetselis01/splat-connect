@@ -3,7 +3,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import type { Tutorial, ToyWithOwner, Organization } from '@splat-connect/types'
+import type { Tutorial, ToyWithOwner, Organization, ImpactSummary } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { useLearnProgress } from '../../lib/learn'
@@ -83,9 +83,6 @@ function DoorCard({
   )
 }
 
-// PENDING(explore-community-stats): the board's "This community so far" stats
-// (guides, toys delivered, contributors, organisations) — GET /api/public/impact
-// already returns them.
 export function ExploreScreen() {
   const router = useRouter()
   const { count } = useLearnProgress()
@@ -98,6 +95,22 @@ export function ExploreScreen() {
   // Bumping this re-runs the fetch — the retry button's handle, same as
   // toy-library-screen's reloadKey.
   const [reloadKey, setReloadKey] = useState(0)
+  // The board's "This community so far". Its own fetch, apart from the three
+  // search sources: a failed count hides the block and nothing else — it is
+  // not something to retry for, so it never raises the error row.
+  const [totals, setTotals] = useState<ImpactSummary['totals'] | null>(null)
+  useEffect(() => {
+    let ignore = false
+    apiClient
+      .get<ImpactSummary>('/api/public/impact')
+      .then((s) => {
+        if (!ignore) setTotals(s.totals)
+      })
+      .catch((err) => console.error('[ExploreScreen] impact fetch failed:', err))
+    return () => {
+      ignore = true
+    }
+  }, [reloadKey])
 
   // Fetched once per reload, not once per keystroke — every source is small
   // enough to load whole and filter client-side as the query changes.
@@ -244,6 +257,25 @@ export function ExploreScreen() {
           icon="information-circle-outline"
           onPress={() => router.push('/explore/about')}
         />
+
+        {totals ? (
+          <View style={styles.stats}>
+            <Text style={styles.eyebrow}>This community so far</Text>
+            <View style={styles.statGrid}>
+              {[
+                { k: 'Guides', v: totals.tutorials },
+                { k: 'Toys delivered', v: totals.toysDelivered },
+                { k: 'Contributors', v: totals.contributors },
+                { k: 'Organisations', v: totals.organisations },
+              ].map((s) => (
+                <View key={s.k} style={styles.stat}>
+                  <Text style={styles.statValue}>{String(s.v)}</Text>
+                  <Text style={styles.statLabel}>{s.k}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        ) : null}
       </ScrollView>
     </Screen>
   )
@@ -323,4 +355,22 @@ const styles = StyleSheet.create({
     color: theme.colors.muted,
     lineHeight: 19,
   },
+  stats: {
+    marginTop: theme.spacing(5),
+    padding: theme.spacing(5),
+    borderRadius: theme.radii.card,
+    borderWidth: theme.border.hairline,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.accentFaint,
+  },
+  statGrid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 14, marginTop: theme.spacing(3) },
+  stat: { width: '50%' },
+  statValue: {
+    fontFamily: theme.fonts.display,
+    fontSize: 26,
+    lineHeight: 30,
+    color: theme.colors.primaryDeep,
+    fontVariant: ['tabular-nums'],
+  },
+  statLabel: { fontFamily: theme.fonts.bold, fontSize: 12, color: theme.colors.muted, marginTop: 3 },
 })

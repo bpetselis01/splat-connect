@@ -384,6 +384,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["mobile"],
     needs: "\"This community so far\" stats (API has them) [ui]",
+    shipped: true,
   },
   'challenge-outcome-tab': {
     title: "Outcome",

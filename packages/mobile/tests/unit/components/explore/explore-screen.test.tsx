@@ -24,6 +24,14 @@ beforeEach(() => {
     if (path === '/api/public/tutorials') return Promise.resolve([{ id: 'g1', title: 'Bubble machine guide' }])
     if (path === '/api/public/toys') return Promise.resolve([{ id: 't1', name: 'Switch car' }])
     if (path === '/api/public/organizations') return Promise.resolve([{ id: 'o1', name: 'TAD Australia' }])
+    if (path === '/api/public/impact')
+      return Promise.resolve({
+        totals: { tutorials: 142, toysShared: 20, toysDelivered: 318, contributors: 57, organisations: 14 },
+        recent: [],
+        contributors: [],
+        organisations: [],
+        deliveriesByMonth: [],
+      })
     return Promise.resolve([])
   })
 })
@@ -31,15 +39,16 @@ beforeEach(() => {
 describe('ExploreScreen', () => {
   it('fetches every source once on mount', async () => {
     render(<ExploreScreen />)
-    await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(3))
+    await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(4))
     expect(mockGet).toHaveBeenCalledWith('/api/public/tutorials')
     expect(mockGet).toHaveBeenCalledWith('/api/public/toys')
     expect(mockGet).toHaveBeenCalledWith('/api/public/organizations')
+    expect(mockGet).toHaveBeenCalledWith('/api/public/impact')
   })
 
   it("renders the board's seven doors with the Learn progress chip, and routes on press", async () => {
     render(<ExploreScreen />)
-    await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(3))
+    await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(4))
     expect(screen.getByText(`2/${LEARN_ARTICLES.length}`)).toBeTruthy()
 
     fireEvent.press(screen.getByLabelText('Learn'))
@@ -64,7 +73,7 @@ describe('ExploreScreen', () => {
 
   it('hides results while the search query is blank', async () => {
     render(<ExploreScreen />)
-    await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(3))
+    await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(4))
     expect(screen.queryByText('Bubble machine guide')).toBeNull()
     expect(screen.queryByText('Switch car')).toBeNull()
     expect(screen.queryByText('TAD Australia')).toBeNull()
@@ -72,7 +81,8 @@ describe('ExploreScreen', () => {
 
   it('filters across guides, toys and organisations as you type, grouped under eyebrows', async () => {
     render(<ExploreScreen />)
-    await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(3))
+    await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(4))
+    await screen.findByText('This community so far')
 
     fireEvent.changeText(screen.getByPlaceholderText('Search guides, toys, organisations'), 'switch')
 
@@ -80,14 +90,15 @@ describe('ExploreScreen', () => {
     expect(screen.getByText('Toys')).toBeTruthy()
     expect(screen.queryByText('Bubble machine guide')).toBeNull()
     expect(screen.queryByText('TAD Australia')).toBeNull()
-    expect(screen.queryByText('Guides')).toBeNull()
-    // "Organisations" is also a door now, so the eyebrow is the one extra.
-    expect(screen.getAllByText('Organisations')).toHaveLength(1)
+    // "Guides" and "Organisations" are also community totals, and
+    // "Organisations" a door, so no eyebrow means only those.
+    expect(screen.getAllByText('Guides')).toHaveLength(1)
+    expect(screen.getAllByText('Organisations')).toHaveLength(2)
   })
 
   it('routes a search result to its detail screen on press', async () => {
     render(<ExploreScreen />)
-    await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(3))
+    await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(4))
 
     fireEvent.changeText(screen.getByPlaceholderText('Search guides, toys, organisations'), 'switch')
     fireEvent.press(await screen.findByLabelText('Switch car'))
@@ -96,7 +107,7 @@ describe('ExploreScreen', () => {
 
   it('clearing the query back to blank hides the results again', async () => {
     render(<ExploreScreen />)
-    await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(3))
+    await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(4))
 
     const field = screen.getByPlaceholderText('Search guides, toys, organisations')
     fireEvent.changeText(field, 'switch')
@@ -114,7 +125,7 @@ describe('ExploreScreen', () => {
       return Promise.resolve([])
     })
     render(<ExploreScreen />)
-    await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(3))
+    await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(4))
     expect(await screen.findByText("Couldn't load everything — try again.")).toBeTruthy()
 
     fireEvent.changeText(screen.getByPlaceholderText('Search guides, toys, organisations'), 'a')
@@ -133,7 +144,7 @@ describe('ExploreScreen', () => {
     })
     render(<ExploreScreen />)
     await screen.findByText("Couldn't load everything — try again.")
-    expect(mockGet).toHaveBeenCalledTimes(3)
+    expect(mockGet).toHaveBeenCalledTimes(4)
 
     mockGet.mockImplementation((path: string) => {
       if (path === '/api/public/tutorials') return Promise.resolve([{ id: 'g1', title: 'Bubble machine guide' }])
@@ -143,7 +154,34 @@ describe('ExploreScreen', () => {
     })
     fireEvent.press(screen.getByRole('button', { name: 'Try again' }))
 
-    await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(6))
+    await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(8))
     expect(screen.queryByText("Couldn't load everything — try again.")).toBeNull()
+  })
+
+  it("shows the community's four totals", async () => {
+    render(<ExploreScreen />)
+    expect(await screen.findByText('This community so far')).toBeTruthy()
+    for (const [value, label] of [
+      ['142', 'Guides'],
+      ['318', 'Toys delivered'],
+      ['57', 'Contributors'],
+    ]) {
+      expect(screen.getByText(value)).toBeTruthy()
+      expect(screen.getByText(label)).toBeTruthy()
+    }
+    // "Organisations" is also a door title above, so it appears twice.
+    expect(screen.getByText('14')).toBeTruthy()
+    expect(screen.getAllByText('Organisations')).toHaveLength(2)
+  })
+
+  it('leaves the totals out, and says nothing, when the impact read fails', async () => {
+    mockGet.mockImplementation((path: string) =>
+      path === '/api/public/impact' ? Promise.reject(new Error('500')) : Promise.resolve([])
+    )
+    render(<ExploreScreen />)
+    await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(4))
+    expect(screen.queryByText('This community so far')).toBeNull()
+    // The search sources succeeded, so the error row stays away too.
+    expect(screen.queryByText(/Couldn.t load everything/)).toBeNull()
   })
 })
