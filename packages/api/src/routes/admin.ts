@@ -10,7 +10,7 @@ import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { ORG_COLUMNS } from './organizations.js'
 import { systemMessage, withPhotoUrl } from './toy-ideas.js'
 import type { AuthVariables } from '../middleware/auth.js'
-import { notificationBody, type TutorialStatus } from '@splat-connect/types'
+import { notificationBody, type AdminCounts, type TutorialStatus } from '@splat-connect/types'
 
 const admin = new Hono<{ Variables: AuthVariables }>()
 
@@ -444,6 +444,39 @@ admin.post('/ideas/:id/graduate', async (c) => {
   return c.json({ tutorial_id: tutorial.id }, 201)
 })
 
+/** How many approved guides one spot-check draws (decision 14). */
+const SPOT_CHECK_SAMPLE = 10
+
+/**
+ * admin-counts: the board's six in one call, as head counts. Spot-check is the
+ * sample's size (what web's card always showed), not a backlog — it never
+ * drains by an admin working through it. A count whose query fails is logged
+ * and reads 0, as /api/me/counts does: one bad table must not take the
+ * dashboard down.
+ */
+admin.get('/counts', async (c) => {
+  const sb = createAdminClient()
+  const head = { count: 'exact', head: true } as const
+  const n = async (label: string, q: PromiseLike<{ count: number | null; error: { message: string } | null }>) => {
+    const { count, error } = await q
+    if (error) {
+      console.error(`[admin/counts] ${label} failed:`, error.message)
+      return 0
+    }
+    return count ?? 0
+  }
+  const [tutorials, reports, ideas, spot, accounts, organisations] = await Promise.all([
+    n('tutorials', sb.from('tutorials').select('id', head).eq('status', 'pending')),
+    n('reports', sb.from('member_reports').select('id', head).neq('status', 'resolved')),
+    n('ideas', sb.from('toy_ideas').select('id', head).eq('status', 'pending')),
+    n('spot-check', sb.from('tutorials').select('id', head).eq('status', 'approved').not('reviewed_by', 'is', null).neq('reviewed_by', c.get('userId'))),
+    n('accounts', sb.from('profiles').select('id', head).neq('role', 'admin')),
+    n('organisations', sb.from('organizations').select('id', head)),
+  ])
+  const counts: AdminCounts = { tutorials, reports, ideas, spotCheck: Math.min(spot, SPOT_CHECK_SAMPLE), accounts, organisations }
+  return c.json(counts)
+})
+
 /**
  * GET /api/admin/spot-check
  *
@@ -453,7 +486,7 @@ admin.post('/ideas/:id/graduate', async (c) => {
  * detection half of a control whose other half is reactive.
  */
 admin.get('/spot-check', async (c) => {
-  const limit = Number(c.req.query('limit') ?? 10)
+  const limit = Number(c.req.query('limit') ?? SPOT_CHECK_SAMPLE)
   const supabase = createAdminClient()
   const { data, error } = await supabase
     .from('tutorials')

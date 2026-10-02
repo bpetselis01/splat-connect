@@ -844,18 +844,6 @@
   "role": "admin",
   "explained": [
    {
-    "type": "missing-section",
-    "match": "board lists cards",
-    "why": "pending",
-    "pending": "admin-counts"
-   },
-   {
-    "type": "missing-section",
-    "match": "board has cards",
-    "why": "pending",
-    "pending": "admin-counts"
-   },
-   {
     "type": "copy",
     "match": "board paragraphs absent",
     "why": "intended",

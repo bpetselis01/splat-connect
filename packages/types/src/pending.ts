@@ -583,6 +583,7 @@ export const PENDING = {
     needs: "Summary/Steps/Safety OK/Flag rows and \"five of six\" [ui]",
   },
   'admin-counts': {
+    shipped: true,
     title: "Admin counts",
     blurb: "Counts for each admin queue are coming to the app.",
     kind: "build",

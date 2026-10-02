@@ -2537,3 +2537,13 @@ export type ReportSubjectKind = (typeof REPORT_SUBJECT_KINDS)[number]
 
 export * from './pending'
 export * from './printing'
+
+/** GET /api/admin/counts (admin-counts): the board's six. */
+export interface AdminCounts {
+  tutorials: number
+  reports: number
+  ideas: number
+  spotCheck: number
+  accounts: number
+  organisations: number
+}

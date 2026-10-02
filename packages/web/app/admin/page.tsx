@@ -20,7 +20,7 @@ import { shortDate } from '@splat-connect/types'
 import type {
   Tutorial,
   AdminAccountsResponse,
-  Organization,
+  AdminCounts,
   ToyIdea,
   OrganizationRequest,
 } from '@splat-connect/types'
@@ -28,11 +28,15 @@ import type {
 type Counted = Array<Record<string, unknown>>
 
 export default async function AdminPage() {
-  const [tutorials, accounts, organizations, spotCheck, ideas, orgRequests] = await Promise.all([
+  const [tutorials, accounts, counts, ideas, orgRequests] = await Promise.all([
     apiClient.get<Tutorial[]>('/api/admin/tutorials?status=pending'),
     apiClient.get<AdminAccountsResponse>('/api/admin/contributors'),
-    apiClient.get<Organization[]>('/api/organizations'),
-    apiClient.get<Tutorial[]>('/api/admin/spot-check'),
+    // admin-counts: the board's six numbers, shared with mobile's Admin. The
+    // lists here and below stay because Recent activity is built from them.
+    // A failed call leaves the cards at 0 rather than taking the page down.
+    apiClient.get<AdminCounts>('/api/admin/counts').catch(
+      (): AdminCounts => ({ tutorials: 0, reports: 0, ideas: 0, spotCheck: 0, accounts: 0, organisations: 0 })
+    ),
     apiClient.get<ToyIdea[]>('/api/admin/ideas'),
     // Degrades to empty rather than taking the dashboard down: an admin who
     // came here to answer a report does not care that one count is missing.
@@ -52,12 +56,8 @@ export default async function AdminPage() {
     apiClient.get<Counted>('/api/admin/test-prints').catch(() => [] as Counted),
   ])
 
-  const pendingTutorials = tutorials.length
-  const totalContributors = accounts.total
-  const pendingIdeas = ideas.filter((i) => i.status === 'pending').length
   const pendingOrgRequests = orgRequests.filter((r) => r.status === 'pending').length
 
-  const pendingReports = memberReports.filter((r) => r.status !== 'resolved').length
   const stalledPrints = printJobs.filter((j) => j.stalled).length
   const nudgeBuilds = buildRequests.filter((b) => b.unclaimed_too_long || b.claimed_and_silent).length
 
@@ -74,7 +74,7 @@ export default async function AdminPage() {
     },
     {
       label: 'Tutorials awaiting review',
-      count: pendingTutorials,
+      count: counts.tutorials,
       href: '/admin/review' as const,
       icon: ClipboardText,
       tint: 'var(--tamber)',
@@ -82,16 +82,16 @@ export default async function AdminPage() {
     },
     {
       label: 'Reports from members',
-      count: pendingReports,
+      count: counts.reports,
       href: '/admin/reports' as const,
       icon: Flag,
       tint: 'var(--tcoral)',
-      numColor: pendingReports ? 'var(--bad)' : undefined,
+      numColor: counts.reports ? 'var(--bad)' : undefined,
       hint: 'Private problem reports — safety first, then oldest',
     },
     {
       label: 'Design challenges awaiting review',
-      count: pendingIdeas,
+      count: counts.ideas,
       href: '/admin/ideas' as const,
       icon: Lightbulb,
       tint: 'var(--tviolet)',
@@ -99,7 +99,7 @@ export default async function AdminPage() {
     },
     {
       label: 'Spot-check',
-      count: spotCheck.length,
+      count: counts.spotCheck,
       href: '/admin/spot-check' as const,
       icon: MagnifyingGlass,
       tint: 'var(--b100)',
@@ -141,7 +141,7 @@ export default async function AdminPage() {
     },
     {
       label: 'Accounts',
-      count: totalContributors,
+      count: counts.accounts,
       href: '/admin/contributors' as const,
       icon: UsersThree,
       tint: 'var(--tmint)',
@@ -149,7 +149,7 @@ export default async function AdminPage() {
     },
     {
       label: 'Organisations',
-      count: organizations.length,
+      count: counts.organisations,
       href: '/admin/organizations' as const,
       icon: Buildings,
       tint: 'var(--tcoral)',
