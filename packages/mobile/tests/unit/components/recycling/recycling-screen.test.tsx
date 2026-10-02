@@ -128,3 +128,32 @@ it('uploads the photo of the sorted plastic and books with its path', async () =
     )
   )
 })
+
+it('holds the Book button while the photo uploads, so the booking never goes without it', async () => {
+  let finish: (v: { path: string; url: string }) => void = () => {}
+  mockUpload.mockReturnValue(new Promise((r) => (finish = r)))
+  render(<RecyclingScreen />)
+  fireEvent.press(await screen.findByLabelText('Book a drop-off at Northside Therapy'))
+  fireEvent.changeText(screen.getByLabelText('How much, roughly, in kilograms'), '2.5')
+  for (const line of RECYCLING_DECLARATION) fireEvent.press(screen.getByLabelText(line))
+  fireEvent.press(screen.getByLabelText('Photo of the sorted plastic'))
+  await waitFor(() => expect(mockUpload).toHaveBeenCalled())
+  expect(screen.getByLabelText('Book the drop-off').props.accessibilityState.disabled).toBe(true)
+  fireEvent.press(screen.getByLabelText('Photo of the sorted plastic'))
+  expect(mockUpload).toHaveBeenCalledTimes(1)
+  finish({ path: 'me/a.jpg', url: 'https://signed' })
+  await waitFor(() =>
+    expect(screen.getByLabelText('Book the drop-off').props.accessibilityState.disabled).toBe(false)
+  )
+})
+
+it('says so when the photo upload fails, and clears it on a successful retry', async () => {
+  mockUpload.mockRejectedValueOnce(new Error('boom')).mockResolvedValueOnce({ path: 'me/a.jpg', url: 'https://signed' })
+  render(<RecyclingScreen />)
+  fireEvent.press(await screen.findByLabelText('Book a drop-off at Northside Therapy'))
+  fireEvent.press(screen.getByLabelText('Photo of the sorted plastic'))
+  expect(await screen.findByText('Could not upload the photo. Please try again.')).toBeTruthy()
+  fireEvent.press(screen.getByLabelText('Photo of the sorted plastic'))
+  await waitFor(() => expect(screen.queryByText('Could not upload the photo. Please try again.')).toBeNull())
+  expect(mockUpload).toHaveBeenCalledTimes(2)
+})

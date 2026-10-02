@@ -307,6 +307,7 @@ function BookDropoff({
   const [ticked, setTicked] = useState<string[]>([])
   const [note, setNote] = useState('')
   const [photo, setPhoto] = useState<{ path: string; uri: string } | null>(null)
+  const [uploading, setUploading] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -317,11 +318,14 @@ function BookDropoff({
     setTicked((t) => (t.includes(line) ? t.filter((l) => l !== line) : [...t, line]))
 
   async function addPhoto() {
+    if (uploading) return
+    setError(null)
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
     if (!permission.granted) return setError('Photo library access is needed to choose a photo.')
     const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ['images'] })
     const asset = result.canceled ? null : result.assets?.[0]
     if (!asset) return
+    setUploading(true)
     try {
       const { path } = await uploadFile(
         '/api/upload/recycling-photo',
@@ -332,6 +336,8 @@ function BookDropoff({
       if (path) setPhoto({ path, uri: asset.uri })
     } catch {
       setError('Could not upload the photo. Please try again.')
+    } finally {
+      setUploading(false)
     }
   }
 
@@ -448,9 +454,13 @@ function BookDropoff({
             onPress={addPhoto}
             accessibilityRole="button"
             accessibilityLabel="Photo of the sorted plastic"
+            accessibilityState={{ busy: uploading }}
+            disabled={uploading}
             style={styles.photoSlot}
           >
-            {photo ? (
+            {uploading ? (
+              <Text style={styles.label}>Uploading…</Text>
+            ) : photo ? (
               <Image source={{ uri: photo.uri }} style={styles.photoFill} accessibilityIgnoresInvertColors />
             ) : (
               <>
@@ -485,7 +495,7 @@ function BookDropoff({
         </View>
 
         <ErrorRow message={error} />
-        <Button label="Book the drop-off" onPress={submit} disabled={!!problem} loading={busy} />
+        <Button label="Book the drop-off" onPress={submit} disabled={!!problem || uploading} loading={busy} />
         <Text style={[styles.help, styles.centerText]}>
           {problem ?? 'Booking tells them to expect you. No credit exists until they weigh it.'}
         </Text>
