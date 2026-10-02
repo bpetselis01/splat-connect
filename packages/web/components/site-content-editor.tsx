@@ -7,9 +7,10 @@
  *
  * - **Home page** and **About pages** are copy. They live in site_content (065)
  *   and this edits them.
- * - **Learn course** is nineteen lesson pages of prose, diagrams and
- *   checkpoints. Their ORDER is content; their bodies are not, and an editor
- *   that pretended otherwise would be a worse text editor than a file.
+ * - **Learn course** is the outline — course title, "Shown as", the outcome,
+ *   unit names and order, each lesson's title, length and kind
+ *   (components/learn-course-editor.tsx). The lesson bodies stay pages in
+ *   code, so units and lessons cannot be added here.
  * - **Legal** is the four documents, and their bodies stay in files on purpose.
  *   What is editable here is the thing that actually changes and has to be
  *   recorded: the version and the effective date. The artboard is explicit that
@@ -36,8 +37,15 @@ import {
 import { browserApiClient } from '@/lib/browser-api-client'
 import { ProfileTabs } from '@/components/profile-tabs'
 import { SCENES } from '@/components/scroll-world'
+import { LearnCourseEditor, type LearnCourseVersion } from '@/components/learn-course-editor'
+import type { LearnCourse } from '@splat-connect/types'
 
-export type ContentRow = { key: string; value: Record<string, unknown>; updated_at: string }
+export type ContentRow = {
+  key: string
+  value: Record<string, unknown>
+  updated_at: string
+  updated_by_name?: string | null
+}
 
 type Hero = {
   eyebrow: string
@@ -88,7 +96,15 @@ const EMPTY_HERO: Hero = {
   secondary_label: '',
 }
 
-export function SiteContentEditor({ rows }: { rows: ContentRow[] }) {
+export function SiteContentEditor({
+  rows,
+  learnCourse,
+  learnVersion,
+}: {
+  rows: ContentRow[]
+  learnCourse: LearnCourse
+  learnVersion: LearnCourseVersion
+}) {
   const router = useRouter()
   const byKey = new Map(rows.map((r) => [r.key, r.value]))
 
@@ -355,21 +371,7 @@ export function SiteContentEditor({ rows }: { rows: ContentRow[] }) {
               key: 'learn',
               label: 'Learn course',
               icon: <GraduationCap size={18} weight="duotone" aria-hidden="true" />,
-              content: (
-                <section className={SECTION}>
-                  <h2 className={SECTION_H}>The course</h2>
-                  <p className="text-sm leading-relaxed text-muted">
-                    The course outline lives in <code>lib/learn-course.ts</code>, which is what
-                    both the{' '}
-                    <Link href="/learn" className="font-semibold text-brand-dark hover:underline">
-                      course home
-                    </Link>{' '}
-                    and every lesson&apos;s sidebar read. The ORDER is content and belongs here
-                    eventually; the nineteen lesson bodies are prose, diagrams and checkpoints, and
-                    an editor for those would be a worse text editor than a file.
-                  </p>
-                </section>
-              ),
+              content: <LearnCourseEditor course={learnCourse} version={learnVersion} />,
             },
             {
               key: 'legal',

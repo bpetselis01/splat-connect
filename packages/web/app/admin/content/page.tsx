@@ -5,16 +5,18 @@
  * These four sections are SPLAT's own.
  */
 import { apiClient } from '@/lib/api-client'
+import { mergeLearnCourse } from '@splat-connect/types'
 import { SiteContentEditor, type ContentRow } from '@/components/site-content-editor'
 
 export const metadata = { title: 'Site content — SPLAT Connect' }
 
-// PENDING(site-content-learn-legal-editing): Learn and Legal stay read-only here —
-// editing a legal document can force every contributor to accept it again.
+// Legal stays code-only, never editable from an admin account (decided
+// 2026-09-30): a legal edit can force every contributor to accept again.
 export default async function AdminContentPage() {
   const rows = await apiClient
     .get<ContentRow[]>('/api/admin/content')
     .catch(() => [] as ContentRow[])
+  const learn = rows.find((r) => r.key === 'learn-course')
 
   return (
     <div className="max-w-[1000px]">
@@ -23,7 +25,11 @@ export default async function AdminContentPage() {
         The pages with no other owner. Guides, toys, events and stories are written by the people
         who made them — these four are ours.
       </p>
-      <SiteContentEditor rows={rows} />
+      <SiteContentEditor
+        rows={rows}
+        learnCourse={mergeLearnCourse(learn?.value ?? null)}
+        learnVersion={learn ? { updated_at: learn.updated_at, updated_by_name: learn.updated_by_name ?? null } : null}
+      />
     </div>
   )
 }

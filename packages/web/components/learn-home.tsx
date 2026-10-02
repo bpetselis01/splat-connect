@@ -29,14 +29,14 @@ import {
 } from '@phosphor-icons/react/dist/ssr'
 import { SplatMascot } from '@/components/splat-mascot'
 import { useLearnProgress } from '@/lib/learn-progress'
-import { UNITS, LESSONS, COURSE_HOURS, type LessonKind } from '@/lib/learn-course'
+import { learnLessons, courseHours, LESSON_KIND_LABEL, type LessonKind } from '@splat-connect/types'
+import { useLearnCourse } from '@/components/learn-course-context'
 
 const KIND_ICON: Record<LessonKind, typeof BookOpen> = {
   read: BookOpen,
   build: Wrench,
   quiz: SealCheck,
 }
-const KIND_LABEL: Record<LessonKind, string> = { read: 'Read', build: 'Build', quiz: 'Checkpoint' }
 // Each kind keeps one colour everywhere it appears: the legend, and every row.
 const KIND_COLOR: Record<LessonKind, string> = {
   read: 'var(--b600)',
@@ -72,6 +72,12 @@ const OUTCOMES = [
 ]
 
 export function LearnHome() {
+  // The outline an admin saved over the code's (site-content-learn-legal-editing).
+  // Same names as the module constants these replaced, so the body is unchanged.
+  const course = useLearnCourse()
+  const UNITS = course.units
+  const LESSONS = learnLessons(course)
+  const COURSE_HOURS = courseHours(course)
   const { ready, done } = useLearnProgress()
   const finished = LESSONS.filter((l) => done[l.slug]).length
   const next = LESSONS.find((l) => !done[l.slug])
@@ -98,16 +104,20 @@ export function LearnHome() {
           <div className="min-w-0">
             <p className="eyebrow text-muted">Learn · A free course</p>
             <h1 className="learn-hero__title">
-              Switch adapting toys, from first switch to handover.
+              {course.title ?? 'Switch adapting toys, from first switch to handover.'}
             </h1>
             <p className="mt-4 max-w-[54ch] text-lg leading-[1.6] text-muted [text-wrap:pretty]">
-              Six short units. You will learn what a switch does, set up a bench without wasting
-              money, master the one soldering job every adaptation needs, then adapt three real toys
-              and build a switch of your own. For instructions on one particular toy, head to the{' '}
-              <Link href="/library" className="text-brand-deep hover:underline">
-                Guides
-              </Link>
-              .
+              {course.outcome ?? (
+                <>
+                  Six short units. You will learn what a switch does, set up a bench without wasting
+                  money, master the one soldering job every adaptation needs, then adapt three real toys
+                  and build a switch of your own. For instructions on one particular toy, head to the{' '}
+                  <Link href="/library" className="text-brand-deep hover:underline">
+                    Guides
+                  </Link>
+                  .
+                </>
+              )}
             </p>
 
             <ul className="mt-5 flex list-none flex-wrap gap-2 p-0">
@@ -244,7 +254,7 @@ export function LearnHome() {
             return (
               <span key={k} className="inline-flex items-center gap-1.5">
                 <Icon weight="bold" style={{ color: KIND_COLOR[k] }} aria-hidden="true" />
-                {KIND_LABEL[k]}
+                {LESSON_KIND_LABEL[k]}
               </span>
             )
           })}
@@ -329,7 +339,7 @@ export function LearnHome() {
                           <span className="min-w-0">
                             <span className="block text-base font-extrabold">{l.title}</span>
                             <span className="mt-px block text-[13px] text-muted">
-                              {KIND_LABEL[l.kind]} · {l.minutes} min
+                              {LESSON_KIND_LABEL[l.kind]} · {l.minutes} min
                             </span>
                           </span>
                           {/* No placeholder when absent, as on the board: the

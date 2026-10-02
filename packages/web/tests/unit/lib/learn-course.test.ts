@@ -2,7 +2,15 @@ import { describe, it, expect } from 'vitest'
 import { readdirSync, existsSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { UNITS, LESSONS, lessonBySlug, unitOf, nextAfter, COURSE_HOURS } from '@/lib/learn-course'
+import { LEARN_COURSE, learnLessons, courseHours, lessonBySlug as bySlug, unitOf as unitIn, nextAfter as after } from '@splat-connect/types'
+
+// The code default — what every page shows until an admin saves an outline.
+const UNITS = LEARN_COURSE.units
+const LESSONS = learnLessons(LEARN_COURSE)
+const COURSE_HOURS = courseHours(LEARN_COURSE)
+const lessonBySlug = (slug: string) => bySlug(LEARN_COURSE, slug)
+const unitOf = (slug: string) => unitIn(LEARN_COURSE, slug)
+const nextAfter = (slug: string) => after(LEARN_COURSE, slug)
 import content from '@/lib/learn-content.json'
 
 const appLearn = join(dirname(fileURLToPath(import.meta.url)), '../../../app/learn')

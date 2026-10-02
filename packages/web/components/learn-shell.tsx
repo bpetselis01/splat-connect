@@ -10,7 +10,7 @@
  *
  * The shell owns the lesson's header (crumb, title, lede) as the board does, so
  * every page passes only its body. The lede is the lesson's blurb from
- * lib/learn-course.ts — the same sentence the course home lists it with.
+ * @splat-connect/types learn-course — the same sentence the course home lists it with.
  *
  * Finishing is the primary button — "Done — next: …" — rather than something
  * inferred from scrolling. Scroll-depth would mark a lesson finished for
@@ -19,7 +19,8 @@
  * so on those the button waits until every question is answered.
  *
  * Related files:
- * - lib/learn-course.ts: the outline
+ * - @splat-connect/types learn-course: the outline (an admin's saved one,
+ *   through components/learn-course-context.tsx)
  * - lib/learn-progress.ts: where "done" is kept, and why it is per-device
  */
 import { useState } from 'react'
@@ -36,7 +37,8 @@ import {
   SealCheck,
 } from '@phosphor-icons/react/dist/ssr'
 import { useLearnProgress } from '@/lib/learn-progress'
-import { UNITS, LESSONS, lessonBySlug, unitOf, nextAfter, type LessonKind } from '@/lib/learn-course'
+import { learnLessons, lessonBySlug, unitOf, nextAfter, type LessonKind } from '@splat-connect/types'
+import { useLearnCourse } from '@/components/learn-course-context'
 
 const KIND_ICON: Record<LessonKind, typeof BookOpen> = {
   read: BookOpen,
@@ -55,9 +57,12 @@ export function LearnShell({
   children: React.ReactNode
 }) {
   const { ready, done, answers, markDone } = useLearnProgress()
-  const lesson = lessonBySlug(slug)
-  const unit = unitOf(slug)
-  const next = nextAfter(slug)
+  const course = useLearnCourse()
+  const UNITS = course.units
+  const LESSONS = learnLessons(course)
+  const lesson = lessonBySlug(course, slug)
+  const unit = unitOf(course, slug)
+  const next = nextAfter(course, slug)
   const idx = LESSONS.findIndex((l) => l.slug === slug)
   const prev = idx > 0 ? LESSONS[idx - 1] : undefined
 
@@ -149,7 +154,7 @@ export function LearnShell({
                       <li key={l.slug}>
                         <Link
                           // Cast, because typedRoutes cannot narrow a slug that
-                          // comes from a data table. lib/learn-course.ts is the
+                          // comes from a data table. @splat-connect/types learn-course is the
                           // only source of these and every one has a page.
                           href={`/learn/${l.slug}` as Route}
                           aria-current={here ? 'page' : undefined}
