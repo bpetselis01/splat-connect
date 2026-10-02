@@ -1,10 +1,11 @@
 // The rules both recycling screens lean on, pulled out so they can be tested
 // without rendering. Every one mirrors the API (packages/api/src/routes/
-// organizations.ts, "the recycling") or web (components/dropoff-form.tsx,
-// components/recycling-intake.tsx) — a client that disagrees with either books
-// a drop the server refuses or offers a button that 400s.
+// organizations.ts, "the recycling") or web (components/dropoff-form.tsx) — a
+// client that disagrees with either books a drop the server refuses or offers
+// a button that 400s. The intake rule itself is intakeCredit in
+// @splat-connect/types, shared with web.
 import type { DropoffStatus, Organization, RecyclingDropoff } from '@splat-connect/types'
-import { kgToGrams, MIN_DROPOFF_GRAMS, RECYCLING_DECLARATION } from '@splat-connect/types'
+import { MIN_DROPOFF_GRAMS, RECYCLING_DECLARATION } from '@splat-connect/types'
 
 export type TakerOrg = Pick<Organization, 'id' | 'name' | 'status' | 'suburb' | 'state'> & {
   recycling_materials?: string[]
@@ -37,23 +38,6 @@ export function bookingProblem(input: { grams: number | null; material: string; 
   const left = RECYCLING_DECLARATION.length - input.ticked
   if (left > 0) return `${left} declaration line${left === 1 ? '' : 's'} still to tick.`
   return null
-}
-
-/**
- * The intake row's two boxes, checked the way the API checks them: whole
- * grams, not negative, and no yield turns two kilos into three. Returns the
- * grams to send, or the sentence to show.
- */
-export function intakeProblem(
-  weighed: string,
-  credit: string
-): { ok: true; weighed_grams: number; credit_grams: number } | { ok: false; message: string } {
-  const w = kgToGrams(weighed)
-  const c = kgToGrams(credit)
-  if (w === null) return { ok: false, message: 'Enter what it weighed, in kilos.' }
-  if (c === null) return { ok: false, message: 'Enter the credit, in kilos.' }
-  if (c > w) return { ok: false, message: 'Credit cannot be more than what was weighed.' }
-  return { ok: true, weighed_grams: w, credit_grams: c }
 }
 
 /**

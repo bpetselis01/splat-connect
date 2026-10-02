@@ -4,11 +4,11 @@
  * dashboard/organisation/recycling: the booked queue first (somebody is at the
  * door), then what the machines take.
  *
- * Credit is minted here, by weighing, and never by the contributor. Where the
- * board computes the credit from the weight, this row asks for both numbers, as
- * web does: the yield is the leader's to apply, and "about three quarters" is a
- * hint beside the box rather than a constant in a ledger. The API refuses a
- * credit larger than the weight; intakeProblem refuses it first.
+ * Credit is minted here, by weighing, and never by the contributor. One
+ * weight box; the credit box is prefilled at about three quarters and is the
+ * leader's to change (decided 2026-09-30). intakeCredit (@splat-connect/types)
+ * is the rule, shared with web; the API repeats the two-kilo floor and the
+ * credit-within-weight limit.
  *
  * "What you can take" edits only the two fields that have columns (059's
  * recycling_materials and recycling_note). The board's machines, forms, min,
@@ -21,11 +21,11 @@ import { useCallback, useState } from 'react'
 import { View, Text, ScrollView, TextInput, Image, StyleSheet } from 'react-native'
 import { useFocusEffect } from 'expo-router'
 import type { Organization, RecyclingDropoff } from '@splat-connect/types'
-import { PRINT_MATERIALS, estimatedCreditGrams, apiMessage, initials, kgToGrams } from '@splat-connect/types'
+import { PRINT_MATERIALS, apiMessage, initials, intakeCredit, weighedInLine } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { useCapabilities } from '../../lib/capabilities'
 import { theme } from '../../lib/theme'
-import { DROPOFF_PILL, canDecide, intakeProblem, kg } from '../../lib/recycling'
+import { DROPOFF_PILL, canDecide, kg } from '../../lib/recycling'
 import { Screen } from '../ui/Screen'
 import { Card } from '../ui/Card'
 import { Badge } from '../ui/Badge'
@@ -35,11 +35,11 @@ import { TextField } from '../ui/TextField'
 import { EmptyState } from '../ui/EmptyState'
 import { SkeletonRow } from '../ui/Skeleton'
 import { ErrorRow } from '../ui/ErrorRow'
+import { FlashLine, useFlash } from '../ui/Flash'
 
 const TINTS = [theme.colors.honeySoft, theme.colors.violetSoft, theme.colors.mintSoft, theme.colors.accentLight]
 const date = (iso: string) => new Date(iso).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })
 
-// PENDING(recycling-intake-credit-rule): the board works the credit out from the weight; this screen asks for both, as web does.
 export function IntakeScreen() {
   const { caps, loading: capsLoading } = useCapabilities()
   const orgId = caps?.ledOrgs[0]?.id
@@ -48,6 +48,7 @@ export function IntakeScreen() {
   const [names, setNames] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
+  const [flash, setFlash] = useFlash()
 
   const load = useCallback(async () => {
     if (!orgId) return
@@ -113,6 +114,7 @@ export function IntakeScreen() {
           Weigh what turns up and the credit is issued against that number. A contributor cannot
           issue their own — this screen is the only place it is minted.
         </Text>
+        <FlashLine message={flash} />
 
         {loading ? (
           <View>
@@ -137,7 +139,10 @@ export function IntakeScreen() {
                   dropoff={d}
                   name={nameOf(d)}
                   tint={TINTS[i % TINTS.length]}
-                  onDone={load}
+                  onDone={(line) => {
+                    if (line) setFlash(line)
+                    load()
+                  }}
                 />
               ))
             )}
@@ -185,20 +190,30 @@ function Avatar({ name, tint }: { name: string; tint: string }) {
   )
 }
 
-function KgBox({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+function NumberBox({
+  label,
+  unit,
+  value,
+  onChange,
+}: {
+  label: string
+  unit: 'kg' | 'g'
+  value: string
+  onChange: (v: string) => void
+}) {
   return (
     <View style={styles.kgBox}>
       <Text style={styles.kgLabel}>{label}</Text>
       <TextInput
         value={value}
         onChangeText={onChange}
-        placeholder="0.0"
+        placeholder={unit === 'kg' ? '0.0' : '0'}
         placeholderTextColor={theme.colors.muted}
-        keyboardType="decimal-pad"
-        accessibilityLabel={`${label}, in kilograms`}
+        keyboardType={unit === 'kg' ? 'decimal-pad' : 'number-pad'}
+        accessibilityLabel={`${label}, in ${unit === 'kg' ? 'kilograms' : 'grams'}`}
         style={styles.kgInput}
       />
-      <Text style={styles.kgLabel}>kg</Text>
+      <Text style={styles.kgLabel}>{unit}</Text>
     </View>
   )
 }
@@ -214,19 +229,20 @@ function BookedRow({
   dropoff: RecyclingDropoff
   name: string
   tint: string
-  onDone: () => void
+  onDone: (line?: string) => void
 }) {
   const [weighed, setWeighed] = useState('')
-  const [credit, setCredit] = useState('')
+  // null until the leader types in the credit box: until then it follows the weight.
+  const [credit, setCredit] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const check = intakeProblem(weighed, credit)
-  const weighedGrams = kgToGrams(weighed)
+  const check = intakeCredit(weighed, credit)
+  const shownCredit = credit ?? (check.ok ? String(check.credit_grams) : '')
 
   async function decide(status: 'received' | 'declined') {
     if (status === 'received' && !check.ok) {
-      setError(check.message)
+      setError(check.line)
       return
     }
     setBusy(true)
@@ -238,7 +254,7 @@ function BookedRow({
           ? { weighed_grams: check.weighed_grams, credit_grams: check.credit_grams }
           : {}),
       })
-      onDone()
+      onDone(status === 'received' && check.ok ? weighedInLine(check.weighed_grams, check.credit_grams, name) : undefined)
     } catch (err) {
       setError(apiMessage(err, 'That did not save. Check your connection and try again.'))
       setBusy(false)
@@ -265,14 +281,10 @@ function BookedRow({
         />
       ) : null}
       <View style={styles.kgRow}>
-        <KgBox label="Actual" value={weighed} onChange={setWeighed} />
-        <KgBox label="Credit" value={credit} onChange={setCredit} />
+        <NumberBox label="Actual" unit="kg" value={weighed} onChange={setWeighed} />
+        <NumberBox label="Credit" unit="g" value={shownCredit} onChange={setCredit} />
       </View>
-      <Text style={styles.meta}>
-        {weighedGrams
-          ? `About ${estimatedCreditGrams(weighedGrams).toLocaleString('en-AU')} g is typical — the credit is the number you decide.`
-          : 'Weigh it to see the typical credit.'}
-      </Text>
+      <Text style={styles.meta}>{check.line}</Text>
       <ErrorRow message={error} />
       <View style={styles.actions}>
         <Button

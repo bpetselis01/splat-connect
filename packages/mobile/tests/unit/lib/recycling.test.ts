@@ -5,7 +5,6 @@ import {
   bookingProblem,
   canDecide,
   diverted,
-  intakeProblem,
   takers,
 } from '../../../lib/recycling'
 
@@ -44,21 +43,6 @@ describe('bookingProblem', () => {
     expect(bookingProblem({ grams: 2000, material: 'PLA', ticked: all - 1 })).toBe('1 declaration line still to tick.')
     expect(bookingProblem({ grams: 2000, material: 'PLA', ticked: 0 })).toBe('7 declaration lines still to tick.')
     expect(bookingProblem({ grams: 2000, material: 'PLA', ticked: all })).toBeNull()
-  })
-})
-
-describe('intakeProblem', () => {
-  it('refuses a credit larger than the weight', () => {
-    expect(intakeProblem('2', '2.5')).toEqual({ ok: false, message: 'Credit cannot be more than what was weighed.' })
-  })
-  it('accepts credit equal to or under the weight, in grams', () => {
-    expect(intakeProblem('2.6', '1.95')).toEqual({ ok: true, weighed_grams: 2600, credit_grams: 1950 })
-    expect(intakeProblem('2', '2')).toEqual({ ok: true, weighed_grams: 2000, credit_grams: 2000 })
-    expect(intakeProblem('2', '0')).toEqual({ ok: true, weighed_grams: 2000, credit_grams: 0 })
-  })
-  it('asks for whichever box is missing', () => {
-    expect(intakeProblem('', '1')).toMatchObject({ ok: false, message: expect.stringMatching(/weighed/) })
-    expect(intakeProblem('2', '')).toMatchObject({ ok: false, message: expect.stringMatching(/credit/) })
   })
 })
 

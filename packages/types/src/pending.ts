@@ -719,6 +719,7 @@ export const PENDING = {
     needs: "Decided 2026-09-30: credit is spent only at the organisation that issued it, deducted when that organisation's printer accepts the job. Grams, never money. Future: consider pooling credit across organisations.",
   },
   'recycling-intake-credit-rule': {
+    shipped: true,
     title: "Credit from weight",
     blurb: "Working out credit from the weight is coming.",
     kind: "build",

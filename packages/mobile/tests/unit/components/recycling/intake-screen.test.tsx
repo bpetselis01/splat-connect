@@ -64,25 +64,45 @@ it('tells a non-leader the screen is not theirs', () => {
   expect(mockGet).not.toHaveBeenCalled()
 })
 
-it('weighs and credits in grams, and holds the button while credit exceeds the weight', async () => {
+it('prefills the credit from the weight, sends what the box holds, and says so', async () => {
   route([drop({})])
   render(<IntakeScreen />)
   expect(await screen.findByText('Tom Beattie')).toBeTruthy()
+  expect(screen.getByText('Weigh it to see the credit')).toBeTruthy()
 
-  fireEvent.changeText(screen.getByLabelText('Actual, in kilograms'), '2')
-  fireEvent.changeText(screen.getByLabelText('Credit, in kilograms'), '2.5')
-  const confirm = screen.getByLabelText("Weigh and credit Tom Beattie's drop-off")
-  expect(confirm.props.accessibilityState.disabled).toBe(true)
+  fireEvent.changeText(screen.getByLabelText('Actual, in kilograms'), '2.6')
+  expect(screen.getByLabelText('Credit, in grams').props.value).toBe('1950')
+  expect(screen.getByText('1950 g credit')).toBeTruthy()
 
-  fireEvent.changeText(screen.getByLabelText('Credit, in kilograms'), '1.5')
-  fireEvent.press(confirm)
+  fireEvent.press(screen.getByLabelText("Weigh and credit Tom Beattie's drop-off"))
   await waitFor(() =>
     expect(mockPatch).toHaveBeenCalledWith('/api/organizations/org1/recycling/d1', {
       status: 'received',
-      weighed_grams: 2000,
-      credit_grams: 1500,
+      weighed_grams: 2600,
+      credit_grams: 1950,
     })
   )
+  expect(await screen.findByText('Weighed at 2.6 kg — 1950 g credit issued to Tom Beattie')).toBeTruthy()
+})
+
+it('keeps an edited credit when the weight changes, and holds the button above the weight', async () => {
+  route([drop({})])
+  render(<IntakeScreen />)
+  await screen.findByText('Tom Beattie')
+  fireEvent.changeText(screen.getByLabelText('Actual, in kilograms'), '3')
+  fireEvent.changeText(screen.getByLabelText('Credit, in grams'), '2000')
+  fireEvent.changeText(screen.getByLabelText('Actual, in kilograms'), '4')
+  expect(screen.getByLabelText('Credit, in grams').props.value).toBe('2000')
+
+  fireEvent.changeText(screen.getByLabelText('Actual, in kilograms'), '1.8')
+  expect(screen.getByText('Under the 2 kg minimum — log it as a donation or hand it back')).toBeTruthy()
+  const confirm = screen.getByLabelText("Weigh and credit Tom Beattie's drop-off")
+  expect(confirm.props.accessibilityState.disabled).toBe(true)
+
+  fireEvent.changeText(screen.getByLabelText('Actual, in kilograms'), '2')
+  fireEvent.changeText(screen.getByLabelText('Credit, in grams'), '2500')
+  expect(screen.getByText('Credit cannot be more than what was weighed.')).toBeTruthy()
+  expect(confirm.props.accessibilityState.disabled).toBe(true)
 })
 
 it('turns one away without sending any grams', async () => {

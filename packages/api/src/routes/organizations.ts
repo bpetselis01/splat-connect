@@ -1567,9 +1567,9 @@ organizations.post('/:id/recycling', async (c) => {
  * PATCH /api/organizations/:orgId/recycling/:id
  *
  * Weighing it in. `weighed_grams` is what came through the door and
- * `credit_grams` is what it is worth as filament — both the leader's, and the
- * yield between them is theirs to apply rather than a constant here. About
- * three quarters is typical, and "typical" is not a number to put in a ledger.
+ * `credit_grams` is what it is worth as filament — both the leader's: the
+ * screens prefill the credit at about three quarters (intakeCredit) and send
+ * whatever the leader leaves in the box. Nothing under two kilos is credited.
  */
 organizations.patch('/:orgId/recycling/:id', async (c) => {
   const supabase = createUserClient(c.get('token'))
@@ -1598,6 +1598,11 @@ organizations.patch('/:orgId/recycling/:id', async (c) => {
     // No yield turns two kilos of milk bottles into three kilos of filament.
     if ((credit as number) > (weighed as number)) {
       return c.json({ error: 'Credit cannot be more than what was weighed.' }, 400)
+    }
+    // The board's floor at the door, as at booking: under two kilos is not a
+    // drop-off to credit. A client that skips the screen's rule meets it here.
+    if ((weighed as number) < MIN_DROPOFF_GRAMS) {
+      return c.json({ error: 'Under the 2 kg minimum — log it as a donation or hand it back.' }, 400)
     }
     patch.weighed_grams = weighed
     patch.credit_grams = credit

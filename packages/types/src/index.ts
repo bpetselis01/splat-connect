@@ -1512,6 +1512,33 @@ export function estimatedCreditGrams(grams: number): number {
   return Math.floor(grams * 0.75)
 }
 
+/**
+ * The intake row (decided 2026-09-30): one weight box, and the credit
+ * prefilled at the estimate for the leader to change. `credit` is the credit
+ * box's text, or null while they have not touched it — then it follows the
+ * weight. The ledger stores what the leader sends, never a yield. `line` is
+ * what the row says under the boxes, in the board's words where it has them.
+ */
+export function intakeCredit(
+  weighedKg: string,
+  credit: string | null
+): { ok: true; weighed_grams: number; credit_grams: number; line: string } | { ok: false; line: string } {
+  const weighed = kgToGrams(weighedKg)
+  if (!weighed) return { ok: false, line: 'Weigh it to see the credit' }
+  if (weighed < MIN_DROPOFF_GRAMS) {
+    return { ok: false, line: `Under the ${MIN_DROPOFF_GRAMS / 1000} kg minimum — log it as a donation or hand it back` }
+  }
+  const text = credit === null ? String(estimatedCreditGrams(weighed)) : credit.trim()
+  if (!/^\d{1,7}$/.test(text)) return { ok: false, line: 'Enter the credit in whole grams.' }
+  const grams = Number(text)
+  if (grams > weighed) return { ok: false, line: 'Credit cannot be more than what was weighed.' }
+  return { ok: true, weighed_grams: weighed, credit_grams: grams, line: `${grams} g credit` }
+}
+
+/** The board's toast once a drop-off is weighed in. */
+export const weighedInLine = (weighedGrams: number, creditGrams: number, who: string) =>
+  `Weighed at ${weighedGrams / 1000} kg — ${creditGrams} g credit issued to ${who}`
+
 export type DropoffStatus = 'booked' | 'received' | 'declined' | 'cancelled'
 
 /**
