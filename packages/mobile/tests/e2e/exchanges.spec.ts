@@ -46,7 +46,7 @@ async function partyPage(
   const context = await browser.newContext({ baseURL })
   const page = await context.newPage()
   await signIn(page, party.email, party.password)
-  await expect(page).toHaveURL(/\/guides$/)
+  await expect(page).toHaveURL(/\/home$/)
   return page
 }
 

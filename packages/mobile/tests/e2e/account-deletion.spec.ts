@@ -6,7 +6,7 @@ import { adminClient, createContributor, latestCode, signIn } from './helpers'
 test('a member deletes their own account with the emailed code', async ({ page }) => {
   const { id, email, password } = await createContributor()
   await signIn(page, email, password)
-  await expect(page).toHaveURL(/\/guides$/)
+  await expect(page).toHaveURL(/\/home$/)
 
   await page.goto('/account')
   await page.getByText('Delete account').click()

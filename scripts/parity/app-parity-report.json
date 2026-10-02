@@ -1,18 +1,172 @@
 {
- "at": "2026-10-02T09:45:18.717Z",
- "live": "http://localhost:3122",
+ "at": "2026-10-02T14:08:09.442Z",
+ "live": "http://localhost:3112",
  "screens": [
   {
-   "id": "about",
-   "name": "About",
-   "group": "push",
-   "route": "/explore/about",
-   "findings": [],
+   "id": "print_request",
+   "name": "Request a print",
+   "group": "modal",
+   "route": "/printing/request",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "board lists cards, live shows none",
+     "board": 4,
+     "live": 0
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "board has cards, live has none",
+     "board": 4,
+     "live": 0
+    },
+    {
+     "type": "missing-section",
+     "severity": "medium",
+     "what": "no inputs on live",
+     "board": 2,
+     "live": 0
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "1/1 board paragraphs absent",
+     "board": "# of # parts · about # h # · ~# g petg",
+     "live": "check your connection and try again."
+    }
+   ],
    "role": "parent",
-   "finalUrl": "/explore/about",
+   "finalUrl": "/printing/request",
    "explained": [],
    "boardHeadings": 0,
+   "liveHeadings": 1
+  },
+  {
+   "id": "org_orders",
+   "name": "Print orders",
+   "group": "push",
+   "route": "/organisation/orders",
+   "findings": [
+    {
+     "type": "stale-exemption",
+     "severity": "medium",
+     "what": "copy \"board paragraphs absent\" no longer occurs",
+     "board": null,
+     "live": null
+    }
+   ],
+   "role": "leader",
+   "finalUrl": "/organisation/orders",
+   "explained": [],
+   "boardHeadings": 0,
+   "liveHeadings": 0
+  },
+  {
+   "id": "guides",
+   "name": "Guides",
+   "group": "tabs",
+   "route": "/guides",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/guides",
+   "explained": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"suits ollie\" has no counterpart",
+     "board": "suits ollie",
+     "live": null,
+     "why": "fixture",
+     "reason": "The board's child Ollie fits a guide, so a Suits Ollie heading draws; the parity child has no name or fit answers."
+    }
+   ],
+   "boardHeadings": 8,
    "liveHeadings": 2
+  },
+  {
+   "id": "guide_detail",
+   "name": "Guide detail",
+   "group": "push",
+   "route": "/guides/64379b3a-eb02-43f6-a7cd-696210649079",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/guides/64379b3a-eb02-43f6-a7cd-696210649079",
+   "explained": [],
+   "boardHeadings": 6,
+   "liveHeadings": 7
+  },
+  {
+   "id": "guide_preview",
+   "name": "Guide preview",
+   "group": "push",
+   "route": "/guides/64379b3a-eb02-43f6-a7cd-696210649079/preview",
+   "findings": [],
+   "role": "contributor",
+   "finalUrl": "/guides/64379b3a-eb02-43f6-a7cd-696210649079/preview",
+   "explained": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "board lists cards, live shows none",
+     "board": 4,
+     "live": 0,
+     "why": "intended",
+     "reason": "Decided 2026-09-30 (guide-draft-preview): Preview opens the reader view; the editor hub is the summary."
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "board has cards, live has none",
+     "board": 4,
+     "live": 0,
+     "why": "intended",
+     "reason": "Decided 2026-09-30 (guide-draft-preview): Preview opens the reader view; the editor hub is the summary."
+    }
+   ],
+   "boardHeadings": 0,
+   "liveHeadings": 1
+  },
+  {
+   "id": "guide_new",
+   "name": "New guide",
+   "group": "push",
+   "route": "/guides/new",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/guides/new",
+   "explained": [
+    {
+     "type": "radius",
+     "severity": "medium",
+     "what": "card radius",
+     "board": "20px",
+     "live": "14px",
+     "why": "intended",
+     "reason": "The cover-photo drop zone is a dashed field (the field radius, no fill, no shadow) - the harness reads any bordered rounded box as a card, and the board's cards are the 20px white sheet cards."
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "set",
+     "live": "none",
+     "why": "intended",
+     "reason": "The cover-photo drop zone is a dashed field (the field radius, no fill, no shadow) - the harness reads any bordered rounded box as a card, and the board's cards are the 20px white sheet cards."
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "card background",
+     "board": "rgb(255,255,255)",
+     "live": "rgba(0,0,0,0)",
+     "why": "intended",
+     "reason": "The cover-photo drop zone is a dashed field (the field radius, no fill, no shadow) - the harness reads any bordered rounded box as a card, and the board's cards are the 20px white sheet cards."
+    }
+   ],
+   "boardHeadings": 0,
+   "liveHeadings": 0
   },
   {
    "id": "contributor",
@@ -30,13 +184,110 @@
    "id": "guide_org",
    "name": "Organisation",
    "group": "push",
-   "route": "/guides/organisation/0c715acd-258f-4621-9ba4-56831746eaa3",
+   "route": "/guides/organisation/b7f14086-7504-4ccb-b33e-65adc9b2dde8",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/guides/organisation/0c715acd-258f-4621-9ba4-56831746eaa3",
+   "finalUrl": "/guides/organisation/b7f14086-7504-4ccb-b33e-65adc9b2dde8",
    "explained": [],
    "boardHeadings": 8,
    "liveHeadings": 9
+  },
+  {
+   "id": "print_find",
+   "name": "Find a printer",
+   "group": "push",
+   "route": "/printing?guide=[id]",
+   "findings": [],
+   "role": "parent",
+   "error": "no record for /printing?guide=[id]",
+   "skipped": true
+  },
+  {
+   "id": "print_job",
+   "name": "Print job",
+   "group": "push",
+   "route": "/printing/jobs/[id]",
+   "findings": [],
+   "role": "parent",
+   "error": "no record for /printing/jobs/[id]",
+   "skipped": true
+  },
+  {
+   "id": "print_basics",
+   "name": "Printing basics",
+   "group": "push",
+   "route": "/printing/basics",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/printing/basics",
+   "explained": [],
+   "boardHeadings": 5,
+   "liveHeadings": 5
+  },
+  {
+   "id": "loading",
+   "name": "Loading state",
+   "group": "tabs",
+   "route": "/guides",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/guides",
+   "explained": [],
+   "boardHeadings": 0,
+   "liveHeadings": 1
+  },
+  {
+   "id": "toy_library",
+   "name": "Toy library",
+   "group": "tabs",
+   "route": "/toy-library",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/toy-library",
+   "explained": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h2 \"nearest first\" has no counterpart",
+     "board": "nearest first",
+     "live": null,
+     "why": "intended",
+     "reason": "Nearest first is a filter chip, off until tapped; the board draws it already switched on, so its heading shows only in that state."
+    }
+   ],
+   "boardHeadings": 8,
+   "liveHeadings": 2
+  },
+  {
+   "id": "lib_toy",
+   "name": "Toy detail",
+   "group": "push",
+   "route": "/toy-library/c8a06fea-22ca-420e-b14b-cd699906b32d",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/toy-library/c8a06fea-22ca-420e-b14b-cd699906b32d",
+   "explained": [
+    {
+     "type": "font",
+     "severity": "high",
+     "what": "card title font",
+     "board": "Nunito",
+     "live": "Baloo 2",
+     "why": "harness",
+     "reason": "The board's only card is Notes from the holder (a Nunito label); the app's card is the same panel plus its pickup tiles, whose titles are Baloo."
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h3 \"also worth a look\" has no counterpart",
+     "board": "also worth a look",
+     "live": null,
+     "why": "intended",
+     "reason": "Built (toy-holder-picks); the seed's swap-toy holder has nothing else listed and no picks, so the section rightly draws nothing."
+    }
+   ],
+   "boardHeadings": 3,
+   "liveHeadings": 1
   },
   {
    "id": "org_list",
@@ -54,10 +305,10 @@
    "id": "lib_org",
    "name": "Organisation",
    "group": "push",
-   "route": "/toy-library/organisation/0c715acd-258f-4621-9ba4-56831746eaa3",
+   "route": "/toy-library/organisation/b7f14086-7504-4ccb-b33e-65adc9b2dde8",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/toy-library/organisation/0c715acd-258f-4621-9ba4-56831746eaa3",
+   "finalUrl": "/toy-library/organisation/b7f14086-7504-4ccb-b33e-65adc9b2dde8",
    "explained": [],
    "boardHeadings": 8,
    "liveHeadings": 9
@@ -87,194 +338,65 @@
    "liveHeadings": 1
   },
   {
-   "id": "inbox",
-   "name": "Inbox",
-   "group": "tabs",
-   "route": "/inbox",
+   "id": "article",
+   "name": "Learn article",
+   "group": "push",
+   "route": "/explore/learn/toy-adaptation-101",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/inbox",
-   "explained": [],
-   "boardHeadings": 0,
-   "liveHeadings": 1
-  },
-  {
-   "id": "my_challenges",
-   "name": "My challenges",
-   "group": "push",
-   "route": "/challenges",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/challenges",
-   "explained": [],
-   "boardHeadings": 0,
-   "liveHeadings": 0
-  },
-  {
-   "id": "saved",
-   "name": "Saved",
-   "group": "push",
-   "route": "/saved",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/saved",
-   "explained": [],
-   "boardHeadings": 0,
-   "liveHeadings": 0
-  },
-  {
-   "id": "notifications",
-   "name": "Notifications",
-   "group": "push",
-   "route": "/notifications",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/notifications",
-   "explained": [],
-   "boardHeadings": 0,
-   "liveHeadings": 0
-  },
-  {
-   "id": "admin",
-   "name": "Admin",
-   "group": "push",
-   "route": "/admin",
-   "findings": [],
-   "role": "admin",
-   "finalUrl": "/admin",
-   "explained": [],
-   "boardHeadings": 0,
-   "liveHeadings": 0
-  },
-  {
-   "id": "wizard",
-   "name": "Child profile wizard",
-   "group": "push",
-   "route": "/child",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/child",
-   "explained": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "2/2 board paragraphs absent",
-     "board": "a name helps us talk about them naturally. it is never shared.",
-     "live": "saved automatically · nothing is shared",
-     "why": "intended",
-     "reason": "The wizard keeps 079's six questions before the board's Play and Measurements; the board's Hands and Movement have no columns. So the bear says web's \"Hi! A few quick questions\" (eight steps, not five), and the About step carries no help sentence."
-    }
-   ],
-   "boardHeadings": 1,
-   "liveHeadings": 1
-  },
-  {
-   "id": "sign_in",
-   "name": "Sign in",
-   "group": "bare",
-   "route": "/sign-in",
-   "findings": [],
-   "role": "guest",
-   "finalUrl": "/sign-in",
+   "finalUrl": "/explore/learn/toy-adaptation-101",
    "explained": [
     {
      "type": "missing-section",
      "severity": "high",
-     "what": "h1 \"splat connect\" has no counterpart",
-     "board": "splat connect",
+     "what": "h3 \"the whole trick in one paragraph\" has no counterpart",
+     "board": "the whole trick in one paragraph",
      "live": null,
      "why": "intended",
-     "reason": "The sign-in spec (2026-09-30-mobile-sign-in-design) sets back, bear and Welcome back in place of the wordmark."
+     "reason": "The app ships the six real Learn articles; the board has short sample ones."
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h3 \"you are not modifying the toy\" has no counterpart",
+     "board": "you are not modifying the toy",
+     "live": null,
+     "why": "intended",
+     "reason": "The app ships the six real Learn articles; the board has short sample ones."
     },
     {
      "type": "copy",
      "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "free to read, reviewed guides for switch-adapted play.",
-     "live": "no paid tier. not a medical device.",
+     "what": "3/3 board paragraphs absent",
+     "board": "what a battery interrupter is, and why it is the whole trick.",
+     "live": "almost every adapted toy on this site works the same way, and the tric",
      "why": "intended",
-     "reason": "The sign-in spec gives the auth screens the foot line No paid tier. Not a medical device."
+     "reason": "Real article copy against the board's sample."
     }
    ],
-   "boardHeadings": 1,
-   "liveHeadings": 1
+   "boardHeadings": 3,
+   "liveHeadings": 6
   },
   {
-   "id": "print_request",
-   "name": "Request a print",
-   "group": "modal",
-   "route": "/printing/request?guide=0cd04c60-4e82-420d-bf20-0802f35f9b75&printers=bfa47ab7-761a-4998-929d-2d449b7a2e61,d35bf477-7811-4d0f-acc4-ecc6a3f95f9c",
+   "id": "challenges",
+   "name": "Challenges",
+   "group": "push",
+   "route": "/explore/challenges",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/printing/request",
+   "finalUrl": "/explore/challenges",
    "explained": [],
-   "boardHeadings": 0,
-   "liveHeadings": 0
-  },
-  {
-   "id": "print_job",
-   "name": "Print job",
-   "group": "push",
-   "route": "/printing/jobs/1ba442ab-3125-499f-b0cc-e1757986290e",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/printing/jobs/1ba442ab-3125-499f-b0cc-e1757986290e",
-   "explained": [
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "none",
-     "live": "set",
-     "why": "harness",
-     "reason": "The board nests its cards (a bordered box inside the card), so its leaf cards are inner boxes without shadow; the app's are the outer cards. Counting every card fixes it here and breaks nine web screens."
-    }
-   ],
-   "boardHeadings": 2,
-   "liveHeadings": 1
-  },
-  {
-   "id": "recycling",
-   "name": "Recycling",
-   "group": "push",
-   "route": "/explore/recycling",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/explore/recycling",
-   "explained": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "h1 wording",
-     "board": "#",
-     "live": "# kg",
-     "why": "harness",
-     "reason": "The board sets the 44px number and its kg unit in separate elements, so its h1 reads '#'; the app's reads '# kg'. Both are 44px Baloo."
-    }
-   ],
-   "boardHeadings": 2,
-   "liveHeadings": 2
-  },
-  {
-   "id": "org_recycling",
-   "name": "Recycling intake",
-   "group": "push",
-   "route": "/organisation/recycling",
-   "findings": [],
-   "role": "leader",
-   "finalUrl": "/organisation/recycling",
-   "explained": [],
-   "boardHeadings": 0,
-   "liveHeadings": 0
+   "boardHeadings": 5,
+   "liveHeadings": 8
   },
   {
    "id": "challenge_detail",
    "name": "Challenge",
    "group": "push",
-   "route": "/explore/challenges/4dcb8edc-42f6-4b38-b83a-2ed94ad345c6",
+   "route": "/explore/challenges/0ed8c532-c0b6-4510-8cbc-7995268d6c28",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/explore/challenges/4dcb8edc-42f6-4b38-b83a-2ed94ad345c6",
+   "finalUrl": "/explore/challenges/0ed8c532-c0b6-4510-8cbc-7995268d6c28",
    "explained": [
     {
      "type": "radius",
@@ -355,10 +477,10 @@
    "id": "build_thread",
    "name": "Build thread",
    "group": "push",
-   "route": "/exchanges/build/a0daf7d7-6f2e-43ff-abe1-e2021f5514ff",
+   "route": "/exchanges/build/7874cf28-1ef7-4f9a-acf5-1a8609b76725",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/exchanges/build/a0daf7d7-6f2e-43ff-abe1-e2021f5514ff",
+   "finalUrl": "/exchanges/build/7874cf28-1ef7-4f9a-acf5-1a8609b76725",
    "explained": [
     {
      "type": "shadow",
@@ -374,66 +496,71 @@
    "liveHeadings": 1
   },
   {
-   "id": "toy_library",
-   "name": "Toy library",
-   "group": "tabs",
-   "route": "/toy-library",
+   "id": "recycling",
+   "name": "Recycling",
+   "group": "push",
+   "route": "/explore/recycling",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/toy-library",
+   "finalUrl": "/explore/recycling",
    "explained": [
     {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"nearest first\" has no counterpart",
-     "board": "nearest first",
-     "live": null,
-     "why": "intended",
-     "reason": "Nearest first is a filter chip, off until tapped; the board draws it already switched on, so its heading shows only in that state."
+     "type": "copy",
+     "severity": "medium",
+     "what": "h1 wording",
+     "board": "#",
+     "live": "# kg",
+     "why": "harness",
+     "reason": "The board sets the 44px number and its kg unit in separate elements, so its h1 reads '#'; the app's reads '# kg'. Both are 44px Baloo."
     }
    ],
-   "boardHeadings": 8,
+   "boardHeadings": 2,
    "liveHeadings": 2
   },
   {
-   "id": "lib_toy",
-   "name": "Toy detail",
+   "id": "org_recycling",
+   "name": "Recycling intake",
    "group": "push",
-   "route": "/toy-library/924ab7e0-336d-47df-b657-b45d8fd0e160",
+   "route": "/organisation/recycling",
+   "findings": [],
+   "role": "leader",
+   "finalUrl": "/organisation/recycling",
+   "explained": [],
+   "boardHeadings": 0,
+   "liveHeadings": 0
+  },
+  {
+   "id": "about",
+   "name": "About",
+   "group": "push",
+   "route": "/explore/about",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/toy-library/924ab7e0-336d-47df-b657-b45d8fd0e160",
-   "explained": [
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "card title font",
-     "board": "Nunito",
-     "live": "Baloo 2",
-     "why": "harness",
-     "reason": "The board's only card is Notes from the holder (a Nunito label); the app's card is the same panel plus its pickup tiles, whose titles are Baloo."
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h3 \"also worth a look\" has no counterpart",
-     "board": "also worth a look",
-     "live": null,
-     "why": "intended",
-     "reason": "Built (toy-holder-picks); the seed's swap-toy holder has nothing else listed and no picks, so the section rightly draws nothing."
-    }
-   ],
-   "boardHeadings": 3,
+   "finalUrl": "/explore/about",
+   "explained": [],
+   "boardHeadings": 0,
+   "liveHeadings": 2
+  },
+  {
+   "id": "inbox",
+   "name": "Inbox",
+   "group": "tabs",
+   "route": "/inbox",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/inbox",
+   "explained": [],
+   "boardHeadings": 0,
    "liveHeadings": 1
   },
   {
    "id": "exchange",
    "name": "Exchange thread",
    "group": "push",
-   "route": "/exchanges/7e093682-1f58-4422-8092-91d59ac75aa5",
+   "route": "/exchanges/a614dfd8-6b77-4f74-aec8-78ab263ffcf8",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/exchanges/7e093682-1f58-4422-8092-91d59ac75aa5",
+   "finalUrl": "/exchanges/a614dfd8-6b77-4f74-aec8-78ab263ffcf8",
    "explained": [
     {
      "type": "missing-section",
@@ -470,240 +597,6 @@
    "liveHeadings": 2
   },
   {
-   "id": "my_toys",
-   "name": "My toys",
-   "group": "push",
-   "route": "/toys",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/toys",
-   "explained": [],
-   "boardHeadings": 0,
-   "liveHeadings": 0
-  },
-  {
-   "id": "toy_detail",
-   "name": "Toy detail",
-   "group": "push",
-   "route": "/toys/70a52040-3a77-4993-8e86-13e434f13a1f",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/toys/70a52040-3a77-4993-8e86-13e434f13a1f",
-   "explained": [],
-   "boardHeadings": 0,
-   "liveHeadings": 0
-  },
-  {
-   "id": "org_toys",
-   "name": "Toy inventory",
-   "group": "push",
-   "route": "/organisation/toys",
-   "findings": [],
-   "role": "leader",
-   "finalUrl": "/organisation/toys",
-   "explained": [
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "1/1 board paragraphs absent",
-     "board": "# on the shelf, # out with families, # need cleaning.",
-     "live": "# listing, # units on the shelf.",
-     "why": "intended",
-     "reason": "Decided 2026-09-30: no lending, so no 'out with families' or 'need cleaning'; the lead counts listings and units."
-    }
-   ],
-   "boardHeadings": 0,
-   "liveHeadings": 0
-  },
-  {
-   "id": "guides",
-   "name": "Guides",
-   "group": "tabs",
-   "route": "/guides",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/guides",
-   "explained": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"suits ollie\" has no counterpart",
-     "board": "suits ollie",
-     "live": null,
-     "why": "fixture",
-     "reason": "The board's child Ollie fits a guide, so a Suits Ollie heading draws; the parity child has no name or fit answers."
-    }
-   ],
-   "boardHeadings": 8,
-   "liveHeadings": 2
-  },
-  {
-   "id": "guide_detail",
-   "name": "Guide detail",
-   "group": "push",
-   "route": "/guides/[id]",
-   "findings": [],
-   "role": "parent",
-   "error": "no record for /guides/[id]",
-   "skipped": true
-  },
-  {
-   "id": "guide_preview",
-   "name": "Guide preview",
-   "group": "push",
-   "route": "/guides/[id]/preview",
-   "findings": [],
-   "role": "contributor",
-   "error": "no record for /guides/[id]/preview",
-   "skipped": true
-  },
-  {
-   "id": "guide_new",
-   "name": "New guide",
-   "group": "push",
-   "route": "/guides/new",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/guides/new",
-   "explained": [
-    {
-     "type": "radius",
-     "severity": "medium",
-     "what": "card radius",
-     "board": "20px",
-     "live": "14px",
-     "why": "intended",
-     "reason": "The cover-photo drop zone is a dashed field (the field radius, no fill, no shadow) - the harness reads any bordered rounded box as a card, and the board's cards are the 20px white sheet cards."
-    },
-    {
-     "type": "shadow",
-     "severity": "low",
-     "what": "card shadow",
-     "board": "set",
-     "live": "none",
-     "why": "intended",
-     "reason": "The cover-photo drop zone is a dashed field (the field radius, no fill, no shadow) - the harness reads any bordered rounded box as a card, and the board's cards are the 20px white sheet cards."
-    },
-    {
-     "type": "colour",
-     "severity": "low",
-     "what": "card background",
-     "board": "rgb(255,255,255)",
-     "live": "rgba(0,0,0,0)",
-     "why": "intended",
-     "reason": "The cover-photo drop zone is a dashed field (the field radius, no fill, no shadow) - the harness reads any bordered rounded box as a card, and the board's cards are the 20px white sheet cards."
-    }
-   ],
-   "boardHeadings": 0,
-   "liveHeadings": 0
-  },
-  {
-   "id": "print_find",
-   "name": "Find a printer",
-   "group": "push",
-   "route": "/printing?guide=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/printing",
-   "explained": [
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "card title font",
-     "board": "Baloo 2",
-     "live": "Nunito",
-     "why": "harness",
-     "reason": "The board's first card text is its aria-hidden initials disc; the printer names match (Nunito 15 on both)."
-    }
-   ],
-   "boardHeadings": 0,
-   "liveHeadings": 0
-  },
-  {
-   "id": "print_basics",
-   "name": "Printing basics",
-   "group": "push",
-   "route": "/printing/basics",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/printing/basics",
-   "explained": [],
-   "boardHeadings": 5,
-   "liveHeadings": 5
-  },
-  {
-   "id": "loading",
-   "name": "Loading state",
-   "group": "tabs",
-   "route": "/guides",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/guides",
-   "explained": [],
-   "boardHeadings": 0,
-   "liveHeadings": 1
-  },
-  {
-   "id": "article",
-   "name": "Learn article",
-   "group": "push",
-   "route": "/explore/learn/toy-adaptation-101",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/explore/learn/toy-adaptation-101",
-   "explained": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h3 \"the whole trick in one paragraph\" has no counterpart",
-     "board": "the whole trick in one paragraph",
-     "live": null,
-     "why": "intended",
-     "reason": "The app ships the six real Learn articles; the board has short sample ones."
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h3 \"you are not modifying the toy\" has no counterpart",
-     "board": "you are not modifying the toy",
-     "live": null,
-     "why": "intended",
-     "reason": "The app ships the six real Learn articles; the board has short sample ones."
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "3/3 board paragraphs absent",
-     "board": "what a battery interrupter is, and why it is the whole trick.",
-     "live": "almost every adapted toy on this site works the same way, and the tric",
-     "why": "intended",
-     "reason": "Real article copy against the board's sample."
-    }
-   ],
-   "boardHeadings": 3,
-   "liveHeadings": 6
-  },
-  {
-   "id": "challenges",
-   "name": "Challenges",
-   "group": "push",
-   "route": "/explore/challenges",
-   "findings": [
-    {
-     "type": "font",
-     "severity": "high",
-     "what": "body font",
-     "board": "Nunito",
-     "live": "Baloo 2"
-    }
-   ],
-   "role": "parent",
-   "finalUrl": "/explore/challenges",
-   "explained": [],
-   "boardHeadings": 5,
-   "liveHeadings": 1
-  },
-  {
    "id": "my_tutorials",
    "name": "My tutorials",
    "group": "push",
@@ -719,10 +612,10 @@
    "id": "editor",
    "name": "Editor hub",
    "group": "push",
-   "route": "/tutorials/f9d3d132-aa2d-41e6-b910-d0d8c2c0065f",
+   "route": "/tutorials/c04bffda-c782-43bf-9c6e-a77b333bf852",
    "findings": [],
    "role": "contributor",
-   "finalUrl": "/tutorials/f9d3d132-aa2d-41e6-b910-d0d8c2c0065f",
+   "finalUrl": "/tutorials/c04bffda-c782-43bf-9c6e-a77b333bf852",
    "explained": [],
    "boardHeadings": 1,
    "liveHeadings": 1
@@ -731,10 +624,10 @@
    "id": "ed_details",
    "name": "Editor · details",
    "group": "push",
-   "route": "/tutorials/f9d3d132-aa2d-41e6-b910-d0d8c2c0065f/details",
+   "route": "/tutorials/c04bffda-c782-43bf-9c6e-a77b333bf852/details",
    "findings": [],
    "role": "contributor",
-   "finalUrl": "/tutorials/f9d3d132-aa2d-41e6-b910-d0d8c2c0065f/details",
+   "finalUrl": "/tutorials/c04bffda-c782-43bf-9c6e-a77b333bf852/details",
    "explained": [
     {
      "type": "colour",
@@ -753,10 +646,10 @@
    "id": "ed_steps",
    "name": "Editor · steps",
    "group": "push",
-   "route": "/tutorials/f9d3d132-aa2d-41e6-b910-d0d8c2c0065f/steps",
+   "route": "/tutorials/c04bffda-c782-43bf-9c6e-a77b333bf852/steps",
    "findings": [],
    "role": "contributor",
-   "finalUrl": "/tutorials/f9d3d132-aa2d-41e6-b910-d0d8c2c0065f/steps",
+   "finalUrl": "/tutorials/c04bffda-c782-43bf-9c6e-a77b333bf852/steps",
    "explained": [
     {
      "type": "colour",
@@ -775,10 +668,10 @@
    "id": "ed_parts",
    "name": "Editor · parts",
    "group": "push",
-   "route": "/tutorials/f9d3d132-aa2d-41e6-b910-d0d8c2c0065f/parts",
+   "route": "/tutorials/c04bffda-c782-43bf-9c6e-a77b333bf852/parts",
    "findings": [],
    "role": "contributor",
-   "finalUrl": "/tutorials/f9d3d132-aa2d-41e6-b910-d0d8c2c0065f/parts",
+   "finalUrl": "/tutorials/c04bffda-c782-43bf-9c6e-a77b333bf852/parts",
    "explained": [
     {
      "type": "colour",
@@ -797,10 +690,10 @@
    "id": "ed_tools",
    "name": "Editor · tools",
    "group": "push",
-   "route": "/tutorials/f9d3d132-aa2d-41e6-b910-d0d8c2c0065f/tools",
+   "route": "/tutorials/c04bffda-c782-43bf-9c6e-a77b333bf852/tools",
    "findings": [],
    "role": "contributor",
-   "finalUrl": "/tutorials/f9d3d132-aa2d-41e6-b910-d0d8c2c0065f/tools",
+   "finalUrl": "/tutorials/c04bffda-c782-43bf-9c6e-a77b333bf852/tools",
    "explained": [
     {
      "type": "colour",
@@ -819,10 +712,10 @@
    "id": "ed_safety",
    "name": "Editor · safety",
    "group": "push",
-   "route": "/tutorials/f9d3d132-aa2d-41e6-b910-d0d8c2c0065f/safety",
+   "route": "/tutorials/c04bffda-c782-43bf-9c6e-a77b333bf852/safety",
    "findings": [],
    "role": "contributor",
-   "finalUrl": "/tutorials/f9d3d132-aa2d-41e6-b910-d0d8c2c0065f/safety",
+   "finalUrl": "/tutorials/c04bffda-c782-43bf-9c6e-a77b333bf852/safety",
    "explained": [
     {
      "type": "colour",
@@ -841,10 +734,10 @@
    "id": "ed_stl",
    "name": "Editor · STL",
    "group": "push",
-   "route": "/tutorials/f9d3d132-aa2d-41e6-b910-d0d8c2c0065f/stl",
+   "route": "/tutorials/c04bffda-c782-43bf-9c6e-a77b333bf852/stl",
    "findings": [],
    "role": "contributor",
-   "finalUrl": "/tutorials/f9d3d132-aa2d-41e6-b910-d0d8c2c0065f/stl",
+   "finalUrl": "/tutorials/c04bffda-c782-43bf-9c6e-a77b333bf852/stl",
    "explained": [
     {
      "type": "missing-section",
@@ -857,6 +750,18 @@
     }
    ],
    "boardHeadings": 1,
+   "liveHeadings": 0
+  },
+  {
+   "id": "my_toys",
+   "name": "My toys",
+   "group": "push",
+   "route": "/toys",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/toys",
+   "explained": [],
+   "boardHeadings": 0,
    "liveHeadings": 0
   },
   {
@@ -900,6 +805,18 @@
    "liveHeadings": 0
   },
   {
+   "id": "toy_detail",
+   "name": "Toy detail",
+   "group": "push",
+   "route": "/toys/0eb6d3de-68cf-4624-a464-078422e65ab3",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/toys/0eb6d3de-68cf-4624-a464-078422e65ab3",
+   "explained": [],
+   "boardHeadings": 0,
+   "liveHeadings": 0
+  },
+  {
    "id": "exchanges",
    "name": "My exchanges",
    "group": "push",
@@ -912,6 +829,30 @@
    "liveHeadings": 0
   },
   {
+   "id": "my_challenges",
+   "name": "My challenges",
+   "group": "push",
+   "route": "/challenges",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/challenges",
+   "explained": [],
+   "boardHeadings": 0,
+   "liveHeadings": 0
+  },
+  {
+   "id": "saved",
+   "name": "Saved",
+   "group": "push",
+   "route": "/saved",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/saved",
+   "explained": [],
+   "boardHeadings": 0,
+   "liveHeadings": 0
+  },
+  {
    "id": "saved_slug",
    "name": "Saved list",
    "group": "push",
@@ -919,6 +860,18 @@
    "findings": [],
    "role": "parent",
    "finalUrl": "/saved/tutorials",
+   "explained": [],
+   "boardHeadings": 0,
+   "liveHeadings": 0
+  },
+  {
+   "id": "notifications",
+   "name": "Notifications",
+   "group": "push",
+   "route": "/notifications",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/notifications",
    "explained": [],
    "boardHeadings": 0,
    "liveHeadings": 0
@@ -1003,25 +956,25 @@
    "id": "ability",
    "name": "Ability profile",
    "group": "push",
-   "route": "/account/child/67428694-64b4-42e5-93a7-4ccbca39ad49",
+   "route": "/account/child/a63b3ddb-34d2-4299-b680-c004af6f6d35",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/account/child/67428694-64b4-42e5-93a7-4ccbca39ad49",
+   "finalUrl": "/account/child/a63b3ddb-34d2-4299-b680-c004af6f6d35",
    "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 3
+   "liveHeadings": 5
   },
   {
    "id": "needs",
    "name": "Everyday needs",
    "group": "push",
-   "route": "/account/child/67428694-64b4-42e5-93a7-4ccbca39ad49",
+   "route": "/account/child/a63b3ddb-34d2-4299-b680-c004af6f6d35",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/account/child/67428694-64b4-42e5-93a7-4ccbca39ad49",
+   "finalUrl": "/account/child/a63b3ddb-34d2-4299-b680-c004af6f6d35",
    "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 3
+   "liveHeadings": 5
   },
   {
    "id": "customization",
@@ -1037,13 +990,13 @@
    "id": "child",
    "name": "Child profile",
    "group": "push",
-   "route": "/account/child/67428694-64b4-42e5-93a7-4ccbca39ad49",
+   "route": "/account/child/a63b3ddb-34d2-4299-b680-c004af6f6d35",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/account/child/67428694-64b4-42e5-93a7-4ccbca39ad49",
+   "finalUrl": "/account/child/a63b3ddb-34d2-4299-b680-c004af6f6d35",
    "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 3
+   "liveHeadings": 5
   },
   {
    "id": "org_queue",
@@ -1061,10 +1014,10 @@
    "id": "org_review",
    "name": "Review a guide",
    "group": "push",
-   "route": "/organisation/cfc08e2f-3cf1-4e5a-9422-0894810b4265",
+   "route": "/organisation/59e0162e-3797-4003-b7f7-0cb317ea87b1",
    "findings": [],
    "role": "leader",
-   "finalUrl": "/organisation/cfc08e2f-3cf1-4e5a-9422-0894810b4265",
+   "finalUrl": "/organisation/59e0162e-3797-4003-b7f7-0cb317ea87b1",
    "explained": [
     {
      "type": "copy",
@@ -1080,39 +1033,106 @@
    "liveHeadings": 1
   },
   {
-   "id": "org_orders",
-   "name": "Print orders",
+   "id": "org_toys",
+   "name": "Toy inventory",
    "group": "push",
-   "route": "/organisation/orders",
+   "route": "/organisation/toys",
    "findings": [],
    "role": "leader",
-   "finalUrl": "/organisation/orders",
+   "finalUrl": "/organisation/toys",
    "explained": [
     {
      "type": "copy",
      "severity": "medium",
-     "what": "3/4 board paragraphs absent",
-     "board": "# of # parts · # h # · ~# g petg",
-     "live": "seeded switch-adapted bubble machine",
-     "why": "fixture",
-     "reason": "The board's sample files and its 'other printers asked' group; the card draws each when the data has them."
+     "what": "1/1 board paragraphs absent",
+     "board": "# on the shelf, # out with families, # need cleaning.",
+     "live": "# listing, # units on the shelf.",
+     "why": "intended",
+     "reason": "Decided 2026-09-30: no lending, so no 'out with families' or 'need cleaning'; the lead counts listings and units."
     }
    ],
    "boardHeadings": 0,
    "liveHeadings": 0
+  },
+  {
+   "id": "admin",
+   "name": "Admin",
+   "group": "push",
+   "route": "/admin",
+   "findings": [],
+   "role": "admin",
+   "finalUrl": "/admin",
+   "explained": [],
+   "boardHeadings": 0,
+   "liveHeadings": 0
+  },
+  {
+   "id": "wizard",
+   "name": "Child profile wizard",
+   "group": "push",
+   "route": "/child",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/child",
+   "explained": [
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "2/2 board paragraphs absent",
+     "board": "a name helps us talk about them naturally. it is never shared.",
+     "live": "saved automatically · nothing is shared",
+     "why": "intended",
+     "reason": "The wizard keeps 079's six questions before the board's Play and Measurements; the board's Hands and Movement have no columns. So the bear says web's \"Hi! A few quick questions\" (eight steps, not five), and the About step carries no help sentence."
+    }
+   ],
+   "boardHeadings": 1,
+   "liveHeadings": 1
+  },
+  {
+   "id": "sign_in",
+   "name": "Sign in",
+   "group": "bare",
+   "route": "/sign-in",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/sign-in",
+   "explained": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h1 \"splat connect\" has no counterpart",
+     "board": "splat connect",
+     "live": null,
+     "why": "intended",
+     "reason": "The sign-in spec (2026-09-30-mobile-sign-in-design) sets back, bear and Welcome back in place of the wordmark."
+    },
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "1/1 board paragraphs absent",
+     "board": "free to read, reviewed guides for switch-adapted play.",
+     "live": "no paid tier. not a medical device.",
+     "why": "intended",
+     "reason": "The sign-in spec gives the auth screens the foot line No paid tier. Not a medical device."
+    }
+   ],
+   "boardHeadings": 1,
+   "liveHeadings": 1
   }
  ],
  "summary": {
   "screens": 61,
-  "clean": 56,
-  "withFindings": 2,
+  "clean": 55,
+  "withFindings": 3,
   "errored": 0,
   "skipped": 3,
-  "findings": 2,
-  "explained": 37,
+  "findings": 6,
+  "explained": 36,
   "byType": {
-   "shadow": 1,
-   "font": 1
+   "missing-section": 3,
+   "copy": 1,
+   "stale-exemption": 1,
+   "shadow": 1
   }
  }
 }

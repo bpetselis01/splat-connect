@@ -70,7 +70,7 @@ export async function createContributor() {
 export async function signInAsNewContributor(page: Page) {
   const contributor = await createContributor()
   await signIn(page, contributor.email, contributor.password)
-  await expect(page).toHaveURL(/\/guides$/)
+  await expect(page).toHaveURL(/\/home$/)
   return contributor
 }
 
@@ -214,7 +214,7 @@ export async function signUpNewAccount(page: Page, email: string) {
   await page.getByTestId('accept-contributor-terms').click()
   await page.getByTestId('auth-submit').click()
   await enterEmailedCode(page, email)
-  await expect(page).toHaveURL(/\/guides$/)
+  await expect(page).toHaveURL(/\/home$/)
 }
 
 // Local Supabase's mail catcher. The e2e reads the real 6-digit code out of

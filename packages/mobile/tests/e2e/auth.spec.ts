@@ -15,7 +15,7 @@ import {
 test('a contributor signs in with a password and lands on Guides', async ({ page }) => {
   const { email, password } = await createContributor()
   await signIn(page, email, password)
-  await expect(page).toHaveURL(/\/guides$/)
+  await expect(page).toHaveURL(/\/home$/)
 })
 
 test('Welcome opens both doors', async ({ page }) => {
@@ -62,7 +62,7 @@ test('an emailed code signs an existing account in, from the code screen with th
   const sent = Date.now() - 1000
   await page.getByRole('button', { name: 'Send code' }).click()
   await enterEmailedCode(page, email, sent)
-  await expect(page).toHaveURL(/\/guides$/)
+  await expect(page).toHaveURL(/\/home$/)
 })
 
 test('the code screen names an empty or malformed email before sending anything', async ({ page }) => {
@@ -105,7 +105,7 @@ test('forgot password resets it in the app, and the new one works', async ({ pag
   await page.getByTestId('code-input').last().fill(await latestCode(email, sent))
   await page.getByLabel('New password', { exact: true }).fill('Brand-new-9')
   await page.getByRole('button', { name: 'Save and sign in' }).click()
-  await expect(page).toHaveURL(/\/guides$/)
+  await expect(page).toHaveURL(/\/home$/)
 
   const { error } = await adminClient().auth.signInWithPassword({ email, password: 'Brand-new-9' })
   expect(error).toBeNull()
@@ -121,13 +121,13 @@ test('an account that never accepted the terms meets the gate first', async ({ p
   await page.getByLabel('Your name', { exact: true }).fill('Gate Tester')
   await page.getByTestId('accept-contributor-terms').click()
   await page.getByTestId('accept-terms').click()
-  await expect(page).toHaveURL(/\/guides$/)
+  await expect(page).toHaveURL(/\/home$/)
 })
 
 test('the account view says how you sign in, and signs out to Welcome', async ({ page }) => {
   const { email, password } = await createContributor()
   await signIn(page, email, password)
-  await expect(page).toHaveURL(/\/guides$/)
+  await expect(page).toHaveURL(/\/home$/)
   await page.goto('/account')
 
   await expect(page.getByText(email, { exact: true })).toBeVisible()

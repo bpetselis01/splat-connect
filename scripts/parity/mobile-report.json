@@ -1,147 +1,7 @@
 {
- "at": "2026-10-02T06:37:23.944Z",
+ "at": "2026-10-02T14:13:14.639Z",
  "live": "http://localhost:3110",
  "screens": [
-  {
-   "id": "learn",
-   "name": "Learn · Course home",
-   "group": "Learn",
-   "role": "guest",
-   "route": "/learn",
-   "findings": [],
-   "finalUrl": "/learn",
-   "height": 6670
-  },
-  {
-   "id": "impact_map",
-   "name": "Deliveries map",
-   "group": "Impact",
-   "role": "guest",
-   "route": "/impact/map",
-   "findings": [],
-   "finalUrl": "/impact/map",
-   "height": 1682
-  },
-  {
-   "id": "admin_content",
-   "name": "Site content",
-   "group": "Admin",
-   "role": "admin",
-   "route": "/admin/content",
-   "findings": [],
-   "finalUrl": "/admin/content",
-   "height": 3963
-  },
-  {
-   "id": "admin_review",
-   "name": "Review queue (live)",
-   "group": "Admin",
-   "role": "admin",
-   "route": "/admin/review?selected=bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
-   "findings": [],
-   "finalUrl": "/admin/review",
-   "height": 5451
-  },
-  {
-   "id": "org_public",
-   "name": "Organisation profile",
-   "group": "Impact",
-   "role": "guest",
-   "route": "/organizations/529257d8-2ad8-4355-a83e-70c7b7c0d091/public",
-   "findings": [],
-   "finalUrl": "/organizations/529257d8-2ad8-4355-a83e-70c7b7c0d091/public",
-   "height": 5007
-  },
-  {
-   "id": "recycling",
-   "name": "Recycling",
-   "group": "Get involved",
-   "role": "guest",
-   "route": "/get-involved/recycling",
-   "findings": [],
-   "finalUrl": "/get-involved/recycling",
-   "height": 3466
-  },
-  {
-   "id": "recycle_new",
-   "name": "Book a drop-off",
-   "group": "Get involved",
-   "role": "parent",
-   "route": "/get-involved/recycling/drop-off",
-   "findings": [],
-   "finalUrl": "/get-involved/recycling/drop-off",
-   "height": 1847
-  },
-  {
-   "id": "org_recycling",
-   "name": "Recycling intake",
-   "group": "Organisation",
-   "role": "leader",
-   "route": "/dashboard/organisation/recycling",
-   "findings": [],
-   "finalUrl": "/dashboard/organisation/recycling",
-   "height": 3983
-  },
-  {
-   "id": "inv_idea",
-   "name": "Submit an idea",
-   "group": "Get involved",
-   "role": "guest",
-   "route": "/get-involved/submit-an-idea",
-   "findings": [],
-   "finalUrl": "/get-involved/submit-an-idea",
-   "height": 2918
-  },
-  {
-   "id": "makers_wanted",
-   "name": "Makers wanted",
-   "group": "Get involved",
-   "role": "guest",
-   "route": "/get-involved/makers-wanted",
-   "findings": [],
-   "finalUrl": "/get-involved/makers-wanted",
-   "height": 2429
-  },
-  {
-   "id": "challenge_detail",
-   "name": "Challenge detail",
-   "group": "Get involved",
-   "role": "guest",
-   "route": "/get-involved/design-challenges/4dcb8edc-42f6-4b38-b83a-2ed94ad345c6",
-   "findings": [],
-   "finalUrl": "/get-involved/design-challenges/4dcb8edc-42f6-4b38-b83a-2ed94ad345c6",
-   "height": 2877
-  },
-  {
-   "id": "build_thread",
-   "name": "Build thread",
-   "group": "My SPLAT",
-   "role": "parent",
-   "route": "/dashboard/exchanges/build/16b23c25-7155-462d-876b-0cd4028c3d65",
-   "findings": [],
-   "finalUrl": "/dashboard/exchanges/build/16b23c25-7155-462d-876b-0cd4028c3d65",
-   "height": 3508
-  },
-  {
-   "id": "toy_detail",
-   "name": "Toy detail",
-   "group": "My SPLAT",
-   "role": "parent",
-   "route": "/dashboard/toys/ffb0874d-1a77-4e61-b535-c4d0f66e3c1e",
-   "findings": [],
-   "finalUrl": "/dashboard/toys/ffb0874d-1a77-4e61-b535-c4d0f66e3c1e",
-   "height": 3439
-  },
-  {
-   "id": "org_toys",
-   "name": "Toy inventory",
-   "group": "Organisation",
-   "role": "leader",
-   "route": "/dashboard/organisation/toys",
-   "findings": [],
-   "finalUrl": "/dashboard/organisation/toys",
-   "height": 2890
-  },
   {
    "id": "home",
    "name": "Home",
@@ -150,7 +10,7 @@
    "route": "/",
    "findings": [],
    "finalUrl": "/",
-   "height": 12256
+   "height": 12159
   },
   {
    "id": "library",
@@ -160,17 +20,17 @@
    "route": "/library",
    "findings": [],
    "finalUrl": "/library",
-   "height": 13930
+   "height": 13674
   },
   {
    "id": "tutorial",
    "name": "Guide detail",
    "group": "Public site",
    "role": "guest",
-   "route": "/tutorials/f677bc3d-1399-4c41-bd1b-1cfd43ae50c2",
+   "route": "/tutorials/64379b3a-eb02-43f6-a7cd-696210649079",
    "findings": [],
-   "finalUrl": "/tutorials/f677bc3d-1399-4c41-bd1b-1cfd43ae50c2",
-   "height": 3606
+   "finalUrl": "/tutorials/64379b3a-eb02-43f6-a7cd-696210649079",
+   "height": 3379
   },
   {
    "id": "toys_public",
@@ -180,26 +40,26 @@
    "route": "/toy-library",
    "findings": [],
    "finalUrl": "/toy-library",
-   "height": 14784
+   "height": 9801
   },
   {
    "id": "toy_public",
    "name": "Toy detail",
    "group": "Public site",
    "role": "guest",
-   "route": "/toy-library/868e2871-d00e-4b86-bc2c-aa0abdd6001d",
+   "route": "/toy-library/8279963f-f840-4d49-9862-7dd051b92193",
    "findings": [],
-   "finalUrl": "/toy-library/868e2871-d00e-4b86-bc2c-aa0abdd6001d",
-   "height": 3480
+   "finalUrl": "/toy-library/8279963f-f840-4d49-9862-7dd051b92193",
+   "height": 3289
   },
   {
    "id": "toy_request",
    "name": "Request a toy",
    "group": "Public site",
    "role": "parent",
-   "route": "/toy-library/868e2871-d00e-4b86-bc2c-aa0abdd6001d/request",
+   "route": "/toy-library/8279963f-f840-4d49-9862-7dd051b92193/request",
    "findings": [],
-   "finalUrl": "/toy-library/868e2871-d00e-4b86-bc2c-aa0abdd6001d/request",
+   "finalUrl": "/toy-library/8279963f-f840-4d49-9862-7dd051b92193/request",
    "height": 3332
   },
   {
@@ -211,6 +71,16 @@
    "findings": [],
    "finalUrl": "/onboarding/child",
    "height": 800
+  },
+  {
+   "id": "learn",
+   "name": "Learn · Course home",
+   "group": "Learn",
+   "role": "guest",
+   "route": "/learn",
+   "findings": [],
+   "finalUrl": "/learn",
+   "height": 6670
   },
   {
    "id": "learn_101",
@@ -407,10 +277,10 @@
    "name": "Request a print",
    "group": "3D Printing",
    "role": "parent",
-   "route": "/printing/requests?guide=37d5ef80-607b-4954-a84b-9d2d86b3bf87",
+   "route": "/printing/requests?guide=19989956-b2cc-4883-ba91-505c468713a1",
    "findings": [],
    "finalUrl": "/printing/requests",
-   "height": 4036
+   "height": 1746
   },
   {
    "id": "involved",
@@ -463,6 +333,16 @@
    "height": 2634
   },
   {
+   "id": "inv_idea",
+   "name": "Submit an idea",
+   "group": "Get involved",
+   "role": "guest",
+   "route": "/get-involved/submit-an-idea",
+   "findings": [],
+   "finalUrl": "/get-involved/submit-an-idea",
+   "height": 2918
+  },
+  {
    "id": "inv_guide",
    "name": "Submit a guide",
    "group": "Get involved",
@@ -473,6 +353,16 @@
    "height": 2526
   },
   {
+   "id": "makers_wanted",
+   "name": "Makers wanted",
+   "group": "Get involved",
+   "role": "guest",
+   "route": "/get-involved/makers-wanted",
+   "findings": [],
+   "finalUrl": "/get-involved/makers-wanted",
+   "height": 2429
+  },
+  {
    "id": "mw_new",
    "name": "Ask for a build",
    "group": "Get involved",
@@ -480,7 +370,17 @@
    "route": "/get-involved/makers-wanted/new",
    "findings": [],
    "finalUrl": "/get-involved/makers-wanted/new",
-   "height": 3893
+   "height": 3841
+  },
+  {
+   "id": "build_thread",
+   "name": "Build thread",
+   "group": "My SPLAT",
+   "role": "parent",
+   "route": "/dashboard/exchanges/build/c0118686-f0b9-4540-9fa7-12ea836d3f8c",
+   "findings": [],
+   "finalUrl": "/dashboard/exchanges/build/c0118686-f0b9-4540-9fa7-12ea836d3f8c",
+   "height": 3508
   },
   {
    "id": "challenges",
@@ -490,7 +390,17 @@
    "route": "/get-involved/design-challenges",
    "findings": [],
    "finalUrl": "/get-involved/design-challenges",
-   "height": 14078
+   "height": 6479
+  },
+  {
+   "id": "challenge_detail",
+   "name": "Challenge detail",
+   "group": "Get involved",
+   "role": "guest",
+   "route": "/get-involved/design-challenges/0ed8c532-c0b6-4510-8cbc-7995268d6c28",
+   "findings": [],
+   "finalUrl": "/get-involved/design-challenges/0ed8c532-c0b6-4510-8cbc-7995268d6c28",
+   "height": 2877
   },
   {
    "id": "impact",
@@ -500,7 +410,7 @@
    "route": "/impact",
    "findings": [],
    "finalUrl": "/impact",
-   "height": 6976
+   "height": 6478
   },
   {
    "id": "orgs",
@@ -510,7 +420,17 @@
    "route": "/organizations",
    "findings": [],
    "finalUrl": "/organizations",
-   "height": 8000
+   "height": 3608
+  },
+  {
+   "id": "org_public",
+   "name": "Organisation profile",
+   "group": "Impact",
+   "role": "guest",
+   "route": "/organizations/15b5fb44-4b59-4478-889e-adf52e7c6e5d/public",
+   "findings": [],
+   "finalUrl": "/organizations/15b5fb44-4b59-4478-889e-adf52e7c6e5d/public",
+   "height": 5007
   },
   {
    "id": "contributor",
@@ -520,7 +440,7 @@
    "route": "/contributors/11111111-1111-1111-1111-111111111111",
    "findings": [],
    "finalUrl": "/contributors/11111111-1111-1111-1111-111111111111",
-   "height": 3532
+   "height": 2669
   },
   {
    "id": "impact_events",
@@ -531,36 +451,20 @@
    "findings": [
     {
      "type": "target",
-     "what": "a.font-extrabold.text-[var(--b700)].underline \"Parity Org mu5j1p9mwpyw\" is 171x18"
-    },
-    {
-     "type": "target",
-     "what": "a.font-extrabold.text-[var(--b700)].underline \"Northside Therapy\" is 116x18"
-    },
-    {
-     "type": "target",
-     "what": "a.font-extrabold.text-[var(--b700)].underline \"Parity Org mucj4fusv80n\" is 154x18"
-    },
-    {
-     "type": "target",
-     "what": "a.font-extrabold.text-[var(--b700)].underline \"Northside Collective 1789602355001\" is 231x18"
-    },
-    {
-     "type": "target",
      "what": "a.font-extrabold.text-[var(--b700)].underline \"Northside Therapy Collective\" is 181x18"
     }
    ],
    "finalUrl": "/get-involved/events",
-   "height": 4020
+   "height": 2749
   },
   {
    "id": "event_detail",
    "name": "Event detail",
    "group": "Get involved",
    "role": "guest",
-   "route": "/get-involved/events/0c81690d-021a-4add-b982-8b7106fd9451",
+   "route": "/get-involved/events/cdcfb423-18a5-4930-a27b-afac584979cb",
    "findings": [],
-   "finalUrl": "/get-involved/events/0c81690d-021a-4add-b982-8b7106fd9451",
+   "finalUrl": "/get-involved/events/cdcfb423-18a5-4930-a27b-afac584979cb",
    "height": 3470
   },
   {
@@ -568,10 +472,40 @@
    "name": "Register for an event",
    "group": "Get involved",
    "role": "parent",
-   "route": "/get-involved/events/0c81690d-021a-4add-b982-8b7106fd9451/register",
+   "route": "/get-involved/events/cdcfb423-18a5-4930-a27b-afac584979cb/register",
    "findings": [],
-   "finalUrl": "/get-involved/events/0c81690d-021a-4add-b982-8b7106fd9451/register",
+   "finalUrl": "/get-involved/events/cdcfb423-18a5-4930-a27b-afac584979cb/register",
    "height": 3078
+  },
+  {
+   "id": "recycling",
+   "name": "Recycling",
+   "group": "Get involved",
+   "role": "guest",
+   "route": "/get-involved/recycling",
+   "findings": [],
+   "finalUrl": "/get-involved/recycling",
+   "height": 3466
+  },
+  {
+   "id": "recycle_new",
+   "name": "Book a drop-off",
+   "group": "Get involved",
+   "role": "parent",
+   "route": "/get-involved/recycling/drop-off",
+   "findings": [],
+   "finalUrl": "/get-involved/recycling/drop-off",
+   "height": 1847
+  },
+  {
+   "id": "org_recycling",
+   "name": "Recycling intake",
+   "group": "Organisation",
+   "role": "leader",
+   "route": "/dashboard/organisation/recycling",
+   "findings": [],
+   "finalUrl": "/dashboard/organisation/recycling",
+   "height": 3983
   },
   {
    "id": "impact_news",
@@ -581,17 +515,26 @@
    "route": "/about/stories",
    "findings": [],
    "finalUrl": "/about/stories",
-   "height": 4048
+   "height": 2282
   },
   {
    "id": "story_detail",
    "name": "Story",
    "group": "About",
    "role": "guest",
-   "route": "/about/stories/2b8a6d88-711a-4d6e-bfb0-8d243d216b07",
+   "route": "/about/stories/[id]",
    "findings": [],
-   "finalUrl": "/about/stories/2b8a6d88-711a-4d6e-bfb0-8d243d216b07",
-   "height": 3489
+   "error": "no fixture"
+  },
+  {
+   "id": "impact_map",
+   "name": "Deliveries map",
+   "group": "Impact",
+   "role": "guest",
+   "route": "/impact/map",
+   "findings": [],
+   "finalUrl": "/impact/map",
+   "height": 1682
   },
   {
    "id": "about",
@@ -601,7 +544,7 @@
    "route": "/about",
    "findings": [],
    "finalUrl": "/about",
-   "height": 3088
+   "height": 3212
   },
   {
    "id": "about_team",
@@ -651,7 +594,7 @@
    "route": "/admin/inbox",
    "findings": [],
    "finalUrl": "/admin/inbox",
-   "height": 1962
+   "height": 1805
   },
   {
    "id": "admin_builds",
@@ -661,16 +604,16 @@
    "route": "/admin/build-requests",
    "findings": [],
    "finalUrl": "/admin/build-requests",
-   "height": 2210
+   "height": 2039
   },
   {
    "id": "org_event_manage",
    "name": "Manage event",
    "group": "My SPLAT",
    "role": "leader",
-   "route": "/dashboard/org/events/0c81690d-021a-4add-b982-8b7106fd9451",
+   "route": "/dashboard/org/events/cdcfb423-18a5-4930-a27b-afac584979cb",
    "findings": [],
-   "finalUrl": "/dashboard/org/events/0c81690d-021a-4add-b982-8b7106fd9451",
+   "finalUrl": "/dashboard/org/events/cdcfb423-18a5-4930-a27b-afac584979cb",
    "height": 3489
   },
   {
@@ -681,7 +624,7 @@
    "route": "/about/partners",
    "findings": [],
    "finalUrl": "/about/partners",
-   "height": 8581
+   "height": 3513
   },
   {
    "id": "about_support",
@@ -711,7 +654,7 @@
    "route": "/privacy",
    "findings": [],
    "finalUrl": "/privacy",
-   "height": 6172
+   "height": 6198
   },
   {
    "id": "terms",
@@ -771,7 +714,7 @@
    "route": "/dashboard",
    "findings": [],
    "finalUrl": "/dashboard",
-   "height": 4483
+   "height": 4303
   },
   {
    "id": "tutorials",
@@ -798,9 +741,9 @@
    "name": "Tutorial editor",
    "group": "My SPLAT",
    "role": "contributor",
-   "route": "/tutorials/c35a3058-21df-4ef4-8676-cdff89387a13/edit",
+   "route": "/tutorials/324b51ab-f48f-4892-a40c-9cf12a9a1d66/edit",
    "findings": [],
-   "finalUrl": "/tutorials/c35a3058-21df-4ef4-8676-cdff89387a13/edit",
+   "finalUrl": "/tutorials/324b51ab-f48f-4892-a40c-9cf12a9a1d66/edit",
    "height": 3572
   },
   {
@@ -824,6 +767,16 @@
    "height": 2641
   },
   {
+   "id": "toy_detail",
+   "name": "Toy detail",
+   "group": "My SPLAT",
+   "role": "parent",
+   "route": "/dashboard/toys/603c2721-4c42-4303-95fd-9d26862fb701",
+   "findings": [],
+   "finalUrl": "/dashboard/toys/603c2721-4c42-4303-95fd-9d26862fb701",
+   "height": 3439
+  },
+  {
    "id": "exchanges",
    "name": "My exchanges",
    "group": "My SPLAT",
@@ -831,16 +784,16 @@
    "route": "/dashboard/exchanges",
    "findings": [],
    "finalUrl": "/dashboard/exchanges",
-   "height": 10038
+   "height": 9306
   },
   {
    "id": "thread",
    "name": "Exchange thread",
    "group": "My SPLAT",
    "role": "parent",
-   "route": "/dashboard/exchanges/f1d44697-b37f-46d8-b6e0-551d084a8555",
+   "route": "/dashboard/exchanges/127166a1-6679-4be7-b070-14c64e0c230b",
    "findings": [],
-   "finalUrl": "/dashboard/exchanges/f1d44697-b37f-46d8-b6e0-551d084a8555",
+   "finalUrl": "/dashboard/exchanges/127166a1-6679-4be7-b070-14c64e0c230b",
    "height": 3689
   },
   {
@@ -851,7 +804,7 @@
    "route": "/dashboard/challenges",
    "findings": [],
    "finalUrl": "/dashboard/challenges",
-   "height": 2765
+   "height": 2819
   },
   {
    "id": "saved",
@@ -861,7 +814,7 @@
    "route": "/dashboard/saved",
    "findings": [],
    "finalUrl": "/dashboard/saved",
-   "height": 2451
+   "height": 2649
   },
   {
    "id": "saved_tutorials",
@@ -911,7 +864,7 @@
    "route": "/notifications",
    "findings": [],
    "finalUrl": "/notifications",
-   "height": 2370
+   "height": 2531
   },
   {
    "id": "print_requests",
@@ -921,17 +874,17 @@
    "route": "/dashboard/print-requests",
    "findings": [],
    "finalUrl": "/dashboard/print-requests",
-   "height": 5511
+   "height": 4847
   },
   {
    "id": "print_job",
    "name": "Print job",
    "group": "My SPLAT",
    "role": "parent",
-   "route": "/dashboard/print-requests/abaf02fc-7cc6-4cf2-b4c3-6ea92e2dc30d",
+   "route": "/dashboard/print-requests/2c6f3f91-df31-4113-b811-47197f701880",
    "findings": [],
-   "finalUrl": "/dashboard/print-requests/abaf02fc-7cc6-4cf2-b4c3-6ea92e2dc30d",
-   "height": 3477
+   "finalUrl": "/dashboard/print-requests/2c6f3f91-df31-4113-b811-47197f701880",
+   "height": 3237
   },
   {
    "id": "print_offer",
@@ -941,7 +894,7 @@
    "route": "/dashboard/printers",
    "findings": [],
    "finalUrl": "/dashboard/printers",
-   "height": 3159
+   "height": 3054
   },
   {
    "id": "print_add",
@@ -951,7 +904,7 @@
    "route": "/dashboard/printers/new",
    "findings": [],
    "finalUrl": "/dashboard/printers/new",
-   "height": 3790
+   "height": 3878
   },
   {
    "id": "account",
@@ -961,17 +914,17 @@
    "route": "/dashboard/profile",
    "findings": [],
    "finalUrl": "/dashboard/profile",
-   "height": 3522
+   "height": 3638
   },
   {
    "id": "child",
    "name": "Child profile",
    "group": "My SPLAT",
    "role": "parent",
-   "route": "/dashboard/child/a91abdb2-01de-44d4-868a-c7feb00d5bf0",
+   "route": "/dashboard/child/e177544b-c03e-47c8-851b-1cb4f1cf628c",
    "findings": [],
-   "finalUrl": "/dashboard/child/a91abdb2-01de-44d4-868a-c7feb00d5bf0",
-   "height": 3081
+   "finalUrl": "/dashboard/child/e177544b-c03e-47c8-851b-1cb4f1cf628c",
+   "height": 3731
   },
   {
    "id": "child_new",
@@ -981,7 +934,7 @@
    "route": "/dashboard/child/new",
    "findings": [],
    "finalUrl": "/dashboard/child/new",
-   "height": 3021
+   "height": 3671
   },
   {
    "id": "org_queue",
@@ -1002,6 +955,16 @@
    "findings": [],
    "finalUrl": "/dashboard/organisation/profile",
    "height": 7704
+  },
+  {
+   "id": "org_toys",
+   "name": "Toy inventory",
+   "group": "Organisation",
+   "role": "leader",
+   "route": "/dashboard/organisation/toys",
+   "findings": [],
+   "finalUrl": "/dashboard/organisation/toys",
+   "height": 2890
   },
   {
    "id": "org_posts",
@@ -1041,7 +1004,17 @@
    "route": "/dashboard/organisation/orders",
    "findings": [],
    "finalUrl": "/dashboard/organisation/orders",
-   "height": 3187
+   "height": 4195
+  },
+  {
+   "id": "admin_content",
+   "name": "Site content",
+   "group": "Admin",
+   "role": "admin",
+   "route": "/admin/content",
+   "findings": [],
+   "finalUrl": "/admin/content",
+   "height": 3963
   },
   {
    "id": "admin",
@@ -1051,7 +1024,17 @@
    "route": "/admin",
    "findings": [],
    "finalUrl": "/admin",
-   "height": 4177
+   "height": 4358
+  },
+  {
+   "id": "admin_review",
+   "name": "Review queue (live)",
+   "group": "Admin",
+   "role": "admin",
+   "route": "/admin/review?selected=bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+   "findings": [],
+   "finalUrl": "/admin/review",
+   "height": 5663
   },
   {
    "id": "admin_review_detail",
@@ -1061,7 +1044,7 @@
    "route": "/admin/review/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
    "findings": [],
    "finalUrl": "/admin/review/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
-   "height": 3426
+   "height": 3402
   },
   {
    "id": "admin_reports",
@@ -1081,16 +1064,16 @@
    "route": "/admin/ideas",
    "findings": [],
    "finalUrl": "/admin/ideas",
-   "height": 6777
+   "height": 3346
   },
   {
    "id": "admin_idea_detail",
    "name": "Review an idea",
    "group": "Admin",
    "role": "admin",
-   "route": "/admin/ideas/37194df9-a3f3-47f0-bc4b-be8b4c541fbb",
+   "route": "/admin/ideas/f291e9d5-fa9a-4b63-b3a3-b969f26d081d",
    "findings": [],
-   "finalUrl": "/admin/ideas/37194df9-a3f3-47f0-bc4b-be8b4c541fbb",
+   "finalUrl": "/admin/ideas/f291e9d5-fa9a-4b63-b3a3-b969f26d081d",
    "height": 2405
   },
   {
@@ -1101,7 +1084,7 @@
    "route": "/admin/print-jobs",
    "findings": [],
    "finalUrl": "/admin/print-jobs",
-   "height": 3846
+   "height": 3417
   },
   {
    "id": "admin_spot",
@@ -1111,7 +1094,7 @@
    "route": "/admin/spot-check",
    "findings": [],
    "finalUrl": "/admin/spot-check",
-   "height": 3442
+   "height": 2022
   },
   {
    "id": "admin_orgs",
@@ -1121,7 +1104,7 @@
    "route": "/admin/organizations",
    "findings": [],
    "finalUrl": "/admin/organizations",
-   "height": 8627
+   "height": 2587
   },
   {
    "id": "admin_contributors",
@@ -1131,7 +1114,7 @@
    "route": "/admin/contributors",
    "findings": [],
    "finalUrl": "/admin/contributors",
-   "height": 8222
+   "height": 8170
   },
   {
    "id": "login",
@@ -1208,9 +1191,9 @@
    "name": "Message an organisation",
    "group": "Extra",
    "role": "parent",
-   "route": "/organizations/0b06226d-8072-4268-93b7-577bf9ab5c60/message",
+   "route": "/organizations/15b5fb44-4b59-4478-889e-adf52e7c6e5d/message",
    "findings": [],
-   "finalUrl": "/organizations/0b06226d-8072-4268-93b7-577bf9ab5c60/message",
+   "finalUrl": "/organizations/15b5fb44-4b59-4478-889e-adf52e7c6e5d/message",
    "height": 2108
   },
   {
@@ -1229,9 +1212,18 @@
    "group": "Extra",
    "role": "guest",
    "route": "/printing/parts",
-   "findings": [],
+   "findings": [
+    {
+     "type": "target",
+     "what": "a.text-sm.font-bold.text-brand-dark \"E2E Tutorial 9d637a04\" is 212x20"
+    },
+    {
+     "type": "target",
+     "what": "a.text-sm.font-bold.text-brand-dark \"E2E Approved One\" is 212x20"
+    }
+   ],
    "finalUrl": "/printing/parts",
-   "height": 2310
+   "height": 4299
   },
   {
    "id": "x_saved_parts",
@@ -1241,7 +1233,7 @@
    "route": "/dashboard/saved/parts",
    "findings": [],
    "finalUrl": "/dashboard/saved/parts",
-   "height": 2147
+   "height": 1683
   },
   {
    "id": "x_org_messages",
@@ -1261,16 +1253,16 @@
    "route": "/admin/organization-requests",
    "findings": [],
    "finalUrl": "/admin/organization-requests",
-   "height": 2144
+   "height": 1723
   }
  ],
  "summary": {
   "screens": 124,
-  "clean": 123,
-  "errored": 0,
-  "findings": 5,
+  "clean": 121,
+  "errored": 1,
+  "findings": 3,
   "byType": {
-   "target": 5
+   "target": 3
   }
  }
 }

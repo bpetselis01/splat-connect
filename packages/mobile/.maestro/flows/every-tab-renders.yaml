@@ -43,24 +43,30 @@ appId: com.splatconnect.mobile
           text: "Not Now"
           optional: true
 
-# Signed-in landing is Guides.
+# Signed-in landing is Home. Guides and Toys are no longer tabs: they are
+# doors on Home, and the bar keeps Home lit while either is open.
+- assertVisible:
+    text: "Welcome to SPLAT"
+- tapOn:
+    text: "Guides"
 - assertVisible:
     text: "Guide library"
 
-# The filter sheet is @expo/ui's native SwiftUI / Compose sheet — Playwright
-# only ever sees its vaul drawer, so this is the one layer that presents the
-# real thing. A chip inside it proves the sheet mounted its content.
-- tapOn:
-    text: "Filters"
-- assertVisible:
-    text: "Easy"
-- tapOn:
-    text: "Done"
+# The native filter sheet this step used to open is gone from the Guides
+# root (the sheet returns with the sub-project 4 layout, and its step with it).
 
+- tapOn:
+    text: "Home"
 - tapOn:
     text: "Toys"
 - assertVisible:
     text: "Toy library"
+
+# Map is a placeholder until sub-project 6; its row opens Not built yet.
+- tapOn:
+    text: "Map"
+- assertVisible:
+    text: "Open the map"
 
 # Inbox must render an actual row, not just its header: rows are where
 # relativeTime runs, and the fixture seeds exactly one notification so this
@@ -68,17 +74,24 @@ appId: com.splatconnect.mobile
 # The tab's accessibilityLabel is "Inbox, N unread" while the seeded
 # notification is unread, so a bare "Inbox" matches nothing on iOS.
 - tapOn:
-    text: "Inbox.*"
+    text: "Inbox(, .*)?"
 - assertVisible:
-    text: "Everything waiting on you, newest first."
+    text: "Exchanges"
+- tapOn:
+    text: "Notifications"
 - assertVisible:
     text: "Your idea was published as a design challenge"
 
 # Me is the hub. Its label carries a count while anything is waiting, so the
 # bare word matches nothing on iOS — same shape as Inbox above.
 - tapOn:
-    text: "Me.*"
+    text: "Me(, .*)?"
 - assertVisible:
     text: "Add a tutorial"
+# The last row sits below the fold; reaching it also proves the list ends
+# clear of the floating bar.
+- scrollUntilVisible:
+    element:
+      text: "About SPLAT"
 - assertVisible:
     text: "About SPLAT"

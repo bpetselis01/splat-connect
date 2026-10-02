@@ -28,6 +28,8 @@ async function chooseFile(page: Page, button: string, file: string) {
 
 test('a new account writes a guide end to end and submits it for review', async ({ page }) => {
   await signUpNewAccount(page, uniqueSignupEmail())
+  // Guides is a door on Home now, not a tab.
+  await page.getByRole('button', { name: 'Guides', exact: true }).click()
 
   // --- Add a guide -------------------------------------------------------
   const title = uniqueTitle('E2E Mobile Authored')
