@@ -32,3 +32,13 @@ describe('DropoffForm photo', () => {
     )
   })
 })
+
+describe('DropoffForm per-drop limits', () => {
+  it('holds a weight over the organisation’s maximum, in the board’s words', () => {
+    render(<DropoffForm orgs={[{ ...ORG, recycling_max_kg: 5 }]} />)
+    expect(screen.getByText('Between 2 and 5 kg. They weigh it again at the door — this is just so they can plan.')).toBeInTheDocument()
+    fireEvent.change(screen.getByPlaceholderText('2.0'), { target: { value: '6' } })
+    expect(screen.getAllByText('Northside can take at most 5 kg in one drop. Split it across two.').length).toBeGreaterThan(0)
+    expect(screen.getByRole('button', { name: /Book the drop-off/ })).toBeDisabled()
+  })
+})

@@ -40,7 +40,7 @@ import { ShelfToyCard } from '@/components/shelf-toy-card'
 import { tintFor } from '@/components/card-photo'
 import { OrgActions } from '@/components/org-actions'
 import { safePhotoSrc } from '@/lib/photo-src'
-import { firstName, initials, shortDate } from '@splat-connect/types'
+import { firstName, initials, recyclingPerDrop, shortDate, type RecyclingGives } from '@splat-connect/types'
 import { getCapabilities } from '@/lib/capabilities'
 import { apiClient } from '@/lib/api-client'
 import { doorLink } from '@/lib/org-profile'
@@ -618,6 +618,13 @@ export default async function OrgPublicProfilePage({
   )
 }
 
+// WB's org profile words for 113's recycling_gives.
+const GIVES_PROFILE: Record<RecyclingGives, string> = {
+  credit: 'Print credit on their machines',
+  spool: 'A spool to take home',
+  either: 'Credit, or a spool if you prefer',
+}
+
 function RecyclingCard({ org, signedIn }: { org: OrgPublicProfile; signedIn: boolean }) {
   return (
     <div className={`${RAIL_CARD} bg-[var(--tmint)] text-[var(--tink)]`}>
@@ -628,11 +635,34 @@ function RecyclingCard({ org, signedIn }: { org: OrgPublicProfile; signedIn: boo
       <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-3.5 gap-y-1.5 text-[13px]">
         <dt className="font-semibold opacity-80">Polymers</dt>
         <dd className="m-0 font-extrabold">{(org.recycling_materials ?? []).join(' · ')}</dd>
+        {(org.recycling_forms ?? []).length > 0 && (
+          <>
+            <dt className="font-semibold opacity-80">In what form</dt>
+            <dd className="m-0 font-extrabold">{org.recycling_forms!.join(', ')}</dd>
+          </>
+        )}
+        {(org.recycling_machines ?? []).length > 0 && (
+          <>
+            <dt className="font-semibold opacity-80">Machines</dt>
+            <dd className="m-0 font-extrabold">{org.recycling_machines!.join(' · ')}</dd>
+          </>
+        )}
+        <dt className="font-semibold opacity-80">Per drop</dt>
+        <dd className="m-0 font-extrabold">{recyclingPerDrop(org)}</dd>
+        <dt className="font-semibold opacity-80">You get</dt>
+        <dd className="m-0 font-extrabold">{GIVES_PROFILE[org.recycling_gives ?? 'credit']}</dd>
+        {org.recycling_hours && (
+          <>
+            <dt className="font-semibold opacity-80">When</dt>
+            <dd className="m-0 font-extrabold">{org.recycling_hours}</dd>
+          </>
+        )}
       </dl>
       <p className="m-0 text-[13px] leading-[1.5]">
-        {org.recycling_note ? `${org.recycling_note} ` : ''}They weigh it at the door and issue
-        print credit against that weight.
+        {org.recycling_door ? `${org.recycling_door}. ` : ''}They weigh it at the door and issue the
+        credit against that weight.
       </p>
+      {org.recycling_note && <p className="m-0 text-[13px] leading-[1.5]">{org.recycling_note}</p>}
       <Link
         href={signedIn ? `/get-involved/recycling/drop-off?org=${org.id}` : '/get-involved/recycling'}
         className="inline-flex min-h-11 items-center self-start rounded-pill bg-surface px-[18px] text-sm font-extrabold text-ink"

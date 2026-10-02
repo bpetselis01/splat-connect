@@ -58,6 +58,8 @@ export type DropoffOrg = {
   state: string | null
   recycling_materials: string[]
   recycling_note: string | null
+  recycling_min_kg?: number | null
+  recycling_max_kg?: number | null
 }
 
 export function DropoffForm({ orgs, initialOrgId }: { orgs: DropoffOrg[]; initialOrgId?: string }) {
@@ -91,8 +93,13 @@ export function DropoffForm({ orgs, initialOrgId }: { orgs: DropoffOrg[]; initia
 
   const grams = kgToGrams(amount)
   const allTicked = ticked.length === RECYCLING_DECLARATION.length
-  const heavyEnough = grams !== null && grams >= MIN_DROPOFF_GRAMS
-  const valid = !!org && material !== '' && heavyEnough && allTicked
+  // 113: the organisation's own per-drop limits, inside the platform floor.
+  const minGrams = Math.max(MIN_DROPOFF_GRAMS, org?.recycling_min_kg != null ? Math.round(org.recycling_min_kg * 1000) : 0)
+  const maxGrams = org?.recycling_max_kg != null ? Math.round(org.recycling_max_kg * 1000) : null
+  const tooHeavy = grams !== null && maxGrams !== null && grams > maxGrams
+  const overMax = `${org?.name} can take at most ${maxGrams! / 1000} kg in one drop. Split it across two.`
+  const heavyEnough = grams !== null && grams >= minGrams
+  const valid = !!org && material !== '' && heavyEnough && !tooHeavy && allTicked
 
   const toggle = (line: string) =>
     setTicked((prev) => (prev.includes(line) ? prev.filter((l) => l !== line) : [...prev, line]))
@@ -212,8 +219,13 @@ export function DropoffForm({ orgs, initialOrgId }: { orgs: DropoffOrg[]; initia
             <span className="text-base font-extrabold text-muted">kg</span>
           </span>
           <span id="weight-help" className="mt-[7px] block text-[13px] leading-[1.45] text-muted">
-            At least {MIN_DROPOFF_GRAMS / 1000} kg. They weigh it again at the door — this is
-            just so they can plan.
+            {grams !== null && grams > 0 && grams < MIN_DROPOFF_GRAMS
+              ? `Under the ${MIN_DROPOFF_GRAMS / 1000} kg minimum — hold on to it until you have ${MIN_DROPOFF_GRAMS / 1000} kg.`
+              : tooHeavy
+                ? overMax
+                : maxGrams !== null
+                  ? `Between ${minGrams / 1000} and ${maxGrams / 1000} kg. They weigh it again at the door — this is just so they can plan.`
+                  : `At least ${minGrams / 1000} kg. They weigh it again at the door — this is just so they can plan.`}
           </span>
         </label>
 
@@ -332,7 +344,7 @@ export function DropoffForm({ orgs, initialOrgId }: { orgs: DropoffOrg[]; initia
           <p className="mt-2 text-sm leading-[1.5]">
             {heavyEnough
               ? `An estimate at about three quarters yield. ${org?.name} issues print credit you spend on their machines, from the weight they record.`
-              : `Enter a weight of at least ${MIN_DROPOFF_GRAMS / 1000} kg to see what it is worth.`}
+              : `Enter a weight of at least ${minGrams / 1000} kg to see what it is worth.`}
           </p>
         </div>
       </div>
@@ -357,8 +369,10 @@ export function DropoffForm({ orgs, initialOrgId }: { orgs: DropoffOrg[]; initia
         <span className="mt-4 max-w-[32ch] text-[13px] leading-[1.45] text-muted">
           {valid
             ? 'Booking tells them to expect you. No credit exists until they weigh it.'
-            : !heavyEnough
-              ? `A drop needs to be at least ${MIN_DROPOFF_GRAMS / 1000} kg.`
+            : tooHeavy
+              ? overMax
+              : !heavyEnough
+              ? `A drop needs to be at least ${minGrams / 1000} kg.`
               : `${left} declaration line${left === 1 ? '' : 's'} still to tick.`}
         </span>
       </div>
