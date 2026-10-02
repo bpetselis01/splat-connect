@@ -58,6 +58,7 @@ const ICON: Record<NotificationType, [Glyph, string]> = {
   org_story_published: [FileText, 'var(--tcoral)'],
   org_message: [Inbox, 'var(--tmint)'],
   org_thanked: [Handshake, 'var(--tamber)'],
+  profile_thanked: [Handshake, 'var(--tamber)'],
 }
 
 function linkFor(n: Notification, isAdmin: boolean): string {
@@ -118,6 +119,9 @@ function linkFor(n: Notification, isAdmin: boolean): string {
       ? '/dashboard/challenges'
       : `/get-involved/design-challenges/${n.idea_id}`
   }
+  // 117: a showcase thanks opens the showcase, where the count it added shows.
+  // A thanks for an exchange, print or build left through toy_transaction_id above.
+  if (n.type === 'profile_thanked' && n.profile_id) return `/contributors/${n.profile_id}`
   return '/notifications'
 }
 

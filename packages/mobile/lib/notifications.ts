@@ -47,6 +47,8 @@ export function linkFor(n: Notification): string {
   if (n.idea_id) {
     return n.type === 'idea_rejected' ? '/challenges' : `/explore/challenges/${n.idea_id}`
   }
+  // 117: web's showcase-thanks branch. A transaction-tied one left above.
+  if (n.type === 'profile_thanked' && n.profile_id) return `/guides/contributor/${n.profile_id}`
   return '/inbox'
 }
 

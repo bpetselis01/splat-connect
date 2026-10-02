@@ -1,5 +1,6 @@
 /**
- * Contributor profile routes: GET/PATCH /api/contributors/me.
+ * Contributor profile routes: GET/PATCH /api/contributors/me, and saying
+ * thanks to a person (117).
  *
  * `name`, the pickup_* address fields, `public_showcase`, `bio` and
  * `featured_tutorial_id` are mutable
@@ -10,6 +11,7 @@
 import { Hono } from 'hono'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { pickEditable } from './pick-editable.js'
+import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
 const contributors = new Hono<{ Variables: AuthVariables }>()
@@ -111,6 +113,97 @@ contributors.post('/me/tutorials/:tutorialId', async (c) => {
     return c.json({ error: error.message }, 500)
   }
   return c.body(null, 201)
+})
+
+/* ------------------------------------------------------------ thanks --
+ *
+ * 117. Thanking a person: once per person per person. The note is optional and
+ * public nowhere; the byline is what they typed, never a name off a profile.
+ * Mirrors organizations.ts's thanks routes.
+ */
+const PERSON_THANKS_COLUMNS = 'profile_id, thanker_id, note, byline, show_note, hidden_at, transaction_id, created_at'
+
+contributors.post('/:id/thanks', async (c) => {
+  const profileId = c.req.param('id')
+  const userId = c.get('userId')
+  if (profileId === userId) return c.json({ error: "You can't thank yourself" }, 403)
+  const body = ((await c.req.json().catch(() => null)) ?? {}) as Record<string, unknown>
+  const note = typeof body.note === 'string' ? body.note.trim() : ''
+  const byline = typeof body.byline === 'string' ? body.byline.trim() : ''
+  if (note.length > 200) return c.json({ error: 'Keep the note to 200 characters.' }, 400)
+  if (byline.length > 60) return c.json({ error: 'Keep the name to 60 characters.' }, 400)
+  const txId = typeof body.transaction_id === 'string' ? body.transaction_id : null
+
+  const admin = createAdminClient()
+  // A thanks may name the exchange it was for, but only one the two of them
+  // were the two sides of.
+  if (txId) {
+    const { data: tx, error } = await admin
+      .from('toy_transactions')
+      .select('requester_id, owner_id')
+      .eq('id', txId)
+      .maybeSingle()
+    if (error && error.code !== INVALID_TEXT_REPRESENTATION) return c.json({ error: error.message }, 500)
+    const sides = tx ? [tx.requester_id, tx.owner_id] : []
+    if (!sides.includes(userId) || !sides.includes(profileId)) {
+      return c.json({ error: 'That exchange is not between the two of you.' }, 400)
+    }
+  }
+
+  const { error } = await createUserClient(c.get('token')).from('profile_thanks').insert({
+    profile_id: profileId,
+    thanker_id: userId,
+    note: note || null,
+    byline: byline || null,
+    show_note: !!note && body.show_note === true,
+  })
+  if (error?.code === '23505') return c.json({ error: 'You already thanked them' }, 409)
+  if (error?.code === '23503' || error?.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
+  if (error) return c.json({ error: error.message }, 500)
+
+  if (txId) {
+    await admin.from('profile_thanks').update({ transaction_id: txId }).eq('profile_id', profileId).eq('thanker_id', userId)
+  }
+  // Logged, never thrown: the thanks has committed. The byline if they gave
+  // one, else nobody — 066's and 077's reticence.
+  const { error: notifyError } = await admin.from('notifications').insert({
+    recipient_id: profileId,
+    type: 'profile_thanked',
+    ...(txId ? { toy_transaction_id: txId } : { profile_id: profileId }),
+    actor_name: byline || 'A family',
+  })
+  if (notifyError) console.error('[contributors] thanks notify failed:', notifyError.message)
+
+  const { data } = await admin.from('profiles').select('profile_thanks_count').eq('id', profileId).single()
+  return c.json({ thanks_count: (data as { profile_thanks_count: number } | null)?.profile_thanks_count ?? 0 }, 201)
+})
+
+/** The thanks you have been given, to read and hide. */
+contributors.get('/me/thanks', async (c) => {
+  const { data, error } = await createUserClient(c.get('token'))
+    .from('profile_thanks')
+    .select(PERSON_THANKS_COLUMNS)
+    .eq('profile_id', c.get('userId'))
+    .order('created_at', { ascending: false })
+  if (error) return c.json({ error: error.message }, 500)
+  return c.json(data ?? [])
+})
+
+/** Hide or unhide a note you were given. hidden_at has no member grant — the
+ *  service role writes it, scoped to the caller's own thanks. */
+contributors.patch('/me/thanks/:thankerId', async (c) => {
+  const body = ((await c.req.json().catch(() => null)) ?? {}) as { hidden?: unknown }
+  if (typeof body.hidden !== 'boolean') return c.json({ error: 'hidden must be true or false' }, 400)
+  const { data, error } = await createAdminClient()
+    .from('profile_thanks')
+    .update({ hidden_at: body.hidden ? new Date().toISOString() : null })
+    .eq('profile_id', c.get('userId'))
+    .eq('thanker_id', c.req.param('thankerId'))
+    .select(PERSON_THANKS_COLUMNS)
+    .maybeSingle()
+  if (error && error.code !== INVALID_TEXT_REPRESENTATION) return c.json({ error: error.message }, 500)
+  if (!data) return c.json({ error: 'Not found' }, 404)
+  return c.json(data)
 })
 
 export default contributors

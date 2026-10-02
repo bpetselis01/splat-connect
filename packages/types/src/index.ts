@@ -1761,6 +1761,7 @@ export type NotificationType =
   | 'build_shot_posted'
   | 'build_approved'
   | 'build_question'
+  | 'profile_thanked'
   | 'print_started'
   | 'print_ready'
   | 'org_event_published'
@@ -1818,6 +1819,7 @@ const NOTIFICATION_BUCKET = {
   build_shot_posted: 'exchanges',
   build_approved: 'exchanges',
   build_question: 'exchanges',
+  profile_thanked: 'exchanges',
   print_started: 'exchanges',
   print_ready: 'exchanges',
   idea_approved: 'challenges',
@@ -1888,6 +1890,8 @@ export const COPY: Record<NotificationType, (n: Notification) => string> = {
   build_approved: (n) => `${n.actor_name} approved the working shot for ${n.toy_name}`,
   // 111: either way round — a maker asking, or the family answering — before a claim.
   build_question: (n) => `${n.actor_name} wrote about ${n.toy_name} before anyone claimed it`,
+  // 117. Signed with the byline they typed, or "A family".
+  profile_thanked: (n) => `${n.actor_name} said thanks to you`,
   print_started: (n) => `${n.actor_name} started printing ${n.toy_name}`,
   print_ready: (n) => `${n.actor_name} finished printing ${n.toy_name}`,
   // 077. For the two publish types the event or story title rides in
@@ -1937,6 +1941,9 @@ export interface Notification {
   org_event_id?: string | null
   org_story_id?: string | null
   org_conversation_id?: string | null
+  /** 117: a thanks sent from someone's showcase. A thanks for an exchange,
+   *  print or build carries toy_transaction_id instead. */
+  profile_id?: string | null
   actor_name: string
   read_at: string | null
   created_at: string

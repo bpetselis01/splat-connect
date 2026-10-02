@@ -699,7 +699,7 @@ publicRoutes.get('/contributors/:id', async (c) => {
 
   const { data: profile } = await admin
     .from('profiles')
-    .select('id, name, public_showcase, bio, featured_tutorial_id, created_at')
+    .select('id, name, public_showcase, bio, featured_tutorial_id, created_at, profile_thanks_count')
     .eq('id', id)
     .maybeSingle()
   if (!profile || !profile.public_showcase) return c.json({ error: 'Not found' }, 404)
@@ -759,7 +759,10 @@ publicRoutes.get('/contributors/:id', async (c) => {
     )
     orgBacked = backed.some((r) => (r.data?.length ?? 0) > 0)
   }
-  const thanks = guides.reduce((n, t) => n + (t.thanks_count ?? 0), 0)
+  // Guide thanks (066) and thanks to the person (117): "Thanked {n} times".
+  const thanks =
+    guides.reduce((n, t) => n + (t.thanks_count ?? 0), 0) +
+    ((profile as { profile_thanks_count?: number }).profile_thanks_count ?? 0)
   const builds = guides.reduce((n, t) => n + (t.builds_count ?? 0), 0)
 
   const result: ContributorProfile = {

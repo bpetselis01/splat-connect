@@ -601,7 +601,26 @@ select * from (values
       where pronamespace = 'public'::regnamespace
         and proname in ('org_backed_count', 'org_toy_count', 'org_has_printer')
         and not has_function_privilege('anon', oid, 'execute')
-        and not has_function_privilege('authenticated', oid, 'execute')))
+        and not has_function_privilege('authenticated', oid, 'execute'))),
+
+  -- 117. A thanks note is private to two people; RLS off would publish every
+  -- one, and a thanker's update grant on hidden_at would let them undo a hide.
+  ('117 profile_thanks has RLS enabled',
+   (select coalesce(bool_and(relrowsecurity), false) from pg_class
+      where relname = 'profile_thanks' and relnamespace = 'public'::regnamespace)),
+
+  ('117 profile_thanks.hidden_at is not updatable by members',
+   (select count(*) = 0 from information_schema.column_privileges
+      where table_schema = 'public' and table_name = 'profile_thanks'
+        and column_name in ('hidden_at', 'transaction_id')
+        and grantee in ('anon', 'authenticated')
+        and privilege_type in ('UPDATE', 'INSERT'))),
+
+  ('117 notifications_type_check permits profile_thanked',
+   (select pg_get_constraintdef(oid) like '%profile_thanked%'
+      from pg_constraint
+     where conname = 'notifications_type_check'
+       and conrelid = 'public.notifications'::regclass))
 ) as t(guard, ok)
 where not ok;
 EOSQL
