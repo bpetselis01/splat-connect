@@ -125,7 +125,7 @@ export function WhatYouTake({ orgId, org }: { orgId: string; org: Organization }
       </div>
       <Chips legend="In what form" options={RECYCLING_FORMS} value={forms} onChange={setForms} />
 
-      <div className="grid gap-3.5 [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]">
+      <div className="grid gap-3.5 [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))] max-sm:grid-cols-2">
         <label>
           <span className={LABEL}>Minimum per drop</span>
           <span className="flex items-center gap-2">
@@ -141,7 +141,7 @@ export function WhatYouTake({ orgId, org }: { orgId: string; org: Organization }
             <span className="font-extrabold text-muted">kg</span>
           </span>
         </label>
-        <label>
+        <label className="max-sm:col-span-2">
           <span className={LABEL}>Turnaround</span>
           <input aria-label="Turnaround" value={turnaround} onChange={(e) => setTurnaround(e.target.value)} maxLength={60} placeholder="About 3 weeks" className="field w-full bg-canvas" />
         </label>
