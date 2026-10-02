@@ -2,10 +2,12 @@
 /**
  * The child profile as the board draws it: one page, three cards, one save.
  *
- * Basics (name, age), the four switch questions, and the everyday needs of the
- * room. Every field is optional, and nothing else is asked — the older MACS,
- * BFMF, grip and measurement columns stay in the table but no form writes them
- * (APP 3 minimisation). These are plain-language preferences for ranking
+ * Basics (name, age), the four switch questions, the everyday needs of the
+ * room, and Play and Measurements (120, mobile's wizard steps). Every field is
+ * optional, and nothing else is asked — the older MACS, BFMF, grip, wrist and
+ * forearm columns stay in the table but no form writes them (APP 3
+ * minimisation). What a child enjoys is kept for a future recommender; nothing
+ * sorts or matches on it yet. These are plain-language preferences for ranking
  * guides, never a clinical assessment; see docs/REGULATORY-CHANGES.md.
  *
  * Saving the first time creates the profile and the URL swaps from
@@ -19,10 +21,15 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import type { Route } from 'next'
 import {
+  CHILD_MEASURES,
   CHILD_QUESTIONS,
+  ENJOYS,
   EVERYDAY_NEEDS,
+  readMeasure,
   type ChildAnswers,
+  type ChildMeasureField,
   type ChildProfile,
+  type Enjoy,
   type EverydayNeed,
 } from '@splat-connect/types'
 import { DeleteEntityButton } from '@/components/delete-entity-button'
@@ -84,9 +91,24 @@ export function NeedsChips({
   value: EverydayNeed[]
   onChange: (v: EverydayNeed[]) => void
 }) {
+  return <ManyChips label="Everyday needs" options={EVERYDAY_NEEDS} value={value} onChange={onChange} />
+}
+
+/** Any number of a list's options — the room's needs, what a child enjoys. */
+export function ManyChips<T extends string>({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string
+  options: readonly { value: T; label: string }[]
+  value: T[]
+  onChange: (v: T[]) => void
+}) {
   return (
-    <div role="group" aria-label="Everyday needs" className="flex flex-wrap gap-2">
-      {EVERYDAY_NEEDS.map((o) => {
+    <div role="group" aria-label={label} className="flex flex-wrap gap-2">
+      {options.map((o) => {
         const on = value.includes(o.value)
         return (
           <button
@@ -121,6 +143,16 @@ export function ChildEditor({ child: initialChild, label }: { child: ChildProfil
   const [child, setChild] = useState<ChildProfile | null>(initialChild)
   const [form, setForm] = useState<ChildAnswers>(() => answersOf(initialChild))
   const [age, setAge] = useState(initialChild?.age?.toString() ?? '')
+  const [enjoys, setEnjoys] = useState<Enjoy[]>(initialChild?.enjoys ?? [])
+  // As typed, so "400" stays on screen with its range under it.
+  const [measures, setMeasures] = useState<Record<ChildMeasureField, string>>(() => {
+    const text = (n: number | null | undefined) => (n == null ? '' : String(n))
+    return {
+      palm_width_mm: text(initialChild?.palm_width_mm),
+      reach_cm: text(initialChild?.reach_cm),
+      tray_mm: text(initialChild?.tray_mm),
+    }
+  })
   const [busy, setBusy] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -134,10 +166,15 @@ export function ChildEditor({ child: initialChild, label }: { child: ChildProfil
     e.preventDefault()
     setBusy(true)
     setError(null)
-    const body: ChildAnswers = {
+    // The inputs' min/max stop the browser submitting an out-of-range number,
+    // and the API refuses one with a sentence; JSON drops an undefined here.
+    const read = CHILD_MEASURES.map((m) => [m.field, readMeasure(m, measures[m.field])] as const)
+    const body = {
       ...form,
       name: form.name?.trim() || null,
       age: age.trim() === '' ? null : Number(age),
+      enjoys,
+      ...Object.fromEntries(read),
     }
     try {
       if (!child) {
@@ -219,6 +256,52 @@ export function ChildEditor({ child: initialChild, label }: { child: ChildProfil
 
         <Card id="everyday-needs" title="Everyday needs" lead="What matters in the room, rather than in the hand.">
           <NeedsChips value={form.everyday_needs} onChange={(v) => set({ everyday_needs: v })} />
+        </Card>
+
+        <Card id="play" title="Play" lead="What does your child enjoy?">
+          <ManyChips
+            label="What does your child enjoy?"
+            options={ENJOYS}
+            value={enjoys}
+            onChange={(v) => {
+              setSaved(false)
+              setEnjoys(v)
+            }}
+          />
+        </Card>
+
+        <Card id="measurements" title="Measurements" lead="Optional. Only for printed grips and mounts.">
+          <div className="grid gap-4 sm:grid-cols-3">
+            {CHILD_MEASURES.map((m) => {
+              const bad = readMeasure(m, measures[m.field]) === undefined
+              return (
+                <div key={m.field} className="flex flex-col">
+                  <label htmlFor={`measure-${m.field}`} className="field-label">{m.label}</label>
+                  <input
+                    id={`measure-${m.field}`}
+                    type="number"
+                    inputMode="decimal"
+                    min={m.min}
+                    max={m.max}
+                    placeholder={m.placeholder}
+                    value={measures[m.field]}
+                    aria-invalid={bad || undefined}
+                    aria-describedby={bad ? `measure-${m.field}-range` : undefined}
+                    onChange={(e) => {
+                      setSaved(false)
+                      setMeasures((t) => ({ ...t, [m.field]: e.target.value }))
+                    }}
+                    className="field"
+                  />
+                  {bad && (
+                    <span id={`measure-${m.field}-range`} className="mt-1 text-xs text-muted">
+                      Between {m.min} and {m.max}.
+                    </span>
+                  )}
+                </div>
+              )
+            })}
+          </div>
         </Card>
 
         {error && (

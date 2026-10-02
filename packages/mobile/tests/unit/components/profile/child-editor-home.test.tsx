@@ -40,6 +40,9 @@ const child = (over: object = {}) => ({
   grip_type: null,
   env_context: null,
   palm_width_mm: null,
+  enjoys: [],
+  reach_cm: null,
+  tray_mm: null,
   wrist_circ_mm: null,
   needs_arm_attachment: false,
   forearm_length_mm: null,
@@ -137,6 +140,55 @@ describe('ChildEditorHome', () => {
           '/api/child-profiles/cp1',
           expect.objectContaining({ name: 'Amara' })
         )
+      )
+    } finally {
+      jest.useRealTimers()
+    }
+  })
+
+  // 120: Play and the three measurements are editable here, not only in the wizard.
+  it('shows what the child enjoys and their measurements as stored', async () => {
+    mockGet.mockResolvedValue([child({ enjoys: ['water'], palm_width_mm: 62, reach_cm: 30, tray_mm: 15 })])
+    render(<ChildEditorHome childId="cp1" />)
+    expect(await screen.findByRole('button', { name: 'Bubbles and water', selected: true })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Lights', selected: false })).toBeTruthy()
+    expect(screen.getByDisplayValue('62')).toBeTruthy()
+    expect(screen.getByDisplayValue('30')).toBeTruthy()
+    expect(screen.getByDisplayValue('15')).toBeTruthy()
+  })
+
+  it('saves a Play chip against this child', async () => {
+    mockPatch.mockResolvedValue({})
+    jest.useFakeTimers()
+    try {
+      render(<ChildEditorHome childId="cp1" />)
+      fireEvent.press(await screen.findByRole('button', { name: 'Lights' }))
+      fireEvent.press(screen.getByRole('button', { name: 'Calm and sensory' }))
+      await waitFor(() => {})
+      jest.advanceTimersByTime(300)
+      await waitFor(() =>
+        expect(mockPatch).toHaveBeenCalledWith('/api/child-profiles/cp1', { enjoys: ['light', 'calm'] })
+      )
+    } finally {
+      jest.useRealTimers()
+    }
+  })
+
+  it('saves a measurement in range, clears a blank one, and says the range of one that is not', async () => {
+    mockGet.mockResolvedValue([child({ tray_mm: 15 })])
+    mockPatch.mockResolvedValue({})
+    jest.useFakeTimers()
+    try {
+      render(<ChildEditorHome childId="cp1" />)
+      fireEvent.changeText(await screen.findByPlaceholderText('e.g. 62'), '62')
+      fireEvent.changeText(screen.getByPlaceholderText('e.g. 30'), '400')
+      fireEvent.changeText(screen.getByPlaceholderText('e.g. 15'), '')
+      expect(screen.getByText('Between 5 and 150.')).toBeTruthy()
+      await waitFor(() => {})
+      jest.advanceTimersByTime(300)
+      // The reach is out of range, so it is not saved; the stored tray is cleared.
+      await waitFor(() =>
+        expect(mockPatch).toHaveBeenCalledWith('/api/child-profiles/cp1', { palm_width_mm: 62, tray_mm: null })
       )
     } finally {
       jest.useRealTimers()

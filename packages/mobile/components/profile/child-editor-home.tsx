@@ -1,16 +1,19 @@
 // packages/mobile/components/profile/child-editor-home.tsx
 // One child's profile as one page, the same questions web's
 // components/child-editor.tsx asks: Basics (name, age), the four switch
-// questions, and the everyday needs of the room. Every answer autosaves through
-// useChildProfile, the mobile pattern, with a "Saved" line to confirm it.
+// questions, the everyday needs of the room, and the wizard's Play and
+// Measurements steps (120). Every answer autosaves through useChildProfile,
+// the mobile pattern, with a "Saved" line to confirm it; a measurement out of
+// its range shows the range and is not saved.
 //
 // The older ability / everyday-needs / customisation sheets (MACS, BFMF, grip,
-// measurements…) are gone: those columns stay in the database but nothing asks
-// for them now (APP 3 minimisation). These are plain-language preferences for
+// wrist and forearm…) are gone: those columns stay in the database but nothing
+// asks for them now (APP 3 minimisation). What a child enjoys is kept for a
+// future recommender; nothing sorts or matches on it yet. These are plain-language preferences for
 // ranking guides, never a clinical assessment — see docs/REGULATORY-CHANGES.md.
 import { ScrollView, View, Text, Linking, StyleSheet } from 'react-native'
 import { Stack, useRouter } from 'expo-router'
-import { CHILD_QUESTIONS } from '@splat-connect/types'
+import { CHILD_MEASURES, CHILD_QUESTIONS, ENJOYS } from '@splat-connect/types'
 import { NotMedicalNote } from '../ui/NotMedicalNote'
 import { apiClient } from '../../lib/api-client'
 import { confirmDestructive, notify } from '../../lib/confirm'
@@ -21,7 +24,7 @@ import { TextField } from '../ui/TextField'
 import { Section } from '../ui/Section'
 import { Skeleton } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
-import { ChoiceChips, NeedsChips } from './fields'
+import { ChoiceChips, ManyChips, MeasureField, NeedsChips } from './fields'
 
 export function ChildEditorHome({ childId }: { childId: string }) {
   const router = useRouter()
@@ -111,6 +114,21 @@ export function ChildEditorHome({ childId }: { childId: string }) {
 
       <Section title="Everyday needs" hint="What matters in the room, rather than in the hand.">
         <NeedsChips value={profile.everyday_needs ?? []} onChange={(v) => save({ everyday_needs: v })} />
+      </Section>
+
+      <Section title="Play" hint="What does your child enjoy?">
+        <ManyChips options={ENJOYS} value={profile.enjoys ?? []} onChange={(v) => save({ enjoys: v })} />
+      </Section>
+
+      <Section title="Measurements" hint="Optional. Only for printed grips and mounts.">
+        {CHILD_MEASURES.map((m) => (
+          <MeasureField
+            key={m.field}
+            measure={m}
+            value={profile[m.field]}
+            onChange={(v) => { if (v !== undefined) save({ [m.field]: v }) }}
+          />
+        ))}
       </Section>
 
       {saveState === 'saved' ? <Text style={styles.saved}>Saved</Text> : null}

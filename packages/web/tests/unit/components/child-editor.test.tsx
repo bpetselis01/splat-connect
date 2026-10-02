@@ -33,6 +33,9 @@ function child(overrides: Partial<ChildProfile> = {}): ChildProfile {
     grip_type: null,
     env_context: null,
     palm_width_mm: null,
+    enjoys: [],
+    reach_cm: null,
+    tray_mm: null,
     wrist_circ_mm: null,
     needs_arm_attachment: false,
     forearm_length_mm: null,
@@ -49,7 +52,10 @@ function child(overrides: Partial<ChildProfile> = {}): ChildProfile {
   }
 }
 
-const NEW_FIELDS = ['name', 'age', 'working_hand', 'press_force', 'aim', 'hold', 'everyday_needs']
+const NEW_FIELDS = [
+  'name', 'age', 'working_hand', 'press_force', 'aim', 'hold', 'everyday_needs',
+  'enjoys', 'palm_width_mm', 'reach_cm', 'tray_mm',
+]
 
 describe('ChildEditor', () => {
   beforeEach(() => {
@@ -81,9 +87,9 @@ describe('ChildEditor', () => {
     expect(screen.getByText(/not a medical/)).toBeInTheDocument()
   })
 
-  it("draws the board's three cards and asks none of the retired questions", () => {
+  it("draws the board's cards and asks none of the retired questions", () => {
     render(<ChildEditor child={null} />)
-    for (const name of ['Basics', 'Ability profile', 'Everyday needs']) {
+    for (const name of ['Basics', 'Ability profile', 'Everyday needs', 'Play', 'Measurements']) {
       expect(screen.getByRole('region', { name })).toBeInTheDocument()
     }
     expect(screen.queryByRole('region', { name: 'Customization' })).not.toBeInTheDocument()
@@ -126,6 +132,7 @@ describe('ChildEditor', () => {
     expect(body).toEqual({
       name: 'Emma', age: 6, working_hand: null, press_force: 'light', aim: 'large', hold: null,
       everyday_needs: ['quiet', 'wipeable'],
+      enjoys: [], palm_width_mm: null, reach_cm: null, tray_mm: null,
     })
     expect(replace).toHaveBeenCalledWith('/dashboard/child/new-id')
   })
@@ -152,7 +159,38 @@ describe('ChildEditor', () => {
     await screen.findByText('Saved')
     expect(browserApiClient.post).toHaveBeenCalledWith('/api/child-profiles', {
       name: null, age: null, working_hand: null, press_force: null, aim: null, hold: null, everyday_needs: [],
+      enjoys: [], palm_width_mm: null, reach_cm: null, tray_mm: null,
     })
+  })
+
+  // 120: Play and the three measurements are editable here, not only in mobile's wizard.
+  it('shows and edits what the child enjoys and their measurements', async () => {
+    vi.mocked(browserApiClient.patch).mockResolvedValue(child())
+    render(<ChildEditor child={child({ id: 'c1', enjoys: ['water'], palm_width_mm: 62, tray_mm: 15 })} />)
+    const play = within(screen.getByRole('group', { name: 'What does your child enjoy?' }))
+    expect(play.getByRole('button', { name: 'Bubbles and water' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByLabelText('Hand width (mm)')).toHaveValue(62)
+
+    fireEvent.click(play.getByRole('button', { name: 'Lights' }))
+    fireEvent.change(screen.getByLabelText('Reach from seated (cm)'), { target: { value: '30' } })
+    fireEvent.change(screen.getByLabelText('Tray thickness (mm)'), { target: { value: '' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    await screen.findByText('Saved')
+    expect(browserApiClient.patch).toHaveBeenCalledWith(
+      '/api/child-profiles/c1',
+      expect.objectContaining({ enjoys: ['water', 'light'], palm_width_mm: 62, reach_cm: 30, tray_mm: null })
+    )
+  })
+
+  it('says the range of a measurement out of it and does not save', () => {
+    render(<ChildEditor child={child({ id: 'c1' })} />)
+    fireEvent.change(screen.getByLabelText('Hand width (mm)'), { target: { value: '10' } })
+    expect(screen.getByText('Between 20 and 250.')).toBeInTheDocument()
+    expect(screen.getByLabelText('Hand width (mm)')).toBeInvalid()
+    // The browser's own range check holds the submit.
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+    expect(browserApiClient.patch).not.toHaveBeenCalled()
   })
 
   it('shows the error and no Saved when the save fails', async () => {
