@@ -3,6 +3,7 @@
 const mockConfigure = jest.fn()
 const mockHasPrevious = jest.fn()
 const mockSilently = jest.fn()
+const mockSignOut = jest.fn()
 jest.mock(
   '@react-native-google-signin/google-signin',
   () => ({
@@ -10,6 +11,7 @@ jest.mock(
       configure: (...a: unknown[]) => mockConfigure(...a),
       hasPreviousSignIn: () => mockHasPrevious(),
       signInSilently: () => mockSilently(),
+      signOut: () => mockSignOut(),
     },
   }),
   { virtual: true }
@@ -74,5 +76,21 @@ describe('googleSavedIdToken', () => {
     delete process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID
     expect(await load().googleSavedIdToken()).toBeNull()
     expect(mockHasPrevious).not.toHaveBeenCalled()
+  })
+})
+
+describe('googleSignOut', () => {
+  // A fresh launch has not configured Google, yet it still holds the account;
+  // skipping the sign-out would let Sign in's silent try sign straight back in.
+  it('signs Google out even before anything configured it this launch', async () => {
+    await load().googleSignOut()
+    expect(mockConfigure).toHaveBeenCalled()
+    expect(mockSignOut).toHaveBeenCalledTimes(1)
+  })
+
+  it('touches nothing before Google sign-in is set up', async () => {
+    delete process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID
+    await load().googleSignOut()
+    expect(mockSignOut).not.toHaveBeenCalled()
   })
 })

@@ -95,10 +95,15 @@ export async function googleSavedIdToken(): Promise<string | null> {
   }
 }
 
+// Configures first, not "skip when unconfigured": after a relaunch Google is
+// unconfigured yet still holds the account, and Sign in's silent try
+// (android-one-tap) would sign the member straight back in.
 export async function googleSignOut(): Promise<void> {
-  if (!configured) return
+  if (!googleAvailable()) return
   try {
-    await google().GoogleSignin.signOut()
+    const G = google()
+    configureGoogle(G)
+    await G.GoogleSignin.signOut()
   } catch {
     // Signing out of Supabase is what matters; a stale Google session only
     // means the account picker preselects the last account.
