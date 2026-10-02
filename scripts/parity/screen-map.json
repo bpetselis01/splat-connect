@@ -921,15 +921,7 @@
   "boardRoute": "/admin/review",
   "route": "/admin/review",
   "role": "admin",
-  "sampleFrom": "/admin/review",
-  "explained": [
-   {
-    "type": "colour",
-    "match": "input background",
-    "why": "intended",
-    "reason": "The Input component fills with canvas on a white card (globals .field, the board's own majority); this board screen hand-sets surface."
-   }
-  ]
+  "sampleFrom": "/admin/review"
  },
  {
   "id": "admin_review_detail",
