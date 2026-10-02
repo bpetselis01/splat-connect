@@ -15,7 +15,6 @@ import { theme } from '../../lib/theme'
 import { Screen } from '../../components/ui/Screen'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { Mascot } from '../../components/ui/TabHero'
-import { PendingRow } from '../../components/ui/pending'
 
 type Glyph = React.ComponentProps<typeof Ionicons>['name']
 
@@ -55,6 +54,7 @@ const GLYPH: Record<NavIcon, Glyph> = {
 
 // Mobile routes, not web hrefs: these are the Explore stack's own screens.
 const EXPLORE: { label: string; href: string; icon: Glyph }[] = [
+  { label: 'Recycling', href: '/explore/recycling', icon: 'leaf-outline' },
   { label: 'Learn', href: '/explore/learn', icon: 'school-outline' },
   { label: 'Design challenges', href: '/explore/challenges', icon: 'extension-puzzle-outline' },
   { label: 'Organisations', href: '/toy-library/organisations', icon: 'business-outline' },
@@ -226,8 +226,6 @@ export default function MeTab() {
               })}
             </View>
           ))}
-          {/* PENDING(me-rows-structure): the board lists Makers wanted under "Give us a challenge" and Recycling under Explore. */}
-          <PendingRow pending="me-rows-structure" label="Makers wanted" icon="hammer-outline" />
           <View style={styles.group}>
             <Text style={styles.eyebrow}>Explore</Text>
             {EXPLORE.map((row) => (

@@ -18,7 +18,7 @@
  * mirrors the three things SPLAT actually does (a tutorial, a toy, a
  * challenge) rather than one flat pile. "Submit an idea" is the one row that
  * lives outside the account section (see lib/public-nav.ts's PUBLIC_NAV) —
- * components/rail.tsx renders every row through BoundaryLink so that crossing
+ * the hub renders every row through BoundaryLink so that crossing
  * is handled the same way it already is everywhere else. Child profiles moved
  * to app/dashboard/profile/page.tsx: it isn't a pillar, it's part of the
  * account, the same reasoning that already applies to Notifications.
@@ -28,7 +28,7 @@
  *
  * Related files:
  * - lib/capabilities.ts: where the input comes from
- * - components/rail.tsx: the only consumer
+ * - app/dashboard/page.tsx (web My SPLAT) and app/(tabs)/me.tsx (mobile Me): the two consumers
  */
 import type { Profile, Organization, UnreadCounts } from './index'
 
@@ -119,6 +119,9 @@ export function buildNav(caps: Capabilities): NavGroup[] {
         // PUBLIC_NAV. components/rail.tsx renders every row through BoundaryLink,
         // so this crosses to a full page load exactly like the header does.
         { href: '/get-involved/submit-an-idea', label: 'Submit an idea', icon: 'clipboard' },
+        // me-rows-structure (decided 2026-09-30): the board's Me lists the open
+        // build requests here. A public page, like Submit an idea.
+        { href: '/get-involved/makers-wanted', label: 'Makers wanted', icon: 'wrench' },
       ],
     },
     {
@@ -140,11 +143,6 @@ export function buildNav(caps: Capabilities): NavGroup[] {
         // well. What a family comes here to check is "am I still going on
         // Sunday", which is a different question from "where are my parts".
         { href: '/dashboard/events', label: 'My events', icon: 'calendar' },
-        // A public page, deliberately, and the one row here that leaves the
-        // account section. Recycling has no "mine" screen — a drop-off is a
-        // booking with one organisation, and what a contributor comes to the
-        // hub for is the way in.
-        { href: '/get-involved/recycling', label: 'Recycle plastic', icon: 'recycle' },
       ],
     },
   ]

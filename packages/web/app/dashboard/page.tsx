@@ -51,7 +51,6 @@ const ORDER = [
   '/dashboard/print-requests',
   '/dashboard/events',
   '/dashboard/printers',
-  '/get-involved/recycling',
 ]
 
 /* The board gives every card its own icon-square colour rather than the
@@ -65,7 +64,6 @@ const TINTS: Record<string, string> = {
   '/dashboard/print-requests': 'var(--tviolet)',
   '/dashboard/events': 'var(--tamber)',
   '/dashboard/printers': 'var(--tmint)',
-  '/get-involved/recycling': 'var(--tmint)',
   '/dashboard/organisation/requests': 'var(--tcoral)',
   '/dashboard/organisation': 'var(--tamber)',
   '/dashboard/organisation/toys': 'var(--tok)',
@@ -86,6 +84,7 @@ const ICONS: Record<string, IconName> = {
 
 const LABELS: Record<string, string> = {
   '/dashboard/organisation/requests': 'Requests to your organisation',
+  [BUILD_HREF]: 'Build for a family',
 }
 
 const NUMBER_WORDS = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten']
@@ -115,8 +114,6 @@ export default async function DashboardHub() {
     [BUILD_HREF]:
       'Families nearby asking for a guide to be built. Claim one, post a working shot, hand it over.',
     '/dashboard/events': 'Build days you are going to, and whether the host is printing your parts.',
-    '/get-involved/recycling':
-      'Drop clean waste plastic at an organisation that can extrude it, and earn print credit on their machines.',
     '/dashboard/organisation': 'Projects waiting for your organisation to review.',
     '/dashboard/organisation/requests':
       'Families asking you to host a build day, print parts, or build a guide nearby. Accept or decline.',
@@ -202,17 +199,12 @@ export default async function DashboardHub() {
     '/notifications': caps.unread.total,
   }
 
-  // Built from the same model the rail reads, so a destination cannot exist in
-  // one and not the other — with one subtraction and one addition. "Submit an
-  // idea" is a public route Design challenges already leads to, so it is a line
-  // on that card instead. "Build for a family" is the maker's side of an
-  // exchange, which the board puts beside My exchanges; its page is public, so
-  // the nav model does not carry it.
+  // Built from the same model as mobile's Me, so a destination cannot exist in
+  // one and not the other. "Submit an idea" is a public route Design challenges
+  // already leads to, so it is a line on that card instead.
   const rows = buildNav(caps)
     .flatMap((g) => g.rows)
     .filter((row) => row.href !== '/get-involved/submit-an-idea')
-  const exchangesAt = rows.findIndex((row) => row.href === '/dashboard/exchanges')
-  rows.splice(exchangesAt + 1, 0, { href: BUILD_HREF, label: 'Build for a family', icon: 'wrench' })
 
   const items: NavItem[] = rows
     .map((row) => ({

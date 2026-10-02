@@ -95,6 +95,7 @@ describe('buildNav', () => {
     // Fourteen after 058 added Print for others; seventeen after 059 added the
     // organisation's own three — events and stories, recycling intake, and the
     // profile editor; twenty-one after 077 added the organisation's messages.
+    // Still twenty-one after me-rows-structure: Makers wanted in, Recycle plastic out.
     expect(rows).toHaveLength(21)
   })
 
@@ -162,11 +163,10 @@ describe('buildNav', () => {
   // How:   asserts each other row href sits under /dashboard, /admin or /notifications
   // Chain: this model is the hub's door list; a row outside the account section
   //        is navigating out of it, which needs a reason each time. Submit an
-  //        idea has one (the idea form is public), and so does Recycle plastic
-  //        — recycling has no "mine" screen at all, because a drop-off is a
-  //        booking with one organisation
+  //        idea has one (the idea form is public). Makers wanted has one too
+  //        — the open requests board is public (me-rows-structure, 2026-09-30).
   it('keeps only account destinations, aside from two named public ones', () => {
-    const outward = ['/get-involved/submit-an-idea', '/get-involved/recycling']
+    const outward = ['/get-involved/submit-an-idea', '/get-involved/makers-wanted']
     const rows = buildNav(caps()).flatMap((g) => g.rows)
     for (const row of rows) {
       if (outward.includes(row.href)) continue
@@ -183,5 +183,14 @@ describe('buildNav', () => {
     const account = buildNav(caps()).find((g) => g.heading === 'Account')!
     expect(account.rows.map((r) => r.label)).toEqual(['Saved', 'Notifications', 'Account'])
     expect(account.rows[0].href).toBe('/dashboard/saved')
+  })
+
+  // Decided 2026-09-30 (me-rows-structure): the board's Me puts Makers wanted
+  // under Give us a challenge, and Recycling under Explore — not in the model.
+  it('lists Makers wanted under Give us a challenge, and no recycling row', () => {
+    const challenge = buildNav(caps()).find((g) => g.heading === 'Give us a challenge')!
+    expect(challenge.rows.map((r) => r.label)).toEqual(['Design challenges', 'Submit an idea', 'Makers wanted'])
+    expect(challenge.rows[2].href).toBe('/get-involved/makers-wanted')
+    expect(hrefs(buildNav(caps()))).not.toContain('/get-involved/recycling')
   })
 })

@@ -792,6 +792,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["mobile"],
     needs: "Decided 2026-09-30: follow the board in the shared nav model. Makers wanted is a live row under Give us a challenge; Recycling moves to Explore.",
+    shipped: true,
   },
   'my-tutorials-views': {
     title: "Views",

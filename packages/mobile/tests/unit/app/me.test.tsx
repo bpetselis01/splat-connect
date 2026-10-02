@@ -115,3 +115,13 @@ describe('Money you have agreed to', () => {
     expect(screen.getByLabelText('My toys')).toBeTruthy()
   })
 })
+
+it('opens Makers wanted from Give us a challenge, and Recycling from Explore', () => {
+  render(<MeTab />)
+  mockPush.mockClear()
+  fireEvent.press(screen.getByLabelText('Makers wanted'))
+  expect(mockPush).toHaveBeenCalledWith('/explore/makers-wanted')
+  fireEvent.press(screen.getByLabelText('Recycling'))
+  expect(mockPush).toHaveBeenCalledWith('/explore/recycling')
+  expect(screen.queryByLabelText('Recycle plastic')).toBeNull()
+})
