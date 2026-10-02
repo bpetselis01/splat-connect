@@ -107,6 +107,7 @@ export const PENDING = {
     needs: "Legal name, based in, founded, contact email (lib/org-facts.ts)",
   },
   'privacy-data-region': {
+    shipped: true,
     title: "Where data is stored",
     blurb: "The region where SPLAT stores data is being confirmed.",
     kind: "content",

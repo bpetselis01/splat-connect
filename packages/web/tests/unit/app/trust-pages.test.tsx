@@ -23,6 +23,11 @@ describe('trust pages', () => {
     expect(screen.getAllByText(/email address/i)).toHaveLength(2)
   })
 
+  it('names the region where the data is hosted', () => {
+    render(<PrivacyPage />)
+    expect(screen.getByText(/hosted in Sydney, Australia/)).toBeInTheDocument()
+  })
+
   it('tells people how to get their data deleted', () => {
     render(<PrivacyPage />)
     expect(screen.getByRole('link', { name: /contact/i })).toHaveAttribute('href', '/contact')
