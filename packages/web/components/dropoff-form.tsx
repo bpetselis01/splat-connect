@@ -17,6 +17,8 @@
  * condition question instead of seven and had no way to choose who to take it
  * to. That page links here with ?org= now.
  *
+ * The photo is uploaded first (112) and the booking sends its storage path, never a URL.
+ *
  * Related files:
  * - packages/api/src/routes/organizations.ts: POST /:id/recycling
  * - supabase/migrations/063_recycling_declaration.sql: the versioned wording
@@ -69,6 +71,23 @@ export function DropoffForm({ orgs, initialOrgId }: { orgs: DropoffOrg[]; initia
   const [note, setNote] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [photo, setPhoto] = useState<{ path: string; url: string | null } | null>(null)
+  const [uploading, setUploading] = useState(false)
+
+  async function pickPhoto(file: File | undefined) {
+    if (!file) return
+    setUploading(true)
+    setError(null)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      setPhoto(await browserApiClient.postFormData<{ path: string; url: string | null }>('/api/upload/recycling-photo', fd))
+    } catch {
+      setError('Could not upload the photo. Please try again.')
+    } finally {
+      setUploading(false)
+    }
+  }
 
   const grams = kgToGrams(amount)
   const allTicked = ticked.length === RECYCLING_DECLARATION.length
@@ -100,6 +119,7 @@ export function DropoffForm({ orgs, initialOrgId }: { orgs: DropoffOrg[]; initia
         // exactly when somebody needs to know.
         declaration_version: DECLARATION_VERSION,
         note: note.trim(),
+        ...(photo ? { photo_url: photo.path } : {}),
       })
       router.push('/dashboard')
       router.refresh()
@@ -263,6 +283,30 @@ export function DropoffForm({ orgs, initialOrgId }: { orgs: DropoffOrg[]; initia
         </p>
       </fieldset>
 
+      <div>
+        <label htmlFor="dropoff-photo" className={`${LABEL} mb-1 block`}>
+          Photo of what you are bringing
+        </label>
+        <p className="mb-2.5 text-[13px] text-muted">
+          Sorted, in the bag or box you will carry it in. It saves an argument at the door.
+        </p>
+        <div className="relative grid h-[180px] place-items-center overflow-hidden rounded-[18px] border border-dashed border-[var(--brand)] bg-[var(--b50)] text-sm font-bold text-muted">
+          {photo?.url ? (
+            // eslint-disable-next-line @next/next/no-img-element -- a signed URL from a private bucket
+            <img src={photo.url} alt="Photo of the sorted plastic" className="h-full w-full object-cover" />
+          ) : (
+            'Drop a photo of the sorted plastic'
+          )}
+          <input
+            id="dropoff-photo"
+            type="file"
+            accept="image/*"
+            onChange={(e) => pickPhoto(e.target.files?.[0])}
+            className="absolute inset-0 cursor-pointer opacity-0"
+          />
+        </div>
+      </div>
+
       <label className="block">
         <span className={`${LABEL} mb-[7px] block`}>
           Anything they should know <span className="font-semibold text-muted">(optional)</span>
@@ -300,7 +344,7 @@ export function DropoffForm({ orgs, initialOrgId }: { orgs: DropoffOrg[]; initia
       )}
 
       <div className="flex flex-wrap items-center gap-3 border-t border-line pt-2">
-        <button type="submit" disabled={!valid || saving} className="btn btn-primary mt-4 px-[26px]">
+        <button type="submit" disabled={!valid || saving || uploading} className="btn btn-primary mt-4 px-[26px]">
           <CalendarCheck weight="bold" aria-hidden="true" />
           {saving ? 'Booking…' : 'Book the drop-off'}
         </button>

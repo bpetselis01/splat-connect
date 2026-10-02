@@ -111,6 +111,14 @@ function BookedRow({
           {new Date(dropoff.created_at).toLocaleDateString('en-AU')}
         </span>
         {dropoff.note && <span className="mt-1 block text-sm text-muted">{dropoff.note}</span>}
+        {dropoff.photo_signed_url && (
+          // eslint-disable-next-line @next/next/no-img-element -- a signed URL from a private bucket
+          <img
+            src={dropoff.photo_signed_url}
+            alt="Photo of the sorted plastic"
+            className="mt-2 h-[120px] w-auto rounded-[14px] object-cover"
+          />
+        )}
       </span>
       <KgInput label="Actual" value={weighed} onChange={setWeighed} />
       <KgInput label="Credit" value={credit} onChange={setCredit} />

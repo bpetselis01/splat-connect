@@ -10,15 +10,17 @@
  * and the declaration's version sent so the API can refuse a stale wording.
  * Credit is shown as the organisation recorded it and never computed here —
  * the "worth roughly" panel is labelled an estimate for that reason.
+ * The photo is uploaded first (112) and the booking sends its path.
  *
  * Where the board draws fields no column holds (machines, per-drop maximum,
  * turnaround, hours, door, spool-or-credit), the organisation's free-text
  * recycling_note stands in, exactly as web's intake editor decided.
  */
 import { useCallback, useState } from 'react'
-import { View, Text, ScrollView, Pressable, TextInput, StyleSheet } from 'react-native'
+import { View, Text, ScrollView, Pressable, TextInput, Image, StyleSheet } from 'react-native'
 import { useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
+import * as ImagePicker from 'expo-image-picker'
 import type { RecyclingDropoff } from '@splat-connect/types'
 import {
   DECLARATION_VERSION,
@@ -30,6 +32,7 @@ import {
   kgToGrams,
 } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
+import { uploadFile } from '../../lib/upload'
 import { useCapabilities } from '../../lib/capabilities'
 import { theme } from '../../lib/theme'
 import {
@@ -49,7 +52,6 @@ import { Chip } from '../ui/Chip'
 import { TextField } from '../ui/TextField'
 import { SkeletonRow } from '../ui/Skeleton'
 import { ErrorRow } from '../ui/ErrorRow'
-import { PendingButton } from '../ui/pending'
 
 type Ion = React.ComponentProps<typeof Ionicons>['name']
 // The board's glyph for each declaration line, in RECYCLING_DECLARATION's order.
@@ -304,6 +306,7 @@ function BookDropoff({
   const [material, setMaterial] = useState(materials[0] ?? '')
   const [ticked, setTicked] = useState<string[]>([])
   const [note, setNote] = useState('')
+  const [photo, setPhoto] = useState<{ path: string; uri: string } | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -312,6 +315,25 @@ function BookDropoff({
   const heavyEnough = grams !== null && grams >= MIN_DROPOFF_GRAMS
   const toggle = (line: string) =>
     setTicked((t) => (t.includes(line) ? t.filter((l) => l !== line) : [...t, line]))
+
+  async function addPhoto() {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
+    if (!permission.granted) return setError('Photo library access is needed to choose a photo.')
+    const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ['images'] })
+    const asset = result.canceled ? null : result.assets?.[0]
+    if (!asset) return
+    try {
+      const { path } = await uploadFile(
+        '/api/upload/recycling-photo',
+        '',
+        { uri: asset.uri, name: asset.fileName ?? 'photo.jpg', mimeType: asset.mimeType ?? 'image/jpeg' },
+        null
+      )
+      if (path) setPhoto({ path, uri: asset.uri })
+    } catch {
+      setError('Could not upload the photo. Please try again.')
+    }
+  }
 
   async function submit() {
     if (problem || grams === null) return
@@ -326,6 +348,7 @@ function BookDropoff({
         // version that is not current rather than trusting this one.
         declaration_version: DECLARATION_VERSION,
         note: note.trim(),
+        ...(photo ? { photo_url: photo.path } : {}),
       })
       onBooked(`Booked — ${org.name} expects about ${kg(grams)}.`)
     } catch (err) {
@@ -420,6 +443,25 @@ function BookDropoff({
           </Text>
         </View>
 
+        <View>
+          <Pressable
+            onPress={addPhoto}
+            accessibilityRole="button"
+            accessibilityLabel="Photo of the sorted plastic"
+            style={styles.photoSlot}
+          >
+            {photo ? (
+              <Image source={{ uri: photo.uri }} style={styles.photoFill} accessibilityIgnoresInvertColors />
+            ) : (
+              <>
+                <Ionicons name="camera-outline" size={22} color={theme.colors.primaryDark} />
+                <Text style={styles.label}>Photo of the sorted plastic</Text>
+              </>
+            )}
+          </Pressable>
+          <Text style={styles.help}>Sorted, in the bag or box you will carry it in. It saves an argument at the door.</Text>
+        </View>
+
         <TextField
           label="Anything they should know (optional)"
           value={note}
@@ -443,7 +485,6 @@ function BookDropoff({
         </View>
 
         <ErrorRow message={error} />
-        <PendingButton pending="recycling-photo-upload" label="Add a photo of the sorted plastic" variant="ghost" />
         <Button label="Book the drop-off" onPress={submit} disabled={!!problem} loading={busy} />
         <Text style={[styles.help, styles.centerText]}>
           {problem ?? 'Booking tells them to expect you. No credit exists until they weigh it.'}
@@ -595,4 +636,17 @@ const styles = StyleSheet.create({
   },
   declOn: { borderColor: theme.colors.success, backgroundColor: theme.colors.mintSoft },
   declText: { flex: 1, fontFamily: theme.fonts.bold, fontSize: 13.5, lineHeight: 18, color: theme.colors.ink },
+  photoSlot: {
+    height: 150,
+    borderRadius: 18,
+    borderWidth: theme.border.hairline,
+    borderStyle: 'dashed',
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.accentFaint,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    overflow: 'hidden',
+  },
+  photoFill: { width: '100%', height: '100%' },
 })

@@ -18,7 +18,7 @@
  * The first led organisation, as web has it. Title from app/(my)/_layout.tsx.
  */
 import { useCallback, useState } from 'react'
-import { View, Text, ScrollView, TextInput, StyleSheet } from 'react-native'
+import { View, Text, ScrollView, TextInput, Image, StyleSheet } from 'react-native'
 import { useFocusEffect } from 'expo-router'
 import type { Organization, RecyclingDropoff } from '@splat-connect/types'
 import { PRINT_MATERIALS, estimatedCreditGrams, apiMessage, initials, kgToGrams } from '@splat-connect/types'
@@ -257,6 +257,13 @@ function BookedRow({
         </View>
       </View>
       {dropoff.note ? <Text style={styles.note}>{dropoff.note}</Text> : null}
+      {dropoff.photo_signed_url ? (
+        <Image
+          source={{ uri: dropoff.photo_signed_url }}
+          accessibilityLabel="Photo of the sorted plastic"
+          style={styles.photo}
+        />
+      ) : null}
       <View style={styles.kgRow}>
         <KgBox label="Actual" value={weighed} onChange={setWeighed} />
         <KgBox label="Credit" value={credit} onChange={setCredit} />
@@ -389,6 +396,7 @@ const styles = StyleSheet.create({
   who: { fontFamily: theme.fonts.black, fontSize: 15, color: theme.colors.ink },
   meta: { fontFamily: theme.fonts.semiBold, fontSize: 12.5, lineHeight: 18, color: theme.colors.muted },
   note: { fontFamily: theme.fonts.regular, fontSize: 13, lineHeight: 19, color: theme.colors.ink },
+  photo: { width: '100%', height: 150, borderRadius: 18 },
   kgRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   kgBox: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   kgLabel: { fontFamily: theme.fonts.black, fontSize: 13, color: theme.colors.ink },

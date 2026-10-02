@@ -103,3 +103,10 @@ it('settled drop-offs get a pill and no actions', async () => {
   expect(screen.getByText('Nothing booked in right now.')).toBeTruthy()
   expect(screen.queryByText('Weigh and credit')).toBeNull()
 })
+
+it('shows the leader the photo the contributor booked with', async () => {
+  route([drop({ photo_url: 'tom/x.jpg', photo_signed_url: 'https://signed/x.jpg' })])
+  render(<IntakeScreen />)
+  const photo = await screen.findByLabelText('Photo of the sorted plastic')
+  expect(photo.props.source).toEqual({ uri: 'https://signed/x.jpg' })
+})

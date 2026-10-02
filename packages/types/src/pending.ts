@@ -493,6 +493,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["mobile", "api"],
     needs: "Photo of sorted plastic (column exists) [ui,api]",
+    shipped: true,
   },
   'me-count-badges': {
     title: "Counts on My SPLAT",

@@ -14,7 +14,7 @@ jest.mock('expo-router', () => {
   const { useEffect } = jest.requireActual('react')
   return {
     useFocusEffect: (effect: () => void) => useEffect(effect, []),
-    // The booking form's pending photo button (PENDING(recycling-photo-upload)) navigates.
+    // Nothing here navigates; the mock keeps any stray useRouter call harmless.
     useRouter: () => ({ push: jest.fn() }),
   }
 })
@@ -22,6 +22,13 @@ let mockCaps: { profile: { id: string }; ledOrgs: never[] } | null = { profile: 
 jest.mock('../../../../lib/capabilities', () => ({
   useCapabilities: () => ({ caps: mockCaps, loading: false, refresh: jest.fn() }),
 }))
+jest.mock('expo-image-picker', () => ({
+  requestMediaLibraryPermissionsAsync: () => Promise.resolve({ granted: true }),
+  launchImageLibraryAsync: () =>
+    Promise.resolve({ canceled: false, assets: [{ uri: 'file:///bag.jpg', fileName: 'bag.jpg', mimeType: 'image/jpeg' }] }),
+}))
+const mockUpload = jest.fn()
+jest.mock('../../../../lib/upload', () => ({ uploadFile: (...a: unknown[]) => mockUpload(...a) }))
 
 const ORGS = [
   { id: 'north', name: 'Northside Therapy', status: 'active', suburb: 'Crows Nest', state: 'NSW', recycling_materials: ['PLA', 'PETG'], recycling_note: 'Tue and Thu, 9am–4pm' },
@@ -95,4 +102,29 @@ it('stops loading when signed out', async () => {
   mockCaps = null
   render(<RecyclingScreen />)
   await waitFor(() => expect(screen.queryByTestId('recycling-skeleton')).toBeNull())
+})
+
+it('uploads the photo of the sorted plastic and books with its path', async () => {
+  mockUpload.mockResolvedValue({ path: 'me/0b5e7c8a-1d2e-4f3a-9b8c-7d6e5f4a3b2c.jpg', url: 'https://signed' })
+  render(<RecyclingScreen />)
+  fireEvent.press(await screen.findByLabelText('Book a drop-off at Northside Therapy'))
+  expect(screen.getByText('Sorted, in the bag or box you will carry it in. It saves an argument at the door.')).toBeTruthy()
+  fireEvent.press(screen.getByLabelText('Photo of the sorted plastic'))
+  await waitFor(() =>
+    expect(mockUpload).toHaveBeenCalledWith(
+      '/api/upload/recycling-photo',
+      '',
+      { uri: 'file:///bag.jpg', name: 'bag.jpg', mimeType: 'image/jpeg' },
+      null
+    )
+  )
+  fireEvent.changeText(screen.getByLabelText('How much, roughly, in kilograms'), '2.5')
+  for (const line of RECYCLING_DECLARATION) fireEvent.press(screen.getByLabelText(line))
+  fireEvent.press(screen.getByLabelText('Book the drop-off'))
+  await waitFor(() =>
+    expect(mockPost).toHaveBeenCalledWith(
+      '/api/organizations/north/recycling',
+      expect.objectContaining({ photo_url: 'me/0b5e7c8a-1d2e-4f3a-9b8c-7d6e5f4a3b2c.jpg' })
+    )
+  )
 })
