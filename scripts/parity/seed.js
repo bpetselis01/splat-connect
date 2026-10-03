@@ -870,6 +870,9 @@ async function seed(db, users) {
     if (build) routes.build_thread = `/dashboard/exchanges/build/${build}`
     const child = await seedChild(db, parent.id)
     if (child) routes.child = `/dashboard/child/${child}`
+    // Before the print request: it hangs off any user-owned printer, and a clean
+    // local database has none until this one exists.
+    await seedPrinterWithJobs(db, { owner_id: parent.id }, await someoneElse(db, parent.id))
     const pj = await seedPrintRequest(db, parent.id)
     if (pj) routes.print_job = `/dashboard/print-requests/${pj}`
     const toy = await seedOwnedToy(db, parent.id)
@@ -878,7 +881,6 @@ async function seed(db, users) {
     if (swap) routes.toy_public = `/toy-library/${swap}`
     await seedSavesAndIdeas(db, parent.id)
     await seedReport(db, parent.id)
-    await seedPrinterWithJobs(db, { owner_id: parent.id }, await someoneElse(db, parent.id))
   }
   if (contributor) {
     const t = await seedOwnedTutorial(db, contributor.id)
