@@ -7,6 +7,7 @@ import { gradeOf, PICK_KIND_LABEL, toyFacts, toyHolderName, type OfferType, type
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { useSaves } from '../../lib/saves'
+import { recordRecent } from '../../lib/recents'
 import { useCapabilities } from '../../lib/capabilities'
 import { Button } from '../ui/Button'
 import { SaveButton } from '../ui/SaveButton'
@@ -87,6 +88,20 @@ export function ToyDetailScreen({ id }: { id: string }) {
       ignore = true
     }
   }, [toy, caps, isOwner])
+
+  // "Pick up where you left off": once per open, when the toy has loaded.
+  useEffect(() => {
+    if (!toy) return
+    recordRecent({
+      id: toy.id,
+      kind: 'toy',
+      title: toy.name,
+      subtitle: toy.holder_suburb ? `Toy · ${[toy.holder_suburb, toy.holder_state].filter(Boolean).join(', ')}` : 'Toy',
+      badge: gradeOf(toy.condition).label,
+      href: `/toy-library/${toy.id}`,
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [toy?.id])
 
   if (loading) {
     return (
