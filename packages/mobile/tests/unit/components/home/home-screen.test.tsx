@@ -155,6 +155,9 @@ describe('HomeScreen', () => {
       expect(StyleSheet.flatten(screen.getByTestId('home-background').props.style)).toMatchObject({ flexGrow: 1 })
       // Not a screen-reader stop: the tiles inside it must stay reachable.
       expect(screen.getByTestId('home-background').props.accessible).toBe(false)
+      // And never disabled, which on web would disable the controls inside it.
+      expect(screen.getByTestId('home-background').props.accessibilityState?.disabled).toBeFalsy()
+      expect(screen.getByLabelText('Edit').props.accessibilityState?.disabled).toBeFalsy()
     })
 
     it('does nothing for a background tap at rest, and leaves edit mode when tapped in it', () => {

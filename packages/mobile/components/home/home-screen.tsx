@@ -76,8 +76,8 @@ export function HomeScreen() {
         <Pressable
           testID="home-background"
           accessible={false}
-          disabled={!editing}
-          onPress={() => (menuId ? setMenuId(null) : setEditing(false))}
+          // Not `disabled` at rest: on web that marks every control inside as disabled too.
+          onPress={editing ? () => (menuId ? setMenuId(null) : setEditing(false)) : undefined}
           style={[styles.fill, scrollContent, { paddingBottom: tabBarClearance(insets.bottom) }]}
         >
           <View testID="home-topbar" style={styles.topbar}>
