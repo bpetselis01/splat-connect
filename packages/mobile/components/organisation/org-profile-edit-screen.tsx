@@ -21,6 +21,7 @@ import { Chip } from '../ui/Chip'
 import { Button } from '../ui/Button'
 import { TextField } from '../ui/TextField'
 import { SkeletonRow } from '../ui/Skeleton'
+import { EmptyState } from '../ui/EmptyState'
 import { ListSection } from '../list/list-kit'
 import { OrgLeadersSection } from './org-leaders-section'
 
@@ -46,17 +47,21 @@ export function OrgProfileEditScreen() {
   const [thanks, setThanks] = useState<OrgThanks[]>([])
   const [saving, setSaving] = useState(false)
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null)
+  const [loadFailed, setLoadFailed] = useState(false)
 
   useFocusEffect(
     useCallback(() => {
       if (!orgId) return
-      apiClient.get<Organization>(`/api/organizations/${orgId}`).then((org) =>
-        setForm(
-          Object.fromEntries(
-            [...FIELDS.map(([k]) => k), 'state'].map((k) => [k, String((org as unknown as Record<string, unknown>)[k] ?? '')])
-          ) as Record<Field, string>
+      apiClient
+        .get<Organization>(`/api/organizations/${orgId}`)
+        .then((org) =>
+          setForm(
+            Object.fromEntries(
+              [...FIELDS.map(([k]) => k), 'state'].map((k) => [k, String((org as unknown as Record<string, unknown>)[k] ?? '')])
+            ) as Record<Field, string>
+          )
         )
-      )
+        .catch(() => setLoadFailed(true))
       apiClient.get<OrgThanks[]>(`/api/organizations/${orgId}/thanks`).then(setThanks).catch(() => setThanks([]))
     }, [orgId])
   )
@@ -76,8 +81,20 @@ export function OrgProfileEditScreen() {
   }
 
   async function setHidden(t: OrgThanks, hidden: boolean) {
-    const row = await apiClient.patch<OrgThanks>(`/api/organizations/${orgId}/thanks/${t.profile_id}`, { hidden })
-    setThanks((all) => all.map((x) => (x.profile_id === t.profile_id ? row : x)))
+    try {
+      const row = await apiClient.patch<OrgThanks>(`/api/organizations/${orgId}/thanks/${t.profile_id}`, { hidden })
+      setThanks((all) => all.map((x) => (x.profile_id === t.profile_id ? row : x)))
+    } catch (err) {
+      setNote({ ok: false, text: apiMessage(err, 'That did not save. Check your connection and try again.') })
+    }
+  }
+
+  if (!form && loadFailed) {
+    return (
+      <Screen>
+        <EmptyState icon="alert-circle-outline" title="Could not load your page." hint="Check your connection and open this screen again." />
+      </Screen>
+    )
   }
 
   if (!form) {

@@ -218,7 +218,9 @@ export function InboxScreen({
   const lastActive = (tx: ToyTransactionSummary) => Date.parse(tx.last_message?.created_at ?? tx.updated_at) || 0
   const threads = mine.sort((a, b) => lastActive(b) - lastActive(a))
   const exchangeUnread = exchangeNotes.filter((n) => n.read_at === null).length
-  const others = notifications.filter((n) => notificationBucket(n.type) !== 'exchanges')
+  // A type this build has no bucket for (a newer API) is left out, so the half
+  // reads as empty rather than blank: nothing below would draw it.
+  const others = notifications.filter((n) => BUCKETS.some((b) => b.key === notificationBucket(n.type)))
 
   const segment: InboxSegment =
     picked ?? (threads.length === 0 && orphans.length === 0 && others.length > 0 ? 'notifications' : 'exchanges')

@@ -111,6 +111,8 @@ export function EventFormScreen() {
   if (!title.trim()) missing.push('a name')
   if (!startAt) missing.push('a date and start time')
   if (ends.trim() && !endAt) missing.push('an end time like 15:30')
+  // The database refuses an end at or before the start; say so here rather than on a failed save.
+  if (startAt && endAt && endAt <= startAt) missing.push('an end time after the start')
   if (format === 'in_person' && !location.trim()) missing.push('a venue')
   if (format === 'in_person' && !suburb.trim()) missing.push('a suburb')
   if (format === 'online' && !onlineUrl.trim()) missing.push('a joining link')

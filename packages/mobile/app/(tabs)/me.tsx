@@ -229,9 +229,9 @@ export default function MeTab() {
           <View style={styles.hero}>
             <Mascot pose="wave" size={72} />
             <View style={styles.flex}>
-              <Text style={styles.name}>Hi, {caps.profile.name.trim().split(/\s+/)[0]}</Text>
+              <Text style={styles.name}>{(caps.profile.name ?? '').trim() ? `Hi, ${caps.profile.name.trim().split(/\s+/)[0]}` : 'Hi there'}</Text>
               {standing ? <Text style={styles.meta}>{standing}</Text> : null}
-              {builds > 0 ? <Text style={styles.meta}>{`${builds} builds logged`}</Text> : null}
+              {builds > 0 ? <Text style={styles.meta}>{`${builds} ${builds === 1 ? 'build' : 'builds'} logged`}</Text> : null}
             </View>
           </View>
           {money ? <MoneyPanel money={money} onOpen={(t) => router.push(threadHref({ id: t.transaction_id, type: t.type }) as never)} /> : null}

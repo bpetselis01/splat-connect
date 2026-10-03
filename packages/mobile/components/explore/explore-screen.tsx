@@ -145,9 +145,9 @@ export function ExploreScreen() {
   }, [reloadKey])
 
   const q = search.trim().toLowerCase()
-  const matchedGuides = q ? tutorials.filter((t) => t.title.toLowerCase().includes(q)) : []
-  const matchedToys = q ? toys.filter((t) => t.name.toLowerCase().includes(q)) : []
-  const matchedOrgs = q ? orgs.filter((o) => o.name.toLowerCase().includes(q)) : []
+  const matchedGuides = q ? tutorials.filter((t) => t.title?.toLowerCase().includes(q)) : []
+  const matchedToys = q ? toys.filter((t) => t.name?.toLowerCase().includes(q)) : []
+  const matchedOrgs = q ? orgs.filter((o) => o.name?.toLowerCase().includes(q)) : []
 
   return (
     // The native header draws the title and back button (explore/_layout).
@@ -273,7 +273,10 @@ export function ExploreScreen() {
                 { k: 'Toys delivered', v: totals.toysDelivered },
                 { k: 'Contributors', v: totals.contributors },
                 { k: 'Organisations', v: totals.organisations },
-              ].map((s) => (
+              ]
+                // A count the API left out is not shown, rather than as "undefined".
+                .filter((s) => s.v != null)
+                .map((s) => (
                 <View key={s.k} style={styles.stat}>
                   <Text style={styles.statValue}>{String(s.v)}</Text>
                   <Text style={styles.statLabel}>{s.k}</Text>
