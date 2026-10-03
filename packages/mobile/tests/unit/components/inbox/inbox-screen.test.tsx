@@ -19,6 +19,9 @@ jest.mock('../../../../lib/api-client', () => ({
   },
 }))
 
+const mockInvalidate = jest.fn()
+jest.mock('../../../../lib/capabilities', () => ({ invalidateCapabilities: () => mockInvalidate() }))
+
 const mockPush = jest.fn()
 jest.mock('expo-router', () => {
   const { useEffect } = jest.requireActual('react')
@@ -178,6 +181,8 @@ describe('InboxScreen', () => {
     fireEvent.press(screen.getByLabelText('Switch car with Northside Therapy'))
     await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/api/notifications/n1', { read: true }))
     expect(mockPush).toHaveBeenCalledWith('/exchanges/tx1')
+    // The tab badges and Today card count what the server holds: tell them it moved.
+    await waitFor(() => expect(mockInvalidate).toHaveBeenCalled())
 
     // A build opens its own thread.
     fireEvent.press(screen.getByLabelText('Bubble machine with Eastwood School'))
@@ -247,6 +252,7 @@ describe('InboxScreen', () => {
     )
     // Optimistic: the count clears without waiting for the refetch.
     await waitFor(() => expect(screen.queryByText('2 unread')).toBeNull())
+    await waitFor(() => expect(mockInvalidate).toHaveBeenCalled())
   })
 
   it('offers Accept and Decline on an invite that is still pending', async () => {

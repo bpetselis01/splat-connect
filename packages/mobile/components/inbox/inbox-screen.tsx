@@ -25,6 +25,7 @@ import type {
 } from '@splat-connect/types'
 import { copyFor, notificationBucket, notificationSecondLine, subjectName } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
+import { invalidateCapabilities } from '../../lib/capabilities'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { theme } from '../../lib/theme'
 import { tabBarClearance } from '../../lib/tab-bar-layout'
@@ -229,11 +230,13 @@ export function InboxScreen({
     if (ids.length === 0) return
     const now = new Date().toISOString()
     setNotifications((cur) => cur.map((row) => (ids.includes(row.id) ? { ...row, read_at: now } : row)))
-    for (const id of ids) {
-      apiClient
-        .patch(`/api/notifications/${id}`, { read: true })
-        .catch((err) => console.error('[InboxScreen] mark read failed:', err))
-    }
+    void Promise.all(
+      ids.map((id) =>
+        apiClient
+          .patch(`/api/notifications/${id}`, { read: true })
+          .catch((err) => console.error('[InboxScreen] mark read failed:', err))
+      )
+    ).then(invalidateCapabilities)
   }
 
   function open(n: Notification) {
@@ -259,6 +262,7 @@ export function InboxScreen({
     } catch (err) {
       console.error('[InboxScreen] bucket mark-read failed:', err)
     }
+    invalidateCapabilities()
   }
 
   async function answerInvite(inviteId: string, answer: 'accept' | 'decline') {
