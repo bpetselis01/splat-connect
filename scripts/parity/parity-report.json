@@ -1,55 +1,7 @@
 {
- "at": "2026-10-02T09:45:52.904Z",
+ "at": "2026-10-03T01:26:45.625Z",
  "live": "http://localhost:3110",
  "screens": [
-  {
-   "id": "about",
-   "name": "About",
-   "group": "About",
-   "route": "/about",
-   "findings": [],
-   "role": "guest",
-   "finalUrl": "/about",
-   "explained": [],
-   "boardHeadings": 9,
-   "liveHeadings": 9
-  },
-  {
-   "id": "contact",
-   "name": "Contact",
-   "group": "About",
-   "route": "/contact",
-   "findings": [],
-   "role": "guest",
-   "finalUrl": "/contact",
-   "explained": [],
-   "boardHeadings": 1,
-   "liveHeadings": 1
-  },
-  {
-   "id": "account",
-   "name": "Account",
-   "group": "My SPLAT",
-   "route": "/dashboard/profile",
-   "findings": [],
-   "role": "parent",
-   "finalUrl": "/dashboard/profile",
-   "explained": [],
-   "boardHeadings": 3,
-   "liveHeadings": 3
-  },
-  {
-   "id": "admin_review",
-   "name": "Review queue (live)",
-   "group": "Admin",
-   "route": "/admin/review?selected=bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
-   "findings": [],
-   "role": "admin",
-   "finalUrl": "/admin/review",
-   "explained": [],
-   "boardHeadings": 2,
-   "liveHeadings": 2
-  },
   {
    "id": "home",
    "name": "Home",
@@ -72,7 +24,7 @@
    "finalUrl": "/library",
    "explained": [],
    "boardHeadings": 8,
-   "liveHeadings": 28
+   "liveHeadings": 27
   },
   {
    "id": "tutorial",
@@ -106,16 +58,16 @@
    "finalUrl": "/toy-library",
    "explained": [],
    "boardHeadings": 8,
-   "liveHeadings": 15
+   "liveHeadings": 17
   },
   {
    "id": "toy_public",
    "name": "Toy detail",
    "group": "Public site",
-   "route": "/toy-library/5dfe7aad-c403-407c-8b00-ee01ff588c47",
+   "route": "/toy-library/cab1272d-3b40-4b4d-a453-592b0bbd037c",
    "findings": [],
    "role": "guest",
-   "finalUrl": "/toy-library/5dfe7aad-c403-407c-8b00-ee01ff588c47",
+   "finalUrl": "/toy-library/cab1272d-3b40-4b4d-a453-592b0bbd037c",
    "explained": [
     {
      "type": "missing-section",
@@ -143,10 +95,10 @@
    "id": "toy_request",
    "name": "Request a toy",
    "group": "Public site",
-   "route": "/toy-library/5dfe7aad-c403-407c-8b00-ee01ff588c47/request",
+   "route": "/toy-library/cab1272d-3b40-4b4d-a453-592b0bbd037c/request",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/toy-library/5dfe7aad-c403-407c-8b00-ee01ff588c47/request",
+   "finalUrl": "/toy-library/cab1272d-3b40-4b4d-a453-592b0bbd037c/request",
    "explained": [],
    "boardHeadings": 4,
    "liveHeadings": 4
@@ -417,70 +369,13 @@
    "id": "print_request_new",
    "name": "Request a print",
    "group": "3D Printing",
-   "route": "/printing/requests?guide=43fbe8ef-2662-4fb2-acfd-150e5bd1a166",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board lists cards, live shows none",
-     "board": 9,
-     "live": 0
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"which parts?\" has no counterpart",
-     "board": "which parts?",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"who you asked\" has no counterpart",
-     "board": "who you asked",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h3 \"# h # min\" has no counterpart",
-     "board": "# h # min",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h3 \"# g petg\" has no counterpart",
-     "board": "# g petg",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "page height differs grossly",
-     "board": "1745px",
-     "live": "275px"
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board has cards, live has none",
-     "board": 9,
-     "live": 0
-    },
-    {
-     "type": "missing-section",
-     "severity": "medium",
-     "what": "no inputs on live",
-     "board": 2,
-     "live": 0
-    }
-   ],
+   "route": "/printing/requests?guide=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+   "findings": [],
    "role": "parent",
    "finalUrl": "/printing/requests",
    "explained": [],
    "boardHeadings": 7,
-   "liveHeadings": 1
+   "liveHeadings": 7
   },
   {
    "id": "involved",
@@ -594,10 +489,10 @@
    "id": "build_thread",
    "name": "Build thread",
    "group": "My SPLAT",
-   "route": "/dashboard/exchanges/build/d164e6c2-0f81-4cab-9b7a-829ca198af4a",
+   "route": "/dashboard/exchanges/build/eeabe022-c6f5-4036-a2ac-99fbc09cd995",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/dashboard/exchanges/build/d164e6c2-0f81-4cab-9b7a-829ca198af4a",
+   "finalUrl": "/dashboard/exchanges/build/eeabe022-c6f5-4036-a2ac-99fbc09cd995",
    "explained": [],
    "boardHeadings": 3,
    "liveHeadings": 3
@@ -616,7 +511,7 @@
      "severity": "high",
      "what": "page height differs grossly",
      "board": "832px",
-     "live": "2535px",
+     "live": "4028px",
      "why": "intended",
      "reason": "Guests see the open challenges listed below the explainer; the board shows only the explainer (an access decision, design-challenges/page.tsx)."
     },
@@ -631,16 +526,16 @@
     }
    ],
    "boardHeadings": 6,
-   "liveHeadings": 15
+   "liveHeadings": 16
   },
   {
    "id": "challenge_detail",
    "name": "Challenge detail",
    "group": "Get involved",
-   "route": "/get-involved/design-challenges/0ed8c532-c0b6-4510-8cbc-7995268d6c28",
+   "route": "/get-involved/design-challenges/3641d653-de6a-4e60-9506-9fff53f77b87",
    "findings": [],
    "role": "guest",
-   "finalUrl": "/get-involved/design-challenges/0ed8c532-c0b6-4510-8cbc-7995268d6c28",
+   "finalUrl": "/get-involved/design-challenges/3641d653-de6a-4e60-9506-9fff53f77b87",
    "explained": [],
    "boardHeadings": 4,
    "liveHeadings": 4
@@ -655,7 +550,7 @@
    "finalUrl": "/impact",
    "explained": [],
    "boardHeadings": 22,
-   "liveHeadings": 12
+   "liveHeadings": 13
   },
   {
    "id": "orgs",
@@ -667,60 +562,41 @@
    "finalUrl": "/organizations",
    "explained": [],
    "boardHeadings": 13,
-   "liveHeadings": 11
+   "liveHeadings": 13
   },
   {
    "id": "org_public",
    "name": "Organisation profile",
    "group": "Impact",
-   "route": "/organizations/437f51db-5444-44c2-92ef-e79c3574c1bc/public",
+   "route": "/organizations/69047600-ce06-42f4-a31f-b2cfa33907fd/public",
    "findings": [],
    "role": "guest",
-   "finalUrl": "/organizations/437f51db-5444-44c2-92ef-e79c3574c1bc/public",
+   "finalUrl": "/organizations/69047600-ce06-42f4-a31f-b2cfa33907fd/public",
    "explained": [],
    "boardHeadings": 17,
-   "liveHeadings": 14
+   "liveHeadings": 15
   },
   {
    "id": "contributor",
    "name": "Contributor profile",
    "group": "Impact",
    "route": "/contributors/11111111-1111-1111-1111-111111111111",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"about\" has no counterpart",
-     "board": "about",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"featured\" has no counterpart",
-     "board": "featured",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"from families who built one\" has no counterpart",
-     "board": "from families who built one",
-     "live": null
-    },
-    {
-     "type": "stale-exemption",
-     "severity": "medium",
-     "what": "extra-section \"builds logged\" no longer occurs",
-     "board": null,
-     "live": null
-    }
-   ],
+   "findings": [],
    "role": "guest",
    "finalUrl": "/contributors/11111111-1111-1111-1111-111111111111",
-   "explained": [],
+   "explained": [
+    {
+     "type": "extra-section",
+     "severity": "medium",
+     "what": "live has an extra h3: \"# builds logged\"",
+     "board": null,
+     "live": "# builds logged",
+     "why": "intended",
+     "reason": "The board predates build logging (091); the count of builds sits above the thanks line once a family has marked one done."
+    }
+   ],
    "boardHeadings": 12,
-   "liveHeadings": 5
+   "liveHeadings": 10
   },
   {
    "id": "impact_events",
@@ -757,10 +633,10 @@
    "id": "event_detail",
    "name": "Event detail",
    "group": "Get involved",
-   "route": "/get-involved/events/334dca07-babf-404f-a560-a859436b43fc",
+   "route": "/get-involved/events/0e8f3fc4-4bc8-4f4a-9468-5db792fa2f3e",
    "findings": [],
    "role": "guest",
-   "finalUrl": "/get-involved/events/334dca07-babf-404f-a560-a859436b43fc",
+   "finalUrl": "/get-involved/events/0e8f3fc4-4bc8-4f4a-9468-5db792fa2f3e",
    "explained": [],
    "boardHeadings": 4,
    "liveHeadings": 4
@@ -769,10 +645,10 @@
    "id": "event_register",
    "name": "Register for an event",
    "group": "Get involved",
-   "route": "/get-involved/events/334dca07-babf-404f-a560-a859436b43fc/register",
+   "route": "/get-involved/events/0e8f3fc4-4bc8-4f4a-9468-5db792fa2f3e/register",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/get-involved/events/334dca07-babf-404f-a560-a859436b43fc/register",
+   "finalUrl": "/get-involved/events/0e8f3fc4-4bc8-4f4a-9468-5db792fa2f3e/register",
    "explained": [],
    "boardHeadings": 3,
    "liveHeadings": 3
@@ -794,43 +670,7 @@
    "name": "Book a drop-off",
    "group": "Get involved",
    "route": "/get-involved/recycling/drop-off",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board lists cards, live shows none",
-     "board": 3,
-     "live": 0
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "page height differs grossly",
-     "board": "1733px",
-     "live": "389px"
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board has cards, live has none",
-     "board": 3,
-     "live": 0
-    },
-    {
-     "type": "missing-section",
-     "severity": "medium",
-     "what": "no inputs on live",
-     "board": 8,
-     "live": 0
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "6/7 board paragraphs absent",
-     "board": "tuesday and thursday, #am–#pm · loading door on corella lane — ring th",
-     "live": "one contaminated bag can ruin a whole extruder run, so the declaration"
-    }
-   ],
+   "findings": [],
    "role": "parent",
    "finalUrl": "/get-involved/recycling/drop-off",
    "explained": [],
@@ -854,44 +694,24 @@
    "name": "Stories",
    "group": "About",
    "route": "/about/stories",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board lists cards, live shows none",
-     "board": 7,
-     "live": 0
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "page height differs grossly",
-     "board": "1758px",
-     "live": "580px"
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board has cards, live has none",
-     "board": 7,
-     "live": 0
-    }
-   ],
+   "findings": [],
    "role": "guest",
    "finalUrl": "/about/stories",
    "explained": [],
    "boardHeadings": 9,
-   "liveHeadings": 2
+   "liveHeadings": 6
   },
   {
    "id": "story_detail",
    "name": "Story",
    "group": "About",
-   "route": "/about/stories/[id]",
+   "route": "/about/stories/90a58e4c-926f-4d9c-a9a1-b3f6b29a34a2",
    "findings": [],
    "role": "guest",
-   "error": "no record for /about/stories/[id] (no link on /about/stories)",
-   "skipped": true
+   "finalUrl": "/about/stories/90a58e4c-926f-4d9c-a9a1-b3f6b29a34a2",
+   "explained": [],
+   "boardHeadings": 6,
+   "liveHeadings": 6
   },
   {
    "id": "impact_map",
@@ -925,6 +745,18 @@
    "liveHeadings": 1
   },
   {
+   "id": "about",
+   "name": "About",
+   "group": "About",
+   "route": "/about",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/about",
+   "explained": [],
+   "boardHeadings": 9,
+   "liveHeadings": 9
+  },
+  {
    "id": "about_team",
    "name": "Our team",
    "group": "About",
@@ -941,10 +773,42 @@
      "live": "nullpx",
      "why": "pending",
      "pending": "team-page"
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "set",
+     "live": "none",
+     "why": "pending",
+     "reason": "The board draws team member cards; until names are supplied the page shows the To be completed card (flat, sunken) instead.",
+     "pending": "team-page"
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "card background",
+     "board": "rgb(255,255,255)",
+     "live": null,
+     "why": "pending",
+     "reason": "The board draws team member cards; until names are supplied the page shows the To be completed card (flat, sunken) instead.",
+     "pending": "team-page"
     }
    ],
    "boardHeadings": 10,
-   "liveHeadings": 4
+   "liveHeadings": 3
+  },
+  {
+   "id": "contact",
+   "name": "Contact",
+   "group": "About",
+   "route": "/contact",
+   "findings": [],
+   "role": "guest",
+   "finalUrl": "/contact",
+   "explained": [],
+   "boardHeadings": 1,
+   "liveHeadings": 1
   },
   {
    "id": "org_requests",
@@ -985,22 +849,7 @@
    "name": "Inbox",
    "group": "Admin",
    "route": "/admin/inbox",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board lists cards, live shows none",
-     "board": 4,
-     "live": 0
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board has cards, live has none",
-     "board": 4,
-     "live": 0
-    }
-   ],
+   "findings": [],
    "role": "admin",
    "finalUrl": "/admin/inbox",
    "explained": [],
@@ -1023,10 +872,10 @@
    "id": "org_event_manage",
    "name": "Manage event",
    "group": "My SPLAT",
-   "route": "/dashboard/org/events/334dca07-babf-404f-a560-a859436b43fc",
+   "route": "/dashboard/org/events/0e8f3fc4-4bc8-4f4a-9468-5db792fa2f3e",
    "findings": [],
    "role": "leader",
-   "finalUrl": "/dashboard/org/events/334dca07-babf-404f-a560-a859436b43fc",
+   "finalUrl": "/dashboard/org/events/0e8f3fc4-4bc8-4f4a-9468-5db792fa2f3e",
    "explained": [],
    "boardHeadings": 3,
    "liveHeadings": 4
@@ -1111,9 +960,60 @@
    "findings": [],
    "role": "guest",
    "finalUrl": "/legal/intended-purpose",
-   "explained": [],
+   "explained": [
+    {
+     "type": "font",
+     "severity": "high",
+     "what": "card title font",
+     "board": "Nunito",
+     "live": "Baloo 2",
+     "why": "pending",
+     "reason": "The page opens with a compact To be completed card until legal review finishes; it is the first card measured, in place of the board's callout.",
+     "pending": "intended-purpose-review"
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "card title size",
+     "board": "16px",
+     "live": "23px",
+     "why": "pending",
+     "reason": "The page opens with a compact To be completed card until legal review finishes; it is the first card measured, in place of the board's callout.",
+     "pending": "intended-purpose-review"
+    },
+    {
+     "type": "radius",
+     "severity": "medium",
+     "what": "card radius",
+     "board": "18px",
+     "live": "24px",
+     "why": "pending",
+     "reason": "The page opens with a compact To be completed card until legal review finishes; it is the first card measured, in place of the board's callout.",
+     "pending": "intended-purpose-review"
+    },
+    {
+     "type": "weight",
+     "severity": "low",
+     "what": "card title weight",
+     "board": 700,
+     "live": 800,
+     "why": "pending",
+     "reason": "The page opens with a compact To be completed card until legal review finishes; it is the first card measured, in place of the board's callout.",
+     "pending": "intended-purpose-review"
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "card background",
+     "board": "rgb(255,240,204)",
+     "live": "rgb(243,241,237)",
+     "why": "pending",
+     "reason": "The page opens with a compact To be completed card until legal review finishes; it is the first card measured, in place of the board's callout.",
+     "pending": "intended-purpose-review"
+    }
+   ],
    "boardHeadings": 6,
-   "liveHeadings": 5
+   "liveHeadings": 6
   },
   {
    "id": "legal_contributor",
@@ -1179,10 +1079,10 @@
    "id": "editor",
    "name": "Tutorial editor",
    "group": "My SPLAT",
-   "route": "/tutorials/f8c58b66-4030-4988-866f-13d19007ca76/edit",
+   "route": "/tutorials/42df2468-ab23-4506-a098-0db0e8d5dad4/edit",
    "findings": [],
    "role": "contributor",
-   "finalUrl": "/tutorials/f8c58b66-4030-4988-866f-13d19007ca76/edit",
+   "finalUrl": "/tutorials/42df2468-ab23-4506-a098-0db0e8d5dad4/edit",
    "explained": [],
    "boardHeadings": 5,
    "liveHeadings": 5
@@ -1215,10 +1115,10 @@
    "id": "toy_detail",
    "name": "Toy detail",
    "group": "My SPLAT",
-   "route": "/dashboard/toys/94e4fbd5-b580-4bca-b219-0524b6b3a0e0",
+   "route": "/dashboard/toys/155a27ba-b68f-409d-a419-3713b0c58de5",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/dashboard/toys/94e4fbd5-b580-4bca-b219-0524b6b3a0e0",
+   "finalUrl": "/dashboard/toys/155a27ba-b68f-409d-a419-3713b0c58de5",
    "explained": [
     {
      "type": "extra-section",
@@ -1243,16 +1143,16 @@
    "finalUrl": "/dashboard/exchanges",
    "explained": [],
    "boardHeadings": 14,
-   "liveHeadings": 8
+   "liveHeadings": 9
   },
   {
    "id": "thread",
    "name": "Exchange thread",
    "group": "My SPLAT",
-   "route": "/dashboard/exchanges/70d5f60e-2afc-4b10-bb10-3d566b8c2587",
+   "route": "/dashboard/exchanges/700e015c-8697-4f53-8792-7080bd381e05",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/dashboard/exchanges/70d5f60e-2afc-4b10-bb10-3d566b8c2587",
+   "finalUrl": "/dashboard/exchanges/700e015c-8697-4f53-8792-7080bd381e05",
    "explained": [],
    "boardHeadings": 4,
    "liveHeadings": 3
@@ -1351,27 +1251,19 @@
    "finalUrl": "/dashboard/print-requests",
    "explained": [],
    "boardHeadings": 4,
-   "liveHeadings": 2
+   "liveHeadings": 3
   },
   {
    "id": "print_job",
    "name": "Print job",
    "group": "My SPLAT",
-   "route": "/dashboard/print-requests/f6516f0b-5a65-484d-bc1a-5c9695e204b2",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h3 \"$#\" has no counterpart",
-     "board": "$#",
-     "live": null
-    }
-   ],
+   "route": "/dashboard/print-requests/592996de-60f6-4998-9650-abd936da7d1f",
+   "findings": [],
    "role": "parent",
-   "finalUrl": "/dashboard/print-requests/f6516f0b-5a65-484d-bc1a-5c9695e204b2",
+   "finalUrl": "/dashboard/print-requests/592996de-60f6-4998-9650-abd936da7d1f",
    "explained": [],
    "boardHeadings": 3,
-   "liveHeadings": 2
+   "liveHeadings": 4
   },
   {
    "id": "print_offer",
@@ -1383,7 +1275,7 @@
    "finalUrl": "/dashboard/printers",
    "explained": [],
    "boardHeadings": 4,
-   "liveHeadings": 2
+   "liveHeadings": 3
   },
   {
    "id": "print_add",
@@ -1398,13 +1290,25 @@
    "liveHeadings": 5
   },
   {
+   "id": "account",
+   "name": "Account",
+   "group": "My SPLAT",
+   "route": "/dashboard/profile",
+   "findings": [],
+   "role": "parent",
+   "finalUrl": "/dashboard/profile",
+   "explained": [],
+   "boardHeadings": 3,
+   "liveHeadings": 3
+  },
+  {
    "id": "child",
    "name": "Child profile",
    "group": "My SPLAT",
-   "route": "/dashboard/child/74a0b0c8-b481-4a86-bf99-dd478e03c6c5",
+   "route": "/dashboard/child/e0052050-8b3f-4cb1-aec0-7eaa1b9db81f",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/dashboard/child/74a0b0c8-b481-4a86-bf99-dd478e03c6c5",
+   "finalUrl": "/dashboard/child/e0052050-8b3f-4cb1-aec0-7eaa1b9db81f",
    "explained": [],
    "boardHeadings": 4,
    "liveHeadings": 6
@@ -1560,6 +1464,18 @@
    "liveHeadings": 14
   },
   {
+   "id": "admin_review",
+   "name": "Review queue (live)",
+   "group": "Admin",
+   "route": "/admin/review?selected=bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+   "findings": [],
+   "role": "admin",
+   "finalUrl": "/admin/review",
+   "explained": [],
+   "boardHeadings": 2,
+   "liveHeadings": 2
+  },
+  {
    "id": "admin_review_detail",
    "name": "Review a tutorial",
    "group": "Admin",
@@ -1593,16 +1509,16 @@
    "finalUrl": "/admin/ideas",
    "explained": [],
    "boardHeadings": 6,
-   "liveHeadings": 11
+   "liveHeadings": 12
   },
   {
    "id": "admin_idea_detail",
    "name": "Review an idea",
    "group": "Admin",
-   "route": "/admin/ideas/66359cf7-8439-49b4-9c3f-4db2208e9722",
+   "route": "/admin/ideas/982dde3a-33e8-411e-bc39-2f753f744766",
    "findings": [],
    "role": "admin",
-   "finalUrl": "/admin/ideas/66359cf7-8439-49b4-9c3f-4db2208e9722",
+   "finalUrl": "/admin/ideas/982dde3a-33e8-411e-bc39-2f753f744766",
    "explained": [],
    "boardHeadings": 3,
    "liveHeadings": 3
@@ -1711,7 +1627,38 @@
    "findings": [],
    "role": "guest",
    "finalUrl": "/onboarding/contributor-terms",
-   "explained": [],
+   "explained": [
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "card title size",
+     "board": "16px",
+     "live": "24px",
+     "why": "pending",
+     "reason": "The terms text is replaced by a compact To be completed card until the lawyer-reviewed terms exist.",
+     "pending": "contributor-terms-legal"
+    },
+    {
+     "type": "radius",
+     "severity": "medium",
+     "what": "card radius",
+     "board": "18px",
+     "live": "24px",
+     "why": "pending",
+     "reason": "The terms text is replaced by a compact To be completed card until the lawyer-reviewed terms exist.",
+     "pending": "contributor-terms-legal"
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "card background",
+     "board": "rgb(250,249,247)",
+     "live": "rgb(243,241,237)",
+     "why": "pending",
+     "reason": "The terms text is replaced by a compact To be completed card until the lawyer-reviewed terms exist.",
+     "pending": "contributor-terms-legal"
+    }
+   ],
    "boardHeadings": 8,
    "liveHeadings": 3
   },
@@ -1742,16 +1689,12 @@
  ],
  "summary": {
   "screens": 118,
-  "clean": 111,
-  "withFindings": 6,
+  "clean": 118,
+  "withFindings": 0,
   "errored": 0,
-  "skipped": 1,
-  "findings": 23,
-  "explained": 16,
-  "byType": {
-   "missing-section": 21,
-   "stale-exemption": 1,
-   "copy": 1
-  }
+  "skipped": 0,
+  "findings": 0,
+  "explained": 27,
+  "byType": {}
  }
 }
