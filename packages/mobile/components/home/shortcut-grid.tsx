@@ -1,12 +1,12 @@
 // packages/mobile/components/home/shortcut-grid.tsx
 //
-// Home's shortcut grid, from the approved mockup: four across, 62px tinted
-// glyphs, a dashed Add tile last. Tiles are absolutely placed by slot so a drag
+// Home's shortcut grid, from the approved mockup: four across, tinted glyphs
+// sized to the column (the mockup's 62 on a 322 phone is ~76 on a 393 one), a dashed Add tile last. Tiles are absolutely placed by slot so a drag
 // can shift the others out of the way with a spring; reanimated plus a plain
 // PanResponder, no gesture-handler. Edit mode wiggles the tiles, badges each
 // with a minus, and a tap or a drop opens a small manage menu beside the tile.
 import { useEffect, useRef, useState } from 'react'
-import { PanResponder, Pressable, StyleSheet, Text, View } from 'react-native'
+import { PanResponder, PixelRatio, Pressable, StyleSheet, Text, View } from 'react-native'
 import Animated, {
   Easing,
   cancelAnimation,
@@ -29,23 +29,32 @@ import { AnimatedPressable } from '../ui/AnimatedPressable'
 const COLS = 4
 const GAP_X = 6
 const GAP_Y = 18
-const GLYPH = 62
-// Glyph, the 6px gap, then two lines of 14px label.
-const CELL_H = GLYPH + 6 + 28
-const PITCH_Y = CELL_H + GAP_Y
+const MAX_GLYPH = 76
+const LABEL_LINE = 16
+// The most the labels grow with the system text size, so large text cannot break the grid.
+const MAX_FONT_SCALE = 1.3
 const MENU_W = 196
 // Room under the last row for the menu when it opens beside a bottom tile.
 const MENU_ROOM = 150
 
+/** Everything about a tile that follows from its column width and the text size. */
+export function tileMetrics(cellW: number, fontScale = PixelRatio.getFontScale()) {
+  const glyph = Math.min(MAX_GLYPH, Math.round(cellW * 0.88))
+  // Glyph, the 6px gap, then two lines of label.
+  const labelH = Math.ceil(2 * LABEL_LINE * Math.min(fontScale, MAX_FONT_SCALE))
+  const cellH = glyph + 6 + labelH
+  return { glyph, radius: Math.round(glyph * 0.32), labelH, cellH, pitchY: cellH + GAP_Y }
+}
+
 export function slotPos(slot: number, cellW: number) {
-  return { x: (slot % COLS) * (cellW + GAP_X), y: Math.floor(slot / COLS) * PITCH_Y }
+  return { x: (slot % COLS) * (cellW + GAP_X), y: Math.floor(slot / COLS) * tileMetrics(cellW).pitchY }
 }
 
 /** The slot nearest a tile's top-left corner, clamped to the tiles that exist. */
 export function slotAt(x: number, y: number, cellW: number, count: number) {
   const rows = Math.ceil(count / COLS)
   const col = Math.min(COLS - 1, Math.max(0, Math.round(x / (cellW + GAP_X))))
-  const row = Math.min(rows - 1, Math.max(0, Math.round(y / PITCH_Y)))
+  const row = Math.min(rows - 1, Math.max(0, Math.round(y / tileMetrics(cellW).pitchY)))
   return Math.min(count - 1, row * COLS + col)
 }
 
@@ -77,6 +86,7 @@ function Tile(props: TileProps) {
   const { feature, index, slot, cellW, editing, dragging } = props
   const reduced = useReducedMotion()
   const target = slotPos(slot, cellW)
+  const m = tileMetrics(cellW)
   const x = useSharedValue(target.x)
   const y = useSharedValue(target.y)
   const lift = useSharedValue(0)
@@ -146,7 +156,7 @@ function Tile(props: TileProps) {
   return (
     <Animated.View
       {...pan.panHandlers}
-      style={[styles.cell, { width: cellW, zIndex: dragging ? 10 : 0 }, placed]}
+      style={[styles.cell, { width: cellW, height: m.cellH, zIndex: dragging ? 10 : 0 }, placed]}
     >
       <AnimatedPressable
         pressScale={0.94}
@@ -175,14 +185,14 @@ function Tile(props: TileProps) {
           testID={`glyph-${feature.id}`}
           style={[
             styles.glyph,
-            { backgroundColor: TINT_BG[feature.tint] },
+            { width: m.glyph, height: m.glyph, borderRadius: m.radius, backgroundColor: TINT_BG[feature.tint] },
             dragging && styles.glyphLifted,
             glyph,
           ]}
         >
-          <Ionicons name={feature.icon} size={28} color={theme.colors.ink} />
+          <Ionicons name={feature.icon} size={32} color={theme.colors.ink} />
         </Animated.View>
-        <Text style={styles.label} numberOfLines={2} maxFontSizeMultiplier={1.1}>
+        <Text style={[styles.label, { height: m.labelH }]} numberOfLines={2} maxFontSizeMultiplier={MAX_FONT_SCALE}>
           {feature.name}
         </Text>
       </AnimatedPressable>
@@ -241,7 +251,8 @@ export function ShortcutGrid({
   const total = features.length + 1
   const rows = Math.ceil(total / COLS)
   const menuFeature = editing && menuId ? features.find((f) => f.id === menuId) : undefined
-  const height = rows * CELL_H + (rows - 1) * GAP_Y + (menuFeature ? MENU_ROOM : 0)
+  const m = tileMetrics(cellW)
+  const height = rows * m.cellH + (rows - 1) * GAP_Y + (menuFeature ? MENU_ROOM : 0)
 
   const closeThen = (fn: () => void) => () => {
     setMenuId(null)
@@ -253,7 +264,7 @@ export function ShortcutGrid({
     const at = slotPos(features.indexOf(menuFeature), cellW)
     const left = Math.min(width - MENU_W, Math.max(0, at.x + cellW / 2 - MENU_W / 2))
     menu = (
-      <View accessibilityRole="menu" accessibilityLabel="Manage shortcut" style={[styles.menu, { top: at.y + CELL_H + 10, left }]}>
+      <View accessibilityRole="menu" accessibilityLabel="Manage shortcut" style={[styles.menu, { top: at.y + m.cellH + 10, left }]}>
         <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFill} />
         <MenuItem icon="eye-outline" label={`Open ${menuFeature.name}`} onPress={closeThen(() => onOpen(menuFeature))} />
         <MenuItem icon="move-outline" label="Move to the top" onPress={closeThen(() => onMoveToTop(menuFeature.id))} />
@@ -300,7 +311,7 @@ export function ShortcutGrid({
           ))
         : null}
       {width > 0 ? (
-        <View style={[styles.cell, { width: cellW, left: slotPos(features.length, cellW).x, top: slotPos(features.length, cellW).y }]}>
+        <View style={[styles.cell, { width: cellW, height: m.cellH, left: slotPos(features.length, cellW).x, top: slotPos(features.length, cellW).y }]}>
           <AnimatedPressable
             pressScale={0.94}
             onPress={onAdd}
@@ -308,10 +319,10 @@ export function ShortcutGrid({
             accessibilityLabel="Add a shortcut"
             style={styles.tile}
           >
-            <View testID="glyph-add" style={[styles.glyph, styles.glyphAdd]}>
-              <Ionicons name="add" size={28} color={theme.colors.muted} />
+            <View testID="glyph-add" style={[styles.glyph, { width: m.glyph, height: m.glyph, borderRadius: m.radius }, styles.glyphAdd]}>
+              <Ionicons name="add" size={32} color={theme.colors.muted} />
             </View>
-            <Text style={styles.label} maxFontSizeMultiplier={1.1}>
+            <Text style={[styles.label, { height: m.labelH }]} maxFontSizeMultiplier={MAX_FONT_SCALE}>
               Add
             </Text>
           </AnimatedPressable>
@@ -343,15 +354,18 @@ function MenuItem({
 }
 
 const styles = StyleSheet.create({
-  cell: { position: 'absolute', height: CELL_H },
+  cell: { position: 'absolute' },
   tile: { alignItems: 'center', gap: 6 },
   glyph: {
-    width: GLYPH,
-    height: GLYPH,
-    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    ...theme.shadow(2),
+    // The board's 0 6 16 at .14: the tiles have to stand off the page on a
+    // phone in daylight. shadowRadius is half a CSS blur.
+    shadowColor: '#1c2530',
+    shadowOpacity: 0.14,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 5,
   },
   glyphLifted: { shadowOpacity: 0.22, shadowRadius: 28, shadowOffset: { width: 0, height: 16 }, elevation: 12 },
   glyphAdd: {
@@ -363,10 +377,9 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
   label: {
-    height: 28,
     fontFamily: theme.fonts.bold,
-    fontSize: 11.5,
-    lineHeight: 14,
+    fontSize: 13,
+    lineHeight: LABEL_LINE,
     color: theme.colors.ink,
     textAlign: 'center',
   },

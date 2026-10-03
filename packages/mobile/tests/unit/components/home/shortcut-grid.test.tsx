@@ -1,7 +1,7 @@
 // packages/mobile/tests/unit/components/home/shortcut-grid.test.tsx
-import { StyleSheet } from 'react-native'
+import { PixelRatio, StyleSheet } from 'react-native'
 import { render, screen, fireEvent } from '@testing-library/react-native'
-import { ShortcutGrid, slotAt, slotPos, reorder } from '../../../../components/home/shortcut-grid'
+import { ShortcutGrid, slotAt, slotPos, reorder, tileMetrics } from '../../../../components/home/shortcut-grid'
 import type { Feature } from '../../../../lib/home-shortcuts'
 import { theme } from '../../../../lib/theme'
 
@@ -16,6 +16,12 @@ const F = (id: string, name: string, tint: Feature['tint'] = 'sky'): Feature => 
   href: `/${id}` as Feature['href'],
 })
 const features = [F('a', 'Guides', 'honey'), F('b', 'Toys', 'apr'), F('c', 'Events', 'sun')]
+
+// The jest runtime reports a font scale of 2; pin the ordinary one.
+beforeEach(() => {
+  jest.spyOn(PixelRatio, 'getFontScale').mockReturnValue(1)
+})
+afterEach(() => jest.restoreAllMocks())
 
 function setup(editing = false) {
   const h = {
@@ -34,14 +40,23 @@ function setup(editing = false) {
 }
 
 describe('grid maths', () => {
-  it('lays four across at gap 6 by 18, each cell 96 tall', () => {
+  it('sizes the glyph to the column: ~75 on a 390 phone, smaller at 320, capped at 76', () => {
+    expect(tileMetrics(85)).toMatchObject({ glyph: 75, radius: 24 })
+    expect(tileMetrics(67.5).glyph).toBe(59)
+    expect(tileMetrics(120).glyph).toBe(76)
+  })
+  it('boxes two lines of 13/16 label under the glyph, and grows with font scale up to 1.3', () => {
+    expect(tileMetrics(85, 1)).toMatchObject({ labelH: 32, cellH: 75 + 6 + 32, pitchY: 75 + 6 + 32 + 18 })
+    expect(tileMetrics(85, 2).labelH).toBe(42)
+  })
+  it('lays four across at gap 6 by 18', () => {
     expect(slotPos(0, 85)).toEqual({ x: 0, y: 0 })
     expect(slotPos(3, 85)).toEqual({ x: 3 * 91, y: 0 })
-    expect(slotPos(5, 85)).toEqual({ x: 91, y: 114 })
+    expect(slotPos(5, 85)).toEqual({ x: 91, y: 131 })
   })
   it('reads the nearest slot, clamped to the tiles that exist', () => {
     expect(slotAt(95, 4, 85, 8)).toBe(1)
-    expect(slotAt(0, 120, 85, 8)).toBe(4)
+    expect(slotAt(0, 130, 85, 8)).toBe(4)
     expect(slotAt(900, 900, 85, 6)).toBe(5)
     expect(slotAt(-50, -50, 85, 6)).toBe(0)
   })
@@ -56,10 +71,27 @@ describe('ShortcutGrid at rest', () => {
     setup()
     expect(screen.getByText('Guides')).toBeTruthy()
     const glyph = StyleSheet.flatten(screen.getByTestId('glyph-a').props.style) as Record<string, unknown>
-    expect(glyph).toMatchObject({ width: 62, height: 62, borderRadius: 20, backgroundColor: theme.colors.honeySoft })
+    expect(glyph).toMatchObject({ width: 75, height: 75, borderRadius: 24, backgroundColor: theme.colors.honeySoft })
+    // A stronger shadow than the old elevation 2, so the tiles stand off the page.
+    expect(glyph).toMatchObject({ shadowOpacity: 0.14, shadowOffset: { width: 0, height: 6 } })
+    const label = StyleSheet.flatten(screen.getByText('Guides').props.style) as Record<string, unknown>
+    expect(label).toMatchObject({ fontSize: 13, lineHeight: 16, height: 32 })
+    expect(screen.getByText('Guides').props.maxFontSizeMultiplier).toBe(1.3)
+    expect(screen.getByText('Guides').props.numberOfLines).toBe(2)
     const add = StyleSheet.flatten(screen.getByTestId('glyph-add').props.style) as Record<string, unknown>
     expect(add).toMatchObject({ borderStyle: 'dashed', borderWidth: 2 })
     expect(screen.queryByTestId('remove-a')).toBeNull()
+  })
+
+  it('draws the icons at 32 and still fits four across a 320 phone', () => {
+    setup()
+    expect(screen.getByTestId('glyph-a').findByProps({ name: 'book-outline' }).props.size).toBe(32)
+    screen.unmount()
+    render(<ShortcutGrid features={features} editing={false} onOpen={jest.fn()} onAdd={jest.fn()} onEnterEdit={jest.fn()} onRemove={jest.fn()} onMove={jest.fn()} onMoveToTop={jest.fn()} />)
+    // 288 = a 320 phone less the gutters: columns of 67.5, so a 59 glyph.
+    fireEvent(screen.getByTestId('shortcut-grid'), 'layout', { nativeEvent: { layout: { width: 288, height: 0 } } })
+    const glyph = StyleSheet.flatten(screen.getByTestId('glyph-a').props.style) as { width: number }
+    expect(glyph.width).toBeLessThanOrEqual(67.5)
   })
 
   it('opens a shortcut on press and the add sheet on Add', () => {
