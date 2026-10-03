@@ -1,7 +1,4 @@
 // packages/mobile/tests/unit/components/explore/explore-screen.test.tsx
-import { ScrollView, StyleSheet } from 'react-native'
-import { theme } from '../../../../lib/theme'
-import { tabBarClearance } from '../../../../lib/tab-bar-layout'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { ExploreScreen } from '../../../../components/explore/explore-screen'
 import { LEARN_ARTICLES } from '../../../../lib/learn-content'
@@ -40,54 +37,14 @@ beforeEach(() => {
 })
 
 
-// The page ground is the background token, and the scroll frame spans the
-// Screen padding so it cannot clip the cards' shadows into a grey rectangle.
-const groundOk = (root: any, frame: { props: { style?: unknown; contentContainerStyle?: unknown } }) => {
-  const ground = StyleSheet.flatten(root.props.style) as { backgroundColor?: string }
-  const f = StyleSheet.flatten(frame.props.style as object) as { marginHorizontal?: number }
-  const c = StyleSheet.flatten(frame.props.contentContainerStyle as object) as { paddingHorizontal?: number }
-  return ground.backgroundColor === theme.colors.background && f.marginHorizontal === -16 && c.paddingHorizontal === 16
-}
-
-describe('ExploreScreen as Home', () => {
-  it('sits on the page ground, and leaves a 16 gap under the search field', async () => {
-    render(<ExploreScreen variant="home" />)
-    await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(4))
-    expect(groundOk(screen.toJSON(), screen.UNSAFE_getByType(ScrollView))).toBe(true)
-    const box = screen.getByTestId('search-box')
-    expect((StyleSheet.flatten(box.props.style) as { marginBottom?: number }).marginBottom).toBeGreaterThanOrEqual(16)
-  })
-
-  it('pads its scroll content so the last row clears the floating tab bar', async () => {
-    render(<ExploreScreen variant="home" />)
-    await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(4))
-    const pad = (n: { props: { contentContainerStyle?: unknown } }) =>
-      (StyleSheet.flatten(n.props.contentContainerStyle as object) as { paddingBottom?: number }).paddingBottom
-    expect(pad(screen.UNSAFE_getByType(ScrollView))).toBe(tabBarClearance(0))
-  })
-
-  it('titles itself Home with no back button, and adds Guides and Toys doors', async () => {
-    render(<ExploreScreen variant="home" />)
-    await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(4))
-    expect(screen.getByText('Home')).toBeTruthy()
-    expect(screen.queryByLabelText(/back/i)).toBeNull()
-    fireEvent.press(screen.getByLabelText('Guides'))
-    expect(mockPush).toHaveBeenCalledWith('/guides')
-    fireEvent.press(screen.getByLabelText('Toys'))
-    expect(mockPush).toHaveBeenCalledWith('/toy-library')
-    fireEvent.press(screen.getByLabelText('Learn'))
-    expect(mockPush).toHaveBeenCalledWith('/explore/learn')
-  })
-
-  it('keeps the plain Explore free of the Home hero and the extra doors', async () => {
+describe('ExploreScreen', () => {
+  it('is the pushed place, with no Home title and no Guides or Toys doors', async () => {
     render(<ExploreScreen />)
     await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(4))
     expect(screen.queryByText('Home')).toBeNull()
     expect(screen.queryByLabelText('Guides')).toBeNull()
   })
-})
 
-describe('ExploreScreen', () => {
   it('fetches every source once on mount', async () => {
     render(<ExploreScreen />)
     await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(4))

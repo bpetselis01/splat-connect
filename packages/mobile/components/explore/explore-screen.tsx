@@ -5,11 +5,8 @@ import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { Tutorial, ToyWithOwner, Organization, ImpactSummary } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { theme } from '../../lib/theme'
-import { tabBarClearance } from '../../lib/tab-bar-layout'
 import { scrollFrame, scrollContent, SEARCH_GAP } from '../../lib/layout'
-import { TabHero } from '../ui/TabHero'
 import { useLearnProgress } from '../../lib/learn'
 import { LEARN_ARTICLES } from '../../lib/learn-content'
 import { Screen } from '../ui/Screen'
@@ -87,12 +84,8 @@ function DoorCard({
   )
 }
 
-/** `home` is the Home tab's root: it draws its own hero (the tab has no native
- *  header), adds Guides and Toys as doors because they are no longer tabs, and
- *  clears the floating tab bar. `explore` is the pushed place under Me. */
-export function ExploreScreen({ variant = 'explore' }: { variant?: 'explore' | 'home' }) {
-  const insets = useSafeAreaInsets()
-  const home = variant === 'home'
+/** The pushed Explore place: search and the doors. Home's grid has its own screen. */
+export function ExploreScreen() {
   const router = useRouter()
   const { count } = useLearnProgress()
   const [search, setSearch] = useState('')
@@ -157,16 +150,13 @@ export function ExploreScreen({ variant = 'explore' }: { variant?: 'explore' | '
   const matchedOrgs = q ? orgs.filter((o) => o.name.toLowerCase().includes(q)) : []
 
   return (
-    // Explore: the native header draws the title and back button
-    // (explore/_layout). Home: the tab root draws its own hero.
-    <Screen ownHeader={home}>
+    // The native header draws the title and back button (explore/_layout).
+    <Screen>
       <ScrollView
         showsVerticalScrollIndicator={false}
         style={scrollFrame}
-        contentContainerStyle={[styles.content, scrollContent, home && { paddingBottom: tabBarClearance(insets.bottom) }]}
+        contentContainerStyle={[styles.content, scrollContent]}
       >
-        {home ? <TabHero greeting="Welcome to SPLAT" title="Home" pose="wave" /> : null}
-
         <TextField
           icon="search"
           placeholder="Search guides, toys, organisations"
@@ -223,24 +213,6 @@ export function ExploreScreen({ variant = 'explore' }: { variant?: 'explore' | '
         {/* The board's seven, in its order. Every destination the old doors
             had is here: Get Involved was the challenges list, and is now
             named for what it opens. */}
-        {home ? (
-          <>
-            <DoorCard
-              title="Guides"
-              blurb="Build guides for adapting toys, from easy to hard."
-              tint={theme.colors.honeySoft}
-              icon="book-outline"
-              onPress={() => router.push('/guides')}
-            />
-            <DoorCard
-              title="Toys"
-              blurb="Adapted toys to borrow, give or receive."
-              tint={theme.colors.apricotSoft}
-              icon="cube-outline"
-              onPress={() => router.push('/toy-library')}
-            />
-          </>
-        ) : null}
         <DoorCard
           title="Learn"
           blurb="How switch adaptation works, first switch to safe finish."
