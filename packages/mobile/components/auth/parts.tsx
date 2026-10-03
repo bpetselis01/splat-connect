@@ -47,17 +47,19 @@ export function AuthStage({
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Screen ownHeader>
+        {/* Pinned under the notch, outside the centred column: inside it the
+            button floated to mid-screen on a tall phone. */}
+        {back ? (
+          <View style={styles.back}>
+            <BackButton />
+          </View>
+        ) : null}
         <ScrollView
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + theme.spacing(8) }]}
         >
           <View style={styles.column}>
-            {back ? (
-              <View style={styles.back}>
-                <BackButton />
-              </View>
-            ) : null}
             {children}
             {foot ? <Text style={styles.foot}>No paid tier. Not a medical device.</Text> : null}
           </View>
@@ -296,7 +298,8 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   scroll: { flexGrow: 1, justifyContent: 'center' },
   column: { width: '100%', maxWidth: 440, alignSelf: 'center', gap: theme.spacing(3) },
-  back: { alignSelf: 'flex-start' },
+  // BackButton insets itself 16 on web (for a JS header); Screen already pads.
+  back: { alignSelf: 'flex-start', marginBottom: theme.spacing(2), ...(Platform.OS === 'web' ? { marginLeft: -theme.spacing(4) } : null) },
   center: { textAlign: 'center' },
   heading: { fontFamily: theme.fonts.display, fontSize: 26, lineHeight: 30, color: theme.colors.ink },
   lede: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, lineHeight: 21, color: theme.colors.muted },
