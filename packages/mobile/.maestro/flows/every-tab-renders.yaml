@@ -44,9 +44,10 @@ appId: com.splatconnect.mobile
           optional: true
 
 # Signed-in landing is Home. Guides and Toys are no longer tabs: they are
-# doors on Home, and the bar keeps Home lit while either is open.
+# default shortcuts on Home's grid, and the bar keeps Home lit while either is
+# open. Home no longer greets; its Guides shortcut is the landing marker.
 - assertVisible:
-    text: "Welcome to SPLAT"
+    text: "Guides"
 - tapOn:
     text: "Guides"
 - assertVisible:
@@ -61,7 +62,7 @@ appId: com.splatconnect.mobile
 - tapOn:
     text: "Home"
 - tapOn:
-    text: "Toys"
+    text: "Toy library"
 - assertVisible:
     text: "Toy library"
 

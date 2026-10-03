@@ -39,7 +39,7 @@ appId: com.splatconnect.mobile
           optional: true
 
 - tapOn:
-    text: "Toys"
+    text: "Toy library"
 - assertVisible:
     text: "Toy library"
 

@@ -33,15 +33,15 @@ test('the tab bar reaches every tab', async ({ page }) => {
   await expect(page.getByRole('tab')).toHaveCount(4)
 })
 
-test('Guides and Toys are doors on Home, and the bar stays to take you back', async ({ page }) => {
+test('Guides and the Toy library are default shortcuts on Home, and the bar stays to take you back', async ({ page }) => {
   await signUpNewAccount(page, uniqueSignupEmail())
   await page.getByRole('tab', { name: 'Home' }).click()
 
-  for (const [door, path] of [
+  for (const [shortcut, path] of [
     ['Guides', '/guides'],
-    ['Toys', '/toy-library'],
+    ['Toy library', '/toy-library'],
   ] as const) {
-    await page.getByRole('button', { name: door, exact: true }).click()
+    await page.getByRole('button', { name: shortcut, exact: true }).click()
     await expect(page).toHaveURL(new RegExp(`${path}$`))
     // react-native-web does not render aria-selected on the tab; the lit state is unit-tested.
     await expect(page.getByRole('tab', { name: 'Home' })).toBeVisible()

@@ -33,7 +33,7 @@ appId: com.splatconnect.mobile
 - tapOn:
     id: "auth-submit"
 
-# A signed-in visitor lands on the Guides tab.
+# A signed-in visitor lands on Home, whose grid carries a Guides shortcut.
 - assertVisible:
     text: "Guides"
 
