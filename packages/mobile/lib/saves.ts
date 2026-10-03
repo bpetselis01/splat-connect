@@ -22,6 +22,10 @@ export function useSaves(): Saves {
   // state, not to a guess made from one request's `was`.
   const confirmed = useRef<SavedIds>(NONE)
   const inFlight = useRef(new Map<string, number>())
+  // Requests for one id go out one after another: a quick second tap used to
+  // send its DELETE before the first tap's POST had landed, which the server
+  // answered as a no-op, leaving the row saved after the screen said otherwise.
+  const queue = useRef(new Map<string, Promise<unknown>>())
 
   useEffect(() => {
     let ignore = false
@@ -37,9 +41,12 @@ export function useSaves(): Saves {
     commit({ ...savedRef.current, [slug]: was ? withoutId(savedRef.current[slug]) : [...savedRef.current[slug], id] })
     const key = `${slug}:${id}`
     inFlight.current.set(key, (inFlight.current.get(key) ?? 0) + 1)
+    const send = (queue.current.get(key) ?? Promise.resolve()).then(() =>
+      was ? apiClient.delete(`/api/saves/${slug}/${id}`) : apiClient.post('/api/saves', { entity_type: SAVE_SLUGS[slug], entity_id: id }),
+    )
+    queue.current.set(key, send.catch(() => {}))
     try {
-      if (was) await apiClient.delete(`/api/saves/${slug}/${id}`)
-      else await apiClient.post('/api/saves', { entity_type: SAVE_SLUGS[slug], entity_id: id })
+      await send
       const c = confirmed.current[slug]
       confirmed.current = { ...confirmed.current, [slug]: was ? c.filter((x) => x !== id) : c.includes(id) ? c : [...c, id] }
     } catch {

@@ -74,11 +74,12 @@ async function checkToyOwner(c: Ctx, supabase: UserClient, toyId: string) {
 }
 
 /** The two file-only buckets: same flow, different bucket and object path. */
-function fileRoute(bucket: string, objectPath: (id: string, file: File) => string, withName: boolean) {
+function fileRoute(bucket: string, objectPath: (id: string, file: File) => string, withName: boolean, mime?: string) {
   return async (c: Ctx) => {
     const read = await readUpload(c, 'tutorialId')
     if (read instanceof Response) return read
     const [file, tutorialId] = read
+    if (mime && file.type !== mime) return c.json({ error: 'Only PDFs are accepted' }, 415)
 
     const supabase = createUserClient(c.get('token'))
     const no = await checkTutorialContributor(c, supabase, tutorialId)
@@ -96,7 +97,7 @@ function fileRoute(bucket: string, objectPath: (id: string, file: File) => strin
   }
 }
 
-upload.post('/pdf', fileRoute('tutorial-pdfs', (id) => `${id}/tutorial.pdf`, false))
+upload.post('/pdf', fileRoute('tutorial-pdfs', (id) => `${id}/tutorial.pdf`, false, 'application/pdf'))
 upload.post('/stl', fileRoute('stl-files', (id, file) => `${id}/${file.name}`, true))
 
 /**

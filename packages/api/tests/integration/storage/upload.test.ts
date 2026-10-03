@@ -66,6 +66,11 @@ describe('storage uploads', () => {
     expect(url).toBe(`${tutorialId}/tutorial.pdf`)
   })
 
+  it('refuses a non-PDF on the PDF route', async () => {
+    const res = await uploadRequest('/api/upload/pdf', user.token, new File(['png-bytes'], 'photo.png', { type: 'image/png' }))
+    expect(res.status).toBe(415)
+  })
+
   // Why:   this route appended-only since a4359f7c; it used to delete every
   //        existing object before writing, which capped a guide at one photo.
   // How:   uploads two and expects both, which is the inverse of the old assertion.
