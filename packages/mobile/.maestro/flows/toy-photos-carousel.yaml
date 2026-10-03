@@ -39,9 +39,9 @@ appId: com.splatconnect.mobile
           optional: true
 
 - tapOn:
-    text: "Toy library"
+    text: "Toys"
 - assertVisible:
-    text: "Toy library"
+    text: "Toys"
 
 - tapOn:
     text: "Device smoke toy.*"

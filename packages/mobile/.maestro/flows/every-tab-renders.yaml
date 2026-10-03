@@ -62,9 +62,9 @@ appId: com.splatconnect.mobile
 - tapOn:
     text: "Home"
 - tapOn:
-    text: "Toy library"
+    text: "Toys"
 - assertVisible:
-    text: "Toy library"
+    text: "Toys"
 
 # Map is a To be completed screen until a maps provider is set up.
 - tapOn:
