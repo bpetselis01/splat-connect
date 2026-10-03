@@ -315,6 +315,41 @@ async function seedInbox(db) {
 }
 
 /**
+ * A contributor profile with something to show — /contributors/[id]. The sampled
+ * contributor was whoever sorted first on the list, an account with no bio, no
+ * featured guide and no builds, so About, Featured and "From families who built
+ * one" (and its "builds logged" line) all drew nothing. This sets a bio and a
+ * featured guide on the first account that has an approved guide (restored on
+ * undo) and logs one build of it by the parent.
+ */
+async function seedContributorProfile(db, parentId) {
+  const { data: link } = await db
+    .from('tutorial_contributors')
+    .select('profile_id, tutorial_id, tutorials!inner(status)')
+    .eq('tutorials.status', 'approved')
+    .neq('profile_id', parentId)
+    .limit(1)
+    .maybeSingle()
+  if (!link) return null
+  const { data: before } = await db
+    .from('profiles')
+    .select('bio, featured_tutorial_id')
+    .eq('id', link.profile_id)
+    .single()
+  await db
+    .from('profiles')
+    .update({ bio: 'Parity fixture bio: builds switch-adapted toys on weekends.', featured_tutorial_id: link.tutorial_id })
+    .eq('id', link.profile_id)
+  undo.push((d) => d.from('profiles').update(before).eq('id', link.profile_id))
+  const { error } = await db.from('tutorial_builds').insert({ tutorial_id: link.tutorial_id, profile_id: parentId })
+  if (!error)
+    undo.push((d) =>
+      d.from('tutorial_builds').delete().eq('tutorial_id', link.tutorial_id).eq('profile_id', parentId)
+    )
+  return `/contributors/${link.profile_id}`
+}
+
+/**
  * A family asking the organisation for a toy off its shelf and for a build —
  * /dashboard/organisation/requests. Both cascade with the organisation.
  */
@@ -829,6 +864,8 @@ async function seed(db, users) {
     await seedOpenBuild(db, parent.id)
     await seedStories(db, parent.id, await seedRecyclingOrg(db))
     await seedInbox(db)
+    const ctb = await seedContributorProfile(db, parent.id)
+    if (ctb) routes.contributor = ctb
     const build = await seedBuild(db, parent.id)
     if (build) routes.build_thread = `/dashboard/exchanges/build/${build}`
     const child = await seedChild(db, parent.id)
