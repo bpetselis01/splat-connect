@@ -124,6 +124,8 @@ export function BuildThreadScreen({ id }: { id: string }) {
       .then(({ data }) => {
         if (!ignore) setShotUrl(data?.signedUrl ?? null)
       })
+      // Offline: the shot just does not draw, as in the print job page.
+      .catch(() => {})
     return () => {
       ignore = true
     }
@@ -392,7 +394,7 @@ export function BuildThreadScreen({ id }: { id: string }) {
                       label="Confirm handover"
                       disabled={busy || !code.trim()}
                       onPress={async () => {
-                        if (await post('confirm', { code })) setCode('')
+                        if (await post('confirm', { code: code.trim() })) setCode('')
                       }}
                     />
                   </>

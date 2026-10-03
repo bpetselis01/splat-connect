@@ -212,7 +212,7 @@ export function PrintJobScreen({ id }: { id: string }) {
             onStart={() => run(() => startPrint(id))}
             onReady={() => run(() => markReady(id))}
             onConfirm={async () => {
-              if (await run(() => apiClient.post<ToyTransaction>(`/api/toy-transactions/${id}/confirm`, { code }))) setCode('')
+              if (await run(() => apiClient.post<ToyTransaction>(`/api/toy-transactions/${id}/confirm`, { code: code.trim() }))) setCode('')
             }}
             onAnswer={() => router.push('/print-for-others')}
             onMessage={openThread}

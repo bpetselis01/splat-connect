@@ -13,7 +13,7 @@
  * Distance is measured from the maker's profile postcode to the family's (099);
  * without one, the chips ask for it.
  */
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { View, Text, ScrollView, Pressable, RefreshControl, StyleSheet } from 'react-native'
 import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -93,21 +93,28 @@ export function MakersWantedScreen() {
   const [boardPage, setBoardPage] = useState(0)
   const [boardMore, setBoardMore] = useState(false)
 
+  // Every board read takes a ticket; only the newest may land, so a slow Live
+  // answer cannot fill the Done tab after the maker has moved on.
+  const boardTicket = useRef(0)
   const loadBoard = useCallback(async (t: 'live' | 'done', page: number) => {
+    const ticket = ++boardTicket.current
     try {
       const rows = await apiClient.get<BoardBuild[]>(`/api/toy-transactions/builds-board?tab=${t}&page=${page}`)
+      if (ticket !== boardTicket.current) return
       setBoard((cur) => (page === 0 ? rows : [...cur, ...rows]))
       setBoardPage(page)
       setBoardMore(rows.length === BOARD_PAGE)
       setLoadFailed(false)
     } catch (err) {
       console.error('[MakersWantedScreen] builds-board fetch failed:', err)
-      setLoadFailed(true)
+      if (ticket === boardTicket.current) setLoadFailed(true)
     }
   }, [])
 
   function pick(t: Tab) {
     setTab(t)
+    setLoadFailed(false)
+    boardTicket.current++
     if (t === 'live' || t === 'done') {
       setBoard([])
       void loadBoard(t, 0)
@@ -241,9 +248,14 @@ export function MakersWantedScreen() {
             <SkeletonRow />
             <SkeletonRow />
           </View>
-        ) : loadFailed && builds.length === 0 ? (
+        ) : loadFailed && (onBoard ? board.length === 0 : builds.length === 0) ? (
           <EmptyState icon="cloud-offline-outline" title="Couldn't load the board." hint="Check your connection and try again.">
-            <Button label="Try again" variant="secondary" onPress={() => void load()} style={styles.retry} />
+            <Button
+              label="Try again"
+              variant="secondary"
+              onPress={() => (tab === 'live' || tab === 'done' ? void loadBoard(tab, 0) : void load())}
+              style={styles.retry}
+            />
           </EmptyState>
         ) : shown.length === 0 ? (
           <View style={styles.empty}>

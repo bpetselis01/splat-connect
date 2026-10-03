@@ -373,7 +373,8 @@ export interface MoneyMine {
 /** Up to two letters for an avatar: "Sam Mitchell" → "SM". `fallback` when there is no name. */
 export function initials(name: string | null | undefined, fallback = ''): string {
   const words = (name ?? '').trim().split(/\s+/).filter(Boolean)
-  return words.slice(0, 2).map((w) => w[0]!.toUpperCase()).join('') || fallback
+  // Array.from walks code points: w[0] is half of an emoji's surrogate pair.
+  return words.slice(0, 2).map((w) => Array.from(w)[0]!.toUpperCase()).join('') || fallback
 }
 
 /** A first name, never a full one — what a thanks is signed with. */

@@ -158,6 +158,21 @@ describe('SubmitIdeaScreen', () => {
     expect(screen.getByLabelText('Idea name').props.value).toBe('A switch a toddler can hit')
   })
 
+  // 77f6bad7: a raw upload error never reaches the screen; the photo-library
+  // permission words (already written for people) do.
+  it.each([
+    [new Error('API POST /api/upload/idea-photo failed with status 500: pg boom'), 'Could not upload the photo. Please try again.'],
+    [new TypeError('Network request failed'), /offline/],
+    [new Error('Photo library access is off. Turn it on in Settings.'), 'Photo library access is off. Turn it on in Settings.'],
+  ])('shows a friendly line for a photo upload failing with %s', async (err, shown) => {
+    mockPick.mockRejectedValue(err)
+    render(<SubmitIdeaScreen />)
+    fillEverything()
+    fireEvent.press(screen.getByRole('button', { name: 'Tap to add a photo' }))
+    expect(await screen.findByText(shown)).toBeTruthy()
+    expect(screen.queryByText(/pg boom|status 500/)).toBeNull()
+  })
+
   it('lands on your ideas once it is sent', async () => {
     render(<SubmitIdeaScreen />)
     fillEverything()
