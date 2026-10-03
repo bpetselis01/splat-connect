@@ -37,6 +37,7 @@ import { doorRoute, sinceYear } from '../../lib/org-profile'
 import { theme } from '../../lib/theme'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
 import { Card } from '../ui/Card'
+import { ToBeCompleted } from '../ui/ToBeCompleted'
 import { Button } from '../ui/Button'
 import { Chip } from '../ui/Chip'
 import { TextField } from '../ui/TextField'
@@ -340,13 +341,16 @@ export function OrgProfileScreen({ id }: { id: string }) {
 
       {place || org.visit_hours || org.service_area || org.website_url ? (
         <Section title="Visit">
-          {/* PENDING(org-visit-map): a map and the street address with access notes — shown only once accepted today, and no maps provider yet. */}
+          {/* PENDING(org-visit-map): a map and the street address with access notes — no maps provider yet, so it says To be completed. */}
           <Card style={styles.visit}>
             {place ? <Fact k="Where" v={place} /> : null}
             {org.visit_hours ? <Fact k="When" v={org.visit_hours} /> : null}
             {org.service_area ? <Fact k="Area" v={org.service_area} /> : null}
             {org.website_url ? <Fact k="Website" v={org.website_url.replace(/^https?:\/\//, '')} /> : null}
             <Text style={styles.rowMeta}>The street address comes once they accept you.</Text>
+            <ToBeCompleted compact subject="Map and address">
+              A map and the street address will appear here once they are set up.
+            </ToBeCompleted>
           </Card>
         </Section>
       ) : null}
