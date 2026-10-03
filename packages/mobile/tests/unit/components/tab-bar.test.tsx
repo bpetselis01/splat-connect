@@ -77,6 +77,14 @@ it('hides on a pushed screen and on Explore, and shows on a tab root', () => {
   expect(screen.getByText('Home')).toBeTruthy()
 })
 
+it('hides on a drill-down screen that is alone in its stack', () => {
+  // Opened from Home into an unvisited Guides stack: nothing under it, still not a root.
+  const state = at('guides').state
+  const lone = { ...state, routes: state.routes.map((r: { name: string }) => (r.name === 'guides' ? { ...r, state: { index: 0, routes: [{ name: '[id]/index' }] } } : r)) }
+  render(<TabBar {...props} state={lone} badges={{}} />)
+  expect(screen.queryByText('Home')).toBeNull()
+})
+
 it('floats: absolute, 14px margins, 16px off the edge, 66px tall, above the home indicator, over a blur', () => {
   render(<TabBar {...props} insets={{ top: 0, bottom: 34, left: 0, right: 0 }} badges={{}} />)
   const bar = StyleSheet.flatten(screen.getByTestId('tab-bar').props.style)

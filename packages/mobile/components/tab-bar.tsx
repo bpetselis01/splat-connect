@@ -57,8 +57,12 @@ export function TabBar({ state, descriptors, navigation, insets, badges }: Props
   // The bar shows on tab roots only: a screen pushed on a tab's stack, and
   // Explore, go without it.
   const current = state.routes[state.index]
-  const depth = (current?.state as { index?: number } | undefined)?.index ?? 0
-  if (!current || !BAR_ROOTS.has(current.name) || depth > 0) return null
+  const nested = current?.state as { index?: number; routes?: { name: string }[] } | undefined
+  const depth = nested?.index ?? 0
+  // A screen opened into an unvisited stack is the only one in it (depth 0), so
+  // the stack's root is told by name.
+  const child = nested?.routes?.[depth]?.name
+  if (!current || !BAR_ROOTS.has(current.name) || depth > 0 || (child && child !== 'index')) return null
 
   const lit = BUTTONS.includes(current.name) ? current.name : 'home'
   const items = BUTTONS.flatMap((name) => state.routes.filter((r) => r.name === name))
