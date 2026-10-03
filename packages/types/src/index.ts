@@ -1890,30 +1890,35 @@ export function notificationBucket(type: NotificationType): NotificationBucket {
  * two clients never narrate the same event differently — that is how a person
  * ends up unsure whether they read about one thing or two.
  */
+// Either can be null when the row it names was deleted; the sentence must
+// not print the word "null".
+const title = (n: Notification) => n.tutorial_title ?? 'a guide'
+const toy = (n: Notification) => n.toy_name ?? 'a toy'
+
 export const COPY: Record<NotificationType, (n: Notification) => string> = {
-  collaborator_invited: (n) => `${n.actor_name} invited you to collaborate on "${n.tutorial_title}"`,
-  collaborator_accepted: (n) => `${n.actor_name} accepted your invite to "${n.tutorial_title}"`,
-  collaborator_declined: (n) => `${n.actor_name} declined your invite to "${n.tutorial_title}"`,
-  collaborator_removed: (n) => `${n.actor_name} removed you from "${n.tutorial_title}"`,
-  collaborator_left: (n) => `${n.actor_name} left "${n.tutorial_title}"`,
+  collaborator_invited: (n) => `${n.actor_name} invited you to collaborate on "${title(n)}"`,
+  collaborator_accepted: (n) => `${n.actor_name} accepted your invite to "${title(n)}"`,
+  collaborator_declined: (n) => `${n.actor_name} declined your invite to "${title(n)}"`,
+  collaborator_removed: (n) => `${n.actor_name} removed you from "${title(n)}"`,
+  collaborator_left: (n) => `${n.actor_name} left "${title(n)}"`,
   // The two review-queue types. Both name the actor and the project, because
   // unlike every other type above the recipient did not start this and has no
   // context for it — a leader may be looking at a title they have never seen.
-  backing_requested: (n) => `${n.actor_name} asked your organisation to back "${n.tutorial_title}"`,
-  tutorial_submitted: (n) => `${n.actor_name} submitted "${n.tutorial_title}" for review`,
-  tutorial_approved: (n) => `"${n.tutorial_title}" was approved and is now published`,
-  tutorial_rejected: (n) => `"${n.tutorial_title}" was rejected`,
+  backing_requested: (n) => `${n.actor_name} asked your organisation to back "${title(n)}"`,
+  tutorial_submitted: (n) => `${n.actor_name} submitted "${title(n)}" for review`,
+  tutorial_approved: (n) => `"${title(n)}" was approved and is now published`,
+  tutorial_rejected: (n) => `"${title(n)}" was rejected`,
   // Unnamed on purpose: who thanked a guide stays private (066).
-  tutorial_thanked: (n) => `A family said thanks for "${n.tutorial_title}"`,
-  tutorial_noted: (n) => `${n.actor_name} added a note to "${n.tutorial_title}"`,
+  tutorial_thanked: (n) => `A family said thanks for "${title(n)}"`,
+  tutorial_noted: (n) => `${n.actor_name} added a note to "${title(n)}"`,
   // 109: to everyone who followed the write-up. The guide's own contributors
   // get tutorial_approved instead.
-  challenge_guide_published: (n) => `The guide from a challenge you follow is published: "${n.tutorial_title}"`,
-  toy_request: (n) => `${n.actor_name} requested ${n.toy_name}`,
-  toy_accepted: (n) => `${n.actor_name} accepted your request for ${n.toy_name}`,
-  toy_rejected: (n) => `${n.actor_name} declined your request for ${n.toy_name}`,
-  toy_withdrawn: (n) => `${n.actor_name} withdrew their request for ${n.toy_name}`,
-  toy_message: (n) => `${n.actor_name} sent a message about ${n.toy_name}`,
+  challenge_guide_published: (n) => `The guide from a challenge you follow is published: "${title(n)}"`,
+  toy_request: (n) => `${n.actor_name} requested ${toy(n)}`,
+  toy_accepted: (n) => `${n.actor_name} accepted your request for ${toy(n)}`,
+  toy_rejected: (n) => `${n.actor_name} declined your request for ${toy(n)}`,
+  toy_withdrawn: (n) => `${n.actor_name} withdrew their request for ${toy(n)}`,
+  toy_message: (n) => `${n.actor_name} sent a message about ${toy(n)}`,
   idea_approved: () => 'Your idea was published as a design challenge',
   idea_rejected: () => 'Your idea was reviewed and not taken forward',
   challenge_joined: (n) => `${n.actor_name} joined your design challenge`,
@@ -1929,22 +1934,22 @@ export const COPY: Record<NotificationType, (n: Notification) => string> = {
   // challenge-card.tsx's "Being written up" and badge.tsx
   // exactly; must never claim more than those two do.
   idea_graduated: () => 'A challenge you were part of is being written up as a guide, and you are credited on it',
-  build_shot_posted: (n) => `${n.actor_name} posted a photo of ${n.toy_name} working`,
-  build_approved: (n) => `${n.actor_name} approved the working shot for ${n.toy_name}`,
+  build_shot_posted: (n) => `${n.actor_name} posted a photo of ${toy(n)} working`,
+  build_approved: (n) => `${n.actor_name} approved the working shot for ${toy(n)}`,
   // 111: either way round — a maker asking, or the family answering — before a claim.
-  build_question: (n) => `${n.actor_name} wrote about ${n.toy_name} before anyone claimed it`,
+  build_question: (n) => `${n.actor_name} wrote about ${toy(n)} before anyone claimed it`,
   // 117. Signed with the byline they typed, or "A family".
   profile_thanked: (n) => `${n.actor_name} said thanks to you`,
-  print_started: (n) => `${n.actor_name} started printing ${n.toy_name}`,
-  print_ready: (n) => `${n.actor_name} finished printing ${n.toy_name}`,
+  print_started: (n) => `${n.actor_name} started printing ${toy(n)}`,
+  print_ready: (n) => `${n.actor_name} finished printing ${toy(n)}`,
   // 077. For the two publish types the event or story title rides in
   // tutorial_title; for a message, the organisation's name does.
-  org_event_published: (n) => `${n.actor_name} published an event: ${n.tutorial_title}`,
-  org_story_published: (n) => `${n.actor_name} published a story: ${n.tutorial_title}`,
+  org_event_published: (n) => `${n.actor_name} published an event: ${n.tutorial_title ?? 'a new one'}`,
+  org_story_published: (n) => `${n.actor_name} published a story: ${n.tutorial_title ?? 'a new one'}`,
   org_message: (n) =>
     n.actor_name === n.tutorial_title
       ? `${n.actor_name} replied to your message`
-      : `${n.actor_name} messaged ${n.tutorial_title}`,
+      : `${n.actor_name} messaged ${n.tutorial_title ?? 'your organisation'}`,
   // The byline the family typed, or "A family" when they gave none.
   org_thanked: (n) => `${n.actor_name} said thanks to your organisation`,
 }

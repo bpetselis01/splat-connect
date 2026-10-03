@@ -170,3 +170,9 @@ describe('myRoute for hostile hrefs', () => {
     for (const h of ['__proto__', 'constructor', 'toString', 'hasOwnProperty']) expect(myRoute(h)).toBe('/me')
   })
 })
+
+describe('copy never prints "null"', () => {
+  it.each(['toy_request', 'tutorial_approved', 'org_event_published', 'org_message'] as const)('%s with no title or toy', (type) => {
+    expect(copyFor(n({ type, tutorial_title: null, toy_name: null }))).not.toMatch(/null|undefined/)
+  })
+})
