@@ -8,11 +8,9 @@
  * - Toys carry no switch tags, so a toy matches when it is switch-adapted,
  *   published and not paused — whatever the child (the spec's rule).
  *
- * suitsChild and the labels are values from ./index, which imports this file
- * back. Both are read only when a function here runs, after both modules have
- * loaded, so the cycle is safe.
+ * suitsChild and the labels live in ./switch-fit, which only imports types back.
  */
-import { suitsChild, SWITCH_FORCE_LABEL, SWITCH_TARGET_LABEL } from './index'
+import { suitsChild, SWITCH_FORCE_LABEL, SWITCH_TARGET_LABEL } from './switch-fit'
 import type { ChildProfile, Toy, Tutorial } from './index'
 
 export function matchesForChild(
