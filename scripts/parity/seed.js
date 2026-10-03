@@ -254,6 +254,14 @@ async function seedRecyclingOrg(db) {
       suburb: 'Newtown',
       state: 'NSW',
       recycling_materials: ['PLA', 'PETG'],
+      // 113: the detail cards the drop-off form draws.
+      recycling_machines: ['Shredder'],
+      recycling_forms: ['Offcuts', 'Failed prints'],
+      recycling_min_kg: 2,
+      recycling_max_kg: 20,
+      recycling_turnaround: 'About two weeks',
+      recycling_gives: 'either',
+      recycling_hours: 'Weekdays, 9–4',
     })
     .select('id')
     .single()
@@ -774,7 +782,7 @@ async function seedOwnedToy(db, parentId) {
 async function seedChild(db, parentId) {
   const { data, error } = await db
     .from('child_profiles')
-    .insert({ parent_id: parentId, age: 7 })
+    .insert({ parent_id: parentId, age: 7, enjoys: ['light', 'sound'], reach_cm: 45, tray_mm: 30 })
     .select('id')
     .single()
   return error ? null : data.id
