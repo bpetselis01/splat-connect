@@ -148,7 +148,16 @@
   "group": "push",
   "boardRoute": "printing/basics",
   "route": "/printing/basics",
-  "role": "parent"
+  "role": "parent",
+  "explained": [
+   {
+    "type": "colour",
+    "match": "card background",
+    "why": "pending",
+    "pending": "printing-basics-hero",
+    "reason": "The board draws the hero photo in this slot; until the photo is supplied the app shows the To be completed card there."
+   }
+  ]
  },
  {
   "id": "loading",
