@@ -255,7 +255,9 @@ export function ShortcutGrid({
   const rows = Math.ceil(total / COLS)
   const menuFeature = editing && menuId ? features.find((f) => f.id === menuId) : undefined
   const m = tileMetrics(cellW)
-  const height = rows * m.cellH + (rows - 1) * GAP_Y + (menuFeature ? MENU_ROOM : 0)
+  // A last row holding only Add has one line of label, not two.
+  const lastRowH = features.length % COLS === 0 ? m.cellH - m.labelH + Math.ceil(LABEL_LINE * Math.min(PixelRatio.getFontScale(), MAX_FONT_SCALE)) : m.cellH
+  const height = (rows - 1) * m.pitchY + lastRowH + (menuFeature ? MENU_ROOM : 0)
 
   const closeThen = (fn: () => void) => () => {
     onMenuId(null)

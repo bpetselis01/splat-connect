@@ -73,6 +73,20 @@ describe('grid maths', () => {
   })
 })
 
+describe('ShortcutGrid height', () => {
+  it('gives a last row holding only Add one line of label, as the mockup does', () => {
+    setup()
+    // 3 shortcuts + Add fill one row: two lines of label.
+    expect(StyleSheet.flatten(screen.getByTestId('shortcut-grid').props.style)).toMatchObject({ height: 75 + 6 + 32 })
+    screen.unmount()
+    const eight = Array.from({ length: 8 }, (_, i) => F(`f${i}`, `Tile ${i}`))
+    render(<ShortcutGrid features={eight} editing={false} menuId={null} onMenuId={jest.fn()} onOpen={jest.fn()} onAdd={jest.fn()} onEnterEdit={jest.fn()} onRemove={jest.fn()} onMove={jest.fn()} onMoveToTop={jest.fn()} />)
+    fireEvent(screen.getByTestId('shortcut-grid'), 'layout', { nativeEvent: { layout: { width: 358, height: 0 } } })
+    // Two full rows, then Add alone on a third.
+    expect(StyleSheet.flatten(screen.getByTestId('shortcut-grid').props.style)).toMatchObject({ height: 2 * 131 + 75 + 6 + 16 })
+  })
+})
+
 describe('ShortcutGrid at rest', () => {
   it('draws a labelled tile per shortcut, tinted, and a dashed Add tile', () => {
     setup()
