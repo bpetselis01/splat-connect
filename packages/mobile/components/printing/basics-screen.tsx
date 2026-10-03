@@ -9,6 +9,7 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { theme } from '../../lib/theme'
 import { Screen } from '../ui/Screen'
+import { ToBeCompleted } from '../ui/ToBeCompleted'
 import { Button } from '../ui/Button'
 
 const SECTIONS = [
@@ -35,7 +36,8 @@ export function PrintingBasicsScreen() {
   return (
     <Screen>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        {/* PENDING(printing-basics-hero): the board's hero photo above the title. */}
+        {/* PENDING(printing-basics-hero): the board's hero photo above the title; the slot says To be completed. */}
+        <ToBeCompleted compact icon="image-outline">A picture for Printing basics will appear here.</ToBeCompleted>
         <Text style={styles.eyebrow}>3D Printing</Text>
         <Text style={styles.title} accessibilityRole="header">
           Printing basics
