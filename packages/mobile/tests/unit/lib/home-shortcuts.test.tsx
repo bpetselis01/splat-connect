@@ -55,6 +55,12 @@ const resolves = (href: string) => {
 }
 
 describe('FEATURES', () => {
+  // /printing/request needs ?guide= (it fetched tutorials/undefined and 404ed);
+  // /printing explains that every request starts from a guide.
+  it('sends Request a print where no guide is needed', () => {
+    expect(FEATURES.find((f) => f.id === 'print')?.href).toBe('/printing')
+  })
+
   it('has unique ids, real Ionicons names and hrefs that map to a route file', () => {
     expect(new Set(FEATURES.map((f) => f.id)).size).toBe(FEATURES.length)
     for (const f of FEATURES) {
