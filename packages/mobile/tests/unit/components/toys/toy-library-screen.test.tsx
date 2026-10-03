@@ -64,6 +64,7 @@ beforeEach(() => {
 describe('ToyLibraryScreen', () => {
   it('asks for a postcode before it can sort nearest first', async () => {
     render(<ToyLibraryScreen />)
+    fireEvent.press(await screen.findByRole('button', { name: 'Filters' }))
     fireEvent.press(await screen.findByText('Add your postcode'))
     expect(mockPush).toHaveBeenCalledWith('/account')
   })
@@ -74,6 +75,7 @@ describe('ToyLibraryScreen', () => {
       Promise.resolve(path === '/api/public/toys?near=2000' ? [toy({ id: 't1', name: 'Bubble machine', km: 3 })] : [])
     )
     render(<ToyLibraryScreen />)
+    fireEvent.press(await screen.findByRole('button', { name: 'Filters' }))
     fireEvent.press(await screen.findByText('Nearest first'))
     expect(await screen.findByText('3 km')).toBeTruthy()
     expect(mockGet).toHaveBeenCalledWith('/api/public/toys?near=2000')
@@ -113,8 +115,8 @@ describe('ToyLibraryScreen', () => {
     render(<ToyLibraryScreen />)
     await screen.findByText('Bubble machine')
     // Words, never a score: 8 is "Good", 5 is "Well-loved".
-    expect(screen.getAllByText('Good', { includeHiddenElements: true })).toHaveLength(2)
-    expect(screen.getAllByText('Well-loved', { includeHiddenElements: true })).toHaveLength(2)
+    expect(screen.getAllByText('Good', { includeHiddenElements: true })).toHaveLength(1)
+    expect(screen.getAllByText('Well-loved', { includeHiddenElements: true })).toHaveLength(1)
     expect(screen.getByText('Jamie')).toBeTruthy()
     expect(screen.getByText('TAD Australia')).toBeTruthy()
     // The number survives for a screen reader, in the row's hint.
@@ -137,7 +139,7 @@ describe('ToyLibraryScreen', () => {
     await screen.findByText('Bubble machine')
     expect(screen.getAllByText('4 available', { includeHiddenElements: true }).length).toBe(1)
     // A person's toy is one unit, so it just says Available.
-    expect(screen.getAllByText('Available', { includeHiddenElements: true }).length).toBeGreaterThan(1)
+    expect(screen.getAllByText('Available', { includeHiddenElements: true }).length).toBeGreaterThan(0)
   })
 
   it('shows the switch-adapted badge only when the toy is adapted', async () => {
@@ -148,7 +150,7 @@ describe('ToyLibraryScreen', () => {
     render(<ToyLibraryScreen />)
     await screen.findByText('Bubble machine')
     // One pill, plus the filter chip of the same name.
-    expect(screen.getAllByText('Switch-adapted', { includeHiddenElements: true }).length).toBe(2)
+    expect(screen.getAllByText('Switch-adapted', { includeHiddenElements: true }).length).toBe(1)
   })
 
   it('filters by the four condition grades', async () => {
@@ -158,6 +160,7 @@ describe('ToyLibraryScreen', () => {
     ])
     render(<ToyLibraryScreen />)
     await screen.findByText('Good toy')
+    fireEvent.press(screen.getByRole('button', { name: 'Filters' }))
     fireEvent.press(screen.getByRole('button', { name: 'Needs a fix' }))
     expect(screen.queryByText('Good toy')).toBeNull()
     expect(screen.getByText('Worn toy')).toBeTruthy()
@@ -173,6 +176,7 @@ describe('ToyLibraryScreen', () => {
     ])
     render(<ToyLibraryScreen />)
     await screen.findByText('Plain toy')
+    fireEvent.press(screen.getByRole('button', { name: 'Filters' }))
     fireEvent.press(screen.getByRole('button', { name: 'Switch-adapted' }))
     expect(screen.queryByText('Plain toy')).toBeNull()
     expect(screen.getByText('Adapted toy')).toBeTruthy()
@@ -213,6 +217,7 @@ describe('ToyLibraryScreen', () => {
     ])
     render(<ToyLibraryScreen />)
     await screen.findByText('Older toy')
+    fireEvent.press(screen.getByRole('button', { name: 'Filters' }))
     fireEvent.press(screen.getByRole('button', { name: 'Available' }))
     expect(screen.queryByText('Gone toy')).toBeNull()
     expect(screen.getByText('Matching toys')).toBeTruthy()
@@ -227,6 +232,16 @@ describe('ToyLibraryScreen', () => {
     mockGet.mockResolvedValue([toy({ id: 't1', name: 'Bubble machine' })])
     fireEvent.press(screen.getByRole('button', { name: 'Try again' }))
     expect(await screen.findByText('Bubble machine')).toBeTruthy()
+  })
+
+  it('keeps the chips behind one Filters button with a count of what is on', async () => {
+    mockGet.mockResolvedValue([toy({ id: 't1', name: 'Bubble machine' })])
+    render(<ToyLibraryScreen />)
+    await screen.findByText('Bubble machine')
+    expect(screen.queryByRole('button', { name: 'Available' })).toBeNull()
+    fireEvent.press(screen.getByRole('button', { name: 'Filters' }))
+    fireEvent.press(screen.getByRole('button', { name: 'Available' }))
+    expect(screen.getByRole('button', { name: 'Filters, 1 active' })).toBeTruthy()
   })
 
   it('shows the count line', async () => {

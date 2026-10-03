@@ -52,8 +52,11 @@ appId: com.splatconnect.mobile
 - assertVisible:
     text: "Guide library"
 
-# The native filter sheet this step used to open is gone from the Guides
-# root (the sheet returns with the sub-project 4 layout, and its step with it).
+# Filters are collapsed behind one button; opening it reveals the chips.
+- tapOn:
+    text: "Filters"
+- assertVisible:
+    text: "Under 30 min"
 
 - tapOn:
     text: "Home"

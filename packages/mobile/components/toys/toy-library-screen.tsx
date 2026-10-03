@@ -2,11 +2,11 @@
 //
 // The Toy library tab, as the board draws it (#toy_library): the same
 // row-card idiom as Guides so the two tabs read as one app — greeting and
-// mascot, Toys / Organisations, a row of filter chips, a heading with the
+// mascot, Toys / Organisations, a Filters button that unfolds the chips, a heading with the
 // count, then cards carrying status, Wired, a plain-language condition grade
 // and the holder.
 import { useEffect, useState } from 'react'
-import { View, Text, FlatList, RefreshControl, ScrollView, StyleSheet } from 'react-native'
+import { View, Text, FlatList, RefreshControl, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import Animated, { FadeInDown } from 'react-native-reanimated'
@@ -19,6 +19,7 @@ import { tabBarClearance } from '../../lib/tab-bar-layout'
 import { scrollFrame, scrollContent, SEARCH_GAP } from '../../lib/layout'
 import { useSaves } from '../../lib/saves'
 import { Chip } from '../ui/Chip'
+import { FilterPanel } from '../ui/FilterPanel'
 import { TextField } from '../ui/TextField'
 import { Screen } from '../ui/Screen'
 import { Button } from '../ui/Button'
@@ -128,6 +129,7 @@ export function ToyLibraryScreen() {
   )
   if (newest) visible.sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))
   const filtered = !!q || !!condition || switchAdaptedOnly || availableOnly
+  const activeCount = [!!condition, switchAdaptedOnly, availableOnly, newest, nearest].filter(Boolean).length
   const heading = filtered ? 'Matching toys' : newest ? 'Newest first' : nearest ? 'Nearest first' : 'All toys'
 
   return (
@@ -172,13 +174,7 @@ export function ToyLibraryScreen() {
               search
             />
 
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.chipScroller}
-              contentContainerStyle={styles.chipRow}
-              keyboardShouldPersistTaps="handled"
-            >
+            <FilterPanel activeCount={activeCount}>
               <Chip
                 variant="filter"
                 icon="checkmark-circle-outline"
@@ -208,7 +204,7 @@ export function ToyLibraryScreen() {
                   onPress={() => setCondition((cur) => (cur === g.key ? null : g.key))}
                 />
               ))}
-            </ScrollView>
+            </FilterPanel>
 
             {!loading && !error ? (
               <View style={styles.headingRow}>
@@ -314,8 +310,6 @@ const styles = StyleSheet.create({
     minHeight: 52,
     ...theme.shadow(1),
   },
-  chipScroller: { marginHorizontal: -theme.spacing(4) },
-  chipRow: { gap: theme.spacing(2), paddingHorizontal: theme.spacing(4), paddingVertical: 4 },
   headingRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
   heading: { fontFamily: theme.fonts.display, fontSize: 20, lineHeight: 26, color: theme.colors.ink },
   count: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.muted },
