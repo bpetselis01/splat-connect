@@ -47,6 +47,10 @@ function StlEditor() {
   async function saveSizes(f: StlFile) {
     const s = sizeOf(f)
     setLocalError(null)
+    if ([s.x, s.y, s.z].some((v) => Number.isNaN(mm(v)))) {
+      setLocalError('Sizes must be numbers, in millimetres.')
+      return
+    }
     setSavingId(f.id)
     try {
       const updated = await apiClient.patch<StlFile>(`/api/tutorials/${id}/stl-files/${f.id}`, {
@@ -170,7 +174,12 @@ function StlEditor() {
             accessibilityLabel={label}
             keyboardType={keyboardType}
             defaultValue={tutorial[field] == null ? '' : String(tutorial[field])}
-            onChangeText={(text) => save({ [field]: text.trim() === '' ? null : Number(text) })}
+            onChangeText={(text) => {
+              // Half-typed or pasted text ("." or "1,5") is not a number: keep
+              // what was saved rather than send NaN, which the wire turns into null.
+              const n = text.trim() === '' ? null : Number(text)
+              if (n === null || !Number.isNaN(n)) save({ [field]: n })
+            }}
           />
         ))}
         <TextField

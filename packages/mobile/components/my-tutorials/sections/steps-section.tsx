@@ -7,7 +7,7 @@
 //
 // Optional: not in getMissingFields, because guides written before steps
 // existed have none and the PDF still carries the guide.
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { View, Text, Image, ScrollView, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import * as ImagePicker from 'expo-image-picker'
@@ -30,23 +30,28 @@ export function StepsSection() {
 
 function StepsEditor() {
   const { tutorial, replaceSteps, saveError } = useDraft()
-  const [rows, setRows] = useState<StepRow[]>(() =>
-    (tutorial?.steps ?? []).map((s) => ({ title: s.title, body: s.body, photo_url: s.photo_url }))
+  // `k` names a row for as long as the screen is open, so an upload that lands
+  // after the rows were edited, moved or removed still finds the row it was for.
+  const nextKey = useRef(0)
+  const [rows, setRows] = useState<(StepRow & { k: number })[]>(() =>
+    (tutorial?.steps ?? []).map((s) => ({ title: s.title, body: s.body, photo_url: s.photo_url, k: nextKey.current++ }))
   )
+  const rowsRef = useRef(rows)
   const [uploading, setUploading] = useState<number | null>(null)
   const [localError, setLocalError] = useState<string | null>(null)
 
   if (!tutorial) return null
   const id = tutorial.id
 
-  function commit(next: StepRow[]) {
+  function commit(next: (StepRow & { k: number })[]) {
+    rowsRef.current = next
     setRows(next)
-    replaceSteps(next)
+    replaceSteps(next.map(({ k: _k, ...row }) => row))
   }
   const update = (i: number, patch: Partial<StepRow>) =>
-    commit(rows.map((r, n) => (n === i ? { ...r, ...patch } : r)))
+    commit(rowsRef.current.map((r, n) => (n === i ? { ...r, ...patch } : r)))
   function move(i: number, by: -1 | 1) {
-    const next = [...rows]
+    const next = [...rowsRef.current]
     ;[next[i], next[i + by]] = [next[i + by], next[i]]
     commit(next)
   }
@@ -62,14 +67,16 @@ function StepsEditor() {
       }
       const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ['images'] })
       if (result.canceled || !result.assets?.length) return
-      setUploading(i)
+      const k = rows[i].k
+      setUploading(k)
       const asset = result.assets[0]
       const { url } = await uploadFile('/api/upload/step-photo', id, {
         uri: asset.uri,
         name: asset.fileName ?? 'step.jpg',
         mimeType: asset.mimeType ?? 'image/jpeg',
       })
-      update(i, { photo_url: url })
+      const at = rowsRef.current.findIndex((r) => r.k === k)
+      if (at >= 0) update(at, { photo_url: url })
     } catch (err) {
       console.error('[StepsSection] photo upload failed:', err)
       setLocalError('Could not upload the photo. Please try again.')
@@ -88,7 +95,7 @@ function StepsEditor() {
         ) : null}
 
         {rows.map((row, i) => (
-          <View key={i} testID={`step-row-${i}`} style={styles.card}>
+          <View key={row.k} testID={`step-row-${i}`} style={styles.card}>
             <View style={styles.head}>
               <View style={styles.num}>
                 <Text style={styles.numText}>{i + 1}</Text>
@@ -123,7 +130,7 @@ function StepsEditor() {
                 testID={`step-remove-${i}`}
                 accessibilityRole="button"
                 accessibilityLabel={`Remove step ${i + 1}`}
-                onPress={() => commit(rows.filter((_, n) => n !== i))}
+                onPress={() => commit(rowsRef.current.filter((_, n) => n !== i))}
                 style={styles.remove}
                 hitSlop={8}
               >
@@ -151,7 +158,7 @@ function StepsEditor() {
               ) : null}
               <Button
                 testID={`step-photo-${i}`}
-                label={uploading === i ? 'Uploading…' : row.photo_url ? 'Replace photo' : 'Add a photo'}
+                label={uploading === row.k ? 'Uploading…' : row.photo_url ? 'Replace photo' : 'Add a photo'}
                 variant="ghost"
                 onPress={() => void pickPhoto(i)}
               />
@@ -171,7 +178,7 @@ function StepsEditor() {
             label="+ Add a step"
             variant="ghost"
             style={styles.add}
-            onPress={() => commit([...rows, { title: null, body: '', photo_url: null }])}
+            onPress={() => commit([...rowsRef.current, { title: null, body: '', photo_url: null, k: nextKey.current++ }])}
           />
         ) : null}
         <ErrorRow message={localError ?? saveError} />

@@ -9,6 +9,7 @@ import type { Difficulty, PdfImportDraft, TutorialKind } from '@splat-connect/ty
 import { apiMessage, KIND_LABEL, SWITCH_TARGET_LABEL, createGuideFromPdfDraft, pdfDraftChecklist, PDF_IMPORT_MAX_BYTES, PDF_IMPORT_MAX_LABEL } from '@splat-connect/types'
 import { apiClient } from '../../../lib/api-client'
 import { uploadFile } from '../../../lib/upload'
+import { parseYears } from '../../../lib/tutorial-sections'
 import { useAuth } from '../../../lib/auth-context'
 import { theme } from '../../../lib/theme'
 import { Screen } from '../../../components/ui/Screen'
@@ -94,8 +95,10 @@ export default function NewGuideRoute() {
   async function applyExtras(id: string) {
     const fields: Record<string, unknown> = {}
     if (switchTarget) fields.switch_target = switchTarget
-    if (ageMin !== '') fields.age_min = Number(ageMin)
-    if (ageMax !== '') fields.age_max = Number(ageMax)
+    const min = parseYears(ageMin)
+    const max = parseYears(ageMax)
+    if (min !== null) fields.age_min = min
+    if (max !== null) fields.age_max = max
     if (!cover && !Object.keys(fields).length) return
     try {
       const { updated_at } = await apiClient.get<{ updated_at: string }>(`/api/tutorials/${id}`)

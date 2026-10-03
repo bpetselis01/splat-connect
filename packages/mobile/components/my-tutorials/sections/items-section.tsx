@@ -150,7 +150,7 @@ function ItemsEditor({ noun }: { noun: 'parts' | 'tools' }) {
                 value={priceText[i] ?? (row.price_cents == null ? '' : (row.price_cents / 100).toFixed(2))}
                 onChangeText={(text) => {
                   setPriceText((p) => ({ ...p, [i]: text }))
-                  update(i, { price_cents: text.trim() ? dollarsToCents(text) : null })
+                  update(i, { price_cents: text.trim() ? (dollarsToCents(text) ?? row.price_cents ?? null) : null })
                 }}
               />
             ) : null}

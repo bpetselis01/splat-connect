@@ -17,6 +17,7 @@ import {
   formatBuildTime,
 } from '@splat-connect/types'
 import { useDraft } from '../../../lib/use-tutorial-draft'
+import { parseYears } from '../../../lib/tutorial-sections'
 import { theme } from '../../../lib/theme'
 import { Screen } from '../../ui/Screen'
 import { TextField } from '../../ui/TextField'
@@ -119,7 +120,7 @@ export function DetailsSection() {
             placeholder="From"
             keyboardType="number-pad"
             value={tutorial.age_min == null ? '' : String(tutorial.age_min)}
-            onChangeText={(text) => save({ age_min: text === '' ? null : Number(text) })}
+            onChangeText={(text) => save({ age_min: parseYears(text) })}
             boxStyle={styles.ageBox}
           />
           <TextField
@@ -127,7 +128,7 @@ export function DetailsSection() {
             placeholder="To"
             keyboardType="number-pad"
             value={tutorial.age_max == null ? '' : String(tutorial.age_max)}
-            onChangeText={(text) => save({ age_max: text === '' ? null : Number(text) })}
+            onChangeText={(text) => save({ age_max: parseYears(text) })}
             boxStyle={styles.ageBox}
           />
         </View>

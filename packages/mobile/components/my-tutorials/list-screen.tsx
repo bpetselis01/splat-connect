@@ -37,7 +37,7 @@ export function tutorialMeta(t: MineRow): string {
   }
   const backer = orgs.find((o) => o.status === 'accepted')?.organizations?.name
   if (t.status === 'approved') {
-    return [`${formatViews(t.view_count ?? 0)} views`, guideFitLine(t.print_fit_stats), backer].filter(Boolean).join(' · ')
+    return [`${formatViews(t.view_count ?? 0)} view${t.view_count === 1 ? '' : 's'}`, guideFitLine(t.print_fit_stats), backer].filter(Boolean).join(' · ')
   }
   return [`${KIND_LABEL[t.kind]} · ${t.difficulty}`, backer].filter(Boolean).join(' · ')
 }
