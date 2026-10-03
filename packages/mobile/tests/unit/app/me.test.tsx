@@ -162,6 +162,22 @@ it('explains each badge and its threshold from one row', () => {
   expect(screen.getByText('Families log 100 builds from your published guides.')).toBeTruthy()
 })
 
+// The row is an inline panel, not a screen: closed it drew nothing to say so,
+// and opened below the fold it looked like a tap that did nothing.
+it('says its panel is open or closed, and scrolls the panel into view when it opens', () => {
+  render(<MeTab />)
+  const scroller = screen.UNSAFE_getByType(ScrollView)
+  const scrollTo = jest.spyOn(scroller.instance, 'scrollTo')
+  const row = () => screen.getByLabelText('How badges are earned')
+  expect(row().props.accessibilityState).toMatchObject({ expanded: false })
+  fireEvent.press(row())
+  expect(row().props.accessibilityState).toMatchObject({ expanded: true })
+  expect(scrollTo).toHaveBeenCalledTimes(1)
+  fireEvent.press(row())
+  expect(row().props.accessibilityState).toMatchObject({ expanded: false })
+  expect(scrollTo).toHaveBeenCalledTimes(1)
+})
+
 const clears = (nodes: { props: { contentContainerStyle?: unknown } }[]) =>
   nodes.some((n) => (StyleSheet.flatten(n.props.contentContainerStyle as object) as { paddingBottom?: number } | undefined)?.paddingBottom === tabBarClearance(0))
 
