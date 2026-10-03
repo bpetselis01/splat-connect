@@ -17,6 +17,7 @@ import { useHomeShortcuts } from '../../lib/home-shortcuts'
 import { Screen } from '../ui/Screen'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
 import { ShortcutGrid } from './shortcut-grid'
+import { useRecents } from '../../lib/recents'
 import { RecentRows } from './recent-rows'
 import { AddShortcutSheet } from './add-shortcut-sheet'
 
@@ -52,6 +53,7 @@ export function HomeScreen() {
   const router = useRouter()
   const { caps } = useCapabilities()
   const shortcuts = useHomeShortcuts()
+  const { recents } = useRecents()
   const [editing, setEditing] = useState(false)
   const [adding, setAdding] = useState(false)
   const [dragging, setDragging] = useState(false)
@@ -99,12 +101,14 @@ export function HomeScreen() {
         {editing ? (
           <Text style={styles.hint}>Drag to reorder. Let go and a menu appears.</Text>
         ) : (
-          <>
-            <Text accessibilityRole="header" style={styles.sectionTitle}>
-              Pick up where you left off
-            </Text>
-            <RecentRows />
-          </>
+          recents.length > 0 && (
+            <>
+              <Text accessibilityRole="header" style={styles.sectionTitle}>
+                Pick up where you left off
+              </Text>
+              <RecentRows />
+            </>
+          )
         )}
       </ScrollView>
       <AddShortcutSheet visible={adding} onClose={() => setAdding(false)} />

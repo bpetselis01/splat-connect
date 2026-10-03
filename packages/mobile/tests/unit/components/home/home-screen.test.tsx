@@ -30,6 +30,9 @@ const mockShortcuts = {
 }
 jest.mock('../../../../lib/home-shortcuts', () => ({ useHomeShortcuts: () => mockShortcuts }))
 
+let mockRecents: unknown[] = [{ key: 'guide:1' }]
+jest.mock('../../../../lib/recents', () => ({ useRecents: () => ({ recents: mockRecents, ready: true, clear: jest.fn() }) }))
+
 jest.mock('../../../../components/home/recent-rows', () => {
   const { Text } = require('react-native')
   return { RecentRows: () => <Text>recent rows</Text> }
@@ -47,6 +50,7 @@ function setup() {
 beforeEach(() => {
   jest.clearAllMocks()
   mockUnread = { total: 2, exchanges: 2 }
+  mockRecents = [{ key: 'guide:1' }]
 })
 
 describe('HomeScreen', () => {
@@ -84,6 +88,12 @@ describe('HomeScreen', () => {
     setup()
     expect(screen.getByText('Pick up where you left off')).toBeTruthy()
     expect(screen.getByText('recent rows')).toBeTruthy()
+  })
+
+  it('leaves out the recents title while there is nothing under it', () => {
+    mockRecents = []
+    setup()
+    expect(screen.queryByText('Pick up where you left off')).toBeNull()
   })
 
   describe('Today card', () => {
