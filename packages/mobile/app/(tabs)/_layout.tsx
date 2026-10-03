@@ -13,7 +13,13 @@ export default function TabsLayout() {
   const badges = { inbox: caps?.unread.total ?? 0, me: caps?.exchangeActions ?? 0 }
   return (
     <View style={{ flex: 1 }}>
-      <Tabs tabBar={(props) => <TabBar {...props} badges={badges} />} screenOptions={{ headerShown: false }}>
+      <Tabs
+        tabBar={(props) => <TabBar {...props} badges={badges} />}
+        screenOptions={{ headerShown: false }}
+        // Back from a screen opened into a hidden tab returns to the tab that
+        // opened it, not to the first tab.
+        backBehavior="history"
+      >
         <Tabs.Screen name="home" options={{ title: 'Home' }} />
         <Tabs.Screen name="map" options={{ title: 'Map' }} />
         <Tabs.Screen name="inbox" options={{ title: 'Inbox' }} />

@@ -19,7 +19,7 @@ jest.mock('expo-router', () => {
     mockScreens.get(mockCurrent)![name] = options
     return null
   }
-  return { Stack, Redirect: () => null, useRouter: () => mockRouter }
+  return { Stack, Redirect: () => null, useRouter: () => mockRouter, useNavigation: () => ({ getState: () => ({ index: 0, routes: [{ key: 'k' }] }), addListener: () => () => {} }), useRoute: () => ({ key: 'k' }) }
 })
 jest.mock('../../../lib/auth-context', () => ({ useAuth: () => ({ session: null }) }))
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
