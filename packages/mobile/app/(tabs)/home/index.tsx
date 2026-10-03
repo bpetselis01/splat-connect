@@ -1,6 +1,5 @@
-import { ExploreScreen } from '../../../components/explore/explore-screen'
+import { HomeScreen } from '../../../components/home/home-screen'
 
-// Until the customizable grid, Home is Explore's feature list plus Guides and Toys.
 export default function HomeTabRoute() {
-  return <ExploreScreen variant="home" />
+  return <HomeScreen />
 }

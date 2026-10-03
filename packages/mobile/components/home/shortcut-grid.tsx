@@ -22,7 +22,8 @@ import { BlurView } from 'expo-blur'
 import * as Haptics from 'expo-haptics'
 import { Ionicons } from '@expo/vector-icons'
 import { theme } from '../../lib/theme'
-import type { Feature, ShortcutTint } from '../../lib/home-shortcuts'
+import type { Feature } from '../../lib/home-shortcuts'
+import { TINT_BG } from './tint'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
 
 const COLS = 4
@@ -35,15 +36,6 @@ const PITCH_Y = CELL_H + GAP_Y
 const MENU_W = 196
 // Room under the last row for the menu when it opens beside a bottom tile.
 const MENU_ROOM = 150
-
-const TINT: Record<ShortcutTint, string> = {
-  sky: theme.colors.accentLight,
-  apr: theme.colors.apricotSoft,
-  mint: theme.colors.mintSoft,
-  honey: theme.colors.honeySoft,
-  vio: theme.colors.violetSoft,
-  sun: theme.colors.surfaceSunken,
-}
 
 export function slotPos(slot: number, cellW: number) {
   return { x: (slot % COLS) * (cellW + GAP_X), y: Math.floor(slot / COLS) * PITCH_Y }
@@ -183,7 +175,7 @@ function Tile(props: TileProps) {
           testID={`glyph-${feature.id}`}
           style={[
             styles.glyph,
-            { backgroundColor: TINT[feature.tint] },
+            { backgroundColor: TINT_BG[feature.tint] },
             dragging && styles.glyphLifted,
             glyph,
           ]}
