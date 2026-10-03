@@ -116,8 +116,7 @@ function Tile(props: TileProps) {
     PanResponder.create({
       // Only a real move in edit mode takes the touch from the Pressable, so
       // a plain tap still reaches it.
-      onMoveShouldSetPanResponderCapture: (_, g) =>
-        latest.current.editing && (Math.abs(g.dx) > 4 || Math.abs(g.dy) > 4),
+      onMoveShouldSetPanResponderCapture: (_, g) => latest.current.editing && (Math.abs(g.dx) > 4 || Math.abs(g.dy) > 4),
       onPanResponderTerminationRequest: () => false,
       onPanResponderGrant: () => {
         const l = latest.current
@@ -221,6 +220,9 @@ type Props = {
   onRemove: (id: string) => void
   onMove: (id: string, to: number) => void
   onMoveToTop: (id: string) => void
+  /** The tile whose manage menu is open. Home owns it so a tap on the page can close it. */
+  menuId: string | null
+  onMenuId: (id: string | null) => void
   /** True while a tile is held, so the page can stop scrolling under the finger. */
   onDragging?: (on: boolean) => void
 }
@@ -234,15 +236,16 @@ export function ShortcutGrid({
   onRemove,
   onMove,
   onMoveToTop,
+  menuId,
+  onMenuId,
   onDragging,
 }: Props) {
   const [width, setWidth] = useState(0)
   const [drag, setDrag] = useState<{ id: string; over: number } | null>(null)
-  const [menuId, setMenuId] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!editing) setMenuId(null)
-  }, [editing])
+    if (!editing) onMenuId(null)
+  }, [editing, onMenuId])
 
   const cellW = (width - GAP_X * (COLS - 1)) / COLS
   const ids = features.map((f) => f.id)
@@ -255,7 +258,7 @@ export function ShortcutGrid({
   const height = rows * m.cellH + (rows - 1) * GAP_Y + (menuFeature ? MENU_ROOM : 0)
 
   const closeThen = (fn: () => void) => () => {
-    setMenuId(null)
+    onMenuId(null)
     fn()
   }
 
@@ -264,11 +267,20 @@ export function ShortcutGrid({
     const at = slotPos(features.indexOf(menuFeature), cellW)
     const left = Math.min(width - MENU_W, Math.max(0, at.x + cellW / 2 - MENU_W / 2))
     menu = (
-      <View accessibilityRole="menu" accessibilityLabel="Manage shortcut" style={[styles.menu, { top: at.y + m.cellH + 10, left }]}>
+      <View
+        accessibilityRole="menu"
+        accessibilityLabel="Manage shortcut"
+        style={[styles.menu, { top: at.y + m.cellH + 10, left }]}
+      >
         <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFill} />
         <MenuItem icon="eye-outline" label={`Open ${menuFeature.name}`} onPress={closeThen(() => onOpen(menuFeature))} />
         <MenuItem icon="move-outline" label="Move to the top" onPress={closeThen(() => onMoveToTop(menuFeature.id))} />
-        <MenuItem icon="remove-circle-outline" label="Remove from Home" danger onPress={closeThen(() => onRemove(menuFeature.id))} />
+        <MenuItem
+          icon="remove-circle-outline"
+          label="Remove from Home"
+          danger
+          onPress={closeThen(() => onRemove(menuFeature.id))}
+        />
       </View>
     )
   }
@@ -286,7 +298,7 @@ export function ShortcutGrid({
               editing={editing}
               dragging={drag?.id === f.id}
               count={features.length}
-              onPress={() => (editing ? setMenuId(f.id) : onOpen(f))}
+              onPress={() => (editing ? onMenuId(f.id) : onOpen(f))}
               onLongPress={() => {
                 if (editing) return
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {})
@@ -294,7 +306,7 @@ export function ShortcutGrid({
               }}
               onRemove={() => onRemove(f.id)}
               onDragStart={() => {
-                setMenuId(null)
+                onMenuId(null)
                 setDrag({ id: f.id, over: i })
                 onDragging?.(true)
               }}
@@ -303,7 +315,7 @@ export function ShortcutGrid({
                 setDrag(null)
                 onDragging?.(false)
                 if (to !== i) onMove(f.id, to)
-                setMenuId(f.id)
+                onMenuId(f.id)
               }}
               onMove={(to) => onMove(f.id, to)}
               onMoveToTop={() => onMoveToTop(f.id)}
@@ -311,7 +323,12 @@ export function ShortcutGrid({
           ))
         : null}
       {width > 0 ? (
-        <View style={[styles.cell, { width: cellW, height: m.cellH, left: slotPos(features.length, cellW).x, top: slotPos(features.length, cellW).y }]}>
+        <View
+          style={[
+            styles.cell,
+            { width: cellW, height: m.cellH, left: slotPos(features.length, cellW).x, top: slotPos(features.length, cellW).y },
+          ]}
+        >
           <AnimatedPressable
             pressScale={0.94}
             onPress={onAdd}
@@ -319,7 +336,10 @@ export function ShortcutGrid({
             accessibilityLabel="Add a shortcut"
             style={styles.tile}
           >
-            <View testID="glyph-add" style={[styles.glyph, { width: m.glyph, height: m.glyph, borderRadius: m.radius }, styles.glyphAdd]}>
+            <View
+              testID="glyph-add"
+              style={[styles.glyph, { width: m.glyph, height: m.glyph, borderRadius: m.radius }, styles.glyphAdd]}
+            >
               <Ionicons name="add" size={32} color={theme.colors.muted} />
             </View>
             <Text style={[styles.label, { height: m.labelH }]} maxFontSizeMultiplier={MAX_FONT_SCALE}>
@@ -376,13 +396,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0,
     elevation: 0,
   },
-  label: {
-    fontFamily: theme.fonts.bold,
-    fontSize: 13,
-    lineHeight: LABEL_LINE,
-    color: theme.colors.ink,
-    textAlign: 'center',
-  },
+  label: { fontFamily: theme.fonts.bold, fontSize: 13, lineHeight: LABEL_LINE, color: theme.colors.ink, textAlign: 'center' },
   minus: {
     position: 'absolute',
     top: -5,

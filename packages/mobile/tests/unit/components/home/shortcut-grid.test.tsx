@@ -1,4 +1,5 @@
 // packages/mobile/tests/unit/components/home/shortcut-grid.test.tsx
+import { useState } from 'react'
 import { PixelRatio, StyleSheet } from 'react-native'
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { ShortcutGrid, slotAt, slotPos, reorder, tileMetrics } from '../../../../components/home/shortcut-grid'
@@ -23,6 +24,12 @@ beforeEach(() => {
 })
 afterEach(() => jest.restoreAllMocks())
 
+// Home owns which tile's menu is open, so a tap on the background can close it.
+function Harness({ editing, ...h }: { editing: boolean } & Omit<React.ComponentProps<typeof ShortcutGrid>, 'features' | 'editing' | 'menuId' | 'onMenuId'>) {
+  const [menuId, setMenuId] = useState<string | null>(null)
+  return <ShortcutGrid features={features} editing={editing} menuId={menuId} onMenuId={setMenuId} {...h} />
+}
+
 function setup(editing = false) {
   const h = {
     onOpen: jest.fn(),
@@ -33,7 +40,7 @@ function setup(editing = false) {
     onMoveToTop: jest.fn(),
     onDragging: jest.fn(),
   }
-  render(<ShortcutGrid features={features} editing={editing} {...h} />)
+  render(<Harness editing={editing} {...h} />)
   // 358 = a 390 phone less the 16px gutters: columns of (358 - 3*6) / 4 = 85.
   fireEvent(screen.getByTestId('shortcut-grid'), 'layout', { nativeEvent: { layout: { width: 358, height: 0 } } })
   return h
@@ -87,7 +94,7 @@ describe('ShortcutGrid at rest', () => {
     setup()
     expect(screen.getByTestId('glyph-a').findByProps({ name: 'book-outline' }).props.size).toBe(32)
     screen.unmount()
-    render(<ShortcutGrid features={features} editing={false} onOpen={jest.fn()} onAdd={jest.fn()} onEnterEdit={jest.fn()} onRemove={jest.fn()} onMove={jest.fn()} onMoveToTop={jest.fn()} />)
+    render(<Harness editing={false} onOpen={jest.fn()} onAdd={jest.fn()} onEnterEdit={jest.fn()} onRemove={jest.fn()} onMove={jest.fn()} onMoveToTop={jest.fn()} />)
     // 288 = a 320 phone less the gutters: columns of 67.5, so a 59 glyph.
     fireEvent(screen.getByTestId('shortcut-grid'), 'layout', { nativeEvent: { layout: { width: 288, height: 0 } } })
     const glyph = StyleSheet.flatten(screen.getByTestId('glyph-a').props.style) as { width: number }
@@ -156,7 +163,7 @@ describe('ShortcutGrid editing', () => {
   it('closes the menu when edit mode ends', () => {
     const h = setup(true)
     fireEvent.press(screen.getByLabelText('Toys'))
-    screen.rerender(<ShortcutGrid features={features} editing={false} {...h} />)
+    screen.rerender(<Harness editing={false} {...h} />)
     expect(screen.queryByText('Remove from Home')).toBeNull()
   })
 })

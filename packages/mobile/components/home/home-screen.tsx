@@ -5,7 +5,7 @@
 // draws its own header (the tab has no native one) and clears the floating
 // tab bar. The searchable Explore page is its own hidden route.
 import { useState } from 'react'
-import { View, Text, ScrollView, StyleSheet } from 'react-native'
+import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -57,6 +57,7 @@ export function HomeScreen() {
   const [editing, setEditing] = useState(false)
   const [adding, setAdding] = useState(false)
   const [dragging, setDragging] = useState(false)
+  const [menuId, setMenuId] = useState<string | null>(null)
   const unread = caps?.unread
 
   return (
@@ -65,51 +66,66 @@ export function HomeScreen() {
         showsVerticalScrollIndicator={false}
         scrollEnabled={!dragging}
         style={scrollFrame}
-        contentContainerStyle={[scrollContent, { paddingBottom: tabBarClearance(insets.bottom) }]}
+        contentContainerStyle={styles.fill}
       >
-        <View testID="home-topbar" style={styles.topbar}>
-          <Text accessibilityRole="header" style={styles.title}>
-            Home
-          </Text>
-          <AnimatedPressable
-            onPress={() => setEditing((e) => !e)}
-            accessibilityRole="button"
-            accessibilityLabel={editing ? 'Done' : 'Edit'}
-            pressScale={0.96}
-            style={[styles.editBtn, editing && styles.editBtnOn]}
-          >
-            <Text style={[styles.editText, editing && styles.editTextOn]}>{editing ? 'Done' : 'Edit'}</Text>
-          </AnimatedPressable>
-        </View>
+        {/* The page itself, as Home-screen edit mode has it: a tap on empty
+            space closes the open menu, then leaves edit mode. It grows to the
+            screen so the space below the content counts, and it is no screen-
+            reader stop, so the tiles inside stay reachable. Anything with its
+            own press (tile, minus, Done, menu item) answers first. */}
+        <Pressable
+          testID="home-background"
+          accessible={false}
+          disabled={!editing}
+          onPress={() => (menuId ? setMenuId(null) : setEditing(false))}
+          style={[styles.fill, scrollContent, { paddingBottom: tabBarClearance(insets.bottom) }]}
+        >
+          <View testID="home-topbar" style={styles.topbar}>
+            <Text accessibilityRole="header" style={styles.title}>
+              Home
+            </Text>
+            <AnimatedPressable
+              onPress={() => setEditing((e) => !e)}
+              accessibilityRole="button"
+              accessibilityLabel={editing ? 'Done' : 'Edit'}
+              pressScale={0.96}
+              style={[styles.editBtn, editing && styles.editBtnOn]}
+            >
+              <Text style={[styles.editText, editing && styles.editTextOn]}>{editing ? 'Done' : 'Edit'}</Text>
+            </AnimatedPressable>
+          </View>
 
-        {!editing && unread && unread.total > 0 ? <TodayCard total={unread.total} exchanges={unread.exchanges} /> : null}
+          {!editing && unread && unread.total > 0 ? <TodayCard total={unread.total} exchanges={unread.exchanges} /> : null}
 
-        <View style={styles.grid}>
-          <ShortcutGrid
-            features={shortcuts.features}
-            editing={editing}
-            onOpen={(f) => router.push(f.href)}
-            onAdd={() => setAdding(true)}
-            onEnterEdit={() => setEditing(true)}
-            onRemove={shortcuts.remove}
-            onMove={shortcuts.move}
-            onMoveToTop={shortcuts.moveToTop}
-            onDragging={setDragging}
-          />
-        </View>
+          <View style={styles.grid}>
+            <ShortcutGrid
+              features={shortcuts.features}
+              editing={editing}
+              onOpen={(f) => router.push(f.href)}
+              onAdd={() => setAdding(true)}
+              onEnterEdit={() => setEditing(true)}
+              onRemove={shortcuts.remove}
+              onMove={shortcuts.move}
+              onMoveToTop={shortcuts.moveToTop}
+              menuId={menuId}
+              onMenuId={setMenuId}
+              onDragging={setDragging}
+            />
+          </View>
 
-        {editing ? (
-          <Text style={styles.hint}>Drag to reorder. Let go and a menu appears.</Text>
-        ) : (
-          recents.length > 0 && (
-            <>
-              <Text accessibilityRole="header" style={styles.sectionTitle}>
-                Pick up where you left off
-              </Text>
-              <RecentRows />
-            </>
-          )
-        )}
+          {editing ? (
+            <Text style={styles.hint}>Drag to reorder. Let go and a menu appears.</Text>
+          ) : (
+            recents.length > 0 && (
+              <>
+                <Text accessibilityRole="header" style={styles.sectionTitle}>
+                  Pick up where you left off
+                </Text>
+                <RecentRows />
+              </>
+            )
+          )}
+        </Pressable>
       </ScrollView>
       <AddShortcutSheet visible={adding} onClose={() => setAdding(false)} />
     </Screen>
@@ -117,6 +133,7 @@ export function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  fill: { flexGrow: 1 },
   topbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   // Baloo 2 is 1.602em tall (hhea 1078 + 524). Boxed at the mockup's 33 the
   // iOS text layout trims and re-offsets it and the word rides low against
@@ -158,13 +175,7 @@ const styles = StyleSheet.create({
   todayCount: { fontFamily: theme.fonts.black },
   todaySmall: { fontFamily: theme.fonts.regular, fontSize: 13, color: theme.colors.muted },
   grid: { marginTop: 22 },
-  hint: {
-    marginTop: 22,
-    textAlign: 'center',
-    fontFamily: theme.fonts.regular,
-    fontSize: 13,
-    color: theme.colors.muted,
-  },
+  hint: { marginTop: 22, textAlign: 'center', fontFamily: theme.fonts.regular, fontSize: 13, color: theme.colors.muted },
   sectionTitle: {
     marginTop: 26,
     marginBottom: 10,

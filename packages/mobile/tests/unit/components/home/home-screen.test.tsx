@@ -84,7 +84,9 @@ describe('HomeScreen', () => {
     setup()
     const frame = screen.UNSAFE_getByType(ScrollView)
     const f = StyleSheet.flatten(frame.props.style) as { marginHorizontal?: number }
-    const c = StyleSheet.flatten(frame.props.contentContainerStyle) as { paddingHorizontal?: number; paddingBottom?: number }
+    // The gutter and the tab-bar clearance sit inside the background tap
+    // target, so the whole page, not just the middle, answers a tap.
+    const c = StyleSheet.flatten(screen.getByTestId('home-background').props.style) as { paddingHorizontal?: number; paddingBottom?: number }
     expect(f.marginHorizontal).toBe(-16)
     expect(c.paddingHorizontal).toBe(16)
     expect(c.paddingBottom).toBe(tabBarClearance(0))
@@ -144,6 +146,48 @@ describe('HomeScreen', () => {
       expect(screen.queryByText('recent rows')).toBeNull()
       fireEvent.press(screen.getByLabelText('Done'))
       expect(screen.getByLabelText('Edit')).toBeTruthy()
+    })
+
+    it('fills the screen with a tap target, so the empty space below the content answers a tap', () => {
+      setup()
+      const frame = screen.UNSAFE_getByType(ScrollView)
+      expect(StyleSheet.flatten(frame.props.contentContainerStyle)).toMatchObject({ flexGrow: 1 })
+      expect(StyleSheet.flatten(screen.getByTestId('home-background').props.style)).toMatchObject({ flexGrow: 1 })
+      // Not a screen-reader stop: the tiles inside it must stay reachable.
+      expect(screen.getByTestId('home-background').props.accessible).toBe(false)
+    })
+
+    it('does nothing for a background tap at rest, and leaves edit mode when tapped in it', () => {
+      setup()
+      fireEvent.press(screen.getByTestId('home-background'))
+      expect(screen.getByLabelText('Edit')).toBeTruthy()
+      fireEvent.press(screen.getByLabelText('Edit'))
+      fireEvent.press(screen.getByTestId('home-background'))
+      expect(screen.getByLabelText('Edit')).toBeTruthy()
+      expect(screen.queryByText('Drag to reorder. Let go and a menu appears.')).toBeNull()
+    })
+
+    it('closes an open manage menu first, and the next tap leaves edit mode', () => {
+      setup()
+      fireEvent.press(screen.getByLabelText('Edit'))
+      fireEvent.press(screen.getByLabelText('Toys'))
+      expect(screen.getByText('Remove from Home')).toBeTruthy()
+      fireEvent.press(screen.getByTestId('home-background'))
+      expect(screen.queryByText('Remove from Home')).toBeNull()
+      expect(screen.getByLabelText('Done')).toBeTruthy()
+      fireEvent.press(screen.getByTestId('home-background'))
+      expect(screen.getByLabelText('Edit')).toBeTruthy()
+    })
+
+    it('does not leave edit mode for taps on the controls themselves', () => {
+      setup()
+      fireEvent.press(screen.getByLabelText('Edit'))
+      fireEvent.press(screen.getByLabelText('Toys'))
+      fireEvent.press(screen.getByText('Move to the top'))
+      fireEvent.press(screen.getByTestId('remove-a'))
+      fireEvent.press(screen.getByLabelText('Add a shortcut'))
+      expect(screen.getByLabelText('Done')).toBeTruthy()
+      expect(screen.getByText('add sheet open')).toBeTruthy()
     })
 
     it('enters on a long press and removes through the hook', () => {
