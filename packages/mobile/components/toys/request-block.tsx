@@ -3,6 +3,7 @@ import { useState, type ReactNode } from 'react'
 import { View, Text, Image, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import type { Toy, ToyTransaction, ToyWithOwner } from '@splat-connect/types'
+import { apiMessage } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { ErrorRow } from '../ui/ErrorRow'
@@ -88,8 +89,9 @@ export function RequestBlock({
         ...(offered_toy_id ? { offered_toy_id } : {}),
       })
       onStarted(tx.id)
-    } catch {
-      setError('Could not start this request. Please try again.')
+    } catch (err) {
+      // The API's 4xx sentence says why (paused, already offered); a retry will not change that.
+      setError(apiMessage(err, 'Could not start this request. Please try again.'))
     } finally {
       setBusy(false)
     }

@@ -493,6 +493,7 @@ function BookDropoff({
 
         <TextField
           label="Anything they should know (optional)"
+          accessibilityLabel="Anything they should know (optional)"
           value={note}
           onChangeText={setNote}
           multiline

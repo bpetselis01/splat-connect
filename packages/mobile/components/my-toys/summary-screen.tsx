@@ -82,12 +82,16 @@ export function ToySummaryScreen({ id }: { id: string }) {
   )
 
   async function togglePaused() {
+    if (busy) return
+    setBusy(true)
     setError(null)
     try {
       const updated = await apiClient.patch<Toy>(`/api/toys/${id}`, { paused_at: toy?.paused_at ? null : new Date().toISOString() })
       setToy((cur) => (cur ? { ...cur, ...updated } : updated))
     } catch (err) {
       setError(apiMessage(err, 'Could not save that. Please try again.'))
+    } finally {
+      setBusy(false)
     }
   }
 

@@ -522,7 +522,7 @@ export function ExchangeThreadScreen({ id, startAccept = false }: { id: string; 
                     disabled={busy || !code.trim()}
                     onPress={async () => {
                       const sent = await run(() =>
-                        apiClient.post<ToyTransaction>(`/api/toy-transactions/${id}/confirm`, { code })
+                        apiClient.post<ToyTransaction>(`/api/toy-transactions/${id}/confirm`, { code: code.trim() })
                       )
                       // Left in place on failure — "Incorrect code" is easiest to
                       // fix by editing what's already there, not retyping it.

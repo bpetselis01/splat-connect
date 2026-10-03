@@ -10,6 +10,7 @@ import { useSaves } from '../../lib/saves'
 import { recordRecent } from '../../lib/recents'
 import { useCapabilities } from '../../lib/capabilities'
 import { Button } from '../ui/Button'
+import { FlashLine, useFlash } from '../ui/Flash'
 import { SaveButton } from '../ui/SaveButton'
 import { Skeleton } from '../ui/Skeleton'
 import { PhotoCarousel } from '../ui/PhotoCarousel'
@@ -38,6 +39,7 @@ export function ToyDetailScreen({ id }: { id: string }) {
   const [myToysError, setMyToysError] = useState<string | null>(null)
   const [thanked, setThanked] = useState(false)
   const [thanking, setThanking] = useState(false)
+  const [thankLine, flashThank] = useFlash()
 
   useEffect(() => {
     let ignore = false
@@ -139,6 +141,7 @@ export function ToyDetailScreen({ id }: { id: string }) {
     } catch (err) {
       // 409: they already have — the same end state.
       if (err instanceof Error && /status 409/.test(err.message)) setThanked(true)
+      else flashThank('Could not send that. Try again.')
     } finally {
       setThanking(false)
     }
@@ -239,14 +242,17 @@ export function ToyDetailScreen({ id }: { id: string }) {
         {canAsk && !toy.owner_org_id && personName && toy.owner_id ? (
           <ThankButton label={`Thank ${personName}`} to={{ profileId: toy.owner_id }} style={styles.thank} />
         ) : canAsk && toy.owner_org_id && orgName ? (
-          <Button
-            label={thanked ? `Thanked ${orgName}` : `Thank ${orgName}`}
-            variant="secondary"
-            disabled={thanked}
-            loading={thanking}
-            onPress={() => void thankOrg()}
-            style={styles.thank}
-          />
+          <View>
+            <Button
+              label={thanked ? `Thanked ${orgName}` : `Thank ${orgName}`}
+              variant="secondary"
+              disabled={thanked}
+              loading={thanking}
+              onPress={() => void thankOrg()}
+              style={styles.thank}
+            />
+            <FlashLine message={thankLine} />
+          </View>
         ) : (
           <View />
         )}
