@@ -28,7 +28,7 @@ const BUTTONS = ['home', 'map', 'inbox', 'me']
 const ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   home: 'home-outline',
   map: 'map-outline',
-  inbox: 'mail-outline',
+  inbox: 'file-tray-outline',
   me: 'person-outline',
 }
 
