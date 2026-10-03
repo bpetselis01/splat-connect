@@ -33,13 +33,13 @@ test('the tab bar reaches every tab', async ({ page }) => {
   await expect(page.getByRole('tab')).toHaveCount(4)
 })
 
-test('Guides and the Toy library are default shortcuts on Home, and the bar stays to take you back', async ({ page }) => {
+test('Guides and Toys are default shortcuts on Home, and the bar stays to take you back', async ({ page }) => {
   await signUpNewAccount(page, uniqueSignupEmail())
   await page.getByRole('tab', { name: 'Home' }).click()
 
   for (const [shortcut, path] of [
     ['Guides', '/guides'],
-    ['Toy library', '/toy-library'],
+    ['Toys', '/toy-library'],
   ] as const) {
     await page.getByRole('button', { name: shortcut, exact: true }).click()
     await expect(page).toHaveURL(new RegExp(`${path}$`))
