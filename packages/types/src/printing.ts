@@ -75,6 +75,11 @@ export function machineStatsLines(s?: PrinterStats | null): string[] {
   ].filter((l): l is string => l !== null)
 }
 
+/** A guide author's "12 of 14 prints fitted". Null until a family has answered. */
+export function guideFitLine(s?: Pick<PrinterStats, 'fitted' | 'fit_answers'> | null): string | null {
+  return s?.fit_answers ? `${s.fitted} of ${count(s.fit_answers, 'print')} fitted` : null
+}
+
 /** Turnaround and Fit on an organisation's profile ("Median 3 days", "29 of 30 first time"). */
 export function orgPrintFacts(s?: PrinterStats | null): Array<{ k: string; v: string }> {
   if (!s || s.jobs < 1) return []

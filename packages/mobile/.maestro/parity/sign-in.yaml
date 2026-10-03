@@ -6,15 +6,15 @@ appId: com.splatconnect.mobile
 - clearState
 # A Release simulator build with the local stack baked in: a dev bundle
 # reads packages/mobile/.env.local at runtime, which names the hosted
-# project. launch.yaml skips the intro.
+# project.
 - runFlow: ../subflows/launch.yaml
 # Decide signed in or out only once a screen has rendered: checked straight
-# after the intro, the welcome gate was not up yet and a signed-out app took
+# after launch, the welcome gate was not up yet and a signed-out app took
 # the sign-out branch.
 - extendedWaitUntil:
     visible:
       id: "welcome-sign-in"
-    # A cold launch plus the intro can take this long.
+    # A cold launch can take this long.
     timeout: 60000
     optional: true
 - runFlow:

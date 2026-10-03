@@ -75,6 +75,8 @@ function audit() {
       if (p !== el && /auto|scroll/.test(cs.overflowX)) return true
       if (cs.clip && cs.clip !== 'auto') return true
       if (p.getAttribute('aria-hidden') === 'true') return true
+      // A map viewport pans: its tiles and overlays extend past it on purpose.
+      if (p.classList.contains('leaflet-container')) return true
     }
     return false
   }
@@ -110,6 +112,8 @@ function audit() {
     // Inline links in running text are exempt from 2.5.8.
     if (el.tagName === 'A' && getComputedStyle(el).display === 'inline' && el.closest('p,li,dd,td'))
       continue
+    // The licence-required map attribution is third-party chrome.
+    if (el.closest('.leaflet-control-attribution')) continue
     // A checkbox/radio inside its label: the label is the target.
     let box = r
     if (el.matches('input[type=checkbox],input[type=radio]')) {

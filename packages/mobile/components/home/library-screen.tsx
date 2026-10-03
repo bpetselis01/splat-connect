@@ -1,21 +1,25 @@
 // packages/mobile/components/home/library-screen.tsx
 //
 // The Guides tab, as the board draws it (#guides): greeting and mascot, the
-// guide-type switch, search, a scrolling row of filter chips, a section
+// guide-type switch, search, one Filters button that unfolds the chips, a section
 // heading with a sort control, then row cards.
 import { useEffect, useState } from 'react'
-import { View, Text, FlatList, RefreshControl, ScrollView, Pressable, StyleSheet } from 'react-native'
+import { View, Text, FlatList, RefreshControl, Pressable, StyleSheet } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import type { Tutorial, TutorialOrg, TutorialKind, Difficulty } from '@splat-connect/types'
 import { KIND_LABEL, fitLine, formatBuildTime } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { theme } from '../../lib/theme'
+import { tabBarClearance } from '../../lib/tab-bar-layout'
+import { scrollFrame, scrollContent, SEARCH_GAP } from '../../lib/layout'
 import { useSaves } from '../../lib/saves'
 import { useMyChildren } from '../../lib/my-children'
 import { useCapabilities } from '../../lib/capabilities'
 import { Chip } from '../ui/Chip'
+import { FilterPanel } from '../ui/FilterPanel'
 import { TextField } from '../ui/TextField'
 import { Screen } from '../ui/Screen'
 import { Button } from '../ui/Button'
@@ -88,6 +92,7 @@ function greetingFor(hour: number): string {
 }
 
 export function LibraryScreen() {
+  const insets = useSafeAreaInsets()
   const router = useRouter()
   const saves = useSaves()
   const { caps } = useCapabilities()
@@ -108,7 +113,7 @@ export function LibraryScreen() {
   const [suitsOnly, setSuitsOnly] = useState(false)
   // wizard-mascot-done: the done screen's "See the matches" opens this tab with
   // suits=1. An effect, not the initial state: the tab may already be mounted.
-  const { suits: suitsParam } = useLocalSearchParams<{ suits?: string }>()
+  const { suits: suitsParam, printWith } = useLocalSearchParams<{ suits?: string; printWith?: string }>()
   useEffect(() => {
     if (suitsParam === '1') setSuitsOnly(true)
   }, [suitsParam])
@@ -184,6 +189,7 @@ export function LibraryScreen() {
     .sort((a, b) => (sortValue(a, sortKey) - sortValue(b, sortKey)) * (asc ? 1 : -1))
 
   const filtered = !!difficulty || quick || printable || kind !== 'all' || !!q
+  const activeCount = [!!difficulty, quick, printable, suitsOnly].filter(Boolean).length
   const heading = suitsOnly ? suitsLabel : filtered ? 'Matching guides' : 'All guides'
   const firstName = caps?.profile.name.trim().split(/\s+/)[0]
   const greeting = `${greetingFor(new Date().getHours())}${firstName ? `, ${firstName}` : ''}`
@@ -205,7 +211,8 @@ export function LibraryScreen() {
         // rows' entrance without remounting the header.
         keyExtractor={(t) => `${difficulty ?? 'all'}:${t.id}`}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listContent}
+        style={scrollFrame}
+        contentContainerStyle={[scrollContent, { paddingBottom: tabBarClearance(insets.bottom) }]}
         keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.ink} />
@@ -225,13 +232,7 @@ export function LibraryScreen() {
               search
             />
 
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.chipScroller}
-              contentContainerStyle={styles.chipRow}
-              keyboardShouldPersistTaps="handled"
-            >
+            <FilterPanel activeCount={activeCount}>
               {!loading && !error && suits.size > 0 ? (
                 <Chip
                   variant="filter"
@@ -263,7 +264,7 @@ export function LibraryScreen() {
                 />
               ))}
               <Chip variant="filter" icon="cube-outline" label="Printable" active={printable} onPress={() => setPrintable((v) => !v)} />
-            </ScrollView>
+            </FilterPanel>
 
             {!loading && !error ? (
               <>
@@ -378,7 +379,7 @@ export function LibraryScreen() {
                 accessibilityHint={`${item.difficulty} difficulty. ${KIND_LABEL[item.kind]}. ${
                   org ? `Backed by ${org}` : 'Reviewed by SPLAT'
                 }. Opens the tutorial.`}
-                onPress={() => router.push({ pathname: '/guides/[id]', params: { id: item.id } })}
+                onPress={() => router.push({ pathname: '/guides/[id]', params: printWith ? { id: item.id, printWith } : { id: item.id } })}
                 pills={
                   <>
                     <Badge status={item.difficulty} icon={pill.icon} bg={pill.bg} />
@@ -416,7 +417,7 @@ export function LibraryScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: { gap: theme.spacing(4), marginBottom: theme.spacing(4) },
+  header: { gap: SEARCH_GAP, marginBottom: theme.spacing(4) },
   searchBar: {
     borderRadius: theme.radii.pill,
     borderWidth: theme.border.hairline,
@@ -424,10 +425,6 @@ const styles = StyleSheet.create({
     minHeight: 52,
     ...theme.shadow(1),
   },
-  // Bleeds to the screen edge like the board's chip row, so a clipped chip
-  // says "scroll me" rather than looking cut off by the gutter.
-  chipScroller: { marginHorizontal: -theme.spacing(4) },
-  chipRow: { gap: theme.spacing(2), paddingHorizontal: theme.spacing(4), paddingVertical: 4 },
   headingRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   headingText: { flex: 1 },
   heading: { fontFamily: theme.fonts.display, fontSize: 20, lineHeight: 26, color: theme.colors.ink },
@@ -486,6 +483,4 @@ const styles = StyleSheet.create({
     color: theme.colors.muted,
   },
   retry: { marginTop: theme.spacing(5), alignSelf: 'center', paddingHorizontal: theme.spacing(8) },
-  // Clears the grid disc pinned bottom-right.
-  listContent: { paddingBottom: theme.spacing(20) },
 })

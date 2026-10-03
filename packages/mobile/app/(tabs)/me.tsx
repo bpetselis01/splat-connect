@@ -2,7 +2,7 @@
 // waiting, and Explore at the bottom — the board's "Me" (#my_splat): a
 // greeting card with the mascot, the money panel when anything is owed, then
 // the grouped rows with an icon each.
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ScrollView, View, Text, Pressable, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -11,7 +11,10 @@ import { apiClient } from '../../lib/api-client'
 import { useCapabilities } from '../../lib/capabilities'
 import { threadHref } from '../../lib/builds'
 import { myRoute } from '../../lib/my-routes'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { theme } from '../../lib/theme'
+import { tabBarClearance } from '../../lib/tab-bar-layout'
+import { scrollFrame, scrollContent } from '../../lib/layout'
 import { Screen } from '../../components/ui/Screen'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { Mascot } from '../../components/ui/TabHero'
@@ -59,8 +62,6 @@ const EXPLORE: { label: string; href: string; icon: Glyph }[] = [
   { label: 'Design challenges', href: '/explore/challenges', icon: 'extension-puzzle-outline' },
   { label: 'Organisations', href: '/toy-library/organisations', icon: 'business-outline' },
   { label: 'About SPLAT', href: '/explore/about', icon: 'information-circle-outline' },
-  // Explore's own screen has no tab; this row is the way in.
-  { label: 'Everything in Explore', href: '/explore', icon: 'compass-outline' },
 ]
 
 /** The board's icon per kind of thread. */
@@ -83,12 +84,15 @@ function Row({
   icon,
   count,
   soon,
+  expanded,
   onPress,
 }: {
   label: string
   icon: Glyph
   count?: number
   soon?: boolean
+  /** Set on a row that opens a panel in place rather than a screen. */
+  expanded?: boolean
   onPress: () => void
 }) {
   return (
@@ -97,12 +101,16 @@ function Row({
       disabled={soon}
       accessibilityRole="button"
       accessibilityLabel={label}
+      accessibilityState={expanded === undefined ? undefined : { expanded }}
       style={({ pressed }) => [styles.row, soon && styles.soon, pressed && styles.pressed]}
     >
       <Ionicons name={icon} size={21} color={theme.colors.primaryDark} />
       <Text style={styles.rowLabel}>{label}</Text>
       {count ? <Text style={styles.count}>{String(count)}</Text> : null}
       {soon ? <Text style={styles.soonTag}>SOON</Text> : null}
+      {expanded === undefined ? null : (
+        <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={18} color={theme.colors.muted} style={styles.chevron} />
+      )}
     </Pressable>
   )
 }
@@ -156,12 +164,20 @@ function MoneyPanel({ money, onOpen }: { money: MoneyMine; onOpen: (t: MoneyThre
 }
 
 export default function MeTab() {
+  const insets = useSafeAreaInsets()
   const { caps } = useCapabilities()
   const router = useRouter()
   const [money, setMoney] = useState<MoneyMine | null>(null)
   const [builds, setBuilds] = useState(0)
   const [counts, setCounts] = useState<MeCounts | undefined>(undefined)
   const [badgesOpen, setBadgesOpen] = useState(false)
+  // The badge rules open in place, usually below the fold: opening them brings
+  // them up, or the tap reads as one that did nothing.
+  const scroller = useRef<ScrollView>(null)
+  const badgesY = useRef(0)
+  useEffect(() => {
+    if (badgesOpen) scroller.current?.scrollTo({ y: Math.max(badgesY.current - 16, 0), animated: true })
+  }, [badgesOpen])
   const go = (href: string) => () => router.push(href as never)
 
   useEffect(() => {
@@ -203,14 +219,19 @@ export default function MeTab() {
   return (
     <Screen ownHeader>
       {caps ? (
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          ref={scroller}
+          style={scrollFrame}
+          contentContainerStyle={[styles.content, scrollContent, { paddingBottom: tabBarClearance(insets.bottom) }]}
+          showsVerticalScrollIndicator={false}
+        >
           <ScreenHeader title="My SPLAT" />
           <View style={styles.hero}>
             <Mascot pose="wave" size={72} />
             <View style={styles.flex}>
-              <Text style={styles.name}>Hi, {caps.profile.name.trim().split(/\s+/)[0]}</Text>
+              <Text style={styles.name}>{(caps.profile.name ?? '').trim() ? `Hi, ${caps.profile.name.trim().split(/\s+/)[0]}` : 'Hi there'}</Text>
               {standing ? <Text style={styles.meta}>{standing}</Text> : null}
-              {builds > 0 ? <Text style={styles.meta}>{`${builds} builds logged`}</Text> : null}
+              {builds > 0 ? <Text style={styles.meta}>{`${builds} ${builds === 1 ? 'build' : 'builds'} logged`}</Text> : null}
             </View>
           </View>
           {money ? <MoneyPanel money={money} onOpen={(t) => router.push(threadHref({ id: t.transaction_id, type: t.type }) as never)} /> : null}
@@ -234,8 +255,8 @@ export default function MeTab() {
               })}
             </View>
           ))}
-          <View style={styles.group}>
-            <Row label="How badges are earned" icon="ribbon-outline" onPress={() => setBadgesOpen((o) => !o)} />
+          <View style={styles.group} onLayout={(e) => { badgesY.current = e.nativeEvent.layout.y }}>
+            <Row label="How badges are earned" icon="ribbon-outline" expanded={badgesOpen} onPress={() => setBadgesOpen((o) => !o)} />
             {badgesOpen ? (
               <View style={styles.money}>
                 {BADGE_RULES.map((b) => (
@@ -260,8 +281,9 @@ export default function MeTab() {
 }
 
 const styles = StyleSheet.create({
-  content: { gap: 18, paddingBottom: theme.spacing(8) },
+  content: { gap: 18 },
   flex: { flex: 1, minWidth: 0 },
+  chevron: { marginLeft: 'auto' },
   pressed: { transform: [{ scale: 0.98 }] },
   eyebrow: {
     fontFamily: theme.fonts.black,

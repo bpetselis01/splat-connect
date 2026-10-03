@@ -27,4 +27,4 @@ const ROUTES: Record<string, string> = {
   '/admin': '/admin',
 }
 
-export const myRoute = (href: string) => ROUTES[href] ?? '/me'
+export const myRoute = (href: string) => (Object.prototype.hasOwnProperty.call(ROUTES, href) ? ROUTES[href] : '/me')

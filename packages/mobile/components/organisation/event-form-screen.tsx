@@ -19,6 +19,7 @@ import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import {
   ANSWER_TYPES,
+  apiMessage,
   AU_STATES,
   EVENT_KINDS,
   EVENT_KIND_LABEL,
@@ -110,6 +111,8 @@ export function EventFormScreen() {
   if (!title.trim()) missing.push('a name')
   if (!startAt) missing.push('a date and start time')
   if (ends.trim() && !endAt) missing.push('an end time like 15:30')
+  // The database refuses an end at or before the start; say so here rather than on a failed save.
+  if (startAt && endAt && endAt <= startAt) missing.push('an end time after the start')
   if (format === 'in_person' && !location.trim()) missing.push('a venue')
   if (format === 'in_person' && !suburb.trim()) missing.push('a suburb')
   if (format === 'online' && !onlineUrl.trim()) missing.push('a joining link')
@@ -165,8 +168,7 @@ export function EventFormScreen() {
       await apiClient.put(`/api/organizations/${org!.id}/events/${saved.id}/questions`, { questions })
       router.back()
     } catch (e) {
-      const detail = e instanceof Error ? /: (.+)$/.exec(e.message)?.[1] : null
-      setError(detail ?? 'That did not save. Try once more.')
+      setError(apiMessage(e, 'That did not save. Try once more.'))
       setSaving(null)
     }
   }

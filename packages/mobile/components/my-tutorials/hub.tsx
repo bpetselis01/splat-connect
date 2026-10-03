@@ -13,7 +13,7 @@ import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { TutorialOrg } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
-import { confirmDestructive } from '../../lib/confirm'
+import { confirmDestructive, notify } from '../../lib/confirm'
 import { useDraft } from '../../lib/use-tutorial-draft'
 import {
   getMissingFields,
@@ -31,6 +31,7 @@ import { ListSection, Pill, StagePill } from '../list/list-kit'
 import { TUTORIAL_STAGE } from '../list/stage'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
+import { ErrorRow } from '../ui/ErrorRow'
 
 const SECTION_ICON: Record<SectionId, ComponentProps<typeof Ionicons>['name']> = {
   details: 'document-text-outline',
@@ -69,7 +70,7 @@ export interface FromPdf {
 
 export function TutorialHub({ id, justCreated, fromPdf }: { id: string; justCreated?: boolean; fromPdf?: FromPdf }) {
   const router = useRouter()
-  const { tutorial, loading, loadError, saveNow, saveState } = useDraft()
+  const { tutorial, loading, loadError, saveNow, saveState, saveError, reload } = useDraft()
   const [menuOpen, setMenuOpen] = useState(false)
   const [noteDismissed, setNoteDismissed] = useState(false)
   // Unlike the arrival note this one stays until dismissed: it asks the author
@@ -115,7 +116,9 @@ export function TutorialHub({ id, justCreated, fromPdf }: { id: string; justCrea
           icon="cloud-offline-outline"
           title="Couldn't load this guide."
           hint="Check your connection and try again."
-        />
+        >
+          <Button label="Try again" variant="secondary" onPress={reload} />
+        </EmptyState>
       </Screen>
     )
   }
@@ -143,6 +146,7 @@ export function TutorialHub({ id, justCreated, fromPdf }: { id: string; justCrea
         router.replace('/tutorials')
       } catch (err) {
         console.error('[TutorialHub] delete failed:', err)
+        notify('Could not delete', 'The draft is still here. Please try again.')
       }
     })
   }
@@ -158,7 +162,7 @@ export function TutorialHub({ id, justCreated, fromPdf }: { id: string; justCrea
         </View>
         <View style={styles.titleRow}>
           <Text numberOfLines={2} style={styles.title}>
-            {tutorial.title || 'Untitled guide'}
+            {tutorial.title.trim() ? tutorial.title : 'Untitled guide'}
           </Text>
             <Pressable
               testID="hub-menu-trigger"
@@ -325,6 +329,7 @@ export function TutorialHub({ id, justCreated, fromPdf }: { id: string; justCrea
       </ScrollView>
 
       <View style={styles.footer}>
+        <ErrorRow message={saveError} />
         <View style={styles.footerButtons}>
           {/* The reader's view of your own guide, before you ask anyone to
               review it — the same route the menu's entry opens. */}

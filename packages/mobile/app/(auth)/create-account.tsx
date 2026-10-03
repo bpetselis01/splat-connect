@@ -35,6 +35,8 @@ export default function CreateAccountScreen() {
   }
 
   async function submit() {
+    // The keyboard's return key reaches here past the disabled button.
+    if (!accepted || busy) return
     setError(null)
     const address = email.trim()
     if (!name.trim() || !address) return setError({ kind: 'other', message: 'Add your name and email.' })

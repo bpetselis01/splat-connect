@@ -22,6 +22,8 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import { theme } from '../../lib/theme'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { tabBarClearance } from '../../lib/tab-bar-layout'
 import { AnimatedPressable } from './AnimatedPressable'
 
 export type CornerMenuItem = {
@@ -36,6 +38,7 @@ export type CornerMenuItem = {
 
 export function CornerMenu({ label, items }: { label: string; items: CornerMenuItem[] }) {
   const router = useRouter()
+  const insets = useSafeAreaInsets()
   const [open, setOpen] = useState(false)
   // Cross-fade, not rotation. The old 135° spin worked because a plus turned
   // 135° IS an ×; three stacked lines turned 135° are three stacked lines on a
@@ -76,7 +79,7 @@ export function CornerMenu({ label, items }: { label: string; items: CornerMenuI
       {/* The board's grid disc, bottom-right above the tab bar: reachable
           by a thumb from anywhere in the list, and clear of the mascot the
           tab heading now carries top-right. The menu fans upward from it. */}
-      <View style={styles.zone} pointerEvents="box-none">
+      <View testID="corner-menu-zone" style={[styles.zone, { bottom: tabBarClearance(insets.bottom) }]} pointerEvents="box-none">
         {open ? (
           <View accessibilityViewIsModal onAccessibilityEscape={toggle} style={styles.menu}>
             {items.map((item, i) => (
@@ -140,7 +143,6 @@ const styles = StyleSheet.create({
   zone: {
     position: 'absolute',
     right: theme.spacing(4),
-    bottom: theme.spacing(4),
     alignItems: 'flex-end',
     gap: theme.spacing(2),
   },

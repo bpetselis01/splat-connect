@@ -1,6 +1,7 @@
 // packages/mobile/tests/unit/components/explore/about-screen.test.tsx
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { Linking } from 'react-native'
+import { ABOUT_LEAD, ABOUT_PILLARS, ABOUT_TEAM_BLURB } from '@splat-connect/types'
 import { AboutScreen } from '../../../../components/explore/about-screen'
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
@@ -27,6 +28,19 @@ describe('AboutScreen', () => {
       expect(openURL).toHaveBeenCalledWith(`${process.env.EXPO_PUBLIC_WEB_URL}${path}`)
     }
     expect(openURL).toHaveBeenCalledTimes(ROWS.length)
+  })
+
+  it("says what SPLAT is and promises, in the web About page's words", () => {
+    render(<AboutScreen />)
+    expect(screen.getByText(ABOUT_LEAD)).toBeTruthy()
+    for (const p of ABOUT_PILLARS) {
+      expect(screen.getByText(p.t)).toBeTruthy()
+      expect(screen.getByText(p.d)).toBeTruthy()
+    }
+    expect(screen.getByRole('link', { name: 'Our team' }).props.accessibilityHint).toBe(ABOUT_TEAM_BLURB)
+    expect(screen.getByRole('link', { name: 'Contact' }).props.accessibilityHint).toBe(
+      'Safety report: same day · Everything else: 2 to 5 days · Weekends: slower'
+    )
   })
 
   it('exposes every row as accessibilityRole link, and nothing else claims the role', () => {

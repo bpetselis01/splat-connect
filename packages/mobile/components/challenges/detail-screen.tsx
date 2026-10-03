@@ -33,6 +33,7 @@ import { apiClient } from '../../lib/api-client'
 import { confirmDestructive } from '../../lib/confirm'
 import { theme } from '../../lib/theme'
 import { useSaves } from '../../lib/saves'
+import { recordRecent } from '../../lib/recents'
 import { useCapabilities } from '../../lib/capabilities'
 import { Screen } from '../ui/Screen'
 import { Card } from '../ui/Card'
@@ -175,6 +176,21 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
       ignore = true
     }
   }, [viewerId, challenge, id])
+
+  // "Pick up where you left off": once per open, when the brief has loaded.
+  useEffect(() => {
+    if (!challenge) return
+    const makers = challenge.maker_count ?? challenge.participants.length
+    recordRecent({
+      id: challenge.id,
+      kind: 'challenge',
+      title: challenge.title,
+      subtitle: `${challenge.kind === 'question' ? 'Question' : 'Challenge'}${makers > 0 ? ` · ${makers} joined` : ''}`,
+      badge: challengePill(challenge).label,
+      href: `/explore/challenges/${challenge.id}`,
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [challenge?.id])
 
   // The public author, or the viewer for their own anonymous idea (F14).
   const authorId = challenge?.author_id ?? (mine ? viewerId : null)

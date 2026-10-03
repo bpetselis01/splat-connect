@@ -32,7 +32,10 @@ runParity({
   // levelSteps: the mobile board's scale, h2 at 20-25px and section h3s at 18.
   liveScope: {
     root: '#root',
-    exclude: '[data-testid="tab-bar"], header, [role="banner"], [role="heading"][aria-level="1"]',
+    // The stack's Back disc is header chrome that now always draws (a shortcut can
+    // open a stack's first screen); without this it is the only enabled button on
+    // a screen whose real button is disabled, and reads as "no button has a shadow".
+    exclude: '[data-testid="tab-bar"], header, [role="banner"], [role="heading"][aria-level="1"], [role="button"][aria-label="Back"]',
     levelSteps: [40, 20, 17],
   },
   // The parity API's CORS admits the web origin only (packages/api/src/app.ts).

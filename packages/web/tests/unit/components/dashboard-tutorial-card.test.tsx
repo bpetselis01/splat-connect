@@ -85,6 +85,11 @@ describe('DashboardTutorialCard', () => {
     expect(screen.getByText('Easy')).toHaveClass('stage-pill')
   })
 
+  it('tells the author how their guide’s prints fitted', () => {
+    render(<DashboardTutorialCard tutorial={tutorial({ print_fit_stats: { fitted: 12, fit_answers: 14 } })} />)
+    expect(screen.getByText('12 of 14 prints fitted')).toBeInTheDocument()
+  })
+
   it('calls a draft a draft', () => {
     render(<DashboardTutorialCard tutorial={tutorial({ status: 'draft' })} />)
     expect(screen.getByText('Draft')).toBeInTheDocument()

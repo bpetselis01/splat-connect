@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { ProsePage, PullQuote } from '@/components/prose-page'
+import { ToBeCompleted } from '@/components/to-be-completed'
 
 // PENDING(intended-purpose-review): legal review — this page states Connect's intended purpose for
 // the Therapeutic Goods Act 1989 (Cth) intended-purpose test. Do not edit the
@@ -13,6 +14,10 @@ export default function IntendedPurposePage() {
       lastUpdated="1 September 2026"
       intro="SPLAT Connect is a free consumer tool that helps parents and carers find, choose and customise adapted toys and everyday aids for children with disability."
     >
+      <ToBeCompleted subject="Legal review" compact>
+        This statement is waiting on a legal review before it is final.
+      </ToBeCompleted>
+
       <PullQuote>
         It is a matching tool, not a measurement. Always talk to your child&apos;s own
         health professionals about their individual needs.

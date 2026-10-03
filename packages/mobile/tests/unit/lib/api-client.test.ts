@@ -78,3 +78,17 @@ describe('apiClient', () => {
     expect((opts.headers as Record<string, string>)?.Authorization).toBeUndefined()
   })
 })
+
+describe('apiMessage', () => {
+  const { apiMessage } = require('@splat-connect/types')
+  it('says offline for a request that never reached the API', () => {
+    expect(apiMessage(new TypeError('Network request failed'), 'x')).toMatch(/offline/)
+  })
+  it('says slow down for a 429', () => {
+    expect(apiMessage(new Error('API POST /a failed with status 429'), 'x')).toMatch(/Too many/)
+  })
+  it('keeps the API sentence for a 4xx and the fallback otherwise', () => {
+    expect(apiMessage(new Error('API POST /a failed with status 400: Name has "quotes" & <tags>'), 'x')).toBe('Name has "quotes" & <tags>')
+    expect(apiMessage(new Error('API POST /a failed with status 500: pg boom'), 'x')).toBe('x')
+  })
+})

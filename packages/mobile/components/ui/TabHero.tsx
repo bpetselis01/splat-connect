@@ -4,7 +4,18 @@
 // with Splat the bear on the right. The bear is a PNG rendered from the
 // board's own bear() (no SVG runtime on mobile), so it is the same drawing web
 // uses, not a lookalike.
-import { View, Text, Image, StyleSheet } from 'react-native'
+import { useEffect } from 'react'
+import { View, Text, StyleSheet } from 'react-native'
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withDelay,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated'
 import { theme } from '../../lib/theme'
 
 const MASCOT = {
@@ -17,11 +28,35 @@ const MASCOT = {
 
 export type MascotPose = keyof typeof MASCOT
 
+const WAVE_MS = 900
+const BREATH_MS = 1600
+const breathe = { duration: BREATH_MS, easing: Easing.inOut(Easing.sin) }
+
+/** Splat waves in on first appearance, then bobs and breathes. Under the
+ *  system's reduce-motion setting it is drawn still. */
 export function Mascot({ pose, size }: { pose: MascotPose; size: number }) {
+  const reduced = useReducedMotion()
+  const rotate = useSharedValue(reduced ? 0 : -14)
+  const lift = useSharedValue(0)
+  const scale = useSharedValue(1)
+
+  useEffect(() => {
+    if (reduced) return
+    const step = { duration: WAVE_MS / 4, easing: Easing.out(Easing.quad) }
+    rotate.value = withSequence(withTiming(10, step), withTiming(-6, step), withTiming(3, step), withTiming(0, step))
+    lift.value = withDelay(WAVE_MS, withRepeat(withSequence(withTiming(-size * 0.04, breathe), withTiming(0, breathe)), -1))
+    scale.value = withDelay(WAVE_MS, withRepeat(withSequence(withTiming(1.03, breathe), withTiming(1, breathe)), -1))
+  }, [reduced, rotate, lift, scale, size])
+
+  const style = useAnimatedStyle(() => ({
+    transform: [{ translateY: lift.value }, { rotate: `${rotate.value}deg` }, { scale: scale.value }],
+  }))
+
   return (
-    <Image
+    <Animated.Image
+      testID="mascot"
       source={MASCOT[pose]}
-      style={{ width: size, height: size }}
+      style={[{ width: size, height: size }, style]}
       resizeMode="contain"
       accessibilityElementsHidden
       importantForAccessibility="no"

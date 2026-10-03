@@ -11,3 +11,9 @@ require('react-native-reanimated').setUpTests()
 // the root layout, so they use the library's own zero-inset mock.
 // `.default` is required: the shipped mock is an ES default export.
 jest.mock('react-native-safe-area-context', () => require('react-native-safe-area-context/jest/mock').default)
+
+// expo-blur's BlurView is a native view; tests only need a plain View.
+jest.mock('expo-blur', () => {
+  const { View } = require('react-native')
+  return { BlurView: View }
+})

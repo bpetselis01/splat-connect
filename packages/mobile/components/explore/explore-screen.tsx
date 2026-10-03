@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons'
 import type { Tutorial, ToyWithOwner, Organization, ImpactSummary } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
+import { scrollFrame, scrollContent, SEARCH_GAP } from '../../lib/layout'
 import { useLearnProgress } from '../../lib/learn'
 import { LEARN_ARTICLES } from '../../lib/learn-content'
 import { Screen } from '../ui/Screen'
@@ -83,6 +84,7 @@ function DoorCard({
   )
 }
 
+/** The pushed Explore place: search and the doors. Home's grid has its own screen. */
 export function ExploreScreen() {
   const router = useRouter()
   const { count } = useLearnProgress()
@@ -143,21 +145,25 @@ export function ExploreScreen() {
   }, [reloadKey])
 
   const q = search.trim().toLowerCase()
-  const matchedGuides = q ? tutorials.filter((t) => t.title.toLowerCase().includes(q)) : []
-  const matchedToys = q ? toys.filter((t) => t.name.toLowerCase().includes(q)) : []
-  const matchedOrgs = q ? orgs.filter((o) => o.name.toLowerCase().includes(q)) : []
+  const matchedGuides = q ? tutorials.filter((t) => t.title?.toLowerCase().includes(q)) : []
+  const matchedToys = q ? toys.filter((t) => t.name?.toLowerCase().includes(q)) : []
+  const matchedOrgs = q ? orgs.filter((o) => o.name?.toLowerCase().includes(q)) : []
 
   return (
-    // The native header draws "Explore" and the back button (explore/_layout).
+    // The native header draws the title and back button (explore/_layout).
     <Screen>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        style={scrollFrame}
+        contentContainerStyle={[styles.content, scrollContent]}
+      >
         <TextField
           icon="search"
           placeholder="Search guides, toys, organisations"
           value={search}
           onChangeText={setSearch}
           boxStyle={styles.searchBar}
+          boxTestID="search-box"
           search
         />
 
@@ -267,7 +273,10 @@ export function ExploreScreen() {
                 { k: 'Toys delivered', v: totals.toysDelivered },
                 { k: 'Contributors', v: totals.contributors },
                 { k: 'Organisations', v: totals.organisations },
-              ].map((s) => (
+              ]
+                // A count the API left out is not shown, rather than as "undefined".
+                .filter((s) => s.v != null)
+                .map((s) => (
                 <View key={s.k} style={styles.stat}>
                   <Text style={styles.statValue}>{String(s.v)}</Text>
                   <Text style={styles.statLabel}>{s.k}</Text>
@@ -287,6 +296,9 @@ const styles = StyleSheet.create({
     borderRadius: theme.radii.pill,
     borderWidth: theme.border.hairline,
     paddingHorizontal: theme.spacing(4),
+    // A search field carries no margin of its own (TextField only gives one
+    // to non-search fields), so the cards below sat 4px under it.
+    marginBottom: SEARCH_GAP,
     ...theme.shadow(2),
   },
   errorRow: { marginBottom: theme.spacing(3), alignItems: 'center' },

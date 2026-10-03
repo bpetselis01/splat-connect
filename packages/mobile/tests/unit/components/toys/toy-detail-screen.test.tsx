@@ -18,6 +18,9 @@ jest.mock('../../../../lib/api-client', () => ({
 
 const mockPush = jest.fn()
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }))
+const mockRecord = jest.fn()
+jest.mock('../../../../lib/recents', () => ({ recordRecent: (...a: unknown[]) => mockRecord(...a) }))
+
 
 // useSaves is mocked directly, same as toy-library-screen.test.tsx, so a save
 // press can be asserted against exactly what SaveButton is contracted to call.
@@ -350,5 +353,23 @@ describe('ToyDetailScreen', () => {
     expect(mockPush).toHaveBeenCalledWith('/toy-library/t9')
     fireEvent.press(screen.getByText('Bubble machine, four-second burst'))
     expect(mockPush).toHaveBeenCalledWith('/guides/g1')
+  })
+})
+
+describe('ToyDetailScreen recents', () => {
+  it('records the toy once it has loaded, with its suburb and condition grade', async () => {
+    mockEndpoints({ detail: Promise.resolve(toy({ holder_suburb: 'Marrickville', holder_state: 'NSW', condition: 9 })) })
+    render(<ToyDetailScreen id="toy1" />)
+    await screen.findByText('Bubble machine')
+    expect(mockRecord).toHaveBeenCalledTimes(1)
+    expect(mockRecord).toHaveBeenCalledWith({
+      id: 'toy1', kind: 'toy', title: 'Bubble machine', subtitle: 'Toy · Marrickville, NSW', badge: 'Like new', href: '/toy-library/toy1',
+    })
+  })
+
+  it('leaves the place out when the holder gave no suburb', async () => {
+    render(<ToyDetailScreen id="toy1" />)
+    await screen.findByText('Bubble machine')
+    expect(mockRecord).toHaveBeenCalledWith(expect.objectContaining({ subtitle: 'Toy' }))
   })
 })

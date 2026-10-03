@@ -2,20 +2,24 @@
 //
 // The Toy library tab, as the board draws it (#toy_library): the same
 // row-card idiom as Guides so the two tabs read as one app — greeting and
-// mascot, Toys / Organisations, a row of filter chips, a heading with the
+// mascot, Toys / Organisations, a Filters button that unfolds the chips, a heading with the
 // count, then cards carrying status, Wired, a plain-language condition grade
 // and the holder.
 import { useEffect, useState } from 'react'
-import { View, Text, FlatList, RefreshControl, ScrollView, StyleSheet } from 'react-native'
+import { View, Text, FlatList, RefreshControl, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import type { ToyWithOwner } from '@splat-connect/types'
 import { gradeOf, GRADES, toyHolderName, type GradeKey } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { theme } from '../../lib/theme'
+import { tabBarClearance } from '../../lib/tab-bar-layout'
+import { scrollFrame, scrollContent, SEARCH_GAP } from '../../lib/layout'
 import { useSaves } from '../../lib/saves'
 import { Chip } from '../ui/Chip'
+import { FilterPanel } from '../ui/FilterPanel'
 import { TextField } from '../ui/TextField'
 import { Screen } from '../ui/Screen'
 import { Button } from '../ui/Button'
@@ -54,6 +58,7 @@ const TINTS = [
 ]
 
 export function ToyLibraryScreen() {
+  const insets = useSafeAreaInsets()
   const router = useRouter()
   const saves = useSaves()
   const { caps, loading: capsLoading } = useCapabilities()
@@ -124,6 +129,7 @@ export function ToyLibraryScreen() {
   )
   if (newest) visible.sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))
   const filtered = !!q || !!condition || switchAdaptedOnly || availableOnly
+  const activeCount = [!!condition, switchAdaptedOnly, availableOnly, newest, nearest].filter(Boolean).length
   const heading = filtered ? 'Matching toys' : newest ? 'Newest first' : nearest ? 'Nearest first' : 'All toys'
 
   return (
@@ -134,7 +140,8 @@ export function ToyLibraryScreen() {
         // rows' entrance without remounting the header.
         keyExtractor={(t) => `${condition ?? 'any'}:${t.id}`}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listContent}
+        style={scrollFrame}
+        contentContainerStyle={[scrollContent, { paddingBottom: tabBarClearance(insets.bottom) }]}
         keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.ink} />
@@ -167,13 +174,7 @@ export function ToyLibraryScreen() {
               search
             />
 
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.chipScroller}
-              contentContainerStyle={styles.chipRow}
-              keyboardShouldPersistTaps="handled"
-            >
+            <FilterPanel activeCount={activeCount}>
               <Chip
                 variant="filter"
                 icon="checkmark-circle-outline"
@@ -203,7 +204,7 @@ export function ToyLibraryScreen() {
                   onPress={() => setCondition((cur) => (cur === g.key ? null : g.key))}
                 />
               ))}
-            </ScrollView>
+            </FilterPanel>
 
             {!loading && !error ? (
               <View style={styles.headingRow}>
@@ -301,7 +302,7 @@ export function ToyLibraryScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: { gap: theme.spacing(4), marginBottom: theme.spacing(4) },
+  header: { gap: SEARCH_GAP, marginBottom: theme.spacing(4) },
   searchBar: {
     borderRadius: theme.radii.pill,
     borderWidth: theme.border.hairline,
@@ -309,12 +310,9 @@ const styles = StyleSheet.create({
     minHeight: 52,
     ...theme.shadow(1),
   },
-  chipScroller: { marginHorizontal: -theme.spacing(4) },
-  chipRow: { gap: theme.spacing(2), paddingHorizontal: theme.spacing(4), paddingVertical: 4 },
   headingRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
   heading: { fontFamily: theme.fonts.display, fontSize: 20, lineHeight: 26, color: theme.colors.ink },
   count: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.muted },
   meta: { gap: 6, alignItems: 'flex-start' },
   retry: { marginTop: theme.spacing(5), alignSelf: 'center', paddingHorizontal: theme.spacing(8) },
-  listContent: { paddingBottom: theme.spacing(20) },
 })

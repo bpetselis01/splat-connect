@@ -17,7 +17,7 @@ import { CardPhoto, tintFor } from '@/components/card-photo'
 import { BackingSummary } from '@/components/backing-state'
 import { BoundaryLink } from '@/components/boundary-link'
 import { StagePill, type StageKey } from '@/components/stage'
-import type { Tutorial, Difficulty, TutorialOrg, TutorialStatus } from '@splat-connect/types'
+import { guideFitLine, type Tutorial, type Difficulty, type TutorialOrg, type TutorialStatus } from '@splat-connect/types'
 
 type Listed = Tutorial & { tutorial_orgs?: TutorialOrg[] }
 
@@ -53,6 +53,7 @@ function when(t: Listed): string {
 
 export function DashboardTutorialCard({ tutorial }: { tutorial: Listed }) {
   const diff = DIFF[tutorial.difficulty as Difficulty]
+  const fit = guideFitLine(tutorial.print_fit_stats)
   return (
     <BoundaryLink
       href={`/tutorials/${tutorial.id}/edit`}
@@ -81,6 +82,7 @@ export function DashboardTutorialCard({ tutorial }: { tutorial: Listed }) {
           )}
         </div>
         <div className="flex-1">
+          {fit && <p className="text-[13px] leading-relaxed text-muted">{fit}</p>}
           {tutorial.status === 'rejected' && (
             // Clamped so one long note cannot stretch its row of cards. The whole
             // note has a home in the callout at the top of the edit page.

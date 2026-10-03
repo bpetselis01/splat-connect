@@ -38,8 +38,8 @@ import {
   Palette,
   PaperPlaneTilt,
 } from '@phosphor-icons/react/dist/ssr'
-import { bedFits, initials, MAX_PRINTERS_PER_REQUEST, PRINT_COLOURS } from '@splat-connect/types'
-import type { PrinterWithOwner, StlFile } from '@splat-connect/types'
+import { bedFits, initials, MAX_PRINTERS_PER_REQUEST, PRINT_COLOURS, PRINT_FIT_QUESTIONS } from '@splat-connect/types'
+import type { PrintFitNotes, PrinterWithOwner, StlFile } from '@splat-connect/types'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { apiErrorDetail } from '@splat-connect/types'
 import { pickSummary, togglePrinterPick } from '@/lib/print-groups'
@@ -96,6 +96,7 @@ export function RequestPrintForm({
   })
   const [colour, setColour] = useState<string>(PRINT_COLOURS[0])
   const [note, setNote] = useState('')
+  const [fitNotes, setFitNotes] = useState<PrintFitNotes>({})
   const [agree, setAgree] = useState(false)
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -125,6 +126,7 @@ export function RequestPrintForm({
           files: ticked.map((p) => ({ stl_file_id: p.id, quantity: p.quantity })),
           colour,
           note: note.trim(),
+          ...(Object.keys(fitNotes).length ? { fit_notes: fitNotes } : {}),
         })
         router.push(`/dashboard/print-requests/${tx.id}` as Route)
       } catch (err) {
@@ -261,7 +263,40 @@ export function RequestPrintForm({
               placeholder="e.g. It is for a round cot rail, about 25 mm across."
             />
           </label>
-          {/* PENDING(web-print-customization): the four customization questions (PRINT_FIT_QUESTIONS) go here, sent as fit_notes like the phone's request. */}
+          <div className="flex flex-col gap-3">
+            <div>
+              <p className="text-sm font-extrabold text-ink">Customization</p>
+              <p className="text-[13px] text-muted">
+                Physical dimensions we use to size printed mounts and brackets. Nothing here is required.
+              </p>
+            </div>
+            {PRINT_FIT_QUESTIONS.map((q) => (
+              <fieldset key={q.key} className="flex flex-col gap-2">
+                <legend className="mb-2 text-sm font-extrabold text-ink">{q.label}</legend>
+                <div className="flex flex-wrap gap-2">
+                  {q.options.map((o) => (
+                    <button
+                      key={o}
+                      type="button"
+                      aria-pressed={fitNotes[q.key] === o}
+                      // A second click clears it: every question is optional.
+                      onClick={() =>
+                        setFitNotes((cur) => {
+                          const next = { ...cur }
+                          if (next[q.key] === o) delete next[q.key]
+                          else next[q.key] = o
+                          return next
+                        })
+                      }
+                      className="chip"
+                    >
+                      {o}
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+            ))}
+          </div>
         </section>
 
         <section className="print-panel">

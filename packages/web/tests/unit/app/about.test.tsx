@@ -65,11 +65,23 @@ describe('About', () => {
     expect(TEAM_MEMBERS[0].name).not.toMatch(/^TODO/)
   })
 
+  it('says To be completed while no team member has been supplied', () => {
+    render(<TeamPage />)
+    expect(TEAM_MEMBERS).toHaveLength(0)
+    expect(screen.getByText('To be completed')).toBeInTheDocument()
+  })
+
   it('renders a card per team member', () => {
     render(<TeamPage />)
     for (const member of TEAM_MEMBERS) {
       expect(screen.getByText(member.name)).toBeInTheDocument()
     }
+  })
+
+  it('says To be completed where the organisation facts are not supplied', async () => {
+    render(await ContactPage())
+    expect(screen.getByText('To be completed')).toBeInTheDocument()
+    expect(screen.queryByText(/TODO/)).toBeNull()
   })
 
   it('gives contact routes for the three things people actually write in about', async () => {

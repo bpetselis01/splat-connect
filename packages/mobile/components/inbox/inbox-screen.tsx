@@ -25,7 +25,11 @@ import type {
 } from '@splat-connect/types'
 import { copyFor, notificationBucket, notificationSecondLine, subjectName } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
+import { invalidateCapabilities } from '../../lib/capabilities'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { theme } from '../../lib/theme'
+import { tabBarClearance } from '../../lib/tab-bar-layout'
+import { scrollFrame, scrollContent } from '../../lib/layout'
 import { threadHref } from '../../lib/builds'
 import { linkFor, relativeTime } from '../../lib/notifications'
 import { Screen } from '../ui/Screen'
@@ -143,6 +147,7 @@ export function InboxScreen({
    *  there are notifications, so nobody lands on a blank half. */
   initialSegment?: InboxSegment
 }) {
+  const insets = useSafeAreaInsets()
   const router = useRouter()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [transactions, setTransactions] = useState<ToyTransactionSummary[]>([])
@@ -213,7 +218,9 @@ export function InboxScreen({
   const lastActive = (tx: ToyTransactionSummary) => Date.parse(tx.last_message?.created_at ?? tx.updated_at) || 0
   const threads = mine.sort((a, b) => lastActive(b) - lastActive(a))
   const exchangeUnread = exchangeNotes.filter((n) => n.read_at === null).length
-  const others = notifications.filter((n) => notificationBucket(n.type) !== 'exchanges')
+  // A type this build has no bucket for (a newer API) is left out, so the half
+  // reads as empty rather than blank: nothing below would draw it.
+  const others = notifications.filter((n) => BUCKETS.some((b) => b.key === notificationBucket(n.type)))
 
   const segment: InboxSegment =
     picked ?? (threads.length === 0 && orphans.length === 0 && others.length > 0 ? 'notifications' : 'exchanges')
@@ -225,11 +232,13 @@ export function InboxScreen({
     if (ids.length === 0) return
     const now = new Date().toISOString()
     setNotifications((cur) => cur.map((row) => (ids.includes(row.id) ? { ...row, read_at: now } : row)))
-    for (const id of ids) {
-      apiClient
-        .patch(`/api/notifications/${id}`, { read: true })
-        .catch((err) => console.error('[InboxScreen] mark read failed:', err))
-    }
+    void Promise.all(
+      ids.map((id) =>
+        apiClient
+          .patch(`/api/notifications/${id}`, { read: true })
+          .catch((err) => console.error('[InboxScreen] mark read failed:', err))
+      )
+    ).then(invalidateCapabilities)
   }
 
   function open(n: Notification) {
@@ -255,6 +264,7 @@ export function InboxScreen({
     } catch (err) {
       console.error('[InboxScreen] bucket mark-read failed:', err)
     }
+    invalidateCapabilities()
   }
 
   async function answerInvite(inviteId: string, answer: 'accept' | 'decline') {
@@ -376,7 +386,8 @@ export function InboxScreen({
       ) : (
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.content}
+          style={scrollFrame}
+          contentContainerStyle={[scrollContent, { paddingBottom: showHeader ? tabBarClearance(insets.bottom) : theme.spacing(6) }]}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.ink} />
           }
@@ -434,7 +445,6 @@ export function InboxScreen({
 
 const styles = StyleSheet.create({
   segments: { marginBottom: 14 },
-  content: { paddingBottom: theme.spacing(6) },
   group: { marginBottom: theme.spacing(4) },
   eyebrowRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2), marginBottom: theme.spacing(2) },
   eyebrow: {

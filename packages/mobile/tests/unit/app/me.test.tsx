@@ -1,4 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
+import { theme } from '../../../lib/theme'
+import { ScrollView, FlatList, StyleSheet } from 'react-native'
+import { tabBarClearance } from '../../../lib/tab-bar-layout'
 import MeTab from '../../../app/(tabs)/me'
 
 // `mock`-prefixed: jest hoists the factory above this const, and only that prefix is allowed through.
@@ -32,7 +35,7 @@ beforeEach(() => {
   )
 })
 
-it('renders every buildNav group as rows, routes them through the map, and ends with Explore', () => {
+it('renders every buildNav group as rows, routes them through the map, and no longer links to the Explore index', () => {
   render(<MeTab />)
   // getAllByText: "Account" is both a group heading and a row label.
   for (const h of ['Add a tutorial', 'Exchange a toy', 'Give us a challenge', 'Organisation', 'Account', 'Explore']) expect(screen.getAllByText(h).length).toBeGreaterThan(0)
@@ -41,9 +44,8 @@ it('renders every buildNav group as rows, routes them through the map, and ends 
   expect(mockPush).toHaveBeenCalledWith('/toys')
   fireEvent.press(screen.getByLabelText('Learn'))
   expect(mockPush).toHaveBeenCalledWith('/explore/learn')
-  // Explore's own screen has no tab, so this row is its way in.
-  fireEvent.press(screen.getByLabelText('Everything in Explore'))
-  expect(mockPush).toHaveBeenCalledWith('/explore')
+  // Explore's index is no longer reachable from Me: Home carries its list.
+  expect(screen.queryByLabelText('Everything in Explore')).toBeNull()
 })
 
 it('shows the builds you have logged', async () => {
@@ -158,4 +160,42 @@ it('explains each badge and its threshold from one row', () => {
   fireEvent.press(screen.getByLabelText('How badges are earned'))
   expect(screen.getByText('Have 10 approved guides published.')).toBeTruthy()
   expect(screen.getByText('Families log 100 builds from your published guides.')).toBeTruthy()
+})
+
+// The row is an inline panel, not a screen: closed it drew nothing to say so,
+// and opened below the fold it looked like a tap that did nothing.
+it('says its panel is open or closed, and scrolls the panel into view when it opens', () => {
+  render(<MeTab />)
+  const scroller = screen.UNSAFE_getByType(ScrollView)
+  const scrollTo = jest.spyOn(scroller.instance, 'scrollTo')
+  const row = () => screen.getByLabelText('How badges are earned')
+  expect(row().props.accessibilityState).toMatchObject({ expanded: false })
+  fireEvent.press(row())
+  expect(row().props.accessibilityState).toMatchObject({ expanded: true })
+  expect(scrollTo).toHaveBeenCalledTimes(1)
+  fireEvent.press(row())
+  expect(row().props.accessibilityState).toMatchObject({ expanded: false })
+  expect(scrollTo).toHaveBeenCalledTimes(1)
+})
+
+const clears = (nodes: { props: { contentContainerStyle?: unknown } }[]) =>
+  nodes.some((n) => (StyleSheet.flatten(n.props.contentContainerStyle as object) as { paddingBottom?: number } | undefined)?.paddingBottom === tabBarClearance(0))
+
+it('pads its scroll content so the last row clears the floating tab bar', () => {
+  render(<MeTab />)
+  expect(clears(screen.UNSAFE_getAllByType(ScrollView))).toBe(true)
+})
+
+// The page ground is the background token, and the scroll frame spans the
+// Screen padding so it cannot clip the cards' shadows into a grey rectangle.
+const groundOk = (root: any, frame: { props: { style?: unknown; contentContainerStyle?: unknown } }) => {
+  const ground = StyleSheet.flatten(root.props.style) as { backgroundColor?: string }
+  const f = StyleSheet.flatten(frame.props.style as object) as { marginHorizontal?: number }
+  const c = StyleSheet.flatten(frame.props.contentContainerStyle as object) as { paddingHorizontal?: number }
+  return ground.backgroundColor === theme.colors.background && f.marginHorizontal === -16 && c.paddingHorizontal === 16
+}
+
+it('sits on the page ground with a full-width scroll frame', () => {
+  render(<MeTab />)
+  expect(groundOk(screen.toJSON(), screen.UNSAFE_getAllByType(ScrollView)[0])).toBe(true)
 })

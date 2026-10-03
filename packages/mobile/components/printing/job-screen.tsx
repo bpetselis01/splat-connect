@@ -212,7 +212,7 @@ export function PrintJobScreen({ id }: { id: string }) {
             onStart={() => run(() => startPrint(id))}
             onReady={() => run(() => markReady(id))}
             onConfirm={async () => {
-              if (await run(() => apiClient.post<ToyTransaction>(`/api/toy-transactions/${id}/confirm`, { code }))) setCode('')
+              if (await run(() => apiClient.post<ToyTransaction>(`/api/toy-transactions/${id}/confirm`, { code: code.trim() }))) setCode('')
             }}
             onAnswer={() => router.push('/print-for-others')}
             onMessage={openThread}
@@ -459,7 +459,6 @@ function StateCard({
         <Text style={[styles.body, styles.ink]}>Both of you confirmed. Closed and kept as a record.</Text>
         {!isPrinter ? (
           <View style={styles.fit}>
-            {/* PENDING(print-fit-author-view): the copy below promises the guide author sees this; no author surface yet. */}
             <Text style={styles.strong}>Did it fit?</Text>
             <Text style={[styles.body, styles.ink]}>
               One tap. It goes back to the printer and to the guide author so the next print is better.

@@ -8,6 +8,7 @@ export { autoPicks, initialPicks, MAX_PICKS, pickOptions, PICK_KIND_LABEL, sameP
 export type { PicksMode, ToyPick, ToyPickInput } from './toy-picks'
 import type { PicksMode, ToyPick } from './toy-picks'
 export { contributorBadges, nextBadgeThreshold, nextBadgeLine, BADGE_RULES } from './contributor-badges'
+export { ABOUT_LEAD, ABOUT_PILLARS, ABOUT_TEAM_BLURB, CONTACT_TIMES } from './about'
 export { matchesForChild, childNeedsLine } from './child-matches'
 export {
   LEARN_COURSE, LEARN_SHOWN_AS, LESSON_KIND_LABEL,
@@ -40,7 +41,7 @@ import { printRequestExpired } from './printing'
 import type { PrinterStats, PrintFitNotes, TestPrint } from './printing'
 // Named, not only the `export *` below: the API runs under tsx, which loads
 // this package as CommonJS, and Node cannot see names behind `export *` there.
-export { printCostCents, costRange, PRINT_ANSWER_DAYS, answerBy, printRequestExpired, PRINT_FIT_QUESTIONS, fitNotesProblem, fitNotesLines, bedFits, VERIFIED_MIN_JOBS, testPrintLabel, statsLine, machineStatsLines, orgPrintFacts } from './printing'
+export { printCostCents, costRange, PRINT_ANSWER_DAYS, answerBy, printRequestExpired, PRINT_FIT_QUESTIONS, fitNotesProblem, fitNotesLines, bedFits, VERIFIED_MIN_JOBS, testPrintLabel, statsLine, machineStatsLines, orgPrintFacts, guideFitLine } from './printing'
 export { costSummary } from './cost-summary'
 export type { CostLine, CostSummary } from './cost-summary'
 export { getMissingToyFields, computeToyStepStatuses } from './toy-steps'
@@ -372,7 +373,8 @@ export interface MoneyMine {
 /** Up to two letters for an avatar: "Sam Mitchell" → "SM". `fallback` when there is no name. */
 export function initials(name: string | null | undefined, fallback = ''): string {
   const words = (name ?? '').trim().split(/\s+/).filter(Boolean)
-  return words.slice(0, 2).map((w) => w[0]!.toUpperCase()).join('') || fallback
+  // Array.from walks code points: w[0] is half of an emoji's surrogate pair.
+  return words.slice(0, 2).map((w) => Array.from(w)[0]!.toUpperCase()).join('') || fallback
 }
 
 /** A first name, never a full one — what a thanks is signed with. */
@@ -1888,30 +1890,35 @@ export function notificationBucket(type: NotificationType): NotificationBucket {
  * two clients never narrate the same event differently — that is how a person
  * ends up unsure whether they read about one thing or two.
  */
+// Either can be null when the row it names was deleted; the sentence must
+// not print the word "null".
+const title = (n: Notification) => n.tutorial_title ?? 'a guide'
+const toy = (n: Notification) => n.toy_name ?? 'a toy'
+
 export const COPY: Record<NotificationType, (n: Notification) => string> = {
-  collaborator_invited: (n) => `${n.actor_name} invited you to collaborate on "${n.tutorial_title}"`,
-  collaborator_accepted: (n) => `${n.actor_name} accepted your invite to "${n.tutorial_title}"`,
-  collaborator_declined: (n) => `${n.actor_name} declined your invite to "${n.tutorial_title}"`,
-  collaborator_removed: (n) => `${n.actor_name} removed you from "${n.tutorial_title}"`,
-  collaborator_left: (n) => `${n.actor_name} left "${n.tutorial_title}"`,
+  collaborator_invited: (n) => `${n.actor_name} invited you to collaborate on "${title(n)}"`,
+  collaborator_accepted: (n) => `${n.actor_name} accepted your invite to "${title(n)}"`,
+  collaborator_declined: (n) => `${n.actor_name} declined your invite to "${title(n)}"`,
+  collaborator_removed: (n) => `${n.actor_name} removed you from "${title(n)}"`,
+  collaborator_left: (n) => `${n.actor_name} left "${title(n)}"`,
   // The two review-queue types. Both name the actor and the project, because
   // unlike every other type above the recipient did not start this and has no
   // context for it — a leader may be looking at a title they have never seen.
-  backing_requested: (n) => `${n.actor_name} asked your organisation to back "${n.tutorial_title}"`,
-  tutorial_submitted: (n) => `${n.actor_name} submitted "${n.tutorial_title}" for review`,
-  tutorial_approved: (n) => `"${n.tutorial_title}" was approved and is now published`,
-  tutorial_rejected: (n) => `"${n.tutorial_title}" was rejected`,
+  backing_requested: (n) => `${n.actor_name} asked your organisation to back "${title(n)}"`,
+  tutorial_submitted: (n) => `${n.actor_name} submitted "${title(n)}" for review`,
+  tutorial_approved: (n) => `"${title(n)}" was approved and is now published`,
+  tutorial_rejected: (n) => `"${title(n)}" was rejected`,
   // Unnamed on purpose: who thanked a guide stays private (066).
-  tutorial_thanked: (n) => `A family said thanks for "${n.tutorial_title}"`,
-  tutorial_noted: (n) => `${n.actor_name} added a note to "${n.tutorial_title}"`,
+  tutorial_thanked: (n) => `A family said thanks for "${title(n)}"`,
+  tutorial_noted: (n) => `${n.actor_name} added a note to "${title(n)}"`,
   // 109: to everyone who followed the write-up. The guide's own contributors
   // get tutorial_approved instead.
-  challenge_guide_published: (n) => `The guide from a challenge you follow is published: "${n.tutorial_title}"`,
-  toy_request: (n) => `${n.actor_name} requested ${n.toy_name}`,
-  toy_accepted: (n) => `${n.actor_name} accepted your request for ${n.toy_name}`,
-  toy_rejected: (n) => `${n.actor_name} declined your request for ${n.toy_name}`,
-  toy_withdrawn: (n) => `${n.actor_name} withdrew their request for ${n.toy_name}`,
-  toy_message: (n) => `${n.actor_name} sent a message about ${n.toy_name}`,
+  challenge_guide_published: (n) => `The guide from a challenge you follow is published: "${title(n)}"`,
+  toy_request: (n) => `${n.actor_name} requested ${toy(n)}`,
+  toy_accepted: (n) => `${n.actor_name} accepted your request for ${toy(n)}`,
+  toy_rejected: (n) => `${n.actor_name} declined your request for ${toy(n)}`,
+  toy_withdrawn: (n) => `${n.actor_name} withdrew their request for ${toy(n)}`,
+  toy_message: (n) => `${n.actor_name} sent a message about ${toy(n)}`,
   idea_approved: () => 'Your idea was published as a design challenge',
   idea_rejected: () => 'Your idea was reviewed and not taken forward',
   challenge_joined: (n) => `${n.actor_name} joined your design challenge`,
@@ -1927,22 +1934,22 @@ export const COPY: Record<NotificationType, (n: Notification) => string> = {
   // challenge-card.tsx's "Being written up" and badge.tsx
   // exactly; must never claim more than those two do.
   idea_graduated: () => 'A challenge you were part of is being written up as a guide, and you are credited on it',
-  build_shot_posted: (n) => `${n.actor_name} posted a photo of ${n.toy_name} working`,
-  build_approved: (n) => `${n.actor_name} approved the working shot for ${n.toy_name}`,
+  build_shot_posted: (n) => `${n.actor_name} posted a photo of ${toy(n)} working`,
+  build_approved: (n) => `${n.actor_name} approved the working shot for ${toy(n)}`,
   // 111: either way round — a maker asking, or the family answering — before a claim.
-  build_question: (n) => `${n.actor_name} wrote about ${n.toy_name} before anyone claimed it`,
+  build_question: (n) => `${n.actor_name} wrote about ${toy(n)} before anyone claimed it`,
   // 117. Signed with the byline they typed, or "A family".
   profile_thanked: (n) => `${n.actor_name} said thanks to you`,
-  print_started: (n) => `${n.actor_name} started printing ${n.toy_name}`,
-  print_ready: (n) => `${n.actor_name} finished printing ${n.toy_name}`,
+  print_started: (n) => `${n.actor_name} started printing ${toy(n)}`,
+  print_ready: (n) => `${n.actor_name} finished printing ${toy(n)}`,
   // 077. For the two publish types the event or story title rides in
   // tutorial_title; for a message, the organisation's name does.
-  org_event_published: (n) => `${n.actor_name} published an event: ${n.tutorial_title}`,
-  org_story_published: (n) => `${n.actor_name} published a story: ${n.tutorial_title}`,
+  org_event_published: (n) => `${n.actor_name} published an event: ${n.tutorial_title ?? 'a new one'}`,
+  org_story_published: (n) => `${n.actor_name} published a story: ${n.tutorial_title ?? 'a new one'}`,
   org_message: (n) =>
     n.actor_name === n.tutorial_title
       ? `${n.actor_name} replied to your message`
-      : `${n.actor_name} messaged ${n.tutorial_title}`,
+      : `${n.actor_name} messaged ${n.tutorial_title ?? 'your organisation'}`,
   // The byline the family typed, or "A family" when they gave none.
   org_thanked: (n) => `${n.actor_name} said thanks to your organisation`,
 }
@@ -2034,6 +2041,8 @@ export interface Profile {
    *  reader of the row has migrated. */
   bio?: string | null
   featured_tutorial_id?: string | null
+  /** 124: the public profile's role line (≤60 chars). */
+  occupation?: string | null
   created_at: string
 }
 
@@ -2142,6 +2151,8 @@ export interface Tutorial {
   builds_count?: number
   /** 092. On /api/tutorials/mine and the public contributor read. */
   view_count?: number
+  /** 094's Did it fit? answers on this guide's prints. On /api/tutorials/mine only: the author's to see. */
+  print_fit_stats?: Pick<PrinterStats, 'fitted' | 'fit_answers'>
   /** Present on saved guides and an organisation's guide rows: the primary
    *  contributor's name, resolved by id on the server. */
   author_name?: string | null
@@ -2345,6 +2356,9 @@ export interface ContributorProfile {
   builds?: number
   badges?: ContributorBadge[]
   created_at?: string
+  /** 124. What they do, in their words; and the active organisation they lead. */
+  occupation?: string | null
+  org?: { id: string; name: string } | null
 }
 
 export interface OrgPublicProfile {
@@ -2518,43 +2532,8 @@ export interface GuideNote {
   created_at: string
 }
 
-/** The switch tags' labels, as the board writes "big button, light press, short hold". */
-export const SWITCH_TARGET_LABEL: Record<'large' | 'small', string> = { large: 'big button', small: 'small target' }
-export const SWITCH_FORCE_LABEL: Record<PressForce, string> = {
-  very_light: 'very light press',
-  light: 'light press',
-  moderate: 'moderate press',
-  full: 'firm press',
-}
-export const SWITCH_HOLD_LABEL: Record<Hold, string> = { moment: 'short hold', second: 'one-second hold', as_long: 'long hold' }
-
-const FORCE_ORDER: PressForce[] = ['very_light', 'light', 'moderate', 'full']
-const HOLD_ORDER: Hold[] = ['moment', 'second', 'as_long']
-
-/**
- * Does a guide's switch suit a child (080)? A suggestion about a toy, never an
- * assessment of the child: true when every tag the guide has is within what
- * the profile says the child can do, null when there is nothing to compare
- * (no tags, or none of the matching answers) — the caller then says nothing.
- *
- * - force: the switch needs at most the force the child can apply
- * - hold: the switch needs a press no longer than the child can hold
- * - target: a small target needs a child who can aim at a small one; a big
- *   button suits anyone who can aim at all ("not reliably" suits neither)
- */
-export function suitsChild(
-  guide: Pick<Tutorial, 'switch_target' | 'switch_force' | 'switch_hold'>,
-  child: Pick<ChildProfile, 'press_force' | 'hold' | 'aim'>
-): boolean | null {
-  const checks: boolean[] = []
-  if (guide.switch_force && child.press_force)
-    checks.push(FORCE_ORDER.indexOf(guide.switch_force) <= FORCE_ORDER.indexOf(child.press_force))
-  if (guide.switch_hold && child.hold)
-    checks.push(HOLD_ORDER.indexOf(guide.switch_hold) <= HOLD_ORDER.indexOf(child.hold))
-  if (guide.switch_target && child.aim)
-    checks.push(child.aim === 'small' || (child.aim === 'large' && guide.switch_target === 'large'))
-  return checks.length ? checks.every(Boolean) : null
-}
+import { SWITCH_TARGET_LABEL, SWITCH_FORCE_LABEL, SWITCH_HOLD_LABEL, suitsChild } from './switch-fit'
+export { SWITCH_TARGET_LABEL, SWITCH_FORCE_LABEL, SWITCH_HOLD_LABEL, suitsChild }
 
 /** "big button, light press, short hold" — the fit line's words, in the board's order. */
 export function switchSummary(guide: Pick<Tutorial, 'switch_target' | 'switch_force' | 'switch_hold'>): string | null {

@@ -163,4 +163,19 @@ describe('098 verified printers', () => {
       .insert({ printer_id: printerId, photo_path: `${printerId}/${crypto.randomUUID()}.png` })
     expect(error).not.toBeNull()
   })
+
+  it('takes a deleted printer’s test-print photos out of storage', async () => {
+    const admin = adminClient()
+    const { data } = await admin
+      .from('printers')
+      .insert({ owner_id: owner.id, name: 'Short-lived', materials: ['PLA'], bed_x: 200, bed_y: 200, bed_z: 200 })
+      .select('id')
+      .single()
+    const id = data!.id as string
+    expect((await app.request(`/api/printers/${id}/test-prints`, photo(owner))).status).toBe(201)
+    expect((await admin.storage.from('printer-test-prints').list(id)).data).toHaveLength(1)
+
+    expect((await app.request(`/api/printers/${id}`, { method: 'DELETE', ...authed(owner) })).status).toBe(200)
+    expect((await admin.storage.from('printer-test-prints').list(id)).data).toEqual([])
+  })
 })

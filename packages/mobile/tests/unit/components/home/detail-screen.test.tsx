@@ -18,6 +18,9 @@ jest.mock('../../../../lib/capabilities', () => ({ useCapabilities: () => ({ cap
 
 const mockPush = jest.fn()
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }))
+const mockRecord = jest.fn()
+jest.mock('../../../../lib/recents', () => ({ recordRecent: (...a: unknown[]) => mockRecord(...a) }))
+
 
 const mockCreateSignedUrl = jest.fn()
 jest.mock('../../../../lib/supabase', () => ({
@@ -163,6 +166,18 @@ describe('DetailScreen', () => {
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/printing', params: { guide: '1' } })
   })
 
+  it('passes on the organisation it was opened to print with', async () => {
+    mockEndpoints({
+      detail: Promise.resolve({
+        ...DETAIL,
+        stl_files: [{ id: 's1', tutorial_id: '1', filename: 'mount.stl', file_url: '1/mount.stl' }],
+      }),
+    })
+    render(<DetailScreen id="1" printWith="o1" />)
+    fireEvent.press(await screen.findByLabelText('Ask someone to print'))
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/printing', params: { guide: '1', printWith: 'o1' } })
+  })
+
   it('asks a maker nearby with this guide already picked', async () => {
     render(<DetailScreen id="1" />)
     fireEvent.press(await screen.findByRole('button', { name: "Can't build it? Ask a maker nearby" }))
@@ -263,5 +278,30 @@ describe('DetailScreen thanks', () => {
     fireEvent.press(screen.getByText('Mark this build done'))
     await waitFor(() => expect(apiClient.post).toHaveBeenCalledWith('/api/tutorials/1/build', {}))
     expect(await screen.findByText('Build logged — nice work')).toBeTruthy()
+  })
+})
+
+describe('DetailScreen recents', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    mockEndpoints()
+  })
+
+  it('records the guide once it has loaded, once per open', async () => {
+    const { rerender } = render(<DetailScreen id="1" />)
+    await screen.findByText('Build a Robot Arm')
+    expect(mockRecord).toHaveBeenCalledTimes(1)
+    expect(mockRecord).toHaveBeenCalledWith({
+      id: '1', kind: 'guide', title: 'Build a Robot Arm', subtitle: 'Guide · 30 min build', badge: 'Easy', href: '/guides/1',
+    })
+    rerender(<DetailScreen id="1" />)
+    expect(mockRecord).toHaveBeenCalledTimes(1)
+  })
+
+  it('records nothing when the guide fails to load', async () => {
+    mockEndpoints({ detail: Promise.reject(new Error('boom')) })
+    render(<DetailScreen id="1" />)
+    await screen.findByText(/couldn.t load/i)
+    expect(mockRecord).not.toHaveBeenCalled()
   })
 })

@@ -34,9 +34,11 @@ import { apiClient } from '../../lib/api-client'
 import { useAuth } from '../../lib/auth-context'
 import { useCapabilities } from '../../lib/capabilities'
 import { doorRoute, sinceYear } from '../../lib/org-profile'
+import { recordRecent } from '../../lib/recents'
 import { theme } from '../../lib/theme'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
 import { Card } from '../ui/Card'
+import { ToBeCompleted } from '../ui/ToBeCompleted'
 import { Button } from '../ui/Button'
 import { Chip } from '../ui/Chip'
 import { TextField } from '../ui/TextField'
@@ -103,6 +105,21 @@ export function OrgProfileScreen({ id }: { id: string }) {
     }
   }, [id, session, reloadKey])
 
+  // "Pick up where you left off": once per open, when the profile has loaded.
+  useEffect(() => {
+    if (!org) return
+    const toys = org.toysShared.length
+    recordRecent({
+      id: org.id,
+      kind: 'organisation',
+      title: org.name,
+      subtitle: toys > 0 ? `Organisation · ${toys} toy${toys === 1 ? '' : 's'}` : 'Organisation',
+      badge: org.verified_at ? 'Verified' : undefined,
+      href: `/toy-library/organisation/${org.id}`,
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [org?.id])
+
   if (loading) {
     return (
       <View style={styles.container}>
@@ -161,7 +178,8 @@ export function OrgProfileScreen({ id }: { id: string }) {
         {org.logo_url ? (
           <Image source={{ uri: org.logo_url }} style={StyleSheet.absoluteFill} accessibilityLabel={`${org.name} logo`} />
         ) : (
-          <Text style={styles.logoInitial}>{org.name.charAt(0).toUpperCase()}</Text>
+          <Text style={styles.logoInitial}>{/* Array.from keeps an emoji whole where charAt would split its surrogate pair. */}
+          {Array.from(org.name)[0]?.toUpperCase()}</Text>
         )}
       </View>
 
@@ -224,8 +242,11 @@ export function OrgProfileScreen({ id }: { id: string }) {
               ))}
               {payments.length > 0 ? <Fact k="Paid back by" v={payments.join(' · ')} /> : null}
               {org.rate_note ? <Text style={styles.quote}>“{org.rate_note}”</Text> : null}
-              {/* PENDING(org-print-preselect): opens the request with no printer chosen; it should preselect this org. */}
-              <Button label="Ask them to print" variant="secondary" onPress={() => router.push('/printing')} />
+              <Button
+                label="Ask them to print"
+                variant="secondary"
+                onPress={() => router.push({ pathname: '/printing', params: { printWith: org.id } })}
+              />
             </View>
           ) : null}
           {recycles ? (
@@ -337,13 +358,16 @@ export function OrgProfileScreen({ id }: { id: string }) {
 
       {place || org.visit_hours || org.service_area || org.website_url ? (
         <Section title="Visit">
-          {/* PENDING(org-visit-map): a map and the street address with access notes — shown only once accepted today, and no maps provider yet. */}
+          {/* PENDING(org-visit-map): a map and the street address with access notes — no maps provider yet, so it says To be completed. */}
           <Card style={styles.visit}>
             {place ? <Fact k="Where" v={place} /> : null}
             {org.visit_hours ? <Fact k="When" v={org.visit_hours} /> : null}
             {org.service_area ? <Fact k="Area" v={org.service_area} /> : null}
             {org.website_url ? <Fact k="Website" v={org.website_url.replace(/^https?:\/\//, '')} /> : null}
             <Text style={styles.rowMeta}>The street address comes once they accept you.</Text>
+            <ToBeCompleted compact subject="Map and address">
+              A map and the street address will appear here once they are set up.
+            </ToBeCompleted>
           </Card>
         </Section>
       ) : null}

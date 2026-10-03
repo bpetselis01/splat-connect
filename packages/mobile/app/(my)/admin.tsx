@@ -44,7 +44,7 @@ export default function MyAdmin() {
       </Text>
       <View style={styles.grid}>
         {CARDS.map((card) => {
-          const n = counts ? counts[card.key] : null
+          const n = counts?.[card.key] ?? null
           return (
             <AnimatedPressable
               key={card.key}

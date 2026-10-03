@@ -1,5 +1,8 @@
 // packages/mobile/tests/unit/components/home/library-screen.test.tsx
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
+import { theme } from '../../../../lib/theme'
+import { ScrollView, FlatList, StyleSheet } from 'react-native'
+import { tabBarClearance } from '../../../../lib/tab-bar-layout'
 import { LibraryScreen } from '../../../../components/home/library-screen'
 
 // Ionicons loads its font asynchronously and setStates after the test ends;
@@ -18,7 +21,8 @@ jest.mock('../../../../lib/api-client', () => ({
   },
 }))
 let mockParams: Record<string, string> = {}
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }), useLocalSearchParams: () => mockParams }))
+const mockPush = jest.fn()
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }), useLocalSearchParams: () => mockParams }))
 // The greeting reads the first name off capabilities.
 jest.mock('../../../../lib/capabilities', () => ({
   useCapabilities: () => ({ caps: { profile: { name: 'Priya Nadarajah' } }, loading: false, refresh: jest.fn() }),
@@ -58,7 +62,40 @@ beforeEach(() => {
   })
 })
 
+
+const clears = (nodes: { props: { contentContainerStyle?: unknown } }[]) =>
+  nodes.some((n) => (StyleSheet.flatten(n.props.contentContainerStyle as object) as { paddingBottom?: number } | undefined)?.paddingBottom === tabBarClearance(0))
+
+
+// The page ground is the background token, and the scroll frame spans the
+// Screen padding so it cannot clip the cards' shadows into a grey rectangle.
+const groundOk = (root: any, frame: { props: { style?: unknown; contentContainerStyle?: unknown } }) => {
+  const ground = StyleSheet.flatten(root.props.style) as { backgroundColor?: string }
+  const f = StyleSheet.flatten(frame.props.style as object) as { marginHorizontal?: number }
+  const c = StyleSheet.flatten(frame.props.contentContainerStyle as object) as { paddingHorizontal?: number }
+  return ground.backgroundColor === theme.colors.background && f.marginHorizontal === -16 && c.paddingHorizontal === 16
+}
+
 describe('LibraryScreen', () => {
+  it('sits on the page ground with a full-width scroll frame', async () => {
+    render(<LibraryScreen />)
+    await screen.findByText('Build a Robot Arm')
+    expect(groundOk(screen.toJSON(), screen.UNSAFE_getByType(FlatList))).toBe(true)
+  })
+
+  it('pads its list so the last row clears the floating tab bar', async () => {
+    render(<LibraryScreen />)
+    await screen.findByText('Build a Robot Arm')
+    expect(clears(screen.UNSAFE_getAllByType(FlatList))).toBe(true)
+  })
+
+  it('carries an organisation to print with into the guide it opens', async () => {
+    mockParams = { printWith: 'o1' }
+    render(<LibraryScreen />)
+    fireEvent.press(await screen.findByText('Build a Robot Arm'))
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/guides/[id]', params: { id: '1', printWith: 'o1' } })
+  })
+
   it('renders tutorial titles from the public tutorials endpoint', async () => {
     render(<LibraryScreen />)
     expect(await screen.findByText('Build a Robot Arm')).toBeTruthy()
@@ -91,6 +128,7 @@ describe('LibraryScreen', () => {
   it('refetches with a difficulty filter when a chip is pressed', async () => {
     render(<LibraryScreen />)
     await screen.findByText('Build a Robot Arm')
+    fireEvent.press(screen.getByRole('button', { name: 'Filters' }))
     fireEvent.press(screen.getByRole('button', { name: 'Hard' }))
     await waitFor(() => expect(mockGet).toHaveBeenCalledWith('/api/public/tutorials?difficulty=hard'))
   })
@@ -98,11 +136,23 @@ describe('LibraryScreen', () => {
   it('clears a difficulty by pressing its chip again', async () => {
     render(<LibraryScreen />)
     await screen.findByText('Build a Robot Arm')
+    fireEvent.press(screen.getByRole('button', { name: 'Filters' }))
     fireEvent.press(screen.getByRole('button', { name: 'Easy' }))
     await waitFor(() => expect(mockGet).toHaveBeenCalledWith('/api/public/tutorials?difficulty=easy'))
     mockGet.mockClear()
     fireEvent.press(screen.getByRole('button', { name: 'Easy' }))
     await waitFor(() => expect(mockGet).toHaveBeenCalledWith('/api/public/tutorials'))
+  })
+
+  it('keeps the filter chips behind one Filters button, search stays out', async () => {
+    render(<LibraryScreen />)
+    await screen.findByText('Build a Robot Arm')
+    expect(screen.queryByRole('button', { name: 'Under 30 min' })).toBeNull()
+    expect(screen.getByPlaceholderText('Search by toy name')).toBeTruthy()
+    fireEvent.press(screen.getByRole('button', { name: 'Filters' }))
+    expect(screen.getByRole('button', { name: 'Under 30 min' })).toBeTruthy()
+    fireEvent.press(screen.getByRole('button', { name: 'Under 30 min' }))
+    expect(screen.getByRole('button', { name: 'Filters, 1 active' })).toBeTruthy()
   })
 
   it('greets by first name over the Guide library title', async () => {
@@ -121,6 +171,7 @@ describe('LibraryScreen', () => {
     })
     render(<LibraryScreen />)
     await screen.findByText('Quick one')
+    fireEvent.press(screen.getByRole('button', { name: 'Filters' }))
     fireEvent.press(screen.getByRole('button', { name: 'Under 30 min' }))
     expect(screen.queryByText('Slow printed one')).toBeNull()
     expect(screen.getByText('Matching guides')).toBeTruthy()
@@ -246,6 +297,7 @@ describe('Suits <child>', () => {
       children: Promise.resolve([{ name: 'Ollie', press_force: 'light', hold: 'second', aim: null }]),
     })
     render(<LibraryScreen />)
+    fireEvent.press(await screen.findByRole('button', { name: 'Filters' }))
     fireEvent.press(await screen.findByLabelText('Suits Ollie · 1'))
     await waitFor(() => expect(screen.queryByText('Firm lever')).toBeNull())
     expect(screen.getByText('Light touch switch')).toBeTruthy()
@@ -257,11 +309,12 @@ describe('Suits <child>', () => {
     mockEndpoints({ tutorials: Promise.resolve([tagged]) })
     render(<LibraryScreen />)
     await screen.findByText('Light touch switch')
+    fireEvent.press(screen.getByRole('button', { name: 'Filters' }))
     expect(screen.queryByText(/Suits/)).toBeNull()
   })
 
   // wizard-mascot-done: the done screen's "See the matches" lands here with suits=1.
-  it('arrives already filtered when opened with suits=1', async () => {
+  it('arrives already filtered, and says so on the Filters button, when opened with suits=1', async () => {
     mockParams = { suits: '1' }
     mockEndpoints({
       tutorials: Promise.resolve([tagged, firm]),
@@ -271,5 +324,6 @@ describe('Suits <child>', () => {
     expect(await screen.findByText('Light touch switch')).toBeTruthy()
     await waitFor(() => expect(screen.queryByText('Firm lever')).toBeNull())
     expect(screen.getByText('Suits Ollie')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Filters, 1 active' })).toBeTruthy()
   })
 })

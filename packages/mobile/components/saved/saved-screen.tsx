@@ -42,7 +42,7 @@ export function SavedScreen() {
     apiClient
       .get<SavedIds>('/api/saves/ids')
       .then((data) => {
-        if (!ignore) setIds(data)
+        if (!ignore) setIds({ ...NONE, ...data })
       })
       .catch((err) => {
         console.error('[SavedScreen] saves fetch failed:', err)

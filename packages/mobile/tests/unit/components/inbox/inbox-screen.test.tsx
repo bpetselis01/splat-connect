@@ -1,5 +1,8 @@
 // packages/mobile/tests/unit/components/inbox/inbox-screen.test.tsx
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
+import { theme } from '../../../../lib/theme'
+import { ScrollView, FlatList, StyleSheet } from 'react-native'
+import { tabBarClearance } from '../../../../lib/tab-bar-layout'
 import type { Notification } from '@splat-connect/types'
 import { InboxScreen } from '../../../../components/inbox/inbox-screen'
 
@@ -15,6 +18,9 @@ jest.mock('../../../../lib/api-client', () => ({
     patch: (...a: unknown[]) => mockPatch(...a),
   },
 }))
+
+const mockInvalidate = jest.fn()
+jest.mock('../../../../lib/capabilities', () => ({ invalidateCapabilities: () => mockInvalidate() }))
 
 const mockPush = jest.fn()
 jest.mock('expo-router', () => {
@@ -75,7 +81,38 @@ beforeEach(() => {
   mockPost.mockResolvedValue(null)
 })
 
+
+const clears = (nodes: { props: { contentContainerStyle?: unknown } }[]) =>
+  nodes.some((n) => (StyleSheet.flatten(n.props.contentContainerStyle as object) as { paddingBottom?: number } | undefined)?.paddingBottom === tabBarClearance(0))
+
+
+// The page ground is the background token, and the scroll frame spans the
+// Screen padding so it cannot clip the cards' shadows into a grey rectangle.
+const groundOk = (root: any, frame: { props: { style?: unknown; contentContainerStyle?: unknown } }) => {
+  const ground = StyleSheet.flatten(root.props.style) as { backgroundColor?: string }
+  const f = StyleSheet.flatten(frame.props.style as object) as { marginHorizontal?: number }
+  const c = StyleSheet.flatten(frame.props.contentContainerStyle as object) as { paddingHorizontal?: number }
+  return ground.backgroundColor === theme.colors.background && f.marginHorizontal === -16 && c.paddingHorizontal === 16
+}
+
 describe('InboxScreen', () => {
+  it('sits on the page ground with a full-width scroll frame', async () => {
+    respond([notification({})])
+    render(<InboxScreen showHeader />)
+    await waitFor(() => expect(screen.UNSAFE_queryAllByType(ScrollView).length).toBeGreaterThan(0))
+    expect(groundOk(screen.toJSON(), screen.UNSAFE_getAllByType(ScrollView)[0])).toBe(true)
+  })
+
+  it('pads its list for the floating tab bar on the tab root, not on the pushed copy', async () => {
+    respond([notification({})])
+    const { unmount } = render(<InboxScreen showHeader />)
+    await waitFor(() => expect(clears(screen.UNSAFE_getAllByType(ScrollView))).toBe(true))
+    unmount()
+    render(<InboxScreen />)
+    await waitFor(() => expect(screen.getAllByText(/Switch car/).length).toBeGreaterThan(0))
+    expect(clears(screen.UNSAFE_getAllByType(ScrollView))).toBe(false)
+  })
+
   it('splits exchanges from notifications, and counts what is unread in each group', async () => {
     respond([
       notification({ id: 'n1', type: 'toy_request', toy_transaction_id: 'tx1' }),
@@ -144,6 +181,8 @@ describe('InboxScreen', () => {
     fireEvent.press(screen.getByLabelText('Switch car with Northside Therapy'))
     await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/api/notifications/n1', { read: true }))
     expect(mockPush).toHaveBeenCalledWith('/exchanges/tx1')
+    // The tab badges and Today card count what the server holds: tell them it moved.
+    await waitFor(() => expect(mockInvalidate).toHaveBeenCalled())
 
     // A build opens its own thread.
     fireEvent.press(screen.getByLabelText('Bubble machine with Eastwood School'))
@@ -213,6 +252,7 @@ describe('InboxScreen', () => {
     )
     // Optimistic: the count clears without waiting for the refetch.
     await waitFor(() => expect(screen.queryByText('2 unread')).toBeNull())
+    await waitFor(() => expect(mockInvalidate).toHaveBeenCalled())
   })
 
   it('offers Accept and Decline on an invite that is still pending', async () => {

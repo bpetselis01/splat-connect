@@ -220,6 +220,15 @@ async function phaseA(P) {
     rate_note: 'Filament at cost, about 6c a gram. Student time is free.',
     recycling_materials: ['PLA', 'PETG'],
     recycling_note: 'Clean offcuts and failed prints only. No supports mixed with other plastics.',
+    // 113: the board's "what we take" block.
+    recycling_machines: ['Filabot EX2 extruder', 'Shredder'],
+    recycling_forms: ['Offcuts', 'Failed prints', 'Spool ends'],
+    recycling_min_kg: 2,
+    recycling_max_kg: 20,
+    recycling_turnaround: 'About two weeks',
+    recycling_gives: 'either',
+    recycling_hours: 'Wednesdays, 5–8 pm',
+    recycling_door: 'Roller door, Building ES',
     // 076: the board's identity line, Visit card and how they like to be paid.
     kind: 'University makerspace',
     visit_hours: 'Wednesdays, 5–8 pm',
@@ -245,6 +254,11 @@ async function phaseA(P) {
     contact_email: CAST.hamish.email,
     recycling_materials: ['PLA'],
     recycling_note: 'Bring it bagged and labelled.',
+    recycling_machines: ['Shredder'],
+    recycling_forms: ['Offcuts'],
+    recycling_min_kg: 2,
+    recycling_gives: 'credit',
+    recycling_hours: 'Tuesday and Thursday mornings',
   })
   const littleSteps = await insert('organizations', {
     name: 'Little Steps Therapy Collective',
@@ -557,6 +571,9 @@ async function phaseA(P) {
     featured_tutorial_id: G.lts,
     bio: 'Mechatronics engineer by day. I started adapting toys for my nephew and now print switches for anyone who asks. Hamilton, NSW.',
   }).eq('id', mei.id)
+  // 124: the occupation line under a name.
+  const JOBS = { priya: 'Primary school teacher', tom: 'Occupational therapist', mei: 'Mechatronics engineer', dan: 'Electrician', sarah: 'Engineering student', hamish: 'Retired cabinet maker' }
+  for (const [key, occupation] of Object.entries(JOBS)) await db.from('profiles').update({ occupation }).eq('id', P[key].id)
   await db.from('profiles').update({ public_showcase: false, bio: 'Electrician. Solder, mostly.' }).eq('id', dan.id)
   await db.from('profiles').update({ public_showcase: true, bio: 'Mum of two in Merewether. Arlo loves anything that lights up.' }).eq('id', priya.id)
 
@@ -567,12 +584,15 @@ async function phaseA(P) {
     env_context: 'Home', palm_width_mm: 58, wrist_circ_mm: 120, hand_dominance: 'Right', sensory_preferences: ['Soft', 'Lightweight'],
     // 079 — the board's questions, the only ones the app asks now.
     working_hand: 'right', press_force: 'light', aim: 'large', hold: 'second', everyday_needs: ['quiet', 'wipeable'],
+    // 120 — play measurements and what he enjoys.
+    enjoys: ['light', 'sound', 'water'], reach_cm: 45, tray_mm: 30,
   })
   await insert('child_profiles', { parent_id: priya.id, name: 'Zara', age: 3, macs_source: 'estimated', bfmf_source: 'estimated', challenges: ['Coordination'], working_hand: 'not_sure' })
   await insert('child_profiles', {
     parent_id: tom.id, name: 'Ruby', age: 8, macs_level: 'II', macs_source: 'manual', hand_involvement: 'bilateral',
     challenges: ['Strength', 'Holding'], grip_type: 'Cylindrical', env_context: 'School', hand_dominance: 'Left', sensory_preferences: ['Textured'],
     working_hand: 'left', press_force: 'moderate', aim: 'small', hold: 'as_long', everyday_needs: ['shared_siblings'],
+    enjoys: ['move', 'calm'], reach_cm: 60, tray_mm: 40,
   })
   log('3 children', arlo)
 
@@ -889,17 +909,38 @@ async function phaseC(P, S, X) {
   await set(X.star, { created_at: at(25), updated_at: at(24) })
   await set(X.spinWithdrawn, { created_at: at(18), updated_at: at(16) })
 
+  const { priya, tom, mei, sarah } = P
+  // 121: the impact map shows a suburb only from three completed hand-overs.
+  // Bubble is one; two older donations from Tom make Lambton the third.
+  for (const daysAgo of [150, 170]) {
+    await insert('toy_transactions', {
+      toy_id: S.T.star, owner_id: tom.id, requester_id: priya.id, type: 'donation', status: 'completed',
+      pickup_suburb: 'Lambton', pickup_state: 'NSW', pickup_postcode: '2299',
+      owner_confirmed_at: at(daysAgo), requester_confirmed_at: at(daysAgo), created_at: at(daysAgo + 5), updated_at: at(daysAgo),
+    })
+  }
+  // 110, 111, 117: a constraint on the page-turner, a maker's question on the open build, a thank-you.
+  await put('toy_idea_constraints', [
+    { idea_id: S.I.active, label: 'Board books only at first', note: 'Thick pages, 6 mm or more.', added_by: priya.id },
+    { idea_id: S.I.active, label: 'One switch press per page', added_by: priya.id },
+  ])
+  await put('build_request_questions', [
+    { transaction_id: X.buildOpen, maker_id: mei.id, sender_id: mei.id, body: 'Does the classroom have a 3.5 mm switch input, or should I add an adapter?' },
+    { transaction_id: X.buildOpen, maker_id: mei.id, sender_id: priya.id, body: 'It does, a standard 3.5 mm socket on the iPad interface.' },
+  ])
+  await put('profile_thanks', { profile_id: tom.id, thanker_id: priya.id, note: 'The bubble machine made Arlo\'s week.', byline: 'Priya', show_note: true })
+
   // Notifications the API has no path to write here: review outcomes come from
   // an admin, whose account this seeder never signs in as.
-  const { priya, tom, mei, sarah } = P
   const n = (recipient_id, type, extra) => ({ recipient_id, type, actor_name: 'SPLAT', tutorial_id: null, tutorial_title: '', toy_transaction_id: null, toy_name: null, idea_id: null, ...extra })
   const { data: rows, error } = await db.from('notifications').insert([
     n(mei.id, 'tutorial_approved', { tutorial_id: S.G.lts, tutorial_title: 'Light Touch Switch' }),
-    n(mei.id, 'tutorial_rejected', { tutorial_id: S.G.sst, tutorial_title: 'Simple Switch Tester' }),
+    // 119: the second line, the reason the writer had.
+    n(mei.id, 'tutorial_rejected', { tutorial_id: S.G.sst, tutorial_title: 'Simple Switch Tester', body: 'The LED resistor value is missing from the parts list.' }),
     n(sarah.id, 'tutorial_submitted', { tutorial_id: S.G.rumble, tutorial_title: 'Rumble Plate Dice Roller', actor_name: 'Mei Chen' }),
     n(priya.id, 'idea_approved', { idea_id: S.I.active }),
     n(priya.id, 'idea_graduated', { idea_id: S.I.graduated }),
-    n(tom.id, 'idea_rejected', { idea_id: S.I.rejected }),
+    n(tom.id, 'idea_rejected', { idea_id: S.I.rejected, body: 'This one needs mains power inside the toy, which we cannot publish safely.' }),
   ]).select('id')
   if (error) throw new Error(`notifications: ${error.message}`)
   rows.forEach((r) => track('notifications', r.id))

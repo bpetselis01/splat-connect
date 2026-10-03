@@ -1,5 +1,6 @@
 // packages/mobile/app/(tabs)/toy-library/_layout.tsx
 import { Stack } from 'expo-router'
+import { useTabFocused } from '../../../lib/use-tab-focused'
 import { stackScreenOptions } from '../../../lib/nav-options'
 
 // A deep link or notification straight to a pushed screen still lands with
@@ -8,6 +9,11 @@ import { stackScreenOptions } from '../../../lib/nav-options'
 export const unstable_settings = { initialRouteName: 'index' }
 
 export default function ToyLibraryStackLayout() {
+  // A hidden tab keeps its stack while another tab is in front, so the next
+  // visit pushed onto the last one. Unmounted while another tab shows, the
+  // stack starts fresh with just the screen opened, and Back falls through to
+  // the tab history (backBehavior="history" in (tabs)/_layout).
+  if (!useTabFocused()) return null
   return (
     <Stack screenOptions={stackScreenOptions}>
       {/*

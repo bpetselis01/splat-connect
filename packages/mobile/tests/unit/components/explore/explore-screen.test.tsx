@@ -36,7 +36,15 @@ beforeEach(() => {
   })
 })
 
+
 describe('ExploreScreen', () => {
+  it('is the pushed place, with no Home title and no Guides or Toys doors', async () => {
+    render(<ExploreScreen />)
+    await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(4))
+    expect(screen.queryByText('Home')).toBeNull()
+    expect(screen.queryByLabelText('Guides')).toBeNull()
+  })
+
   it('fetches every source once on mount', async () => {
     render(<ExploreScreen />)
     await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(4))

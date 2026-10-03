@@ -2,6 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Briefcase } from '@phosphor-icons/react/dist/ssr'
 import { initials } from '@splat-connect/types'
+import { ToBeCompleted } from '@/components/to-be-completed'
 
 export const metadata = { title: 'Our team — SPLAT Connect' }
 
@@ -17,13 +18,7 @@ export const TEAM_MEMBERS: Array<{
   day?: string
   photo: string | null
 }> = [
-  // PENDING(team-page): real names, roles and bios — the placeholders below stay until then.
-  {
-    name: 'TODO: full name',
-    role: 'TODO: role',
-    bio: 'TODO: one or two sentences — what they do here, and what they did before.',
-    photo: null,
-  },
+  // PENDING(team-page): real names, roles and bios. Empty shows To be completed.
 ]
 
 // The board tints each portrait slot and its role pill with the same colour,
@@ -58,6 +53,12 @@ export default function TeamPage() {
         Everyone here does something else for a living, and the bios say so. Every one of us
         also has a contributor profile, because we build toys too.
       </p>
+
+      {!lead && (
+        <ToBeCompleted subject="Who runs SPLAT Connect">
+          The team&apos;s names, roles and bios will appear here once they are supplied.
+        </ToBeCompleted>
+      )}
 
       {lead && (
         <div

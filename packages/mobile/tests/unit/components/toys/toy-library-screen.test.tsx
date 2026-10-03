@@ -1,5 +1,8 @@
 // packages/mobile/tests/unit/components/toys/toy-library-screen.test.tsx
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
+import { theme } from '../../../../lib/theme'
+import { ScrollView, FlatList, StyleSheet } from 'react-native'
+import { tabBarClearance } from '../../../../lib/tab-bar-layout'
 import { ToyLibraryScreen } from '../../../../components/toys/toy-library-screen'
 
 // Ionicons loads its font asynchronously and setStates after the test ends;
@@ -61,6 +64,7 @@ beforeEach(() => {
 describe('ToyLibraryScreen', () => {
   it('asks for a postcode before it can sort nearest first', async () => {
     render(<ToyLibraryScreen />)
+    fireEvent.press(await screen.findByRole('button', { name: 'Filters' }))
     fireEvent.press(await screen.findByText('Add your postcode'))
     expect(mockPush).toHaveBeenCalledWith('/account')
   })
@@ -71,6 +75,7 @@ describe('ToyLibraryScreen', () => {
       Promise.resolve(path === '/api/public/toys?near=2000' ? [toy({ id: 't1', name: 'Bubble machine', km: 3 })] : [])
     )
     render(<ToyLibraryScreen />)
+    fireEvent.press(await screen.findByRole('button', { name: 'Filters' }))
     fireEvent.press(await screen.findByText('Nearest first'))
     expect(await screen.findByText('3 km')).toBeTruthy()
     expect(mockGet).toHaveBeenCalledWith('/api/public/toys?near=2000')
@@ -110,8 +115,8 @@ describe('ToyLibraryScreen', () => {
     render(<ToyLibraryScreen />)
     await screen.findByText('Bubble machine')
     // Words, never a score: 8 is "Good", 5 is "Well-loved".
-    expect(screen.getAllByText('Good', { includeHiddenElements: true })).toHaveLength(2)
-    expect(screen.getAllByText('Well-loved', { includeHiddenElements: true })).toHaveLength(2)
+    expect(screen.getAllByText('Good', { includeHiddenElements: true })).toHaveLength(1)
+    expect(screen.getAllByText('Well-loved', { includeHiddenElements: true })).toHaveLength(1)
     expect(screen.getByText('Jamie')).toBeTruthy()
     expect(screen.getByText('TAD Australia')).toBeTruthy()
     // The number survives for a screen reader, in the row's hint.
@@ -134,7 +139,7 @@ describe('ToyLibraryScreen', () => {
     await screen.findByText('Bubble machine')
     expect(screen.getAllByText('4 available', { includeHiddenElements: true }).length).toBe(1)
     // A person's toy is one unit, so it just says Available.
-    expect(screen.getAllByText('Available', { includeHiddenElements: true }).length).toBeGreaterThan(1)
+    expect(screen.getAllByText('Available', { includeHiddenElements: true }).length).toBeGreaterThan(0)
   })
 
   it('shows the switch-adapted badge only when the toy is adapted', async () => {
@@ -145,7 +150,7 @@ describe('ToyLibraryScreen', () => {
     render(<ToyLibraryScreen />)
     await screen.findByText('Bubble machine')
     // One pill, plus the filter chip of the same name.
-    expect(screen.getAllByText('Switch-adapted', { includeHiddenElements: true }).length).toBe(2)
+    expect(screen.getAllByText('Switch-adapted', { includeHiddenElements: true }).length).toBe(1)
   })
 
   it('filters by the four condition grades', async () => {
@@ -155,6 +160,7 @@ describe('ToyLibraryScreen', () => {
     ])
     render(<ToyLibraryScreen />)
     await screen.findByText('Good toy')
+    fireEvent.press(screen.getByRole('button', { name: 'Filters' }))
     fireEvent.press(screen.getByRole('button', { name: 'Needs a fix' }))
     expect(screen.queryByText('Good toy')).toBeNull()
     expect(screen.getByText('Worn toy')).toBeTruthy()
@@ -170,6 +176,7 @@ describe('ToyLibraryScreen', () => {
     ])
     render(<ToyLibraryScreen />)
     await screen.findByText('Plain toy')
+    fireEvent.press(screen.getByRole('button', { name: 'Filters' }))
     fireEvent.press(screen.getByRole('button', { name: 'Switch-adapted' }))
     expect(screen.queryByText('Plain toy')).toBeNull()
     expect(screen.getByText('Adapted toy')).toBeTruthy()
@@ -210,6 +217,7 @@ describe('ToyLibraryScreen', () => {
     ])
     render(<ToyLibraryScreen />)
     await screen.findByText('Older toy')
+    fireEvent.press(screen.getByRole('button', { name: 'Filters' }))
     fireEvent.press(screen.getByRole('button', { name: 'Available' }))
     expect(screen.queryByText('Gone toy')).toBeNull()
     expect(screen.getByText('Matching toys')).toBeTruthy()
@@ -224,6 +232,16 @@ describe('ToyLibraryScreen', () => {
     mockGet.mockResolvedValue([toy({ id: 't1', name: 'Bubble machine' })])
     fireEvent.press(screen.getByRole('button', { name: 'Try again' }))
     expect(await screen.findByText('Bubble machine')).toBeTruthy()
+  })
+
+  it('keeps the chips behind one Filters button with a count of what is on', async () => {
+    mockGet.mockResolvedValue([toy({ id: 't1', name: 'Bubble machine' })])
+    render(<ToyLibraryScreen />)
+    await screen.findByText('Bubble machine')
+    expect(screen.queryByRole('button', { name: 'Available' })).toBeNull()
+    fireEvent.press(screen.getByRole('button', { name: 'Filters' }))
+    fireEvent.press(screen.getByRole('button', { name: 'Available' }))
+    expect(screen.getByRole('button', { name: 'Filters, 1 active' })).toBeTruthy()
   })
 
   it('shows the count line', async () => {
@@ -241,4 +259,26 @@ describe('ToyLibraryScreen', () => {
     expect(screen.getByText('Bubble machine')).toBeTruthy()
     expect(mockPush).not.toHaveBeenCalledWith(expect.objectContaining({ pathname: '/not-built' }))
   })
+})
+
+const clears = (nodes: { props: { contentContainerStyle?: unknown } }[]) =>
+  nodes.some((n) => (StyleSheet.flatten(n.props.contentContainerStyle as object) as { paddingBottom?: number } | undefined)?.paddingBottom === tabBarClearance(0))
+
+it('pads its list so the last row clears the floating tab bar', () => {
+  render(<ToyLibraryScreen />)
+  expect(clears(screen.UNSAFE_getAllByType(FlatList))).toBe(true)
+})
+
+// The page ground is the background token, and the scroll frame spans the
+// Screen padding so it cannot clip the cards' shadows into a grey rectangle.
+const groundOk = (root: any, frame: { props: { style?: unknown; contentContainerStyle?: unknown } }) => {
+  const ground = StyleSheet.flatten(root.props.style) as { backgroundColor?: string }
+  const f = StyleSheet.flatten(frame.props.style as object) as { marginHorizontal?: number }
+  const c = StyleSheet.flatten(frame.props.contentContainerStyle as object) as { paddingHorizontal?: number }
+  return ground.backgroundColor === theme.colors.background && f.marginHorizontal === -16 && c.paddingHorizontal === 16
+}
+
+it('sits on the page ground with a full-width scroll frame', () => {
+  render(<ToyLibraryScreen />)
+  expect(groundOk(screen.toJSON(), screen.UNSAFE_getByType(FlatList))).toBe(true)
 })

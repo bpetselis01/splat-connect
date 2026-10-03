@@ -1,19 +1,7 @@
 {
- "at": "2026-10-02T06:36:03.125Z",
+ "at": "2026-10-03T12:54:42.084Z",
  "live": "http://localhost:3110",
  "screens": [
-  {
-   "id": "admin_review",
-   "name": "Review queue (live)",
-   "group": "Admin",
-   "route": "/admin/review?selected=bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
-   "findings": [],
-   "role": "admin",
-   "finalUrl": "/admin/review",
-   "explained": [],
-   "boardHeadings": 2,
-   "liveHeadings": 2
-  },
   {
    "id": "home",
    "name": "Home",
@@ -70,16 +58,16 @@
    "finalUrl": "/toy-library",
    "explained": [],
    "boardHeadings": 8,
-   "liveHeadings": 15
+   "liveHeadings": 16
   },
   {
    "id": "toy_public",
    "name": "Toy detail",
    "group": "Public site",
-   "route": "/toy-library/5dfe7aad-c403-407c-8b00-ee01ff588c47",
+   "route": "/toy-library/b05ea619-149c-46c1-a39d-00b9b1474f9d",
    "findings": [],
    "role": "guest",
-   "finalUrl": "/toy-library/5dfe7aad-c403-407c-8b00-ee01ff588c47",
+   "finalUrl": "/toy-library/b05ea619-149c-46c1-a39d-00b9b1474f9d",
    "explained": [
     {
      "type": "missing-section",
@@ -107,10 +95,10 @@
    "id": "toy_request",
    "name": "Request a toy",
    "group": "Public site",
-   "route": "/toy-library/5dfe7aad-c403-407c-8b00-ee01ff588c47/request",
+   "route": "/toy-library/b05ea619-149c-46c1-a39d-00b9b1474f9d/request",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/toy-library/5dfe7aad-c403-407c-8b00-ee01ff588c47/request",
+   "finalUrl": "/toy-library/b05ea619-149c-46c1-a39d-00b9b1474f9d/request",
    "explained": [],
    "boardHeadings": 4,
    "liveHeadings": 4
@@ -381,70 +369,13 @@
    "id": "print_request_new",
    "name": "Request a print",
    "group": "3D Printing",
-   "route": "/printing/requests?guide=43fbe8ef-2662-4fb2-acfd-150e5bd1a166",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board lists cards, live shows none",
-     "board": 9,
-     "live": 0
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"which parts?\" has no counterpart",
-     "board": "which parts?",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"who you asked\" has no counterpart",
-     "board": "who you asked",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h3 \"# h # min\" has no counterpart",
-     "board": "# h # min",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h3 \"# g petg\" has no counterpart",
-     "board": "# g petg",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "page height differs grossly",
-     "board": "1745px",
-     "live": "275px"
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board has cards, live has none",
-     "board": 9,
-     "live": 0
-    },
-    {
-     "type": "missing-section",
-     "severity": "medium",
-     "what": "no inputs on live",
-     "board": 2,
-     "live": 0
-    }
-   ],
+   "route": "/printing/requests?guide=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+   "findings": [],
    "role": "parent",
    "finalUrl": "/printing/requests",
    "explained": [],
    "boardHeadings": 7,
-   "liveHeadings": 1
+   "liveHeadings": 7
   },
   {
    "id": "involved",
@@ -558,10 +489,10 @@
    "id": "build_thread",
    "name": "Build thread",
    "group": "My SPLAT",
-   "route": "/dashboard/exchanges/build/d164e6c2-0f81-4cab-9b7a-829ca198af4a",
+   "route": "/dashboard/exchanges/build/9b33d612-eed1-45ef-924f-b6968858024e",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/dashboard/exchanges/build/d164e6c2-0f81-4cab-9b7a-829ca198af4a",
+   "finalUrl": "/dashboard/exchanges/build/9b33d612-eed1-45ef-924f-b6968858024e",
    "explained": [],
    "boardHeadings": 3,
    "liveHeadings": 3
@@ -580,7 +511,7 @@
      "severity": "high",
      "what": "page height differs grossly",
      "board": "832px",
-     "live": "2535px",
+     "live": "5100px",
      "why": "intended",
      "reason": "Guests see the open challenges listed below the explainer; the board shows only the explainer (an access decision, design-challenges/page.tsx)."
     },
@@ -601,10 +532,10 @@
    "id": "challenge_detail",
    "name": "Challenge detail",
    "group": "Get involved",
-   "route": "/get-involved/design-challenges/0ed8c532-c0b6-4510-8cbc-7995268d6c28",
+   "route": "/get-involved/design-challenges/bce3e87a-2689-4f1a-a37f-e69f8742cb46",
    "findings": [],
    "role": "guest",
-   "finalUrl": "/get-involved/design-challenges/0ed8c532-c0b6-4510-8cbc-7995268d6c28",
+   "finalUrl": "/get-involved/design-challenges/bce3e87a-2689-4f1a-a37f-e69f8742cb46",
    "explained": [],
    "boardHeadings": 4,
    "liveHeadings": 4
@@ -619,7 +550,7 @@
    "finalUrl": "/impact",
    "explained": [],
    "boardHeadings": 22,
-   "liveHeadings": 12
+   "liveHeadings": 13
   },
   {
    "id": "orgs",
@@ -631,60 +562,41 @@
    "finalUrl": "/organizations",
    "explained": [],
    "boardHeadings": 13,
-   "liveHeadings": 11
+   "liveHeadings": 7
   },
   {
    "id": "org_public",
    "name": "Organisation profile",
    "group": "Impact",
-   "route": "/organizations/437f51db-5444-44c2-92ef-e79c3574c1bc/public",
+   "route": "/organizations/91f66758-f2c2-41a2-8356-d04d3ffcf6e3/public",
    "findings": [],
    "role": "guest",
-   "finalUrl": "/organizations/437f51db-5444-44c2-92ef-e79c3574c1bc/public",
+   "finalUrl": "/organizations/91f66758-f2c2-41a2-8356-d04d3ffcf6e3/public",
    "explained": [],
    "boardHeadings": 17,
-   "liveHeadings": 14
+   "liveHeadings": 15
   },
   {
    "id": "contributor",
    "name": "Contributor profile",
    "group": "Impact",
    "route": "/contributors/11111111-1111-1111-1111-111111111111",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"about\" has no counterpart",
-     "board": "about",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"featured\" has no counterpart",
-     "board": "featured",
-     "live": null
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h2 \"from families who built one\" has no counterpart",
-     "board": "from families who built one",
-     "live": null
-    },
-    {
-     "type": "stale-exemption",
-     "severity": "medium",
-     "what": "extra-section \"builds logged\" no longer occurs",
-     "board": null,
-     "live": null
-    }
-   ],
+   "findings": [],
    "role": "guest",
    "finalUrl": "/contributors/11111111-1111-1111-1111-111111111111",
-   "explained": [],
+   "explained": [
+    {
+     "type": "extra-section",
+     "severity": "medium",
+     "what": "live has an extra h3: \"# builds logged\"",
+     "board": null,
+     "live": "# builds logged",
+     "why": "intended",
+     "reason": "The board predates build logging (091); the count of builds sits above the thanks line once a family has marked one done."
+    }
+   ],
    "boardHeadings": 12,
-   "liveHeadings": 5
+   "liveHeadings": 10
   },
   {
    "id": "impact_events",
@@ -721,10 +633,10 @@
    "id": "event_detail",
    "name": "Event detail",
    "group": "Get involved",
-   "route": "/get-involved/events/334dca07-babf-404f-a560-a859436b43fc",
+   "route": "/get-involved/events/1e881351-5bb4-4c12-8b8b-7527bfa0d46d",
    "findings": [],
    "role": "guest",
-   "finalUrl": "/get-involved/events/334dca07-babf-404f-a560-a859436b43fc",
+   "finalUrl": "/get-involved/events/1e881351-5bb4-4c12-8b8b-7527bfa0d46d",
    "explained": [],
    "boardHeadings": 4,
    "liveHeadings": 4
@@ -733,10 +645,10 @@
    "id": "event_register",
    "name": "Register for an event",
    "group": "Get involved",
-   "route": "/get-involved/events/334dca07-babf-404f-a560-a859436b43fc/register",
+   "route": "/get-involved/events/1e881351-5bb4-4c12-8b8b-7527bfa0d46d/register",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/get-involved/events/334dca07-babf-404f-a560-a859436b43fc/register",
+   "finalUrl": "/get-involved/events/1e881351-5bb4-4c12-8b8b-7527bfa0d46d/register",
    "explained": [],
    "boardHeadings": 3,
    "liveHeadings": 3
@@ -758,43 +670,7 @@
    "name": "Book a drop-off",
    "group": "Get involved",
    "route": "/get-involved/recycling/drop-off",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board lists cards, live shows none",
-     "board": 3,
-     "live": 0
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "page height differs grossly",
-     "board": "1733px",
-     "live": "389px"
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board has cards, live has none",
-     "board": 3,
-     "live": 0
-    },
-    {
-     "type": "missing-section",
-     "severity": "medium",
-     "what": "no inputs on live",
-     "board": 8,
-     "live": 0
-    },
-    {
-     "type": "copy",
-     "severity": "medium",
-     "what": "6/7 board paragraphs absent",
-     "board": "tuesday and thursday, #am–#pm · loading door on corella lane — ring th",
-     "live": "one contaminated bag can ruin a whole extruder run, so the declaration"
-    }
-   ],
+   "findings": [],
    "role": "parent",
    "finalUrl": "/get-involved/recycling/drop-off",
    "explained": [],
@@ -818,44 +694,24 @@
    "name": "Stories",
    "group": "About",
    "route": "/about/stories",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board lists cards, live shows none",
-     "board": 7,
-     "live": 0
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "page height differs grossly",
-     "board": "1758px",
-     "live": "580px"
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board has cards, live has none",
-     "board": 7,
-     "live": 0
-    }
-   ],
+   "findings": [],
    "role": "guest",
    "finalUrl": "/about/stories",
    "explained": [],
    "boardHeadings": 9,
-   "liveHeadings": 2
+   "liveHeadings": 6
   },
   {
    "id": "story_detail",
    "name": "Story",
    "group": "About",
-   "route": "/about/stories/[id]",
+   "route": "/about/stories/9720e9a0-d723-4686-854b-5b4d59aeb590",
    "findings": [],
    "role": "guest",
-   "error": "no record for /about/stories/[id] (no link on /about/stories)",
-   "skipped": true
+   "finalUrl": "/about/stories/9720e9a0-d723-4686-854b-5b4d59aeb590",
+   "explained": [],
+   "boardHeadings": 6,
+   "liveHeadings": 6
   },
   {
    "id": "impact_map",
@@ -866,15 +722,6 @@
    "role": "guest",
    "finalUrl": "/impact/map",
    "explained": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "page height differs grossly",
-     "board": "627px",
-     "live": "277px",
-     "why": "intended",
-     "reason": "The board draws its own Not built yet scaffold here; the map is built from story s4 (WB:9958)."
-    },
     {
      "type": "missing-section",
      "severity": "medium",
@@ -917,10 +764,30 @@
      "live": "nullpx",
      "why": "pending",
      "pending": "team-page"
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "set",
+     "live": "none",
+     "why": "pending",
+     "reason": "The board draws team member cards; until names are supplied the page shows the To be completed card (flat, sunken) instead.",
+     "pending": "team-page"
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "card background",
+     "board": "rgb(255,255,255)",
+     "live": null,
+     "why": "pending",
+     "reason": "The board draws team member cards; until names are supplied the page shows the To be completed card (flat, sunken) instead.",
+     "pending": "team-page"
     }
    ],
    "boardHeadings": 10,
-   "liveHeadings": 4
+   "liveHeadings": 3
   },
   {
    "id": "contact",
@@ -973,22 +840,7 @@
    "name": "Inbox",
    "group": "Admin",
    "route": "/admin/inbox",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board lists cards, live shows none",
-     "board": 4,
-     "live": 0
-    },
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "board has cards, live has none",
-     "board": 4,
-     "live": 0
-    }
-   ],
+   "findings": [],
    "role": "admin",
    "finalUrl": "/admin/inbox",
    "explained": [],
@@ -1011,10 +863,10 @@
    "id": "org_event_manage",
    "name": "Manage event",
    "group": "My SPLAT",
-   "route": "/dashboard/org/events/334dca07-babf-404f-a560-a859436b43fc",
+   "route": "/dashboard/org/events/1e881351-5bb4-4c12-8b8b-7527bfa0d46d",
    "findings": [],
    "role": "leader",
-   "finalUrl": "/dashboard/org/events/334dca07-babf-404f-a560-a859436b43fc",
+   "finalUrl": "/dashboard/org/events/1e881351-5bb4-4c12-8b8b-7527bfa0d46d",
    "explained": [],
    "boardHeadings": 3,
    "liveHeadings": 4
@@ -1099,9 +951,60 @@
    "findings": [],
    "role": "guest",
    "finalUrl": "/legal/intended-purpose",
-   "explained": [],
+   "explained": [
+    {
+     "type": "font",
+     "severity": "high",
+     "what": "card title font",
+     "board": "Nunito",
+     "live": "Baloo 2",
+     "why": "pending",
+     "reason": "The page opens with a compact To be completed card until legal review finishes; it is the first card measured, in place of the board's callout.",
+     "pending": "intended-purpose-review"
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "card title size",
+     "board": "16px",
+     "live": "23px",
+     "why": "pending",
+     "reason": "The page opens with a compact To be completed card until legal review finishes; it is the first card measured, in place of the board's callout.",
+     "pending": "intended-purpose-review"
+    },
+    {
+     "type": "radius",
+     "severity": "medium",
+     "what": "card radius",
+     "board": "18px",
+     "live": "24px",
+     "why": "pending",
+     "reason": "The page opens with a compact To be completed card until legal review finishes; it is the first card measured, in place of the board's callout.",
+     "pending": "intended-purpose-review"
+    },
+    {
+     "type": "weight",
+     "severity": "low",
+     "what": "card title weight",
+     "board": 700,
+     "live": 800,
+     "why": "pending",
+     "reason": "The page opens with a compact To be completed card until legal review finishes; it is the first card measured, in place of the board's callout.",
+     "pending": "intended-purpose-review"
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "card background",
+     "board": "rgb(255,240,204)",
+     "live": "rgb(243,241,237)",
+     "why": "pending",
+     "reason": "The page opens with a compact To be completed card until legal review finishes; it is the first card measured, in place of the board's callout.",
+     "pending": "intended-purpose-review"
+    }
+   ],
    "boardHeadings": 6,
-   "liveHeadings": 5
+   "liveHeadings": 6
   },
   {
    "id": "legal_contributor",
@@ -1167,10 +1070,10 @@
    "id": "editor",
    "name": "Tutorial editor",
    "group": "My SPLAT",
-   "route": "/tutorials/f8c58b66-4030-4988-866f-13d19007ca76/edit",
+   "route": "/tutorials/4511f691-c0ce-4602-b33f-a502a9a1bd06/edit",
    "findings": [],
    "role": "contributor",
-   "finalUrl": "/tutorials/f8c58b66-4030-4988-866f-13d19007ca76/edit",
+   "finalUrl": "/tutorials/4511f691-c0ce-4602-b33f-a502a9a1bd06/edit",
    "explained": [],
    "boardHeadings": 5,
    "liveHeadings": 5
@@ -1203,10 +1106,10 @@
    "id": "toy_detail",
    "name": "Toy detail",
    "group": "My SPLAT",
-   "route": "/dashboard/toys/94e4fbd5-b580-4bca-b219-0524b6b3a0e0",
+   "route": "/dashboard/toys/7d120f7b-7af2-4095-929f-e58921039d34",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/dashboard/toys/94e4fbd5-b580-4bca-b219-0524b6b3a0e0",
+   "finalUrl": "/dashboard/toys/7d120f7b-7af2-4095-929f-e58921039d34",
    "explained": [
     {
      "type": "extra-section",
@@ -1231,16 +1134,16 @@
    "finalUrl": "/dashboard/exchanges",
    "explained": [],
    "boardHeadings": 14,
-   "liveHeadings": 8
+   "liveHeadings": 9
   },
   {
    "id": "thread",
    "name": "Exchange thread",
    "group": "My SPLAT",
-   "route": "/dashboard/exchanges/70d5f60e-2afc-4b10-bb10-3d566b8c2587",
+   "route": "/dashboard/exchanges/9618aa10-bf4c-4292-bf17-e107b9b933d4",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/dashboard/exchanges/70d5f60e-2afc-4b10-bb10-3d566b8c2587",
+   "finalUrl": "/dashboard/exchanges/9618aa10-bf4c-4292-bf17-e107b9b933d4",
    "explained": [],
    "boardHeadings": 4,
    "liveHeadings": 3
@@ -1339,27 +1242,19 @@
    "finalUrl": "/dashboard/print-requests",
    "explained": [],
    "boardHeadings": 4,
-   "liveHeadings": 2
+   "liveHeadings": 3
   },
   {
    "id": "print_job",
    "name": "Print job",
    "group": "My SPLAT",
-   "route": "/dashboard/print-requests/f6516f0b-5a65-484d-bc1a-5c9695e204b2",
-   "findings": [
-    {
-     "type": "missing-section",
-     "severity": "high",
-     "what": "h3 \"$#\" has no counterpart",
-     "board": "$#",
-     "live": null
-    }
-   ],
+   "route": "/dashboard/print-requests/b3d76703-b58e-41b8-b818-b5c6d61a1a6e",
+   "findings": [],
    "role": "parent",
-   "finalUrl": "/dashboard/print-requests/f6516f0b-5a65-484d-bc1a-5c9695e204b2",
+   "finalUrl": "/dashboard/print-requests/b3d76703-b58e-41b8-b818-b5c6d61a1a6e",
    "explained": [],
    "boardHeadings": 3,
-   "liveHeadings": 2
+   "liveHeadings": 4
   },
   {
    "id": "print_offer",
@@ -1371,7 +1266,7 @@
    "finalUrl": "/dashboard/printers",
    "explained": [],
    "boardHeadings": 4,
-   "liveHeadings": 2
+   "liveHeadings": 3
   },
   {
    "id": "print_add",
@@ -1401,10 +1296,10 @@
    "id": "child",
    "name": "Child profile",
    "group": "My SPLAT",
-   "route": "/dashboard/child/74a0b0c8-b481-4a86-bf99-dd478e03c6c5",
+   "route": "/dashboard/child/52a736f2-a370-4262-9fdb-9ba223eec1a4",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/dashboard/child/74a0b0c8-b481-4a86-bf99-dd478e03c6c5",
+   "finalUrl": "/dashboard/child/52a736f2-a370-4262-9fdb-9ba223eec1a4",
    "explained": [],
    "boardHeadings": 4,
    "liveHeadings": 6
@@ -1560,6 +1455,18 @@
    "liveHeadings": 14
   },
   {
+   "id": "admin_review",
+   "name": "Review queue (live)",
+   "group": "Admin",
+   "route": "/admin/review?selected=bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+   "findings": [],
+   "role": "admin",
+   "finalUrl": "/admin/review",
+   "explained": [],
+   "boardHeadings": 2,
+   "liveHeadings": 2
+  },
+  {
    "id": "admin_review_detail",
    "name": "Review a tutorial",
    "group": "Admin",
@@ -1599,10 +1506,10 @@
    "id": "admin_idea_detail",
    "name": "Review an idea",
    "group": "Admin",
-   "route": "/admin/ideas/66359cf7-8439-49b4-9c3f-4db2208e9722",
+   "route": "/admin/ideas/c59f4bdf-1b7c-416f-b872-9a950152e188",
    "findings": [],
    "role": "admin",
-   "finalUrl": "/admin/ideas/66359cf7-8439-49b4-9c3f-4db2208e9722",
+   "finalUrl": "/admin/ideas/c59f4bdf-1b7c-416f-b872-9a950152e188",
    "explained": [],
    "boardHeadings": 3,
    "liveHeadings": 3
@@ -1711,7 +1618,38 @@
    "findings": [],
    "role": "guest",
    "finalUrl": "/onboarding/contributor-terms",
-   "explained": [],
+   "explained": [
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "card title size",
+     "board": "16px",
+     "live": "24px",
+     "why": "pending",
+     "reason": "The terms text is replaced by a compact To be completed card until the lawyer-reviewed terms exist.",
+     "pending": "contributor-terms-legal"
+    },
+    {
+     "type": "radius",
+     "severity": "medium",
+     "what": "card radius",
+     "board": "18px",
+     "live": "24px",
+     "why": "pending",
+     "reason": "The terms text is replaced by a compact To be completed card until the lawyer-reviewed terms exist.",
+     "pending": "contributor-terms-legal"
+    },
+    {
+     "type": "colour",
+     "severity": "low",
+     "what": "card background",
+     "board": "rgb(250,249,247)",
+     "live": "rgb(243,241,237)",
+     "why": "pending",
+     "reason": "The terms text is replaced by a compact To be completed card until the lawyer-reviewed terms exist.",
+     "pending": "contributor-terms-legal"
+    }
+   ],
    "boardHeadings": 8,
    "liveHeadings": 3
   },
@@ -1742,16 +1680,12 @@
  ],
  "summary": {
   "screens": 118,
-  "clean": 111,
-  "withFindings": 6,
+  "clean": 118,
+  "withFindings": 0,
   "errored": 0,
-  "skipped": 1,
-  "findings": 23,
-  "explained": 16,
-  "byType": {
-   "missing-section": 21,
-   "stale-exemption": 1,
-   "copy": 1
-  }
+  "skipped": 0,
+  "findings": 0,
+  "explained": 26,
+  "byType": {}
  }
 }

@@ -21,13 +21,17 @@ type Row = OrgConversationSummary & { org_name: string }
 
 export function OrgMessagesScreen() {
   const router = useRouter()
-  const { caps } = useCapabilities()
+  const { caps, loading } = useCapabilities()
   const [rows, setRows] = useState<Row[] | null>(null)
   const orgs = caps?.ledOrgs ?? []
 
   useFocusEffect(
     useCallback(() => {
-      if (!caps) return
+      if (!caps) {
+        // Capabilities that failed to load: show the empty inbox, not skeletons forever.
+        if (!loading) setRows([])
+        return
+      }
       let ignore = false
       Promise.all(
         caps.ledOrgs.map((org) =>
@@ -42,7 +46,7 @@ export function OrgMessagesScreen() {
       return () => {
         ignore = true
       }
-    }, [caps])
+    }, [caps, loading])
   )
 
   if (!rows) {

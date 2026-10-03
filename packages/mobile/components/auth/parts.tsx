@@ -18,6 +18,7 @@ import {
   type TextInputProps,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { theme } from '../../lib/theme'
 import { BackButton } from '../ui/BackButton'
 import { Screen } from '../ui/Screen'
@@ -42,20 +43,23 @@ export function AuthStage({
   back?: boolean
   foot?: boolean
 }) {
+  const insets = useSafeAreaInsets()
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Screen ownHeader>
+        {/* Pinned under the notch, outside the centred column: inside it the
+            button floated to mid-screen on a tall phone. */}
+        {back ? (
+          <View style={styles.back}>
+            <BackButton />
+          </View>
+        ) : null}
         <ScrollView
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scroll}
+          contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + theme.spacing(8) }]}
         >
           <View style={styles.column}>
-            {back ? (
-              <View style={styles.back}>
-                <BackButton />
-              </View>
-            ) : null}
             {children}
             {foot ? <Text style={styles.foot}>No paid tier. Not a medical device.</Text> : null}
           </View>
@@ -67,7 +71,9 @@ export function AuthStage({
 
 export function Heading({ children, center }: { children: string; center?: boolean }) {
   return (
-    <Text accessibilityRole="header" style={[styles.heading, center && styles.center]}>
+    // Capped so a title breaks between words, never inside one, on a 320pt
+    // screen at the largest accessibility size.
+    <Text accessibilityRole="header" maxFontSizeMultiplier={1.6} style={[styles.heading, center && styles.center]}>
       {children}
     </Text>
   )
@@ -112,7 +118,7 @@ export function SocialButtons({ onApple, onGoogle }: { onApple: () => void; onGo
             style={({ pressed }) => [styles.applePlaceholder, pressed && styles.pressed]}
           >
             <Ionicons name="logo-apple" size={20} color="#ffffff" />
-            <Text style={styles.appleText}>Continue with Apple</Text>
+            <Text maxFontSizeMultiplier={1.4} style={styles.appleText}>Continue with Apple</Text>
           </Pressable>
         )
       ) : null}
@@ -124,7 +130,7 @@ export function SocialButtons({ onApple, onGoogle }: { onApple: () => void; onGo
         style={({ pressed }) => [styles.google, pressed && styles.pressed]}
       >
         <Image source={require('../../assets/google-g.png')} style={styles.gLogo} />
-        <Text style={styles.googleText}>Continue with Google</Text>
+        <Text maxFontSizeMultiplier={1.4} style={styles.googleText}>Continue with Google</Text>
       </Pressable>
       <View style={styles.or} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
         <View style={styles.rule} />
@@ -194,7 +200,7 @@ export function CodeInput({ value, onChange }: { value: string; onChange: (code:
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
         >
-          <Text style={styles.codeDigit}>{value[i] ?? ''}</Text>
+          <Text maxFontSizeMultiplier={1.3} style={styles.codeDigit}>{value[i] ?? ''}</Text>
         </View>
       ))}
       <TextInput
@@ -205,8 +211,9 @@ export function CodeInput({ value, onChange }: { value: string; onChange: (code:
         onChangeText={(t) => onChange(t.replace(/\D/g, '').slice(0, 6))}
         keyboardType="number-pad"
         textContentType="oneTimeCode"
-        autoComplete="one-time-code"
-        maxLength={6}
+        autoComplete="sms-otp"
+        // No maxLength: the OS truncates a paste to it before onChangeText
+        // runs, so "123 456" would arrive as "123 45". The handler cuts to six.
         autoFocus
         caretHidden
         style={styles.codeInput}
@@ -290,9 +297,10 @@ export function TextLink({ lead, label, onPress, testID }: { lead?: string; labe
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  scroll: { flexGrow: 1, justifyContent: 'center', paddingBottom: theme.spacing(8) },
+  scroll: { flexGrow: 1, justifyContent: 'center' },
   column: { width: '100%', maxWidth: 440, alignSelf: 'center', gap: theme.spacing(3) },
-  back: { alignSelf: 'flex-start' },
+  // BackButton insets itself 16 on web (for a JS header); Screen already pads.
+  back: { alignSelf: 'flex-start', marginBottom: theme.spacing(2), ...(Platform.OS === 'web' ? { marginLeft: -theme.spacing(4) } : null) },
   center: { textAlign: 'center' },
   heading: { fontFamily: theme.fonts.display, fontSize: 26, lineHeight: 30, color: theme.colors.ink },
   lede: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, lineHeight: 21, color: theme.colors.muted },
@@ -305,7 +313,8 @@ const styles = StyleSheet.create({
   },
   social: { gap: theme.spacing(3) },
   google: {
-    height: CONTROL,
+    minHeight: CONTROL,
+    paddingVertical: theme.spacing(2),
     borderRadius: theme.radii.pill,
     backgroundColor: theme.colors.surface,
     borderWidth: theme.border.hairline,
@@ -319,7 +328,8 @@ const styles = StyleSheet.create({
   pressed: { transform: [{ scale: theme.motion.pressScale }] },
   gLogo: { width: 20, height: 20 },
   applePlaceholder: {
-    height: CONTROL,
+    minHeight: CONTROL,
+    paddingVertical: theme.spacing(2),
     borderRadius: theme.radii.pill,
     backgroundColor: '#000000',
     flexDirection: 'row',

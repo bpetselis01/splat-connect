@@ -16,14 +16,14 @@
  * when real terms land. No placeholder legal language is to be generated here.
  */
 import { ProsePage } from '@/components/prose-page'
+import { ToBeCompleted } from '@/components/to-be-completed'
 
 export default function OrgLeaderTermsPage() {
   return (
     <ProsePage title="Organisation leader terms">
-      <p className="alert alert-warning">
-        These terms have not been written yet. Anything you accept here is not
-        binding, and will be replaced.
-      </p>
+      <ToBeCompleted subject="Organisation leader terms" compact>
+        These terms have not been written yet. Anything you accept here is not binding, and will be replaced.
+      </ToBeCompleted>
     </ProsePage>
   )
 }

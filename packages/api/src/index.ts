@@ -5,10 +5,15 @@
  */
 import { serve } from '@hono/node-server'
 import app from './app.js'
+import { describeSchema, schemaStatus } from './schema-version.js'
 
 const port = parseInt(process.env.API_PORT ?? '3101')
 serve({ fetch: app.fetch, port }, () => {
   console.log(`API running on http://localhost:${port}`)
+  schemaStatus().then((s) => {
+    const warning = describeSchema(s)
+    if (warning) console.error(`[schema] ${warning}`)
+  })
 })
 
 export default app

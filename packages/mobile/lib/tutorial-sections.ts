@@ -136,3 +136,9 @@ export function sectionSummary(section: SectionId, t: TutorialWithDetails): stri
       return t.stl_files.length ? count(t.stl_files.length, 'file') : 'No STL yet'
   }
 }
+
+/** Whole years from an age field; pasted text that is not a number is no age. */
+export function parseYears(text: string): number | null {
+  const n = parseInt(text, 10)
+  return Number.isNaN(n) ? null : n
+}

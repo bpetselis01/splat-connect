@@ -25,6 +25,8 @@ export const stackScreenOptions = {
     fontSize: theme.type.heading,
     color: theme.colors.ink,
   },
-  headerLeft: ({ canGoBack }: { canGoBack?: boolean }) => (canGoBack ? createElement(BackButton) : null),
+  // Always drawn, not only when `canGoBack`: a hidden tab's stack opened by a
+  // Home shortcut holds that one screen, and BackButton goes Home from there.
+  headerLeft: () => createElement(BackButton),
   contentStyle: { backgroundColor: theme.colors.background },
 }

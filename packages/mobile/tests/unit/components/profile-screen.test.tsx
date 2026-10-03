@@ -123,6 +123,15 @@ describe('ProfileScreen', () => {
       await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/api/contributors/me', { pickup_postcode: '2042' }))
     })
 
+    it('saves what you do, the line under your name on your public profile', async () => {
+      mockUseAuth.mockReturnValue(auth({}))
+      mockGet.mockResolvedValue([])
+      mockPatch.mockResolvedValue({})
+      render(<ProfileScreen />)
+      fireEvent(await screen.findByLabelText('What you do'), 'endEditing', { nativeEvent: { text: ' Occupational therapist ' } })
+      await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/api/contributors/me', { occupation: 'Occupational therapist' }))
+    })
+
     it('refuses a postcode that is not four digits, inline', async () => {
       mockUseAuth.mockReturnValue(auth({}))
       render(<ProfileScreen />)

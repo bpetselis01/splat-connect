@@ -20,10 +20,12 @@ const secureStoreAdapter: AuthStorage = {
   removeItem: (key) => SecureStore.deleteItemAsync(key),
 }
 
+// async, so a browser that throws (quota, blocked storage) rejects instead of
+// throwing before the caller's .catch exists.
 const webAdapter: AuthStorage = {
-  getItem: (key) => Promise.resolve(globalThis.localStorage?.getItem(key) ?? null),
-  setItem: (key, value) => { globalThis.localStorage?.setItem(key, value); return Promise.resolve() },
-  removeItem: (key) => { globalThis.localStorage?.removeItem(key); return Promise.resolve() },
+  getItem: async (key) => globalThis.localStorage?.getItem(key) ?? null,
+  setItem: async (key, value) => { globalThis.localStorage?.setItem(key, value) },
+  removeItem: async (key) => { globalThis.localStorage?.removeItem(key) },
 }
 
 export function resolveAuthStorage(os: string = Platform.OS): AuthStorage {

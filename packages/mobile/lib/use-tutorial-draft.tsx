@@ -216,6 +216,20 @@ function useTutorialDraft(id: string): TutorialDraft {
         console.error('[useTutorialDraft] save failed:', err)
         // The optimistic value stays on screen. Reverting it would throw away
         // typing the contributor can still see and would have to redo.
+        // Nor does the server forget it: what failed goes back in the queue
+        // under anything newer, for the next save or flush. Two exceptions: a
+        // Submit is never re-queued, or the next edit would send it unasked,
+        // and neither is a write the server refused as wrong (4xx other than
+        // 408/429), which would only fail every later save the same way.
+        const status = (err as { status?: number }).status
+        const refused = typeof status === 'number' && status >= 400 && status < 500 && status !== 408 && status !== 429
+        if (!refused) {
+          const { status: _submit, ...retry } = fields
+          pendingFields.current = { ...retry, ...pendingFields.current }
+          pendingItems.current = { ...items, ...pendingItems.current }
+          pendingSteps.current ??= steps
+          pendingSafety.current ??= safety
+        }
         setSaveState('error')
         setSaveError(SAVE_ERROR)
       })

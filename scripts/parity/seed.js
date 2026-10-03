@@ -217,6 +217,150 @@ async function seedOrgQueue(db, leaderId, orgId) {
 }
 
 /**
+ * An open build request from someone else — /explore/makers-wanted. The screen
+ * lists requests nobody owns yet, so with none it draws its empty state and the
+ * board's request cards have nothing to compare against.
+ */
+async function seedOpenBuild(db, parentId) {
+  const requester = await someoneElse(db, parentId)
+  const tutorial_id = await approvedGuide(db)
+  if (!requester || !tutorial_id) return
+  const { data } = await db
+    .from('toy_transactions')
+    .insert({
+      type: 'build',
+      status: 'requested',
+      requester_id: requester,
+      tutorial_id,
+      build_brief: 'A big button for a 4-year-old, whenever suits.',
+      requester_suburb: 'Newtown',
+    })
+    .select('id')
+    .single()
+  if (data) undo.push((d) => d.from('toy_transactions').delete().eq('id', data.id))
+}
+
+/**
+ * An organisation that takes plastic. /get-involved/recycling/drop-off lists only
+ * organisations that have said what they accept, and none on the parity
+ * database had, so the form drew its empty state against the board's three
+ * cards and eight fields.
+ */
+async function seedRecyclingOrg(db) {
+  const { data } = await db
+    .from('organizations')
+    .insert({
+      name: 'Parity fixture recycling org',
+      suburb: 'Newtown',
+      state: 'NSW',
+      recycling_materials: ['PLA', 'PETG'],
+      // 113: the detail cards the drop-off form draws.
+      recycling_machines: ['Shredder'],
+      recycling_forms: ['Offcuts', 'Failed prints'],
+      recycling_min_kg: 2,
+      recycling_max_kg: 20,
+      recycling_turnaround: 'About two weeks',
+      recycling_gives: 'either',
+      recycling_hours: 'Weekdays, 9–4',
+    })
+    .select('id')
+    .single()
+  if (data) undo.push((d) => d.from('organizations').delete().eq('id', data.id))
+  return data?.id
+}
+
+/**
+ * Published stories — /about/stories lists only status 'published', and the
+ * table was empty, so the page drew its empty state against the board's cards.
+ * One featured (drawn once, large) and a family, maker and announcement story
+ * for the grid.
+ */
+async function seedStories(db, authorId, orgId) {
+  // org_stories_orgless_is_an_announcement: only an announcement may have no org.
+  const mk = (kind, title, featured = false) => ({
+    kind,
+    org_id: orgId,
+    title: `Parity fixture ${title}`,
+    summary: 'Seeded so the stories page has a card to measure.',
+    body: 'Fixture story body. '.repeat(20),
+    byline: 'A parity fixture',
+    consent_confirmed: true,
+    status: 'published',
+    published_at: new Date().toISOString(),
+    created_by: authorId,
+    // The reading page draws a pull quote only when the story has one.
+    pull_quote: 'Parity fixture quote, set large on the reading page.',
+    pull_quote_by: 'A parity fixture',
+    featured,
+  })
+  const { data } = await db
+    .from('org_stories')
+    .insert([
+      mk('family', 'family story', true),
+      mk('family', 'second family story'),
+      mk('maker', 'maker story'),
+      mk('announcement', 'announcement'),
+    ])
+    .select('id')
+  const ids = (data ?? []).map((r) => r.id)
+  if (ids.length) undo.push((d) => d.from('org_stories').delete().in('id', ids))
+}
+
+/**
+ * Contact-form messages — /admin/inbox. Empty, it draws its empty state against
+ * the board's four cards. One per topic, the safety one first in the queue.
+ */
+async function seedInbox(db) {
+  const mk = (topic) => ({
+    topic,
+    name: 'Parity fixture sender',
+    email: 'parity-fixture@example.com',
+    body: `Seeded ${topic} message so the inbox has a card to measure.`,
+  })
+  const { data } = await db
+    .from('contact_messages')
+    .insert(['safety', 'organisation', 'guide', 'other'].map(mk))
+    .select('id')
+  const ids = (data ?? []).map((r) => r.id)
+  if (ids.length) undo.push((d) => d.from('contact_messages').delete().in('id', ids))
+}
+
+/**
+ * A contributor profile with something to show — /contributors/[id]. The sampled
+ * contributor was whoever sorted first on the list, an account with no bio, no
+ * featured guide and no builds, so About, Featured and "From families who built
+ * one" (and its "builds logged" line) all drew nothing. This sets a bio and a
+ * featured guide on the first account that has an approved guide (restored on
+ * undo) and logs one build of it by the parent.
+ */
+async function seedContributorProfile(db, parentId) {
+  const { data: link } = await db
+    .from('tutorial_contributors')
+    .select('profile_id, tutorial_id, tutorials!inner(status)')
+    .eq('tutorials.status', 'approved')
+    .neq('profile_id', parentId)
+    .limit(1)
+    .maybeSingle()
+  if (!link) return null
+  const { data: before } = await db
+    .from('profiles')
+    .select('bio, featured_tutorial_id')
+    .eq('id', link.profile_id)
+    .single()
+  await db
+    .from('profiles')
+    .update({ bio: 'Parity fixture bio: builds switch-adapted toys on weekends.', featured_tutorial_id: link.tutorial_id })
+    .eq('id', link.profile_id)
+  undo.push((d) => d.from('profiles').update(before).eq('id', link.profile_id))
+  const { error } = await db.from('tutorial_builds').insert({ tutorial_id: link.tutorial_id, profile_id: parentId })
+  if (!error)
+    undo.push((d) =>
+      d.from('tutorial_builds').delete().eq('tutorial_id', link.tutorial_id).eq('profile_id', parentId)
+    )
+  return `/contributors/${link.profile_id}`
+}
+
+/**
  * A family asking the organisation for a toy off its shelf and for a build —
  * /dashboard/organisation/requests. Both cascade with the organisation.
  */
@@ -638,7 +782,7 @@ async function seedOwnedToy(db, parentId) {
 async function seedChild(db, parentId) {
   const { data, error } = await db
     .from('child_profiles')
-    .insert({ parent_id: parentId, age: 7 })
+    .insert({ parent_id: parentId, age: 7, enjoys: ['light', 'sound'], reach_cm: 45, tray_mm: 30 })
     .select('id')
     .single()
   return error ? null : data.id
@@ -728,10 +872,18 @@ async function seed(db, users) {
     await seedOutstandingCost(db, parent.id, ex)
     await seedNotifications(db, parent.id, ex?.id)
     await seedGivenAway(db, parent.id)
+    await seedOpenBuild(db, parent.id)
+    await seedStories(db, parent.id, await seedRecyclingOrg(db))
+    await seedInbox(db)
+    const ctb = await seedContributorProfile(db, parent.id)
+    if (ctb) routes.contributor = ctb
     const build = await seedBuild(db, parent.id)
     if (build) routes.build_thread = `/dashboard/exchanges/build/${build}`
     const child = await seedChild(db, parent.id)
     if (child) routes.child = `/dashboard/child/${child}`
+    // Before the print request: it hangs off any user-owned printer, and a clean
+    // local database has none until this one exists.
+    await seedPrinterWithJobs(db, { owner_id: parent.id }, await someoneElse(db, parent.id))
     const pj = await seedPrintRequest(db, parent.id)
     if (pj) routes.print_job = `/dashboard/print-requests/${pj}`
     const toy = await seedOwnedToy(db, parent.id)
@@ -740,7 +892,6 @@ async function seed(db, users) {
     if (swap) routes.toy_public = `/toy-library/${swap}`
     await seedSavesAndIdeas(db, parent.id)
     await seedReport(db, parent.id)
-    await seedPrinterWithJobs(db, { owner_id: parent.id }, await someoneElse(db, parent.id))
   }
   if (contributor) {
     const t = await seedOwnedTutorial(db, contributor.id)

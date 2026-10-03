@@ -52,12 +52,21 @@ export function MyEventsScreen() {
   const router = useRouter()
   const [rows, setRows] = useState<MyEvent[] | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [loadFailed, setLoadFailed] = useState(false)
 
   const load = useCallback(() => {
     apiClient
       .get<MyEvent[]>('/api/events/mine')
-      .then(setRows)
-      .catch(() => setRows([]))
+      .then((r) => {
+        setError(null)
+        setLoadFailed(false)
+        setRows(r)
+      })
+      .catch(() => {
+        // A failed load is not an empty list; "Nothing booked yet" would be a lie.
+        setRows((prev) => prev ?? [])
+        setLoadFailed(true)
+      })
   }, [])
   useFocusEffect(load)
 
@@ -134,7 +143,12 @@ export function MyEventsScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <ListIntro lead="What you said you are going to, and where any part-print request with the host is up to." />
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        {rows.length === 0 ? (
+        {loadFailed && rows.length === 0 ? (
+          <>
+            <Text style={styles.error}>Could not load your events.</Text>
+            <Button label="Try again" variant="ghost" onPress={load} style={styles.action} />
+          </>
+        ) : rows.length === 0 ? (
           <EmptyState
             icon="calendar-outline"
             title="Nothing booked yet"

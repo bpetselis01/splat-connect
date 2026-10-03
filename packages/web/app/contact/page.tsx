@@ -8,7 +8,9 @@ import {
   GraduationCap,
   MapPin,
 } from '@phosphor-icons/react/dist/ssr'
+import { CONTACT_TIMES } from '@splat-connect/types'
 import { ORG_FACTS } from '@/lib/org-facts'
+import { ToBeCompleted } from '@/components/to-be-completed'
 import { ContactForm } from '@/components/contact-form'
 import { getCapabilities } from '@/lib/capabilities'
 
@@ -42,11 +44,8 @@ const ROUTES: Array<{ t: string; d: string; cta: string; icon: typeof Flag; tint
   },
 ]
 
-const ETAS = [
-  { k: 'Safety report', v: 'Same day', c: 'var(--ok)' },
-  { k: 'Everything else', v: '2 to 5 days', c: 'var(--ink)' },
-  { k: 'Weekends', v: 'Slower', c: 'var(--muted)' },
-]
+const ETA_COLOR = ['var(--ok)', 'var(--ink)', 'var(--muted)']
+const ETAS = CONTACT_TIMES.map((e, i) => ({ ...e, c: ETA_COLOR[i] }))
 
 const ASIDE_CARD = 'rounded-card border border-line bg-surface p-[22px]'
 const ASIDE_LABEL = 'mb-3 block text-xs font-extrabold uppercase tracking-[0.1em] text-muted'
@@ -111,15 +110,27 @@ export default async function ContactPage() {
           </div>
           <div className={ASIDE_CARD} style={{ boxShadow: 'var(--shadow-e1)' }}>
             <span className={`${ASIDE_LABEL} !mb-2.5`}>Other ways</span>
-            <p className="m-0 text-sm leading-[1.7] text-ink">
-              <EnvelopeSimple size={14} weight="bold" className="mr-1.5 inline text-[var(--b600)]" aria-hidden="true" />
-              <a href={`mailto:${ORG_FACTS.contactEmail}`} className="hover:underline">
-                {ORG_FACTS.contactEmail}
-              </a>
-              <br />
-              <MapPin size={14} weight="bold" className="mr-1.5 inline text-[var(--b600)]" aria-hidden="true" />
-              {ORG_FACTS.basedIn}
-            </p>
+            {ORG_FACTS.contactEmail || ORG_FACTS.basedIn ? (
+              <p className="m-0 text-sm leading-[1.7] text-ink">
+                {ORG_FACTS.contactEmail && (
+                  <>
+                    <EnvelopeSimple size={14} weight="bold" className="mr-1.5 inline text-[var(--b600)]" aria-hidden="true" />
+                    <a href={`mailto:${ORG_FACTS.contactEmail}`} className="hover:underline">
+                      {ORG_FACTS.contactEmail}
+                    </a>
+                    <br />
+                  </>
+                )}
+                {ORG_FACTS.basedIn && (
+                  <>
+                    <MapPin size={14} weight="bold" className="mr-1.5 inline text-[var(--b600)]" aria-hidden="true" />
+                    {ORG_FACTS.basedIn}
+                  </>
+                )}
+              </p>
+            ) : (
+              <ToBeCompleted compact>SPLAT&apos;s contact email and base will appear here.</ToBeCompleted>
+            )}
           </div>
         </aside>
       </div>

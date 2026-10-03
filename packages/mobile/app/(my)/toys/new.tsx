@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
+import { apiMessage } from '@splat-connect/types'
 import { apiClient } from '../../../lib/api-client'
 import { useCapabilities } from '../../../lib/capabilities'
 import { theme } from '../../../lib/theme'
@@ -38,13 +39,13 @@ export default function NewToyRoute() {
       // POST /api/toys carries no terms gate — unlike tutorials, a toy has no
       // contributor agreement to accept before it can be created.
       const data = await apiClient.post<{ id: string }>('/api/toys', {
-        name,
+        name: name.trim(),
         condition,
         ...(orgId ? { owner_org_id: orgId, quantity: Number(quantity) } : {}),
       })
       router.replace(`/toys/${data.id}/edit`)
-    } catch {
-      setError('Could not create this toy. Please try again.')
+    } catch (err) {
+      setError(apiMessage(err, 'Could not create this toy. Please try again.'))
     } finally {
       setSubmitting(false)
     }

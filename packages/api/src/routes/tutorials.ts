@@ -53,7 +53,23 @@ tutorials.get('/mine', async (c) => {
     .eq('tutorial_contributors.profile_id', c.get('userId'))
     .order('created_at', { ascending: false })
   if (error) return c.json({ error: error.message }, 500)
-  return c.json(data)
+
+  // Did it fit? goes back to the guide's author (094). The prints are other
+  // people's transactions, so RLS hides them from the caller; the rows above
+  // are already narrowed to guides they wrote, and only counts leave.
+  const { data: answers, error: fitError } = await createAdminClient()
+    .from('toy_transactions')
+    .select('tutorial_id, print_fit')
+    .eq('type', 'print')
+    .in('tutorial_id', data.map((t) => t.id))
+    .not('print_fit', 'is', null)
+  if (fitError) return c.json({ error: fitError.message }, 500)
+  return c.json(
+    data.map((t) => {
+      const mine = (answers ?? []).filter((a) => a.tutorial_id === t.id)
+      return { ...t, print_fit_stats: { fitted: mine.filter((a) => a.print_fit === 'fitted').length, fit_answers: mine.length } }
+    })
+  )
 })
 
 tutorials.get('/:id', async (c) => {
@@ -127,6 +143,7 @@ reviewer:reviewed_by(name), reviewed_for:reviewed_for_org_id(name)'
 
 tutorials.post('/', async (c) => {
   const body = await c.req.json()
+  if (typeof body.title !== 'string' || !body.title.trim()) return c.json({ error: 'Give the guide a title.' }, 400)
   if (!(await hasAcceptedContributorTerms(c.get('token'), c.get('userId')))) {
     return c.json({ error: 'You must accept the contributor terms before contributing' }, 403)
   }

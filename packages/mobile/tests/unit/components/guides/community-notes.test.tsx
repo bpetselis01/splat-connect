@@ -69,3 +69,15 @@ it('adds a photo through the shared picker and posts its path, or shows why it c
   fireEvent.press(screen.getByRole('button', { name: 'Post' }))
   await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/tutorials/g/notes', expect.objectContaining({ photo_path: 'g/notes/a.jpg' })))
 })
+
+it.each([
+  ['a 5xx with a raw database sentence', new Error('API POST /api/tutorials/g/notes failed with status 500: new row violates row-level security policy')],
+  ['a body that was not JSON', new SyntaxError('JSON Parse error: Unexpected character: <')],
+])('shows a sentence to act on, not %s', async (_label, err) => {
+  mockPost.mockRejectedValueOnce(err)
+  render(<CommunityNotes {...props} notes={[]} />)
+  fireEvent.press(screen.getByText('Step 1'))
+  fireEvent.changeText(screen.getByLabelText('Your note'), 'x')
+  fireEvent.press(screen.getByRole('button', { name: 'Post' }))
+  expect(await screen.findByText('Could not post that. Please try again.')).toBeTruthy()
+})

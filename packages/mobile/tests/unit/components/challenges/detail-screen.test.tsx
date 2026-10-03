@@ -18,6 +18,9 @@ jest.mock('../../../../lib/api-client', () => ({
 }))
 
 const mockPush = jest.fn()
+const mockRecord = jest.fn()
+jest.mock('../../../../lib/recents', () => ({ recordRecent: (...a: unknown[]) => mockRecord(...a) }))
+
 // useFocusEffect stands in as a mount-time effect (no navigator in a unit
 // render) — the same substitution exchanges/thread-screen.test.tsx makes, and
 // it is what lets the poll below be driven by fake timers.
@@ -618,5 +621,21 @@ describe('ChallengeDetailScreen', () => {
     fireEvent.press(await screen.findByRole('tab', { name: 'Constraints' }))
     expect(screen.getByText('Turning on a bubble machine during therapy.')).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Add a constraint' })).toBeNull()
+  })
+})
+
+describe('ChallengeDetailScreen recents', () => {
+  it('records the challenge once, with its maker count and pill', async () => {
+    mockGet.mockResolvedValue(detail({ participants: [
+      { profile_id: 'p1', name: 'Sam', role: 'contributor', joined_at: '2026-08-16T03:00:00Z' },
+      { profile_id: 'p2', name: 'Al', role: 'contributor', joined_at: '2026-08-17T03:00:00Z' },
+    ] }))
+    render(<ChallengeDetailScreen id="c1" />)
+    await screen.findByText('A switch a toddler can hit')
+    expect(mockRecord).toHaveBeenCalledTimes(1)
+    expect(mockRecord).toHaveBeenCalledWith({
+      id: 'c1', kind: 'challenge', title: 'A switch a toddler can hit', subtitle: 'Challenge · 2 joined', badge: 'Live',
+      href: '/explore/challenges/c1',
+    })
   })
 })

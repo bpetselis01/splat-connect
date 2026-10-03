@@ -1,5 +1,6 @@
 // packages/mobile/app/(tabs)/explore/_layout.tsx
 import { Stack, useRouter } from 'expo-router'
+import { useTabFocused } from '../../../lib/use-tab-focused'
 import { stackScreenOptions } from '../../../lib/nav-options'
 import { CloseButton } from '../../../components/ui/CloseButton'
 import { BackButton } from '../../../components/ui/BackButton'
@@ -18,6 +19,11 @@ function ExploreBack() {
 }
 
 export default function ExploreStackLayout() {
+  // A hidden tab keeps its stack while another tab is in front, so the next
+  // visit pushed onto the last one. Unmounted while another tab shows, the
+  // stack starts fresh with just the screen opened, and Back falls through to
+  // the tab history (backBehavior="history" in (tabs)/_layout).
+  if (!useTabFocused()) return null
   return (
     <Stack screenOptions={stackScreenOptions}>
       {/* The board draws Explore under the drill-down header, not a tab

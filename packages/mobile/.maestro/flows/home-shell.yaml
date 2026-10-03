@@ -1,0 +1,113 @@
+# Home's native-only behaviour, checked by hand on a real iPhone on 2026-10-03
+# and kept here so it is checked again. Playwright cannot see any of it:
+# react-native-web draws a formSheet as an ordinary push (no grabber, no swipe),
+# reports insets.top = 0, and has no real tab bar. Web-visible Home behaviour is
+# in tests/e2e/home.spec.ts. Edge-swipe-back on a hidden-tab screen opened from
+# Home is a known open gap (the root-stack redesign) and is deliberately absent.
+#
+# Same fixture and env as every-tab-renders.yaml: the provisioned contributor
+# has exactly one unread notification.
+appId: com.splatconnect.mobile
+---
+- clearState
+- runFlow: ../subflows/launch.yaml
+- runFlow:
+    when:
+      visible:
+        id: "welcome-sign-in"
+    commands:
+      - tapOn:
+          id: "welcome-sign-in"
+      - tapOn:
+          id: "email-input"
+      - inputText: ${DEVICE_EMAIL}
+      - tapOn: "Welcome back"
+      - tapOn:
+          id: "password-input"
+      - inputText: ${DEVICE_PASSWORD}
+      - tapOn: "Welcome back"
+      - tapOn:
+          id: "auth-submit"
+      - tapOn:
+          text: "Not Now"
+          optional: true
+
+# Signing in lands on Home; title and Edit share a line.
+- assertVisible:
+    text: "Home"
+- assertVisible:
+    text: "Edit"
+- assertVisible:
+    text: "Guides"
+
+# Today card counts the one unread row; the Inbox tab says the same.
+- assertVisible:
+    text: "1 new message.*"
+- assertVisible:
+    text: "Inbox, 1 unread"
+
+# Request a print opens the finder, not a request form with no guide.
+- tapOn:
+    text: "Request a print"
+- assertVisible:
+    text: "Find a printer"
+- tapOn:
+    text: "Back"
+- assertVisible:
+    text: "Edit"
+
+# A hidden-tab root (Guides): Back goes Home.
+- tapOn:
+    text: "Guides"
+- assertVisible:
+    text: "Guide library"
+- tapOn:
+    text: "Home"
+- assertVisible:
+    text: "Edit"
+
+# Tapping empty space leaves edit mode; the first tap closes an open menu.
+- tapOn:
+    text: "Edit"
+- assertVisible:
+    text: "Done"
+- tapOn:
+    point: "50%,75%"
+- assertVisible:
+    text: "Edit"
+- assertNotVisible:
+    text: "Done"
+
+# The Add a shortcut sheet is a native page sheet: swiping its header down
+# closes it.
+# The Add tile only exists in edit mode.
+- tapOn:
+    text: "Edit"
+- tapOn:
+    text: "Add a shortcut"
+- assertVisible:
+    text: "Search features"
+- swipe:
+    start: "50%,12%"
+    end: "50%,95%"
+- assertNotVisible:
+    text: "Search features"
+- tapOn:
+    text: "Done"
+
+# Reading the notification drops the badge and the Today card together.
+- tapOn:
+    text: "Inbox(, .*)?"
+- tapOn:
+    text: "Notifications"
+- tapOn:
+    text: "Your idea was published as a design challenge"
+- tapOn:
+    text: "Back"
+    optional: true
+- tapOn:
+    text: "Home"
+- assertNotVisible:
+    text: "1 new message.*"
+- assertNotVisible:
+    text: "Inbox, 1 unread"

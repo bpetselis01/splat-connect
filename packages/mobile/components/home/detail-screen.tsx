@@ -3,10 +3,11 @@ import { View, Text, ScrollView, Pressable, Image, StyleSheet } from 'react-nati
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { Tutorial, Part, Tool, StlFile, Recommendation, TutorialStep, TutorialSafetyNote } from '@splat-connect/types'
-import { KIND_LABEL, MATURITY_LABEL, checkedOn, fitLine, formatCents, partsTotalCents, printSettingRows } from '@splat-connect/types'
+import { DIFFICULTY_LABEL, KIND_LABEL, MATURITY_LABEL, checkedOn, fitLine, formatCents, partsTotalCents, printSettingRows } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { supabase } from '../../lib/supabase'
 import { useSaves } from '../../lib/saves'
+import { recordRecent } from '../../lib/recents'
 import { useMyChildren } from '../../lib/my-children'
 import { useCapabilities } from '../../lib/capabilities'
 import { useGuideNotes, noteSummary, pinCountLabel } from '../../lib/guide-notes'
@@ -48,7 +49,7 @@ type TutorialDetail = Tutorial & {
   safety_notes?: TutorialSafetyNote[]
 }
 
-export function DetailScreen({ id }: { id: string }) {
+export function DetailScreen({ id, printWith }: { id: string; printWith?: string }) {
   const router = useRouter()
   const saves = useSaves()
   const children = useMyChildren()
@@ -67,6 +68,20 @@ export function DetailScreen({ id }: { id: string }) {
   const { caps } = useCapabilities()
   const scroller = useRef<ScrollView>(null)
   const [notesY, setNotesY] = useState(0)
+
+  // "Pick up where you left off": once per open, when the guide has loaded.
+  useEffect(() => {
+    if (!tutorial) return
+    recordRecent({
+      id: tutorial.id,
+      kind: 'guide',
+      title: tutorial.title,
+      subtitle: tutorial.build_minutes ? `Guide · ${tutorial.build_minutes} min build` : 'Guide',
+      badge: DIFFICULTY_LABEL[tutorial.difficulty],
+      href: `/guides/${tutorial.id}`,
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tutorial?.id])
 
   useEffect(() => {
     apiClient
@@ -363,7 +378,7 @@ export function DetailScreen({ id }: { id: string }) {
       ) : null}
       {tutorial.stl_files.length > 0 ? (
         <AnimatedPressable
-          onPress={() => router.push({ pathname: '/printing', params: { guide: tutorial.id } })}
+          onPress={() => router.push({ pathname: '/printing', params: printWith ? { guide: tutorial.id, printWith } : { guide: tutorial.id } })}
           accessibilityRole="button"
           accessibilityLabel="Ask someone to print"
           accessibilityHint="Pick up to three printers nearby"

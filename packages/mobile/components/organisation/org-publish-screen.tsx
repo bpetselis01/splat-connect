@@ -10,7 +10,7 @@
 import { useCallback, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
-import { EVENT_KIND_LABEL, isPast, STORY_KIND_LABEL, type OrgEvent, type OrgStory } from '@splat-connect/types'
+import { apiMessage, EVENT_KIND_LABEL, isPast, STORY_KIND_LABEL, type OrgEvent, type OrgStory } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { confirmDestructive } from '../../lib/confirm'
 import { useCapabilities } from '../../lib/capabilities'
@@ -54,8 +54,7 @@ export function OrgPublishScreen() {
       load()
     } catch (err) {
       // A story without consent is refused by the API; its message says so.
-      const detail = err instanceof Error ? /: (.+)$/.exec(err.message)?.[1] : null
-      setError(detail ?? 'That did not save. Check your connection and try again.')
+      setError(apiMessage(err, 'That did not save. Check your connection and try again.'))
     } finally {
       setBusy(false)
     }

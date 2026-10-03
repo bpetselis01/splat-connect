@@ -25,7 +25,9 @@ export default function NotBuiltYet() {
       <View style={styles.tile}>
         <Ionicons name={item.icon} size={40} color={theme.colors.ink} />
       </View>
-      <Text style={styles.pill}>Not built yet</Text>
+      <Text style={styles.pill} maxFontSizeMultiplier={1.4}>
+        Not built yet
+      </Text>
       <Heading center>{item.title}</Heading>
       <Lede center>{item.blurb}</Lede>
       <Button testID="not-built-back" label="Go back" variant="secondary" style={pill} onPress={() => router.back()} />

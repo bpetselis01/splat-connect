@@ -11,6 +11,7 @@
  */
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import { ToBeCompleted } from '@/components/to-be-completed'
 import type { Route } from 'next'
 import Image from 'next/image'
 import {
@@ -529,6 +530,9 @@ export default async function OrgPublicProfilePage({
               <p className="m-0 text-[13px] text-muted">
                 The street address comes once they accept you. Messages go to all their leaders.
               </p>
+              <ToBeCompleted subject="Map and address" compact>
+                A map and the street address will appear here once they are set up.
+              </ToBeCompleted>
             </div>
           )}
 

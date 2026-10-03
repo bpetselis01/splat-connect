@@ -17,15 +17,13 @@ import { BackButton } from '../../../../components/ui/BackButton'
  * entry behind the hub and the native chevron never renders. The editor is also
  * reachable from My tutorials and from a notification, so leaning on whatever
  * happens to be on the stack is exactly what broke: the same screen had a back
- * button or not depending on how you arrived. This names the destination.
+ * button or not depending on how you arrived. This names the fallback destination,
+ * and is labelled Back like every other: back is wherever the editor was opened from.
  */
 function HubBackButton() {
   const router = useRouter()
   return (
-    <BackButton
-      label="My tutorials"
-      onPress={() => (router.canGoBack() ? router.back() : router.replace('/tutorials'))}
-    />
+    <BackButton onPress={() => (router.canGoBack() ? router.back() : router.replace('/tutorials'))} />
   )
 }
 

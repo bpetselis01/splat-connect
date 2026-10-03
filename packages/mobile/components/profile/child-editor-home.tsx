@@ -18,6 +18,7 @@ import { NotMedicalNote } from '../ui/NotMedicalNote'
 import { apiClient } from '../../lib/api-client'
 import { confirmDestructive, notify } from '../../lib/confirm'
 import { theme } from '../../lib/theme'
+import { readAge } from '../../lib/child-age'
 import { useChildProfile } from '../../lib/use-child-profile'
 import { Button } from '../ui/Button'
 import { TextField } from '../ui/TextField'
@@ -91,8 +92,8 @@ export function ChildEditorHome({ childId }: { childId: string }) {
           keyboardType="numeric"
           defaultValue={profile.age != null ? String(profile.age) : ''}
           onChangeText={(v) => {
-            if (v.trim() === '') save({ age: null })
-            else if (!Number.isNaN(Number(v))) save({ age: Number(v) })
+            const age = readAge(v)
+            if (age !== undefined) save({ age })
           }}
         />
       </Section>

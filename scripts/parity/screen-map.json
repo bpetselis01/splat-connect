@@ -468,12 +468,6 @@
   "explained": [
    {
     "type": "missing-section",
-    "match": "page height",
-    "why": "intended",
-    "reason": "The board draws its own Not built yet scaffold here; the map is built from story s4 (WB:9958)."
-   },
-   {
-    "type": "missing-section",
     "match": "no inputs",
     "why": "intended",
     "reason": "The board draws its own Not built yet scaffold here; the map is built from story s4 (WB:9958)."
@@ -499,6 +493,20 @@
     "match": "card title size",
     "why": "pending",
     "pending": "team-page"
+   },
+   {
+    "type": "shadow",
+    "match": "card shadow",
+    "why": "pending",
+    "pending": "team-page",
+    "reason": "The board draws team member cards; until names are supplied the page shows the To be completed card (flat, sunken) instead."
+   },
+   {
+    "type": "colour",
+    "match": "card background",
+    "why": "pending",
+    "pending": "team-page",
+    "reason": "The board draws team member cards; until names are supplied the page shows the To be completed card (flat, sunken) instead."
    }
   ]
  },
@@ -605,7 +613,44 @@
   "name": "What Connect is (and isn\u2019t)",
   "group": "Legal",
   "boardRoute": "/legal/intended-purpose",
-  "route": "/legal/intended-purpose"
+  "route": "/legal/intended-purpose",
+  "explained": [
+   {
+    "type": "font",
+    "match": "card title font",
+    "why": "pending",
+    "pending": "intended-purpose-review",
+    "reason": "The page opens with a compact To be completed card until legal review finishes; it is the first card measured, in place of the board's callout."
+   },
+   {
+    "type": "size",
+    "match": "card title size",
+    "why": "pending",
+    "pending": "intended-purpose-review",
+    "reason": "The page opens with a compact To be completed card until legal review finishes; it is the first card measured, in place of the board's callout."
+   },
+   {
+    "type": "radius",
+    "match": "card radius",
+    "why": "pending",
+    "pending": "intended-purpose-review",
+    "reason": "The page opens with a compact To be completed card until legal review finishes; it is the first card measured, in place of the board's callout."
+   },
+   {
+    "type": "weight",
+    "match": "card title weight",
+    "why": "pending",
+    "pending": "intended-purpose-review",
+    "reason": "The page opens with a compact To be completed card until legal review finishes; it is the first card measured, in place of the board's callout."
+   },
+   {
+    "type": "colour",
+    "match": "card background",
+    "why": "pending",
+    "pending": "intended-purpose-review",
+    "reason": "The page opens with a compact To be completed card until legal review finishes; it is the first card measured, in place of the board's callout."
+   }
+  ]
  },
  {
   "id": "legal_contributor",
@@ -1023,7 +1068,30 @@
   "name": "Contributor terms gate",
   "group": "Auth",
   "boardRoute": "/onboarding/contributor-terms",
-  "route": "/onboarding/contributor-terms"
+  "route": "/onboarding/contributor-terms",
+  "explained": [
+   {
+    "type": "size",
+    "match": "card title size",
+    "why": "pending",
+    "pending": "contributor-terms-legal",
+    "reason": "The terms text is replaced by a compact To be completed card until the lawyer-reviewed terms exist."
+   },
+   {
+    "type": "radius",
+    "match": "card radius",
+    "why": "pending",
+    "pending": "contributor-terms-legal",
+    "reason": "The terms text is replaced by a compact To be completed card until the lawyer-reviewed terms exist."
+   },
+   {
+    "type": "colour",
+    "match": "card background",
+    "why": "pending",
+    "pending": "contributor-terms-legal",
+    "reason": "The terms text is replaced by a compact To be completed card until the lawyer-reviewed terms exist."
+   }
+  ]
  },
  {
   "id": "components",

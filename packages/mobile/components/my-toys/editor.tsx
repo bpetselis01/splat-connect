@@ -177,7 +177,7 @@ export function Editor({ id }: { id: string }) {
     setSaveError(null)
     try {
       const updated = await apiClient.patch<Toy>(`/api/toys/${id}`, {
-        name,
+        name: name.trim(),
         description: description.trim() ? description : null,
         condition,
         switch_adapted: switchAdapted,
@@ -191,7 +191,7 @@ export function Editor({ id }: { id: string }) {
       setToy((prev) => (prev ? { ...prev, ...updated } : updated))
     } catch (err) {
       console.error('[Editor] save details failed:', err)
-      setSaveError('Could not save details. Please try again.')
+      setSaveError(apiMessage(err, 'Could not save details. Please try again.'))
     } finally {
       setSaving(false)
     }
@@ -343,7 +343,7 @@ export function Editor({ id }: { id: string }) {
       // Shares publishError/its ErrorRow below rather than a state of its
       // own — both are Review-step failures on the same toy, and a chip that
       // silently declined to switch otherwise reads as "nothing happened".
-      setPublishError('Could not save that. Please try again.')
+      setPublishError(apiMessage(err, 'Could not save that. Please try again.'))
     }
   }
 
@@ -355,7 +355,7 @@ export function Editor({ id }: { id: string }) {
       setToy((prev) => (prev ? { ...prev, ...updated } : updated))
     } catch (err) {
       console.error('[Editor] publish failed:', err)
-      setPublishError('Could not publish this toy. Please try again.')
+      setPublishError(apiMessage(err, 'Could not publish this toy. Please try again.'))
     } finally {
       setPublishing(false)
     }
@@ -430,10 +430,10 @@ export function Editor({ id }: { id: string }) {
             <Text style={styles.label}>Ages it suits</Text>
             <View style={styles.pairRow}>
               <View style={styles.pairCell}>
-                <TextField placeholder="From age" accessibilityLabel="From age" value={ageMin} onChangeText={setAgeMin} keyboardType="number-pad" maxLength={2} />
+                <TextField placeholder="From age" accessibilityLabel="From age" value={ageMin} onChangeText={(t) => setAgeMin(t.replace(/\D/g, ''))} keyboardType="number-pad" maxLength={2} />
               </View>
               <View style={styles.pairCell}>
-                <TextField placeholder="To age" accessibilityLabel="To age" value={ageMax} onChangeText={setAgeMax} keyboardType="number-pad" maxLength={2} />
+                <TextField placeholder="To age" accessibilityLabel="To age" value={ageMax} onChangeText={(t) => setAgeMax(t.replace(/\D/g, ''))} keyboardType="number-pad" maxLength={2} />
               </View>
             </View>
             <TextField label="Batteries" placeholder="e.g. 2 × AA, included" value={batteries} onChangeText={setBatteries} maxLength={60} />

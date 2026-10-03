@@ -99,7 +99,11 @@ export function SubmitIdeaScreen({ from }: { from?: string } = {}) {
       const uploaded = await pickAndUploadPhoto('/api/upload/idea-photo', '', null)
       if (uploaded) setPhoto(uploaded)
     } catch (err) {
-      setError((err as Error).message)
+      setError(
+        err instanceof Error && /^Photo library/.test(err.message)
+          ? err.message
+          : apiMessage(err, 'Could not upload the photo. Please try again.'),
+      )
     }
   }
 

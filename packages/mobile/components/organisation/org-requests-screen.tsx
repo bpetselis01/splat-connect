@@ -36,7 +36,7 @@ const threadRoute = (t: ToyTransactionSummary) =>
 
 export function OrgRequestsScreen() {
   const router = useRouter()
-  const { caps } = useCapabilities()
+  const { caps, loading } = useCapabilities()
   const [all, setAll] = useState<ToyTransactionSummary[] | null>(null)
   const [tab, setTab] = useState<TabKey | null>(null)
 
@@ -53,7 +53,8 @@ export function OrgRequestsScreen() {
     }, [])
   )
 
-  if (!all || !caps) {
+  // Capabilities that failed to load are not a reason to wait forever: no led organisations, no rows.
+  if (!all || loading) {
     return (
       <Screen>
         <SkeletonRow />
@@ -63,7 +64,7 @@ export function OrgRequestsScreen() {
   }
 
   // The organisation's, not the leader's own; finished records leave the queue.
-  const led = new Set(caps.ledOrgs.map((o) => o.id))
+  const led = new Set((caps?.ledOrgs ?? []).map((o) => o.id))
   const mine = all.filter(
     (t) => t.owner_org_id && led.has(t.owner_org_id) && (t.status === 'requested' || t.status === 'accepted')
   )
@@ -86,7 +87,7 @@ export function OrgRequestsScreen() {
     <Screen>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={styles.lede}>
-          Everything a family can ask of {caps.ledOrgs[0]?.name ?? 'your organisation'}, in one place. A declined
+          Everything a family can ask of {caps?.ledOrgs[0]?.name ?? 'your organisation'}, in one place. A declined
           family is told straight away.
         </Text>
         <View style={styles.tabs} accessibilityRole="radiogroup">

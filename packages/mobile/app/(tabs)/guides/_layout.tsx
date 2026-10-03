@@ -1,5 +1,6 @@
 // packages/mobile/app/(tabs)/guides/_layout.tsx
 import { Stack } from 'expo-router'
+import { useTabFocused } from '../../../lib/use-tab-focused'
 import { stackScreenOptions } from '../../../lib/nav-options'
 import { CloseButton } from '../../../components/ui/CloseButton'
 
@@ -9,6 +10,11 @@ import { CloseButton } from '../../../components/ui/CloseButton'
 export const unstable_settings = { initialRouteName: 'index' }
 
 export default function GuidesStackLayout() {
+  // A hidden tab keeps its stack while another tab is in front, so the next
+  // visit pushed onto the last one. Unmounted while another tab shows, the
+  // stack starts fresh with just the screen opened, and Back falls through to
+  // the tab history (backBehavior="history" in (tabs)/_layout).
+  if (!useTabFocused()) return null
   return (
     <Stack screenOptions={stackScreenOptions}>
       {/*

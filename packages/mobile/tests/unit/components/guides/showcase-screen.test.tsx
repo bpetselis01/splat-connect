@@ -1,5 +1,5 @@
 // packages/mobile/tests/unit/components/guides/showcase-screen.test.tsx
-import { render, screen } from '@testing-library/react-native'
+import { fireEvent, render, screen } from '@testing-library/react-native'
 import { ShowcaseScreen } from '../../../../components/guides/showcase-screen'
 
 // Ionicons loads its font asynchronously and setStates after the test ends;
@@ -9,7 +9,8 @@ jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 
 const mockGet = jest.fn()
 jest.mock('../../../../lib/api-client', () => ({ apiClient: { get: (...a: unknown[]) => mockGet(...a) } }))
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }))
+const mockPush = jest.fn()
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }))
 let mockUser: string | null = null
 jest.mock('../../../../lib/auth-context', () => ({ useAuth: () => ({ session: mockUser ? { user: { id: mockUser } } : null }) }))
 
@@ -111,5 +112,14 @@ describe('ShowcaseScreen', () => {
     render(<ShowcaseScreen kind="person" id="c1" />)
     expect(await screen.findByText('Thanked 1 time')).toBeTruthy()
     expect(screen.queryByText(/^Joined/)).toBeNull()
+    expect(screen.queryByLabelText(/^Organisation:/)).toBeNull()
+  })
+
+  it('says what they do and chips the organisation they lead', async () => {
+    mockGet.mockResolvedValue({ ...PERSON, occupation: 'Occupational therapist', org: { id: 'o1', name: 'TAD Australia' } })
+    render(<ShowcaseScreen kind="person" id="c1" />)
+    expect(await screen.findByText('Occupational therapist')).toBeTruthy()
+    fireEvent.press(screen.getByLabelText('Organisation: TAD Australia'))
+    expect(mockPush).toHaveBeenCalledWith('/guides/organisation/o1')
   })
 })

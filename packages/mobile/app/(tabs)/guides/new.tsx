@@ -6,9 +6,10 @@ import { randomUUID } from 'expo-crypto'
 import * as DocumentPicker from 'expo-document-picker'
 import * as ImagePicker from 'expo-image-picker'
 import type { Difficulty, PdfImportDraft, TutorialKind } from '@splat-connect/types'
-import { KIND_LABEL, SWITCH_TARGET_LABEL, createGuideFromPdfDraft, pdfDraftChecklist, PDF_IMPORT_MAX_BYTES, PDF_IMPORT_MAX_LABEL } from '@splat-connect/types'
+import { apiMessage, KIND_LABEL, SWITCH_TARGET_LABEL, createGuideFromPdfDraft, pdfDraftChecklist, PDF_IMPORT_MAX_BYTES, PDF_IMPORT_MAX_LABEL } from '@splat-connect/types'
 import { apiClient } from '../../../lib/api-client'
 import { uploadFile } from '../../../lib/upload'
+import { parseYears } from '../../../lib/tutorial-sections'
 import { useAuth } from '../../../lib/auth-context'
 import { theme } from '../../../lib/theme'
 import { Screen } from '../../../components/ui/Screen'
@@ -75,9 +76,7 @@ export default function NewGuideRoute() {
       setKind(draft.kind)
       setDifficulty(draft.difficulty ?? 'easy')
     } catch (err) {
-      // uploadFile ends its message with the API's own sentence, when it sent one.
-      const detail = err instanceof Error ? /status \d+: (.+)$/.exec(err.message)?.[1] : null
-      setError(detail ?? 'Could not read this PDF. Please try again.')
+      setError(apiMessage(err, 'Could not read this PDF. Please try again.'))
     } finally {
       setReading(false)
     }
@@ -96,8 +95,10 @@ export default function NewGuideRoute() {
   async function applyExtras(id: string) {
     const fields: Record<string, unknown> = {}
     if (switchTarget) fields.switch_target = switchTarget
-    if (ageMin !== '') fields.age_min = Number(ageMin)
-    if (ageMax !== '') fields.age_max = Number(ageMax)
+    const min = parseYears(ageMin)
+    const max = parseYears(ageMax)
+    if (min !== null) fields.age_min = min
+    if (max !== null) fields.age_max = max
     if (!cover && !Object.keys(fields).length) return
     try {
       const { updated_at } = await apiClient.get<{ updated_at: string }>(`/api/tutorials/${id}`)

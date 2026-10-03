@@ -33,12 +33,14 @@ import printers from './routes/printers.js'
 import events from './routes/events.js'
 import reports from './routes/reports.js'
 import me from './routes/me.js'
+import { schemaStatus } from './schema-version.js'
 
 const app = new Hono()
 
 app.use('*', cors({ origin: process.env.CORS_ORIGIN ?? `http://localhost:${process.env.PORT ?? '3100'}` }))
 
-app.get('/health', (c) => c.json({ status: 'ok' }))
+// The migration versions stay off a public production /health (they say which schema, and whether it is behind); boot still logs them.
+app.get('/health', async (c) => c.json(process.env.NODE_ENV === 'production' ? { status: 'ok' } : { status: 'ok', schema: await schemaStatus() }))
 
 // Public routes — no auth required
 app.route('/api/public', publicRoutes)

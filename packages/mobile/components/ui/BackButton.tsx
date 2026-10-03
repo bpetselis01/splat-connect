@@ -16,7 +16,7 @@ export function BackButton({
   label = 'Back',
   icon = 'arrow-back',
 }: {
-  /** Defaults to router.back(). */
+  /** Defaults to router.back(), or Home when there is nothing behind it. */
   onPress?: () => void
   label?: string
   icon?: IconName
@@ -24,7 +24,7 @@ export function BackButton({
   const router = useRouter()
   return (
     <Pressable
-      onPress={onPress ?? (() => router.back())}
+      onPress={onPress ?? (() => (router.canGoBack() ? router.back() : router.replace('/home')))}
       accessibilityRole="button"
       accessibilityLabel={label}
       hitSlop={4}

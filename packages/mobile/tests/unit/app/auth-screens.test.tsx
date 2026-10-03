@@ -5,10 +5,13 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react-nativ
 import Welcome from '../../../app/(auth)/welcome'
 import CreateAccount from '../../../app/(auth)/create-account'
 import SignIn from '../../../app/(auth)/sign-in'
+import CodeSignIn from '../../../app/(auth)/code-sign-in'
 import Verify from '../../../app/(auth)/verify'
 import ForgotPassword from '../../../app/(auth)/forgot-password'
 import TermsGate from '../../../app/terms'
 import NotBuilt from '../../../app/not-built'
+import { toProblem } from '../../../lib/auth-errors'
+import { BLANK, EMAILS, NAMES, PASSWORDS } from '../../special-strings'
 
 const mockPush = jest.fn()
 const mockReplace = jest.fn()
@@ -118,6 +121,74 @@ describe('Create account', () => {
   })
 })
 
+// Each special string either reaches Supabase exactly (trimmed only where the
+// screen trims) or comes back as a sentence that names the field to fix.
+describe('Create account, special characters', () => {
+  async function create(name: string, email: string, password: string) {
+    render(<CreateAccount />)
+    fireEvent.changeText(screen.getByLabelText('Your name'), name)
+    fireEvent.changeText(screen.getByLabelText('Email'), email)
+    fireEvent.changeText(screen.getByLabelText('Password'), password)
+    fireEvent.press(screen.getByTestId('accept-contributor-terms'))
+    fireEvent.press(screen.getByTestId('auth-submit'))
+  }
+  const answer = (server?: { status: number; code: string; message: string }) =>
+    server ? { problem: toProblem(server) } : ok
+
+  it.each(NAMES.map((c) => [c.label, c]))('name: %s', async (_l, c) => {
+    mockAuth.signUp.mockResolvedValue(ok)
+    await create(c.value, 'sam@example.com', 'secret1')
+    await waitFor(() => expect(mockAuth.signUp).toHaveBeenCalledWith('sam@example.com', 'secret1', c.value.trim()))
+  })
+
+  it.each(EMAILS.map((c) => [c.label, c]))('email: %s', async (_l, c) => {
+    mockAuth.signUp.mockResolvedValue(answer(c.server))
+    await create('Sam', c.value, 'secret1')
+    await waitFor(() => expect(mockAuth.signUp).toHaveBeenCalledWith(c.value.trim(), 'secret1', 'Sam'))
+    if (c.server) expect(await screen.findByText("That email address doesn't look right. Check it for typos and try again.")).toBeTruthy()
+    else expect(mockPush).toHaveBeenCalledWith({ pathname: '/verify', params: { email: c.value.trim(), type: 'signup' } })
+  })
+
+  it.each(PASSWORDS.map((c) => [c.label, c]))('password: %s', async (_l, c) => {
+    mockAuth.signUp.mockResolvedValue(answer(c.server))
+    await create('Sam', 'sam@example.com', c.value)
+    await waitFor(() => expect(mockAuth.signUp).toHaveBeenCalledWith('sam@example.com', c.value, 'Sam'))
+    if (c.server) expect(await screen.findByText('Use 72 characters or fewer for the password.')).toBeTruthy()
+    else expect(mockPush).toHaveBeenCalled()
+  })
+
+  it.each([['name', BLANK, 'sam@example.com'], ['email', 'Sam', BLANK]])('a whitespace-only %s is refused on the screen', async (_l, name, email) => {
+    await create(name, email, 'secret1')
+    expect(screen.getByText('Add your name and email.')).toBeTruthy()
+    expect(mockAuth.signUp).not.toHaveBeenCalled()
+  })
+})
+
+describe('Sign in, special characters', () => {
+  it.each([...EMAILS, ...PASSWORDS].map((c) => [c.label, c]))('%s reaches Supabase as typed, or says why not', async (_l, c) => {
+    const isEmail = EMAILS.includes(c)
+    const email = isEmail ? c.value : 'sam@example.com'
+    const password = isEmail ? 'secret1' : c.value
+    // Supabase answers a malformed email at sign-in as a plain credentials miss.
+    mockAuth.signIn.mockResolvedValue({ problem: toProblem({ status: 400, code: 'invalid_credentials', message: 'Invalid login credentials' }) })
+    render(<SignIn />)
+    fireEvent.changeText(screen.getByLabelText('Email'), email)
+    fireEvent.changeText(screen.getByLabelText('Password'), password)
+    fireEvent.press(screen.getByTestId('auth-submit'))
+    await waitFor(() => expect(mockAuth.signIn).toHaveBeenCalledWith(email.trim(), password))
+    expect(await screen.findByText("That email and password don't match.")).toBeTruthy()
+  })
+
+  it('refuses a whitespace-only email on the screen', () => {
+    render(<SignIn />)
+    fireEvent.changeText(screen.getByLabelText('Email'), BLANK)
+    fireEvent.changeText(screen.getByLabelText('Password'), 'secret1')
+    fireEvent.press(screen.getByTestId('auth-submit'))
+    expect(screen.getByText('Add your email and password.')).toBeTruthy()
+    expect(mockAuth.signIn).not.toHaveBeenCalled()
+  })
+})
+
 describe('Sign in', () => {
   it('clears the password, not the email, on bad credentials', async () => {
     mockAuth.signIn.mockResolvedValue({ problem: { kind: 'credentials', message: "That email and password don't match." } })
@@ -141,19 +212,24 @@ describe('Sign in', () => {
     )
   })
 
-  it('emails a code and offers Create when no account uses the email', async () => {
-    mockAuth.sendSignInCode.mockResolvedValue({ problem: { kind: 'no-account', message: 'No account uses that email.' } })
-    mockParams = { email: 'new@example.com' }
+  it('opens the code screen carrying the typed email, with no request', () => {
     render(<SignIn />)
+    fireEvent.changeText(screen.getByLabelText('Email'), ' sam@example.com ')
     fireEvent.press(screen.getByTestId('email-code'))
-    fireEvent.press(await screen.findByText('Create an account', { exact: true }))
-    expect(mockAuth.sendSignInCode).toHaveBeenCalledWith('new@example.com')
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/code-sign-in', params: { email: 'sam@example.com' } })
+    expect(mockAuth.sendSignInCode).not.toHaveBeenCalled()
   })
 
-  it('asks for the email before sending a code', () => {
+  it('opens the code screen even with no email typed, and shows no error', () => {
     render(<SignIn />)
     fireEvent.press(screen.getByTestId('email-code'))
-    expect(screen.getByText('Type your email first, then we can send a code.')).toBeTruthy()
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/code-sign-in', params: { email: '' } })
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+
+  it('labels the code link as navigation', () => {
+    render(<SignIn />)
+    expect(screen.getByText('Email me a sign-in code ›')).toBeTruthy()
   })
 
   it('carries the email to Forgot password', () => {
@@ -178,6 +254,98 @@ describe('Sign in', () => {
   })
 })
 
+describe('Code sign-in', () => {
+  const type = (v: string) => fireEvent.changeText(screen.getByLabelText('Email'), v)
+  const send = () => fireEvent.press(screen.getByTestId('auth-submit'))
+
+  it('shows the heading and lede, and opens the keyboard', () => {
+    render(<CodeSignIn />)
+    expect(screen.getByText('Sign in with a code')).toBeTruthy()
+    expect(screen.getByText("We'll email you a 6-digit code. No password needed.")).toBeTruthy()
+    expect(screen.getByLabelText('Email').props.autoFocus).toBe(true)
+  })
+
+  it('is prefilled from the email param', () => {
+    mockParams = { email: 'sam@example.com' }
+    render(<CodeSignIn />)
+    expect(screen.getByLabelText('Email').props.value).toBe('sam@example.com')
+  })
+
+  it('sends the code and moves to the code screen', async () => {
+    mockAuth.sendSignInCode.mockResolvedValue(ok)
+    render(<CodeSignIn />)
+    type(' sam@example.com ')
+    send()
+    await waitFor(() =>
+      expect(mockPush).toHaveBeenCalledWith({ pathname: '/verify', params: { email: 'sam@example.com', type: 'email' } })
+    )
+    expect(mockAuth.sendSignInCode).toHaveBeenCalledWith('sam@example.com')
+  })
+
+  it('sends from the keyboard return key too', async () => {
+    mockAuth.sendSignInCode.mockResolvedValue(ok)
+    render(<CodeSignIn />)
+    type('sam@example.com')
+    fireEvent(screen.getByLabelText('Email'), 'submitEditing')
+    await waitFor(() => expect(mockAuth.sendSignInCode).toHaveBeenCalledWith('sam@example.com'))
+  })
+
+  it.each([
+    ['empty', '', 'Add your email.'],
+    ['whitespace only', BLANK, 'Add your email.'],
+    ['no at sign', 'sam.example.com', "That email address doesn't look right."],
+    ['no domain dot', 'sam@example', "That email address doesn't look right."],
+    ['inner space', 'sam smith@example.com', "That email address doesn't look right."],
+  ])('%s: says so and sends nothing', (_l, value, message) => {
+    render(<CodeSignIn />)
+    type(value)
+    send()
+    expect(screen.getByText(message)).toBeTruthy()
+    expect(mockAuth.sendSignInCode).not.toHaveBeenCalled()
+    expect(mockPush).not.toHaveBeenCalled()
+  })
+
+  it('offers Create an account when no account uses the email', async () => {
+    mockAuth.sendSignInCode.mockResolvedValue({ problem: toProblem({ status: 422, code: 'otp_disabled', message: 'Signups not allowed for otp' }) })
+    mockParams = { email: 'new@example.com' }
+    render(<CodeSignIn />)
+    send()
+    expect(await screen.findByText('No account uses that email.')).toBeTruthy()
+    fireEvent.press(screen.getByText('Create an account', { exact: true }))
+    expect(mockReplace).toHaveBeenCalledWith('/create-account')
+    expect(mockPush).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['rate limit', 'rate-limited', 'Too many tries. Wait a minute and try again.'],
+    ['offline', 'offline', "You're offline. Check your connection and try again."],
+  ])('shows the %s problem and stays put', async (_l, kind, message) => {
+    mockAuth.sendSignInCode.mockResolvedValue({ problem: { kind, message } })
+    mockParams = { email: 'sam@example.com' }
+    render(<CodeSignIn />)
+    send()
+    expect(await screen.findByText(message)).toBeTruthy()
+    expect(mockPush).not.toHaveBeenCalled()
+  })
+
+  it('goes back to password sign-in with the email', () => {
+    render(<CodeSignIn />)
+    type(' sam@example.com ')
+    fireEvent.press(screen.getByText('Use a password instead'))
+    expect(mockReplace).toHaveBeenCalledWith({ pathname: '/sign-in', params: { email: 'sam@example.com' } })
+  })
+
+  it.each(EMAILS.map((c) => [c.label, c]))('email: %s reaches Supabase trimmed, or says why not', async (_l, c) => {
+    mockAuth.sendSignInCode.mockResolvedValue(c.server ? { problem: toProblem(c.server) } : ok)
+    render(<CodeSignIn />)
+    type(c.value)
+    send()
+    await waitFor(() => expect(mockAuth.sendSignInCode).toHaveBeenCalledWith(c.value.trim()))
+    if (c.server) expect(await screen.findByText(/That email address doesn't look right/)).toBeTruthy()
+    else expect(mockPush).toHaveBeenCalledWith({ pathname: '/verify', params: { email: c.value.trim(), type: 'email' } })
+  })
+})
+
 describe('Verify', () => {
   it('checks the code on the sixth digit and clears it when wrong', async () => {
     mockParams = { email: 'sam@example.com', type: 'email' }
@@ -187,6 +355,30 @@ describe('Verify', () => {
     await waitFor(() => expect(mockAuth.verifyCode).toHaveBeenCalledWith('sam@example.com', '123456', 'email'))
     expect(await screen.findByText(/That code didn't work/)).toBeTruthy()
     expect(screen.getByTestId('code-input').props.value).toBe('')
+  })
+
+  it('asks the OS for the emailed code and opens the keyboard', () => {
+    mockParams = { email: 'sam@example.com', type: 'email' }
+    render(<Verify />)
+    const input = screen.getByTestId('code-input')
+    expect(input.props.textContentType).toBe('oneTimeCode')
+    expect(input.props.autoComplete).toBe('sms-otp')
+    expect(input.props.autoFocus).toBe(true)
+  })
+
+  it('lets a code sign-in change the email', () => {
+    mockParams = { email: 'sam@example.com', type: 'email' }
+    render(<Verify />)
+    fireEvent.press(screen.getByText('Wrong email? Change it'))
+    expect(mockReplace).toHaveBeenCalledWith({ pathname: '/code-sign-in', params: { email: 'sam@example.com' } })
+  })
+
+  it('keeps going back for a sign-up code, with no Change link to the code screen', () => {
+    mockParams = { email: 'sam@example.com', type: 'signup' }
+    render(<Verify />)
+    expect(screen.queryByText('Wrong email? Change it')).toBeNull()
+    fireEvent.press(screen.getByText('Use a different email'))
+    expect(mockBack).toHaveBeenCalled()
   })
 })
 
@@ -230,10 +422,10 @@ describe('Terms gate', () => {
     expect(screen.queryByLabelText('Your name')).toBeNull()
   })
 
-  it('sends an accepted account on to Guides', () => {
+  it('sends an accepted account on to Home', () => {
     mockAuth.hasContributorTerms = true
     render(<TermsGate />)
-    expect(mockRedirect).toHaveBeenCalledWith('/guides')
+    expect(mockRedirect).toHaveBeenCalledWith('/home')
   })
 })
 

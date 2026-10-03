@@ -181,11 +181,22 @@ describe('GET /mine', () => {
         }),
       }),
     })
+    // The did-it-fit counts come from the admin client: the prints are other people's rows.
+    mockAdminClient.from.mockReturnValue({
+      select: () => ({
+        eq: () => ({
+          in: () => ({
+            not: () => ({ data: [{ tutorial_id: '1', print_fit: 'fitted' }, { tutorial_id: '1', print_fit: 'tight' }], error: null }),
+          }),
+        }),
+      }),
+    })
     const res = await makeApp().request('/mine')
     expect(res.status).toBe(200)
     const body = await res.json() as any
     expect(body).toHaveLength(1)
     expect(body[0].title).toBe('Mine')
+    expect(body[0].print_fit_stats).toEqual({ fitted: 1, fit_answers: 2 })
   })
 
   // Tests: GET /mine returns 500 when the database query fails

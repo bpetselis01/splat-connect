@@ -17,10 +17,19 @@ export function useSaves(): Saves {
   // still see each other.
   const savedRef = useRef<SavedIds>(NONE)
   const commit = useCallback((next: SavedIds) => { savedRef.current = next; setSavedIds(next) }, [])
+  // What the server last confirmed, and how many requests are still out per id:
+  // when the last one for an id fails, the screen goes back to the confirmed
+  // state, not to a guess made from one request's `was`.
+  const confirmed = useRef<SavedIds>(NONE)
+  const inFlight = useRef(new Map<string, number>())
+  // Requests for one id go out one after another: a quick second tap used to
+  // send its DELETE before the first tap's POST had landed, which the server
+  // answered as a no-op, leaving the row saved after the screen said otherwise.
+  const queue = useRef(new Map<string, Promise<unknown>>())
 
   useEffect(() => {
     let ignore = false
-    apiClient.get<SavedIds>('/api/saves/ids').then((ids) => { if (!ignore) commit(ids) }).catch(() => {})
+    apiClient.get<SavedIds>('/api/saves/ids').then((ids) => { if (!ignore) { confirmed.current = { ...NONE, ...ids }; commit(confirmed.current) } }).catch(() => {})
     return () => { ignore = true }
   }, [commit])
 
@@ -30,14 +39,26 @@ export function useSaves(): Saves {
     const was = savedRef.current[slug].includes(id)
     const withoutId = (ids: string[]) => ids.filter((x) => x !== id)
     commit({ ...savedRef.current, [slug]: was ? withoutId(savedRef.current[slug]) : [...savedRef.current[slug], id] })
+    const key = `${slug}:${id}`
+    inFlight.current.set(key, (inFlight.current.get(key) ?? 0) + 1)
+    const send = (queue.current.get(key) ?? Promise.resolve()).then(() =>
+      was ? apiClient.delete(`/api/saves/${slug}/${id}`) : apiClient.post('/api/saves', { entity_type: SAVE_SLUGS[slug], entity_id: id }),
+    )
+    queue.current.set(key, send.catch(() => {}))
     try {
-      if (was) await apiClient.delete(`/api/saves/${slug}/${id}`)
-      else await apiClient.post('/api/saves', { entity_type: SAVE_SLUGS[slug], entity_id: id })
+      await send
+      const c = confirmed.current[slug]
+      confirmed.current = { ...confirmed.current, [slug]: was ? c.filter((x) => x !== id) : c.includes(id) ? c : [...c, id] }
     } catch {
-      // Revert only this id, against whatever the ref holds NOW — other ids may
-      // have moved while the request was in flight.
-      const ids = savedRef.current[slug]
-      commit({ ...savedRef.current, [slug]: was ? (ids.includes(id) ? ids : [...ids, id]) : withoutId(ids) })
+      // Once the last request for this id has failed, show what the server
+      // holds. Other ids may have moved meanwhile, so only this one is touched.
+      if ((inFlight.current.get(key) ?? 1) <= 1) {
+        const ids = savedRef.current[slug]
+        const hold = confirmed.current[slug].includes(id)
+        commit({ ...savedRef.current, [slug]: hold ? (ids.includes(id) ? ids : [...ids, id]) : withoutId(ids) })
+      }
+    } finally {
+      inFlight.current.set(key, (inFlight.current.get(key) ?? 1) - 1)
     }
   }, [commit])
 

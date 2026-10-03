@@ -40,7 +40,7 @@ type Guide = Tutorial & { stl_files: StlFile[] }
 
 const TINTS = [theme.colors.mintSoft, theme.colors.accentLight, theme.colors.honeySoft, theme.colors.violetSoft]
 
-export function FindPrinterScreen({ guideId }: { guideId?: string }) {
+export function FindPrinterScreen({ guideId, printWith }: { guideId?: string; printWith?: string }) {
   const router = useRouter()
   const { caps, loading: capsLoading } = useCapabilities()
   const [printers, setPrinters] = useState<PrinterWithOwner[] | null>(null)
@@ -61,12 +61,21 @@ export function FindPrinterScreen({ guideId }: { guideId?: string }) {
       .then(([p, g]) => {
         setPrinters(p)
         setGuide(g)
+        // From an organisation's "Ask them to print": its open machines that fit start picked.
+        if (printWith && g) {
+          setPicks(
+            p
+              .filter((x) => x.owner_org_id === printWith && isOpen(x) && bedFits(x, g.stl_files))
+              .map((x) => x.id)
+              .slice(0, MAX_PRINTERS_PER_REQUEST)
+          )
+        }
       })
       .catch((err) => {
         console.error('[FindPrinterScreen] load failed:', err)
         setError(true)
       })
-  }, [guideId, postcode])
+  }, [guideId, postcode, printWith])
 
   if (error) {
     return (
@@ -129,7 +138,12 @@ export function FindPrinterScreen({ guideId }: { guideId?: string }) {
                 The printer gets the parts and settings straight from the guide. Open one and tap Ask
                 someone to print; come here to see who is printing.
               </Text>
-              <Button label="Find a guide" variant="secondary" onPress={() => router.push('/guides')} style={styles.guideButton} />
+              <Button
+                label="Find a guide"
+                variant="secondary"
+                onPress={() => router.push(printWith ? { pathname: '/guides', params: { printWith } } : '/guides')}
+                style={styles.guideButton}
+              />
             </View>
           </Card>
         )}

@@ -23,6 +23,14 @@ async function fetchCapabilities(): Promise<Capabilities | null> {
   return { profile, isAdmin: profile.role === 'admin', ledOrgs, unread, exchangeActions }
 }
 
+// Every screen that calls useCapabilities holds its own copy (the tab bar, Home's
+// Today card, Me), fetched once on mount. A count that changes afterwards, such
+// as a notification read in the Inbox, reaches them through this.
+// ponytail: each mounted copy refetches its own four calls; share one store if
+// the number of mounted copies ever matters.
+const stale = new Set<() => void>()
+export const invalidateCapabilities = () => stale.forEach((refresh) => refresh())
+
 export function useCapabilities() {
   const { session } = useAuth()
   const [caps, setCaps] = useState<Capabilities | null>(null)
@@ -35,6 +43,10 @@ export function useCapabilities() {
   }, [session])
 
   useEffect(() => { refresh() }, [refresh])
+  useEffect(() => {
+    stale.add(refresh)
+    return () => { stale.delete(refresh) }
+  }, [refresh])
 
   return { caps, loading, refresh }
 }

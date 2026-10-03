@@ -12,6 +12,7 @@ import { useEffect, useState } from 'react'
 import { ScrollView, View, Text, StyleSheet } from 'react-native'
 import { CHILD_MEASURES, CHILD_QUESTIONS, ENJOYS, type ChildAnswers, type ChildMeasureField, type ChildProfile } from '@splat-connect/types'
 import { theme } from '../../lib/theme'
+import { readAge } from '../../lib/child-age'
 import { useChildProfile } from '../../lib/use-child-profile'
 import { Button } from '../ui/Button'
 import { TextField } from '../ui/TextField'
@@ -87,13 +88,14 @@ export function ChildWizard() {
   }
 
   function saveAndNext() {
-    // Only what this step answered. An emptied list is an answer when the
-    // child had some before; otherwise empty is the same as a skip.
+    // Only what this step answered. A cleared answer (an emptied list, a
+    // chip or name taken back out) is an answer when the child had one
+    // before; otherwise empty is the same as a skip.
     const answered = STEPS[step].fields.filter((f) => {
       const v = draft[f]
-      if (!Array.isArray(v)) return v !== null
-      const before = profile?.[f as 'everyday_needs' | 'enjoys']
-      return v.length > 0 || (before?.length ?? 0) > 0
+      const before = profile?.[f]
+      if (Array.isArray(v)) return v.length > 0 || (Array.isArray(before) && before.length > 0)
+      return v !== null || (before != null && !Array.isArray(before))
     })
     const fields: Partial<Answers> = Object.fromEntries(answered.map((f) => [f, draft[f]]))
     if ('name' in fields) fields.name = fields.name?.trim() || null
@@ -135,14 +137,17 @@ export function ChildWizard() {
             label="First name (optional)"
             placeholder="e.g. Sam"
             value={draft.name ?? ''}
-            onChangeText={(v) => set({ name: v || null })}
+            onChangeText={(v) => set({ name: v.trim() ? v : null })}
           />
           <TextField
             label="Age"
             accessibilityLabel="Age in years"
             keyboardType="numeric"
             value={draft.age != null ? String(draft.age) : ''}
-            onChangeText={(v) => set({ age: v.trim() === '' || Number.isNaN(Number(v)) ? null : Number(v) })}
+            onChangeText={(v) => {
+              const age = readAge(v)
+              if (age !== undefined) set({ age })
+            }}
           />
         </>
       ) : current.kind === 'question' ? (

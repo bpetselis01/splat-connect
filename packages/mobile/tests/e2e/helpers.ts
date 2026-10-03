@@ -37,15 +37,14 @@ export function uniqueTitle(prefix: string) {
  * for signing in through the UI.
  */
 /**
- * Taps one chip inside the Guides / Toy Library filter sheet. Opens the sheet
- * (whose trigger is named "Filters, N active" once something is on), taps the
- * chip, then Done — the sheet is a modal drawer on web, so anything asserted
- * about the list behind it should be asserted with the sheet away.
+ * Taps one chip in the Guides / Toy Library filters. The chips sit behind the
+ * "Filters" pill (named "Filters, N active" once something is on); the panel
+ * opens in place and stays open, so it is opened only when the chip is hidden.
  */
 export async function pickFilter(page: Page, chip: string) {
-  // The chips sit on the screen in a scrolling row (no sheet since the
-  // 2026-09-23 board pass); Playwright scrolls a clipped one into view.
-  await page.getByRole('button', { name: chip, exact: true }).click()
+  const target = page.getByRole('button', { name: chip, exact: true })
+  if (!(await target.isVisible())) await page.getByRole('button', { name: /^Filters/ }).click()
+  await target.click()
 }
 
 export async function createContributor() {
@@ -70,7 +69,7 @@ export async function createContributor() {
 export async function signInAsNewContributor(page: Page) {
   const contributor = await createContributor()
   await signIn(page, contributor.email, contributor.password)
-  await expect(page).toHaveURL(/\/guides$/)
+  await expect(page).toHaveURL(/\/home$/)
   return contributor
 }
 
@@ -214,7 +213,7 @@ export async function signUpNewAccount(page: Page, email: string) {
   await page.getByTestId('accept-contributor-terms').click()
   await page.getByTestId('auth-submit').click()
   await enterEmailedCode(page, email)
-  await expect(page).toHaveURL(/\/guides$/)
+  await expect(page).toHaveURL(/\/home$/)
 }
 
 // Local Supabase's mail catcher. The e2e reads the real 6-digit code out of

@@ -33,8 +33,15 @@ export function apiErrorDetail(err: unknown): string | null {
  * raw Postgres error is not copy.
  */
 export function apiMessage(err: unknown, fallback: string): string {
-  const match = /failed with status 4\d\d: (.+)$/.exec(err instanceof Error ? err.message : '')
-  return match ? match[1] : fallback
+  const text = err instanceof Error ? err.message : ''
+  const match = /failed with status 4\d\d: (.+)$/.exec(text)
+  if (match) return match[1]
+  // fetch rejects with these when the request never reached the API.
+  if (/network request failed|failed to fetch|network error|load failed/i.test(text)) {
+    return "You're offline. Check your connection and try again."
+  }
+  if (/failed with status 429/.test(text)) return 'Too many tries. Wait a minute and try again.'
+  return fallback
 }
 
 export function makeApiClient(deps: {

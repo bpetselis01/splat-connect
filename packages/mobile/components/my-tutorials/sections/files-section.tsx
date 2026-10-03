@@ -70,16 +70,27 @@ export function FilesSection() {
       setPhotoUploading(true)
 
       const urls: string[] = []
+      let failed: unknown = null
       for (const asset of result.assets.slice(0, remaining)) {
-        const { url } = await uploadFile('/api/upload/photo', id, {
-          uri: asset.uri,
-          name: asset.fileName ?? 'photo.jpg',
-          mimeType: asset.mimeType ?? 'image/jpeg',
-        })
-        urls.push(url)
+        try {
+          const { url } = await uploadFile('/api/upload/photo', id, {
+            uri: asset.uri,
+            name: asset.fileName ?? 'photo.jpg',
+            mimeType: asset.mimeType ?? 'image/jpeg',
+          })
+          urls.push(url)
+        } catch (err) {
+          failed = err
+          break
+        }
       }
-      const next = [...currentPhotoUrls, ...urls]
-      await saveNow({ photo_urls: next, photo_captions: realignCaptions(currentPhotoUrls, captions, next) })
+      // The ones that did upload are kept even when a later one failed, or
+      // they would sit in the bucket attached to nothing.
+      if (urls.length) {
+        const next = [...currentPhotoUrls, ...urls]
+        await saveNow({ photo_urls: next, photo_captions: realignCaptions(currentPhotoUrls, captions, next) })
+      }
+      if (failed) throw failed
     } catch (err) {
       console.error('[FilesSection] photo upload failed:', err)
       setLocalError('Could not upload the photo. Please try again.')

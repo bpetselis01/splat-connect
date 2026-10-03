@@ -42,6 +42,14 @@ describe('MyTutorialsListScreen', () => {
     expect(screen.getByText('890 views')).toBeTruthy()
   })
 
+  it('tells the author how their guide’s prints fitted', async () => {
+    mockGet.mockResolvedValue([
+      tutorial({ id: 'l', status: 'approved', view_count: 890, tutorial_orgs: [], print_fit_stats: { fitted: 12, fit_answers: 14 } }),
+    ])
+    render(<MyTutorialsListScreen />)
+    expect(await screen.findByText('890 views · 12 of 14 prints fitted')).toBeTruthy()
+  })
+
   it('lists the caller\'s tutorials with their status, and pushes to the editor on tap', async () => {
     mockGet.mockResolvedValue([tutorial({ id: 't1', title: 'Bubble machine switch', status: 'draft' })])
     render(<MyTutorialsListScreen />)

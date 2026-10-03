@@ -84,7 +84,8 @@ export function CostPanel({
 
   const lines = costs?.lines ?? []
   const loaded = costs !== null
-  if (mode === 'read' && lines.length === 0) return null
+  // A failed read is not "no costs": say so, or a family never learns there was something to pay.
+  if (mode === 'read' && lines.length === 0 && !error) return null
 
   const setLines = (fn: (ls: CostLine[]) => CostLine[]) =>
     setCosts((c) => ({ lines: fn(c?.lines ?? []), settlement: c?.settlement ?? null }))
