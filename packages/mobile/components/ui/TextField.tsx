@@ -81,6 +81,7 @@ export function TextField({
         ) : null}
         <TextInput
           {...input}
+          accessibilityLabel={input.accessibilityLabel ?? label ?? input.placeholder}
           style={[styles.input, icon ? styles.inputWithIcon : null, trailing ? styles.inputFlex : null, style]}
           placeholderTextColor={theme.colors.muted}
           onFocus={(e) => {
