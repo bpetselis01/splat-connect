@@ -14,9 +14,6 @@ import {
  * The outliers around the toy and exchange journeys: awkward names and
  * messages, a wrong or padded handover code, and giving a toy away twice.
  * Imports only e2e helpers, never a component (see e2e-specs-import-no-components).
- *
- * NOT YET RUN: written alongside the unit edge suites without starting the
- * stack, so the first run may need selector tweaks.
  */
 
 const PICKUP = { pickup_line1: '12 Seeded St', pickup_suburb: 'Testville', pickup_state: 'VIC', pickup_postcode: '3000' }
@@ -72,13 +69,17 @@ test('messages with emoji, markup and quotes arrive exactly as typed, and surviv
 
     await ownerPage.goto(`/exchanges/${txId}`)
     await ownerPage.getByRole('textbox', { name: /^Message / }).fill(`   ${text}   `)
+    const sent = ownerPage.waitForResponse((r) => r.url().endsWith(`/api/toy-transactions/${txId}/messages`) && r.request().method() === 'POST')
     await ownerPage.getByRole('button', { name: 'Send', exact: true }).click()
-    await expect(ownerPage.getByText(text, { exact: true })).toBeVisible()
+    expect((await sent).status()).toBe(201)
+    // Scoped to the conversation: the composer's own textarea also holds this text until it empties.
+    const thread = (page: Page) => page.getByRole('list', { name: 'Conversation' }).getByText(text, { exact: true })
+    await expect(thread(ownerPage)).toBeVisible()
 
     await ownerPage.reload()
-    await expect(ownerPage.getByText(text, { exact: true })).toBeVisible()
+    await expect(thread(ownerPage)).toBeVisible()
     // The other side's 10s poll brings it over without a reload.
-    await expect(requesterPage.getByText(text, { exact: true })).toBeVisible({ timeout: 20_000 })
+    await expect(thread(requesterPage)).toBeVisible({ timeout: 20_000 })
   } finally {
     await requesterPage.context().close()
     await ownerPage.context().close()
@@ -129,7 +130,7 @@ test('an owner cannot ask for their own toy, and the library shows a one-toy sea
   const toyId = await createPublishedToy(me.id, { name, offer_type: 'both' })
 
   await page.goto(`/toy-library/${toyId}`)
-  await expect(page.getByText(name).first()).toBeVisible()
+  await expect(page.getByRole('heading', { name })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Ask to collect it', exact: true })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Arrange exchange', exact: true })).toHaveCount(0)
 

@@ -57,7 +57,7 @@ test('the basics, an empty request list and an empty print queue each teach what
   await signInAsNewContributor(page)
 
   await page.goto('/printing/basics')
-  await expect(page.getByText('Printing basics')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Printing basics' }).first()).toBeVisible()
 
   await page.goto('/printing')
   await expect(page.getByText('Every request starts from a guide')).toBeVisible()

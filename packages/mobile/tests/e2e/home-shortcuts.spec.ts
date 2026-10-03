@@ -4,8 +4,7 @@ import { createContributor, signIn, signInAsNewContributor } from './helpers'
 /**
  * Home shortcuts are kept on the device per member (lib/home-shortcuts.ts). The
  * unit tests drive the hook against an in-memory disk; this runs the real
- * localStorage adapter and a real reload. Written without a local run: see the
- * hand-off note, nothing here has been executed yet.
+ * localStorage adapter and a real reload.
  */
 
 const tile = (page: Page, name: string) => page.getByRole('button', { name, exact: true })
@@ -66,11 +65,17 @@ test('a shortcut added from the sheet survives a reload and the sheet then offer
   await page.getByRole('button', { name: 'Add a shortcut' }).click()
   await page.getByLabel('Search features').fill('learn')
   await page.getByRole('button', { name: 'Add Learn to Home' }).click()
-  await page.getByRole('button', { name: 'Close' }).first().click()
+  // The Close backdrop fills the screen behind the sheet; tap its exposed top corner.
+  await page.getByRole('button', { name: 'Close' }).first().click({ position: { x: 5, y: 5 } })
   await expect(tile(page, 'Learn')).toBeVisible()
 
   await page.reload()
   await expect(tile(page, 'Learn')).toBeVisible()
+
+  await page.getByRole('button', { name: 'Add a shortcut' }).click()
+  await page.getByLabel('Search features').fill('learn')
+  await expect(page.getByRole('button', { name: 'Remove Learn from Home' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Add Learn to Home' })).toHaveCount(0)
 })
 
 test('corrupt device data falls back to the default eight rather than an empty or broken Home', async ({ page }) => {

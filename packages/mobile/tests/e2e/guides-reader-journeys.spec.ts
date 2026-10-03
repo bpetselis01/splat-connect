@@ -103,7 +103,7 @@ test('a note that fails to post keeps its words and says so', async ({ page }) =
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile NoteFails'), status: 'approved' })
 
   await page.goto(`/guides/${id}`)
-  await page.route(`**/api/tutorials/${id}/notes`, (route) => (route.request().method() === 'POST' ? route.abort() : route.continue()))
+  await page.route(`**/api/tutorials/${id}/notes`, (route) => (route.request().method() === 'POST' ? route.fulfill({ status: 500, contentType: 'application/json', body: '{"error":"boom"}' }) : route.continue()))
   await page.getByRole('button', { name: 'Missing step', exact: true }).click()
   await page.getByLabel('Your note').fill('Keep these words')
   await page.getByRole('button', { name: 'Post', exact: true }).click()

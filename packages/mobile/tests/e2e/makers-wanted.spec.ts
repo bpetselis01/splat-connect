@@ -18,7 +18,10 @@ async function postRequest(page: import('@playwright/test').Page, title: string)
   await page.getByRole('radio', { name: title }).click()
   await page.getByPlaceholder('Newtown').fill('Glebe')
   await page.getByRole('checkbox', { name: /You cover the parts/ }).click()
+  // The form lives at /explore/makers-wanted/new, so a URL wait cannot tell "posted" from "still here".
+  const posted = page.waitForResponse((r) => r.url().endsWith('/api/toy-transactions/build') && r.request().method() === 'POST')
   await page.getByRole('button', { name: 'Post to Makers wanted' }).click()
+  expect((await posted).status()).toBe(201)
 }
 
 test('the ask form complains about the guide, then the suburb, then the parts promise, and posts nothing until all three are fixed', async ({ page }) => {
@@ -74,8 +77,16 @@ test('a posted request is on the board for another maker, who claims it and land
   await makerPage.waitForURL(/\/home$/)
   await makerPage.goto('/explore/makers-wanted')
   await expect(makerPage.getByText(title)).toBeVisible()
-  await makerPage.getByRole('button', { name: "I'll build this" }).first().click()
-  await makerPage.waitForURL(new RegExp(`/exchanges/build/${rows![0]!.id}$`))
+  // The board is shared with every other open request, so claim this card's own button; the
+  // innermost div holding both the title and the button is the card.
+  await makerPage
+    .locator('div')
+    .filter({ hasText: title })
+    .filter({ has: makerPage.getByRole('button', { name: "I'll build this" }) })
+    .last()
+    .getByRole('button', { name: "I'll build this" })
+    .click()
+  await expect(makerPage).toHaveURL(new RegExp(`/exchanges/build/${rows![0]!.id}$`))
 
   const { data: claimed } = await adminClient().from('toy_transactions').select('owner_id, status').eq('id', rows![0]!.id).single()
   expect(claimed).toEqual({ owner_id: maker.id, status: 'accepted' })

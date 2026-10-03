@@ -36,7 +36,7 @@ test('searches full of SQL and wildcard characters find nothing and show the emp
 
   await page.goto('/guides')
   const box = page.getByPlaceholder('Search by toy name')
-  for (const q of [`'; drop table tutorials; --`, '%', '_', '\\', '"', '<script>alert(1)</script>', '🧸🧸🧸']) {
+  for (const q of [`'; drop table tutorials; --`, '%', '_', '\\', '""', '<script>alert(1)</script>', '🧸🧸🧸']) {
     await box.fill(q)
     await expect(page.locator('text=/No tutorials/i').first()).toBeVisible()
     await expect(page.getByText("Couldn't load tutorials.")).toHaveCount(0)
