@@ -116,7 +116,7 @@ export function SocialButtons({ onApple, onGoogle }: { onApple: () => void; onGo
             style={({ pressed }) => [styles.applePlaceholder, pressed && styles.pressed]}
           >
             <Ionicons name="logo-apple" size={20} color="#ffffff" />
-            <Text style={styles.appleText}>Continue with Apple</Text>
+            <Text maxFontSizeMultiplier={1.4} style={styles.appleText}>Continue with Apple</Text>
           </Pressable>
         )
       ) : null}
@@ -128,7 +128,7 @@ export function SocialButtons({ onApple, onGoogle }: { onApple: () => void; onGo
         style={({ pressed }) => [styles.google, pressed && styles.pressed]}
       >
         <Image source={require('../../assets/google-g.png')} style={styles.gLogo} />
-        <Text style={styles.googleText}>Continue with Google</Text>
+        <Text maxFontSizeMultiplier={1.4} style={styles.googleText}>Continue with Google</Text>
       </Pressable>
       <View style={styles.or} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
         <View style={styles.rule} />
@@ -198,7 +198,7 @@ export function CodeInput({ value, onChange }: { value: string; onChange: (code:
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
         >
-          <Text style={styles.codeDigit}>{value[i] ?? ''}</Text>
+          <Text maxFontSizeMultiplier={1.3} style={styles.codeDigit}>{value[i] ?? ''}</Text>
         </View>
       ))}
       <TextInput
@@ -309,7 +309,8 @@ const styles = StyleSheet.create({
   },
   social: { gap: theme.spacing(3) },
   google: {
-    height: CONTROL,
+    minHeight: CONTROL,
+    paddingVertical: theme.spacing(2),
     borderRadius: theme.radii.pill,
     backgroundColor: theme.colors.surface,
     borderWidth: theme.border.hairline,
@@ -323,7 +324,8 @@ const styles = StyleSheet.create({
   pressed: { transform: [{ scale: theme.motion.pressScale }] },
   gLogo: { width: 20, height: 20 },
   applePlaceholder: {
-    height: CONTROL,
+    minHeight: CONTROL,
+    paddingVertical: theme.spacing(2),
     borderRadius: theme.radii.pill,
     backgroundColor: '#000000',
     flexDirection: 'row',
