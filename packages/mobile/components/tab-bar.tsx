@@ -60,8 +60,10 @@ export function TabBar({ state, descriptors, navigation, insets, badges }: Props
   const nested = current?.state as { index?: number; routes?: { name: string }[] } | undefined
   const depth = nested?.index ?? 0
   // A screen opened into an unvisited stack is the only one in it (depth 0), so
-  // the stack's root is told by name.
-  const child = nested?.routes?.[depth]?.name
+  // the stack's root is told by name. Before the stack has reported a state at
+  // all (the first screen of a stack that was unmounted) the name is only in
+  // the params the tab was navigated with.
+  const child = nested?.routes?.[depth]?.name ?? (current?.params as { screen?: string } | undefined)?.screen
   if (!current || !BAR_ROOTS.has(current.name) || depth > 0 || (child && child !== 'index')) return null
 
   const lit = BUTTONS.includes(current.name) ? current.name : 'home'

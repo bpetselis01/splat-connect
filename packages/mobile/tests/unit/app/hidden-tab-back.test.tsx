@@ -40,6 +40,7 @@ const routes = () => ({
   '(tabs)/guides/[id]/index': Stub('Guide'),
   '(tabs)/toy-library/_layout': require('../../../app/(tabs)/toy-library/_layout'),
   '(tabs)/toy-library/index': Stub('Toys'),
+  '(tabs)/toy-library/[id]': Stub('Toy'),
 })
 
 // The real layouts name screens these stubs leave out; expo-router warns once per stack.
@@ -102,5 +103,36 @@ describe('Back from a screen opened into a hidden tab', () => {
     testRouter.push('/toys')
     back()
     expect(app.getPathname()).toBe('/guides/abc')
+  })
+})
+
+describe('The floating bar on a screen opened into a hidden tab', () => {
+  const bar = () => screen.queryByTestId('tab-bar')
+
+  it('is off a guide or toy opened straight from Home, as from a recents row', () => {
+    app = renderRouter(routes(), { initialUrl: '/home' })
+    expect(bar()).not.toBeNull()
+    testRouter.push('/guides/abc')
+    expect(bar()).toBeNull()
+    testRouter.navigate('/home')
+    testRouter.push('/toy-library/xyz')
+    expect(bar()).toBeNull()
+  })
+
+  it('stays on the list roots', () => {
+    app = renderRouter(routes(), { initialUrl: '/home' })
+    testRouter.push('/guides')
+    expect(bar()).not.toBeNull()
+    testRouter.navigate('/home')
+    testRouter.push('/toy-library')
+    expect(bar()).not.toBeNull()
+  })
+
+  it('returns on the list root after a detail opened first', () => {
+    app = renderRouter(routes(), { initialUrl: '/home' })
+    testRouter.push('/guides/abc')
+    testRouter.navigate('/home')
+    testRouter.push('/guides')
+    expect(bar()).not.toBeNull()
   })
 })
