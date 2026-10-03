@@ -241,6 +241,80 @@ async function seedOpenBuild(db, parentId) {
 }
 
 /**
+ * An organisation that takes plastic. /get-involved/recycling/drop-off lists only
+ * organisations that have said what they accept, and none on the parity
+ * database had, so the form drew its empty state against the board's three
+ * cards and eight fields.
+ */
+async function seedRecyclingOrg(db) {
+  const { data } = await db
+    .from('organizations')
+    .insert({
+      name: 'Parity fixture recycling org',
+      suburb: 'Newtown',
+      state: 'NSW',
+      recycling_materials: ['PLA', 'PETG'],
+    })
+    .select('id')
+    .single()
+  if (data) undo.push((d) => d.from('organizations').delete().eq('id', data.id))
+  return data?.id
+}
+
+/**
+ * Published stories — /about/stories lists only status 'published', and the
+ * table was empty, so the page drew its empty state against the board's cards.
+ * One featured (drawn once, large) and a family, maker and announcement story
+ * for the grid.
+ */
+async function seedStories(db, authorId, orgId) {
+  // org_stories_orgless_is_an_announcement: only an announcement may have no org.
+  const mk = (kind, title, featured = false) => ({
+    kind,
+    org_id: orgId,
+    title: `Parity fixture ${title}`,
+    summary: 'Seeded so the stories page has a card to measure.',
+    body: 'Fixture story body. '.repeat(20),
+    byline: 'A parity fixture',
+    consent_confirmed: true,
+    status: 'published',
+    published_at: new Date().toISOString(),
+    created_by: authorId,
+    featured,
+  })
+  const { data } = await db
+    .from('org_stories')
+    .insert([
+      mk('family', 'family story', true),
+      mk('family', 'second family story'),
+      mk('maker', 'maker story'),
+      mk('announcement', 'announcement'),
+    ])
+    .select('id')
+  const ids = (data ?? []).map((r) => r.id)
+  if (ids.length) undo.push((d) => d.from('org_stories').delete().in('id', ids))
+}
+
+/**
+ * Contact-form messages — /admin/inbox. Empty, it draws its empty state against
+ * the board's four cards. One per topic, the safety one first in the queue.
+ */
+async function seedInbox(db) {
+  const mk = (topic) => ({
+    topic,
+    name: 'Parity fixture sender',
+    email: 'parity-fixture@example.com',
+    body: `Seeded ${topic} message so the inbox has a card to measure.`,
+  })
+  const { data } = await db
+    .from('contact_messages')
+    .insert(['safety', 'organisation', 'guide', 'other'].map(mk))
+    .select('id')
+  const ids = (data ?? []).map((r) => r.id)
+  if (ids.length) undo.push((d) => d.from('contact_messages').delete().in('id', ids))
+}
+
+/**
  * A family asking the organisation for a toy off its shelf and for a build —
  * /dashboard/organisation/requests. Both cascade with the organisation.
  */
@@ -753,6 +827,8 @@ async function seed(db, users) {
     await seedNotifications(db, parent.id, ex?.id)
     await seedGivenAway(db, parent.id)
     await seedOpenBuild(db, parent.id)
+    await seedStories(db, parent.id, await seedRecyclingOrg(db))
+    await seedInbox(db)
     const build = await seedBuild(db, parent.id)
     if (build) routes.build_thread = `/dashboard/exchanges/build/${build}`
     const child = await seedChild(db, parent.id)
