@@ -33,6 +33,17 @@ describe('MyEventsScreen', () => {
     expect(await screen.findByText('Nothing booked yet')).toBeTruthy()
   })
 
+  it('a failed load says so and retries, instead of claiming nothing is booked', async () => {
+    mockGet.mockRejectedValueOnce(new Error('offline'))
+    render(<MyEventsScreen />)
+    expect(await screen.findByText('Could not load your events.')).toBeTruthy()
+    expect(screen.queryByText('Nothing booked yet')).toBeNull()
+    serve([row()])
+    fireEvent.press(screen.getByRole('button', { name: 'Try again' }))
+    expect(await screen.findByText('Build day')).toBeTruthy()
+    expect(screen.queryByText('Could not load your events.')).toBeNull()
+  })
+
   it('splits upcoming from been-and-gone, upcoming first, and offers Can\'t make it only on upcoming', async () => {
     serve([
       row({ id: 'old', reg: 'r0', event: { title: 'Last year', starts_at: '2020-01-01T10:00:00Z', ends_at: '2020-01-01T12:00:00Z' } }),
