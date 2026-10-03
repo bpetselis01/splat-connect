@@ -128,6 +128,7 @@ describe('LibraryScreen', () => {
   it('refetches with a difficulty filter when a chip is pressed', async () => {
     render(<LibraryScreen />)
     await screen.findByText('Build a Robot Arm')
+    fireEvent.press(screen.getByRole('button', { name: 'Filters' }))
     fireEvent.press(screen.getByRole('button', { name: 'Hard' }))
     await waitFor(() => expect(mockGet).toHaveBeenCalledWith('/api/public/tutorials?difficulty=hard'))
   })
@@ -135,11 +136,23 @@ describe('LibraryScreen', () => {
   it('clears a difficulty by pressing its chip again', async () => {
     render(<LibraryScreen />)
     await screen.findByText('Build a Robot Arm')
+    fireEvent.press(screen.getByRole('button', { name: 'Filters' }))
     fireEvent.press(screen.getByRole('button', { name: 'Easy' }))
     await waitFor(() => expect(mockGet).toHaveBeenCalledWith('/api/public/tutorials?difficulty=easy'))
     mockGet.mockClear()
     fireEvent.press(screen.getByRole('button', { name: 'Easy' }))
     await waitFor(() => expect(mockGet).toHaveBeenCalledWith('/api/public/tutorials'))
+  })
+
+  it('keeps the filter chips behind one Filters button, search stays out', async () => {
+    render(<LibraryScreen />)
+    await screen.findByText('Build a Robot Arm')
+    expect(screen.queryByRole('button', { name: 'Under 30 min' })).toBeNull()
+    expect(screen.getByPlaceholderText('Search by toy name')).toBeTruthy()
+    fireEvent.press(screen.getByRole('button', { name: 'Filters' }))
+    expect(screen.getByRole('button', { name: 'Under 30 min' })).toBeTruthy()
+    fireEvent.press(screen.getByRole('button', { name: 'Under 30 min' }))
+    expect(screen.getByRole('button', { name: 'Filters, 1 active' })).toBeTruthy()
   })
 
   it('greets by first name over the Guide library title', async () => {
@@ -158,6 +171,7 @@ describe('LibraryScreen', () => {
     })
     render(<LibraryScreen />)
     await screen.findByText('Quick one')
+    fireEvent.press(screen.getByRole('button', { name: 'Filters' }))
     fireEvent.press(screen.getByRole('button', { name: 'Under 30 min' }))
     expect(screen.queryByText('Slow printed one')).toBeNull()
     expect(screen.getByText('Matching guides')).toBeTruthy()
@@ -283,6 +297,7 @@ describe('Suits <child>', () => {
       children: Promise.resolve([{ name: 'Ollie', press_force: 'light', hold: 'second', aim: null }]),
     })
     render(<LibraryScreen />)
+    fireEvent.press(await screen.findByRole('button', { name: 'Filters' }))
     fireEvent.press(await screen.findByLabelText('Suits Ollie · 1'))
     await waitFor(() => expect(screen.queryByText('Firm lever')).toBeNull())
     expect(screen.getByText('Light touch switch')).toBeTruthy()
@@ -294,11 +309,12 @@ describe('Suits <child>', () => {
     mockEndpoints({ tutorials: Promise.resolve([tagged]) })
     render(<LibraryScreen />)
     await screen.findByText('Light touch switch')
+    fireEvent.press(screen.getByRole('button', { name: 'Filters' }))
     expect(screen.queryByText(/Suits/)).toBeNull()
   })
 
   // wizard-mascot-done: the done screen's "See the matches" lands here with suits=1.
-  it('arrives already filtered when opened with suits=1', async () => {
+  it('arrives already filtered, and says so on the Filters button, when opened with suits=1', async () => {
     mockParams = { suits: '1' }
     mockEndpoints({
       tutorials: Promise.resolve([tagged, firm]),
@@ -308,5 +324,6 @@ describe('Suits <child>', () => {
     expect(await screen.findByText('Light touch switch')).toBeTruthy()
     await waitFor(() => expect(screen.queryByText('Firm lever')).toBeNull())
     expect(screen.getByText('Suits Ollie')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Filters, 1 active' })).toBeTruthy()
   })
 })

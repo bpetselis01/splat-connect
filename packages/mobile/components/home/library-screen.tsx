@@ -1,10 +1,10 @@
 // packages/mobile/components/home/library-screen.tsx
 //
 // The Guides tab, as the board draws it (#guides): greeting and mascot, the
-// guide-type switch, search, a scrolling row of filter chips, a section
+// guide-type switch, search, one Filters button that unfolds the chips, a section
 // heading with a sort control, then row cards.
 import { useEffect, useState } from 'react'
-import { View, Text, FlatList, RefreshControl, ScrollView, Pressable, StyleSheet } from 'react-native'
+import { View, Text, FlatList, RefreshControl, Pressable, StyleSheet } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import Animated, { FadeInDown } from 'react-native-reanimated'
@@ -19,6 +19,7 @@ import { useSaves } from '../../lib/saves'
 import { useMyChildren } from '../../lib/my-children'
 import { useCapabilities } from '../../lib/capabilities'
 import { Chip } from '../ui/Chip'
+import { FilterPanel } from '../ui/FilterPanel'
 import { TextField } from '../ui/TextField'
 import { Screen } from '../ui/Screen'
 import { Button } from '../ui/Button'
@@ -188,6 +189,7 @@ export function LibraryScreen() {
     .sort((a, b) => (sortValue(a, sortKey) - sortValue(b, sortKey)) * (asc ? 1 : -1))
 
   const filtered = !!difficulty || quick || printable || kind !== 'all' || !!q
+  const activeCount = [!!difficulty, quick, printable, suitsOnly].filter(Boolean).length
   const heading = suitsOnly ? suitsLabel : filtered ? 'Matching guides' : 'All guides'
   const firstName = caps?.profile.name.trim().split(/\s+/)[0]
   const greeting = `${greetingFor(new Date().getHours())}${firstName ? `, ${firstName}` : ''}`
@@ -230,13 +232,7 @@ export function LibraryScreen() {
               search
             />
 
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.chipScroller}
-              contentContainerStyle={styles.chipRow}
-              keyboardShouldPersistTaps="handled"
-            >
+            <FilterPanel activeCount={activeCount}>
               {!loading && !error && suits.size > 0 ? (
                 <Chip
                   variant="filter"
@@ -268,7 +264,7 @@ export function LibraryScreen() {
                 />
               ))}
               <Chip variant="filter" icon="cube-outline" label="Printable" active={printable} onPress={() => setPrintable((v) => !v)} />
-            </ScrollView>
+            </FilterPanel>
 
             {!loading && !error ? (
               <>
@@ -429,10 +425,6 @@ const styles = StyleSheet.create({
     minHeight: 52,
     ...theme.shadow(1),
   },
-  // Bleeds to the screen edge like the board's chip row, so a clipped chip
-  // says "scroll me" rather than looking cut off by the gutter.
-  chipScroller: { marginHorizontal: -theme.spacing(4) },
-  chipRow: { gap: theme.spacing(2), paddingHorizontal: theme.spacing(4), paddingVertical: 4 },
   headingRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   headingText: { flex: 1 },
   heading: { fontFamily: theme.fonts.display, fontSize: 20, lineHeight: 26, color: theme.colors.ink },
