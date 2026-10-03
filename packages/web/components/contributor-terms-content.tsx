@@ -1,3 +1,5 @@
+import { ToBeCompleted } from '@/components/to-be-completed'
+
 /**
  * The actual (placeholder) contributor-terms text. One copy, three places it
  * renders: the standalone /legal/contributor-terms page, the signup dialog
@@ -11,9 +13,8 @@
  */
 export function ContributorTermsContent() {
   return (
-    <p className="alert alert-warning">
-      These terms have not been written yet. Anything you accept here is not
-      binding, and will be replaced.
-    </p>
+    <ToBeCompleted subject="Contributor terms" compact>
+      These terms have not been written yet. Anything you accept here is not binding, and will be replaced.
+    </ToBeCompleted>
   )
 }
