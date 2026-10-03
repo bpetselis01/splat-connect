@@ -89,3 +89,6 @@ scripts/parity/mobile/
 
 # Parity stack's own build dir — see next.config.ts distDir
 .next-parity/
+
+# Apple tooling identity file (holds a private key)
+selfIdentity.plist
