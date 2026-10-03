@@ -82,7 +82,12 @@ export function Segmented<T extends string>({
                   ? { color: on ? theme.colors.ink : theme.colors.muted }
                   : on && (variant === 'tint' ? styles.pillTextTint : styles.pillTextOn),
               ]}
-              numberOfLines={2}
+              // Capped so a label breaks between words, never inside one. The
+              // two-pill dresses hold one word each: shrink it before wrapping.
+              maxFontSizeMultiplier={1.3}
+              numberOfLines={track ? 2 : 1}
+              adjustsFontSizeToFit={!track}
+              minimumFontScale={0.8}
             >
               {o.label}
             </Text>
