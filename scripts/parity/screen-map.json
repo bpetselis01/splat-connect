@@ -468,12 +468,6 @@
   "explained": [
    {
     "type": "missing-section",
-    "match": "page height",
-    "why": "intended",
-    "reason": "The board draws its own Not built yet scaffold here; the map is built from story s4 (WB:9958)."
-   },
-   {
-    "type": "missing-section",
     "match": "no inputs",
     "why": "intended",
     "reason": "The board draws its own Not built yet scaffold here; the map is built from story s4 (WB:9958)."
