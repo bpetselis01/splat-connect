@@ -25,6 +25,9 @@ jest.mock('../../../../lib/api-client', () => ({
   },
 }))
 const mockPush = jest.fn()
+const mockRecord = jest.fn()
+jest.mock('../../../../lib/recents', () => ({ recordRecent: (...a: unknown[]) => mockRecord(...a) }))
+
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }))
 
 const ORG = {
@@ -183,5 +186,20 @@ describe('org-profile helpers', () => {
     expect(firstName('Priya Nair')).toBe('Priya')
     expect(sinceYear('2024-03-01T00:00:00Z')).toBe(2024)
     expect(sinceYear(null)).toBeNull()
+  })
+})
+
+describe('OrgProfileScreen recents', () => {
+  it('records the organisation once, with its toy count and Verified badge', async () => {
+    mockGet.mockImplementation((path: string) =>
+      Promise.resolve(path.startsWith('/api/public') ? { ...ORG, toysShared: [{ id: 't1' }, { id: 't2' }] } : null)
+    )
+    render(<OrgProfileScreen id="o1" />)
+    await screen.findByText('Northbank Makerspace')
+    expect(mockRecord).toHaveBeenCalledTimes(1)
+    expect(mockRecord).toHaveBeenCalledWith({
+      id: 'o1', kind: 'organisation', title: 'Northbank Makerspace', subtitle: 'Organisation · 2 toys', badge: 'Verified',
+      href: '/toy-library/organisation/o1',
+    })
   })
 })

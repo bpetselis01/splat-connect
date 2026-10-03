@@ -34,6 +34,7 @@ import { apiClient } from '../../lib/api-client'
 import { useAuth } from '../../lib/auth-context'
 import { useCapabilities } from '../../lib/capabilities'
 import { doorRoute, sinceYear } from '../../lib/org-profile'
+import { recordRecent } from '../../lib/recents'
 import { theme } from '../../lib/theme'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
 import { Card } from '../ui/Card'
@@ -103,6 +104,21 @@ export function OrgProfileScreen({ id }: { id: string }) {
       ignore = true
     }
   }, [id, session, reloadKey])
+
+  // "Pick up where you left off": once per open, when the profile has loaded.
+  useEffect(() => {
+    if (!org) return
+    const toys = org.toysShared.length
+    recordRecent({
+      id: org.id,
+      kind: 'organisation',
+      title: org.name,
+      subtitle: toys > 0 ? `Organisation · ${toys} toy${toys === 1 ? '' : 's'}` : 'Organisation',
+      badge: org.verified_at ? 'Verified' : undefined,
+      href: `/toy-library/organisation/${org.id}`,
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [org?.id])
 
   if (loading) {
     return (
