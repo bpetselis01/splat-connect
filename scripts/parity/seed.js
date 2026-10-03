@@ -217,6 +217,30 @@ async function seedOrgQueue(db, leaderId, orgId) {
 }
 
 /**
+ * An open build request from someone else — /explore/makers-wanted. The screen
+ * lists requests nobody owns yet, so with none it draws its empty state and the
+ * board's request cards have nothing to compare against.
+ */
+async function seedOpenBuild(db, parentId) {
+  const requester = await someoneElse(db, parentId)
+  const tutorial_id = await approvedGuide(db)
+  if (!requester || !tutorial_id) return
+  const { data } = await db
+    .from('toy_transactions')
+    .insert({
+      type: 'build',
+      status: 'requested',
+      requester_id: requester,
+      tutorial_id,
+      build_brief: 'A big button for a 4-year-old, whenever suits.',
+      requester_suburb: 'Newtown',
+    })
+    .select('id')
+    .single()
+  if (data) undo.push((d) => d.from('toy_transactions').delete().eq('id', data.id))
+}
+
+/**
  * A family asking the organisation for a toy off its shelf and for a build —
  * /dashboard/organisation/requests. Both cascade with the organisation.
  */
@@ -728,6 +752,7 @@ async function seed(db, users) {
     await seedOutstandingCost(db, parent.id, ex)
     await seedNotifications(db, parent.id, ex?.id)
     await seedGivenAway(db, parent.id)
+    await seedOpenBuild(db, parent.id)
     const build = await seedBuild(db, parent.id)
     if (build) routes.build_thread = `/dashboard/exchanges/build/${build}`
     const child = await seedChild(db, parent.id)
