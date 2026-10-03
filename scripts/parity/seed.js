@@ -280,6 +280,9 @@ async function seedStories(db, authorId, orgId) {
     status: 'published',
     published_at: new Date().toISOString(),
     created_by: authorId,
+    // The reading page draws a pull quote only when the story has one.
+    pull_quote: 'Parity fixture quote, set large on the reading page.',
+    pull_quote_by: 'A parity fixture',
     featured,
   })
   const { data } = await db
