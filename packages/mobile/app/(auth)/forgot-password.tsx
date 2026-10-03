@@ -18,6 +18,7 @@ export default function ForgotPasswordScreen() {
   const [busy, setBusy] = useState(false)
 
   async function submit() {
+    if (busy) return
     setError(null)
     const address = email.trim()
     if (!address) return setError({ kind: 'other', message: 'Type the email you sign in with.' })

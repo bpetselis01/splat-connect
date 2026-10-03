@@ -45,6 +45,7 @@ export default function SignInScreen() {
   }
 
   async function submit() {
+    if (busy) return
     setError(null)
     if (!address || !password) return setError({ kind: 'other', message: 'Add your email and password.' })
     setBusy(true)

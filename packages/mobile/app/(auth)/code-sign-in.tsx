@@ -24,6 +24,7 @@ export default function CodeSignInScreen() {
   const address = email.trim()
 
   async function submit() {
+    if (busy) return
     setError(null)
     if (!address) return setError({ kind: 'other', message: 'Add your email.' })
     if (!LOOKS_LIKE_EMAIL.test(address)) {

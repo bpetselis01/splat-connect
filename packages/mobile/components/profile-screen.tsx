@@ -1,5 +1,5 @@
 // packages/mobile/components/profile-screen.tsx
-import { useState, useEffect, type ComponentProps } from 'react'
+import { useState, useEffect, useRef, type ComponentProps } from 'react'
 import { View, Text, ScrollView, StyleSheet, Linking } from 'react-native'
 import { useRouter } from 'expo-router'
 import type { UserAgreement } from '@splat-connect/types'
@@ -23,7 +23,7 @@ function acceptedDate(iso: string): string {
 
 /** "Sam Mitchell" → "SM"; an email when there is no name yet. */
 const initialsOf = (name: string | null | undefined, email: string | undefined) =>
-  initials(name) || (email ?? '?')[0]!.toUpperCase()
+  initials(name) || (email || '?')[0]!.toUpperCase()
 
 function RowIcon({ name }: { name: ComponentProps<typeof Ionicons>['name'] }) {
   return <Ionicons name={name} size={21} color={theme.colors.primaryDark} />
@@ -32,7 +32,8 @@ function RowIcon({ name }: { name: ComponentProps<typeof Ionicons>['name'] }) {
 const PROVIDER: Record<string, string> = { apple: 'Apple', google: 'Google', email: 'email' }
 
 export function signedInWith(providers: unknown): string {
-  const names = (Array.isArray(providers) ? providers : ['email']).map((p) => PROVIDER[p] ?? p)
+  const list = Array.isArray(providers) && providers.length ? providers : ['email']
+  const names = list.map((p) => PROVIDER[p] ?? p)
   return `Signed in with ${names.join(' and ')}`
 }
 
@@ -45,6 +46,10 @@ export function ProfileScreen() {
   const [occupationError, setOccupationError] = useState<string | null>(null)
   const [nameState, setNameState] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle')
   const [terms, setTerms] = useState<UserAgreement | null>(null)
+  // What each field last saved to the server. The auth profile is not
+  // refreshed by these saves, so comparing with it alone would call an edit
+  // back to the old value "unchanged" and never send it.
+  const saved = useRef<{ name?: string; occupation?: string; pickup_postcode?: string }>({})
 
   useEffect(() => {
     let ignore = false
@@ -62,10 +67,11 @@ export function ProfileScreen() {
 
   async function saveName(raw: string) {
     const name = raw.trim()
-    if (!name || name === profile?.name) return
+    if (!name || name === (saved.current.name ?? profile?.name)) return
     setNameState('saving')
     try {
       await apiClient.patch('/api/contributors/me', { name })
+      saved.current.name = name
       setNameState('saved')
     } catch (err) {
       console.error('[ProfileScreen] rename failed:', err)
@@ -76,10 +82,11 @@ export function ProfileScreen() {
   // 124. The line under your name on your public profile.
   async function saveOccupation(raw: string) {
     const occupation = raw.trim()
-    if (occupation === (profile?.occupation ?? '')) return
+    if (occupation === (saved.current.occupation ?? profile?.occupation ?? '')) return
     setOccupationError(null)
     try {
       await apiClient.patch('/api/contributors/me', { occupation: occupation || null })
+      saved.current.occupation = occupation
     } catch (err) {
       console.error('[ProfileScreen] occupation save failed:', err)
       setOccupationError(apiMessage(err, 'Could not save what you do. Please try again.'))
@@ -91,7 +98,7 @@ export function ProfileScreen() {
   // measures nothing.
   async function savePostcode(raw: string) {
     const postcode = raw.trim()
-    if (postcode === (profile?.pickup_postcode ?? '')) return
+    if (postcode === (saved.current.pickup_postcode ?? profile?.pickup_postcode ?? '')) return
     if (postcode && !/^\d{4}$/.test(postcode)) {
       setPostcodeError('A postcode is four digits.')
       return
@@ -99,6 +106,7 @@ export function ProfileScreen() {
     setPostcodeError(null)
     try {
       await apiClient.patch('/api/contributors/me', { pickup_postcode: postcode || null })
+      saved.current.pickup_postcode = postcode
     } catch (err) {
       console.error('[ProfileScreen] postcode save failed:', err)
       setPostcodeError(apiMessage(err, 'Could not save your postcode. Please try again.'))

@@ -178,7 +178,8 @@ export function OrgProfileScreen({ id }: { id: string }) {
         {org.logo_url ? (
           <Image source={{ uri: org.logo_url }} style={StyleSheet.absoluteFill} accessibilityLabel={`${org.name} logo`} />
         ) : (
-          <Text style={styles.logoInitial}>{org.name.charAt(0).toUpperCase()}</Text>
+          <Text style={styles.logoInitial}>{/* Array.from keeps an emoji whole where charAt would split its surrogate pair. */}
+          {Array.from(org.name)[0]?.toUpperCase()}</Text>
         )}
       </View>
 

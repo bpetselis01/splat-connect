@@ -212,7 +212,8 @@ export function CodeInput({ value, onChange }: { value: string; onChange: (code:
         keyboardType="number-pad"
         textContentType="oneTimeCode"
         autoComplete="sms-otp"
-        maxLength={6}
+        // No maxLength: the OS truncates a paste to it before onChangeText
+        // runs, so "123 456" would arrive as "123 45". The handler cuts to six.
         autoFocus
         caretHidden
         style={styles.codeInput}

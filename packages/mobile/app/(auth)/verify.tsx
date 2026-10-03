@@ -21,6 +21,7 @@ export default function VerifyScreen() {
   const [code, setCode] = useState('')
   const [error, setError] = useState<AuthProblem | null>(null)
   const [busy, setBusy] = useState(false)
+  const [resending, setResending] = useState(false)
   const [wait, setWait] = useState(RESEND_AFTER)
 
   useEffect(() => {
@@ -46,8 +47,11 @@ export default function VerifyScreen() {
   }
 
   async function resend() {
+    if (resending) return
     setError(null)
+    setResending(true)
     const res = type === 'signup' ? await resendSignupCode(email) : await sendSignInCode(email)
+    setResending(false)
     if (res.problem) return setError(res.problem)
     setWait(RESEND_AFTER)
   }

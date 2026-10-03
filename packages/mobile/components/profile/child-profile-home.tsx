@@ -28,7 +28,7 @@ const TINTS = [
 function Initial({ name, i }: { name: string; i: number }) {
   return (
     <View style={[styles.avatar, { backgroundColor: TINTS[i % TINTS.length] }]}>
-      <Text style={styles.avatarText}>{name.trim()[0]?.toUpperCase() ?? '?'}</Text>
+      <Text style={styles.avatarText}>{Array.from(name.trim())[0]?.toUpperCase() ?? '?'}</Text>
     </View>
   )
 }

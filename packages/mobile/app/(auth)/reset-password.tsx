@@ -21,6 +21,7 @@ export default function ResetPasswordScreen() {
   const [sent, setSent] = useState(false)
 
   async function submit() {
+    if (busy) return
     setError(null)
     if (code.length !== 6) return setError({ kind: 'other', message: 'Type the 6-digit code from the email.' })
     // Checked before the code is spent: verifying signs you in, and the new
@@ -53,9 +54,8 @@ export default function ResetPasswordScreen() {
         keyboardType="number-pad"
         textContentType="oneTimeCode"
         autoComplete="one-time-code"
-        maxLength={6}
         value={code}
-        onChangeText={(t) => setCode(t.replace(/\D/g, ''))}
+        onChangeText={(t) => setCode(t.replace(/\D/g, '').slice(0, 6))}
         style={{ fontFamily: theme.fonts.numeral, letterSpacing: 6 }}
       />
       <PasswordField label="New password" isNew value={password} onChangeText={setPassword} onSubmitEditing={submit} />

@@ -57,10 +57,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [resetting, setResetting] = useState(false)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session)
-      setLoading(false)
-    })
+    // A failed read (the secure store refusing) is "signed out", not a spinner forever.
+    supabase.auth
+      .getSession()
+      .then(({ data }) => setSession(data.session))
+      .catch(() => {})
+      .finally(() => setLoading(false))
     const { data } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession)
     })
