@@ -65,6 +65,21 @@ describe('HomeScreen', () => {
     expect(title).toMatchObject({ fontFamily: theme.fonts.display, fontSize: 30 })
   })
 
+  it('puts the title and Edit on one centred line, whatever Baloo 2 reports as its height', () => {
+    setup()
+    const bar = StyleSheet.flatten(screen.getByTestId('home-topbar').props.style) as Record<string, number | string>
+    expect(bar).toMatchObject({ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' })
+    const title = StyleSheet.flatten(screen.getByText('Home').props.style) as Record<string, number>
+    // Baloo 2 is 1.602em tall (hhea 1078 + 524), so a 30px title boxed at 33
+    // sits low on iOS. The box is the font's own height, pulled back by margins
+    // so the row still measures 33.
+    expect(title.lineHeight).toBe(48)
+    expect(title.lineHeight + 2 * title.marginVertical).toBe(33)
+    const edit = StyleSheet.flatten(screen.getByLabelText('Edit').props.style) as Record<string, number>
+    expect(edit).toMatchObject({ paddingVertical: 8, paddingHorizontal: 14 })
+    expect(StyleSheet.flatten(screen.getByText('Edit').props.style)).toMatchObject({ fontSize: 14 })
+  })
+
   it('sits on the page ground and clears the floating tab bar', () => {
     setup()
     const frame = screen.UNSAFE_getByType(ScrollView)

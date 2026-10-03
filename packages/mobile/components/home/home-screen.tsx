@@ -67,7 +67,7 @@ export function HomeScreen() {
         style={scrollFrame}
         contentContainerStyle={[scrollContent, { paddingBottom: tabBarClearance(insets.bottom) }]}
       >
-        <View style={styles.topbar}>
+        <View testID="home-topbar" style={styles.topbar}>
           <Text accessibilityRole="header" style={styles.title}>
             Home
           </Text>
@@ -118,7 +118,11 @@ export function HomeScreen() {
 
 const styles = StyleSheet.create({
   topbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
-  title: { fontFamily: theme.fonts.display, fontSize: 30, lineHeight: 33, color: theme.colors.ink },
+  // Baloo 2 is 1.602em tall (hhea 1078 + 524). Boxed at the mockup's 33 the
+  // iOS text layout trims and re-offsets it and the word rides low against
+  // Edit. Give it the font's own 48 so nothing is trimmed, and take the 15
+  // back in margins so the row is still 33 and alignItems centres the pair.
+  title: { fontFamily: theme.fonts.display, fontSize: 30, lineHeight: 48, marginVertical: -7.5, color: theme.colors.ink },
   editBtn: {
     paddingVertical: 8,
     paddingHorizontal: 14,
