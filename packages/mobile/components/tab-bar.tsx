@@ -20,7 +20,7 @@ import { TAB_BAR_HEIGHT, TAB_BAR_OFFSET } from '../lib/tab-bar-layout'
 
 // Roots that show the bar. Guides and Toys are hidden tabs reached from Home:
 // they show the bar with Home lit. Explore is a pushed place, never a root.
-const BAR_ROOTS = new Set(['home', 'map', 'inbox', 'me', 'guides', 'toy-library'])
+export const BAR_ROOTS = new Set(['home', 'map', 'inbox', 'me', 'guides', 'toy-library'])
 const BUTTONS = ['home', 'map', 'inbox', 'me']
 
 // Outline always, as the board draws it: the lit tab changes colour and gets
