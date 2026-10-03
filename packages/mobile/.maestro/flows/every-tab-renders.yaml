@@ -65,11 +65,11 @@ appId: com.splatconnect.mobile
 - assertVisible:
     text: "Toy library"
 
-# Map is a placeholder until sub-project 6; its row opens Not built yet.
+# Map is a To be completed screen until a maps provider is set up.
 - tapOn:
     text: "Map"
 - assertVisible:
-    text: "Open the map"
+    text: "To be completed"
 
 # Inbox must render an actual row, not just its header: rows are where
 # relativeTime runs, and the fixture seeds exactly one notification so this
