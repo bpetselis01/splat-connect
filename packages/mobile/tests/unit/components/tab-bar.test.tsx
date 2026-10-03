@@ -77,23 +77,40 @@ it('hides on a pushed screen and on Explore, and shows on a tab root', () => {
   expect(screen.getByText('Home')).toBeTruthy()
 })
 
-it('floats: absolute, 14px margins, 66px tall, above the home indicator, over a blur', () => {
+it('floats: absolute, 14px margins, 16px off the edge, 66px tall, above the home indicator, over a blur', () => {
   render(<TabBar {...props} insets={{ top: 0, bottom: 34, left: 0, right: 0 }} badges={{}} />)
   const bar = StyleSheet.flatten(screen.getByTestId('tab-bar').props.style)
   expect(bar).toMatchObject({ position: 'absolute', left: 14, right: 14, height: 66, bottom: 34 })
   expect(screen.UNSAFE_getByType(BlurView)).toBeTruthy()
   screen.unmount()
   render(<TabBar {...props} badges={{}} />)
-  expect(StyleSheet.flatten(screen.getByTestId('tab-bar').props.style).bottom).toBe(14)
+  expect(StyleSheet.flatten(screen.getByTestId('tab-bar').props.style).bottom).toBe(16)
 })
 
 it('tabBarClearance is bar + offset + 12', () => {
   expect(tabBarClearance(34)).toBe(66 + 34 + 12)
-  expect(tabBarClearance(0)).toBe(66 + 14 + 12)
+  expect(tabBarClearance(0)).toBe(66 + 16 + 12)
 })
 
 it('caps label scaling at 1.3 and shows 99+ for a badge over 99', () => {
   render(<TabBar {...props} badges={{ inbox: 150 }} />)
   expect(screen.getByText('Home').props.maxFontSizeMultiplier).toBe(1.3)
   expect(screen.getByText('99+')).toBeTruthy()
+})
+
+it('matches the board glass: 62% white, board shadow, pale-blue active pill, outline icons', () => {
+  render(<TabBar {...props} badges={{}} />)
+  const bar = StyleSheet.flatten(screen.getByTestId('tab-bar').props.style)
+  expect(bar).toMatchObject({ backgroundColor: 'rgba(255,255,255,0.62)', shadowOpacity: 0.14, shadowRadius: 28, padding: 6 })
+  expect(StyleSheet.flatten(screen.getByLabelText('Home').props.style)).toMatchObject({ backgroundColor: 'rgba(220,240,251,0.85)' })
+  expect(StyleSheet.flatten(screen.getByLabelText('Map').props.style).backgroundColor).toBeUndefined()
+})
+
+it('the unread badge is dangerDeep with white 10.5 text, a white ring and the board size', () => {
+  render(<TabBar {...props} badges={{ inbox: 3 }} />)
+  const pill = StyleSheet.flatten(screen.getByTestId('tab-badge').props.style)
+  expect(pill).toMatchObject({
+    backgroundColor: '#b83a3a', minWidth: 21, height: 21, borderWidth: 2, borderColor: 'rgba(255,255,255,0.9)',
+  })
+  expect(StyleSheet.flatten(screen.getByText('3').props.style)).toMatchObject({ color: '#ffffff', fontSize: 10.5, lineHeight: 17 })
 })

@@ -23,11 +23,13 @@ import { TAB_BAR_HEIGHT, TAB_BAR_OFFSET } from '../lib/tab-bar-layout'
 const BAR_ROOTS = new Set(['home', 'map', 'inbox', 'me', 'guides', 'toy-library'])
 const BUTTONS = ['home', 'map', 'inbox', 'me']
 
-const ICONS: Record<string, { on: keyof typeof Ionicons.glyphMap; off: keyof typeof Ionicons.glyphMap }> = {
-  home: { on: 'home', off: 'home-outline' },
-  map: { on: 'map', off: 'map-outline' },
-  inbox: { on: 'mail', off: 'mail-outline' },
-  me: { on: 'person', off: 'person-outline' },
+// Outline always, as the board draws it: the lit tab changes colour and gets
+// the pill, not a filled glyph.
+const ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
+  home: 'home-outline',
+  map: 'map-outline',
+  inbox: 'mail-outline',
+  me: 'person-outline',
 }
 
 /**
@@ -88,12 +90,14 @@ export function TabBar({ state, descriptors, navigation, insets, badges }: Props
           style={[styles.item, focused && styles.itemOn]}
         >
           <SpringIcon focused={focused}>
-            <Ionicons name={focused ? icon.on : icon.off} size={24} color={tint} />
+            <Ionicons name={icon} size={24} color={tint} />
           </SpringIcon>
           <Text maxFontSizeMultiplier={1.3} style={[styles.label, { color: tint }]}>{label}</Text>
           {badge > 0 ? (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{(badge > 99 ? '99+' : String(badge))}</Text>
+            <View pointerEvents="none" style={styles.badgeAnchor}>
+              <View testID="tab-badge" style={styles.badge}>
+                <Text style={styles.badgeText}>{(badge > 99 ? '99+' : String(badge))}</Text>
+              </View>
             </View>
           ) : null}
         </Pressable>
@@ -124,14 +128,22 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: 'rgba(255,255,255,0.62)',
     ...theme.shadow(3),
+    // The board's 0 12 28 at .14; elevation 3 of the ladder is .1.
+    shadowOpacity: 0.14,
   },
-  item: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 2, borderRadius: theme.radii.pill },
-  itemOn: { backgroundColor: theme.colors.accentLight },
+  item: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 1, borderRadius: theme.radii.pill },
+  // accentLight at 85%, so the glass shows through the pill.
+  itemOn: { backgroundColor: 'rgba(220,240,251,0.85)' },
   label: { fontFamily: theme.fonts.black, fontSize: 11 },
+  // The board puts the badge's right edge 22px right of the item's centre.
+  // A flex row with 50% right padding lands on the centre; the margin does
+  // the 22 (+2 for the ring, which the board draws outside the 17px box).
+  badgeAnchor: { position: 'absolute', top: 3, left: 0, right: 0, flexDirection: 'row', justifyContent: 'flex-end', paddingRight: '50%' },
+  // dangerDeep, not the board's #e05252: white on that is 3.82:1, under AA.
   badge: {
-    position: 'absolute', top: 6, right: 18, minWidth: 18, height: 18, paddingHorizontal: 5,
-    borderRadius: theme.radii.pill, backgroundColor: theme.colors.apricot,
+    marginRight: -24, minWidth: 21, height: 21, paddingHorizontal: 3, borderRadius: theme.radii.pill,
+    backgroundColor: theme.colors.dangerDeep, borderWidth: 2, borderColor: 'rgba(255,255,255,0.9)',
     alignItems: 'center', justifyContent: 'center',
   },
-  badgeText: { fontFamily: theme.fonts.black, fontSize: 10, lineHeight: 12, color: theme.colors.ink },
+  badgeText: { fontFamily: theme.fonts.black, fontSize: 10.5, lineHeight: 17, color: '#ffffff' },
 })
