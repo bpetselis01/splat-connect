@@ -9,6 +9,7 @@ import { theme } from '../../lib/theme'
 import { useLearnProgress } from '../../lib/learn'
 import { LEARN_ARTICLES } from '../../lib/learn-content'
 import { Screen } from '../ui/Screen'
+import { ToBeCompleted } from '../ui/ToBeCompleted'
 import { Button } from '../ui/Button'
 import { EmptyState } from '../ui/EmptyState'
 
@@ -28,13 +29,14 @@ export function ArticleScreen({ slug }: { slug: string }) {
 
   const next = LEARN_ARTICLES[index + 1] ?? null
 
-  // PENDING(learn-article-hero): a hero image above the first heading — articles store none.
+  // PENDING(learn-article-hero): a hero image above the first heading — articles store none, so the slot says To be completed.
   return (
     <Screen>
       {/* The layout registers a static "Guide" fallback; this overrides it
           with the real title once the article is known. */}
       <Stack.Screen options={{ title: article.title }} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        <ToBeCompleted compact icon="image-outline">A picture for this article will appear here.</ToBeCompleted>
         <Text style={styles.eyebrow}>{`Learn · ${index + 1} of ${LEARN_ARTICLES.length}`}</Text>
         <Text style={styles.title}>{article.title}</Text>
         <Text style={styles.intro}>{article.intro}</Text>

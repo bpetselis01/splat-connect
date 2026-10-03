@@ -37,6 +37,11 @@ describe('ArticleScreen', () => {
     expect(screen.getAllByTestId('article-callout')).toHaveLength(1)
   })
 
+  it('holds the hero picture slot as To be completed', () => {
+    render(<ArticleScreen slug="toy-adaptation-101" />)
+    expect(screen.getByText('To be completed')).toBeTruthy()
+  })
+
   it('has the next article as its only footer action, and reaching it marks this one read', () => {
     render(<ArticleScreen slug="toy-adaptation-101" />)
 
