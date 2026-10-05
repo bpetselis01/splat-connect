@@ -27,6 +27,7 @@ import { Button } from '../ui/Button'
 import { EmptyState } from '../ui/EmptyState'
 import { ListSection } from '../list/list-kit'
 import { MapCanvas } from './MapCanvas'
+import { FilterButton, GroupLabel, OptionPill } from '../ui/FilterControls'
 
 const WHEN: [When, string][] = [['any', 'Any time'], ['fortnight', 'Next 2 weeks'], ['weekend', 'Weekends']]
 const BANDS: [string, (km: number | null) => boolean][] = [
@@ -175,29 +176,15 @@ export function MapScreen() {
               clearButtonMode="while-editing"
             />
           </View>
-          {/* Dark while the sheet is open (an ✕ that closes it) or while a filter is on. */}
-          <Pressable
+          <FilterButton
+            count={count}
+            open={filtersOpen}
             onPress={() => {
               if (!filtersOpen) setDraft(filters)
               setFiltersOpen((v) => !v)
               setSelected(null)
             }}
-            accessibilityRole="button"
-            accessibilityState={{ expanded: filtersOpen }}
-            accessibilityLabel={filtersOpen ? 'Close filters' : count ? `Filters, ${count} on` : 'Filters'}
-            style={[styles.filterButton, (filtersOpen || count > 0) && styles.filterButtonOn]}
-          >
-            <Ionicons
-              name={filtersOpen ? 'close' : 'options-outline'}
-              size={20}
-              color={filtersOpen || count ? theme.colors.onInverse : theme.colors.ink}
-            />
-            {count && !filtersOpen ? (
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{count}</Text>
-              </View>
-            ) : null}
-          </Pressable>
+          />
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow} contentContainerStyle={styles.chips}>
           {KIND_ORDER.map((k) => (
@@ -256,7 +243,7 @@ export function MapScreen() {
               <GroupLabel label="Distance" hint={`from ${postcode}`} />
               <View style={styles.opts} accessibilityRole="radiogroup">
                 {[null, ...DISTANCES].map((d) => (
-                  <Option key={String(d)} radio label={d ? `${d} km` : 'Any'} on={draft.within === d} onPress={() => setDraft({ ...draft, within: d })} />
+                  <OptionPill key={String(d)} radio label={d ? `${d} km` : 'Any'} on={draft.within === d} onPress={() => setDraft({ ...draft, within: d })} />
                 ))}
               </View>
             </View>
@@ -265,7 +252,7 @@ export function MapScreen() {
             <GroupLabel label="Filament" hint="printers and drop-offs" />
             <View style={styles.opts}>
               {MATERIALS.map((m) => (
-                <Option
+                <OptionPill
                   key={m}
                   label={m}
                   on={draft.materials.includes(m)}
@@ -280,7 +267,7 @@ export function MapScreen() {
             <GroupLabel label="Events" />
             <View style={styles.opts} accessibilityRole="radiogroup">
               {WHEN.map(([w, label]) => (
-                <Option key={w} radio label={label} on={draft.when === w} onPress={() => setDraft({ ...draft, when: w })} />
+                <OptionPill key={w} radio label={label} on={draft.when === w} onPress={() => setDraft({ ...draft, when: w })} />
               ))}
             </View>
           </View>
@@ -347,28 +334,7 @@ function PlaceRow({ item, meta, km, onPress }: { item: MapItem; meta: string; km
   )
 }
 
-function GroupLabel({ label, hint }: { label: string; hint?: string }) {
-  return (
-    <View style={styles.groupHead}>
-      <Text style={styles.groupLabel}>{label}</Text>
-      {hint ? <Text style={styles.groupHint}>{hint}</Text> : null}
-    </View>
-  )
-}
 
-/** A filter option: outlined, ink when chosen. */
-function Option({ label, on, onPress, radio }: { label: string; on: boolean; onPress: () => void; radio?: boolean }) {
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole={radio ? 'radio' : 'button'}
-      accessibilityState={radio ? { checked: on } : { selected: on }}
-      style={[styles.option, on && styles.optionOn]}
-    >
-      <Text style={[styles.optionText, on && styles.optionTextOn]}>{label}</Text>
-    </Pressable>
-  )
-}
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.colors.background },
@@ -406,21 +372,6 @@ const styles = StyleSheet.create({
   layerDot: { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   layerText: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.ink },
   handle: { alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: theme.colors.muted, opacity: 0.3, marginBottom: theme.spacing(2) },
-  groupHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: theme.spacing(2) },
-  groupHint: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.caption, color: theme.colors.muted },
-  option: {
-    minHeight: 40,
-    paddingHorizontal: theme.spacing(4),
-    borderRadius: theme.radii.pill,
-    borderWidth: 1.5,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  optionOn: { backgroundColor: theme.colors.inverse, borderColor: theme.colors.inverse },
-  optionText: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.ink },
-  optionTextOn: { color: theme.colors.onInverse },
   clearText: { fontFamily: theme.fonts.black, fontSize: theme.type.body, color: theme.colors.ink, textDecorationLine: 'underline' },
   km: { fontFamily: theme.fonts.numeral, fontSize: theme.type.caption, color: theme.colors.muted },
 
@@ -428,31 +379,6 @@ const styles = StyleSheet.create({
   topSolid: { backgroundColor: theme.colors.background, borderBottomWidth: theme.border.hairline, borderBottomColor: theme.colors.border },
   searchRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2) },
   searchBox: { borderRadius: theme.radii.pill, ...theme.shadow(2) },
-  filterButton: {
-    width: 48,
-    height: 48,
-    borderRadius: theme.radii.pill,
-    backgroundColor: theme.colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...theme.shadow(2),
-  },
-  filterButtonOn: { backgroundColor: theme.colors.inverse },
-  badge: {
-    position: 'absolute',
-    top: -3,
-    right: -3,
-    minWidth: 20,
-    height: 20,
-    paddingHorizontal: 5,
-    borderRadius: theme.radii.pill,
-    backgroundColor: theme.colors.apricot,
-    borderWidth: 2,
-    borderColor: theme.colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  badgeText: { fontFamily: theme.fonts.black, fontSize: theme.type.micro, color: theme.colors.onColor },
   // Room inside the scroll view for the chips' shadows, which it would clip.
   chipRow: { marginHorizontal: -theme.spacing(4), marginVertical: -theme.spacing(2) },
   chips: { gap: theme.spacing(2), paddingHorizontal: theme.spacing(4), paddingVertical: theme.spacing(2) },
@@ -505,7 +431,6 @@ const styles = StyleSheet.create({
     paddingTop: theme.spacing(4),
   },
   group: { paddingVertical: theme.spacing(3), borderBottomWidth: theme.border.hairline, borderBottomColor: theme.colors.border, gap: theme.spacing(2) },
-  groupLabel: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink },
   opts: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2) },
   actions: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2), marginTop: theme.spacing(4) },
 })
