@@ -7,7 +7,7 @@
 // Pins are MapLibre's own clustering: a number is a cluster, and tapping it
 // zooms to where it splits; at full zoom every item is its own coloured dot.
 import { useMemo, useRef, useState } from 'react'
-import { StyleSheet, Text } from 'react-native'
+import { Keyboard, StyleSheet, Text } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Map, Camera, GeoJSONSource, Images, Layer, type CameraRef, type GeoJSONSourceRef, type LngLatBounds } from '@maplibre/maplibre-react-native'
 import type { MapPlace } from '@splat-connect/types'
@@ -78,7 +78,13 @@ export function MapCanvas({ places, selected, onSelect, inset }: MapCanvasProps)
         compass
         compassPosition={{ top: inset.top - safe.top + 8, right: 16 }}
         attribution={false}
-        onPress={() => onSelect(null)}
+        // The native map swallows the taps that would close the keyboard
+        // anywhere else, so a tap, pan or zoom closes it here.
+        onPress={() => {
+          Keyboard.dismiss()
+          onSelect(null)
+        }}
+        onRegionWillChange={() => Keyboard.dismiss()}
         onDidFinishLoadingStyle={() => setStyleReady(true)}
       >
         <Camera
