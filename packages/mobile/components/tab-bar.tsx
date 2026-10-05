@@ -114,7 +114,7 @@ export function TabBar({ state, descriptors, navigation, insets, badges }: Props
   // reserve tabBarClearance. Sits on the home indicator where there is one.
   return (
     <View testID="tab-bar" style={[styles.bar, { bottom: Math.max(insets.bottom, TAB_BAR_OFFSET) }]}>
-      <BlurView intensity={60} tint="light" style={StyleSheet.absoluteFill} />
+      <BlurView intensity={60} tint={theme.dark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
       {items}
     </View>
   )
@@ -132,14 +132,14 @@ const styles = StyleSheet.create({
     borderWidth: theme.border.hairline,
     borderColor: theme.colors.border,
     overflow: 'hidden',
-    backgroundColor: 'rgba(255,255,255,0.62)',
+    backgroundColor: theme.colors.tabGlass,
     ...theme.shadow(3),
     // The board's 0 12 28 at .14; elevation 3 of the ladder is .1.
     shadowOpacity: 0.14,
   },
   item: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 1, borderRadius: theme.radii.pill },
   // accentLight at 85%, so the glass shows through the pill.
-  itemOn: { backgroundColor: 'rgba(220,240,251,0.85)' },
+  itemOn: { backgroundColor: theme.colors.tabOn },
   label: { fontFamily: theme.fonts.black, fontSize: theme.type.micro },
   // The board puts the badge's right edge 22px right of the item's centre.
   // A flex row with 50% right padding lands on the centre; the margin does
@@ -148,8 +148,8 @@ const styles = StyleSheet.create({
   // dangerDeep, not the board's #e05252: white on that is 3.82:1, under AA.
   badge: {
     marginRight: -24, minWidth: 21, height: 21, paddingHorizontal: 3, borderRadius: theme.radii.pill,
-    backgroundColor: theme.colors.dangerDeep, borderWidth: 2, borderColor: 'rgba(255,255,255,0.9)',
+    backgroundColor: theme.colors.dangerDeep, borderWidth: 2, borderColor: theme.colors.surface,
     alignItems: 'center', justifyContent: 'center',
   },
-  badgeText: { fontFamily: theme.fonts.black, fontSize: theme.type.micro, lineHeight: 17, color: '#ffffff' },
+  badgeText: { fontFamily: theme.fonts.black, fontSize: theme.type.micro, lineHeight: 17, color: theme.colors.onColor },
 })

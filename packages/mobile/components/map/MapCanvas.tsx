@@ -14,7 +14,7 @@ import type { MapPlace } from '@splat-connect/types'
 import { KINDS, KIND_ORDER, toFeatures } from '../../lib/map-filters'
 import { theme } from '../../lib/theme'
 
-const STYLE = 'https://tiles.openfreemap.org/styles/positron'
+const STYLE = `https://tiles.openfreemap.org/styles/${theme.dark ? 'dark' : 'positron'}`
 // Sydney, for a first frame with nothing to frame.
 const SYDNEY: LngLatBounds = [150.9, -34.0, 151.35, -33.7]
 const HAS_COUNT = ['has', 'point_count'] as const
@@ -35,8 +35,11 @@ const PER_KIND = Object.fromEntries(
 const CLUSTER_COLOR = [
   'case',
   ...KIND_ORDER.flatMap((k) => [['==', ['get', k], ['get', 'point_count']], KINDS[k].color]),
-  theme.colors.ink,
+  theme.colors.inverse,
 ]
+// White on a kind's colour; a mixed cluster is the inverse pill, so its count takes onInverse.
+const ONE_KIND = ['any', ...KIND_ORDER.map((k) => ['==', ['get', k], ['get', 'point_count']])]
+const COUNT_COLOR = ['case', ONE_KIND, theme.colors.onColor, theme.colors.onInverse]
 
 export type MapCanvasProps = {
   places: MapPlace[]
@@ -131,7 +134,7 @@ export function MapCanvas({ places, selected, onSelect, inset }: MapCanvasProps)
                 id="cluster-count"
                 filter={HAS_COUNT as never}
                 layout={{ 'text-field': ['get', 'point_count_abbreviated'], 'text-font': ['Noto Sans Bold'], 'text-size': 14, 'text-allow-overlap': true }}
-                paint={{ 'text-color': theme.colors.surface }}
+                paint={{ 'text-color': COUNT_COLOR as never }}
               />
               <Layer
                 type="circle"
@@ -168,7 +171,7 @@ const styles = StyleSheet.create({
     paddingVertical: 1,
     borderRadius: 4,
     overflow: 'hidden',
-    backgroundColor: 'rgba(255,255,255,0.7)',
+    backgroundColor: theme.colors.glass,
     fontFamily: theme.fonts.semiBold,
     fontSize: theme.type.micro,
     color: theme.colors.muted,

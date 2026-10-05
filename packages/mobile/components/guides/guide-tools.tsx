@@ -44,7 +44,7 @@ export function GuideTools({ tutorialId, tools }: { tutorialId: string; tools: T
                 hitSlop={8}
                 style={[styles.tick, owned && styles.tickOn]}
               >
-                <Ionicons name={owned ? 'checkmark' : 'ellipse-outline'} size={16} color={owned ? theme.colors.surface : theme.colors.muted} />
+                <Ionicons name={owned ? 'checkmark' : 'ellipse-outline'} size={16} color={owned ? theme.colors.onColor : theme.colors.muted} />
               </Pressable>
               <View style={styles.rowText}>
                 <Text style={[styles.name, owned && styles.owned]}>{`${t.name}${t.is_optional ? ' (optional)' : ''}`}</Text>

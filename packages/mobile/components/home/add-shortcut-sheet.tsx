@@ -196,7 +196,7 @@ export function AddShortcutSheet({ visible, onClose }: { visible: boolean; onClo
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: theme.colors.background },
-  root: { flex: 1, backgroundColor: 'rgba(28,37,48,0.38)' },
+  root: { flex: 1, backgroundColor: theme.colors.scrim },
   sheet: {
     flex: 1,
     marginTop: 78,
@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 28,
     overflow: 'hidden',
   },
-  grab: { width: 40, height: 5, borderRadius: 3, backgroundColor: 'rgba(28,37,48,0.18)', alignSelf: 'center', marginTop: 8 },
+  grab: { width: 40, height: 5, borderRadius: 3, backgroundColor: theme.colors.border, alignSelf: 'center', marginTop: 8 },
   head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 10 },
   title: { fontFamily: theme.fonts.display, fontSize: theme.type.title, color: theme.colors.ink },
   count: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.muted },

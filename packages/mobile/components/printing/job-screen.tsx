@@ -190,7 +190,7 @@ export function PrintJobScreen({ id }: { id: string }) {
                     <Ionicons
                       name={done ? 'checkmark' : RAIL_ICONS[i]}
                       size={14}
-                      color={done || current ? theme.colors.surface : theme.colors.muted}
+                      color={done || current ? theme.colors.onColor : theme.colors.muted}
                     />
                   </View>
                   <Text style={[styles.railLabel, current && styles.railLabelCurrent]}>{label}</Text>
@@ -293,7 +293,7 @@ export function PrintJobScreen({ id }: { id: string }) {
                 onPress={send}
                 style={[styles.send, (busy || !draft.trim()) && styles.sendOff]}
               >
-                <Ionicons name="paper-plane" size={20} color={theme.colors.surface} />
+                <Ionicons name="paper-plane" size={20} color={theme.colors.onColor} />
               </Pressable>
             </View>
           ) : null}

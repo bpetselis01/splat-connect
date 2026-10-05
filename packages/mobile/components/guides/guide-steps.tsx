@@ -74,7 +74,7 @@ export function GuideSteps({
           >
             <View style={[styles.stepNum, done && styles.stepNumDone]}>
               {done ? (
-                <Ionicons name="checkmark" size={16} color={theme.colors.surface} />
+                <Ionicons name="checkmark" size={16} color={theme.colors.onColor} />
               ) : (
                 <Text style={styles.stepNumText}>{st.position}</Text>
               )}

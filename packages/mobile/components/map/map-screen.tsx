@@ -190,7 +190,7 @@ export function MapScreen() {
             <Ionicons
               name={filtersOpen ? 'close' : 'options-outline'}
               size={20}
-              color={filtersOpen || count ? theme.colors.surface : theme.colors.ink}
+              color={filtersOpen || count ? theme.colors.onInverse : theme.colors.ink}
             />
             {count && !filtersOpen ? (
               <View style={styles.badge}>
@@ -233,7 +233,7 @@ export function MapScreen() {
           accessibilityRole="button"
           style={[styles.toggle, { bottom: bottom - theme.spacing(1) }]}
         >
-          <Ionicons name={list ? 'map-outline' : 'list'} size={16} color={theme.colors.surface} />
+          <Ionicons name={list ? 'map-outline' : 'list'} size={16} color={theme.colors.onInverse} />
           <Text style={styles.toggleText}>{list ? 'Map' : 'List'}</Text>
         </Pressable>
       ) : null}
@@ -314,7 +314,7 @@ function LayerChip({ kind, on, onPress }: { kind: MapKind; on: boolean; onPress:
       style={[styles.layer, on && { backgroundColor: k.soft, borderColor: k.color }]}
     >
       <View style={[styles.layerDot, { backgroundColor: k.color }]}>
-        <Ionicons name={k.icon} size={13} color={theme.colors.surface} />
+        <Ionicons name={k.icon} size={13} color={theme.colors.onColor} />
       </View>
       <Text style={styles.layerText}>{k.label}</Text>
     </Pressable>
@@ -418,9 +418,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  optionOn: { backgroundColor: theme.colors.ink, borderColor: theme.colors.ink },
+  optionOn: { backgroundColor: theme.colors.inverse, borderColor: theme.colors.inverse },
   optionText: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.ink },
-  optionTextOn: { color: theme.colors.surface },
+  optionTextOn: { color: theme.colors.onInverse },
   clearText: { fontFamily: theme.fonts.black, fontSize: theme.type.body, color: theme.colors.ink, textDecorationLine: 'underline' },
   km: { fontFamily: theme.fonts.numeral, fontSize: theme.type.caption, color: theme.colors.muted },
 
@@ -437,7 +437,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     ...theme.shadow(2),
   },
-  filterButtonOn: { backgroundColor: theme.colors.ink },
+  filterButtonOn: { backgroundColor: theme.colors.inverse },
   badge: {
     position: 'absolute',
     top: -3,
@@ -452,7 +452,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  badgeText: { fontFamily: theme.fonts.black, fontSize: theme.type.micro, color: theme.colors.surface },
+  badgeText: { fontFamily: theme.fonts.black, fontSize: theme.type.micro, color: theme.colors.onColor },
   // Room inside the scroll view for the chips' shadows, which it would clip.
   chipRow: { marginHorizontal: -theme.spacing(4), marginVertical: -theme.spacing(2) },
   chips: { gap: theme.spacing(2), paddingHorizontal: theme.spacing(4), paddingVertical: theme.spacing(2) },
@@ -463,13 +463,13 @@ const styles = StyleSheet.create({
     minHeight: 44,
     paddingHorizontal: theme.spacing(4),
     borderRadius: theme.radii.pill,
-    backgroundColor: theme.colors.ink,
+    backgroundColor: theme.colors.inverse,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     ...theme.shadow(3),
   },
-  toggleText: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.surface },
+  toggleText: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.onInverse },
 
   sheet: {
     position: 'absolute',
@@ -491,7 +491,7 @@ const styles = StyleSheet.create({
   sheetAddress: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.caption, color: theme.colors.muted, marginTop: -theme.spacing(1), marginBottom: theme.spacing(1) },
   close: { width: 32, height: 32, borderRadius: theme.radii.pill, backgroundColor: theme.colors.surfaceSunken, alignItems: 'center', justifyContent: 'center' },
 
-  backdrop: { flex: 1, backgroundColor: 'rgba(28,37,48,0.4)' },
+  backdrop: { flex: 1, backgroundColor: theme.colors.scrim },
   filterSheet: {
     position: 'absolute',
     left: 0,

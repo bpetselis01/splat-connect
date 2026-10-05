@@ -1,4 +1,5 @@
 import { View } from 'react-native'
+import { theme } from '../../lib/theme'
 import { Redirect, Tabs } from 'expo-router'
 import { TabBar } from '../../components/tab-bar'
 import { useAuthGate } from '../../lib/use-auth-gate'
@@ -15,7 +16,7 @@ export default function TabsLayout() {
     <View style={{ flex: 1 }}>
       <Tabs
         tabBar={(props) => <TabBar {...props} badges={badges} />}
-        screenOptions={{ headerShown: false }}
+        screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: theme.colors.background } }}
         // Back from a screen opened into a hidden tab returns to the tab that
         // opened it, not to the first tab.
         backBehavior="history"

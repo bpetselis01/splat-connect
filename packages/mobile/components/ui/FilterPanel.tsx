@@ -60,6 +60,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  badgeText: { fontFamily: theme.fonts.black, fontSize: theme.type.micro, color: theme.colors.surface },
+  badgeText: { fontFamily: theme.fonts.black, fontSize: theme.type.micro, color: theme.colors.onColor },
   body: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2) },
 })

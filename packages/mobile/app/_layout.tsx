@@ -5,11 +5,15 @@ import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { useFonts, Nunito_400Regular, Nunito_500Medium, Nunito_600SemiBold, Nunito_700Bold, Nunito_800ExtraBold } from '@expo-google-fonts/nunito'
 import { Baloo2_800ExtraBold } from '@expo-google-fonts/baloo-2'
 import { JetBrainsMono_400Regular } from '@expo-google-fonts/jetbrains-mono'
+import { StatusBar } from 'expo-status-bar'
 import { AuthProvider } from '../lib/auth-context'
+import { useReloadOnAppearanceChange } from '../lib/appearance'
+import { theme } from '../lib/theme'
 
 SplashScreen.preventAutoHideAsync()
 
 export default function RootLayout() {
+  useReloadOnAppearanceChange()
   const [fontsLoaded] = useFonts({
     Nunito_400Regular,
     Nunito_500Medium,
@@ -29,7 +33,8 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <Stack screenOptions={{ headerShown: false }}>
+        <StatusBar style={theme.dark ? 'light' : 'dark'} />
+        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.colors.background } }}>
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="(my)" />

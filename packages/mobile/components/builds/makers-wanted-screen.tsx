@@ -180,7 +180,7 @@ export function MakersWantedScreen() {
               hitSlop={8}
               style={styles.addButton}
             >
-              <Ionicons name="add" size={24} color={theme.colors.surface} />
+              <Ionicons name="add" size={24} color={theme.colors.onColor} />
             </Pressable>
           ),
         }}

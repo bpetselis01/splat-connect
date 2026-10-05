@@ -112,5 +112,5 @@ const styles = StyleSheet.create({
   // 7px, per spec — a hazard dot, not a badge.
   dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: theme.colors.apricot },
   label: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.ink },
-  labelActive: { color: theme.colors.surface },
+  labelActive: { color: theme.colors.onColor },
 })

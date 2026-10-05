@@ -659,7 +659,7 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
                 return (
                   <View key={s.label} style={styles.event}>
                     <View style={[styles.stepDot, STEP_TONE[state]]}>
-                      <Ionicons name={STEP_ICON[state]} size={13} color={state === 'done' ? theme.colors.surface : theme.colors.ink} />
+                      <Ionicons name={STEP_ICON[state]} size={13} color={state === 'done' ? theme.colors.onColor : theme.colors.ink} />
                     </View>
                     <View style={styles.eventText}>
                       <Text style={[styles.eventTitle, state === 'todo' && styles.stepTodo]}>{s.label}</Text>

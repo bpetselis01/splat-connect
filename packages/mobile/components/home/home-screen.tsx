@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
   },
   editBtnOn: { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
   editText: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.primaryDeep },
-  editTextOn: { color: '#fff' },
+  editTextOn: { color: theme.colors.onColor },
   today: {
     marginTop: 14,
     flexDirection: 'row',
