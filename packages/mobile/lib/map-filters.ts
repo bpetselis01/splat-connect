@@ -36,7 +36,7 @@ export function toFeatures(places: MapPlace[]): GeoJSON.FeatureCollection<GeoJSO
         return {
           type: 'Feature' as const,
           geometry: { type: 'Point' as const, coordinates: [p.lng + (r * Math.cos(a)) / Math.cos((p.lat * Math.PI) / 180), p.lat + r * Math.sin(a)] },
-          properties: { place: placeKey(p), item: itemKey(i), color: KINDS[i.kind].color },
+          properties: { place: placeKey(p), item: itemKey(i), kind: i.kind, color: KINDS[i.kind].color },
         }
       })
     ),

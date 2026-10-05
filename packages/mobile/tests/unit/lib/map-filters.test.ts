@@ -67,7 +67,7 @@ describe('toFeatures', () => {
     const fc = toFeatures([places[0], place({ suburb: 'Solo', items: [{ kind: 'org', id: 'o', title: 'O', meta: null }] })])
     expect(fc.features).toHaveLength(4)
     expect(fc.features[3].geometry.coordinates).toEqual([151.18, -33.9])
-    expect(fc.features[3].properties).toEqual({ place: '-33.9,151.18', item: 'org:o', color: expect.any(String) })
+    expect(fc.features[3].properties).toEqual({ place: '-33.9,151.18', item: 'org:o', kind: 'org', color: expect.any(String) })
     const fan = fc.features.slice(0, 3).map((f) => f.geometry.coordinates)
     expect(new Set(fan.map(String)).size).toBe(3)
     for (const [lng, lat] of fan) {

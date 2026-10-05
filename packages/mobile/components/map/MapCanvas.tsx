@@ -8,15 +8,34 @@
 // zooms to where it splits; at full zoom every item is its own coloured dot.
 import { useMemo, useRef } from 'react'
 import { StyleSheet } from 'react-native'
-import { Map, Camera, GeoJSONSource, Layer, type CameraRef, type GeoJSONSourceRef, type LngLatBounds } from '@maplibre/maplibre-react-native'
+import { Map, Camera, GeoJSONSource, Images, Layer, type CameraRef, type GeoJSONSourceRef, type LngLatBounds } from '@maplibre/maplibre-react-native'
 import type { MapPlace } from '@splat-connect/types'
-import { toFeatures } from '../../lib/map-filters'
+import { KINDS, KIND_ORDER, toFeatures } from '../../lib/map-filters'
 import { theme } from '../../lib/theme'
 
 const STYLE = 'https://tiles.openfreemap.org/styles/positron'
 // Sydney, for a first frame with nothing to frame.
 const SYDNEY: LngLatBounds = [150.9, -34.0, 151.35, -33.7]
 const HAS_COUNT = ['has', 'point_count'] as const
+// White pin icons, rendered from the app's Ionicons by scripts/map-icons.py.
+const ICONS = {
+  toy: require('../../assets/map/toy.png'),
+  printer: require('../../assets/map/printer.png'),
+  event: require('../../assets/map/event.png'),
+  dropoff: require('../../assets/map/dropoff.png'),
+  org: require('../../assets/map/org.png'),
+}
+// Each cluster counts its items per kind, so one that is all one kind wears
+// that kind's colour and a mixed one is ink, as the mockup's pins do.
+// The full reduce form: iOS rejects web MapLibre's bare '+' shorthand.
+const PER_KIND = Object.fromEntries(
+  KIND_ORDER.map((k) => [k, [['+', ['accumulated'], ['get', k]], ['case', ['==', ['get', 'kind'], k], 1, 0]]])
+)
+const CLUSTER_COLOR = [
+  'case',
+  ...KIND_ORDER.flatMap((k) => [['==', ['get', k], ['get', 'point_count']], KINDS[k].color]),
+  theme.colors.ink,
+]
 
 export type MapCanvasProps = {
   places: MapPlace[]
@@ -55,6 +74,7 @@ export function MapCanvas({ places, selected, onSelect, inset }: MapCanvasProps)
         ref={camera}
         initialViewState={{ bounds: bounds(places), padding: { top: inset.top + 32, bottom: inset.bottom + 32, left: 40, right: 40 } }}
       />
+      <Images images={ICONS} />
       <GeoJSONSource
         ref={source}
         id="places"
@@ -62,6 +82,7 @@ export function MapCanvas({ places, selected, onSelect, inset }: MapCanvasProps)
         cluster
         clusterRadius={44}
         clusterMaxZoom={17}
+        clusterProperties={PER_KIND as never}
         onPress={async (e) => {
           e.stopPropagation()
           const f = e.nativeEvent.features[0]
@@ -80,7 +101,7 @@ export function MapCanvas({ places, selected, onSelect, inset }: MapCanvasProps)
           id="clusters"
           filter={HAS_COUNT as never}
           paint={{
-            'circle-color': theme.colors.ink,
+            'circle-color': CLUSTER_COLOR as never,
             'circle-radius': ['step', ['get', 'point_count'], 17, 10, 21, 50, 26],
             'circle-stroke-width': 2.5,
             'circle-stroke-color': theme.colors.surface,
@@ -99,10 +120,16 @@ export function MapCanvas({ places, selected, onSelect, inset }: MapCanvasProps)
           filter={['!', HAS_COUNT] as never}
           paint={{
             'circle-color': ['get', 'color'],
-            'circle-radius': ['case', ['==', ['get', 'item'], selected ?? ''], 13, 9],
+            'circle-radius': ['case', ['==', ['get', 'item'], selected ?? ''], 19, 15],
             'circle-stroke-width': 2.5,
             'circle-stroke-color': theme.colors.surface,
           }}
+        />
+        <Layer
+          type="symbol"
+          id="item-icons"
+          filter={['!', HAS_COUNT] as never}
+          layout={{ 'icon-image': ['get', 'kind'], 'icon-size': 1, 'icon-allow-overlap': true, 'icon-ignore-placement': true }}
         />
       </GeoJSONSource>
     </Map>
