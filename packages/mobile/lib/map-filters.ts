@@ -1,0 +1,76 @@
+// packages/mobile/lib/map-filters.ts
+// The Map tab's layers and filters. Pure: the screen, the pins and the list
+// all read what applyFilters returns.
+import type { Ionicons } from '@expo/vector-icons'
+import type { MapItem, MapKind, MapPlace } from '@splat-connect/types'
+import { theme } from './theme'
+
+type IconName = React.ComponentProps<typeof Ionicons>['name']
+
+export const KINDS: Record<MapKind, { label: string; one: string; icon: IconName; color: string; soft: string }> = {
+  toy: { label: 'Toys', one: 'Toy', icon: 'cube-outline', color: theme.colors.apricot, soft: theme.colors.apricotSoft },
+  printer: { label: 'Printers', one: 'Printer', icon: 'print-outline', color: theme.colors.primary, soft: theme.colors.accentLight },
+  event: { label: 'Events', one: 'Event', icon: 'calendar-outline', color: theme.colors.violet, soft: theme.colors.violetSoft },
+  dropoff: { label: 'Drop-offs', one: 'Drop-off', icon: 'refresh-outline', color: theme.colors.mint, soft: theme.colors.mintSoft },
+  org: { label: 'Organisations', one: 'Organisation', icon: 'business-outline', color: theme.colors.honey, soft: theme.colors.honeySoft },
+}
+export const KIND_ORDER = Object.keys(KINDS) as MapKind[]
+
+/** A place's identity: one suburb in one state. */
+export const placeKey = (p: MapPlace) => `${p.suburb}|${p.state}`
+
+export const MATERIALS = ['PLA', 'PETG', 'TPU'] as const
+export const DISTANCES = [2, 5, 10, 25] as const
+
+export type When = 'any' | 'fortnight' | 'weekend'
+export type MapFilters = { within: number | null; materials: string[]; when: When }
+export const NO_FILTERS: MapFilters = { within: null, materials: [], when: 'any' }
+
+/** How many filters are on, for the button's badge. Layer chips do not count. */
+export const filterCount = (f: MapFilters) => (f.within ? 1 : 0) + f.materials.length + (f.when !== 'any' ? 1 : 0)
+
+const DAY = 86_400_000
+
+function keepItem(item: MapItem, f: MapFilters, now: number): boolean {
+  if (f.materials.length && (item.kind === 'printer' || item.kind === 'dropoff')) {
+    if (!f.materials.some((m) => item.materials?.includes(m))) return false
+  }
+  if (f.when !== 'any' && item.kind === 'event' && item.starts_at) {
+    const start = new Date(item.starts_at)
+    if (f.when === 'fortnight' && start.getTime() - now > 14 * DAY) return false
+    if (f.when === 'weekend' && start.getDay() !== 0 && start.getDay() !== 6) return false
+  }
+  return true
+}
+
+/** Places with only the shown kinds and the items the filters keep; empty places drop out. */
+export function applyFilters(places: MapPlace[], kinds: Set<MapKind>, f: MapFilters, now = Date.now()): MapPlace[] {
+  return places
+    .filter((p) => !f.within || (p.km !== null && p.km <= f.within))
+    .map((p) => ({ ...p, items: p.items.filter((i) => kinds.has(i.kind) && keepItem(i, f, now)) }))
+    .filter((p) => p.items.length > 0)
+}
+
+/** Where tapping an item goes. */
+export function itemRoute(i: MapItem): string {
+  switch (i.kind) {
+    case 'toy':
+      return `/toy-library/${i.id}`
+    case 'printer':
+      return '/printing'
+    case 'event':
+      return `/news/event/${i.id}`
+    case 'dropoff':
+      return '/explore/recycling'
+    case 'org':
+      return `/toy-library/organisation/${i.id}`
+  }
+}
+
+/** The row's second line: the kind, then the server's meta, or the date for an event. */
+export function itemMeta(i: MapItem): string {
+  const date = i.starts_at
+    ? new Date(i.starts_at).toLocaleString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })
+    : null
+  return [KINDS[i.kind].one, date, i.meta].filter(Boolean).join(' · ')
+}

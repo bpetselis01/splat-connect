@@ -63,6 +63,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["mobile"],
     needs: "A maps provider (owner setup), then map pins, filters and list view (sub-project 6 of the 2026-10-02 notes)",
+    shipped: true,
   },
   'org-visit-map': {
     title: "Map and address",
