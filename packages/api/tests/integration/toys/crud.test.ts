@@ -67,6 +67,19 @@ describe('toys CRUD', () => {
     expect(patched.status).toBe('draft')
   })
 
+  // 127: who it suits round-trips on a toy, and a value that is not an answer is a 400.
+  it('saves the suits tags and refuses a value that is not an answer', async () => {
+    const created = (await (await req('/', owner.token, { method: 'POST', body: JSON.stringify({ name: 'Penguins', condition: 7 }) })).json()) as { id: string }
+    const ok = await req(`/${created.id}`, owner.token, {
+      method: 'PATCH',
+      body: JSON.stringify({ movement: ['press', 'lever'], play: ['move'], fit: { tray_mm: [5, 30] } }),
+    })
+    expect(ok.status).toBe(200)
+    expect(await ok.json()).toMatchObject({ movement: ['press', 'lever'], play: ['move'], fit: { tray_mm: [5, 30] }, hands: null })
+    const bad = await req(`/${created.id}`, owner.token, { method: 'PATCH', body: JSON.stringify({ movement: ['wave'] }) })
+    expect(bad.status).toBe(400)
+  })
+
   it('returns 404 (never 403) when another owner touches the toy, and 404 for a malformed id', async () => {
     const create = await req('/', owner.token, {
       method: 'POST',

@@ -10,6 +10,9 @@ import type { PicksMode, ToyPick } from './toy-picks'
 export { contributorBadges, nextBadgeThreshold, nextBadgeLine, BADGE_RULES } from './contributor-badges'
 export { ABOUT_LEAD, ABOUT_PILLARS, ABOUT_TEAM_BLURB, CONTACT_TIMES } from './about'
 export { matchesForChild, childNeedsLine } from './child-matches'
+export { MOVEMENTS, HANDS, SUITS_FIELDS, NO_SUITS_FILTER, readSuits, matchesSuits, suitsFilterCount } from './suits'
+export type { Movement, Hand, Fit, FitRange, Suits, SuitsFilter } from './suits'
+import type { Suits } from './suits'
 export {
   LEARN_COURSE, LEARN_SHOWN_AS, LESSON_KIND_LABEL,
   learnLessons, lessonBySlug, unitOf, nextAfter, courseHours, readLearnCourse, mergeLearnCourse,
@@ -196,7 +199,7 @@ export const OFFER_SHORT_LABEL: Record<OfferType, string> = { donation: 'Gift', 
  */
 export const MAX_PHOTOS = 5
 
-export interface Toy {
+export interface Toy extends Suits {
   id: string
   /** Null when an organisation holds it. Exactly one of this and
    *  `owner_org_id` is set — 033's `toys_one_owner` constraint. */
@@ -2117,7 +2120,7 @@ export function formatAgeRange(min: number | null | undefined, max: number | nul
   return min === max ? `Age ${min}` : `Age ${min}–${max}`
 }
 
-export interface Tutorial {
+export interface Tutorial extends Suits {
   id: string
   title: string
   description: string | null

@@ -30,7 +30,7 @@ import { ledOrgIds, ownedByCaller } from '../toy-access.js'
 import { removeDroppedPhotos } from '../photo-storage.js'
 import { chunk } from '../chunk.js'
 import type { AuthVariables } from '../middleware/auth.js'
-import type { OfferType, ToyPickInput } from '@splat-connect/types'
+import { readSuits, SUITS_FIELDS, type OfferType, type ToyPickInput } from '@splat-connect/types'
 
 const toys = new Hono<{ Variables: AuthVariables }>()
 
@@ -53,6 +53,8 @@ const EDITABLE = [
   'tutorial_id',
   'paused_at',
   'picks_mode',
+  // 127: who it suits.
+  ...SUITS_FIELDS,
 ] as const
 
 const FACT_TEXT = { batteries: 60, switch_fitting: 60, volume: 40 } as const
@@ -78,6 +80,10 @@ async function checkFacts(
   body: Record<string, unknown>,
   current: { age_min: number | null; age_max: number | null } = { age_min: null, age_max: null }
 ): Promise<string | null> {
+  // 127: who it suits, checked against the answer lists and tidied in place.
+  const suits = readSuits(body)
+  if (typeof suits === 'string') return suits
+  Object.assign(body, suits)
   for (const key of ['age_min', 'age_max'] as const) {
     if (!(key in body)) continue
     const v = body[key] === '' ? null : body[key]

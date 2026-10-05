@@ -38,6 +38,24 @@ afterAll(async () => {
 })
 
 describe('PATCH /api/tutorials/:id', () => {
+  // 127: who it suits round-trips, and a value that is not an answer is a 400.
+  it('applies the suits tags and 400s a value that is not an answer', async () => {
+    let { data: current } = await adminClient().from('tutorials').select('updated_at').eq('id', draft).single()
+    const ok = await app.request(`/api/tutorials/${draft}`, authed(author.token, {
+      method: 'PATCH',
+      body: JSON.stringify({ movement: ['press'], hands: ['one'], play: ['light', 'water'], fit: { palm_width_mm: [40, 80] }, updated_at: current!.updated_at }),
+    }))
+    expect(ok.status).toBe(200)
+    expect(await ok.json()).toMatchObject({ movement: ['press'], hands: ['one'], play: ['light', 'water'], fit: { palm_width_mm: [40, 80] } })
+    ;({ data: current } = await adminClient().from('tutorials').select('updated_at').eq('id', draft).single())
+    const bad = await app.request(`/api/tutorials/${draft}`, authed(author.token, {
+      method: 'PATCH',
+      body: JSON.stringify({ play: ['fireworks'], updated_at: current!.updated_at }),
+    }))
+    expect(bad.status).toBe(400)
+    expect(((await bad.json()) as { error: string }).error).toMatch(/^play must be a list of/)
+  })
+
   it('applies the editable fields', async () => {
     const { data: current } = await adminClient().from('tutorials').select('updated_at').eq('id', draft).single()
     const res = await app.request(`/api/tutorials/${draft}`, authed(author.token, {
