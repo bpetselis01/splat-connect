@@ -135,6 +135,20 @@ it('filters apply only on Show places, and the button counts them', async () => 
   expect(screen.getByRole('button', { name: 'Filters, 1 on' })).toBeTruthy()
 })
 
+it('the filter button turns into a close button while the sheet is open, and closing drops unapplied choices', async () => {
+  render(<MapTab />)
+  await screen.findByRole('button', { name: 'pin Chatswood' })
+  fireEvent.press(screen.getByRole('button', { name: 'Filters' }))
+  expect(screen.getByText('Show places')).toBeTruthy()
+  fireEvent.press(screen.getByText('5 km'))
+  // Both the backdrop and the button close; the button is the one in the top bar.
+  const close = screen.getAllByRole('button', { name: 'Close filters' })
+  fireEvent.press(close[close.length - 1])
+  await waitFor(() => expect(screen.queryByText('Show places')).toBeNull())
+  expect(screen.getByRole('button', { name: 'Filters' })).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'pin Chatswood' })).toBeTruthy()
+})
+
 it('search narrows to a suburb or a matching title', async () => {
   render(<MapTab />)
   await screen.findByRole('button', { name: 'pin Leichhardt' })

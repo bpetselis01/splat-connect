@@ -6,7 +6,8 @@
  * Mockup: https://claude.ai/artifact/Q2GMV7emYY35QYtrW8LWtb
  */
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { View, Text, Pressable, ScrollView, Modal, StyleSheet } from 'react-native'
+import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native'
+import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -153,6 +154,12 @@ export function MapScreen() {
     <View style={styles.screen}>
       {body}
 
+      {filtersOpen ? (
+        <Animated.View entering={FadeIn.duration(theme.motion.fast)} exiting={FadeOut.duration(theme.motion.fast)} style={StyleSheet.absoluteFill}>
+          <Pressable style={styles.backdrop} onPress={() => setFiltersOpen(false)} accessibilityLabel="Close filters" accessibilityRole="button" />
+        </Animated.View>
+      ) : null}
+
       <View style={[styles.top, { paddingTop: insets.top + theme.spacing(2) }, list && styles.topSolid]} onLayout={(e) => setTopHeight(e.nativeEvent.layout.height)}>
         <View style={styles.searchRow}>
           <View style={styles.flex}>
@@ -168,17 +175,24 @@ export function MapScreen() {
               clearButtonMode="while-editing"
             />
           </View>
+          {/* Dark while the sheet is open (an ✕ that closes it) or while a filter is on. */}
           <Pressable
             onPress={() => {
-              setDraft(filters)
-              setFiltersOpen(true)
+              if (!filtersOpen) setDraft(filters)
+              setFiltersOpen((v) => !v)
+              setSelected(null)
             }}
             accessibilityRole="button"
-            accessibilityLabel={count ? `Filters, ${count} on` : 'Filters'}
-            style={[styles.filterButton, count > 0 && styles.filterButtonOn]}
+            accessibilityState={{ expanded: filtersOpen }}
+            accessibilityLabel={filtersOpen ? 'Close filters' : count ? `Filters, ${count} on` : 'Filters'}
+            style={[styles.filterButton, (filtersOpen || count > 0) && styles.filterButtonOn]}
           >
-            <Ionicons name="options-outline" size={20} color={count ? theme.colors.surface : theme.colors.ink} />
-            {count ? (
+            <Ionicons
+              name={filtersOpen ? 'close' : 'options-outline'}
+              size={20}
+              color={filtersOpen || count ? theme.colors.surface : theme.colors.ink}
+            />
+            {count && !filtersOpen ? (
               <View style={styles.badge}>
                 <Text style={styles.badgeText}>{count}</Text>
               </View>
@@ -192,7 +206,7 @@ export function MapScreen() {
         </ScrollView>
       </View>
 
-      {open ? (
+      {filtersOpen ? null : open ? (
         <View style={[styles.sheet, { paddingBottom: bottom }]}>
           <View style={styles.handle} />
           <View style={styles.sheetHead}>
@@ -224,14 +238,17 @@ export function MapScreen() {
         </Pressable>
       ) : null}
 
-      <Modal visible={filtersOpen} animationType="slide" transparent onRequestClose={() => setFiltersOpen(false)}>
-        <Pressable style={styles.backdrop} onPress={() => setFiltersOpen(false)} accessibilityLabel="Close filters" accessibilityRole="button" />
-        <View style={[styles.filterSheet, { paddingBottom: insets.bottom + theme.spacing(4) }]}>
+      {filtersOpen ? (
+        <Animated.View
+          entering={SlideInDown.duration(theme.motion.base)}
+          exiting={SlideOutDown.duration(theme.motion.fast)}
+          style={[styles.filterSheet, { paddingBottom: bottom }]}
+        >
           <View style={styles.handle} />
           <View style={styles.sheetHead}>
             <Text style={styles.sheetTitle}>Filters</Text>
-            <Pressable onPress={() => setFiltersOpen(false)} accessibilityRole="button" accessibilityLabel="Close filters" hitSlop={8} style={styles.close}>
-              <Ionicons name="close" size={16} color={theme.colors.muted} />
+            <Pressable onPress={() => setDraft(NO_FILTERS)} accessibilityRole="button" hitSlop={8}>
+              <Text style={styles.clearText}>Clear all</Text>
             </Pressable>
           </View>
           {postcode ? (
@@ -268,9 +285,6 @@ export function MapScreen() {
             </View>
           </View>
           <View style={styles.actions}>
-            <Pressable onPress={() => setDraft(NO_FILTERS)} accessibilityRole="button" hitSlop={8} style={styles.clear}>
-              <Text style={styles.clearText}>Clear all</Text>
-            </Pressable>
             <View style={styles.flex}>
               <Button
                 label="Show places"
@@ -282,8 +296,8 @@ export function MapScreen() {
               />
             </View>
           </View>
-        </View>
-      </Modal>
+        </Animated.View>
+      ) : null}
     </View>
   )
 }
@@ -407,7 +421,6 @@ const styles = StyleSheet.create({
   optionOn: { backgroundColor: theme.colors.ink, borderColor: theme.colors.ink },
   optionText: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.ink },
   optionTextOn: { color: theme.colors.surface },
-  clear: { paddingHorizontal: theme.spacing(3), minHeight: 48, justifyContent: 'center' },
   clearText: { fontFamily: theme.fonts.black, fontSize: theme.type.body, color: theme.colors.ink, textDecorationLine: 'underline' },
   km: { fontFamily: theme.fonts.numeral, fontSize: theme.type.caption, color: theme.colors.muted },
 
@@ -480,6 +493,11 @@ const styles = StyleSheet.create({
 
   backdrop: { flex: 1, backgroundColor: 'rgba(28,37,48,0.4)' },
   filterSheet: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    ...theme.shadow(3),
     backgroundColor: theme.colors.surface,
     borderTopLeftRadius: theme.radii.card,
     borderTopRightRadius: theme.radii.card,
