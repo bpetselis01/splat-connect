@@ -1,6 +1,6 @@
 // The Map tab with MapCanvas stubbed: pins are buttons named by suburb, so the
 // screen's own state (chips, filters, sheet, list) is what is under test.
-import { render, screen, fireEvent, waitFor, within } from '@testing-library/react-native'
+import { render, screen, fireEvent, waitFor, within, act } from '@testing-library/react-native'
 import type { MapPlace } from '@splat-connect/types'
 import MapTab from '../../../app/(tabs)/map'
 
@@ -8,7 +8,15 @@ jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 const mockGet = jest.fn()
 jest.mock('../../../lib/api-client', () => ({ apiClient: { get: (...a: unknown[]) => mockGet(...a) } }))
 const mockPush = jest.fn()
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }))
+let mockBlur: (() => void) | undefined
+jest.mock('expo-router', () => {
+  const { useEffect } = jest.requireActual('react')
+  return {
+    useRouter: () => ({ push: mockPush }),
+    // Focus runs the effect; mockBlur stands in for leaving the tab.
+    useFocusEffect: (effect: () => (() => void) | undefined) => useEffect(() => { mockBlur = effect() ?? undefined }, [effect]),
+  }
+})
 let mockPostcode: string | null = '2040'
 jest.mock('../../../lib/capabilities', () => ({
   useCapabilities: () => ({ caps: { profile: { pickup_postcode: mockPostcode } }, loading: false }),
@@ -124,6 +132,16 @@ it('search narrows to a suburb or a matching title', async () => {
   fireEvent.changeText(screen.getByLabelText('Search suburbs and places'), 'prusa')
   expect(screen.queryByRole('button', { name: 'pin Chatswood' })).toBeNull()
   expect(within(screen.getByRole('button', { name: 'pin Leichhardt' })).getByText('1')).toBeTruthy()
+})
+
+it('leaving the tab clears the search, so every place shows when you come back', async () => {
+  render(<MapTab />)
+  await screen.findByRole('button', { name: 'pin Leichhardt' })
+  fireEvent.changeText(screen.getByLabelText('Search suburbs and places'), 'prusa')
+  expect(screen.queryByRole('button', { name: 'pin Chatswood' })).toBeNull()
+  act(() => mockBlur?.())
+  expect(screen.getByLabelText('Search suburbs and places').props.value).toBe('')
+  expect(screen.getByRole('button', { name: 'pin Chatswood' })).toBeTruthy()
 })
 
 it('a failed load says so and retries', async () => {

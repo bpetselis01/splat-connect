@@ -7,7 +7,7 @@
  */
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { View, Text, Pressable, ScrollView, Modal, StyleSheet } from 'react-native'
-import { useRouter } from 'expo-router'
+import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { MapItem, MapKind, MapPlace } from '@splat-connect/types'
@@ -52,6 +52,9 @@ export function MapScreen() {
   // The tapped dot: its place, and its item.
   const [selected, setSelected] = useState<{ place: string; item?: string } | null>(null)
   const [query, setQuery] = useState('')
+  // Leaving the tab clears the search, so a forgotten one cannot hide places
+  // the next time the map is opened (Byron, 2026-10-05).
+  useFocusEffect(useCallback(() => () => setQuery(''), []))
   const [topHeight, setTopHeight] = useState(140)
 
   const load = useCallback(() => {
