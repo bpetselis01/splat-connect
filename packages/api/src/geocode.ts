@@ -17,6 +17,12 @@ type Fetch = typeof fetch
 const ENDPOINT = 'https://nominatim.openstreetmap.org/search'
 const USER_AGENT = 'SPLAT-Connect/1.0 (+https://github.com/bpetselis01/splat-connect)'
 const GAP_MS = 1100
+// Caps on outbound work, so rows nobody vetted cannot queue unbounded lookups:
+// new lookups one call may start, and lookups pending across all calls. What
+// is left over is picked up by a later call; until then it sits at its
+// postcode centre.
+const PER_CALL = 10
+const MAX_PENDING = 50
 
 /** The cache key and the text sent: parts trimmed, blanks dropped, spaces collapsed, ", Australia" on the end. */
 export function addressQuery(parts: Array<string | null | undefined>): string | null {
@@ -94,7 +100,8 @@ export async function geocodeAll(
   for (const r of reads.flatMap((x) => (x.data ?? []) as Array<{ query: string; lat: number | null; lng: number | null; found: boolean }>)) {
     out.set(r.query, r.found ? { lat: r.lat!, lng: r.lng! } : null)
   }
-  const misses = wanted.filter((q) => !out.has(q))
+  const room = Math.max(0, Math.min(PER_CALL, MAX_PENDING - inFlight.size))
+  const misses = wanted.filter((q) => !out.has(q) && !inFlight.has(q)).slice(0, room)
   if (!misses.length) return out
   const jobs = misses.map((q) =>
     resolve(q, fetchImpl).then(

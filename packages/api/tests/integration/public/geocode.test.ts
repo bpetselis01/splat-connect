@@ -60,4 +60,16 @@ describe('geocodeAll', () => {
       expect(data?.found).toBe(true)
     }, { timeout: 3000 })
   })
+
+  it('starts at most ten new lookups a call, and leaves the rest for later', async () => {
+    const fetchImpl = vi.fn(() => answer([]))
+    const many = Array.from({ length: 25 }, (_, i) => q(`${i} Many St`))
+    await geocodeAll(many, { fetchImpl: fetchImpl as typeof fetch, waitMs: 0 })
+    const cached = async () =>
+      (await adminClient().from('geocodes').select('query', { count: 'exact', head: true }).like('query', `%Many St ${tag}%`)).count ?? 0
+    // Each not-found query is tried twice (full, then narrowed), a second apart.
+    await vi.waitFor(async () => expect(await cached()).toBe(10), { timeout: 40000, interval: 1000 })
+    await new Promise((r) => setTimeout(r, 2500))
+    expect(await cached()).toBe(10)
+  }, 60000)
 })
