@@ -90,3 +90,13 @@ it('saves the toy fields trimmed-or-null, like web', () => {
   fireEvent.changeText(screen.getByLabelText('If someone would rather not build it'), 'Ask the shelf')
   expect(mockDraft.save).toHaveBeenLastCalledWith({ no_build_note: 'Ask the shelf' })
 })
+
+it('saves the closing line, capped at 300, blank as null', () => {
+  render(<DetailsSection />)
+  const field = screen.getByLabelText('Your closing line')
+  expect(field.props.maxLength).toBe(300)
+  fireEvent.changeText(field, 'Well done')
+  expect(mockDraft.save).toHaveBeenLastCalledWith({ done_note: 'Well done' })
+  fireEvent.changeText(field, '  ')
+  expect(mockDraft.save).toHaveBeenLastCalledWith({ done_note: null })
+})

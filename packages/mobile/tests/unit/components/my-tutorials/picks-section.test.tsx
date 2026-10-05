@@ -43,10 +43,21 @@ it('adds a guide by replacing the whole list', async () => {
   fireEvent.press(await screen.findByLabelText('Add Guide B'))
   await waitFor(() =>
     expect(apiClient.post).toHaveBeenCalledWith('/api/tutorials/t1/recommendations', {
-      recommendations: [{ recommended_id: 'a' }, { recommended_id: 'b' }],
+      recommendations: [{ recommended_id: 'a', required: false }, { recommended_id: 'b', required: false }],
     })
   )
   expect(await screen.findByLabelText('Remove Guide B')).toBeTruthy()
+})
+
+it('toggles Required first on a pick and sends it with the list', async () => {
+  mockDraft.tutorial = { ...base, tutorial_recommendations: [{ ...rec('a', 'Guide A'), required: true }] }
+  render(<PicksSection />)
+  fireEvent.press(screen.getByText('Required first'))
+  await waitFor(() =>
+    expect(apiClient.post).toHaveBeenCalledWith('/api/tutorials/t1/recommendations', {
+      recommendations: [{ recommended_id: 'a', required: false }],
+    })
+  )
 })
 
 it('removes a pick, and flags one that is not approved', async () => {

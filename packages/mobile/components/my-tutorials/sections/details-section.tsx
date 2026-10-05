@@ -101,6 +101,17 @@ export function DetailsSection() {
           Sits next to "Get help with this build" in the sidebar, before the link to the toy library. Leave blank and we just show the link.
         </Text>
 
+        <TextField
+          label="Your closing line (optional)"
+          accessibilityLabel="Your closing line"
+          placeholder="e.g. Nice work - show us how it turned out."
+          multiline
+          maxLength={300}
+          defaultValue={tutorial.done_note ?? ''}
+          onChangeText={(text) => save({ done_note: text.trim() ? text : null })}
+        />
+        <Text style={styles.hint}>Shown to the builder once every step is ticked off. Leave blank to skip it.</Text>
+
         <Text style={styles.label}>Kind</Text>
         <View style={styles.chipRow}>
           {KIND_OPTIONS.map((o) => (

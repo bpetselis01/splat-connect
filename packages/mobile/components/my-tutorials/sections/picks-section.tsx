@@ -15,6 +15,7 @@ import { useDraft } from '../../../lib/use-tutorial-draft'
 import { theme } from '../../../lib/theme'
 import { Screen } from '../../ui/Screen'
 import { Button } from '../../ui/Button'
+import { Chip } from '../../ui/Chip'
 import { ErrorRow } from '../../ui/ErrorRow'
 import { SectionFooter } from '../section-footer'
 import { DraftGate } from './draft-gate'
@@ -22,7 +23,8 @@ import { DraftGate } from './draft-gate'
 /** Mirrors 048's `position between 1 and 3`. */
 const MAX_PICKS = 3
 
-type PickRow = Recommendation['tutorials']
+// `required` is 129's "Required first": make that guide before this one.
+type PickRow = Recommendation['tutorials'] & { required: boolean }
 type Candidate = Pick<Tutorial, 'id' | 'title' | 'kind'>
 
 export function PicksSection() {
@@ -31,7 +33,7 @@ export function PicksSection() {
 
 function PicksEditor() {
   const { tutorial } = useDraft()
-  const [picks, setPicks] = useState<PickRow[]>(() => (tutorial?.tutorial_recommendations ?? []).map((r) => r.tutorials))
+  const [picks, setPicks] = useState<PickRow[]>(() => (tutorial?.tutorial_recommendations ?? []).map((r) => ({ ...r.tutorials, required: !!r.required })))
   const [candidates, setCandidates] = useState<Candidate[]>([])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -55,7 +57,7 @@ function PicksEditor() {
     setError(null)
     try {
       await apiClient.post(`/api/tutorials/${tutorial!.id}/recommendations`, {
-        recommendations: next.map((p) => ({ recommended_id: p.id })),
+        recommendations: next.map((p) => ({ recommended_id: p.id, required: p.required })),
       })
       setPicks(next)
     } catch (err) {
@@ -83,6 +85,11 @@ function PicksEditor() {
                 {p.status && p.status !== 'approved' ? ' - not yet approved, hidden from the public page' : ''}
               </Text>
             </View>
+            <Chip
+              label="Required first"
+              active={p.required}
+              onPress={() => void write(picks.map((x) => (x.id === p.id ? { ...x, required: !x.required } : x)))}
+            />
             <Button
               label="Remove"
               variant="secondary"
@@ -109,7 +116,7 @@ function PicksEditor() {
                     label="Add"
                     accessibilityLabel={`Add ${c.title}`}
                     disabled={busy}
-                    onPress={() => void write([...picks, c as PickRow])}
+                    onPress={() => void write([...picks, { ...c, required: false } as PickRow])}
                   />
                 </View>
               ))
