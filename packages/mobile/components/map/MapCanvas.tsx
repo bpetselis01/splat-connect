@@ -8,6 +8,7 @@
 // zooms to where it splits; at full zoom every item is its own coloured dot.
 import { useMemo, useRef, useState } from 'react'
 import { StyleSheet, Text } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Map, Camera, GeoJSONSource, Images, Layer, type CameraRef, type GeoJSONSourceRef, type LngLatBounds } from '@maplibre/maplibre-react-native'
 import type { MapPlace } from '@splat-connect/types'
 import { KINDS, KIND_ORDER, toFeatures } from '../../lib/map-filters'
@@ -57,6 +58,7 @@ function bounds(places: MapPlace[]): LngLatBounds {
 }
 
 export function MapCanvas({ places, selected, onSelect, inset }: MapCanvasProps) {
+  const safe = useSafeAreaInsets()
   const camera = useRef<CameraRef>(null)
   const source = useRef<GeoJSONSourceRef>(null)
   const data = useMemo(() => toFeatures(places), [places])
@@ -70,7 +72,11 @@ export function MapCanvas({ places, selected, onSelect, inset }: MapCanvasProps)
         style={StyleSheet.absoluteFill}
         mapStyle={STYLE}
         logo={false}
-        compass={false}
+        // The native compass, as Google Maps has: shown only while the map is
+        // rotated, and a tap turns it back to north. Under the filter button;
+        // MapLibre measures from below the status bar, which inset.top includes.
+        compass
+        compassPosition={{ top: inset.top - safe.top + 8, right: 16 }}
         attribution={false}
         onPress={() => onSelect(null)}
         onDidFinishLoadingStyle={() => setStyleReady(true)}
