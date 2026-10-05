@@ -35,3 +35,10 @@ it('opens a buy link in the browser', async () => {
   fireEvent.press(await screen.findByText('Jaycar'))
   expect(open).toHaveBeenCalledWith('https://j.test/servo')
 })
+
+it('never opens a buy link that is not a web address', async () => {
+  const { BuyLinks } = jest.requireActual('../../../../components/guides/guide-parts')
+  render(<BuyLinks links={[{ label: 'Call us', url: 'tel:0400000000' }, { label: 'Jaycar', url: 'https://www.jaycar.com.au' }]} />)
+  expect(screen.queryByText('Call us')).toBeNull()
+  expect(screen.getByText('Jaycar')).toBeTruthy()
+})

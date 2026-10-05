@@ -10,8 +10,13 @@ import { ticksKey, useDeviceTicks } from '../../lib/guide-progress'
 import { theme } from '../../lib/theme'
 import { Section } from '../ui/Section'
 
+// A buy link is contributor text: only a web address opens. Anything else
+// (tel:, intent:, another app's scheme) is not something a shop link needs.
+const isWeb = (url: string) => /^https?:\/\//i.test(url.trim())
+
 /** "Jaycar · Core Electronics", each opening its shop. */
 export function BuyLinks({ links }: { links: BuyLink[] }) {
+  links = links.filter((l) => isWeb(l.url))
   if (!links.length) return null
   return (
     <View style={styles.links}>
