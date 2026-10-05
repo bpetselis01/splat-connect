@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.accentFaint,
     marginBottom: theme.spacing(5),
   },
-  saysText: { flex: 1, fontFamily: theme.fonts.semiBold, fontSize: 13.5, lineHeight: 20, color: theme.colors.ink },
+  saysText: { flex: 1, fontFamily: theme.fonts.semiBold, fontSize: theme.type.caption, lineHeight: 20, color: theme.colors.ink },
   help: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.label, color: theme.colors.text, lineHeight: 21, marginTop: -theme.spacing(3), marginBottom: theme.spacing(4) },
   private: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted, marginTop: theme.spacing(3), textAlign: 'center' },
   actions: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: theme.spacing(5) },

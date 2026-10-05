@@ -350,10 +350,10 @@ const styles = StyleSheet.create({
   },
   doorBody: { flex: 1 },
   doorTitleRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2) },
-  doorTitle: { fontFamily: theme.fonts.display, fontSize: 18, lineHeight: 24, color: theme.colors.ink },
+  doorTitle: { fontFamily: theme.fonts.display, fontSize: theme.type.heading, lineHeight: 24, color: theme.colors.ink },
   progressChip: {
     fontFamily: theme.fonts.numeral,
-    fontSize: 13,
+    fontSize: theme.type.caption,
     color: theme.colors.primaryDeep,
     borderRadius: theme.radii.pill,
     backgroundColor: theme.colors.accentLight,
@@ -379,10 +379,10 @@ const styles = StyleSheet.create({
   stat: { width: '50%' },
   statValue: {
     fontFamily: theme.fonts.display,
-    fontSize: 26,
+    fontSize: theme.type.display,
     lineHeight: 30,
     color: theme.colors.primaryDeep,
     fontVariant: ['tabular-nums'],
   },
-  statLabel: { fontFamily: theme.fonts.bold, fontSize: 12, color: theme.colors.muted, marginTop: 3 },
+  statLabel: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.muted, marginTop: 3 },
 })

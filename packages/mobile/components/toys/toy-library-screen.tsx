@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
     ...theme.shadow(1),
   },
   headingRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
-  heading: { fontFamily: theme.fonts.display, fontSize: 20, lineHeight: 26, color: theme.colors.ink },
+  heading: { fontFamily: theme.fonts.display, fontSize: theme.type.heading, lineHeight: 26, color: theme.colors.ink },
   count: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.muted },
   meta: { gap: 6, alignItems: 'flex-start' },
   retry: { marginTop: theme.spacing(5), alignSelf: 'center', paddingHorizontal: theme.spacing(8) },

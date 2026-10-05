@@ -97,5 +97,5 @@ const styles = StyleSheet.create({
   },
   text: { flex: 1 },
   greeting: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.muted },
-  title: { fontFamily: theme.fonts.display, fontSize: 28, lineHeight: 34, color: theme.colors.ink },
+  title: { fontFamily: theme.fonts.display, fontSize: theme.type.display, lineHeight: 34, color: theme.colors.ink },
 })

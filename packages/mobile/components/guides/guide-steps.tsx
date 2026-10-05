@@ -115,7 +115,7 @@ export function GuideSteps({
 
 const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3), marginBottom: theme.spacing(2) },
-  pct: { fontFamily: theme.fonts.display, fontSize: 24, color: theme.colors.ink },
+  pct: { fontFamily: theme.fonts.display, fontSize: theme.type.title, color: theme.colors.ink },
   headText: { flex: 1, gap: theme.spacing(1) },
   done: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.ink },
   resume: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.ink, marginBottom: theme.spacing(2) },
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
   muted: { color: theme.colors.muted },
   stepBody: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.text, lineHeight: 21 },
   stepPhoto: { width: '100%', aspectRatio: 4 / 3, borderRadius: theme.radii.field, marginTop: theme.spacing(1), backgroundColor: theme.colors.surfaceSunken },
-  noteLabel: { fontFamily: theme.fonts.bold, fontSize: 12, color: theme.colors.primaryDark },
+  noteLabel: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.primaryDark },
   extra: { padding: theme.spacing(3), gap: theme.spacing(1), borderRadius: theme.radii.field, backgroundColor: theme.colors.honeySoft, marginVertical: theme.spacing(1) },
   extraHead: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2) },
 })

@@ -398,7 +398,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0,
     elevation: 0,
   },
-  label: { fontFamily: theme.fonts.bold, fontSize: 13, lineHeight: LABEL_LINE, color: theme.colors.ink, textAlign: 'center' },
+  label: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, lineHeight: LABEL_LINE, color: theme.colors.ink, textAlign: 'center' },
   minus: {
     position: 'absolute',
     top: -5,
@@ -428,5 +428,5 @@ const styles = StyleSheet.create({
     ...theme.shadow(3),
   },
   menuItem: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 10, borderRadius: 12 },
-  menuText: { fontFamily: theme.fonts.bold, fontSize: 14 },
+  menuText: { fontFamily: theme.fonts.bold, fontSize: theme.type.label },
 })

@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
   content: { paddingBottom: theme.spacing(6) },
   courseTitle: {
     fontFamily: theme.fonts.display,
-    fontSize: 24,
+    fontSize: theme.type.title,
     lineHeight: 29,
     color: theme.colors.text,
     marginBottom: theme.spacing(2),
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     fontFamily: theme.fonts.black,
-    fontSize: 12,
+    fontSize: theme.type.caption,
     letterSpacing: 1,
     textTransform: 'uppercase',
     color: theme.colors.muted,
@@ -253,8 +253,8 @@ const styles = StyleSheet.create({
   tileNumber: { backgroundColor: theme.colors.honeySoft },
   tileIcon: { backgroundColor: theme.colors.surfaceSunken },
   tileRead: { backgroundColor: theme.colors.mintSoft },
-  tileText: { fontFamily: theme.fonts.display, fontSize: 15, color: theme.colors.ink },
+  tileText: { fontFamily: theme.fonts.display, fontSize: theme.type.body, color: theme.colors.ink },
   rowText: { flex: 1, gap: 2 },
-  rowTitle: { fontFamily: theme.fonts.black, fontSize: 15, color: theme.colors.text },
-  rowIntro: { fontFamily: theme.fonts.regular, fontSize: 12.5, color: theme.colors.muted, lineHeight: 18 },
+  rowTitle: { fontFamily: theme.fonts.black, fontSize: theme.type.body, color: theme.colors.text },
+  rowIntro: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted, lineHeight: 18 },
 })

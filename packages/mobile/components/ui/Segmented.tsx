@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
   boxOn: { backgroundColor: theme.colors.ink },
   boxText: {
     fontFamily: theme.fonts.black,
-    fontSize: 12,
+    fontSize: theme.type.caption,
     // Web sets these labels in IBM Plex Mono. The phone loads Nunito and
     // Jersey 10 only, and a fourth family for two words is not worth the
     // bundle; Nunito Black uppercase at web's 0.05em tracking is the match.

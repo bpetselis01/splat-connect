@@ -70,14 +70,14 @@ const styles = StyleSheet.create({
   content: { paddingBottom: theme.spacing(8), gap: theme.spacing(3) },
   eyebrow: {
     fontFamily: theme.fonts.black,
-    fontSize: 12,
+    fontSize: theme.type.caption,
     letterSpacing: 1.2,
     textTransform: 'uppercase',
     // The board's coral fails contrast at 12px on the canvas; muted is the
     // eyebrow colour everywhere else in the app.
     color: theme.colors.muted,
   },
-  title: { fontFamily: theme.fonts.display, fontSize: 25, color: theme.colors.text },
+  title: { fontFamily: theme.fonts.display, fontSize: theme.type.display, color: theme.colors.text },
   lede: { fontFamily: theme.fonts.regular, fontSize: theme.type.body, color: theme.colors.muted, lineHeight: 23 },
   section: { gap: theme.spacing(2), marginTop: theme.spacing(2) },
   heading: { fontFamily: theme.fonts.display, fontSize: theme.type.heading, color: theme.colors.text },

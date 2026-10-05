@@ -294,7 +294,7 @@ function LayerChip({ kind, on, onPress }: { kind: MapKind; on: boolean; onPress:
       style={[styles.layer, !on && styles.layerOff]}
     >
       <View style={[styles.layerDot, { backgroundColor: on ? k.color : theme.colors.muted }]}>
-        <Ionicons name={k.icon} size={11} color={theme.colors.surface} />
+        <Ionicons name={k.icon} size={13} color={theme.colors.surface} />
       </View>
       <Text style={[styles.layerText, !on && styles.layerTextOff]}>{k.label}</Text>
     </Pressable>
@@ -307,7 +307,7 @@ function PlaceRow({ item, meta, km, onPress }: { item: MapItem; meta: string; km
   return (
     <Pressable onPress={onPress} accessibilityRole="button" style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}>
       <View style={[styles.tile, { backgroundColor: k.soft }]}>
-        <Ionicons name={k.icon} size={20} color={k.color} />
+        <Ionicons name={k.icon} size={22} color={k.color} />
       </View>
       <View style={styles.flex}>
         <Text style={styles.rowTitle} numberOfLines={2}>
@@ -360,31 +360,31 @@ const styles = StyleSheet.create({
     borderWidth: theme.border.hairline,
     borderColor: theme.colors.border,
   },
-  row: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3), paddingVertical: theme.spacing(2.5), paddingHorizontal: theme.spacing(1), borderRadius: theme.radii.field },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 13, paddingVertical: theme.spacing(3), paddingHorizontal: theme.spacing(1), borderRadius: theme.radii.field },
   rowPressed: { backgroundColor: theme.colors.background },
-  tile: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  rowTitle: { fontFamily: theme.fonts.black, fontSize: 15, lineHeight: 19, color: theme.colors.ink },
-  rowMeta: { fontFamily: theme.fonts.regular, fontSize: 12.5, lineHeight: 17, color: theme.colors.muted, marginTop: 2 },
+  tile: { width: 48, height: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  rowTitle: { fontFamily: theme.fonts.black, fontSize: theme.type.body, lineHeight: 21, color: theme.colors.ink },
+  rowMeta: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, lineHeight: 18, color: theme.colors.muted, marginTop: 2 },
   layer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    height: 34,
-    paddingLeft: 8,
-    paddingRight: 13,
+    gap: 7,
+    height: 40,
+    paddingLeft: 9,
+    paddingRight: 15,
     borderRadius: theme.radii.pill,
     backgroundColor: theme.colors.surface,
     ...theme.shadow(2),
   },
   layerOff: { backgroundColor: theme.colors.surfaceSunken, shadowOpacity: 0, elevation: 0 },
-  layerDot: { width: 19, height: 19, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  layerText: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.ink },
+  layerDot: { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+  layerText: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.ink },
   layerTextOff: { color: theme.colors.muted },
-  handle: { alignSelf: 'center', width: 38, height: 5, borderRadius: 3, backgroundColor: theme.colors.muted, opacity: 0.3, marginBottom: theme.spacing(2) },
+  handle: { alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: theme.colors.muted, opacity: 0.3, marginBottom: theme.spacing(2) },
   groupHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: theme.spacing(2) },
-  groupHint: { fontFamily: theme.fonts.semiBold, fontSize: 12, color: theme.colors.muted },
+  groupHint: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.caption, color: theme.colors.muted },
   option: {
-    minHeight: 36,
+    minHeight: 40,
     paddingHorizontal: theme.spacing(4),
     borderRadius: theme.radii.pill,
     borderWidth: 1.5,
@@ -394,11 +394,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   optionOn: { backgroundColor: theme.colors.ink, borderColor: theme.colors.ink },
-  optionText: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.ink },
+  optionText: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.ink },
   optionTextOn: { color: theme.colors.surface },
-  clear: { paddingHorizontal: theme.spacing(3), minHeight: 44, justifyContent: 'center' },
-  clearText: { fontFamily: theme.fonts.black, fontSize: 15, color: theme.colors.ink, textDecorationLine: 'underline' },
-  km: { fontFamily: theme.fonts.numeral, fontSize: 12, color: theme.colors.muted },
+  clear: { paddingHorizontal: theme.spacing(3), minHeight: 48, justifyContent: 'center' },
+  clearText: { fontFamily: theme.fonts.black, fontSize: theme.type.body, color: theme.colors.ink, textDecorationLine: 'underline' },
+  km: { fontFamily: theme.fonts.numeral, fontSize: theme.type.caption, color: theme.colors.muted },
 
   top: { position: 'absolute', left: 0, right: 0, top: 0, paddingHorizontal: theme.spacing(4), paddingBottom: theme.spacing(2), gap: theme.spacing(2) },
   topSolid: { backgroundColor: theme.colors.background, borderBottomWidth: theme.border.hairline, borderBottomColor: theme.colors.border },
@@ -428,7 +428,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  badgeText: { fontFamily: theme.fonts.black, fontSize: 11, color: theme.colors.surface },
+  badgeText: { fontFamily: theme.fonts.black, fontSize: theme.type.micro, color: theme.colors.surface },
   // Room inside the scroll view for the chips' shadows, which it would clip.
   chipRow: { marginHorizontal: -theme.spacing(4), marginVertical: -theme.spacing(2) },
   chips: { gap: theme.spacing(2), paddingHorizontal: theme.spacing(4), paddingVertical: theme.spacing(2) },

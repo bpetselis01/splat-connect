@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
   content: { paddingBottom: theme.spacing(8) },
   eyebrow: {
     fontFamily: theme.fonts.black,
-    fontSize: 12,
+    fontSize: theme.type.caption,
     letterSpacing: 1,
     textTransform: 'uppercase',
     color: theme.colors.primaryDeep,

@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
   tile: { width: 48, height: 48, borderRadius: theme.radii.field, alignItems: 'center', justifyContent: 'center' },
   guideBody: { flex: 1, minWidth: 0 },
   guideTitle: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.text },
-  guideMeta: { fontFamily: theme.fonts.bold, fontSize: 12, color: theme.colors.muted, marginTop: 2 },
+  guideMeta: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.muted, marginTop: 2 },
   guideAction: { fontFamily: theme.fonts.black, fontSize: theme.type.caption, color: theme.colors.primaryDeep },
   note: { minHeight: 88, textAlignVertical: 'top' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(1.5) },

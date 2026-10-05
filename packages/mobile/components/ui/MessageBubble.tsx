@@ -76,5 +76,5 @@ const styles = StyleSheet.create({
   bubbleTheirs: { backgroundColor: theme.colors.surface },
   bubbleWho: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.primaryDeep },
   bubbleText: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.text, lineHeight: 20 },
-  stamp: { fontFamily: theme.fonts.regular, fontSize: 11, color: theme.colors.muted, alignSelf: 'flex-end' },
+  stamp: { fontFamily: theme.fonts.regular, fontSize: theme.type.micro, color: theme.colors.muted, alignSelf: 'flex-end' },
 })

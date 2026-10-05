@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
   },
   list: { gap: 9 },
   avatar: { width: 38, height: 38, borderRadius: theme.radii.pill, alignItems: 'center', justifyContent: 'center' },
-  avatarText: { fontFamily: theme.fonts.black, fontSize: 14, color: theme.colors.ink },
+  avatarText: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink },
   // The board's dashed "+ Add a child", the full width of the list.
   add: {
     borderStyle: 'dashed',

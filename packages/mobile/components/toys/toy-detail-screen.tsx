@@ -320,7 +320,7 @@ const styles = StyleSheet.create({
   holderQty: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted },
   factLabel: {
     fontFamily: theme.fonts.bold,
-    fontSize: 11,
+    fontSize: theme.type.micro,
     letterSpacing: 0.6,
     textTransform: 'uppercase',
     color: theme.colors.muted,
@@ -361,7 +361,7 @@ const styles = StyleSheet.create({
   builtFromNote: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.ink },
   description: { fontFamily: theme.fonts.regular, fontSize: theme.type.body, color: theme.colors.text, lineHeight: 23 },
   picks: { gap: theme.spacing(3) },
-  picksTitle: { fontFamily: theme.fonts.display, fontSize: 18, color: theme.colors.ink },
+  picksTitle: { fontFamily: theme.fonts.display, fontSize: theme.type.heading, color: theme.colors.ink },
   pick: {
     flexDirection: 'row',
     alignItems: 'center',

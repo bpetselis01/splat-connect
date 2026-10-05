@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
   // iOS text layout trims and re-offsets it and the word rides low against
   // Edit. Give it the font's own 48 so nothing is trimmed, and take the 15
   // back in margins so the row is still 33 and alignItems centres the pair.
-  title: { fontFamily: theme.fonts.display, fontSize: 30, lineHeight: 48, marginVertical: -7.5, color: theme.colors.ink },
+  title: { fontFamily: theme.fonts.display, fontSize: theme.type.display, lineHeight: 48, marginVertical: -7.5, color: theme.colors.ink },
   editBtn: {
     paddingVertical: 8,
     paddingHorizontal: 14,
@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
     ...theme.shadow(1),
   },
   editBtnOn: { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
-  editText: { fontFamily: theme.fonts.black, fontSize: 14, color: theme.colors.primaryDeep },
+  editText: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.primaryDeep },
   editTextOn: { color: '#fff' },
   today: {
     marginTop: 14,
@@ -171,16 +171,16 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.apricotSoft,
   },
   todayBody: { flex: 1 },
-  todayText: { fontFamily: theme.fonts.regular, fontSize: 14, lineHeight: 19, color: theme.colors.ink },
+  todayText: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, lineHeight: 19, color: theme.colors.ink },
   todayCount: { fontFamily: theme.fonts.black },
-  todaySmall: { fontFamily: theme.fonts.regular, fontSize: 13, color: theme.colors.muted },
+  todaySmall: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted },
   grid: { marginTop: 22 },
-  hint: { marginTop: 22, textAlign: 'center', fontFamily: theme.fonts.regular, fontSize: 13, color: theme.colors.muted },
+  hint: { marginTop: 22, textAlign: 'center', fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted },
   sectionTitle: {
     marginTop: 26,
     marginBottom: 10,
     fontFamily: theme.fonts.display,
-    fontSize: 19,
+    fontSize: theme.type.heading,
     lineHeight: 24,
     color: theme.colors.ink,
   },

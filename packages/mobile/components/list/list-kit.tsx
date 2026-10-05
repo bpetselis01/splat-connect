@@ -199,9 +199,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 9,
     paddingVertical: 2,
   },
-  pillText: { fontFamily: theme.fonts.black, fontSize: 11, letterSpacing: 0.3 },
+  pillText: { fontFamily: theme.fonts.black, fontSize: theme.type.micro, letterSpacing: 0.3 },
   pillLarge: { paddingHorizontal: theme.spacing(2.5), paddingVertical: theme.spacing(1) },
-  pillLargeText: { fontSize: 12, letterSpacing: 0 },
+  pillLargeText: { fontSize: theme.type.caption, letterSpacing: 0 },
   pillOutline: {
     borderWidth: theme.border.hairline,
     borderColor: theme.colors.border,
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
   cta: { borderRadius: theme.radii.pill, minHeight: 50, borderWidth: 0 },
   section: {
     fontFamily: theme.fonts.black,
-    fontSize: 12,
+    fontSize: theme.type.caption,
     letterSpacing: 1.2,
     textTransform: 'uppercase',
     color: theme.colors.muted,
@@ -241,11 +241,11 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   segOn: { backgroundColor: theme.colors.surface, ...theme.shadow(1) },
-  segText: { fontFamily: theme.fonts.black, fontSize: 12.5, color: theme.colors.muted },
+  segText: { fontFamily: theme.fonts.black, fontSize: theme.type.caption, color: theme.colors.muted },
   segTextOn: { color: theme.colors.ink },
-  segN: { fontFamily: theme.fonts.black, fontSize: 11, color: theme.colors.ink, opacity: 0.55 },
+  segN: { fontFamily: theme.fonts.black, fontSize: theme.type.micro, color: theme.colors.ink, opacity: 0.55 },
   none: { alignItems: 'center', paddingVertical: theme.spacing(10), paddingHorizontal: theme.spacing(5) },
-  noneTitle: { fontFamily: theme.fonts.display, fontSize: 16, color: theme.colors.ink },
+  noneTitle: { fontFamily: theme.fonts.display, fontSize: theme.type.body, color: theme.colors.ink },
   noneBtn: { marginTop: theme.spacing(4), borderRadius: theme.radii.pill, minHeight: 44 },
   thumb: { width: 52, height: 52, borderRadius: theme.radii.field, backgroundColor: theme.colors.surfaceSunken },
   glyph: { backgroundColor: theme.colors.accentLight, alignItems: 'center', justifyContent: 'center' },
@@ -263,8 +263,8 @@ const styles = StyleSheet.create({
   // Receded, not hidden — the same 60% web's Given away section takes.
   dim: { opacity: 0.6 },
   body: { flex: 1, minWidth: 0 },
-  title: { fontFamily: theme.fonts.black, fontSize: 15, lineHeight: 20, color: theme.colors.ink },
-  meta: { fontFamily: theme.fonts.regular, fontSize: 12.5, lineHeight: 18, color: theme.colors.muted, marginTop: 2 },
+  title: { fontFamily: theme.fonts.black, fontSize: theme.type.body, lineHeight: 20, color: theme.colors.ink },
+  meta: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, lineHeight: 18, color: theme.colors.muted, marginTop: 2 },
   pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 7 },
 })
 

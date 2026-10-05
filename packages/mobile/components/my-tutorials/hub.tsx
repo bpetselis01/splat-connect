@@ -380,7 +380,7 @@ const styles = StyleSheet.create({
   headState: {
     flex: 1,
     fontFamily: theme.fonts.black,
-    fontSize: 12,
+    fontSize: theme.type.caption,
     letterSpacing: 0.8,
     textTransform: 'uppercase',
     color: theme.colors.muted,
@@ -403,7 +403,7 @@ const styles = StyleSheet.create({
   barFill: { height: '100%', borderRadius: theme.radii.pill, backgroundColor: theme.colors.success },
   progressText: {
     fontFamily: theme.fonts.semiBold,
-    fontSize: 12.5,
+    fontSize: theme.type.caption,
     color: theme.colors.muted,
     marginTop: 7,
   },
@@ -429,7 +429,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  rowTitle: { fontFamily: theme.fonts.black, fontSize: 15, color: theme.colors.ink },
+  rowTitle: { fontFamily: theme.fonts.black, fontSize: theme.type.body, color: theme.colors.ink },
   moreHeading: { marginTop: theme.spacing(5) },
   footer: { paddingTop: theme.spacing(3), paddingBottom: theme.spacing(2) },
   footerButtons: { flexDirection: 'row', gap: theme.spacing(3) },

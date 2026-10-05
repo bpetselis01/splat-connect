@@ -680,7 +680,7 @@ const styles = StyleSheet.create({
   },
   eyebrow: {
     fontFamily: theme.fonts.black,
-    fontSize: 12,
+    fontSize: theme.type.caption,
     letterSpacing: 1,
     textTransform: 'uppercase',
     color: theme.colors.ink,
@@ -713,7 +713,7 @@ const styles = StyleSheet.create({
   stageBarDone: { backgroundColor: theme.colors.primary },
   stageLabel: {
     fontFamily: theme.fonts.black,
-    fontSize: 11.5,
+    fontSize: theme.type.micro,
     color: theme.colors.ink,
   },
   stageLabelTodo: { color: theme.colors.muted },
@@ -744,7 +744,7 @@ const styles = StyleSheet.create({
   },
   codeLabel: {
     fontFamily: theme.fonts.black,
-    fontSize: 12,
+    fontSize: theme.type.caption,
     letterSpacing: 1,
     textTransform: 'uppercase',
     color: theme.colors.muted,

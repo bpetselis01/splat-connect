@@ -165,8 +165,8 @@ const styles = StyleSheet.create({
   error: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.caption, color: theme.colors.danger },
   // The board's list row, with the row's own actions under its pill.
   row: { padding: 15, gap: 2, borderRadius: theme.radii.panel, ...theme.shadow(1) },
-  title: { fontFamily: theme.fonts.black, fontSize: 15, lineHeight: 20, color: theme.colors.ink },
-  meta: { fontFamily: theme.fonts.regular, fontSize: 12.5, lineHeight: 18, color: theme.colors.muted, marginBottom: 5 },
+  title: { fontFamily: theme.fonts.black, fontSize: theme.type.body, lineHeight: 20, color: theme.colors.ink },
+  meta: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, lineHeight: 18, color: theme.colors.muted, marginBottom: 5 },
   actions: { flexDirection: 'row', justifyContent: 'space-between', gap: theme.spacing(2), marginTop: theme.spacing(2) },
   grow: { flex: 1, borderRadius: theme.radii.pill },
   foot: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted, lineHeight: 19, marginTop: theme.spacing(3) },

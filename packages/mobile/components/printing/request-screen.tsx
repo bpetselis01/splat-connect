@@ -354,7 +354,7 @@ const styles = StyleSheet.create({
   content: { paddingBottom: theme.spacing(6), gap: theme.spacing(5) },
   eyebrow: {
     fontFamily: theme.fonts.black,
-    fontSize: 12,
+    fontSize: theme.type.caption,
     letterSpacing: 1.2,
     textTransform: 'uppercase',
     color: theme.colors.muted,

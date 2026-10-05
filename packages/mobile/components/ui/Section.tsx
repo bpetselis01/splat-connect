@@ -34,7 +34,7 @@ const styles = StyleSheet.create({
   // Every section heading on the board: Baloo 2, 800, 18px.
   title: {
     fontFamily: theme.fonts.display,
-    fontSize: 18,
+    fontSize: theme.type.heading,
     color: theme.colors.text,
     marginBottom: theme.spacing(1),
   },

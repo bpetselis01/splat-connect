@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
     borderWidth: theme.border.hairline,
     borderColor: theme.colors.border,
     fontFamily: theme.fonts.black,
-    fontSize: 12,
+    fontSize: theme.type.caption,
     letterSpacing: 1.2,
     textTransform: 'uppercase',
     color: theme.colors.muted,

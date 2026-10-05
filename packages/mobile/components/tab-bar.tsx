@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
   item: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 1, borderRadius: theme.radii.pill },
   // accentLight at 85%, so the glass shows through the pill.
   itemOn: { backgroundColor: 'rgba(220,240,251,0.85)' },
-  label: { fontFamily: theme.fonts.black, fontSize: 11 },
+  label: { fontFamily: theme.fonts.black, fontSize: theme.type.micro },
   // The board puts the badge's right edge 22px right of the item's centre.
   // A flex row with 50% right padding lands on the centre; the margin does
   // the 22 (+2 for the ring, which the board draws outside the 17px box).
@@ -151,5 +151,5 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.dangerDeep, borderWidth: 2, borderColor: 'rgba(255,255,255,0.9)',
     alignItems: 'center', justifyContent: 'center',
   },
-  badgeText: { fontFamily: theme.fonts.black, fontSize: 10.5, lineHeight: 17, color: '#ffffff' },
+  badgeText: { fontFamily: theme.fonts.black, fontSize: theme.type.micro, lineHeight: 17, color: '#ffffff' },
 })

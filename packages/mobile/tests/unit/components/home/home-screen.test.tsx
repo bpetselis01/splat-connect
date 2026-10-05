@@ -62,7 +62,7 @@ describe('HomeScreen', () => {
     expect(screen.queryByPlaceholderText(/search/i)).toBeNull()
     expect(screen.queryByText('This community so far')).toBeNull()
     const title = StyleSheet.flatten(screen.getByText('Home').props.style) as Record<string, unknown>
-    expect(title).toMatchObject({ fontFamily: theme.fonts.display, fontSize: 30 })
+    expect(title).toMatchObject({ fontFamily: theme.fonts.display, fontSize: theme.type.display })
   })
 
   it('puts the title and Edit on one centred line, whatever Baloo 2 reports as its height', () => {
@@ -77,7 +77,7 @@ describe('HomeScreen', () => {
     expect(title.lineHeight + 2 * title.marginVertical).toBe(33)
     const edit = StyleSheet.flatten(screen.getByLabelText('Edit').props.style) as Record<string, number>
     expect(edit).toMatchObject({ paddingVertical: 8, paddingHorizontal: 14 })
-    expect(StyleSheet.flatten(screen.getByText('Edit').props.style)).toMatchObject({ fontSize: 14 })
+    expect(StyleSheet.flatten(screen.getByText('Edit').props.style)).toMatchObject({ fontSize: theme.type.label })
   })
 
   it('sits on the page ground and clears the floating tab bar', () => {

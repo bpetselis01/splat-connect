@@ -57,10 +57,10 @@ export function ChildDone({ child }: { child: Pick<ChildProfile, 'name' | 'press
 
 const styles = StyleSheet.create({
   done: { alignItems: 'center', paddingVertical: theme.spacing(6) },
-  heading: { fontFamily: theme.fonts.display, fontSize: 25, color: theme.colors.text, marginTop: theme.spacing(4), textAlign: 'center' },
+  heading: { fontFamily: theme.fonts.display, fontSize: theme.type.display, color: theme.colors.text, marginTop: theme.spacing(4), textAlign: 'center' },
   line: {
     fontFamily: theme.fonts.regular,
-    fontSize: 14.5,
+    fontSize: theme.type.label,
     lineHeight: 22,
     color: theme.colors.muted,
     textAlign: 'center',

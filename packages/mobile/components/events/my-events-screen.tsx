@@ -173,8 +173,8 @@ const styles = StyleSheet.create({
   item: { marginBottom: theme.spacing(3) },
   // The row's photo slot, as a calendar leaf.
   date: { width: 52, height: 52, alignItems: 'center', justifyContent: 'center', borderRadius: theme.radii.field, backgroundColor: theme.colors.tone.brand.bg },
-  month: { fontFamily: theme.fonts.black, fontSize: 10, letterSpacing: 0.8, textTransform: 'uppercase', color: theme.colors.ink },
-  day: { fontFamily: theme.fonts.display, fontSize: 22, lineHeight: 24, color: theme.colors.ink },
+  month: { fontFamily: theme.fonts.black, fontSize: theme.type.micro, letterSpacing: 0.8, textTransform: 'uppercase', color: theme.colors.ink },
+  day: { fontFamily: theme.fonts.display, fontSize: theme.type.title, lineHeight: 24, color: theme.colors.ink },
   actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: theme.spacing(1), marginTop: theme.spacing(1) },
   action: { minHeight: 44, paddingHorizontal: theme.spacing(3) },
 })

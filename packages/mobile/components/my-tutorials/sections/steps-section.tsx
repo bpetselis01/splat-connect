@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: theme.colors.accentLight,
   },
-  numText: { fontFamily: theme.fonts.display, fontSize: 13, color: theme.colors.primaryDeep },
+  numText: { fontFamily: theme.fonts.display, fontSize: theme.type.caption, color: theme.colors.primaryDeep },
   // The board's dashed full-width "+ Add" under a section's cards.
   add: {
     borderStyle: 'dashed',

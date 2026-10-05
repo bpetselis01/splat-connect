@@ -155,15 +155,15 @@ export function CommunityNotes({ tutorialId, guideTitle, authorName, steps, note
 
 const styles = StyleSheet.create({
   lead: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted, lineHeight: 19, marginBottom: theme.spacing(3) },
-  eyebrow: { fontFamily: theme.fonts.black, fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', color: theme.colors.muted, marginVertical: theme.spacing(2) },
+  eyebrow: { fontFamily: theme.fonts.black, fontSize: theme.type.caption, letterSpacing: 1, textTransform: 'uppercase', color: theme.colors.muted, marginVertical: theme.spacing(2) },
   note: { padding: theme.spacing(3), gap: theme.spacing(1), borderRadius: theme.radii.field, borderWidth: theme.border.hairline, borderColor: theme.colors.border, backgroundColor: theme.colors.surface, marginBottom: theme.spacing(2) },
   pinnedNote: { backgroundColor: theme.colors.honeySoft },
-  meta: { fontFamily: theme.fonts.semiBold, fontSize: 12, color: theme.colors.muted },
+  meta: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.caption, color: theme.colors.muted },
   body: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.text, lineHeight: 20 },
   photo: { width: '100%', aspectRatio: 4 / 3, borderRadius: theme.radii.field, backgroundColor: theme.colors.surfaceSunken },
   actions: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: theme.spacing(2) },
-  pinnedBy: { fontFamily: theme.fonts.black, fontSize: 12, color: theme.colors.ink },
+  pinnedBy: { fontFamily: theme.fonts.black, fontSize: theme.type.caption, color: theme.colors.ink },
   form: { marginTop: theme.spacing(3), padding: theme.spacing(3), gap: theme.spacing(2), borderRadius: theme.radii.panel, borderWidth: theme.border.hairline, borderColor: theme.colors.border, backgroundColor: theme.colors.surface },
-  formTitle: { fontFamily: theme.fonts.display, fontSize: 15, color: theme.colors.ink },
+  formTitle: { fontFamily: theme.fonts.display, fontSize: theme.type.body, color: theme.colors.ink },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2) },
 })

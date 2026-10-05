@@ -82,6 +82,6 @@ const styles = StyleSheet.create({
     ...theme.shadow(2),
   },
   tile: { width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  count: { fontFamily: theme.fonts.display, fontSize: 28, lineHeight: 32, marginTop: 10, color: theme.colors.ink, fontVariant: ['tabular-nums'] },
-  label: { fontFamily: theme.fonts.black, fontSize: 13.5, lineHeight: 18, marginTop: 4, color: theme.colors.ink },
+  count: { fontFamily: theme.fonts.display, fontSize: theme.type.display, lineHeight: 32, marginTop: 10, color: theme.colors.ink, fontVariant: ['tabular-nums'] },
+  label: { fontFamily: theme.fonts.black, fontSize: theme.type.caption, lineHeight: 18, marginTop: 4, color: theme.colors.ink },
 })

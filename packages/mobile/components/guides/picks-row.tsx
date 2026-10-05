@@ -62,8 +62,8 @@ export function PicksRow({
 const styles = StyleSheet.create({
   wrap: { marginTop: theme.spacing(6) },
   // The board's section heading and its muted hint.
-  heading: { fontFamily: theme.fonts.display, fontSize: 18, color: theme.colors.text },
-  hint: { fontFamily: theme.fonts.regular, fontSize: 13, color: theme.colors.muted, marginBottom: theme.spacing(2) },
+  heading: { fontFamily: theme.fonts.display, fontSize: theme.type.heading, color: theme.colors.text },
+  hint: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted, marginBottom: theme.spacing(2) },
   content: { gap: 10, paddingRight: 6, paddingBottom: 8, paddingLeft: 2 },
   card: {
     width: 124,

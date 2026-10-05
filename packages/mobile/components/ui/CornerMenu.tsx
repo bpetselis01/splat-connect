@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
   },
   countText: {
     fontFamily: theme.fonts.numeral,
-    fontSize: 17,
+    fontSize: theme.type.body,
     color: theme.colors.ink,
   },
 })

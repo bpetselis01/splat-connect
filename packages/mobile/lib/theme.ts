@@ -71,7 +71,9 @@ export const theme = {
     // Counts and money, with tabular figures at the call site.
     numeral: 'JetBrainsMono_400Regular',
   },
-  type: { title: 24, heading: 19, body: 16, label: 14, caption: 13 },
+  // The only text sizes in the app; tests/unit/lib/type-scale.test.ts fails on
+  // a raw number. hero is the one big figure (recycling), display the tab heroes.
+  type: { hero: 44, display: 28, title: 24, heading: 19, body: 16, label: 14, caption: 13, micro: 11 },
   spacing: (n: number) => n * 4,
   // One hairline. `thick` survives for the few places that need a real edge,
   // but Soft Pop separates with elevation rather than with borders.

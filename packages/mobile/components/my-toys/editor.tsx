@@ -698,7 +698,7 @@ const styles = StyleSheet.create({
   },
   coverFlagText: {
     fontFamily: theme.fonts.black,
-    fontSize: 10,
+    fontSize: theme.type.micro,
     color: theme.colors.ink,
     textAlign: 'center',
     textTransform: 'uppercase',

@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   },
   flagText: {
     fontFamily: theme.fonts.black,
-    fontSize: 11,
+    fontSize: theme.type.micro,
     color: theme.colors.ink,
     textTransform: 'uppercase',
   },

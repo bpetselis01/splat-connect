@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
   compact: { paddingVertical: theme.spacing(4), paddingHorizontal: theme.spacing(4) },
   pill: {
     fontFamily: theme.fonts.black,
-    fontSize: 12,
+    fontSize: theme.type.caption,
     letterSpacing: 1.2,
     textTransform: 'uppercase',
     color: theme.colors.muted,

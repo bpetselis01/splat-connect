@@ -96,7 +96,7 @@ describe('ShortcutGrid at rest', () => {
     // A stronger shadow than the old elevation 2, so the tiles stand off the page.
     expect(glyph).toMatchObject({ shadowOpacity: 0.14, shadowOffset: { width: 0, height: 6 } })
     const label = StyleSheet.flatten(screen.getByText('Guides').props.style) as Record<string, unknown>
-    expect(label).toMatchObject({ fontSize: 13, lineHeight: 16, height: 32 })
+    expect(label).toMatchObject({ fontSize: theme.type.caption, lineHeight: 16, height: 32 })
     expect(screen.getByText('Guides').props.maxFontSizeMultiplier).toBe(1.3)
     expect(screen.getByText('Guides').props.numberOfLines).toBe(2)
     const add = StyleSheet.flatten(screen.getByTestId('glyph-add').props.style) as Record<string, unknown>

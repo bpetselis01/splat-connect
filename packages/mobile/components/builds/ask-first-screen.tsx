@@ -154,7 +154,7 @@ export function AskFirstScreen({ id }: { id: string }) {
 const styles = StyleSheet.create({
   content: { paddingBottom: theme.spacing(6), gap: theme.spacing(3) },
   stage: { gap: theme.spacing(1), padding: theme.spacing(4), backgroundColor: theme.colors.mintSoft },
-  kicker: { fontFamily: theme.fonts.black, fontSize: 11, letterSpacing: 0.9, textTransform: 'uppercase', color: theme.colors.ink },
+  kicker: { fontFamily: theme.fonts.black, fontSize: theme.type.micro, letterSpacing: 0.9, textTransform: 'uppercase', color: theme.colors.ink },
   title: { fontFamily: theme.fonts.display, fontSize: theme.type.body, color: theme.colors.ink },
   body: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.ink, lineHeight: 19 },
   guide: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.text },

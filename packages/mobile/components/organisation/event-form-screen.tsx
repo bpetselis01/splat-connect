@@ -381,7 +381,7 @@ const styles = StyleSheet.create({
   content: { gap: theme.spacing(3), paddingBottom: theme.spacing(10) },
   lede: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted, lineHeight: 21 },
   label: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.text },
-  kicker: { fontFamily: theme.fonts.black, fontSize: 11, letterSpacing: 0.8, textTransform: 'uppercase', color: theme.colors.muted },
+  kicker: { fontFamily: theme.fonts.black, fontSize: theme.type.micro, letterSpacing: 0.8, textTransform: 'uppercase', color: theme.colors.muted },
   group: { marginBottom: 0 },
   // The board's full-width pill buttons.
   primary: { borderRadius: theme.radii.pill, minHeight: 52 },

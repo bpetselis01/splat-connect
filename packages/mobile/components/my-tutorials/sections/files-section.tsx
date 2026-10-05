@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
   // The board's uppercase group label, as list-kit's ListSection draws it.
   heading: {
     fontFamily: theme.fonts.black,
-    fontSize: 12,
+    fontSize: theme.type.caption,
     letterSpacing: 1.2,
     textTransform: 'uppercase',
     color: theme.colors.muted,
@@ -371,7 +371,7 @@ const styles = StyleSheet.create({
   },
   coverFlagText: {
     fontFamily: theme.fonts.black,
-    fontSize: 10,
+    fontSize: theme.type.micro,
     color: theme.colors.ink,
     textAlign: 'center',
     textTransform: 'uppercase',
