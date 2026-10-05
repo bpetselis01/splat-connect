@@ -62,7 +62,7 @@ test('at most ten rows: the eleventh opened pushes the oldest out', async ({ pag
   // The device holds ten too, not just the screen.
   const stored = await page.evaluate(() =>
     Object.keys(localStorage)
-      .filter((k) => k.startsWith('home-recents:'))
+      .filter((k) => k.startsWith('home-recents.'))
       .map((k) => JSON.parse(localStorage.getItem(k) as string).length)
   )
   expect(stored).toEqual([10])

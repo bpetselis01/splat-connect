@@ -209,3 +209,7 @@ describe('one list per account', () => {
     await waitFor(() => expect(mockDisk.get(recentsKeyFor('u3'))).toContain('guide:early'))
   })
 })
+
+it("an account's key is one iOS's secure store accepts (letters, digits, '.', '-', '_')", () => {
+  expect(recentsKeyFor('4f1c2a9e-1d2b-4c3d-9e8f-0a1b2c3d4e5f')).toMatch(/^[A-Za-z0-9._-]+$/)
+})
