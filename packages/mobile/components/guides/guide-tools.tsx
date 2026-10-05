@@ -9,6 +9,7 @@ import { TOOL_GET_BY_LABEL, type Tool } from '@splat-connect/types'
 import { ticksKey, useDeviceTicks } from '../../lib/guide-progress'
 import { theme } from '../../lib/theme'
 import { Section } from '../ui/Section'
+import { BuyLinks } from './guide-parts'
 
 export function GuideTools({ tutorialId, tools }: { tutorialId: string; tools: Tool[] }) {
   const router = useRouter()
@@ -18,7 +19,7 @@ export function GuideTools({ tutorialId, tools }: { tutorialId: string; tools: T
   return (
     <Section title="Tools you'll need">
       {tools.length ? <Text style={styles.count}>{`${have} of ${tools.length} already yours`}</Text> : null}
-      <Text style={styles.hint}>Not counted in the total above — tools are a one-off.</Text>
+      <Text style={styles.hint}>Not counted in the parts total — tools are a one-off.</Text>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Tools and materials on Learn"
@@ -49,6 +50,7 @@ export function GuideTools({ tutorialId, tools }: { tutorialId: string; tools: T
               <View style={styles.rowText}>
                 <Text style={[styles.name, owned && styles.owned]}>{`${t.name}${t.is_optional ? ' (optional)' : ''}`}</Text>
                 {t.note ? <Text style={styles.why}>{t.note}</Text> : null}
+                <BuyLinks links={t.buy_links ?? []} />
               </View>
               {t.get_by ? <Text style={styles.tag}>{TOOL_GET_BY_LABEL[t.get_by]}</Text> : null}
             </View>
