@@ -25,7 +25,7 @@ const { createClient } = require(
 )
 
 const ROOT = path.resolve(__dirname, '../..')
-const MANIFEST = path.join(__dirname, 'manifest.json')
+let MANIFEST = path.join(__dirname, 'manifest.json')
 const CACHE = path.join(__dirname, '.cache')
 const API = process.env.SEED_API_URL || 'http://localhost:3101'
 const SOURCES = require('./sources.json')
@@ -63,6 +63,12 @@ const HOME = {
 // ── manifest ────────────────────────────────────────────────────────────────
 let manifest = { users: {}, rows: [], storage: [] }
 const save = () => fs.writeFileSync(MANIFEST, JSON.stringify(manifest, null, 2))
+/** For another cast (sydney.js): track into its own manifest file. Returns the manifest. */
+function useManifest(file) {
+  MANIFEST = file
+  manifest = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : { users: {}, rows: [], storage: [] }
+  return manifest
+}
 const track = (table, id) => {
   manifest.rows.push({ table, id })
   save()
@@ -1025,8 +1031,12 @@ async function main() {
   for (const u of Object.values(P)) console.log(`  ${u.name.padEnd(16)} ${u.email}`)
 }
 
-main().catch((e) => {
-  console.error('\n✗', e.message)
-  console.error('  Partial seed is recorded in manifest.json; run with --remove to clear it.')
-  process.exit(1)
-})
+module.exports = { db, API, days, log, track, save, useManifest, insert, put, update, publicPhoto, signIn, api, newTx, tx, confirm }
+
+if (require.main === module) {
+  main().catch((e) => {
+    console.error('\n✗', e.message)
+    console.error('  Partial seed is recorded in manifest.json; run with --remove to clear it.')
+    process.exit(1)
+  })
+}
