@@ -31,7 +31,7 @@ test('a card carries its holder, its condition and its switch-adapted badge', as
   // Narrowed to the one row first: the library is every worker's published
   // toys at once, and the lines below are not unique to this fixture unless
   // the list is.
-  await page.getByPlaceholder('Search by toy name').fill(name)
+  await page.getByPlaceholder('Search toys').fill(name)
   await expect(page.getByText(name)).toBeVisible()
 
   // Condition in words (7 is "Good"), then who holds it.
@@ -53,7 +53,7 @@ test('the condition buckets keep only the toys that fall in them', async ({ page
   await createPublishedToy(owner.id, { name: wellLoved, condition: 2 })
 
   await page.goto('/toy-library')
-  await page.getByPlaceholder('Search by toy name').fill(token)
+  await page.getByPlaceholder('Search toys').fill(token)
   await expect(page.getByText(good)).toBeVisible()
   await expect(page.getByText(wellLoved)).toBeVisible()
 
@@ -61,12 +61,13 @@ test('the condition buckets keep only the toys that fall in them', async ({ page
   await expect(page.getByText(good)).toBeVisible()
   await expect(page.getByText(wellLoved)).toHaveCount(0)
 
-  await pickFilter(page, 'Needs a fix')
+  // Condition takes several at once, so Like new comes off as Needs a fix goes on.
+  await pickFilter(page, 'Like new', 'Needs a fix')
   await expect(page.getByText(wellLoved)).toBeVisible()
   await expect(page.getByText(good)).toHaveCount(0)
 
   // Good sits between the two, so it proves the cut points exclude as well as include.
-  await pickFilter(page, 'Good')
+  await pickFilter(page, 'Needs a fix', 'Good')
   await expect(page.getByText(good)).toHaveCount(0)
   await expect(page.getByText(wellLoved)).toHaveCount(0)
 })
@@ -78,7 +79,7 @@ test('tapping Save on a toy card flips the bookmark and the flip survives a relo
   await createPublishedToy(owner.id, { name })
 
   await page.goto('/toy-library')
-  await page.getByPlaceholder('Search by toy name').fill(name)
+  await page.getByPlaceholder('Search toys').fill(name)
   await expect(page.getByText(name)).toBeVisible()
 
   // Awaited, not just clicked: the flip is optimistic, so a reload fired
@@ -92,7 +93,7 @@ test('tapping Save on a toy card flips the bookmark and the flip survives a relo
   expect((await saved).status()).toBe(201)
 
   await page.reload()
-  await page.getByPlaceholder('Search by toy name').fill(name)
+  await page.getByPlaceholder('Search toys').fill(name)
   await expect(page.getByLabel('Saved', { exact: true })).toBeVisible()
 })
 

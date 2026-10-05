@@ -1,5 +1,5 @@
 // packages/mobile/tests/unit/components/home/library-screen.test.tsx
-import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { theme } from '../../../../lib/theme'
 import { ScrollView, FlatList, StyleSheet } from 'react-native'
 import { tabBarClearance } from '../../../../lib/tab-bar-layout'
@@ -23,16 +23,20 @@ jest.mock('../../../../lib/api-client', () => ({
 let mockParams: Record<string, string> = {}
 const mockPush = jest.fn()
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }), useLocalSearchParams: () => mockParams }))
-// The greeting reads the first name off capabilities.
-jest.mock('../../../../lib/capabilities', () => ({
-  useCapabilities: () => ({ caps: { profile: { name: 'Priya Nadarajah' } }, loading: false, refresh: jest.fn() }),
-}))
 
 const row = (over: object) => ({
   id: 't1', title: 'Bubble machine', description: null, difficulty: 'easy', kind: 'toy_adaptation',
   status: 'approved', tutorial_pdf_url: null, photo_urls: [], toy_photo_url: null, rejection_note: null,
   created_at: '', updated_at: '', reviewed_at: null, tutorial_orgs: [], ...over,
 })
+
+// Open the filter page, press each option, then Show: choices apply only then.
+async function applyFilters(labels: string[]) {
+  fireEvent.press(await screen.findByRole('button', { name: /^Filters/ }))
+  for (const l of labels) fireEvent.press(screen.getByText(l))
+  fireEvent.press(screen.getByText(/^Show \d+ guides?$/))
+}
+const search = (text: string) => fireEvent.changeText(screen.getByPlaceholderText('Search guides'), text)
 
 const NO_SAVES = { tutorials: [], toys: [], challenges: [] }
 
@@ -106,7 +110,7 @@ describe('LibraryScreen', () => {
   it('filters the list by search text', async () => {
     render(<LibraryScreen />)
     await screen.findByText('Build a Robot Arm')
-    fireEvent.changeText(screen.getByPlaceholderText('Search by toy name'), 'gearbox')
+    fireEvent.changeText(screen.getByPlaceholderText('Search guides'), 'gearbox')
     expect(screen.queryByText('Build a Robot Arm')).toBeNull()
     expect(screen.getByText('Advanced Gearbox')).toBeTruthy()
   })
@@ -120,46 +124,50 @@ describe('LibraryScreen', () => {
     })
     render(<LibraryScreen />)
     await screen.findByText('Build a Robot Arm')
-    fireEvent.changeText(screen.getByPlaceholderText('Search by toy name'), 'spinning')
+    fireEvent.changeText(screen.getByPlaceholderText('Search guides'), 'spinning')
     expect(screen.getByText('Build a Robot Arm')).toBeTruthy()
     expect(screen.queryByText('Advanced Gearbox')).toBeNull()
   })
 
-  it('refetches with a difficulty filter when a chip is pressed', async () => {
+  it('filters by difficulty on the client and never refetches with a param', async () => {
     render(<LibraryScreen />)
     await screen.findByText('Build a Robot Arm')
-    fireEvent.press(screen.getByRole('button', { name: 'Filters' }))
-    fireEvent.press(screen.getByRole('button', { name: 'Hard' }))
-    await waitFor(() => expect(mockGet).toHaveBeenCalledWith('/api/public/tutorials?difficulty=hard'))
+    await applyFilters(['Hard'])
+    expect(screen.queryByText('Build a Robot Arm')).toBeNull()
+    expect(screen.getByText('Advanced Gearbox')).toBeTruthy()
+    expect(mockGet.mock.calls.filter(([p]) => String(p).startsWith('/api/public/tutorials')).every(([p]) => p === '/api/public/tutorials')).toBe(true)
   })
 
-  it('clears a difficulty by pressing its chip again', async () => {
+  it('clears a difficulty by removing its tag under the search', async () => {
     render(<LibraryScreen />)
     await screen.findByText('Build a Robot Arm')
-    fireEvent.press(screen.getByRole('button', { name: 'Filters' }))
-    fireEvent.press(screen.getByRole('button', { name: 'Easy' }))
-    await waitFor(() => expect(mockGet).toHaveBeenCalledWith('/api/public/tutorials?difficulty=easy'))
-    mockGet.mockClear()
-    fireEvent.press(screen.getByRole('button', { name: 'Easy' }))
-    await waitFor(() => expect(mockGet).toHaveBeenCalledWith('/api/public/tutorials'))
+    await applyFilters(['Easy'])
+    expect(screen.queryByText('Advanced Gearbox')).toBeNull()
+    fireEvent.press(screen.getByRole('button', { name: 'Remove filter: Easy' }))
+    expect(screen.getByText('Advanced Gearbox')).toBeTruthy()
+    expect(screen.getByText('Build a Robot Arm')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Filters' })).toBeTruthy()
   })
 
-  it('keeps the filter chips behind one Filters button, search stays out', async () => {
+  it('keeps the filter options behind one Filters button, search stays out', async () => {
     render(<LibraryScreen />)
     await screen.findByText('Build a Robot Arm')
-    expect(screen.queryByRole('button', { name: 'Under 30 min' })).toBeNull()
-    expect(screen.getByPlaceholderText('Search by toy name')).toBeTruthy()
+    expect(screen.queryByText('Under 30 min')).toBeNull()
+    expect(screen.getByPlaceholderText('Search guides')).toBeTruthy()
     fireEvent.press(screen.getByRole('button', { name: 'Filters' }))
-    expect(screen.getByRole('button', { name: 'Under 30 min' })).toBeTruthy()
-    fireEvent.press(screen.getByRole('button', { name: 'Under 30 min' }))
-    expect(screen.getByRole('button', { name: 'Filters, 1 active' })).toBeTruthy()
+    expect(screen.getByRole('radio', { name: 'Under 30 min' })).toBeTruthy()
+    fireEvent.press(screen.getByText('Under 30 min'))
+    fireEvent.press(screen.getByText(/^Show \d+ guides?$/))
+    expect(screen.getByRole('button', { name: 'Filters, 1 on' })).toBeTruthy()
   })
 
-  it('greets by first name over the Guide library title', async () => {
+  it('titles the tab Guide library with its one-line description and no greeting', async () => {
     render(<LibraryScreen />)
     await screen.findByText('Build a Robot Arm')
-    expect(screen.getByText(/^Good (morning|afternoon|evening), Priya$/)).toBeTruthy()
     expect(screen.getByText('Guide library')).toBeTruthy()
+    expect(screen.queryByText(/^Good (morning|afternoon|evening)/)).toBeNull()
+    expect(screen.getByText('All guides')).toBeTruthy()
+    expect(screen.getByText('2 guides · Newest first')).toBeTruthy()
   })
 
   it('filters to quick builds and to printable guides', async () => {
@@ -171,17 +179,16 @@ describe('LibraryScreen', () => {
     })
     render(<LibraryScreen />)
     await screen.findByText('Quick one')
-    fireEvent.press(screen.getByRole('button', { name: 'Filters' }))
-    fireEvent.press(screen.getByRole('button', { name: 'Under 30 min' }))
+    await applyFilters(['Under 30 min'])
     expect(screen.queryByText('Slow printed one')).toBeNull()
     expect(screen.getByText('Matching guides')).toBeTruthy()
-    fireEvent.press(screen.getByRole('button', { name: 'Under 30 min' }))
-    fireEvent.press(screen.getByRole('button', { name: 'Printable' }))
+    fireEvent.press(screen.getByRole('button', { name: 'Remove filter: Under 30 min' }))
+    await applyFilters(['Printable parts'])
     expect(screen.queryByText('Quick one')).toBeNull()
     expect(screen.getByText('Slow printed one')).toBeTruthy()
   })
 
-  it('sorts by build time and flips the direction', async () => {
+  it('sorts quickest first from the filter page', async () => {
     mockEndpoints({
       tutorials: Promise.resolve([
         row({ id: '1', title: 'Long build', build_minutes: 120 }),
@@ -191,11 +198,9 @@ describe('LibraryScreen', () => {
     render(<LibraryScreen />)
     await screen.findByText('Long build')
     const order = () => screen.getAllByText(/ build$/).map((t) => t.props.children)
-    fireEvent.press(screen.getByRole('button', { name: 'Sort: Date added' }))
-    fireEvent.press(screen.getByRole('button', { name: 'Build time' }))
+    await applyFilters(['Quickest'])
     expect(order()).toEqual(['Short build', 'Long build'])
-    fireEvent.press(screen.getByRole('button', { name: 'Switch to longest first' }))
-    expect(order()).toEqual(['Long build', 'Short build'])
+    expect(screen.getByText('2 guides · Quickest first')).toBeTruthy()
   })
 
   it('shows an error message when apiClient.get rejects', async () => {
@@ -249,7 +254,7 @@ describe('LibraryScreen', () => {
     })
     render(<LibraryScreen />)
     await waitFor(() => expect(screen.getByText('Bubble machine')).toBeTruthy())
-    fireEvent.press(screen.getByRole('tab', { name: 'Assistive tech' }))
+    await applyFilters(['Assistive tech'])
     expect(screen.queryByText('Bubble machine')).toBeNull()
     expect(screen.getByText('Head switch arm')).toBeTruthy()
   })
@@ -263,7 +268,7 @@ describe('LibraryScreen', () => {
   it('clears every filter from the empty state in one tap', async () => {
     render(<LibraryScreen />)
     await screen.findByText('Build a Robot Arm')
-    fireEvent.changeText(screen.getByPlaceholderText('Search by toy name'), 'zzz')
+    fireEvent.changeText(screen.getByPlaceholderText('Search guides'), 'zzz')
     expect(screen.queryByText('Build a Robot Arm')).toBeNull()
     fireEvent.press(screen.getByText('Clear filters'))
     expect(screen.getByText('Build a Robot Arm')).toBeTruthy()
@@ -279,7 +284,7 @@ describe('LibraryScreen', () => {
     })
     render(<LibraryScreen />)
     await screen.findByText('Bubble machine')
-    fireEvent.changeText(screen.getByPlaceholderText('Search by toy name'), 'jelly')
+    fireEvent.changeText(screen.getByPlaceholderText('Search guides'), 'jelly')
     expect(screen.getByText('Bubble machine')).toBeTruthy()
     expect(screen.queryByText('Robot arm')).toBeNull()
   })
@@ -297,8 +302,10 @@ describe('Suits <child>', () => {
       children: Promise.resolve([{ name: 'Ollie', press_force: 'light', hold: 'second', aim: null }]),
     })
     render(<LibraryScreen />)
-    fireEvent.press(await screen.findByRole('button', { name: 'Filters' }))
-    fireEvent.press(await screen.findByLabelText('Suits Ollie · 1'))
+    await screen.findByText('Light touch switch')
+    await waitFor(() => expect(mockGet).toHaveBeenCalledWith('/api/child-profiles'))
+    await act(async () => {})
+    await applyFilters(['Suits Ollie · 1'])
     await waitFor(() => expect(screen.queryByText('Firm lever')).toBeNull())
     expect(screen.getByText('Light touch switch')).toBeTruthy()
     // The section heading names who the list is for.
@@ -324,6 +331,6 @@ describe('Suits <child>', () => {
     expect(await screen.findByText('Light touch switch')).toBeTruthy()
     await waitFor(() => expect(screen.queryByText('Firm lever')).toBeNull())
     expect(screen.getByText('Suits Ollie')).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Filters, 1 active' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Filters, 1 on' })).toBeTruthy()
   })
 })

@@ -135,6 +135,6 @@ test('an owner cannot ask for their own toy, and the library shows a one-toy sea
   await expect(page.getByRole('button', { name: 'Arrange exchange', exact: true })).toHaveCount(0)
 
   await page.goto('/toy-library')
-  await page.getByPlaceholder('Search by toy name').fill(name)
-  await expect(page.getByText('1 toy', { exact: true })).toBeVisible()
+  await page.getByPlaceholder('Search toys').fill(name)
+  await expect(page.getByText('1 toy · Newest first', { exact: true })).toBeVisible()
 })

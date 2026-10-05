@@ -37,14 +37,16 @@ export function uniqueTitle(prefix: string) {
  * for signing in through the UI.
  */
 /**
- * Taps one chip in the Guides / Toy Library filters. The chips sit behind the
- * "Filters" pill (named "Filters, N active" once something is on); the panel
- * opens in place and stays open, so it is opened only when the chip is hidden.
+ * Sets filters on the Guides / Toy Library filter page: opens it from the
+ * Filters button, presses each option (a pill toggles, a radio picks), then
+ * applies with "Show N …". Nothing applies until Show (filter-page.tsx).
  */
-export async function pickFilter(page: Page, chip: string) {
-  const target = page.getByRole('button', { name: chip, exact: true })
-  if (!(await target.isVisible())) await page.getByRole('button', { name: /^Filters/ }).click()
-  await target.click()
+export async function pickFilter(page: Page, ...options: string[]) {
+  await page.getByRole('button', { name: /^Filters/ }).click()
+  for (const name of options) {
+    await page.getByRole('radio', { name, exact: true }).or(page.getByRole('button', { name, exact: true })).click()
+  }
+  await page.getByRole('button', { name: /^Show \d+ / }).click()
 }
 
 export async function createContributor() {

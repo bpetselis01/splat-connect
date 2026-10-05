@@ -12,7 +12,7 @@ test('a saved guide reaches the shelf, and unsaving clears it', async ({ page })
 
   // Save it from the library card's bookmark island.
   await page.goto('/guides')
-  await page.getByPlaceholder('Search by toy name').fill(title)
+  await page.getByPlaceholder('Search guides').fill(title)
   await expect(page.getByRole('button', { name: title })).toBeVisible()
   // Awaited, not just clicked: the flip is optimistic, so a goto fired
   // straight after the click aborts the POST in flight and the save never

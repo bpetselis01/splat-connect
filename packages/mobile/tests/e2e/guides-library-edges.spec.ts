@@ -10,7 +10,7 @@ test('a guide whose title holds quotes, markup, an ampersand and an emoji is fou
   await createTutorial(contributor.id, { title, status: 'approved' })
 
   await page.goto('/guides')
-  await page.getByPlaceholder('Search by toy name').fill(title)
+  await page.getByPlaceholder('Search guides').fill(title)
   await expect(page.getByRole('button', { name: title })).toBeVisible()
   await page.getByRole('button', { name: title }).click()
 
@@ -24,7 +24,7 @@ test('a 300-character title does not break the card or the detail screen', async
   await createTutorial(contributor.id, { title, status: 'approved' })
 
   await page.goto('/guides')
-  await page.getByPlaceholder('Search by toy name').fill(title)
+  await page.getByPlaceholder('Search guides').fill(title)
   await expect(page.getByRole('button', { name: title })).toBeVisible()
   await page.getByRole('button', { name: title }).click()
   await expect(page.getByText('Created by a Playwright E2E test.').last()).toBeVisible()
@@ -35,7 +35,7 @@ test('searches full of SQL and wildcard characters find nothing and show the emp
   await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile Wildcard'), status: 'approved' })
 
   await page.goto('/guides')
-  const box = page.getByPlaceholder('Search by toy name')
+  const box = page.getByPlaceholder('Search guides')
   for (const q of [`'; drop table tutorials; --`, '%', '_', '\\', '""', '<script>alert(1)</script>', '🧸🧸🧸']) {
     await box.fill(q)
     await expect(page.locator('text=/No tutorials/i').first()).toBeVisible()
@@ -49,7 +49,7 @@ test('clearing a search that found nothing brings the library back', async ({ pa
   await createTutorial(contributor.id, { title, status: 'approved' })
 
   await page.goto('/guides')
-  const box = page.getByPlaceholder('Search by toy name')
+  const box = page.getByPlaceholder('Search guides')
   await box.fill('zzz-no-such-toy-zzz')
   await expect(page.locator('text=/No tutorials/i').first()).toBeVisible()
   await box.fill(title)
@@ -62,7 +62,7 @@ test('tapping Save twice quickly leaves the bookmark where the last tap put it, 
   await createTutorial(contributor.id, { title, status: 'approved' })
 
   await page.goto('/guides')
-  await page.getByPlaceholder('Search by toy name').fill(title)
+  await page.getByPlaceholder('Search guides').fill(title)
   await expect(page.getByText(title)).toBeVisible()
 
   // Both requests are armed before the taps: the optimistic flip answers at once
@@ -76,7 +76,7 @@ test('tapping Save twice quickly leaves the bookmark where the last tap put it, 
 
   await expect(page.getByLabel('Save', { exact: true })).toBeVisible()
   await page.reload()
-  await page.getByPlaceholder('Search by toy name').fill(title)
+  await page.getByPlaceholder('Search guides').fill(title)
   await expect(page.getByLabel('Save', { exact: true })).toBeVisible()
   await expect(page.getByLabel('Saved', { exact: true })).toHaveCount(0)
 })
@@ -87,7 +87,7 @@ test('a failed save puts the bookmark back and nothing is on the shelf', async (
   await createTutorial(contributor.id, { title, status: 'approved' })
 
   await page.goto('/guides')
-  await page.getByPlaceholder('Search by toy name').fill(title)
+  await page.getByPlaceholder('Search guides').fill(title)
   await expect(page.getByText(title)).toBeVisible()
   await page.route('**/api/saves', (route) => (route.request().method() === 'POST' ? route.abort() : route.continue()))
 

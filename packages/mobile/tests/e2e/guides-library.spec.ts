@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { signInAsNewContributor, createTutorial, uniqueTitle, pickFilter } from './helpers'
+import { signInAsNewContributor, createTutorial, uniqueTitle, pickFilter, adminClient } from './helpers'
 
 test('the library lists a tutorial with its difficulty badge', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
@@ -9,8 +9,7 @@ test('the library lists a tutorial with its difficulty badge', async ({ page }) 
   await page.goto('/guides')
 
   await expect(page.getByText(title)).toBeVisible()
-  // Scoped to this row: the Easy filter chip above the list carries the same
-  // word, and so do dozens of other workers' rows.
+  // Scoped to this row: dozens of other workers' rows carry the same word.
   await expect(page.getByRole('button', { name: title }).getByText('Easy', { exact: true })).toBeVisible()
 })
 
@@ -21,10 +20,10 @@ test('search narrows the list and clearing it restores the tutorial', async ({ p
 
   await page.goto('/guides')
 
-  await page.getByPlaceholder('Search by toy name').fill('no such toy')
+  await page.getByPlaceholder('Search guides').fill('no such toy')
   await expect(page.getByText(title)).toHaveCount(0)
 
-  await page.getByPlaceholder('Search by toy name').fill('')
+  await page.getByPlaceholder('Search guides').fill('')
   await expect(page.getByText(title)).toBeVisible()
 })
 
@@ -64,7 +63,7 @@ test('a search with no matches shows the empty state', async ({ page }) => {
   await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile Empty'), status: 'approved' })
 
   await page.goto('/guides')
-  await page.getByPlaceholder('Search by toy name').fill('zzz-no-such-toy-zzz')
+  await page.getByPlaceholder('Search guides').fill('zzz-no-such-toy-zzz')
 
   await expect(page.getByText('zzz-no-such-toy-zzz')).toBeVisible()
   await expect(page.locator('text=/No tutorials/i').first()).toBeVisible()
@@ -96,12 +95,12 @@ test('the guide-type switch narrows the list to one kind, and All clears it', as
   await page.goto('/guides')
   await expect(page.getByText(toy)).toBeVisible()
 
-  await page.getByRole('tab', { name: 'Assistive tech' }).click()
+  await pickFilter(page, 'Assistive tech')
   await expect(page.getByText(tech)).toBeVisible()
   await expect(page.getByText(toy)).toHaveCount(0)
 
   // One type at a time, as on the board: All is the way back.
-  await page.getByRole('tab', { name: 'All' }).click()
+  await pickFilter(page, 'All')
   await expect(page.getByText(toy)).toBeVisible()
 })
 
@@ -118,12 +117,12 @@ test('a backed guide carries a Backed pill on the card, and an unbacked one does
 
   await page.goto('/guides')
 
-  await page.getByPlaceholder('Search by toy name').fill(title)
+  await page.getByPlaceholder('Search guides').fill(title)
   await expect(page.getByRole('button', { name: title }).getByText('Backed', { exact: true })).toBeVisible()
 
   // The unbacked card has no pill; its row still tells a screen reader who
   // reviewed it.
-  await page.getByPlaceholder('Search by toy name').fill(plain)
+  await page.getByPlaceholder('Search guides').fill(plain)
   await expect(page.getByRole('button', { name: plain })).toBeVisible()
   await expect(page.getByRole('button', { name: plain }).getByText('Backed', { exact: true })).toHaveCount(0)
 })
@@ -136,7 +135,7 @@ test('tapping Save on a card flips the bookmark and the flip survives a reload',
   await page.goto('/guides')
   // Narrowed to the one row first: every card carries its own bookmark, and
   // the button has no per-row name to tell them apart by.
-  await page.getByPlaceholder('Search by toy name').fill(title)
+  await page.getByPlaceholder('Search guides').fill(title)
   await expect(page.getByText(title)).toBeVisible()
 
   // Awaited, not just clicked: the flip is optimistic, so a reload fired
@@ -152,6 +151,32 @@ test('tapping Save on a card flips the bookmark and the flip survives a reload',
   // The reload is the point: only a fresh /api/saves/ids proves the row is
   // really there, rather than the optimistic flip still showing.
   await page.reload()
-  await page.getByPlaceholder('Search by toy name').fill(title)
+  await page.getByPlaceholder('Search guides').fill(title)
   await expect(page.getByLabel('Saved', { exact: true })).toBeVisible()
+})
+
+test('the filter page narrows to guides tagged for the child, and removing a tag widens it again', async ({ page }) => {
+  const contributor = await signInAsNewContributor(page)
+  const prefix = uniqueTitle('E2E Mobile Suits')
+  const [fits, other] = await Promise.all(
+    ['Fits', 'Other', 'Untagged'].map((n) => createTutorial(contributor.id, { title: `${prefix} ${n}`, status: 'approved' }))
+  )
+  const admin = adminClient()
+  await admin.from('tutorials').update({ movement: ['press'], play: ['light', 'sound'] }).eq('id', fits)
+  await admin.from('tutorials').update({ movement: ['grasp'], play: ['light'] }).eq('id', other)
+
+  await page.goto('/guides')
+  await page.getByPlaceholder('Search guides').fill(prefix)
+  await expect(page.getByText(`${prefix} Untagged`)).toBeVisible()
+
+  // Within a question any answer matches; across questions all must. An untagged guide never matches a filtered question.
+  await pickFilter(page, 'Palm or fist press', 'Lights')
+  await expect(page.getByText(`${prefix} Fits`)).toBeVisible()
+  await expect(page.getByText(`${prefix} Other`)).toHaveCount(0)
+  await expect(page.getByText(`${prefix} Untagged`)).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Filters, 2 on' })).toBeVisible()
+
+  await page.getByRole('button', { name: 'Remove filter: Palm or fist press' }).click()
+  await expect(page.getByText(`${prefix} Other`)).toBeVisible()
+  await expect(page.getByText(`${prefix} Untagged`)).toHaveCount(0)
 })
