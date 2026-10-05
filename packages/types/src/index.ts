@@ -2128,6 +2128,8 @@ export interface Tutorial extends Suits {
   toy_brand?: string | null
   works_with?: string | null
   no_build_note?: string | null
+  /** 129. The author's closing line, shown once every step is done. */
+  done_note?: string | null
   /** 088. The guide's print settings, as the author sliced it. */
   layer_height_mm?: number | null
   infill_percent?: number | null
@@ -2220,6 +2222,8 @@ export type PrintJobFile = Pick<
  *  entirely, the way it drops backing that was never accepted. */
 export interface Recommendation {
   position: number
+  /** 129. "Required first": make the recommended guide before this one. */
+  required?: boolean
   tutorials: Pick<Tutorial, 'id' | 'title' | 'kind' | 'difficulty' | 'toy_photo_url' | 'status' | 'maturity'>
 }
 
@@ -2497,6 +2501,10 @@ export interface TutorialStep {
   title: string | null
   body: string
   photo_url: string | null
+  /** 129. A short tip or caution shown on this step. */
+  tip?: string | null
+  /** 129. Roughly how long the step takes, 1–600. */
+  minutes?: number | null
 }
 
 /** 093. A community note on a published guide, as GET /api/public/tutorials/:id/notes serves it. */

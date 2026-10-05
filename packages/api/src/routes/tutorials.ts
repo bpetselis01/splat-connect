@@ -93,7 +93,7 @@ tutorials.get('/:id', async (c) => {
     .select(
       '*, parts(*), tools(*), stl_files(*), steps:tutorial_steps(*), safety_notes:tutorial_safety_notes(*), tutorial_contributors(*, profiles(id, name, role, created_at)), \
 tutorial_collaborator_invites(*, profiles:invited_profile_id(id, name, role, created_at)), \
-tutorial_recommendations!tutorial_id(position, recommended_id, tutorials!recommended_id(id, title, kind, difficulty, toy_photo_url, status, maturity)), \
+tutorial_recommendations!tutorial_id(position, recommended_id, required, tutorials!recommended_id(id, title, kind, difficulty, toy_photo_url, status, maturity)), \
 reviewer:reviewed_by(name), reviewed_for:reviewed_for_org_id(name)'
     )
     .eq('id', c.req.param('id'))
@@ -182,7 +182,7 @@ tutorials.post('/', async (c) => {
 /** Only these may be set through the generic edit endpoint. Unknown keys are
  *  dropped silently; the protected ones return 403 so a caller learns rather than
  *  wonders. */
-const EDITABLE = ['title', 'description', 'difficulty', 'kind', 'maturity', 'build_minutes', 'age_min', 'age_max', 'tutorial_pdf_url', 'photo_urls', 'photo_captions', 'prices_checked_on', 'layer_height_mm', 'infill_percent', 'material', 'print_minutes', 'toy_name', 'toy_brand', 'works_with', 'no_build_note', 'status', ...GUIDE_SUITS_FIELDS] as const
+const EDITABLE = ['title', 'description', 'difficulty', 'kind', 'maturity', 'build_minutes', 'age_min', 'age_max', 'tutorial_pdf_url', 'photo_urls', 'photo_captions', 'prices_checked_on', 'layer_height_mm', 'infill_percent', 'material', 'print_minutes', 'toy_name', 'toy_brand', 'works_with', 'no_build_note', 'done_note', 'status', ...GUIDE_SUITS_FIELDS] as const
 const PROTECTED = ['reviewed_by', 'reviewed_for_org_id', 'reviewed_at', 'rejection_note']
 
 async function hasAcceptedContributorTerms(token: string, userId: string) {
@@ -223,6 +223,7 @@ export function fieldError(body: Record<string, unknown>): string | null {
     ['toy_brand', 80, 'The toy’s maker'],
     ['works_with', 300, 'Works with'],
     ['no_build_note', 300, 'The note for people who would rather not build'],
+    ['done_note', 300, 'The closing line'],
   ]
   for (const [k, max, label] of LONG) {
     if (has(k) && !(typeof body[k] === 'string' && (body[k] as string).trim().length <= max)) return `${label} is over ${max} characters`
@@ -265,7 +266,7 @@ tutorials.patch('/:id', async (c) => {
 
   const update = pickEditable(body, EDITABLE)
   // fieldError measured these trimmed; store what it measured so the CHECK agrees.
-  for (const k of ['material', 'toy_name', 'toy_brand', 'works_with', 'no_build_note']) {
+  for (const k of ['material', 'toy_name', 'toy_brand', 'works_with', 'no_build_note', 'done_note']) {
     if (typeof update[k] === 'string') update[k] = (update[k] as string).trim()
   }
   // Not in EDITABLE because the client never chooses the timestamp: it affirms
@@ -465,7 +466,7 @@ tutorials.delete('/:id/build', async (c) => {
  * refusing a non-contributor, a bad value) leaves the old steps untouched.
  */
 const MAX_STEPS = 60
-type StepInput = { title?: string | null; body: string; photo_url?: string | null }
+type StepInput = { title?: string | null; body: string; photo_url?: string | null; tip?: string | null; minutes?: number | null }
 
 // A step's photo must live in this guide's own folder: the old URLs are later
 // fed to an admin-client delete, so a URL pointing at another guide's object
@@ -483,6 +484,9 @@ function stepsError(steps: unknown, id: string): string | null {
       return `Step ${n}'s title is over 120 characters`
     if (s.photo_url != null && (typeof s.photo_url !== 'string' || !ownPhoto(s.photo_url, id)))
       return `Step ${n}'s photo was not uploaded to this guide`
+    if (s.tip != null && (typeof s.tip !== 'string' || s.tip.trim().length > 300)) return `Step ${n}'s tip is over 300 characters`
+    if (s.minutes != null && (!Number.isInteger(s.minutes) || s.minutes < 1 || s.minutes > 600))
+      return `Step ${n}'s minutes must be a whole number from 1 to 600`
   }
   return null
 }
@@ -506,6 +510,8 @@ tutorials.put('/:id/steps', async (c) => {
     title: s.title?.trim() || null,
     body: s.body.trim(),
     photo_url: s.photo_url || null,
+    tip: s.tip?.trim() || null,
+    minutes: s.minutes ?? null,
   }))
   let saved: unknown[] = []
   if (rows.length) {
