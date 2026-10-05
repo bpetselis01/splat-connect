@@ -2,12 +2,12 @@
 /**
  * The child profile as the board draws it: one page, three cards, one save.
  *
- * Basics (name, age), the four switch questions, the everyday needs of the
- * room, and Play and Measurements (120, mobile's wizard steps). Every field is
+ * Basics (name, age), the four child questions (128's CHILD_QUESTIONS — the
+ * same answers guides are tagged with, so Recommended counts what they share),
+ * the room's everyday needs, and the Measurements (120). Every field is
  * optional, and nothing else is asked — the older MACS, BFMF, grip, wrist and
  * forearm columns stay in the table but no form writes them (APP 3
- * minimisation). What a child enjoys is kept for a future recommender; nothing
- * sorts or matches on it yet. These are plain-language preferences for ranking
+ * minimisation). These are plain-language preferences for ranking
  * guides, never a clinical assessment; see docs/REGULATORY-CHANGES.md.
  *
  * Saving the first time creates the profile and the URL swaps from
@@ -23,13 +23,12 @@ import type { Route } from 'next'
 import {
   CHILD_MEASURES,
   CHILD_QUESTIONS,
-  ENJOYS,
   EVERYDAY_NEEDS,
+  ONE_HAND_LABEL,
   readMeasure,
   type ChildAnswers,
   type ChildMeasureField,
   type ChildProfile,
-  type Enjoy,
   type EverydayNeed,
 } from '@splat-connect/types'
 import { DeleteEntityButton } from '@/components/delete-entity-button'
@@ -41,12 +40,52 @@ export function answersOf(child: ChildProfile | null): ChildAnswers {
   return {
     name: child?.name ?? null,
     age: child?.age ?? null,
-    working_hand: child?.working_hand ?? null,
+    helps_with: child?.helps_with ?? [],
+    access: child?.access ?? [],
+    one_hand: child?.one_hand ?? false,
     press_force: child?.press_force ?? null,
-    aim: child?.aim ?? null,
-    hold: child?.hold ?? null,
+    enjoys: child?.enjoys ?? [],
     everyday_needs: child?.everyday_needs ?? [],
   }
+}
+
+/**
+ * One of the four child questions: press force is one answer, the rest any
+ * number; How they use it carries the One hand chip. The wizard and the
+ * editor both draw it, so the two ask the same thing the same way.
+ */
+export function ChildQuestion({
+  q,
+  answers,
+  set,
+  legend,
+  hideLegend = false,
+}: {
+  q: (typeof CHILD_QUESTIONS)[number]
+  answers: ChildAnswers
+  set: (patch: Partial<ChildAnswers>) => void
+  legend: string
+  hideLegend?: boolean
+}) {
+  if (q.child === 'press_force') {
+    return <ChoiceChips legend={legend} hideLegend={hideLegend} options={q.options} value={answers.press_force} onChange={(v) => set({ press_force: v as ChildAnswers['press_force'] })} />
+  }
+  const options = [...q.options, ...(q.child === 'access' ? [{ value: 'one_hand', label: ONE_HAND_LABEL }] : [])] as { value: string; label: string }[]
+  const value = [...(answers[q.child] as string[]), ...(q.child === 'access' && answers.one_hand ? ['one_hand'] : [])]
+  // ManyChips is itself the named group; a fieldset around it would name it twice.
+  return (
+    <div>
+      {!hideLegend && <p className="field-label" aria-hidden="true">{legend}</p>}
+      <ManyChips
+        label={legend}
+        options={options}
+        value={value}
+        onChange={(v) =>
+          set(q.child === 'access' ? { access: v.filter((x) => x !== 'one_hand') as ChildAnswers['access'], one_hand: v.includes('one_hand') } : { [q.child]: v })
+        }
+      />
+    </div>
+  )
 }
 
 /** One single-choice question as a row of chips. Pressing the chosen chip again clears it. */
@@ -91,7 +130,7 @@ export function NeedsChips({
   value: EverydayNeed[]
   onChange: (v: EverydayNeed[]) => void
 }) {
-  return <ManyChips label="Everyday needs" options={EVERYDAY_NEEDS} value={value} onChange={onChange} />
+  return <ManyChips label="Good to know" options={EVERYDAY_NEEDS} value={value} onChange={onChange} />
 }
 
 /** Any number of a list's options — the room's needs, what a child enjoys. */
@@ -143,7 +182,6 @@ export function ChildEditor({ child: initialChild, label }: { child: ChildProfil
   const [child, setChild] = useState<ChildProfile | null>(initialChild)
   const [form, setForm] = useState<ChildAnswers>(() => answersOf(initialChild))
   const [age, setAge] = useState(initialChild?.age?.toString() ?? '')
-  const [enjoys, setEnjoys] = useState<Enjoy[]>(initialChild?.enjoys ?? [])
   // As typed, so "400" stays on screen with its range under it.
   const [measures, setMeasures] = useState<Record<ChildMeasureField, string>>(() => {
     const text = (n: number | null | undefined) => (n == null ? '' : String(n))
@@ -173,7 +211,6 @@ export function ChildEditor({ child: initialChild, label }: { child: ChildProfil
       ...form,
       name: form.name?.trim() || null,
       age: age.trim() === '' ? null : Number(age),
-      enjoys,
       ...Object.fromEntries(read),
     }
     try {
@@ -238,36 +275,14 @@ export function ChildEditor({ child: initialChild, label }: { child: ChildProfil
           </div>
         </Card>
 
-        <Card
-          id="ability"
-          title="Ability profile"
-          lead="Used to rank guides by whether the switch they call for is one your child can operate."
-        >
+        <Card id="questions" title="Who they are" lead="Guides tagged with the same answers come first under Recommended.">
           {CHILD_QUESTIONS.map((q) => (
-            <ChoiceChips
-              key={q.field}
-              legend={q.prompt}
-              options={q.options}
-              value={form[q.field]}
-              onChange={(v) => set({ [q.field]: v } as Partial<ChildAnswers>)}
-            />
+            <ChildQuestion key={q.child} q={q} legend={q.label} answers={form} set={set} />
           ))}
         </Card>
 
-        <Card id="everyday-needs" title="Everyday needs" lead="What matters in the room, rather than in the hand.">
+        <Card id="everyday-needs" title="Good to know" lead="Notes for whoever makes or lends a toy.">
           <NeedsChips value={form.everyday_needs} onChange={(v) => set({ everyday_needs: v })} />
-        </Card>
-
-        <Card id="play" title="Play" lead="What does your child enjoy?">
-          <ManyChips
-            label="What does your child enjoy?"
-            options={ENJOYS}
-            value={enjoys}
-            onChange={(v) => {
-              setSaved(false)
-              setEnjoys(v)
-            }}
-          />
         </Card>
 
         <Card id="measurements" title="Measurements" lead="Optional. Only for printed grips and mounts.">

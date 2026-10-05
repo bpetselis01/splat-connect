@@ -165,12 +165,12 @@ test('a contributor adds two children, edits one, and deletes one', async ({ pag
       await expect(page).toHaveURL('/dashboard/profile')
     }
 
-    // First child, named, with one switch question answered.
+    // First child, named, with one of the four questions answered.
     await page.getByRole('link', { name: 'Add child' }).click()
     await expect(page).toHaveURL('/dashboard/child/new')
     await page.getByLabel('Name or nickname').fill('Emma')
     await page.getByLabel('Age').fill('7')
-    await page.getByRole('group', { name: 'How much force can they apply?' }).getByRole('button', { name: 'Light', exact: true }).click()
+    await page.getByRole('group', { name: 'Press force' }).getByRole('button', { name: 'Light', exact: true }).click()
     await page.getByRole('button', { name: 'Create profile' }).click()
     // Scoped to <main>: "Saved" is also a hub card and a footer link.
     await expect(main.getByText('Saved', { exact: true })).toBeVisible()
