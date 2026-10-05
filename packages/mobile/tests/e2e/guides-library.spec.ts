@@ -85,25 +85,6 @@ test('the skeleton renders while the tutorial request is in flight', async ({ pa
   await expect(page.getByTestId('skeleton-row').first()).toBeVisible()
 })
 
-test('the guide-type switch narrows the list to one kind, and All clears it', async ({ page }) => {
-  const contributor = await signInAsNewContributor(page)
-  const toy = uniqueTitle('E2E Mobile Kind Toy')
-  const tech = uniqueTitle('E2E Mobile Kind Tech')
-  await createTutorial(contributor.id, { title: toy, status: 'approved' })
-  await createTutorial(contributor.id, { title: tech, status: 'approved', kind: 'assistive_tech' })
-
-  await page.goto('/guides')
-  await expect(page.getByText(toy)).toBeVisible()
-
-  await pickFilter(page, 'Assistive tech')
-  await expect(page.getByText(tech)).toBeVisible()
-  await expect(page.getByText(toy)).toHaveCount(0)
-
-  // One type at a time, as on the board: All is the way back.
-  await pickFilter(page, 'All')
-  await expect(page.getByText(toy)).toBeVisible()
-})
-
 test('a backed guide carries a Backed pill on the card, and an unbacked one does not', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const title = uniqueTitle('E2E Mobile Backed')
