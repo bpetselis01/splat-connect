@@ -7,7 +7,7 @@
 // Pins are MapLibre's own clustering: a number is a cluster, and tapping it
 // zooms to where it splits; at full zoom every item is its own coloured dot.
 import { useMemo, useRef } from 'react'
-import { StyleSheet } from 'react-native'
+import { StyleSheet, Text } from 'react-native'
 import { Map, Camera, GeoJSONSource, Images, Layer, type CameraRef, type GeoJSONSourceRef, type LngLatBounds } from '@maplibre/maplibre-react-native'
 import type { MapPlace } from '@splat-connect/types'
 import { KINDS, KIND_ORDER, toFeatures } from '../../lib/map-filters'
@@ -62,76 +62,95 @@ export function MapCanvas({ places, selected, onSelect, inset }: MapCanvasProps)
   const data = useMemo(() => toFeatures(places), [places])
 
   return (
-    <Map
-      style={StyleSheet.absoluteFill}
-      mapStyle={STYLE}
-      logo={false}
-      compass={false}
-      attributionPosition={{ bottom: inset.bottom + 8, left: 12 }}
-      onPress={() => onSelect(null)}
-    >
-      <Camera
-        ref={camera}
-        initialViewState={{ bounds: bounds(places), padding: { top: inset.top + 32, bottom: inset.bottom + 32, left: 40, right: 40 } }}
-      />
-      <Images images={ICONS} />
-      <GeoJSONSource
-        ref={source}
-        id="places"
-        data={data}
-        cluster
-        clusterRadius={44}
-        clusterMaxZoom={17}
-        clusterProperties={PER_KIND as never}
-        onPress={async (e) => {
-          e.stopPropagation()
-          const f = e.nativeEvent.features[0]
-          if (!f || f.geometry.type !== 'Point') return
-          const props = f.properties ?? {}
-          if (props.cluster) {
-            const zoom = await source.current?.getClusterExpansionZoom(props.cluster_id)
-            if (zoom !== undefined) camera.current?.easeTo({ center: f.geometry.coordinates as [number, number], zoom, duration: 500 })
-          } else {
-            onSelect(props.place, props.item)
-          }
-        }}
+    <>
+      <Map
+        style={StyleSheet.absoluteFill}
+        mapStyle={STYLE}
+        logo={false}
+        compass={false}
+        attribution={false}
+        onPress={() => onSelect(null)}
       >
-        <Layer
-          type="circle"
-          id="clusters"
-          filter={HAS_COUNT as never}
-          paint={{
-            'circle-color': CLUSTER_COLOR as never,
-            'circle-radius': ['step', ['get', 'point_count'], 17, 10, 21, 50, 26],
-            'circle-stroke-width': 2.5,
-            'circle-stroke-color': theme.colors.surface,
+        <Camera
+          ref={camera}
+          initialViewState={{ bounds: bounds(places), padding: { top: inset.top + 32, bottom: inset.bottom + 32, left: 40, right: 40 } }}
+        />
+        <Images images={ICONS} />
+        <GeoJSONSource
+          ref={source}
+          id="places"
+          data={data}
+          cluster
+          clusterRadius={44}
+          clusterMaxZoom={17}
+          clusterProperties={PER_KIND as never}
+          onPress={async (e) => {
+            e.stopPropagation()
+            const f = e.nativeEvent.features[0]
+            if (!f || f.geometry.type !== 'Point') return
+            const props = f.properties ?? {}
+            if (props.cluster) {
+              const zoom = await source.current?.getClusterExpansionZoom(props.cluster_id)
+              if (zoom !== undefined) camera.current?.easeTo({ center: f.geometry.coordinates as [number, number], zoom, duration: 500 })
+            } else {
+              onSelect(props.place, props.item)
+            }
           }}
-        />
-        <Layer
-          type="symbol"
-          id="cluster-count"
-          filter={HAS_COUNT as never}
-          layout={{ 'text-field': ['get', 'point_count_abbreviated'], 'text-font': ['Noto Sans Bold'], 'text-size': 14, 'text-allow-overlap': true }}
-          paint={{ 'text-color': theme.colors.surface }}
-        />
-        <Layer
-          type="circle"
-          id="items"
-          filter={['!', HAS_COUNT] as never}
-          paint={{
-            'circle-color': ['get', 'color'],
-            'circle-radius': ['case', ['==', ['get', 'item'], selected ?? ''], 19, 15],
-            'circle-stroke-width': 2.5,
-            'circle-stroke-color': theme.colors.surface,
-          }}
-        />
-        <Layer
-          type="symbol"
-          id="item-icons"
-          filter={['!', HAS_COUNT] as never}
-          layout={{ 'icon-image': ['get', 'kind'], 'icon-size': 1, 'icon-allow-overlap': true, 'icon-ignore-placement': true }}
-        />
-      </GeoJSONSource>
-    </Map>
+        >
+          <Layer
+            type="circle"
+            id="clusters"
+            filter={HAS_COUNT as never}
+            paint={{
+              'circle-color': CLUSTER_COLOR as never,
+              'circle-radius': ['step', ['get', 'point_count'], 17, 10, 21, 50, 26],
+              'circle-stroke-width': 2.5,
+              'circle-stroke-color': theme.colors.surface,
+            }}
+          />
+          <Layer
+            type="symbol"
+            id="cluster-count"
+            filter={HAS_COUNT as never}
+            layout={{ 'text-field': ['get', 'point_count_abbreviated'], 'text-font': ['Noto Sans Bold'], 'text-size': 14, 'text-allow-overlap': true }}
+            paint={{ 'text-color': theme.colors.surface }}
+          />
+          <Layer
+            type="circle"
+            id="items"
+            filter={['!', HAS_COUNT] as never}
+            paint={{
+              'circle-color': ['get', 'color'],
+              'circle-radius': ['case', ['==', ['get', 'item'], selected ?? ''], 19, 15],
+              'circle-stroke-width': 2.5,
+              'circle-stroke-color': theme.colors.surface,
+            }}
+          />
+          <Layer
+            type="symbol"
+            id="item-icons"
+            filter={['!', HAS_COUNT] as never}
+            layout={{ 'icon-image': ['get', 'kind'], 'icon-size': 1, 'icon-allow-overlap': true, 'icon-ignore-placement': true }}
+          />
+        </GeoJSONSource>
+      </Map>
+      {/* The tiles' licence asks for this credit to stay visible; it replaces MapLibre's (i) button. */}
+      <Text style={[styles.credit, { bottom: inset.bottom + 8 }]}>© OpenFreeMap © OpenStreetMap</Text>
+    </>
   )
 }
+
+const styles = StyleSheet.create({
+  credit: {
+    position: 'absolute',
+    left: 12,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: 4,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(255,255,255,0.7)',
+    fontFamily: theme.fonts.semiBold,
+    fontSize: theme.type.micro,
+    color: theme.colors.muted,
+  },
+})
