@@ -38,6 +38,7 @@ const SECTION_ICON: Record<SectionId, ComponentProps<typeof Ionicons>['name']> =
   steps: 'list-outline',
   safety: 'shield-checkmark-outline',
   suits: 'people-outline',
+  picks: 'arrow-redo-outline',
   parts: 'hardware-chip-outline',
   tools: 'construct-outline',
   files: 'folder-open-outline',

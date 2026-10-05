@@ -12,7 +12,7 @@ import { KIND_LABEL, formatCents, partsTotalCents } from '@splat-connect/types'
 
 // 'steps' (080) is optional: no gap ever names it, so it never blocks submit
 // and Next never lands on it — a contributor opens it from the hub.
-export type SectionId = 'details' | 'steps' | 'safety' | 'suits' | 'parts' | 'tools' | 'files' | 'stl'
+export type SectionId = 'details' | 'steps' | 'safety' | 'suits' | 'picks' | 'parts' | 'tools' | 'files' | 'stl'
 
 export interface Gap {
   section: SectionId
@@ -24,6 +24,7 @@ export const SECTION_LABEL: Record<SectionId, string> = {
   steps: 'Steps',
   safety: 'Safety',
   suits: "Who it's for",
+  picks: 'Worth a look',
   parts: 'Parts',
   tools: 'Tools',
   files: 'Files',
@@ -56,14 +57,14 @@ export function getMissingFields(tutorial: TutorialWithDetails): Gap[] {
 export function sectionsFor(kind: TutorialKind): SectionId[] {
   // The board's order: what it is, how to build it, what to buy, what to use,
   // what could hurt, then the files.
-  const base: SectionId[] = ['details', 'steps', 'parts', 'tools', 'safety', 'suits', 'files']
+  const base: SectionId[] = ['details', 'steps', 'parts', 'tools', 'safety', 'suits', 'picks', 'files']
   return kind === 'assistive_tech' ? [...base, 'stl'] : base
 }
 
 /** The hub's "{ready} of {total} sections complete", shared with My tutorials. */
 export function sectionProgress(t: TutorialWithDetails): { ready: number; total: number } {
-  // 'suits' is all optional: counting it would show a finished bar for a section nobody has opened.
-  const sections = sectionsFor(t.kind).filter((s) => s !== 'suits')
+  // 'suits' and 'picks' are all optional: counting them would show a finished bar for a section nobody has opened.
+  const sections = sectionsFor(t.kind).filter((s) => s !== 'suits' && s !== 'picks')
   const incomplete = new Set(getMissingFields(t).map((g) => g.section))
   return { ready: sections.filter((s) => !incomplete.has(s)).length, total: sections.length }
 }
@@ -124,6 +125,10 @@ export function sectionSummary(section: SectionId, t: TutorialWithDetails): stri
     case 'suits': {
       const n = (t.device_types?.length ?? 0) + (t.helps_with?.length ?? 0) + (t.access?.length ?? 0) + (t.one_hand ? 1 : 0) + (t.press_force?.length ?? 0) + (t.play?.length ?? 0)
       return n ? count(n, 'answer') : 'Optional - helps families find it'
+    }
+    case 'picks': {
+      const n = t.tutorial_recommendations?.length ?? 0
+      return n ? count(n, 'guide') : 'Optional - up to three guides to read next'
     }
     case 'parts': {
       const total = partsTotalCents(t.parts)
