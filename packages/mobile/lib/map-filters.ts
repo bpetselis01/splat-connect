@@ -16,8 +16,8 @@ export const KINDS: Record<MapKind, { label: string; one: string; icon: IconName
 }
 export const KIND_ORDER = Object.keys(KINDS) as MapKind[]
 
-/** A place's identity: one suburb in one state. */
-export const placeKey = (p: MapPlace) => `${p.suburb}|${p.state}`
+/** A place's identity: its point. Two places can share a suburb. */
+export const placeKey = (p: MapPlace) => `${p.lat},${p.lng}`
 export const itemKey = (i: MapItem) => `${i.kind}:${i.id}`
 
 /**

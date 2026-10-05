@@ -19,7 +19,7 @@ jest.mock('../../../components/map/MapCanvas', () => ({
     return (
     <View testID="map">
       {places.map((p) => (
-        <Pressable key={p.suburb} accessibilityRole="button" accessibilityLabel={`pin ${p.suburb}`} onPress={() => onSelect(`${p.suburb}|${p.state}`)}>
+        <Pressable key={p.suburb} accessibilityRole="button" accessibilityLabel={`pin ${p.suburb}`} onPress={() => onSelect(`${p.lat},${p.lng}`)}>
           <Text>{p.items.length}</Text>
         </Pressable>
       ))}
