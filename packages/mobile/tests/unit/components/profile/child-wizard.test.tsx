@@ -14,15 +14,14 @@ jest.mock('../../../../lib/api-client', () => ({
 const mockReplace = jest.fn()
 jest.mock('expo-router', () => ({ useRouter: () => ({ replace: mockReplace, push: jest.fn() }) }))
 
+// No name typed, so '{name}' falls back to "your child".
 const HEADINGS = [
   'Who are we finding toys for?',
-  'Which hand does most of the work?',
-  'How much force can they apply?',
-  'Can they aim at a target?',
-  'How long can they hold a press?',
-  'What matters in the room?',
+  'What would help your child day to day?',
+  'How does your child start or control things?',
+  'How hard can your child press?',
   'What does your child enjoy?',
-  'Any measurements? (optional)',
+  'Good to know',
 ]
 
 beforeEach(() => {
@@ -61,35 +60,53 @@ describe('ChildWizard', () => {
       render(<ChildWizard />)
       fireEvent.changeText(await screen.findByPlaceholderText('e.g. Sam'), ' Sam ')
       fireEvent.press(screen.getByRole('button', { name: 'Continue' }))
-      expect(await screen.findByText('Which hand does most of the work?')).toBeTruthy()
-      fireEvent.press(screen.getByRole('button', { name: 'Either' }))
+      // The headings use the name once there is one.
+      expect(await screen.findByText('What would help Sam day to day?')).toBeTruthy()
+      fireEvent.press(screen.getByRole('button', { name: 'Seeing' }))
       fireEvent.press(screen.getByRole('button', { name: 'Continue' }))
       // An unanswered step on Continue is a skip.
       fireEvent.press(screen.getByRole('button', { name: 'Continue' }))
-      expect(screen.getByText('Can they aim at a target?')).toBeTruthy()
+      expect(screen.getByText('How hard can Sam press?')).toBeTruthy()
       await act(async () => { jest.advanceTimersByTime(500) })
       // The hook batches the two answers into the one create.
       await waitFor(() =>
-        expect(mockPost).toHaveBeenCalledWith('/api/child-profiles', { name: 'Sam', working_hand: 'either' })
+        expect(mockPost).toHaveBeenCalledWith('/api/child-profiles', { name: 'Sam', helps_with: ['seeing'] })
       )
     } finally {
       jest.useRealTimers()
     }
   })
 
-  it('saves what the child enjoys from the Play step', async () => {
+  it('saves how the child starts things, with one hand as its own chip', async () => {
     jest.useFakeTimers()
     try {
       render(<ChildWizard />)
       await screen.findByText(HEADINGS[0])
-      for (let i = 0; i < 6; i++) fireEvent.press(screen.getByRole('button', { name: 'Skip' }))
+      for (let i = 0; i < 2; i++) fireEvent.press(screen.getByRole('button', { name: 'Skip' }))
+      expect(screen.getByText(HEADINGS[2])).toBeTruthy()
+      fireEvent.press(screen.getByRole('button', { name: 'Eyes' }))
+      fireEvent.press(screen.getByRole('button', { name: 'One hand is enough for your child' }))
+      fireEvent.press(screen.getByRole('button', { name: 'Continue' }))
+      await act(async () => { jest.advanceTimersByTime(500) })
+      await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/child-profiles', { access: ['eyes'], one_hand: true }))
+    } finally {
+      jest.useRealTimers()
+    }
+  })
+
+  it('saves what the child enjoys, and Good to know is the last step', async () => {
+    jest.useFakeTimers()
+    try {
+      render(<ChildWizard />)
+      await screen.findByText(HEADINGS[0])
+      for (let i = 0; i < 4; i++) fireEvent.press(screen.getByRole('button', { name: 'Skip' }))
       expect(screen.getByText('What does your child enjoy?')).toBeTruthy()
-      // Kept as the board draws it; nothing sorts by it (Byron 2026-10-02).
-      expect(screen.getByText('We will put those toys first.')).toBeTruthy()
       fireEvent.press(screen.getByRole('button', { name: 'Lights' }))
       fireEvent.press(screen.getByRole('button', { name: 'Bubbles and water' }))
       fireEvent.press(screen.getByRole('button', { name: 'Continue' }))
-      expect(screen.getByText('Any measurements? (optional)')).toBeTruthy()
+      // Measurements are in the editor now, not the wizard.
+      expect(screen.getByText('Good to know')).toBeTruthy()
+      expect(screen.getByRole('button', { name: 'Finish' })).toBeTruthy()
       await act(async () => { jest.advanceTimersByTime(500) })
       await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/child-profiles', { enjoys: ['light', 'water'] }))
     } finally {
@@ -97,36 +114,17 @@ describe('ChildWizard', () => {
     }
   })
 
-  it('saves the measurements in range and says the range of one that is not', async () => {
-    jest.useFakeTimers()
-    try {
-      render(<ChildWizard />)
-      await screen.findByText(HEADINGS[0])
-      for (let i = 0; i < 7; i++) fireEvent.press(screen.getByRole('button', { name: 'Skip' }))
-      expect(screen.getByText('Only for printed grips and mounts.')).toBeTruthy()
-      fireEvent.changeText(screen.getByPlaceholderText('e.g. 62'), '62')
-      fireEvent.changeText(screen.getByPlaceholderText('e.g. 30'), '400')
-      expect(screen.getByText('Between 5 and 150.')).toBeTruthy()
-      fireEvent.press(screen.getByRole('button', { name: 'Finish' }))
-      await act(async () => { jest.advanceTimersByTime(500) })
-      // The reach is out of range, so it is not an answer — only the hand width saves.
-      await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/child-profiles', { palm_width_mm: 62 }))
-    } finally {
-      jest.useRealTimers()
-    }
-  })
-
-  it('ends on the board\'s done screen with the matches, and opens Guides filtered to them', async () => {
+  it('ends on the board\'s done screen with the matches, and opens Guides', async () => {
     mockGet.mockImplementation((path: string) =>
       path === '/api/public/tutorials'
         ? Promise.resolve([
-            { id: 'g1', switch_force: 'light', switch_target: 'large', switch_hold: null },
-            { id: 'g2', switch_force: 'full', switch_target: null, switch_hold: null },
+            { id: 'g1', helps_with: ['seeing'] },
+            { id: 'g2', helps_with: ['hearing'] },
           ])
         : path === '/api/public/toys'
           ? Promise.resolve([
-              { id: 'y1', switch_adapted: true, status: 'published', paused_at: null },
-              { id: 'y2', switch_adapted: false, status: 'published', paused_at: null },
+              { id: 'y1', helps_with: ['seeing'], status: 'published', paused_at: null },
+              { id: 'y2', helps_with: ['hearing'], status: 'published', paused_at: null },
             ])
           : Promise.resolve([])
     )
@@ -135,16 +133,13 @@ describe('ChildWizard', () => {
       render(<ChildWizard />)
       fireEvent.changeText(await screen.findByPlaceholderText('e.g. Sam'), 'Ollie')
       fireEvent.press(screen.getByRole('button', { name: 'Continue' }))
-      fireEvent.press(screen.getByRole('button', { name: 'Skip' })) // hand
-      fireEvent.press(screen.getByRole('button', { name: 'Light' }))
+      fireEvent.press(screen.getByRole('button', { name: 'Seeing' }))
       fireEvent.press(screen.getByRole('button', { name: 'Continue' }))
-      fireEvent.press(screen.getByRole('button', { name: 'Yes, large' }))
-      fireEvent.press(screen.getByRole('button', { name: 'Continue' }))
-      for (let i = 0; i < 4; i++) fireEvent.press(screen.getByRole('button', { name: 'Skip' })) // hold, room, play, measurements
+      for (let i = 0; i < 4; i++) fireEvent.press(screen.getByRole('button', { name: 'Skip' })) // access, force, enjoys, good to know
       expect(await screen.findByText("Ollie's profile is ready")).toBeTruthy()
-      expect(await screen.findByText('We found 1 guide and 1 toy that suit a light press with a big button.')).toBeTruthy()
+      expect(await screen.findByText('We found 1 guide and 1 toy that suit Ollie.')).toBeTruthy()
       fireEvent.press(screen.getByRole('button', { name: 'See the matches' }))
-      expect(mockReplace).toHaveBeenCalledWith('/guides?suits=1')
+      expect(mockReplace).toHaveBeenCalledWith('/guides')
       await act(async () => { jest.advanceTimersByTime(500) })
     } finally {
       jest.useRealTimers()

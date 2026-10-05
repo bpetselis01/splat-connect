@@ -48,10 +48,10 @@ const child = (over: object = {}) => ({
   forearm_length_mm: null,
   hand_dominance: null,
   sensory_preferences: [],
-  working_hand: null,
+  helps_with: [],
+  access: [],
+  one_hand: false,
   press_force: null,
-  aim: null,
-  hold: null,
   everyday_needs: [],
   created_at: '',
   updated_at: '',
@@ -66,8 +66,8 @@ beforeEach(() => {
 describe('ChildEditorHome', () => {
   it('asks the board questions on one page, and none of the retired ones', async () => {
     render(<ChildEditorHome childId="cp1" />)
-    expect(await screen.findByText('Which hand does most of the work?')).toBeTruthy()
-    for (const q of ['How much force can they apply?', 'Can they aim at a target?', 'How long can they hold a press?', 'Everyday needs']) {
+    expect(await screen.findByText('Helps with')).toBeTruthy()
+    for (const q of ['How the child uses it', 'Press force', 'Play', 'Good to know', 'Measurements']) {
       expect(screen.getByText(q)).toBeTruthy()
     }
     expect(screen.getByText(/never shown to another person/)).toBeTruthy()
@@ -77,11 +77,30 @@ describe('ChildEditorHome', () => {
   })
 
   it('shows the stored answers as selected', async () => {
-    mockGet.mockResolvedValue([child({ working_hand: 'left', everyday_needs: ['wipeable'] })])
+    mockGet.mockResolvedValue([child({ helps_with: ['seeing'], one_hand: true, everyday_needs: ['wipeable'] })])
     render(<ChildEditorHome childId="cp1" />)
-    expect(await screen.findByRole('button', { name: 'Left', selected: true })).toBeTruthy()
+    expect(await screen.findByRole('button', { name: 'Seeing', selected: true })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Hearing', selected: false })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'One hand is enough', selected: true })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Wipeable', selected: true })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Quiet toys only', selected: false })).toBeTruthy()
+  })
+
+  it('saves a Helps with chip and the one-hand chip against this child', async () => {
+    mockPatch.mockResolvedValue({})
+    jest.useFakeTimers()
+    try {
+      render(<ChildEditorHome childId="cp1" />)
+      fireEvent.press(await screen.findByRole('button', { name: 'Seeing' }))
+      fireEvent.press(screen.getByRole('button', { name: 'One hand is enough' }))
+      await waitFor(() => {})
+      jest.advanceTimersByTime(300)
+      await waitFor(() =>
+        expect(mockPatch).toHaveBeenCalledWith('/api/child-profiles/cp1', { helps_with: ['seeing'], one_hand: true })
+      )
+    } finally {
+      jest.useRealTimers()
+    }
   })
 
   it('saves only the field a chip changed, against this child', async () => {
@@ -146,7 +165,7 @@ describe('ChildEditorHome', () => {
     }
   })
 
-  // 120: Play and the three measurements are editable here, not only in the wizard.
+  // 120: Play and the three measurements are editable here (the wizard no longer asks for measurements).
   it('shows what the child enjoys and their measurements as stored', async () => {
     mockGet.mockResolvedValue([child({ enjoys: ['water'], palm_width_mm: 62, reach_cm: 30, tray_mm: 15 })])
     render(<ChildEditorHome childId="cp1" />)

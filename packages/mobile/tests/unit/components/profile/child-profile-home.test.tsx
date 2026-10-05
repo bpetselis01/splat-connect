@@ -48,10 +48,10 @@ const child = (over: object) => ({
   forearm_length_mm: null,
   hand_dominance: null,
   sensory_preferences: [],
-  working_hand: null,
+  helps_with: [],
+  access: [],
+  one_hand: false,
   press_force: null,
-  aim: null,
-  hold: null,
   everyday_needs: [],
   created_at: '',
   updated_at: '',
@@ -66,13 +66,13 @@ beforeEach(() => {
 describe('ChildProfileHome', () => {
   it('lists each child with its one-line summary, falling back per the spec', async () => {
     mockGet.mockResolvedValue([
-      child({ id: 'cp1', name: 'Maya', age: 5, working_hand: 'right', press_force: 'light' }),
+      child({ id: 'cp1', name: 'Maya', age: 5, helps_with: ['seeing', 'calm'], press_force: 'light' }),
       child({ id: 'cp2', name: null }),
     ])
     render(<ChildProfileHome />)
 
     expect(await screen.findByText('Maya')).toBeTruthy()
-    expect(screen.getByText('Age 5 · Right hand · Light press')).toBeTruthy()
+    expect(screen.getByText('Age 5 · Seeing, Feeling calm · Light press')).toBeTruthy()
     // Unnamed children take their position; a blank profile says so plainly.
     expect(screen.getByText('Child 2')).toBeTruthy()
     expect(screen.getByText('Not set yet')).toBeTruthy()

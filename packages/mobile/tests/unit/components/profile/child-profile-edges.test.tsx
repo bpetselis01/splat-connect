@@ -34,7 +34,7 @@ jest.mock('expo-router', () => {
 })
 
 const child = (over: object = {}) => ({
-  id: 'cp1', parent_id: 'u1', name: null, age: null, working_hand: null, press_force: null, aim: null, hold: null,
+  id: 'cp1', parent_id: 'u1', name: null, age: null, helps_with: [], access: [], one_hand: false, press_force: null,
   everyday_needs: [], enjoys: [], palm_width_mm: null, reach_cm: null, tray_mm: null, created_at: '', updated_at: '',
   ...over,
 })
@@ -118,22 +118,22 @@ describe('Wizard, age and name', () => {
     expect(screen.getByRole('button', { name: 'Back' }).props.accessibilityState?.disabled).toBe(true)
     fireEvent.changeText(f.name, 'Sam')
     next()
-    await screen.findByText('Which hand does most of the work?')
+    await screen.findByText('What would help Sam day to day?')
     fireEvent.press(screen.getByRole('button', { name: 'Back' }))
     expect((await screen.findByPlaceholderText('e.g. Sam')).props.value).toBe('Sam')
   })
 
   it('shows the step count and moves it on', async () => {
     await aboutStep()
-    expect(screen.getByText('STEP 1 OF 8')).toBeTruthy()
+    expect(screen.getByText('STEP 1 OF 6')).toBeTruthy()
     next()
-    expect(screen.getByText('STEP 2 OF 8')).toBeTruthy()
+    expect(screen.getByText('STEP 2 OF 6')).toBeTruthy()
   })
 })
 
 describe('Wizard, an existing child', () => {
   beforeEach(() => {
-    mockGet.mockResolvedValue([child({ name: 'Sam', age: 6, working_hand: 'left', everyday_needs: ['quiet'] })])
+    mockGet.mockResolvedValue([child({ name: 'Sam', age: 6, helps_with: ['seeing'], everyday_needs: ['quiet'] })])
   })
 
   it('opens with what is already set', async () => {
@@ -154,19 +154,17 @@ describe('Wizard, an existing child', () => {
     render(<ChildWizard />)
     await screen.findByPlaceholderText('e.g. Sam')
     fireEvent.press(screen.getByRole('button', { name: 'Skip' }))
-    fireEvent.press(await screen.findByRole('button', { name: 'Left' }))
+    fireEvent.press(await screen.findByRole('button', { name: 'Seeing' }))
     fireEvent.press(screen.getByRole('button', { name: 'Continue' }))
     await flush()
-    expect(mockPatch).toHaveBeenCalledWith('/api/child-profiles/cp1', { working_hand: null })
+    expect(mockPatch).toHaveBeenCalledWith('/api/child-profiles/cp1', { helps_with: [] })
   })
 
   it('skipping a step leaves what was set alone', async () => {
     render(<ChildWizard />)
     await screen.findByPlaceholderText('e.g. Sam')
-    for (let i = 0; i < 8; i++) {
-      fireEvent.press(screen.getByRole('button', { name: i === 7 ? 'Finish' : 'Skip' }))
-      if (i === 7) break
-    }
+    // Skip on every step, the last included: its Good to know chip is already set, so Finish would re-save it.
+    for (let i = 0; i < 6; i++) fireEvent.press(screen.getByRole('button', { name: 'Skip' }))
     await flush()
     expect(mockPatch).not.toHaveBeenCalled()
   })
@@ -176,9 +174,9 @@ describe('Wizard, failures', () => {
   it('still walks every step when the first read of the account failed', async () => {
     mockGet.mockRejectedValue(new Error('offline'))
     render(<ChildWizard />)
-    await screen.findByText('STEP 1 OF 8')
+    await screen.findByText('STEP 1 OF 6')
     fireEvent.press(screen.getByRole('button', { name: 'Skip' }))
-    expect(await screen.findByText('STEP 2 OF 8')).toBeTruthy()
+    expect(await screen.findByText('STEP 2 OF 6')).toBeTruthy()
   })
 
   it('a save that fails still moves on to the next step, and the last step still finishes', async () => {
@@ -187,7 +185,7 @@ describe('Wizard, failures', () => {
     fireEvent.changeText(await screen.findByPlaceholderText('e.g. Sam'), 'Sam')
     fireEvent.press(screen.getByRole('button', { name: 'Continue' }))
     await flush()
-    expect(screen.getByText('STEP 2 OF 8')).toBeTruthy()
+    expect(screen.getByText('STEP 2 OF 6')).toBeTruthy()
   })
 })
 
