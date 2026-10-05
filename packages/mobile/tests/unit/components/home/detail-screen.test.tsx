@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
+import { act, render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { DetailScreen, splitLead } from '../../../../components/home/detail-screen'
 import { apiClient } from '../../../../lib/api-client'
 
@@ -8,8 +8,9 @@ import { apiClient } from '../../../../lib/api-client'
 // are what pull in more Icon instances than this file had before Task 3.
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 
+let mockTicks: string | null = null
 jest.mock('../../../../lib/supabase-storage', () => ({
-  resolveAuthStorage: () => ({ getItem: jest.fn().mockResolvedValue(null), setItem: jest.fn().mockResolvedValue(undefined), removeItem: jest.fn() }),
+  resolveAuthStorage: () => ({ getItem: jest.fn(() => Promise.resolve(mockTicks)), setItem: jest.fn().mockResolvedValue(undefined), removeItem: jest.fn() }),
 }))
 
 jest.mock('../../../../lib/api-client', () => ({ apiClient: { get: jest.fn(), post: jest.fn() } }))
@@ -17,7 +18,18 @@ jest.mock('../../../../lib/api-client', () => ({ apiClient: { get: jest.fn(), po
 jest.mock('../../../../lib/capabilities', () => ({ useCapabilities: () => ({ caps: { profile: { id: 'me' } } }) }))
 
 const mockPush = jest.fn()
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }))
+const mockFocus: (() => void)[] = []
+jest.mock('expo-router', () => ({
+  useRouter: () => ({ push: mockPush }),
+  // Runs on mount like a first focus; later focuses are fired by the test.
+  useFocusEffect: (cb: () => void) => {
+    const { useEffect } = jest.requireActual('react')
+    useEffect(() => {
+      mockFocus.push(cb)
+      cb()
+    }, [])
+  },
+}))
 const mockRecord = jest.fn()
 jest.mock('../../../../lib/recents', () => ({ recordRecent: (...a: unknown[]) => mockRecord(...a) }))
 
@@ -309,6 +321,17 @@ describe('DetailScreen redesigned page', () => {
     render(<DetailScreen id="1" />)
     fireEvent.press(await screen.findByText('Start building'))
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/guides/[id]/build', params: { id: '1' } })
+  })
+
+  // Build mode ticks steps while the guide page stays mounted underneath.
+  it('reads the step ticks again when the page comes back into focus', async () => {
+    mockTicks = null
+    render(<DetailScreen id="1" />)
+    expect(await screen.findByText('Start building')).toBeTruthy()
+    mockTicks = '["s1"]'
+    act(() => mockFocus.at(-1)!())
+    expect(await screen.findByText('Pick up at step 2')).toBeTruthy()
+    mockTicks = null
   })
 
   it('offers the PDF as the primary action when there are no steps', async () => {

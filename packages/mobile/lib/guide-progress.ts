@@ -47,6 +47,9 @@ export function useDeviceTicks(key: string, validIds: readonly string[]) {
   // Which key and step list the stored ticks were last read for (a failed read
   // counts): build mode waits for its own steps' read to know where to resume.
   const [readFor, setReadFor] = useState<string | null>(null)
+  // Bumped by reread(): a screen that stays mounted under another (the guide
+  // page under build mode) reads the ticks again when it comes back.
+  const [readCount, setReadCount] = useState(0)
   // A tap before the read lands wins: the read would otherwise undo it.
   const touched = useRef(false)
   const ids = validIds.join(',')
@@ -67,7 +70,7 @@ export function useDeviceTicks(key: string, validIds: readonly string[]) {
       ignore = true
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, ids])
+  }, [key, ids, readCount])
 
   function write(next: Set<string>) {
     touched.current = true
@@ -80,6 +83,7 @@ export function useDeviceTicks(key: string, validIds: readonly string[]) {
   return {
     ticked,
     loaded: readFor === `${key}|${ids}`,
+    reread: () => setReadCount((n) => n + 1),
     toggle: (id: string) => {
       const next = new Set(ticked)
       if (next.has(id)) next.delete(id)

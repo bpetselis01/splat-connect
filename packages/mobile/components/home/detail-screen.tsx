@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { View, Text, ScrollView, Pressable, Image, StyleSheet } from 'react-native'
-import { useRouter } from 'expo-router'
+import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { Tutorial, Part, Tool, StlFile, Recommendation, TutorialStep, TutorialSafetyNote } from '@splat-connect/types'
 import {
@@ -90,7 +90,15 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
   const [tab, setTab] = useState<Tab>(startTab === 'notes' || startTab === 'parts' || startTab === 'files' ? startTab : 'overview')
   const [tabsY, setTabsY] = useState(0)
   const stepIds = (tutorial?.steps ?? []).map((s) => s.id)
-  const { ticked } = useDeviceTicks(ticksKey('steps', id), stepIds)
+  const { ticked, reread } = useDeviceTicks(ticksKey('steps', id), stepIds)
+  // Build mode ticks steps while this page stays mounted underneath; read them
+  // again on the way back so Start building becomes Pick up at step N.
+  useFocusEffect(
+    useCallback(() => {
+      reread()
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+  )
 
   // "Pick up where you left off": once per open, when the guide has loaded.
   useEffect(() => {
