@@ -111,7 +111,7 @@ export function MapScreen() {
     )
   } else if (list) {
     body = (
-      <ScrollView style={styles.list} contentContainerStyle={{ paddingTop: topHeight, paddingBottom: bottom + 64, paddingHorizontal: theme.spacing(4) }}>
+      <ScrollView style={styles.list} keyboardDismissMode="on-drag" contentContainerStyle={{ paddingTop: topHeight, paddingBottom: bottom + 64, paddingHorizontal: theme.spacing(4) }}>
         {places && total === 0 ? (
           <EmptyState icon="map-outline" title="Nothing here" hint="Turn a layer back on, or clear the filters." />
         ) : (
@@ -157,6 +157,7 @@ export function MapScreen() {
               accessibilityLabel="Search suburbs and places"
               boxStyle={styles.searchBox}
               returnKeyType="search"
+              clearButtonMode="while-editing"
             />
           </View>
           <Pressable
