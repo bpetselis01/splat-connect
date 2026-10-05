@@ -95,12 +95,21 @@ it('a row is announced as its title, detail and distance', async () => {
   expect(screen.getByRole('button', { name: 'Bubble machine, Toy · A family, here' })).toBeTruthy()
 })
 
-it('a layer chip hides that kind, and a suburb left empty loses its pin', async () => {
+it('a chip shows only its kind; more chips add kinds; unpicking the last shows everything', async () => {
   render(<MapTab />)
   await screen.findByRole('button', { name: 'pin Chatswood' })
-  fireEvent.press(screen.getByText('Organisations'))
-  expect(screen.queryByRole('button', { name: 'pin Chatswood' })).toBeNull()
+  fireEvent.press(screen.getByRole('button', { name: 'Organisations' }))
+  expect(screen.getByRole('button', { name: 'Organisations' }).props.accessibilityState).toMatchObject({ selected: true })
+  expect(screen.getByRole('button', { name: 'pin Chatswood' })).toBeTruthy()
+  expect(screen.queryByRole('button', { name: 'pin Leichhardt' })).toBeNull()
+
+  fireEvent.press(screen.getByRole('button', { name: 'Printers' }))
   expect(screen.getByRole('button', { name: 'pin Leichhardt' })).toBeTruthy()
+
+  fireEvent.press(screen.getByRole('button', { name: 'Printers' }))
+  fireEvent.press(screen.getByRole('button', { name: 'Organisations' }))
+  expect(screen.getByRole('button', { name: 'pin Leichhardt' })).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'pin Chatswood' })).toBeTruthy()
 })
 
 it('the List button shows every place nearest first, grouped by distance, and Map goes back', async () => {

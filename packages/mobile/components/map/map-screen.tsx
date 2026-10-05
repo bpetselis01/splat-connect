@@ -44,7 +44,9 @@ export function MapScreen() {
 
   const [places, setPlaces] = useState<MapPlace[] | null>(null)
   const [failed, setFailed] = useState(false)
-  const [kinds, setKinds] = useState(() => new Set<MapKind>(KIND_ORDER))
+  // The kinds picked with the chips. None picked shows every kind; picking one
+  // shows only it, and more can be added (Byron, 2026-10-05).
+  const [picked, setPicked] = useState(() => new Set<MapKind>())
   const [filters, setFilters] = useState<MapFilters>(NO_FILTERS)
   const [draft, setDraft] = useState<MapFilters>(NO_FILTERS)
   const [filtersOpen, setFiltersOpen] = useState(false)
@@ -70,12 +72,12 @@ export function MapScreen() {
 
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase()
-    const filtered = applyFilters(places ?? [], kinds, filters)
+    const filtered = applyFilters(places ?? [], picked.size ? picked : new Set(KIND_ORDER), filters)
     if (!q) return filtered
     return filtered
       .map((p) => (p.suburb.toLowerCase().includes(q) ? p : { ...p, items: p.items.filter((i) => i.title.toLowerCase().includes(q)) }))
       .filter((p) => p.items.length > 0)
-  }, [places, kinds, filters, query])
+  }, [places, picked, filters, query])
   const total = shown.reduce((n, p) => n + p.items.length, 0)
   const openPlace = list || !selected ? undefined : shown.find((p) => placeKey(p) === selected.place)
   // The whole point, as the mockup's sheet lists it, with the tapped dot first.
@@ -87,12 +89,13 @@ export function MapScreen() {
   const bottom = tabBarClearance(insets.bottom)
 
   function toggleKind(k: MapKind) {
-    setKinds((prev) => {
+    setPicked((prev) => {
       const next = new Set(prev)
       if (next.has(k)) next.delete(k)
       else next.add(k)
       return next
     })
+    setSelected(null)
   }
 
   const row = (p: MapPlace) =>
@@ -184,7 +187,7 @@ export function MapScreen() {
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow} contentContainerStyle={styles.chips}>
           {KIND_ORDER.map((k) => (
-            <LayerChip key={k} kind={k} on={kinds.has(k)} onPress={() => toggleKind(k)} />
+            <LayerChip key={k} kind={k} on={picked.has(k)} onPress={() => toggleKind(k)} />
           ))}
         </ScrollView>
       </View>
@@ -285,7 +288,7 @@ export function MapScreen() {
   )
 }
 
-/** A layer toggle: white with its colour dot when on, sunken grey when off. */
+/** A kind filter: white with its colour dot; picked, it takes its kind's tint and edge. */
 function LayerChip({ kind, on, onPress }: { kind: MapKind; on: boolean; onPress: () => void }) {
   const k = KINDS[kind]
   return (
@@ -294,12 +297,12 @@ function LayerChip({ kind, on, onPress }: { kind: MapKind; on: boolean; onPress:
       accessibilityRole="button"
       accessibilityState={{ selected: on }}
       accessibilityLabel={k.label}
-      style={[styles.layer, !on && styles.layerOff]}
+      style={[styles.layer, on && { backgroundColor: k.soft, borderColor: k.color }]}
     >
-      <View style={[styles.layerDot, { backgroundColor: on ? k.color : theme.colors.muted }]}>
+      <View style={[styles.layerDot, { backgroundColor: k.color }]}>
         <Ionicons name={k.icon} size={13} color={theme.colors.surface} />
       </View>
-      <Text style={[styles.layerText, !on && styles.layerTextOff]}>{k.label}</Text>
+      <Text style={styles.layerText}>{k.label}</Text>
     </Pressable>
   )
 }
@@ -381,13 +384,13 @@ const styles = StyleSheet.create({
     paddingLeft: 9,
     paddingRight: 15,
     borderRadius: theme.radii.pill,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
     backgroundColor: theme.colors.surface,
     ...theme.shadow(2),
   },
-  layerOff: { backgroundColor: theme.colors.surfaceSunken, shadowOpacity: 0, elevation: 0 },
   layerDot: { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   layerText: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.ink },
-  layerTextOff: { color: theme.colors.muted },
   handle: { alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: theme.colors.muted, opacity: 0.3, marginBottom: theme.spacing(2) },
   groupHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: theme.spacing(2) },
   groupHint: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.caption, color: theme.colors.muted },
