@@ -60,6 +60,47 @@ export function DetailsSection() {
           onChangeText={(text) => save({ description: text.trim() ? text : null })}
         />
 
+        {/* Web's toy fields (edit-details-section.tsx): shown for every kind,
+            lengths are the API's (80/80/300/300), blank clears to null. */}
+        <Text style={styles.label}>The toy you start with</Text>
+        <TextField
+          label="Toy"
+          accessibilityLabel="Toy"
+          maxLength={80}
+          defaultValue={tutorial.toy_name ?? ''}
+          onChangeText={(text) => save({ toy_name: text.trim() ? text : null })}
+        />
+        <TextField
+          label="Made by (optional)"
+          accessibilityLabel="Made by"
+          placeholder="e.g. ZURU"
+          maxLength={80}
+          defaultValue={tutorial.toy_brand ?? ''}
+          onChangeText={(text) => save({ toy_brand: text.trim() ? text : null })}
+        />
+        <TextField
+          label="Works with"
+          accessibilityLabel="Works with"
+          placeholder="Any 3.5mm switch - Jelly Bean, Big Red, or a printed lever switch."
+          maxLength={300}
+          defaultValue={tutorial.works_with ?? ''}
+          onChangeText={(text) => save({ works_with: text.trim() ? text : null })}
+        />
+        <Text style={styles.hint}>
+          The switches this build accepts. Shown as its own card in the guide sidebar - a parent checks it before they start.
+        </Text>
+        <TextField
+          label="If someone would rather not build it (optional)"
+          accessibilityLabel="If someone would rather not build it"
+          placeholder="e.g. Organisation 2 keeps printed mounts on the shelf if you would rather not print one."
+          maxLength={300}
+          defaultValue={tutorial.no_build_note ?? ''}
+          onChangeText={(text) => save({ no_build_note: text.trim() ? text : null })}
+        />
+        <Text style={styles.hint}>
+          Sits next to "Get help with this build" in the sidebar, before the link to the toy library. Leave blank and we just show the link.
+        </Text>
+
         <Text style={styles.label}>Kind</Text>
         <View style={styles.chipRow}>
           {KIND_OPTIONS.map((o) => (
