@@ -152,6 +152,8 @@ async function seed() {
   await api(P.amira, 'POST', `/toy-transactions/${t3}/accept`, HOME.amira)
   await newTx(P.amira, '/toy-transactions', { toy_id: T.benMount, type: 'exchange', offered_toy_id: T.amiraBook })
   log('4 exchanges')
+  const tagged = await require('./suits-tags.js').applySuitsTags(db, { toys: Object.values(T) })
+  log(`${tagged} toys tagged with who they suit`)
 }
 
 async function remove() {

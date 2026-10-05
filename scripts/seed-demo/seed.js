@@ -1025,6 +1025,8 @@ async function main() {
   const S = await phaseA(P)
   const X = await phaseB(P, S)
   await phaseC(P, S, X)
+  const { applySuitsTags } = require('./suits-tags.js')
+  log(`${await applySuitsTags(db, { tutorials: Object.values(S.G), toys: Object.values(S.T) })} guides and toys tagged with who they suit`)
   manifest.ids = { orgs: { northbank: S.northbank, mensShed: S.mensShed, littleSteps: S.littleSteps }, tutorials: S.G, toys: S.T, events: S.E, ideas: S.I, printers: S.printers, transactions: X }
   save()
   console.log(`\nDone. Password for all six: ${manifest.password}`)
