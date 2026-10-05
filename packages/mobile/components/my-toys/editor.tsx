@@ -176,8 +176,7 @@ export function Editor({ id }: { id: string }) {
     : 0
 
   async function handleSaveDetails() {
-    const suitsFields = suitsPayload(suits)
-    if ('error' in suitsFields) return setSaveError(suitsFields.error)
+    const suitsFields = suitsPayload(suits, false)
     setSaving(true)
     setSaveError(null)
     try {
@@ -460,8 +459,8 @@ export function Editor({ id }: { id: string }) {
               ))}
             </View>
 
-            <Text style={styles.sectionTitle}>Who it suits</Text>
-            <SuitsFields value={suits} onChange={setSuits} />
+            <Text style={styles.sectionTitle}>Who it's for</Text>
+            <SuitsFields value={suits} onChange={setSuits} guide={false} />
 
             <ErrorRow message={saveError} />
             <Button label="Save details" onPress={handleSaveDetails} loading={saving} />

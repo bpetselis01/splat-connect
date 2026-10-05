@@ -122,6 +122,13 @@ describe('sectionSummary', () => {
     expect(sectionSummary('files', base())).toBe('PDF and photo added')
   })
 
+  // 128: Who it's for counts every tag answer; one_hand is one answer.
+  it('counts the tag answers on Who it’s for, and invites when there are none', () => {
+    expect(sectionSummary('suits', base())).toBe('Optional - helps families find it')
+    const tagged = base({ device_types: ['switch'], helps_with: ['moving', 'calm'], access: ['press'], one_hand: true, press_force: ['light'], play: ['sound'] } as never)
+    expect(sectionSummary('suits', tagged)).toBe('7 answers')
+  })
+
   // 080: optional, so the empty line is an invitation rather than a gap.
   it('counts steps, and says nothing is there yet without calling it missing', () => {
     expect(sectionSummary('steps', base())).toBe('0 steps - nothing yet')
@@ -136,7 +143,7 @@ describe('SECTION_LABEL', () => {
       details: 'Details',
       steps: 'Steps',
       safety: 'Safety',
-      suits: 'Who it suits',
+      suits: "Who it's for",
       parts: 'Parts',
       tools: 'Tools',
       files: 'Files',

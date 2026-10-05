@@ -1,8 +1,8 @@
 // packages/mobile/components/my-tutorials/sections/suits-section.tsx
 //
-// Optional (127): no gap ever names it, so it never blocks submit. Saves
-// through the draft like every section; a range that fails the bounds is
-// caught here, and one the API refuses shows the API's sentence.
+// Optional (128): no gap ever names it, so it never blocks submit. Saves
+// through the draft like every section; a value the API refuses shows the
+// API's sentence.
 import { useState } from 'react'
 import { ScrollView } from 'react-native'
 import { useDraft } from '../../../lib/use-tutorial-draft'
@@ -19,20 +19,16 @@ export function SuitsSection() {
 function SuitsEditor() {
   const { tutorial, save, saveError } = useDraft()
   const [form, setForm] = useState<SuitsForm>(() => suitsForm(tutorial ?? {}))
-  const [invalid, setInvalid] = useState<string | null>(null)
   if (!tutorial) return null
   const change = (next: SuitsForm) => {
     setForm(next)
-    const payload = suitsPayload(next)
-    if ('error' in payload) return setInvalid(payload.error)
-    setInvalid(null)
-    save(payload)
+    save({ ...suitsPayload(next, true) })
   }
   return (
     <Screen>
       <ScrollView showsVerticalScrollIndicator={false} automaticallyAdjustKeyboardInsets>
-        <SuitsFields value={form} onChange={change} />
-        <ErrorRow message={invalid ?? saveError} />
+        <SuitsFields value={form} onChange={change} guide />
+        <ErrorRow message={saveError} />
       </ScrollView>
       <SectionFooter section="suits" />
     </Screen>

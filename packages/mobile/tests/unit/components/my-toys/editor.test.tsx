@@ -171,10 +171,11 @@ describe('Editor', () => {
         switch_fitting: null,
         volume: null,
         tutorial_id: null,
-        movement: null,
-        hands: null,
+        helps_with: null,
+        access: null,
+        one_hand: false,
+        press_force: null,
         play: null,
-        fit: null,
       })
     )
   })

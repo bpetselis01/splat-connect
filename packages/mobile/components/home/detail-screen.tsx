@@ -3,7 +3,7 @@ import { View, Text, ScrollView, Pressable, Image, StyleSheet } from 'react-nati
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { Tutorial, Part, Tool, StlFile, Recommendation, TutorialStep, TutorialSafetyNote } from '@splat-connect/types'
-import { DIFFICULTY_LABEL, KIND_LABEL, MATURITY_LABEL, checkedOn, fitLine, formatCents, partsTotalCents, printSettingRows } from '@splat-connect/types'
+import { DEVICE_TYPES, DIFFICULTY_LABEL, KIND_LABEL, MATURITY_LABEL, checkedOn, fitLine, formatCents, partsTotalCents, printSettingRows } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { supabase } from '../../lib/supabase'
 import { useSaves } from '../../lib/saves'
@@ -28,7 +28,6 @@ import { AnimatedPressable } from '../ui/AnimatedPressable'
 import { ReportProblem } from '../reports/report-problem'
 import { useFlash, FlashLine } from '../ui/Flash'
 
-const SWITCH_TARGET_LABEL = { large: 'Big button', small: 'Small button' } as const
 const HERO_HEIGHT = 240
 
 /** The lead sentence the board shows under the title; the rest reads below. */
@@ -210,9 +209,9 @@ export function DetailScreen({ id, printWith }: { id: string; printWith?: string
       <View style={styles.badgeRow}>
         <Badge status={tutorial.difficulty} />
         {tutorial.build_minutes ? <Badge status="draft" label={`${tutorial.build_minutes} min`} /> : null}
-        {tutorial.switch_target ? (
-          <Badge status="accepted" label={SWITCH_TARGET_LABEL[tutorial.switch_target]} />
-        ) : null}
+        {(tutorial.device_types ?? []).map((d) => (
+          <Badge key={d} status="accepted" label={DEVICE_TYPES.find((o) => o.value === d)?.label ?? d} />
+        ))}
         <Badge status={tutorial.kind} label={KIND_LABEL[tutorial.kind]} />
         {tutorial.maturity !== 'complete' ? (
           <Badge status={tutorial.maturity} label={MATURITY_LABEL[tutorial.maturity]} />

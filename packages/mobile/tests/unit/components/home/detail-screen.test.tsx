@@ -197,28 +197,30 @@ describe('DetailScreen', () => {
 describe('DetailScreen steps and fit', () => {
   const tagged = {
     ...DETAIL,
-    switch_target: 'large',
-    switch_force: 'light',
-    switch_hold: 'moment',
+    device_types: ['switch', 'mounting'],
+    access: ['press'],
+    press_force: ['light'],
     steps: [
       { id: 's1', tutorial_id: '1', position: 1, title: 'Open it', body: 'Unscrew the lid.', photo_url: null },
       { id: 's2', tutorial_id: '1', position: 2, title: null, body: 'Fit the interrupter.', photo_url: null },
     ],
   }
-  const ollie = { name: 'Ollie', press_force: 'light', hold: 'second', aim: 'large' }
+  const ollie = { name: 'Ollie', helps_with: null, access: ['press', 'eyes'], one_hand: false, press_force: 'light', enjoys: null }
 
   it('numbers the steps and says it suits the child', async () => {
     mockEndpoints({ detail: Promise.resolve(tagged), children: Promise.resolve([ollie]) })
     render(<DetailScreen id="1" />)
     expect(await screen.findByText('Open it')).toBeTruthy()
     expect(screen.getByText('Fit the interrupter.')).toBeTruthy()
-    expect(await screen.findByText('Suits Ollie — big button, light press, short hold')).toBeTruthy()
+    expect(await screen.findByText('Suits Ollie')).toBeTruthy()
+    expect(screen.getByText('Switch')).toBeTruthy()
+    expect(screen.getByText('Mounting and positioning')).toBeTruthy()
   })
 
   it('says nothing when the guide does not suit the child', async () => {
     mockEndpoints({
       detail: Promise.resolve(tagged),
-      children: Promise.resolve([{ ...ollie, press_force: 'very_light' }]),
+      children: Promise.resolve([{ ...ollie, access: ['voice'], press_force: 'full' }]),
     })
     render(<DetailScreen id="1" />)
     await screen.findByText('Open it')

@@ -108,21 +108,21 @@ describe('Editor - who it suits', () => {
     await screen.findByRole('tab', { name: 'Details' })
   }
 
-  it('starts from the stored answers and sends chips and filled ranges with Save details', async () => {
-    await open({ hands: ['left'], fit: { reach_cm: [10, 20] } })
-    expect(screen.getByLabelText('Reach from seated (cm) from').props.value).toBe('10')
+  it('starts from the stored answers and sends the chips with Save details', async () => {
+    await open({ access: ['head'], one_hand: true })
     mockPatch.mockResolvedValue(toy({}))
-    fireEvent.press(screen.getByText('Lever'))
-    fireEvent.changeText(screen.getByLabelText('Hand width (mm) from'), '60')
-    fireEvent.changeText(screen.getByLabelText('Hand width (mm) to'), '80')
+    fireEvent.press(screen.getByText('Lights'))
+    fireEvent.press(screen.getByText('Light'))
     fireEvent.press(screen.getByLabelText('Save details'))
     await waitFor(() => expect(mockPatch).toHaveBeenCalled())
     expect(mockPatch.mock.calls[0][1]).toMatchObject({
-      movement: ['lever'],
-      hands: ['left'],
-      play: null,
-      fit: { palm_width_mm: [60, 80], reach_cm: [10, 20] },
+      helps_with: null,
+      access: ['head'],
+      one_hand: true,
+      press_force: ['light'],
+      play: ['light'],
     })
+    expect(mockPatch.mock.calls[0][1]).not.toHaveProperty('device_types')
   })
 
   it('sends null for everything left empty', async () => {
@@ -130,22 +130,11 @@ describe('Editor - who it suits', () => {
     mockPatch.mockResolvedValue(toy({}))
     fireEvent.press(screen.getByLabelText('Save details'))
     await waitFor(() => expect(mockPatch).toHaveBeenCalled())
-    expect(mockPatch.mock.calls[0][1]).toMatchObject({ movement: null, hands: null, play: null, fit: null })
+    expect(mockPatch.mock.calls[0][1]).toMatchObject({ helps_with: null, access: null, one_hand: false, press_force: null, play: null })
   })
 
-  it('refuses a bad range locally, without calling the API', async () => {
+  it('asks no device type of a toy', async () => {
     await open()
-    fireEvent.changeText(screen.getByLabelText('Hand width (mm) from'), '90')
-    fireEvent.changeText(screen.getByLabelText('Hand width (mm) to'), '80')
-    fireEvent.press(screen.getByLabelText('Save details'))
-    expect(await screen.findByText(/smallest first/)).toBeTruthy()
-    expect(mockPatch).not.toHaveBeenCalled()
-  })
-
-  it('shows the API sentence when it refuses the range', async () => {
-    await open()
-    mockPatch.mockRejectedValue(new Error('PATCH /api/toys/toy1 failed with status 400: Reach from seated (cm): a range from 5 to 90, smallest first.'))
-    fireEvent.press(screen.getByLabelText('Save details'))
-    expect(await screen.findByText('Reach from seated (cm): a range from 5 to 90, smallest first.')).toBeTruthy()
+    expect(screen.queryByText('What is it?')).toBeNull()
   })
 })

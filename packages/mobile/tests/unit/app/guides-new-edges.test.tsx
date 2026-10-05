@@ -139,11 +139,10 @@ describe('creating', () => {
 })
 
 describe('extras', () => {
-  it('clears the switch type when its chip is tapped twice, and sends nothing when none is picked', async () => {
+  it('sends nothing when no extras are filled, and no longer asks a switch type', async () => {
     render(<NewGuideRoute />)
     type('No extras')
-    fireEvent.press(screen.getByText('Big button'))
-    fireEvent.press(screen.getByText('Big button'))
+    expect(screen.queryByText('Switch type')).toBeNull()
     create()
     await waitFor(() => expect(mockReplace).toHaveBeenCalled())
     expect(mockPatch).not.toHaveBeenCalled()

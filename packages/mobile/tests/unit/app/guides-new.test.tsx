@@ -134,7 +134,7 @@ describe('NewGuideRoute', () => {
     })
   })
 
-  it('sends the cover, switch type and age range once the draft exists', async () => {
+  it('sends the cover and age range once the draft exists', async () => {
     mockPost.mockResolvedValue({ id: 'uuid-1' })
     mockGet.mockResolvedValue({ updated_at: 'v1' })
     mockPatch.mockResolvedValue({})
@@ -144,7 +144,6 @@ describe('NewGuideRoute', () => {
     fireEvent.changeText(screen.getByPlaceholderText('Title'), 'Light-up drum')
     fireEvent.press(screen.getByLabelText('Add a cover photo'))
     await screen.findByText('Cover photo chosen')
-    fireEvent.press(screen.getByText('Big button'))
     fireEvent.changeText(screen.getByLabelText('Youngest age'), '3')
     fireEvent.changeText(screen.getByLabelText('Oldest age'), '7')
     fireEvent.press(screen.getByLabelText('Create draft'))
@@ -152,7 +151,6 @@ describe('NewGuideRoute', () => {
       expect(mockPatch).toHaveBeenCalledWith('/api/tutorials/uuid-1', {
         updated_at: 'v1',
         photo_urls: ['https://x.test/toy-photos/uuid-1/cover.jpg'],
-        switch_target: 'large',
         age_min: 3,
         age_max: 7,
       })
@@ -167,7 +165,7 @@ describe('NewGuideRoute', () => {
     const logged = jest.spyOn(console, 'error').mockImplementation(() => {})
     render(<NewGuideRoute />)
     fireEvent.changeText(screen.getByPlaceholderText('Title'), 'Light-up drum')
-    fireEvent.press(screen.getByText('Big button'))
+    fireEvent.changeText(screen.getByLabelText('Youngest age'), '3')
     fireEvent.press(screen.getByLabelText('Create draft'))
     await waitFor(() => expect(mockReplace).toHaveBeenCalled())
     expect(logged).toHaveBeenCalled()

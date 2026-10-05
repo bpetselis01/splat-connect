@@ -6,7 +6,7 @@ import { randomUUID } from 'expo-crypto'
 import * as DocumentPicker from 'expo-document-picker'
 import * as ImagePicker from 'expo-image-picker'
 import type { Difficulty, PdfImportDraft, TutorialKind } from '@splat-connect/types'
-import { apiMessage, KIND_LABEL, SWITCH_TARGET_LABEL, createGuideFromPdfDraft, pdfDraftChecklist, PDF_IMPORT_MAX_BYTES, PDF_IMPORT_MAX_LABEL } from '@splat-connect/types'
+import { apiMessage, KIND_LABEL, createGuideFromPdfDraft, pdfDraftChecklist, PDF_IMPORT_MAX_BYTES, PDF_IMPORT_MAX_LABEL } from '@splat-connect/types'
 import { apiClient } from '../../../lib/api-client'
 import { uploadFile } from '../../../lib/upload'
 import { parseYears } from '../../../lib/tutorial-sections'
@@ -39,7 +39,6 @@ export default function NewGuideRoute() {
   const [kind, setKind] = useState<TutorialKind>('toy_adaptation')
   const [difficulty, setDifficulty] = useState<Difficulty>('easy')
   const [cover, setCover] = useState<{ uri: string; name: string; mimeType: string } | null>(null)
-  const [switchTarget, setSwitchTarget] = useState<'large' | 'small' | null>(null)
   const [ageMin, setAgeMin] = useState('')
   const [ageMax, setAgeMax] = useState('')
   const [needsTerms, setNeedsTerms] = useState(false)
@@ -94,7 +93,6 @@ export default function NewGuideRoute() {
   // tutorial_contributors. Best effort — the editor has every one of these.
   async function applyExtras(id: string) {
     const fields: Record<string, unknown> = {}
-    if (switchTarget) fields.switch_target = switchTarget
     const min = parseYears(ageMin)
     const max = parseYears(ageMax)
     if (min !== null) fields.age_min = min
@@ -241,18 +239,6 @@ export default function NewGuideRoute() {
               label={o.label}
               active={difficulty === o.value}
               onPress={() => setDifficulty(o.value)}
-            />
-          ))}
-        </View>
-
-        <Text style={styles.label}>Switch type</Text>
-        <View style={styles.chipRow}>
-          {(Object.keys(SWITCH_TARGET_LABEL) as ('large' | 'small')[]).map((v) => (
-            <Chip
-              key={v}
-              label={SWITCH_TARGET_LABEL[v].charAt(0).toUpperCase() + SWITCH_TARGET_LABEL[v].slice(1)}
-              active={switchTarget === v}
-              onPress={() => setSwitchTarget((cur) => (cur === v ? null : v))}
             />
           ))}
         </View>

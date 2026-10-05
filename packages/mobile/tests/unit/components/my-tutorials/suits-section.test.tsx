@@ -21,45 +21,38 @@ beforeEach(() => {
   mockDraft.tutorial = { ...base }
 })
 
-it('renders the help line, chips and the three ranges', () => {
+it('renders the help line and the guide questions', () => {
   render(<SuitsSection />)
   expect(screen.getByText(/None of this is required/)).toBeTruthy()
-  expect(screen.getByText('Lever')).toBeTruthy()
-  expect(screen.getByText('Both hands')).toBeTruthy()
-  expect(screen.getByLabelText('Hand width (mm) from')).toBeTruthy()
-  expect(screen.getByLabelText('Reach from seated (cm) from')).toBeTruthy()
+  expect(screen.getByText('What is it?')).toBeTruthy()
+  expect(screen.getByText('Switch interface')).toBeTruthy()
+  expect(screen.getByText('How a child uses it')).toBeTruthy()
+  expect(screen.getByText('One hand is enough')).toBeTruthy()
 })
 
 it('saves a toggled chip, then null when it is emptied again', () => {
   render(<SuitsSection />)
-  fireEvent.press(screen.getByText('Lever'))
-  expect(mockDraft.save).toHaveBeenLastCalledWith({ movement: ['lever'], hands: null, play: null, fit: null })
-  fireEvent.press(screen.getByText('Lever'))
-  expect(mockDraft.save).toHaveBeenLastCalledWith({ movement: null, hands: null, play: null, fit: null })
+  fireEvent.press(screen.getByText('Switch interface'))
+  expect(mockDraft.save).toHaveBeenLastCalledWith({
+    device_types: ['switch_interface'], helps_with: null, access: null, one_hand: false, press_force: null, play: null,
+  })
+  fireEvent.press(screen.getByText('Switch interface'))
+  expect(mockDraft.save).toHaveBeenLastCalledWith({
+    device_types: null, helps_with: null, access: null, one_hand: false, press_force: null, play: null,
+  })
 })
 
-it('sends fit with only the filled pairs', () => {
+it('saves the one-hand flag as a boolean', () => {
   render(<SuitsSection />)
-  fireEvent.changeText(screen.getByLabelText('Hand width (mm) from'), '60')
-  expect(mockDraft.save).not.toHaveBeenCalled()
-  expect(screen.getByText(/fill in both ends/)).toBeTruthy()
-  fireEvent.changeText(screen.getByLabelText('Hand width (mm) to'), '80')
-  expect(mockDraft.save).toHaveBeenLastCalledWith({ movement: null, hands: null, play: null, fit: { palm_width_mm: [60, 80] } })
-  expect(screen.queryByText(/fill in both ends/)).toBeNull()
-})
-
-it('refuses min above max locally and does not save', () => {
-  render(<SuitsSection />)
-  fireEvent.changeText(screen.getByLabelText('Hand width (mm) from'), '90')
-  fireEvent.changeText(screen.getByLabelText('Hand width (mm) to'), '80')
-  expect(mockDraft.save).not.toHaveBeenCalled()
-  expect(screen.getByText(/smallest first/)).toBeTruthy()
+  fireEvent.press(screen.getByText('One hand is enough'))
+  expect(mockDraft.save).toHaveBeenLastCalledWith(expect.objectContaining({ one_hand: true }))
 })
 
 it('starts from what is stored and shows the API sentence when a save is refused', () => {
-  mockDraft.tutorial = { ...base, hands: ['both'], fit: { reach_cm: [10, 20] } }
-  mockDraft.saveError = 'Reach from seated (cm): a range from 5 to 90, smallest first.'
+  mockDraft.tutorial = { ...base, device_types: ['switch'], one_hand: true }
+  mockDraft.saveError = 'press_force must be a list of: very_light, light, moderate, full.'
   render(<SuitsSection />)
-  expect(screen.getByLabelText('Reach from seated (cm) from').props.value).toBe('10')
-  expect(screen.getByText('Reach from seated (cm): a range from 5 to 90, smallest first.')).toBeTruthy()
+  expect(screen.getByText('press_force must be a list of: very_light, light, moderate, full.')).toBeTruthy()
+  fireEvent.press(screen.getByText('Lights'))
+  expect(mockDraft.save).toHaveBeenLastCalledWith(expect.objectContaining({ device_types: ['switch'], one_hand: true, play: ['light'] }))
 })

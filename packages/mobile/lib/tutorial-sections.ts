@@ -23,7 +23,7 @@ export const SECTION_LABEL: Record<SectionId, string> = {
   details: 'Details',
   steps: 'Steps',
   safety: 'Safety',
-  suits: 'Who it suits',
+  suits: "Who it's for",
   parts: 'Parts',
   tools: 'Tools',
   files: 'Files',
@@ -122,7 +122,7 @@ export function sectionSummary(section: SectionId, t: TutorialWithDetails): stri
     case 'safety':
       return t.safety_declared_at ? 'Declared' : 'Not declared yet'
     case 'suits': {
-      const n = (t.movement?.length ?? 0) + (t.hands?.length ?? 0) + (t.play?.length ?? 0) + Object.keys(t.fit ?? {}).length
+      const n = (t.device_types?.length ?? 0) + (t.helps_with?.length ?? 0) + (t.access?.length ?? 0) + (t.one_hand ? 1 : 0) + (t.press_force?.length ?? 0) + (t.play?.length ?? 0)
       return n ? count(n, 'answer') : 'Optional - helps families find it'
     }
     case 'parts': {
