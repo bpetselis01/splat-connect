@@ -183,7 +183,7 @@ export function fitLine(item: Suits, children: (ChildTags & Pick<ChildProfile, '
 export function matchesForChild(
   child: ChildTags,
   guides: (Suits & { id: string })[],
-  toys: (Suits & { id: string; status: string; paused_at: string | null })[]
+  toys: (Suits & { id: string; status: string; paused_at?: string | null })[]
 ): { guideIds: string[]; toyIds: string[] } {
   return {
     guideIds: guides.filter((g) => recommendScore(g, child) > 0).map((g) => g.id),
