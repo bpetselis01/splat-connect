@@ -121,7 +121,7 @@ export function MapScreen() {
             return (
               <View key={label}>
                 {postcode ? <ListSection style={styles.band}>{label}</ListSection> : null}
-                <View style={styles.card}>{band.map(row)}</View>
+                <View style={styles.rows}>{band.map(row)}</View>
               </View>
             )
           })
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
   error: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.label, color: theme.colors.danger },
   list: { flex: 1 },
   band: { marginTop: theme.spacing(3) },
-  card: { backgroundColor: theme.colors.surface, borderRadius: theme.radii.card, paddingHorizontal: theme.spacing(2), borderWidth: theme.border.hairline, borderColor: theme.colors.border },
+  rows: { gap: theme.spacing(2) },
   km: { fontFamily: theme.fonts.numeral, fontSize: 12, color: theme.colors.muted },
 
   top: { position: 'absolute', left: 0, right: 0, top: 0, paddingHorizontal: theme.spacing(4), paddingBottom: theme.spacing(2), gap: theme.spacing(2) },
