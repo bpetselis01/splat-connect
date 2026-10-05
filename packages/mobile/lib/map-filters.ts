@@ -21,16 +21,17 @@ export const placeKey = (p: MapPlace) => `${p.suburb}|${p.state}`
 export const itemKey = (i: MapItem) => `${i.kind}:${i.id}`
 
 /**
- * One map point per item, for the clustering source. Items in one suburb share
- * its point, so they fan out on a small spiral (about 100-300 m) to come apart
- * at full zoom. The spiral is drawing only: it is not where anything is.
+ * One map point per item, for the clustering source. Items at one address (an
+ * organisation and its drop-off, say) or one suburb centre share a point, so
+ * they fan out on a small spiral, about 20-60 m, to come apart at street zoom.
+ * The spiral is drawing only: it is not where anything is.
  */
 export function toFeatures(places: MapPlace[]): GeoJSON.FeatureCollection<GeoJSON.Point> {
   return {
     type: 'FeatureCollection',
     features: places.flatMap((p) =>
       p.items.map((i, n) => {
-        const r = p.items.length === 1 ? 0 : 0.0012 * Math.sqrt(n + 0.5)
+        const r = p.items.length === 1 ? 0 : 0.0002 * Math.sqrt(n + 0.5)
         const a = n * 2.4 // the golden angle, in radians: no two items line up
         return {
           type: 'Feature' as const,

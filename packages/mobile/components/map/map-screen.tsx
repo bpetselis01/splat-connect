@@ -95,7 +95,7 @@ export function MapScreen() {
         key={itemKey(i)}
         thumb={<RowThumb glyph={KINDS[i.kind].icon} tint={KINDS[i.kind].soft} />}
         title={i.title}
-        meta={[itemMeta(i), list ? p.suburb : null].filter(Boolean).join(' · ')}
+        meta={[itemMeta(i), p.address, list ? p.suburb : null].filter(Boolean).join(' · ')}
         trailing={kmLabel(p.km) ? <Text style={styles.km}>{kmLabel(p.km)}</Text> : null}
         onPress={() => router.push(itemRoute(i) as never)}
       />

@@ -61,7 +61,7 @@ export function MapCanvas({ places, selected, onSelect, inset }: MapCanvasProps)
         data={data}
         cluster
         clusterRadius={44}
-        clusterMaxZoom={14}
+        clusterMaxZoom={17}
         onPress={async (e) => {
           e.stopPropagation()
           const f = e.nativeEvent.features[0]

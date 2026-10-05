@@ -4,7 +4,7 @@ import { applyFilters, filterCount, itemMeta, itemRoute, KIND_ORDER, NO_FILTERS,
 const all = new Set(KIND_ORDER)
 // Wed 1 Oct 2026, local time.
 const now = new Date(2026, 9, 1, 9).getTime()
-const place = (over: Partial<MapPlace>): MapPlace => ({ suburb: 'Newtown', state: 'NSW', lat: -33.9, lng: 151.18, km: 2, items: [], ...over })
+const place = (over: Partial<MapPlace>): MapPlace => ({ suburb: 'Newtown', state: 'NSW', lat: -33.9, lng: 151.18, km: 2, address: null, items: [], ...over })
 const places: MapPlace[] = [
   place({
     items: [
@@ -71,8 +71,8 @@ describe('toFeatures', () => {
     const fan = fc.features.slice(0, 3).map((f) => f.geometry.coordinates)
     expect(new Set(fan.map(String)).size).toBe(3)
     for (const [lng, lat] of fan) {
-      expect(Math.abs(lng - 151.18)).toBeLessThan(0.005)
-      expect(Math.abs(lat + 33.9)).toBeLessThan(0.005)
+      expect(Math.abs(lng - 151.18)).toBeLessThan(0.001)
+      expect(Math.abs(lat + 33.9)).toBeLessThan(0.001)
     }
   })
 })

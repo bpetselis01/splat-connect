@@ -30,14 +30,14 @@ jest.mock('../../../components/map/MapCanvas', () => ({
 
 const PLACES: MapPlace[] = [
   {
-    suburb: 'Leichhardt', state: 'NSW', lat: -33.88, lng: 151.15, km: 0,
+    suburb: 'Leichhardt', state: 'NSW', lat: -33.88, lng: 151.15, km: 0, address: null,
     items: [
       { kind: 'printer', id: 'p1', title: 'Hannah’s Prusa', meta: 'PLA, PETG', materials: ['PLA', 'PETG'] },
       { kind: 'toy', id: 't1', title: 'Bubble machine', meta: 'A family' },
     ],
   },
   {
-    suburb: 'Chatswood', state: 'NSW', lat: -33.79, lng: 151.18, km: 11,
+    suburb: 'Chatswood', state: 'NSW', lat: -33.79, lng: 151.18, km: 11, address: '1 Victoria Ave',
     items: [{ kind: 'org', id: 'o1', title: 'North Shore Makers', meta: null }],
   },
 ]
@@ -72,6 +72,12 @@ it('tapping a pin opens its sheet, and a row opens the item', async () => {
   expect(mockPush).toHaveBeenCalledWith('/toy-library/t1')
   fireEvent.press(screen.getByRole('button', { name: 'Close' }))
   expect(screen.queryByText('Bubble machine')).toBeNull()
+})
+
+it('an organisation row shows its street address', async () => {
+  render(<MapTab />)
+  fireEvent.press(await screen.findByRole('button', { name: 'pin Chatswood' }))
+  expect(screen.getByText('Organisation · 1 Victoria Ave')).toBeTruthy()
 })
 
 it('a layer chip hides that kind, and a suburb left empty loses its pin', async () => {
