@@ -104,7 +104,7 @@ async function file(key) {
   }
   return { buf: fs.readFileSync(local), name: path.basename(decodeURIComponent(rel)).replace(/\s+/g, '_') }
 }
-const MIME = { '.jpg': 'image/jpeg', '.pdf': 'application/pdf', '.stl': 'model/stl' }
+const MIME = { '.jpg': 'image/jpeg', '.png': 'image/png', '.pdf': 'application/pdf', '.stl': 'model/stl' }
 async function upload(bucket, objectPath, buf) {
   const contentType = MIME[path.extname(objectPath)] || 'application/octet-stream'
   const { error } = await db.storage.from(bucket).upload(objectPath, buf, { contentType, upsert: true })
@@ -1026,7 +1026,7 @@ async function main() {
   for (const u of Object.values(P)) console.log(`  ${u.name.padEnd(16)} ${u.email}`)
 }
 
-module.exports = { db, API, days, log, track, save, useManifest, insert, put, update, publicPhoto, signIn, api, newTx, tx, confirm }
+module.exports = { db, API, days, log, track, save, useManifest, insert, put, update, file, upload, publicPhoto, signIn, api, newTx, tx, confirm }
 
 if (require.main === module) {
   main().catch((e) => {
