@@ -13,6 +13,7 @@ import { EditDetailsSection } from '@/components/edit-details-section'
 import { EditSafetyNotesSection } from '@/components/edit-safety-notes-section'
 import { EditStepsSection, type StepInput } from '@/components/edit-steps-section'
 import { EditCollaboratorsSection } from '@/components/edit-collaborators-section'
+import { EditSuitsSection } from '@/components/edit-suits-section'
 import { EditRecommendationsSection } from '@/components/edit-recommendations-section'
 import { Stepper } from '@/components/stepper'
 import { CreatedToast } from '@/components/created-toast'
@@ -269,6 +270,7 @@ export default async function EditTutorialPage({
         <div className="panel pt-5">
           <EditDetailsSection tutorial={tutorial!} onSave={saveDetails} />
           <EditSafetyNotesSection notes={(tutorial!.safety_notes ?? []).map((n) => ({ title: n.title, detail: n.detail }))} onSave={saveSafetyNotes} />
+          <EditSuitsSection endpoint={`/api/tutorials/${id}`} lock suits={tutorial!} />
         </div>
       ),
     },
