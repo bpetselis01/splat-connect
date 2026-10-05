@@ -171,9 +171,9 @@ export default async function EditTutorialPage({
 
   // Photos save one at a time as they are added or removed, so they get their
   // own action rather than riding along with the PDF's Save button.
-  async function patchPhotoUrls(photoUrls: string[]) {
+  async function patchPhotoUrls(photoUrls: string[], photoCaptions?: (string | null)[]) {
     'use server'
-    return patchTutorialFiles(id, { photo_urls: photoUrls })
+    return patchTutorialFiles(id, { photo_urls: photoUrls, ...(photoCaptions ? { photo_captions: photoCaptions } : {}) })
   }
 
   // Takes ItemInput, the exact type EditItemsSection emits, so it can be handed
@@ -297,6 +297,7 @@ export default async function EditTutorialPage({
           <EditFilesSection
             tutorialId={id}
             photoUrls={tutorial.photo_urls}
+            photoCaptions={tutorial.photo_captions ?? []}
             currentPdfUrl={tutorial.tutorial_pdf_url}
             onSavePhotos={patchPhotoUrls}
             onSave={patchFileUrls}

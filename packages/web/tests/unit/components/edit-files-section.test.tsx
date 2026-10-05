@@ -117,6 +117,16 @@ describe('EditFilesSection', () => {
     )
   })
 
+  // Tests: a caption edit saves the urls with the aligned captions (087)
+  it('saves a caption with the current photo urls', async () => {
+    const { onSavePhotos } = setup()
+    fireEvent.change(screen.getByLabelText('Caption for photo 1'), { target: { value: 'Front view' } })
+    fireEvent.blur(screen.getByLabelText('Caption for photo 1'))
+    await waitFor(() =>
+      expect(onSavePhotos).toHaveBeenCalledWith(['https://test.supabase.co/storage/v1/object/public/photos/photo.jpg'], ['Front view'])
+    )
+  })
+
   it('the guide has no switch column — there is no switch to picture', () => {
     setup()
     expect(screen.queryByLabelText('Shows the switch')).toBeNull()
