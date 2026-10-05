@@ -67,7 +67,7 @@ it('without a postcode it asks for the whole map and offers no distance filter',
 it('tapping a pin opens its sheet, and a row opens the item', async () => {
   render(<MapTab />)
   fireEvent.press(await screen.findByRole('button', { name: 'pin Leichhardt' }))
-  expect(screen.getByText('your postcode')).toBeTruthy()
+  expect(screen.getByText(/NSW · your postcode/)).toBeTruthy()
   fireEvent.press(screen.getByText('Bubble machine'))
   expect(mockPush).toHaveBeenCalledWith('/toy-library/t1')
   fireEvent.press(screen.getByRole('button', { name: 'Close' }))
@@ -77,7 +77,8 @@ it('tapping a pin opens its sheet, and a row opens the item', async () => {
 it('an organisation row shows its street address', async () => {
   render(<MapTab />)
   fireEvent.press(await screen.findByRole('button', { name: 'pin Chatswood' }))
-  expect(screen.getByText('Organisation · 1 Victoria Ave')).toBeTruthy()
+  expect(screen.getByText('1 Victoria Ave')).toBeTruthy()
+  expect(screen.getByText('Organisation')).toBeTruthy()
 })
 
 it('a layer chip hides that kind, and a suburb left empty loses its pin', async () => {
