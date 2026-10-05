@@ -1,5 +1,7 @@
 import { renderHook, act, waitFor } from '@testing-library/react-native'
-import { recordRecent, useRecents, parseRecents, resetRecentsCache, RECENTS_KEY } from '../../../lib/recents'
+import { recordRecent, useRecents, parseRecents, resetRecentsCache, setRecentsOwner, recentsKeyFor } from '../../../lib/recents'
+
+const RECENTS_KEY = recentsKeyFor('u1')
 
 const mockGetItem = jest.fn()
 const mockSetItem = jest.fn()
@@ -23,6 +25,10 @@ beforeEach(() => {
   jest.clearAllMocks()
   mockGetItem.mockResolvedValue(null)
   mockSetItem.mockResolvedValue(undefined)
+  resetRecentsCache() // nothing left over to carry into the next owner
+  setRecentsOwner(null)
+  setRecentsOwner('u1')
+  // The owner switch starts a read of an empty disk; each test writes its own first.
   resetRecentsCache()
 })
 
