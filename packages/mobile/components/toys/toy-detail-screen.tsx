@@ -165,20 +165,20 @@ export function ToyDetailScreen({ id }: { id: string }) {
       </View>
 
       {orgName ? (
-        <View style={styles.holderRow}>
-          <Text style={styles.holder}>
-            Held by{' '}
-            <Text
-              onPress={() => router.push(`/toy-library/organisation/${toy.owner_org_id}`)}
-              accessibilityRole="link"
-              style={styles.holderLink}
-            >
-              {orgName}
-            </Text>
+        // One Text, so a long organisation name wraps like a sentence instead of
+        // pushing the count and suburb off the screen.
+        <Text style={styles.holder}>
+          Held by{' '}
+          <Text
+            onPress={() => router.push(`/toy-library/organisation/${toy.owner_org_id}`)}
+            accessibilityRole="link"
+            style={styles.holderLink}
+          >
+            {orgName}
           </Text>
-          <Text style={styles.holderQty}>{`· ${toy.quantity} available`}</Text>
-          {place ? <Text style={styles.holderQty}>{`· ${place}`}</Text> : null}
-        </View>
+          {` · ${toy.quantity} available`}
+          {place ? ` · ${place}` : ''}
+        </Text>
       ) : personName ? (
         <Text style={styles.holder}>{`Held by ${personName}${place ? ` · ${place}` : ''}`}</Text>
       ) : null}
@@ -303,7 +303,8 @@ const styles = StyleSheet.create({
     ...theme.shadow(1),
   },
   notesTitle: { fontFamily: theme.fonts.display, fontSize: theme.type.body, color: theme.colors.ink },
-  footerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: theme.spacing(2) },
+  // Wraps: "Thank <a long organisation name>" leaves no room for Report on one line.
+  footerRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: theme.spacing(2) },
   thank: { paddingVertical: theme.spacing(2), paddingHorizontal: theme.spacing(4), minHeight: 40 },
   loading: {
     flex: 1,
@@ -314,10 +315,8 @@ const styles = StyleSheet.create({
   loadingPhoto: { borderRadius: theme.radii.card, marginBottom: theme.spacing(2) },
   titleRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: theme.spacing(3) },
   title: { flex: 1, fontFamily: theme.fonts.display, fontSize: theme.type.title, color: theme.colors.text, lineHeight: 32 },
-  holderRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2) },
   holder: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted },
   holderLink: { fontFamily: theme.fonts.bold, color: theme.colors.primaryDeep, textDecorationLine: 'underline' },
-  holderQty: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted },
   factLabel: {
     fontFamily: theme.fonts.bold,
     fontSize: theme.type.micro,

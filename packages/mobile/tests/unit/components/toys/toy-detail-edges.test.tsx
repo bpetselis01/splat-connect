@@ -80,7 +80,7 @@ describe('sparse and long toys', () => {
   it('shows a zero-stock organisation toy as 0 available', async () => {
     serve(Promise.resolve(orgToy({ quantity: 0 })))
     render(<ToyDetailScreen id="toy1" />)
-    expect(await screen.findByText('· 0 available')).toBeTruthy()
+    expect(await screen.findByText(/^Held by .+ · 0 available/)).toBeTruthy()
   })
 
   it('opens both kinds of pick, a toy and a guide, from the holder\'s list', async () => {
