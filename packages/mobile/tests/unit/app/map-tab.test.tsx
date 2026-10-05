@@ -81,6 +81,12 @@ it('an organisation row shows its street address', async () => {
   expect(screen.getByText('Organisation')).toBeTruthy()
 })
 
+it('a row is announced as its title, detail and distance', async () => {
+  render(<MapTab />)
+  fireEvent.press(await screen.findByRole('button', { name: 'pin Leichhardt' }))
+  expect(screen.getByRole('button', { name: 'Bubble machine, Toy · A family, here' })).toBeTruthy()
+})
+
 it('a layer chip hides that kind, and a suburb left empty loses its pin', async () => {
   render(<MapTab />)
   await screen.findByRole('button', { name: 'pin Chatswood' })

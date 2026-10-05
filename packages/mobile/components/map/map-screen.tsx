@@ -305,7 +305,12 @@ function LayerChip({ kind, on, onPress }: { kind: MapKind; on: boolean; onPress:
 function PlaceRow({ item, meta, km, onPress }: { item: MapItem; meta: string; km: string | null; onPress: () => void }) {
   const k = KINDS[item.kind]
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={[item.title, meta, km].filter(Boolean).join(', ')}
+      style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+    >
       <View style={[styles.tile, { backgroundColor: k.soft }]}>
         <Ionicons name={k.icon} size={22} color={k.color} />
       </View>
