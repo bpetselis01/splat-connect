@@ -167,7 +167,7 @@ describe('LibraryScreen', () => {
     expect(screen.getByText('Guide library')).toBeTruthy()
     expect(screen.queryByText(/^Good (morning|afternoon|evening)/)).toBeNull()
     expect(screen.getByText('All guides')).toBeTruthy()
-    expect(screen.getByText('2 guides · Newest first')).toBeTruthy()
+    expect(screen.getByText('2 guides · Recommended')).toBeTruthy()
   })
 
   it('filters to quick builds and to printable guides', async () => {
@@ -245,16 +245,16 @@ describe('LibraryScreen', () => {
     expect(screen.getByLabelText('Head switch arm').props.accessibilityHint).toContain('Reviewed by SPLAT')
   })
 
-  it('filters by kind client-side', async () => {
+  it('filters by device type client-side', async () => {
     mockEndpoints({
       tutorials: Promise.resolve([
-        row({ id: 't1' }),
-        row({ id: 't2', title: 'Head switch arm', kind: 'assistive_tech' }),
+        row({ id: 't1', device_types: ['adapted_toy'] }),
+        row({ id: 't2', title: 'Head switch arm', device_types: ['switch'] }),
       ]),
     })
     render(<LibraryScreen />)
     await waitFor(() => expect(screen.getByText('Bubble machine')).toBeTruthy())
-    await applyFilters(['Assistive tech'])
+    await applyFilters(['Switch'])
     expect(screen.queryByText('Bubble machine')).toBeNull()
     expect(screen.getByText('Head switch arm')).toBeTruthy()
   })
@@ -290,47 +290,51 @@ describe('LibraryScreen', () => {
   })
 })
 
-// 080: the board's "Suits Ollie" — a chip that narrows the list to the guides
-// that suit one of the parent's children, drawn only when some do.
-describe('Suits <child>', () => {
-  const tagged = row({ id: 't9', title: 'Light touch switch', switch_force: 'very_light', switch_hold: 'moment' })
-  const firm = row({ id: 't8', title: 'Firm lever', switch_force: 'full' })
+// 128: Recommended is the default sort — with a child, the guides sharing
+// the child's answers come first; the filter page opens with them suggested.
+describe('Recommended and About <child>', () => {
+  const older = row({ id: 't9', title: 'Light touch switch', created_at: '2026-01-01T00:00:00Z', helps_with: ['moving'], access: ['press'], play: ['sound'] })
+  const newer = row({ id: 't8', title: 'Untagged newer', created_at: '2026-09-01T00:00:00Z' })
+  const ollie = { name: 'Ollie', helps_with: ['moving'], access: ['press'], one_hand: false, press_force: null, enjoys: ['sound'] }
+  const order = () => screen.getAllByText(/^(Light touch switch|Untagged newer)$/).map((t) => t.props.children)
 
-  it('filters to the guides that suit the child', async () => {
-    mockEndpoints({
-      tutorials: Promise.resolve([tagged, firm]),
-      children: Promise.resolve([{ name: 'Ollie', press_force: 'light', hold: 'second', aim: null }]),
-    })
+  it('puts the guides that share the child’s answers first, then newest', async () => {
+    mockEndpoints({ tutorials: Promise.resolve([newer, older]), children: Promise.resolve([ollie]) })
+    render(<LibraryScreen />)
+    await screen.findByText('Light touch switch')
+    await waitFor(() => expect(order()).toEqual(['Light touch switch', 'Untagged newer']))
+    expect(screen.getByText('2 guides · Recommended')).toBeTruthy()
+  })
+
+  it('is newest first without a child', async () => {
+    mockEndpoints({ tutorials: Promise.resolve([older, newer]) })
+    render(<LibraryScreen />)
+    await screen.findByText('Light touch switch')
+    expect(order()).toEqual(['Untagged newer', 'Light touch switch'])
+  })
+
+  it('opens the filter page with About <name> filled in from the profile, applying nothing until Show', async () => {
+    mockEndpoints({ tutorials: Promise.resolve([older, newer]), children: Promise.resolve([ollie]) })
     render(<LibraryScreen />)
     await screen.findByText('Light touch switch')
     await waitFor(() => expect(mockGet).toHaveBeenCalledWith('/api/child-profiles'))
     await act(async () => {})
-    await applyFilters(['Suits Ollie · 1'])
-    await waitFor(() => expect(screen.queryByText('Firm lever')).toBeNull())
-    expect(screen.getByText('Light touch switch')).toBeTruthy()
-    // The section heading names who the list is for.
-    expect(screen.getByText('Suits Ollie')).toBeTruthy()
+    fireEvent.press(screen.getByRole('button', { name: 'Filters' }))
+    expect(screen.getByText('About Ollie')).toBeTruthy()
+    expect(screen.getByText('About the guide')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Moving and using hands', selected: true })).toBeTruthy()
+    expect(screen.getByText('Show 1 guide')).toBeTruthy()
+    fireEvent.press(screen.getByText('Show 1 guide'))
+    expect(screen.queryByText('Untagged newer')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Filters, 3 on' })).toBeTruthy()
   })
 
-  it('says nothing without a child', async () => {
-    mockEndpoints({ tutorials: Promise.resolve([tagged]) })
+  it('says About your child, with nothing filled in, without a profile', async () => {
+    mockEndpoints({ tutorials: Promise.resolve([older]) })
     render(<LibraryScreen />)
     await screen.findByText('Light touch switch')
     fireEvent.press(screen.getByRole('button', { name: 'Filters' }))
-    expect(screen.queryByText(/Suits/)).toBeNull()
-  })
-
-  // wizard-mascot-done: the done screen's "See the matches" lands here with suits=1.
-  it('arrives already filtered, and says so on the Filters button, when opened with suits=1', async () => {
-    mockParams = { suits: '1' }
-    mockEndpoints({
-      tutorials: Promise.resolve([tagged, firm]),
-      children: Promise.resolve([{ name: 'Ollie', press_force: 'light', hold: 'second', aim: null }]),
-    })
-    render(<LibraryScreen />)
-    expect(await screen.findByText('Light touch switch')).toBeTruthy()
-    await waitFor(() => expect(screen.queryByText('Firm lever')).toBeNull())
-    expect(screen.getByText('Suits Ollie')).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Filters, 1 on' })).toBeTruthy()
+    expect(screen.getByText('About your child')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Moving and using hands', selected: false })).toBeTruthy()
   })
 })

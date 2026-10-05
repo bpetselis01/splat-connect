@@ -1,6 +1,6 @@
 // The libraries' filter page, driven through both screens (spec
 // 2026-10-05-library-redesign): choices apply only on Show, Close discards,
-// Reset restores defaults, and the suits questions keep only tagged items.
+// Reset restores defaults, and the child questions keep only tagged items.
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { LibraryScreen } from '../../../../components/home/library-screen'
 import { ToyLibraryScreen } from '../../../../components/toys/toy-library-screen'
@@ -65,7 +65,7 @@ describe('Guides filter page', () => {
     await openFilters()
     fireEvent.press(screen.getByText('Hard'))
     // Behind the page, and on the button, nothing has changed yet.
-    expect(screen.getByText('3 guides · Newest first')).toBeTruthy()
+    expect(screen.getByText('3 guides · Recommended')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Filters' })).toBeTruthy()
     show('guides')
     expect(screen.queryByText('Easy one')).toBeNull()
@@ -105,11 +105,10 @@ describe('Guides filter page', () => {
     render(<LibraryScreen />)
     await screen.findByText('Easy one')
     await openFilters()
-    expect(screen.getByRole('radio', { name: 'All', checked: true })).toBeTruthy()
-    expect(screen.getByRole('radio', { name: 'Newest', checked: true })).toBeTruthy()
+    expect(screen.getByRole('radio', { name: 'Recommended', checked: true })).toBeTruthy()
     fireEvent.press(screen.getByText('Quickest'))
     expect(screen.getByRole('radio', { name: 'Quickest', checked: true })).toBeTruthy()
-    expect(screen.getByRole('radio', { name: 'Newest', checked: false })).toBeTruthy()
+    expect(screen.getByRole('radio', { name: 'Recommended', checked: false })).toBeTruthy()
     fireEvent.press(screen.getByText('Easy'))
     expect(screen.getByRole('button', { name: 'Easy', selected: true })).toBeTruthy()
   })
@@ -123,7 +122,7 @@ describe('Guides filter page', () => {
     expect(screen.getByText('Show 1 guide')).toBeTruthy()
     fireEvent.press(screen.getByText('Reset'))
     expect(screen.getByText('Show 3 guides')).toBeTruthy()
-    expect(screen.getByRole('radio', { name: 'Newest', checked: true })).toBeTruthy()
+    expect(screen.getByRole('radio', { name: 'Recommended', checked: true })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Hard', selected: false })).toBeTruthy()
   })
 
@@ -138,7 +137,7 @@ describe('Guides filter page', () => {
     fireEvent.press(screen.getByText('Reset'))
     show('guides')
     expect(screen.getByRole('button', { name: 'Filters' })).toBeTruthy()
-    expect(screen.getByText('3 guides · Newest first')).toBeTruthy()
+    expect(screen.getByText('3 guides · Recommended')).toBeTruthy()
   })
 
   it('counts every applied filter on the button, and drops a tag when it is removed', async () => {
@@ -168,93 +167,95 @@ describe('Guides filter page', () => {
     expect(screen.getByText('3 guides · Easiest first')).toBeTruthy()
   })
 
-  describe('Movement, Hands, Play and Measurements', () => {
+  it('lays the page out as Sort by, About the child, then About the guide', async () => {
+    render(<LibraryScreen />)
+    await screen.findByText('Easy one')
+    await openFilters()
+    const titles = ['Sort by', 'About your child', 'Helps with', 'How the child uses it', 'Press force', 'Play', 'About the guide', 'Device type', 'Difficulty', 'Build time', 'Parts']
+    // Text in tree order, cut to the group titles (an option like "Press" is not one).
+    const seen = screen.getAllByText(/.+/).map((n) => n.props.children).filter((c) => titles.includes(c))
+    expect(seen).toEqual(titles)
+  })
+
+  describe('the child questions and Device type', () => {
     beforeEach(() => {
       guides = [
-        guide({ id: 'a', title: 'Press guide', movement: ['press'], hands: ['both'], play: ['light'], fit: { palm_width_mm: [50, 70] } }),
-        guide({ id: 'b', title: 'Lever guide', movement: ['lever'], hands: ['left'], play: ['sound'], fit: { palm_width_mm: [80, 100] } }),
+        guide({ id: 'a', title: 'Press guide', helps_with: ['moving'], access: ['press'], one_hand: true, press_force: ['light'], play: ['light'], device_types: ['adapted_toy'] }),
+        guide({ id: 'b', title: 'Voice guide', helps_with: ['communicating'], access: ['voice'], press_force: ['full'], play: ['sound'], device_types: ['switch'] }),
         guide({ id: 'c', title: 'Untagged guide' }),
       ]
     })
 
-    it('keeps only guides tagged Movement, leaving out an untagged one', async () => {
+    it('keeps only guides tagged Helps with, leaving out an untagged one', async () => {
       render(<LibraryScreen />)
       await screen.findByText('Press guide')
       await openFilters()
-      fireEvent.press(screen.getByText('Lever'))
+      fireEvent.press(screen.getByText('Communicating'))
       expect(screen.getByText('Show 1 guide')).toBeTruthy()
       show('guides')
-      expect(screen.getByText('Lever guide')).toBeTruthy()
+      expect(screen.getByText('Voice guide')).toBeTruthy()
       expect(screen.queryByText('Press guide')).toBeNull()
       expect(screen.queryByText('Untagged guide')).toBeNull()
     })
 
-    it('keeps guides matching any of the chosen Hands', async () => {
+    it('keeps guides matching any of the chosen ways to use it', async () => {
       render(<LibraryScreen />)
       await screen.findByText('Press guide')
       await openFilters()
-      fireEvent.press(screen.getByText('Both hands'))
-      fireEvent.press(screen.getByText('Left stronger'))
+      fireEvent.press(screen.getByText('Press'))
+      fireEvent.press(screen.getByText('Voice or breath'))
       show('guides')
       expect(screen.getByText('Press guide')).toBeTruthy()
-      expect(screen.getByText('Lever guide')).toBeTruthy()
+      expect(screen.getByText('Voice guide')).toBeTruthy()
       expect(screen.queryByText('Untagged guide')).toBeNull()
     })
 
-    it('keeps only guides tagged Play', async () => {
+    it('offers One hand is enough as a chip that keeps guides flagged for one hand', async () => {
       render(<LibraryScreen />)
       await screen.findByText('Press guide')
       await openFilters()
-      fireEvent.press(screen.getByText('Music and sound'))
+      fireEvent.press(screen.getByText('One hand is enough'))
       show('guides')
-      expect(screen.getByText('Lever guide')).toBeTruthy()
+      expect(screen.getByText('Press guide')).toBeTruthy()
+      expect(screen.queryByText('Voice guide')).toBeNull()
+      expect(screen.getByRole('button', { name: 'Remove filter: One hand is enough' })).toBeTruthy()
+    })
+
+    it('keeps only guides tagged with a chosen Press force or Play value', async () => {
+      render(<LibraryScreen />)
+      await screen.findByText('Press guide')
+      await openFilters()
+      fireEvent.press(screen.getByText('Full'))
+      show('guides')
+      expect(screen.getByText('Voice guide')).toBeTruthy()
+      expect(screen.queryByText('Press guide')).toBeNull()
+      await openFilters()
+      fireEvent.press(screen.getByText('Reset'))
+      fireEvent.press(screen.getByText('Lights'))
+      show('guides')
+      expect(screen.getByText('Press guide')).toBeTruthy()
+      expect(screen.queryByText('Voice guide')).toBeNull()
+      expect(screen.queryByText('Untagged guide')).toBeNull()
+    })
+
+    it('keeps only guides of a chosen Device type', async () => {
+      render(<LibraryScreen />)
+      await screen.findByText('Press guide')
+      await openFilters()
+      fireEvent.press(screen.getByText('Switch'))
+      show('guides')
+      expect(screen.getByText('Voice guide')).toBeTruthy()
       expect(screen.queryByText('Press guide')).toBeNull()
       expect(screen.queryByText('Untagged guide')).toBeNull()
-    })
-
-    it('keeps guides whose range holds a typed measurement, and tags it', async () => {
-      render(<LibraryScreen />)
-      await screen.findByText('Press guide')
-      await openFilters()
-      fireEvent.changeText(screen.getByPlaceholderText('e.g. 62'), '60')
-      expect(screen.getByText('Show 1 guide')).toBeTruthy()
-      show('guides')
-      expect(screen.getByText('Press guide')).toBeTruthy()
-      expect(screen.queryByText('Lever guide')).toBeNull()
-      expect(screen.queryByText('Untagged guide')).toBeNull()
-      expect(screen.getByRole('button', { name: 'Remove filter: Hand width 60 mm' })).toBeTruthy()
-      fireEvent.press(screen.getByRole('button', { name: 'Remove filter: Hand width 60 mm' }))
-      expect(screen.getByText('Untagged guide')).toBeTruthy()
-    })
-
-    it('says a measurement out of range is not an answer, and does not filter on it', async () => {
-      render(<LibraryScreen />)
-      await screen.findByText('Press guide')
-      await openFilters()
-      fireEvent.changeText(screen.getByPlaceholderText('e.g. 62'), '9999')
-      expect(screen.getByText('Between 20 and 250.')).toBeTruthy()
-      expect(screen.getByText('Show 3 guides')).toBeTruthy()
-    })
-  })
-
-  describe('For your child', () => {
-    it('offers Suits <name> with its count only when some guide suits a child', async () => {
-      children = [{ name: 'Ollie', press_force: 'light', hold: 'second', aim: null }]
-      guides = [guide({ id: 'a', title: 'Light', switch_force: 'very_light', switch_hold: 'moment' }), guide({ id: 'b', title: 'Firm', switch_force: 'full' })]
-      render(<LibraryScreen />)
-      await screen.findByText('Light')
-      await act(async () => {})
-      await openFilters()
-      expect(screen.getByText('Suits Ollie · 1')).toBeTruthy()
     })
   })
 
   describe('child-profile pre-fill', () => {
     beforeEach(() => {
-      children = [{ name: 'Ollie', working_hand: 'left', enjoys: ['light'], palm_width_mm: 60, reach_cm: null, tray_mm: null }]
+      children = [{ name: 'Ollie', helps_with: ['moving'], access: ['press'], one_hand: true, press_force: 'light', enjoys: ['light'] }]
       guides = [
-        guide({ id: 'a', title: 'Fits Ollie', hands: ['left'], play: ['light'], fit: { palm_width_mm: [50, 70] } }),
-        guide({ id: 'b', title: 'Does not fit', hands: ['right'], play: ['sound'], fit: { palm_width_mm: [80, 100] } }),
+        guide({ id: 'a', title: 'Fits Ollie', helps_with: ['moving'], access: ['press'], one_hand: true, press_force: ['light'], play: ['light'] }),
+        guide({ id: 'b', title: 'Does not fit', helps_with: ['seeing'], access: ['eyes'], press_force: ['full'], play: ['sound'] }),
       ]
     })
 
@@ -263,9 +264,12 @@ describe('Guides filter page', () => {
       await screen.findByText('Fits Ollie')
       await act(async () => {})
       await openFilters()
-      expect(screen.getByRole('button', { name: 'Left stronger', selected: true })).toBeTruthy()
+      expect(screen.getByText('About Ollie')).toBeTruthy()
+      expect(screen.getByRole('button', { name: 'Moving and using hands', selected: true })).toBeTruthy()
+      expect(screen.getByRole('button', { name: 'Press', selected: true })).toBeTruthy()
+      expect(screen.getByRole('button', { name: 'One hand is enough', selected: true })).toBeTruthy()
+      expect(screen.getByRole('button', { name: 'Light', selected: true })).toBeTruthy()
       expect(screen.getByRole('button', { name: 'Lights', selected: true })).toBeTruthy()
-      expect(screen.getByDisplayValue('60')).toBeTruthy()
       expect(screen.getByText('Show 1 guide')).toBeTruthy()
       fireEvent.press(screen.getByRole('button', { name: 'Close filters' }))
       expect(screen.getByRole('button', { name: 'Filters' })).toBeTruthy()
@@ -280,7 +284,7 @@ describe('Guides filter page', () => {
       show('guides')
       expect(screen.queryByText('Does not fit')).toBeNull()
       expect(screen.getByText('Fits Ollie')).toBeTruthy()
-      expect(screen.getByRole('button', { name: 'Filters, 3 on' })).toBeTruthy()
+      expect(screen.getByRole('button', { name: 'Filters, 5 on' })).toBeTruthy()
     })
 
     it('does not overwrite filters already applied on those questions', async () => {
@@ -289,11 +293,11 @@ describe('Guides filter page', () => {
       await act(async () => {})
       await openFilters()
       fireEvent.press(screen.getByText('Reset'))
-      fireEvent.press(screen.getByText('Right stronger'))
+      fireEvent.press(screen.getByText('Full'))
       show('guides')
       await openFilters()
-      expect(screen.getByRole('button', { name: 'Right stronger', selected: true })).toBeTruthy()
-      expect(screen.getByRole('button', { name: 'Left stronger', selected: false })).toBeTruthy()
+      expect(screen.getByRole('button', { name: 'Full', selected: true })).toBeTruthy()
+      expect(screen.getByRole('button', { name: 'Light', selected: false })).toBeTruthy()
       expect(screen.getByRole('button', { name: 'Lights', selected: false })).toBeTruthy()
     })
   })
@@ -302,8 +306,8 @@ describe('Guides filter page', () => {
 describe('Toys filter page', () => {
   beforeEach(() => {
     toys = [
-      toy({ id: 'a', name: 'Press toy', movement: ['press'], hands: ['both'], play: ['light'], fit: { reach_cm: [20, 40] } }),
-      toy({ id: 'b', name: 'Lever toy', movement: ['lever'], hands: ['left'], play: ['sound'], fit: { reach_cm: [50, 70] } }),
+      toy({ id: 'a', name: 'Press toy', helps_with: ['moving'], access: ['press'], one_hand: true, press_force: ['light'], play: ['light'] }),
+      toy({ id: 'b', name: 'Voice toy', helps_with: ['communicating'], access: ['voice'], press_force: ['full'], play: ['sound'] }),
       toy({ id: 'c', name: 'Untagged toy' }),
     ]
   })
@@ -313,13 +317,13 @@ describe('Toys filter page', () => {
     await screen.findByText('Press toy')
     await openFilters()
     expect(screen.getByText('Show 3 toys')).toBeTruthy()
-    fireEvent.press(screen.getByText('Lever'))
+    fireEvent.press(screen.getByText('Voice or breath'))
     expect(screen.getByText('Show 1 toy')).toBeTruthy()
     expect(screen.getByText('3 toys · Newest first')).toBeTruthy()
     show('toys')
     expect(screen.queryByText('Press toy')).toBeNull()
     expect(screen.queryByText('Untagged toy')).toBeNull()
-    expect(screen.getByText('Lever toy')).toBeTruthy()
+    expect(screen.getByText('Voice toy')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Filters, 1 on' })).toBeTruthy()
   })
 
@@ -327,54 +331,46 @@ describe('Toys filter page', () => {
     render(<ToyLibraryScreen />)
     await screen.findByText('Press toy')
     await openFilters()
-    fireEvent.press(screen.getByText('Lever'))
+    fireEvent.press(screen.getByText('Voice or breath'))
     fireEvent.press(screen.getByRole('button', { name: 'Close filters' }))
     expect(screen.getByText('Press toy')).toBeTruthy()
     await openFilters()
     expect(screen.getByText('Show 3 toys')).toBeTruthy()
-    fireEvent.press(screen.getByText('Lever'))
+    fireEvent.press(screen.getByText('Voice or breath'))
     fireEvent.press(screen.getByText('Lights'))
     fireEvent.press(screen.getByText('Reset'))
     expect(screen.getByText('Show 3 toys')).toBeTruthy()
   })
 
-  it('keeps only toys tagged with a chosen Hands or Play value', async () => {
+  it('keeps only toys tagged with a chosen Access, One hand, Press force or Play value', async () => {
     render(<ToyLibraryScreen />)
     await screen.findByText('Press toy')
     await openFilters()
-    fireEvent.press(screen.getByText('Both hands'))
+    fireEvent.press(screen.getByText('One hand is enough'))
     show('toys')
     expect(screen.getByText('Press toy')).toBeTruthy()
-    expect(screen.queryByText('Lever toy')).toBeNull()
+    expect(screen.queryByText('Voice toy')).toBeNull()
     expect(screen.queryByText('Untagged toy')).toBeNull()
     await openFilters()
     fireEvent.press(screen.getByText('Reset'))
     fireEvent.press(screen.getByText('Music and sound'))
     show('toys')
-    expect(screen.getByText('Lever toy')).toBeTruthy()
+    expect(screen.getByText('Voice toy')).toBeTruthy()
+    expect(screen.queryByText('Press toy')).toBeNull()
+    await openFilters()
+    fireEvent.press(screen.getByText('Reset'))
+    fireEvent.press(screen.getByText('Full'))
+    show('toys')
+    expect(screen.getByText('Voice toy')).toBeTruthy()
     expect(screen.queryByText('Press toy')).toBeNull()
   })
 
-  it('keeps toys whose range holds a measurement', async () => {
-    render(<ToyLibraryScreen />)
-    await screen.findByText('Press toy')
-    await openFilters()
-    fireEvent.changeText(screen.getByPlaceholderText('e.g. 30'), '30')
-    show('toys')
-    expect(screen.getByText('Press toy')).toBeTruthy()
-    expect(screen.queryByText('Lever toy')).toBeNull()
-    expect(screen.queryByText('Untagged toy')).toBeNull()
-    expect(screen.getByRole('button', { name: 'Remove filter: Reach from seated 30 cm' })).toBeTruthy()
-  })
-
   it('shows the child pre-fill on the page, applying nothing until Show', async () => {
-    children = [{ name: 'Ollie', working_hand: 'either', enjoys: ['sound'], palm_width_mm: null, reach_cm: null, tray_mm: null }]
+    children = [{ name: 'Ollie', helps_with: [], access: [], one_hand: false, press_force: null, enjoys: ['sound'] }]
     render(<ToyLibraryScreen />)
     await screen.findByText('Press toy')
     await act(async () => {})
     await openFilters()
-    // 'either' reads as both hands.
-    expect(screen.getByRole('button', { name: 'Both hands', selected: true })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Music and sound', selected: true })).toBeTruthy()
     fireEvent.press(screen.getByRole('button', { name: 'Close filters' }))
     expect(screen.getByRole('button', { name: 'Filters' })).toBeTruthy()

@@ -5,6 +5,7 @@ import {
   guideGroups,
   guideMatches,
   sortGuides,
+  suitsFilterOf,
   toyGroups,
   toyMatches,
   withChildSuggestion,
@@ -17,47 +18,45 @@ type T = Parameters<typeof toyMatches>[0]
 const t = (over: Partial<T> = {}): T => ({ condition: 8, switch_adapted: false, quantity: 1, ...over })
 const gv = (over: FilterValues = {}): FilterValues => ({ ...GUIDE_DEFAULTS, ...over })
 const tv = (over: FilterValues = {}): FilterValues => ({ ...TOY_DEFAULTS, ...over })
-const none = new Set<string>()
 
 describe('guideMatches', () => {
   it('keeps everything at the defaults, even an untagged guide with no build time', () => {
-    expect(guideMatches(g({ build_minutes: null }), GUIDE_DEFAULTS, none)).toBe(true)
+    expect(guideMatches(g({ build_minutes: null }), GUIDE_DEFAULTS)).toBe(true)
   })
-  it('matches the guide type', () => {
-    expect(guideMatches(g({ kind: 'assistive_tech' }), gv({ type: 'toy_adaptation' }), none)).toBe(false)
-    expect(guideMatches(g({ kind: 'assistive_tech' }), gv({ type: 'assistive_tech' }), none)).toBe(true)
+  it('matches the device type', () => {
+    expect(guideMatches(g({ device_types: ['switch'] }), gv({ device_types: ['mounting'] }))).toBe(false)
+    expect(guideMatches(g({ device_types: ['switch', 'mounting'] }), gv({ device_types: ['mounting'] }))).toBe(true)
   })
   it('matches any of the chosen difficulties', () => {
     const v = gv({ diff: ['easy', 'hard'] })
-    expect(guideMatches(g({ difficulty: 'medium' }), v, none)).toBe(false)
-    expect(guideMatches(g({ difficulty: 'hard' }), v, none)).toBe(true)
+    expect(guideMatches(g({ difficulty: 'medium' }), v)).toBe(false)
+    expect(guideMatches(g({ difficulty: 'hard' }), v)).toBe(true)
   })
   it('keeps builds at or under the time, and leaves out one with no time', () => {
-    expect(guideMatches(g({ build_minutes: 30 }), gv({ time: '30' }), none)).toBe(true)
-    expect(guideMatches(g({ build_minutes: 31 }), gv({ time: '30' }), none)).toBe(false)
-    expect(guideMatches(g({ build_minutes: null }), gv({ time: '60' }), none)).toBe(false)
+    expect(guideMatches(g({ build_minutes: 30 }), gv({ time: '30' }))).toBe(true)
+    expect(guideMatches(g({ build_minutes: 31 }), gv({ time: '30' }))).toBe(false)
+    expect(guideMatches(g({ build_minutes: null }), gv({ time: '60' }))).toBe(false)
   })
   it('keeps only guides with printable parts when asked', () => {
-    expect(guideMatches(g({ has_stl: false }), gv({ parts: ['printable'] }), none)).toBe(false)
-    expect(guideMatches(g({ has_stl: true }), gv({ parts: ['printable'] }), none)).toBe(true)
+    expect(guideMatches(g({ has_stl: false }), gv({ parts: ['printable'] }))).toBe(false)
+    expect(guideMatches(g({ has_stl: true }), gv({ parts: ['printable'] }))).toBe(true)
   })
-  it('keeps only the guides that suit a child when For your child is on', () => {
-    expect(guideMatches(g({ id: 'a' }), gv({ suits: ['suits'] }), new Set(['b']))).toBe(false)
-    expect(guideMatches(g({ id: 'b' }), gv({ suits: ['suits'] }), new Set(['b']))).toBe(true)
-  })
-  it('applies the suits questions, leaving out untagged guides while one is filtered', () => {
-    const tagged = g({ movement: ['lever'], hands: ['left'], play: ['sound'], fit: { reach_cm: [20, 40] } })
-    expect(guideMatches(tagged, gv({ movement: ['lever'] }), none)).toBe(true)
-    expect(guideMatches(tagged, gv({ movement: ['press'] }), none)).toBe(false)
-    expect(guideMatches(g(), gv({ movement: ['lever'] }), none)).toBe(false)
-    expect(guideMatches(g(), gv({ hands: ['left'] }), none)).toBe(false)
-    expect(guideMatches(g(), gv({ play: ['sound'] }), none)).toBe(false)
-    expect(guideMatches(tagged, gv({ fit: { reach_cm: 30 } }), none)).toBe(true)
-    expect(guideMatches(tagged, gv({ fit: { reach_cm: 41 } }), none)).toBe(false)
-    expect(guideMatches(g(), gv({ fit: { reach_cm: 30 } }), none)).toBe(false)
+  it('applies the child questions, leaving out untagged guides while one is filtered', () => {
+    const tagged = g({ helps_with: ['moving'], access: ['press', 'head'], one_hand: true, press_force: ['light'], play: ['sound'] })
+    expect(guideMatches(tagged, gv({ helps_with: ['moving'] }))).toBe(true)
+    expect(guideMatches(tagged, gv({ helps_with: ['seeing'] }))).toBe(false)
+    expect(guideMatches(tagged, gv({ access: ['eyes', 'head'] }))).toBe(true)
+    expect(guideMatches(tagged, gv({ press_force: ['full'] }))).toBe(false)
+    expect(guideMatches(tagged, gv({ play: ['sound'] }))).toBe(true)
+    expect(guideMatches(tagged, gv({ access: ['one_hand'] }))).toBe(true)
+    // One hand is enough is a chip on access, but needs the guide's own flag.
+    expect(guideMatches(g({ access: ['press'] }), gv({ access: ['one_hand'] }))).toBe(false)
+    for (const v of [{ helps_with: ['moving'] }, { access: ['press'] }, { press_force: ['light'] }, { play: ['sound'] }, { device_types: ['switch'] }] as FilterValues[]) {
+      expect(guideMatches(g(), gv(v))).toBe(false)
+    }
   })
   it('needs every filter to hold at once', () => {
-    expect(guideMatches(g({ difficulty: 'easy', build_minutes: 90 }), gv({ diff: ['easy'], time: '60' }), none)).toBe(false)
+    expect(guideMatches(g({ difficulty: 'easy', build_minutes: 90 }), gv({ diff: ['easy'], time: '60' }))).toBe(false)
   })
 })
 
@@ -77,6 +76,16 @@ describe('sortGuides', () => {
   })
   it('puts the easiest first, ties by build time', () => {
     expect(ids('easy')).toEqual(['nobuild', 'new', 'quick', 'old'])
+  })
+  it('puts the guides sharing most of the child’s answers first, newest first on a tie and without a child', () => {
+    const tagged = [
+      g({ id: 'none', created_at: '2026-09-01T00:00:00Z' }),
+      g({ id: 'one', created_at: '2026-01-01T00:00:00Z', play: ['sound'] }),
+      g({ id: 'two', created_at: '2026-02-01T00:00:00Z', play: ['sound'], one_hand: true }),
+    ]
+    const child = { helps_with: null, access: null, one_hand: true, press_force: null, enjoys: ['sound'] } as never
+    expect(sortGuides(tagged, 'recommended', child).map((x) => x.id)).toEqual(['two', 'one', 'none'])
+    expect(sortGuides(tagged, 'recommended').map((x) => x.id)).toEqual(['none', 'two', 'one'])
   })
   it('does not reorder the list it was given', () => {
     const before = list.map((x) => x.id)
@@ -103,45 +112,43 @@ describe('toyMatches', () => {
     expect(toyMatches(t({ condition: 8 }), tv({ cond: ['like-new', 'good'] }))).toBe(true)
     expect(toyMatches(t({ condition: -1 }), tv({ cond: ['needs-fix'] }))).toBe(true)
   })
-  it('applies the suits questions, leaving out untagged toys', () => {
-    const tagged = t({ movement: ['press'], hands: ['both'], play: ['light'], fit: { tray_mm: [5, 20] } })
-    expect(toyMatches(tagged, tv({ movement: ['press'], hands: ['both'], play: ['light'], fit: { tray_mm: 10 } }))).toBe(true)
-    expect(toyMatches(tagged, tv({ fit: { tray_mm: 30 } }))).toBe(false)
+  it('applies the child questions, leaving out untagged toys', () => {
+    const tagged = t({ helps_with: ['calm'], access: ['touch'], one_hand: true, press_force: ['very_light'], play: ['light'] })
+    expect(toyMatches(tagged, tv({ helps_with: ['calm'], access: ['touch', 'one_hand'], press_force: ['very_light'], play: ['light'] }))).toBe(true)
+    expect(toyMatches(tagged, tv({ press_force: ['full'] }))).toBe(false)
     expect(toyMatches(t(), tv({ play: ['light'] }))).toBe(false)
+    expect(toyMatches(t({ access: ['touch'] }), tv({ access: ['one_hand'] }))).toBe(false)
   })
 })
 
 describe('withChildSuggestion', () => {
-  const child = (over: Partial<ChildProfile>) => ({ working_hand: null, enjoys: [], palm_width_mm: null, reach_cm: null, tray_mm: null, ...over }) as ChildProfile
+  const child = (over: Partial<ChildProfile>) => ({ helps_with: [], access: [], one_hand: false, press_force: null, enjoys: [], ...over }) as unknown as ChildProfile
 
   it('is the values untouched without a child', () => {
     expect(withChildSuggestion(GUIDE_DEFAULTS, undefined)).toBe(GUIDE_DEFAULTS)
   })
-  it('suggests hands, play and measurements from the child', () => {
-    const v = withChildSuggestion(GUIDE_DEFAULTS, child({ working_hand: 'left', enjoys: ['light', 'water'], palm_width_mm: 60, reach_cm: 30 }))
-    expect(v.hands).toEqual(['left'])
+  it('suggests the four questions from the child, the same answers with no conversion', () => {
+    const v = withChildSuggestion(GUIDE_DEFAULTS, child({ helps_with: ['moving'], access: ['press', 'head'], press_force: 'light', enjoys: ['light', 'water'] }))
+    expect(v.helps_with).toEqual(['moving'])
+    expect(v.access).toEqual(['press', 'head'])
+    expect(v.press_force).toEqual(['light'])
     expect(v.play).toEqual(['light', 'water'])
-    expect(v.fit).toEqual({ palm_width_mm: 60, reach_cm: 30 })
-    expect(v.movement).toEqual([])
-    expect(v.sort).toBe('new')
+    expect(v.sort).toBe('recommended')
   })
-  it('reads either hand as both, right as right, and an unknown hand as none', () => {
-    expect(withChildSuggestion(GUIDE_DEFAULTS, child({ working_hand: 'either' })).hands).toEqual(['both'])
-    expect(withChildSuggestion(GUIDE_DEFAULTS, child({ working_hand: 'right' })).hands).toEqual(['right'])
-    expect(withChildSuggestion(GUIDE_DEFAULTS, child({})).hands).toEqual([])
-  })
-  it('leaves out a measurement the child has not given', () => {
-    expect(withChildSuggestion(GUIDE_DEFAULTS, child({ tray_mm: 12 })).fit).toEqual({ tray_mm: 12 })
+  it('puts one hand on the access chips, and leaves a missing press force out', () => {
+    const v = withChildSuggestion(GUIDE_DEFAULTS, child({ access: ['press'], one_hand: true }))
+    expect(v.access).toEqual(['press', 'one_hand'])
+    expect(v.press_force).toEqual([])
   })
   it('keeps what is already chosen on those questions, whichever one it is', () => {
-    const c = child({ working_hand: 'left', enjoys: ['light'] })
-    for (const chosen of <FilterValues[]>[{ movement: ['lever'] }, { hands: ['right'] }, { play: ['calm'] }, { fit: { tray_mm: 10 } }]) {
+    const c = child({ helps_with: ['moving'], enjoys: ['light'] })
+    for (const chosen of <FilterValues[]>[{ helps_with: ['seeing'] }, { access: ['eyes'] }, { press_force: ['full'] }, { play: ['calm'] }]) {
       const v = gv(chosen)
       expect(withChildSuggestion(v, c)).toBe(v)
     }
   })
-  it('does not touch the non-suits filters, so Show keeps them', () => {
-    const v = withChildSuggestion(gv({ diff: ['easy'], time: '30' }), child({ working_hand: 'left' }))
+  it('does not touch the non-child filters, so Show keeps them', () => {
+    const v = withChildSuggestion(gv({ diff: ['easy'], time: '30' }), child({ helps_with: ['moving'] }))
     expect(v.diff).toEqual(['easy'])
     expect(v.time).toBe('30')
   })
@@ -150,11 +157,30 @@ describe('withChildSuggestion', () => {
   })
 })
 
+describe('suitsFilterOf', () => {
+  it('splits one_hand off the access chips into its own flag', () => {
+    const f = suitsFilterOf(gv({ access: ['press', 'one_hand'], device_types: ['switch'] }))
+    expect(f.access).toEqual(['press'])
+    expect(f.one_hand).toBe(true)
+    expect(f.device_types).toEqual(['switch'])
+    expect(suitsFilterOf(gv()).one_hand).toBe(false)
+  })
+})
+
 describe('groups', () => {
   const keys = (gs: FilterGroup[]) => gs.map((x) => x.key)
-  it('leaves out For your child unless a label is given', () => {
-    expect(keys(guideGroups(null))).not.toContain('suits')
-    expect(keys(guideGroups('Suits Ollie · 2'))).toContain('suits')
+  it('orders the guide page: sort, About the child, its four questions, About the guide, then the guide’s own', () => {
+    expect(keys(guideGroups('Ollie'))).toEqual(['sort', 'about-child', 'helps_with', 'access', 'press_force', 'play', 'about-guide', 'device_types', 'diff', 'time', 'parts'])
+    const gs = guideGroups('Ollie')
+    expect(gs.find((x) => x.key === 'about-child')).toMatchObject({ kind: 'heading', label: 'About Ollie' })
+    expect(guideGroups(null).find((x) => x.key === 'about-child')).toMatchObject({ label: 'About your child' })
+  })
+  it('sorts by Recommended first, and puts One hand is enough among the access chips', () => {
+    const gs = guideGroups(null)
+    const sort = gs.find((x) => x.key === 'sort') as Extract<FilterGroup, { kind: 'one' }>
+    expect(sort.options.map((o) => o.label)).toEqual(['Recommended', 'Newest', 'Quickest', 'Easiest'])
+    const access = gs.find((x) => x.key === 'access') as Extract<FilterGroup, { kind: 'many' }>
+    expect(access.options.map((o) => o.label)).toContain('One hand is enough')
   })
   it('offers Nearest first only with a postcode', () => {
     const sort = (has: boolean) => (toyGroups(has).find((x) => x.key === 'sort') as Extract<FilterGroup, { kind: 'one' }>).options.map((o) => o.label)
@@ -164,44 +190,38 @@ describe('groups', () => {
 })
 
 describe('filterTags', () => {
-  const groups = guideGroups('Suits Ollie · 2')
+  const groups = guideGroups('Ollie')
 
   it('is empty at the defaults', () => {
     expect(filterTags(groups, GUIDE_DEFAULTS, GUIDE_DEFAULTS)).toEqual([])
   })
   it('makes a tag per chosen many-of option, labelled as the option', () => {
-    const tags = filterTags(groups, gv({ diff: ['easy', 'hard'], parts: ['printable'], suits: ['suits'] }), GUIDE_DEFAULTS)
-    expect(tags.map((x) => x.label)).toEqual(['Suits Ollie · 2', 'Easy', 'Hard', 'Printable parts'])
+    const tags = filterTags(groups, gv({ diff: ['easy', 'hard'], parts: ['printable'], access: ['one_hand'] }), GUIDE_DEFAULTS)
+    expect(tags.map((x) => x.label)).toEqual(['One hand is enough', 'Easy', 'Hard', 'Printable parts'])
   })
   it('makes a tag for a one-of group that is off its default, and none at the default', () => {
-    expect(filterTags(groups, gv({ type: 'assistive_tech', time: '30' }), GUIDE_DEFAULTS).map((x) => x.label)).toEqual(['Assistive tech', 'Under 30 min'])
+    expect(filterTags(groups, gv({ sort: 'quick', time: '30' }), GUIDE_DEFAULTS).map((x) => x.label)).toEqual(['Quickest', 'Under 30 min'])
   })
   it('leaves out the groups it is told are untagged', () => {
     expect(filterTags(groups, gv({ sort: 'quick', diff: ['easy'] }), GUIDE_DEFAULTS, ['sort']).map((x) => x.label)).toEqual(['Easy'])
     expect(filterTags(groups, gv({ sort: 'quick' }), GUIDE_DEFAULTS).map((x) => x.label)).toEqual(['Quickest'])
   })
-  it('labels a measurement with its name, number and unit', () => {
-    const tags = filterTags(groups, gv({ fit: { palm_width_mm: 60, reach_cm: 30, tray_mm: 12 } }), GUIDE_DEFAULTS)
-    expect(tags.map((x) => x.label)).toEqual(['Hand width 60 mm', 'Reach from seated 30 cm', 'Tray thickness 12 mm'])
-  })
   it('removing a tag returns values without it and with everything else', () => {
-    const v = gv({ diff: ['easy', 'hard'], type: 'assistive_tech', fit: { palm_width_mm: 60, tray_mm: 12 } })
+    const v = gv({ diff: ['easy', 'hard'], sort: 'quick', helps_with: ['moving', 'calm'] })
     const by = (label: string) => filterTags(groups, v, GUIDE_DEFAULTS).find((x) => x.label === label)!
     expect(by('Easy').remove(v).diff).toEqual(['hard'])
-    expect(by('Assistive tech').remove(v).type).toBe('all')
-    expect(by('Hand width 60 mm').remove(v).fit).toEqual({ tray_mm: 12 })
-    expect(by('Easy').remove(v).type).toBe('assistive_tech')
+    expect(by('Quickest').remove(v).sort).toBe('recommended')
+    expect(by('Feeling calm').remove(v).helps_with).toEqual(['moving'])
+    expect(by('Easy').remove(v).sort).toBe('quick')
     // The values it was given are not changed.
     expect(v.diff).toEqual(['easy', 'hard'])
-    expect(v.fit).toEqual({ palm_width_mm: 60, tray_mm: 12 })
+    expect(v.helps_with).toEqual(['moving', 'calm'])
+  })
+  it('makes no tag for a heading', () => {
+    expect(filterTags(groups, gv(), GUIDE_DEFAULTS).length).toBe(0)
   })
   it('gives each tag a distinct key', () => {
-    const keys = filterTags(groups, gv({ diff: ['easy', 'hard'], fit: { palm_width_mm: 60 } }), GUIDE_DEFAULTS).map((x) => x.key)
+    const keys = filterTags(groups, gv({ diff: ['easy', 'hard'], helps_with: ['moving'] }), GUIDE_DEFAULTS).map((x) => x.key)
     expect(new Set(keys).size).toBe(keys.length)
   })
-})
-
-it('leaves out a saved measurement outside the page’s range, so opening never shows Show 0 for it', () => {
-  const v = withChildSuggestion(GUIDE_DEFAULTS, { palm_width_mm: 6, reach_cm: 30 } as never)
-  expect(v.fit).toEqual({ reach_cm: 30 })
 })

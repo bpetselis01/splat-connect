@@ -8,24 +8,20 @@ import { useEffect, useState } from 'react'
 import { View, Text, Pressable, ScrollView, Modal, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { CHILD_MEASURES, readMeasure, type ChildMeasureField } from '@splat-connect/types'
 import { theme } from '../../lib/theme'
 import { Button } from '../ui/Button'
-import { TextField } from '../ui/TextField'
 import { GroupLabel, OptionPill } from '../ui/FilterControls'
 
 type Option = { readonly value: string; readonly label: string }
-export type Measures = Partial<Record<ChildMeasureField, number>>
-
 export type FilterGroup =
   /** One answer, always one chosen (a type, a sort). */
   | { kind: 'one'; key: string; label: string; hint?: string; options: readonly Option[] }
   /** Any number of answers. */
   | { kind: 'many'; key: string; label: string; hint?: string; options: readonly Option[] }
-  /** The child's three measurements. */
-  | { kind: 'measures'; key: string; label: string; hint?: string }
+  /** A section label between groups ("About Ollie"); holds no value. */
+  | { kind: 'heading'; key: string; label: string; hint?: string }
 
-export type FilterValues = Record<string, string | string[] | Measures>
+export type FilterValues = Record<string, string | string[]>
 
 /** What one chosen filter reads as on a tag under the search, and how removing it changes the values. */
 export type FilterTag = { key: string; label: string; remove: (v: FilterValues) => FilterValues }
@@ -47,18 +43,7 @@ export function filterTags(groups: FilterGroup[], value: FilterValues, defaults:
         remove: (all) => ({ ...all, [g.key]: (all[g.key] as string[]).filter((y) => y !== x) }),
       }))
     }
-    return Object.entries((v as Measures) ?? {}).map(([field, n]) => {
-      const m = CHILD_MEASURES.find((c) => c.field === field)!
-      return {
-        key: `${g.key}:${field}`,
-        label: `${m.label.replace(/ \(.*\)$/, '')} ${n} ${m.label.match(/\((.*)\)/)?.[1] ?? ''}`.trim(),
-        remove: (all) => {
-          const next = { ...(all[g.key] as Measures) }
-          delete next[field as ChildMeasureField]
-          return { ...all, [g.key]: next }
-        },
-      }
-    })
+    return []
   })
 }
 
@@ -108,13 +93,8 @@ export function FilterPage({
 }) {
   const insets = useSafeAreaInsets()
   const [draft, setDraft] = useState<FilterValues>(start)
-  // The text of each measurement as typed, so a half-typed number is not lost.
-  const [typed, setTyped] = useState<Record<string, string>>({})
   useEffect(() => {
-    if (!visible) return
-    setDraft(start)
-    const m = Object.values(start).find((v) => v && typeof v === 'object' && !Array.isArray(v)) as Measures | undefined
-    setTyped(Object.fromEntries(Object.entries(m ?? {}).map(([k, n]) => [k, String(n)])))
+    if (visible) setDraft(start)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible])
 
@@ -137,7 +117,6 @@ export function FilterPage({
           <Pressable
             onPress={() => {
               setDraft(defaults)
-              setTyped({})
             }}
             accessibilityRole="button"
             hitSlop={8}
@@ -147,36 +126,15 @@ export function FilterPage({
         </View>
 
         <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
-          {groups.map((g) => (
-            <View key={g.key} style={styles.group}>
-              <GroupLabel label={g.label} hint={g.hint} />
-              {g.kind === 'measures' ? (
-                <View style={styles.measures}>
-                  {CHILD_MEASURES.map((m) => {
-                    const text = typed[m.field] ?? ''
-                    const bad = text !== '' && readMeasure(m, text) === undefined
-                    return (
-                      <View key={m.field} style={styles.measure}>
-                        <TextField
-                          label={m.label}
-                          value={text}
-                          placeholder={m.placeholder}
-                          keyboardType="number-pad"
-                          onChangeText={(t) => {
-                            setTyped({ ...typed, [m.field]: t })
-                            const v = readMeasure(m, t)
-                            const next = { ...((draft[g.key] as Measures) ?? {}) }
-                            if (typeof v === 'number') next[m.field] = v
-                            else delete next[m.field]
-                            setDraft({ ...draft, [g.key]: next })
-                          }}
-                        />
-                        {bad ? <Text style={styles.error}>{`Between ${m.min} and ${m.max}.`}</Text> : null}
-                      </View>
-                    )
-                  })}
-                </View>
-              ) : (
+          {groups.map((g) =>
+            g.kind === 'heading' ? (
+              <View key={g.key} style={styles.section}>
+                <Text style={styles.sectionLabel} accessibilityRole="header">{g.label}</Text>
+                {g.hint ? <Text style={styles.sectionHint}>{g.hint}</Text> : null}
+              </View>
+            ) : (
+              <View key={g.key} style={styles.group}>
+                <GroupLabel label={g.label} hint={g.hint} />
                 <View style={styles.opts} accessibilityRole={g.kind === 'one' ? 'radiogroup' : undefined}>
                   {g.options.map((o) =>
                     g.kind === 'one' ? (
@@ -186,9 +144,9 @@ export function FilterPage({
                     )
                   )}
                 </View>
-              )}
-            </View>
-          ))}
+              </View>
+            )
+          )}
         </ScrollView>
 
         <View style={[styles.foot, { paddingBottom: insets.bottom + theme.spacing(3) }]}>
@@ -227,9 +185,9 @@ const styles = StyleSheet.create({
   body: { paddingHorizontal: theme.spacing(4), paddingBottom: theme.spacing(6) },
   group: { paddingVertical: theme.spacing(4), borderBottomWidth: theme.border.hairline, borderBottomColor: theme.colors.border, gap: theme.spacing(3) },
   opts: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2) },
-  measures: { gap: theme.spacing(1) },
-  measure: {},
-  error: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.caption, color: theme.colors.danger, marginTop: -theme.spacing(2), marginBottom: theme.spacing(2) },
+  section: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', paddingTop: theme.spacing(6), gap: theme.spacing(2) },
+  sectionLabel: { fontFamily: theme.fonts.black, fontSize: theme.type.caption, color: theme.colors.primaryDeep, textTransform: 'uppercase', letterSpacing: 0.6 },
+  sectionHint: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.caption, color: theme.colors.muted },
   foot: {
     paddingHorizontal: theme.spacing(4),
     paddingTop: theme.spacing(3),

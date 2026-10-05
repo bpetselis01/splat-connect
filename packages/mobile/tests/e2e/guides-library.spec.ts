@@ -162,21 +162,42 @@ test('the filter page narrows to guides tagged for the child, and removing a tag
     ['Fits', 'Other', 'Untagged'].map((n) => createTutorial(contributor.id, { title: `${prefix} ${n}`, status: 'approved' }))
   )
   const admin = adminClient()
-  await admin.from('tutorials').update({ movement: ['press'], play: ['light', 'sound'] }).eq('id', fits)
-  await admin.from('tutorials').update({ movement: ['grasp'], play: ['light'] }).eq('id', other)
+  await admin.from('tutorials').update({ device_types: ['communication'], access: ['eyes'], play: ['light', 'sound'] }).eq('id', fits)
+  await admin.from('tutorials').update({ device_types: ['switch'], access: ['press'], play: ['light'] }).eq('id', other)
 
   await page.goto('/guides')
   await page.getByPlaceholder('Search guides').fill(prefix)
   await expect(page.getByText(`${prefix} Untagged`)).toBeVisible()
 
   // Within a question any answer matches; across questions all must. An untagged guide never matches a filtered question.
-  await pickFilter(page, 'Palm or fist press', 'Lights')
+  await pickFilter(page, 'Eyes', 'Lights')
   await expect(page.getByText(`${prefix} Fits`)).toBeVisible()
   await expect(page.getByText(`${prefix} Other`)).toHaveCount(0)
   await expect(page.getByText(`${prefix} Untagged`)).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Filters, 2 on' })).toBeVisible()
 
-  await page.getByRole('button', { name: 'Remove filter: Palm or fist press' }).click()
+  await page.getByRole('button', { name: 'Remove filter: Eyes' }).click()
   await expect(page.getByText(`${prefix} Other`)).toBeVisible()
   await expect(page.getByText(`${prefix} Untagged`)).toHaveCount(0)
+
+  await pickFilter(page, 'Switch')
+  await expect(page.getByText(`${prefix} Other`)).toBeVisible()
+  await expect(page.getByText(`${prefix} Fits`)).toHaveCount(0)
+})
+
+test('Recommended puts the guides that share the child\'s answers first, then newest', async ({ page }) => {
+  const contributor = await signInAsNewContributor(page)
+  const prefix = uniqueTitle('E2E Mobile Recommended')
+  const admin = adminClient()
+  // Created oldest first, so newest-first alone would put Plain on top.
+  const match = await createTutorial(contributor.id, { title: `${prefix} Match`, status: 'approved' })
+  await createTutorial(contributor.id, { title: `${prefix} Plain`, status: 'approved' })
+  await admin.from('tutorials').update({ helps_with: ['hearing'], play: ['sound'] }).eq('id', match)
+  await admin.from('child_profiles').insert({ parent_id: contributor.id, name: 'Iris', helps_with: ['hearing'], enjoys: ['sound'] })
+
+  await page.goto('/guides')
+  await page.getByPlaceholder('Search guides').fill(prefix)
+  const rows = page.getByRole('button', { name: new RegExp(`^${prefix}`) })
+  await expect(rows).toHaveCount(2)
+  await expect(rows.first()).toHaveAccessibleName(new RegExp(`${prefix} Match`))
 })

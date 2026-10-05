@@ -9,7 +9,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import type { Tutorial, TutorialOrg, Difficulty } from '@splat-connect/types'
-import { KIND_LABEL, fitLine, formatBuildTime } from '@splat-connect/types'
+import { KIND_LABEL, formatBuildTime } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { theme } from '../../lib/theme'
@@ -56,7 +56,7 @@ function backer(t: ListedTutorial): string | null {
   return accepted ? (accepted.organizations?.name ?? 'an organisation') : null
 }
 
-const SORT_WORD: Record<GuideSort, string> = { new: 'Newest first', quick: 'Quickest first', easy: 'Easiest first' }
+const SORT_WORD: Record<GuideSort, string> = { recommended: 'Recommended', new: 'Newest first', quick: 'Quickest first', easy: 'Easiest first' }
 
 export function LibraryScreen() {
   const insets = useSafeAreaInsets()
@@ -68,15 +68,11 @@ export function LibraryScreen() {
   const [search, setSearch] = useState('')
   const [filters, setFilters] = useState<FilterValues>(GUIDE_DEFAULTS)
   const [filtersOpen, setFiltersOpen] = useState(false)
-  // The board's "Suits Ollie" (080): the guides that suit one of the parent's
-  // children. Offered only when some do.
+  // Recommended (128) sorts by the first child's answers; the filter page's
+  // "About <name>" section opens with them as a suggestion.
   const children = useMyChildren()
-  // wizard-mascot-done: the done screen's "See the matches" opens this tab with
-  // suits=1. An effect, not the initial state: the tab may already be mounted.
-  const { suits: suitsParam, printWith } = useLocalSearchParams<{ suits?: string; printWith?: string }>()
-  useEffect(() => {
-    if (suitsParam === '1') setFilters((f) => ({ ...f, suits: ['suits'] }))
-  }, [suitsParam])
+  const child = children[0] ?? null
+  const { printWith } = useLocalSearchParams<{ printWith?: string }>()
   // Bumping this re-runs the fetch — the retry button's and pull-to-refresh's
   // shared handle.
   const [reloadKey, setReloadKey] = useState(0)
@@ -118,10 +114,6 @@ export function LibraryScreen() {
     }
   }, [reloadKey])
 
-  const suits = new Set(tutorials.filter((t) => fitLine(t, children)).map((t) => t.id))
-  const named = children.filter((c) => c.name?.trim())
-  const suitsLabel = `Suits ${children.length === 1 && named.length === 1 ? named[0].name!.trim() : 'your child'}`
-
   // The whole approved set is already loaded (the endpoint isn't paged), so this
   // client-side match is complete — it just has to look past the title.
   const q = search.trim().toLowerCase()
@@ -132,13 +124,13 @@ export function LibraryScreen() {
           t.title.toLowerCase().includes(q) ||
           (t.description?.toLowerCase().includes(q) ?? false) ||
           (t.parts ?? []).some((p) => p.name.toLowerCase().includes(q))) &&
-        guideMatches(t, draft, suits)
+        guideMatches(t, draft)
     )
-  const visible = sortGuides(matching(filters), filters.sort as GuideSort)
-  const groups = guideGroups(!loading && !error && suits.size > 0 ? `${suitsLabel} · ${suits.size}` : null)
+  const visible = sortGuides(matching(filters), filters.sort as GuideSort, child)
+  const groups = guideGroups(child ? child.name?.trim() || 'your child' : null)
   const tags = filterTags(groups, filters, GUIDE_DEFAULTS, ['sort'])
   const filtered = tags.length > 0 || !!q
-  const heading = (filters.suits as string[]).length && tags.length === 1 ? suitsLabel : filtered ? 'Matching guides' : 'All guides'
+  const heading = filtered ? 'Matching guides' : 'All guides'
 
   // One always-mounted list: header, search and filters live inside it as
   // ListHeaderComponent so they scroll away with the content. Loading/error/
