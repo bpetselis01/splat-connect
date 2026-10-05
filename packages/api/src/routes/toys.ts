@@ -53,7 +53,7 @@ const EDITABLE = [
   'tutorial_id',
   'paused_at',
   'picks_mode',
-  // 127: who it suits.
+  // 128: who it's for.
   ...SUITS_FIELDS,
 ] as const
 
@@ -80,8 +80,8 @@ async function checkFacts(
   body: Record<string, unknown>,
   current: { age_min: number | null; age_max: number | null } = { age_min: null, age_max: null }
 ): Promise<string | null> {
-  // 127: who it suits, checked against the answer lists and tidied in place.
-  const suits = readSuits(body)
+  // 128: who it's for, checked against the answer lists and tidied in place.
+  const suits = readSuits(body, SUITS_FIELDS)
   if (typeof suits === 'string') return suits
   Object.assign(body, suits)
   for (const key of ['age_min', 'age_max'] as const) {

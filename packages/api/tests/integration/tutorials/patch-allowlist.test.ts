@@ -38,15 +38,15 @@ afterAll(async () => {
 })
 
 describe('PATCH /api/tutorials/:id', () => {
-  // 127: who it suits round-trips, and a value that is not an answer is a 400.
-  it('applies the suits tags and 400s a value that is not an answer', async () => {
+  // 128: who it's for round-trips, and a value that is not an answer is a 400.
+  it('applies the tags and 400s a value that is not an answer', async () => {
     let { data: current } = await adminClient().from('tutorials').select('updated_at').eq('id', draft).single()
     const ok = await app.request(`/api/tutorials/${draft}`, authed(author.token, {
       method: 'PATCH',
-      body: JSON.stringify({ movement: ['press'], hands: ['one'], play: ['light', 'water'], fit: { palm_width_mm: [40, 80] }, updated_at: current!.updated_at }),
+      body: JSON.stringify({ device_types: ['switch', 'sensory'], helps_with: ['seeing'], access: ['press'], one_hand: true, press_force: ['very_light', 'light'], play: ['light', 'build'], updated_at: current!.updated_at }),
     }))
     expect(ok.status).toBe(200)
-    expect(await ok.json()).toMatchObject({ movement: ['press'], hands: ['one'], play: ['light', 'water'], fit: { palm_width_mm: [40, 80] } })
+    expect(await ok.json()).toMatchObject({ device_types: ['switch', 'sensory'], helps_with: ['seeing'], access: ['press'], one_hand: true, press_force: ['very_light', 'light'], play: ['light', 'build'] })
     ;({ data: current } = await adminClient().from('tutorials').select('updated_at').eq('id', draft).single())
     const bad = await app.request(`/api/tutorials/${draft}`, authed(author.token, {
       method: 'PATCH',
@@ -81,24 +81,6 @@ describe('PATCH /api/tutorials/:id', () => {
     const bad = await app.request(`/api/tutorials/${draft}`, authed(author.token, {
       method: 'PATCH',
       body: JSON.stringify({ age_min: 9, age_max: 7, updated_at: current!.updated_at }),
-    }))
-    expect(bad.status).toBe(400)
-  })
-
-  // 080: what the switch asks of a child; the check constraints answer 400.
-  it('applies the switch tags and 400s an unknown one', async () => {
-    let { data: current } = await adminClient().from('tutorials').select('updated_at').eq('id', draft).single()
-    const ok = await app.request(`/api/tutorials/${draft}`, authed(author.token, {
-      method: 'PATCH',
-      body: JSON.stringify({ switch_target: 'large', switch_force: 'light', switch_hold: 'moment', updated_at: current!.updated_at }),
-    }))
-    expect(ok.status).toBe(200)
-    expect(await ok.json()).toMatchObject({ switch_target: 'large', switch_force: 'light', switch_hold: 'moment' })
-
-    ;({ data: current } = await adminClient().from('tutorials').select('updated_at').eq('id', draft).single())
-    const bad = await app.request(`/api/tutorials/${draft}`, authed(author.token, {
-      method: 'PATCH',
-      body: JSON.stringify({ switch_force: 'enormous', updated_at: current!.updated_at }),
     }))
     expect(bad.status).toBe(400)
   })

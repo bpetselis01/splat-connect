@@ -10,7 +10,7 @@ import { nameFormerContributors } from '../former-contributor.js'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { pickEditable } from './pick-editable.js'
 import { notifyTutorialSubmitted } from '../review-notifications.js'
-import { readSuits, realignCaptions, SUITS_FIELDS } from '@splat-connect/types'
+import { readSuits, realignCaptions, GUIDE_SUITS_FIELDS } from '@splat-connect/types'
 import { removeDroppedPhotos } from '../photo-storage.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
@@ -182,7 +182,7 @@ tutorials.post('/', async (c) => {
 /** Only these may be set through the generic edit endpoint. Unknown keys are
  *  dropped silently; the protected ones return 403 so a caller learns rather than
  *  wonders. */
-const EDITABLE = ['title', 'description', 'difficulty', 'kind', 'maturity', 'build_minutes', 'age_min', 'age_max', 'switch_target', 'switch_force', 'switch_hold', 'tutorial_pdf_url', 'photo_urls', 'photo_captions', 'prices_checked_on', 'layer_height_mm', 'infill_percent', 'material', 'print_minutes', 'toy_name', 'toy_brand', 'works_with', 'no_build_note', 'status', ...SUITS_FIELDS] as const
+const EDITABLE = ['title', 'description', 'difficulty', 'kind', 'maturity', 'build_minutes', 'age_min', 'age_max', 'tutorial_pdf_url', 'photo_urls', 'photo_captions', 'prices_checked_on', 'layer_height_mm', 'infill_percent', 'material', 'print_minutes', 'toy_name', 'toy_brand', 'works_with', 'no_build_note', 'status', ...GUIDE_SUITS_FIELDS] as const
 const PROTECTED = ['reviewed_by', 'reviewed_for_org_id', 'reviewed_at', 'rejection_note']
 
 async function hasAcceptedContributorTerms(token: string, userId: string) {
@@ -200,7 +200,7 @@ async function hasAcceptedContributorTerms(token: string, userId: string) {
  * repeat them). Only fields present in the body are checked.
  */
 export function fieldError(body: Record<string, unknown>): string | null {
-  // 127: who it suits, checked against the answer lists and tidied in place.
+  // 128: who it's for, checked against the answer lists and tidied in place.
   const suits = readSuits(body)
   if (typeof suits === 'string') return suits
   Object.assign(body, suits)
