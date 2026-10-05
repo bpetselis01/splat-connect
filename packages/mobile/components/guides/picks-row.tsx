@@ -32,13 +32,13 @@ export function PicksRow({
       </Text>
       <Text style={styles.hint}>Up to three guides {firstName} points you at next.</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.content}>
-        {picks.map(({ tutorials: t }) => (
+        {picks.map(({ tutorials: t, required }) => (
           <AnimatedPressable
             key={t.id}
             onPress={() => onOpen(t.id)}
             pressScale={0.97}
             accessibilityRole="button"
-            accessibilityLabel={t.title}
+            accessibilityLabel={required ? `${t.title}, required first` : t.title}
           >
             <View style={styles.card}>
               {t.toy_photo_url ? (
@@ -50,6 +50,8 @@ export function PicksRow({
                 {t.title}
               </Text>
               <Badge status={t.difficulty} />
+              {/* 129: make this one before the guide you are on. */}
+              {required ? <Badge status="pending" label="Required first" /> : null}
             </View>
           </AnimatedPressable>
         ))}

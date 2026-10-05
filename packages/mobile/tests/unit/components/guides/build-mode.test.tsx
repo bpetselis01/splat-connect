@@ -89,3 +89,19 @@ it('logs the build once from the done screen, then offers a note', async () => {
   fireEvent.press(screen.getByText('Leave a note'))
   expect(mockReplace).toHaveBeenCalledWith({ pathname: '/guides/[id]', params: { id: 'g', tab: 'notes' } })
 })
+
+// 129: a step's tip and minutes on its screen, and the author's closing line when done.
+it('shows a step tip and minutes, and the closing line on the done screen', async () => {
+  const withExtras = {
+    ...GUIDE,
+    done_note: 'Plug it into the bubble machine and press.',
+    steps: [{ ...GUIDE.steps[0], tip: 'Keep the screws in a cup.', minutes: 5 }],
+  }
+  ;(apiClient.get as jest.Mock).mockImplementation((p: string) => (p.endsWith('/notes') ? Promise.resolve([]) : Promise.resolve(withExtras)))
+  render(<BuildMode id="g" />)
+  fireEvent.press(await screen.findByText('Start step 1'))
+  expect(screen.getByText('Keep the screws in a cup.')).toBeTruthy()
+  expect(screen.getByText('About 5 min')).toBeTruthy()
+  fireEvent.press(screen.getByText('Done'))
+  expect(screen.getByText('Plug it into the bubble machine and press.')).toBeTruthy()
+})

@@ -26,6 +26,7 @@ type BuildGuide = {
   id: string
   title: string
   safety_declared_at: string | null
+  done_note?: string | null
   steps?: TutorialStep[]
   safety_notes?: TutorialSafetyNote[]
 }
@@ -141,7 +142,15 @@ export function BuildMode({ id }: { id: string }) {
               <Image source={{ uri: step.photo_url }} style={styles.photo} accessibilityLabel={step.title ? `Step ${at}: ${step.title}` : `Step ${at}`} />
             ) : null}
             {step.title ? <Text style={styles.title}>{step.title}</Text> : null}
+            {step.minutes ? <Text style={styles.minutes}>{`About ${step.minutes} min`}</Text> : null}
             <Text style={styles.text}>{step.body}</Text>
+            {/* 129: the author's tip or caution, on the step it is about. */}
+            {step.tip ? (
+              <View style={styles.tip}>
+                <Ionicons name="bulb-outline" size={16} color={theme.colors.ink} />
+                <Text style={[styles.noteText, styles.flex]}>{step.tip}</Text>
+              </View>
+            ) : null}
             {pinned.map((n) => (
               <View key={n.id} style={styles.note}>
                 <Ionicons name="pin" size={15} color={theme.colors.ink} />
@@ -152,6 +161,7 @@ export function BuildMode({ id }: { id: string }) {
         ) : (
           <View style={styles.done}>
             <Text style={styles.title}>{`All ${total} steps done`}</Text>
+            {guide.done_note ? <Text style={styles.doneNote}>{guide.done_note}</Text> : null}
             <Text style={styles.text}>Log it and this build shows up in My SPLAT. Did it work? A note on the guide helps the next family.</Text>
             <Button
               label={built ? 'Build logged' : 'Mark this build done'}
@@ -204,6 +214,9 @@ const styles = StyleSheet.create({
   note: { flexDirection: 'row', gap: theme.spacing(2), padding: theme.spacing(3), borderRadius: theme.radii.field, backgroundColor: theme.colors.violetSoft },
   noteText: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.caption, color: theme.colors.ink, lineHeight: 19 },
   done: { gap: theme.spacing(3), alignItems: 'stretch' },
+  doneNote: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.body, color: theme.colors.ink, lineHeight: 24, padding: theme.spacing(3), borderRadius: theme.radii.field, backgroundColor: theme.colors.mintSoft },
+  minutes: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.muted },
+  tip: { flexDirection: 'row', gap: theme.spacing(2), padding: theme.spacing(3), borderRadius: theme.radii.field, backgroundColor: theme.colors.honeySoft },
   foot: { flexDirection: 'row', gap: theme.spacing(2), paddingHorizontal: theme.spacing(4), paddingTop: theme.spacing(3), borderTopWidth: theme.border.hairline, borderTopColor: theme.colors.border, backgroundColor: theme.colors.surface },
   flex: { flex: 1 },
 })
