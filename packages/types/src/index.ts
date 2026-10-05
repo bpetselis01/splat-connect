@@ -2330,6 +2330,30 @@ export interface ImpactSummary {
   deliveriesByMonth: Array<{ month: string; n: number }>
 }
 
+/** GET /api/public/map: what the mobile Map tab pins. */
+export type MapKind = 'toy' | 'printer' | 'event' | 'dropoff' | 'org'
+export interface MapItem {
+  kind: MapKind
+  id: string
+  title: string
+  /** Owner, host or materials line; the phone writes the date for an event. */
+  meta: string | null
+  /** Printers and drop-offs: what they print or take. */
+  materials?: string[]
+  /** Events only. */
+  starts_at?: string
+}
+/** One suburb. The point is the mean of its postcode centres (099), never an address. */
+export interface MapPlace {
+  suburb: string
+  state: string
+  lat: number
+  lng: number
+  /** Whole km from the viewer's postcode; null when none was given. */
+  km: number | null
+  items: MapItem[]
+}
+
 /** A row of GET /api/public/impact/map (121): one suburb with three or more deliveries. */
 export interface ImpactMapSuburb {
   suburb: string

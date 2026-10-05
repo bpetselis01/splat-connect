@@ -14,7 +14,8 @@ import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { toyPhotoUrl } from '../photo-storage.js'
 import { withPhotoUrl } from './toy-ideas.js'
 import { readNear, byDistance, pickupPostcodes, type Near } from '../distance.js'
-import { autoPicks, buildCalendar, contributorBadges, gradeOf, mergeLearnCourse, partsTotalCents, readMinutes } from '@splat-connect/types'
+import { groupPlaces, type Located, type Point } from '../map.js'
+import { isPast, autoPicks, buildCalendar, contributorBadges, gradeOf, mergeLearnCourse, partsTotalCents, readMinutes } from '@splat-connect/types'
 import type {
   ImpactSummary,
   ImpactEntity,
@@ -1695,6 +1696,81 @@ publicRoutes.post('/contact', async (c) => {
   }
 
   return c.json({ ok: true }, 201)
+})
+
+/**
+ * The Map tab: toys, printers, events, drop-offs and organisations, grouped by
+ * suburb (map.ts). Admin client: the pickup postcodes are not public, and only
+ * a suburb-level point built from them leaves here. A family's toy sits at its
+ * owner's pickup suburb (Byron, 2026-10-05). `near` counts only for a
+ * signed-in caller, as on every other list.
+ */
+publicRoutes.get('/map', async (c) => {
+  const near = await publicNear(c)
+  if (typeof near === 'string') return c.json({ error: near }, 400)
+  const admin = createAdminClient()
+  const [toys, printers, events, orgs, unavailable] = await Promise.all([
+    admin.from('toys').select('id, name, owner_id, owner_org_id').eq('status', 'published'),
+    admin.from('printers').select('id, name, materials, suburb, state, postcode').eq('accepting', true),
+    admin
+      .from('org_events')
+      .select('id, org_id, title, starts_at, ends_at, suburb, state')
+      .eq('status', 'published')
+      .eq('format', 'in_person')
+      .is('cancelled_at', null),
+    admin.from('organizations').select('id, name, status, suburb, state, pickup_postcode, recycling_materials'),
+    atCapacityToyIds(admin, null, true),
+  ])
+  const failed = [toys, printers, events, orgs].find((r) => r.error)
+  if (failed || unavailable === null) return c.json({ error: 'Failed to load the map' }, 500)
+
+  type Org = { id: string; name: string; status: string; suburb: string | null; state: string | null; pickup_postcode: string | null; recycling_materials: string[] | null }
+  const orgRows = (orgs.data ?? []) as Org[]
+  const orgById = new Map(orgRows.map((o) => [o.id, o]))
+  const hidden = new Set(unavailable)
+  const shownToys = ((toys.data ?? []) as Array<{ id: string; name: string; owner_id: string | null; owner_org_id: string | null }>).filter(
+    (t) => !hidden.has(t.id)
+  )
+  const families = [...new Set(shownToys.map((t) => t.owner_id).filter((id): id is string => !!id))]
+  const familyRows = (
+    await Promise.all(chunk(families).map((ids) => admin.from('profiles').select('id, name, pickup_suburb, pickup_state, pickup_postcode').in('id', ids)))
+  ).flatMap((r) => (r.data ?? []) as Array<{ id: string; name: string | null; pickup_suburb: string | null; pickup_state: string | null; pickup_postcode: string | null }>)
+  const family = new Map(familyRows.map((p) => [p.id, p]))
+
+  const rows: Located[] = []
+  for (const t of shownToys) {
+    const o = t.owner_org_id ? orgById.get(t.owner_org_id) : undefined
+    const p = t.owner_id ? family.get(t.owner_id) : undefined
+    rows.push(
+      o
+        ? { kind: 'toy', id: t.id, title: t.name, meta: o.name, suburb: o.suburb, state: o.state, postcode: o.pickup_postcode }
+        : { kind: 'toy', id: t.id, title: t.name, meta: p?.name ?? null, suburb: p?.pickup_suburb ?? null, state: p?.pickup_state ?? null, postcode: p?.pickup_postcode ?? null }
+    )
+  }
+  for (const r of (printers.data ?? []) as Array<{ id: string; name: string; materials: string[] | null; suburb: string | null; state: string | null; postcode: string | null }>) {
+    const materials = r.materials ?? []
+    rows.push({ kind: 'printer', id: r.id, title: r.name, meta: materials.join(', ') || null, materials, suburb: r.suburb, state: r.state, postcode: r.postcode })
+  }
+  for (const e of (events.data ?? []) as Array<{ id: string; org_id: string; title: string; starts_at: string; ends_at: string | null; suburb: string | null; state: string | null }>) {
+    if (isPast(e.starts_at, e.ends_at)) continue
+    const host = orgById.get(e.org_id)
+    rows.push({ kind: 'event', id: e.id, title: e.title, meta: host?.name ?? null, starts_at: e.starts_at, suburb: e.suburb, state: e.state, postcode: host?.pickup_postcode ?? null })
+  }
+  for (const o of orgRows) {
+    if (o.status === 'suspended') continue
+    const at = { suburb: o.suburb, state: o.state, postcode: o.pickup_postcode }
+    rows.push({ kind: 'org', id: o.id, title: o.name, meta: null, ...at })
+    const materials = o.recycling_materials ?? []
+    if (materials.length) rows.push({ kind: 'dropoff', id: o.id, title: o.name, meta: `Takes ${materials.join(', ')}`, materials, ...at })
+  }
+
+  const postcodes = [...new Set([...rows.map((r) => r.postcode?.trim()), near.near].filter((p): p is string => !!p))]
+  const centreRows = (
+    await Promise.all(chunk(postcodes).map((ids) => admin.from('postcode_centroids').select('postcode, lat, lng').in('postcode', ids)))
+  ).flatMap((r) => (r.data ?? []) as Array<{ postcode: string } & Point>)
+  const centres = new Map(centreRows.map((r) => [r.postcode, { lat: r.lat, lng: r.lng }]))
+  const places = groupPlaces(rows, centres, near.near ? centres.get(near.near) ?? null : null)
+  return c.json(near.within === null ? places : places.filter((p) => p.km !== null && p.km <= near.within!))
 })
 
 export default publicRoutes
