@@ -1,5 +1,5 @@
 /** GET /api/public/map: a family's toy is pinned at its pickup suburb, for signed-in callers only. */
-import { describe, it, expect, beforeAll, afterAll } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
 import type { MapPlace } from '@splat-connect/types'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -7,6 +7,13 @@ import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../.
 const get = (token?: string, query = '') =>
   app.request(`http://localhost/api/public/map${query}`, token ? { headers: { Authorization: `Bearer ${token}` } } : {})
 const items = (places: MapPlace[]) => places.flatMap((p) => p.items.map((i) => ({ ...i, suburb: p.suburb, km: p.km })))
+
+// Nominatim is never called from a test: its lookups answer "not found", so
+// every row falls back to its postcode centre.
+const realFetch = globalThis.fetch
+vi.spyOn(globalThis, 'fetch').mockImplementation((input, init) =>
+  String(input).includes('nominatim.openstreetmap.org') ? Promise.resolve(new Response('[]')) : realFetch(input, init)
+)
 
 describe('GET /api/public/map', () => {
   let family: TestUser

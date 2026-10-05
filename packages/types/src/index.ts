@@ -2343,12 +2343,14 @@ export interface MapItem {
   /** Events only. */
   starts_at?: string
 }
-/** One suburb. The point is the mean of its postcode centres (099), never an address. */
+/** One point: an organisation's address, an event's venue, or a suburb's centre for an individual. */
 export interface MapPlace {
   suburb: string
   state: string
   lat: number
   lng: number
+  /** The street line, for an organisation's address; null at a suburb centre. Public (Byron, 2026-10-05). */
+  address: string | null
   /** Whole km from the viewer's postcode; null when none was given. */
   km: number | null
   items: MapItem[]
