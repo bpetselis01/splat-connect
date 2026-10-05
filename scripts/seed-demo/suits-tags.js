@@ -1,5 +1,5 @@
 /**
- * Who each demo guide and toy suits (127), so the library filter page returns
+ * Who each demo guide and toy is for (128), so the library filter page returns
  * results on the demo data. Matched by title or name, and only on rows a demo
  * manifest owns, so nobody else's guide or toy is touched.
  *
@@ -11,29 +11,29 @@ const fs = require('fs')
 const path = require('path')
 
 const GUIDES = {
-  'Light Touch Switch': { movement: ['press'], hands: ['one', 'left', 'right'], play: ['light'], fit: { palm_width_mm: [30, 90] } },
-  'Low Profile Switch': { movement: ['press'], hands: ['one', 'both'], fit: { palm_width_mm: [30, 110], tray_mm: [5, 40] } },
-  'Switch Adapted Bubble Blower': { movement: ['press'], hands: ['one', 'both'], play: ['water', 'move'] },
-  'One Handed Book Holder': { movement: ['grasp'], hands: ['one', 'left', 'right'], play: ['calm'], fit: { reach_cm: [20, 60] } },
-  'Rumble Plate Dice Roller': { movement: ['press', 'proximity'], hands: ['both'], play: ['sound', 'move'] },
-  'Simple Switch Tester': { movement: ['press', 'lever'], hands: ['one', 'both'], play: ['light', 'sound'] },
-  'Switch Adapted Penguin': { movement: ['press'], hands: ['one', 'both'], play: ['move', 'sound'] },
+  'Light Touch Switch': { device_types: ['switch'], helps_with: ['moving'], access: ['press', 'touch', 'head'], one_hand: true, press_force: ['very_light', 'light'], play: ['light'] },
+  'Low Profile Switch': { device_types: ['switch'], helps_with: ['moving'], access: ['press', 'touch'], one_hand: true, press_force: ['light', 'moderate'] },
+  'Switch Adapted Bubble Blower': { device_types: ['adapted_toy'], helps_with: ['moving', 'calm'], access: ['press', 'watch'], press_force: ['light', 'moderate', 'full'], play: ['water', 'move'] },
+  'One Handed Book Holder': { device_types: ['learning', 'daily_living'], helps_with: ['moving', 'learning'], access: ['grasp'], one_hand: true, play: ['calm'] },
+  'Rumble Plate Dice Roller': { device_types: ['adapted_toy'], helps_with: ['moving', 'seeing'], access: ['press', 'head'], press_force: ['moderate', 'full'], play: ['sound', 'move'] },
+  'Simple Switch Tester': { device_types: ['switch_interface'], access: ['press'], play: ['light', 'sound'] },
+  'Switch Adapted Penguin': { device_types: ['adapted_toy'], helps_with: ['moving'], access: ['press', 'watch'], press_force: ['light', 'moderate'], play: ['move', 'sound'] },
 }
 const TOYS = {
-  'Switch-adapted racing penguins': { movement: ['press'], hands: ['one', 'both'], play: ['move', 'sound'] },
-  'Adapted bubble machine': { movement: ['press'], hands: ['one'], play: ['water'] },
-  'Star projector night light': { movement: ['press'], hands: ['both'], play: ['light', 'calm'] },
-  'Light-up spinning top (adapted)': { movement: ['press'], hands: ['one', 'left', 'right'], play: ['light', 'move'] },
-  'Musical floor mat': { movement: ['press'], hands: ['both'], play: ['sound'], fit: { reach_cm: [10, 80] } },
-  'Jack-in-the-box with switch turner': { movement: ['press'], hands: ['one', 'both'], play: ['move', 'sound'] },
-  'Adapted bubble blower': { movement: ['press'], hands: ['one'], play: ['water'] },
-  'Suction-cup switch mount': { movement: ['press', 'lever'], hands: ['one', 'left', 'right'], fit: { tray_mm: [5, 40] } },
-  'One-handed book holder': { movement: ['grasp'], hands: ['one'], play: ['calm'], fit: { reach_cm: [20, 60] } },
-  'Light Touch Switch (spare)': { movement: ['press'], hands: ['one', 'both'], fit: { palm_width_mm: [30, 90] } },
-  'Camera-mount switch arm': { movement: ['press', 'proximity'], hands: ['one', 'left', 'right'], fit: { reach_cm: [15, 70] } },
-  'Simple adaptive switch': { movement: ['press'], hands: ['one', 'both'], play: ['sound'] },
-  'Racing penguins (adapted)': { movement: ['press'], hands: ['one', 'both'], play: ['move', 'sound'] },
-  'Bubble machine, not adapted yet': { movement: ['press'], hands: ['both'], play: ['water'] },
+  'Switch-adapted racing penguins': { helps_with: ['moving'], access: ['press'], one_hand: true, press_force: ['light', 'moderate'], play: ['move', 'sound'] },
+  'Adapted bubble machine': { helps_with: ['moving'], access: ['press'], one_hand: true, press_force: ['light', 'moderate'], play: ['water'] },
+  'Star projector night light': { helps_with: ['moving'], access: ['press'], press_force: ['light', 'moderate'], play: ['light', 'calm'] },
+  'Light-up spinning top (adapted)': { helps_with: ['moving'], access: ['press'], one_hand: true, press_force: ['light', 'moderate'], play: ['light', 'move'] },
+  'Musical floor mat': { helps_with: ['moving'], access: ['press'], press_force: ['light', 'moderate'], play: ['sound'] },
+  'Jack-in-the-box with switch turner': { helps_with: ['moving'], access: ['press'], one_hand: true, press_force: ['light', 'moderate'], play: ['move', 'sound'] },
+  'Adapted bubble blower': { helps_with: ['moving'], access: ['press'], one_hand: true, press_force: ['light', 'moderate'], play: ['water'] },
+  'Suction-cup switch mount': { helps_with: ['moving'], access: ['press'], one_hand: true, press_force: ['light', 'moderate'] },
+  'One-handed book holder': { helps_with: ['moving'], access: ['grasp'], one_hand: true, play: ['calm'] },
+  'Light Touch Switch (spare)': { helps_with: ['moving'], access: ['press'], one_hand: true, press_force: ['light', 'moderate'] },
+  'Camera-mount switch arm': { helps_with: ['moving'], access: ['press', 'head'], one_hand: true, press_force: ['light', 'moderate'] },
+  'Simple adaptive switch': { helps_with: ['moving'], access: ['press'], one_hand: true, press_force: ['light', 'moderate'], play: ['sound'] },
+  'Racing penguins (adapted)': { helps_with: ['moving'], access: ['press'], one_hand: true, press_force: ['light', 'moderate'], play: ['move', 'sound'] },
+  'Bubble machine, not adapted yet': { helps_with: ['moving'], access: ['press'], press_force: ['light', 'moderate'], play: ['water'] },
 }
 
 /** Tags the listed rows; `ids` maps table → ids a manifest owns. */
@@ -47,7 +47,7 @@ async function applySuitsTags(db, ids) {
     for (const row of data) {
       const tags = byTitle[row[col]]
       if (!tags) continue
-      const { error: e } = await db.from(table).update({ movement: null, hands: null, play: null, fit: null, ...tags }).eq('id', row.id)
+      const { error: e } = await db.from(table).update({ helps_with: null, access: null, one_hand: null, press_force: null, play: null, ...(table === 'tutorials' ? { device_types: null } : {}), ...tags }).eq('id', row.id)
       if (e) throw new Error(`tag ${table} ${row[col]}: ${e.message}`)
       n++
     }

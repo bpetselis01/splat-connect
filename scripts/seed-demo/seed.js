@@ -324,10 +324,6 @@ async function phaseA(P) {
       age_min: t.age[0],
       age_max: t.age[1],
       safety_declared_at: t.status === 'draft' ? null : days(-40),
-      // 080: what the switch asks of a child, for "Suits <child>".
-      switch_target: t.switch?.target ?? null,
-      switch_force: t.switch?.force ?? null,
-      switch_hold: t.switch?.hold ?? null,
     })
     G[key] = id
     const photos = []
@@ -411,7 +407,6 @@ async function phaseA(P) {
         body: 'Put a small drop of hot glue in the square recess of the button base and press the switch in flat and level. Fill the recess around the cable with glue to seal it, no higher than the top edge. Slide the button top on, push the pin all the way in, and flush-cut it level with the base.',
       },
     ],
-    switch: { target: 'large', force: 'very_light', hold: 'moment' },
     contributors: [[mei.id, 'primary']],
     reviewed: { by: sarah.id, org: northbank },
   })
@@ -438,7 +433,6 @@ async function phaseA(P) {
       { name: '3.5 mm mono cable', quantity: 1, buy_links: [shop('Jaycar', '3.5mm mono cable')] },
     ],
     tools: solderingTools,
-    switch: { target: 'large', force: 'light', hold: 'moment' },
     contributors: [[mei.id, 'primary']],
     reviewed: { by: sarah.id, org: northbank },
   })
@@ -588,17 +582,16 @@ async function phaseA(P) {
     parent_id: priya.id, name: 'Arlo', age: 6, macs_level: 'III', macs_source: 'manual', bfmf_score: '3', bfmf_source: 'manual',
     hand_involvement: 'unilateral', assist_hand: 'left', challenges: ['Grasping', 'Fine motor', 'Fatigue'], grip_type: 'Palmar',
     env_context: 'Home', palm_width_mm: 58, wrist_circ_mm: 120, hand_dominance: 'Right', sensory_preferences: ['Soft', 'Lightweight'],
-    // 079 — the board's questions, the only ones the app asks now.
-    working_hand: 'right', press_force: 'light', aim: 'large', hold: 'second', everyday_needs: ['quiet', 'wipeable'],
-    // 120 — play measurements and what he enjoys.
-    enjoys: ['light', 'sound', 'water'], reach_cm: 45, tray_mm: 30,
+    // 128 — the four child questions, the same answers guides are tagged with.
+    helps_with: ['moving'], access: ['press', 'touch'], one_hand: true, press_force: 'light', enjoys: ['light', 'sound', 'water'],
+    everyday_needs: ['quiet', 'wipeable'], reach_cm: 45, tray_mm: 30,
   })
-  await insert('child_profiles', { parent_id: priya.id, name: 'Zara', age: 3, macs_source: 'estimated', bfmf_source: 'estimated', challenges: ['Coordination'], working_hand: 'not_sure' })
+  await insert('child_profiles', { parent_id: priya.id, name: 'Zara', age: 3, macs_source: 'estimated', bfmf_source: 'estimated', challenges: ['Coordination'], helps_with: ['seeing', 'calm'], access: ['watch'], enjoys: ['light', 'soft'] })
   await insert('child_profiles', {
     parent_id: tom.id, name: 'Ruby', age: 8, macs_level: 'II', macs_source: 'manual', hand_involvement: 'bilateral',
     challenges: ['Strength', 'Holding'], grip_type: 'Cylindrical', env_context: 'School', hand_dominance: 'Left', sensory_preferences: ['Textured'],
-    working_hand: 'left', press_force: 'moderate', aim: 'small', hold: 'as_long', everyday_needs: ['shared_siblings'],
-    enjoys: ['move', 'calm'], reach_cm: 60, tray_mm: 40,
+    helps_with: ['moving', 'learning'], access: ['grasp', 'press'], press_force: 'moderate', enjoys: ['move', 'calm', 'build'],
+    everyday_needs: ['shared_siblings'], reach_cm: 60, tray_mm: 40,
   })
   log('3 children', arlo)
 
