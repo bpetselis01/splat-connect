@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { createContributor, createTutorial, signIn, uniqueTitle } from '../helpers'
 
-// The board's #library: three one-choice facets, a sort menu, and the header
+// The board's #library: skill and time facets, the tag groups, a Recommended-first sort, and the header
 // search arriving as ?q=. Spec docs/superpowers/specs/2026-09-18-library-backend-design.md.
 
 test('the library lists an approved guide and hides a pending one', async ({ page }) => {
@@ -53,20 +53,18 @@ test('Time filters on hands-on minutes, and Needs printing on STL files', async 
   await expect(page.getByText(quick)).toHaveCount(0)
 })
 
-test('sort by build time, then flip it', async ({ page }) => {
+test('sort by Quickest', async ({ page }) => {
   const contributor = await createContributor()
   const marker = uniqueTitle('E2E Sort')
   await createTutorial(contributor.id, { title: `${marker} long`, status: 'approved', buildMinutes: 120 })
   await createTutorial(contributor.id, { title: `${marker} short`, status: 'approved', buildMinutes: 15 })
 
   await page.goto(`/library?q=${encodeURIComponent(marker)}`)
-  await page.getByRole('button', { name: 'Newest first' }).click()
-  await page.getByRole('button', { name: /Build time/ }).click()
+  // Recommended is the default: with no child profile it is newest first.
+  await expect(page.getByRole('button', { name: 'Recommended' })).toHaveAttribute('aria-pressed', 'true')
+  await page.getByRole('button', { name: 'Quickest' }).click()
   const titles = page.getByTestId('tutorial-card').locator('.browse-card__title')
   await expect(titles).toHaveText([`${marker} short`, `${marker} long`])
-
-  await page.getByRole('button', { name: 'Switch to longest first' }).click()
-  await expect(titles).toHaveText([`${marker} long`, `${marker} short`])
 })
 
 test('a signed-in visitor thanks a guide once, and the count shows on its card', async ({ page }) => {
