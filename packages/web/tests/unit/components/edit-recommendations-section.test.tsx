@@ -48,13 +48,24 @@ describe('EditRecommendationsSection', () => {
   it('saves the whole list, appended, when one is picked', async () => {
     const onSave = renderSection([rec('a')])
     fireEvent.change(screen.getByLabelText('Add a recommendation'), { target: { value: 'b' } })
-    await waitFor(() => expect(onSave).toHaveBeenCalledWith(['a', 'b']))
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith([{ recommended_id: 'a', required: false }, { recommended_id: 'b', required: false }]))
   })
 
   it('saves the whole list, minus the row, on remove', async () => {
     const onSave = renderSection([rec('a'), rec('b')])
     fireEvent.click(screen.getAllByRole('button', { name: 'Remove' })[0])
-    await waitFor(() => expect(onSave).toHaveBeenCalledWith(['b']))
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith([{ recommended_id: 'b', required: false }]))
+  })
+
+  it('saves the list with the toggled Required first', async () => {
+    const onSave = renderSection([rec('a'), rec('b')])
+    fireEvent.click(screen.getAllByLabelText('Required first')[1])
+    await waitFor(() =>
+      expect(onSave).toHaveBeenCalledWith([
+        { recommended_id: 'a', required: false },
+        { recommended_id: 'b', required: true },
+      ])
+    )
   })
 
   it('shows an error and keeps the list when the save fails', async () => {

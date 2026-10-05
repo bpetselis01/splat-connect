@@ -82,6 +82,25 @@ describe('TutorialView', () => {
     expect(screen.queryByTestId('fit-callout')).toBeNull()
   })
 
+  it('shows each step\'s tip and minutes, and the author\'s closing line after the last step', () => {
+    const steps = [
+      { id: 'a', tutorial_id: 't1', position: 1, title: 'Open it', body: 'Unscrew.', photo_url: null, tip: 'Keep the screws', minutes: 10 },
+      { id: 'b', tutorial_id: 't1', position: 2, title: null, body: 'Close.', photo_url: null },
+    ]
+    const { unmount } = render(<TutorialView tutorial={tutorial({ steps, done_note: 'Enjoy!' })} signedIn />)
+    expect(screen.getByTestId('step-tip')).toHaveTextContent('Keep the screws')
+    expect(screen.getByText('~10 min')).toBeInTheDocument()
+    expect(screen.getByTestId('done-note')).toHaveTextContent('Enjoy!')
+    unmount()
+    render(<TutorialView tutorial={tutorial({ steps })} signedIn />)
+    expect(screen.queryByTestId('done-note')).toBeNull()
+  })
+
+  it('pills a required recommendation', () => {
+    render(<TutorialView tutorial={tutorial({ tutorial_recommendations: [{ ...rec('a', 1), required: true }, rec('b', 2)] })} signedIn={false} />)
+    expect(screen.getAllByText('Required first')).toHaveLength(1)
+  })
+
   it('names the kind in the header', () => {
     render(<TutorialView tutorial={tutorial({ kind: 'assistive_tech' })} signedIn={false} />)
     expect(screen.getByText('Assistive tech')).toBeInTheDocument()

@@ -393,6 +393,12 @@ export function TutorialView({
           <div className="flex min-w-0 flex-1 flex-col gap-2">
             {st.title && <h3 className="m-0 text-[17px] font-extrabold leading-[1.3] text-ink">{st.title}</h3>}
             <p className="m-0 whitespace-pre-line text-[15px] leading-[1.55] text-ink">{st.body}</p>
+            {st.minutes != null && <p className="m-0 text-[13px] font-bold text-muted">~{st.minutes} min</p>}
+            {st.tip && (
+              <p data-testid="step-tip" className="m-0 rounded-[var(--radius-inset)] bg-honey-soft px-3 py-2 text-[14px] leading-[1.5] text-ink">
+                <strong>Tip:</strong> {st.tip}
+              </p>
+            )}
             {st.photo_url && safePhotoSrc(st.photo_url) && (
               <div className="relative mt-1 aspect-[4/3] w-full max-w-[460px] overflow-hidden rounded-[var(--radius-inset)] bg-sunken">
                 <Image
@@ -407,6 +413,12 @@ export function TutorialView({
           </div>
         </li>
       ))}
+      {tutorial.done_note && (
+        <li data-testid="done-note" className="rounded-[var(--radius-inset)] border border-line bg-brand-tint p-[18px]">
+          <p className="eyebrow m-0 text-muted">From the author</p>
+          <p className="m-0 mt-1 whitespace-pre-line text-[15px] leading-[1.55] text-ink">{tutorial.done_note}</p>
+        </li>
+      )}
     </ol>
   )
 
@@ -565,7 +577,7 @@ export function TutorialView({
               </p>
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              {recs.map(({ tutorials: r }) => {
+              {recs.map(({ tutorials: r, required }) => {
                 const Glyph = r.kind === 'assistive_tech' ? Cube : HandTap
                 return (
                   <div key={r.id} className="flex flex-col gap-2">
@@ -581,6 +593,7 @@ export function TutorialView({
                         </span>
                       </span>
                     </BoundaryLink>
+                    {required && <span className="badge self-start bg-brand-tint text-brand-deep">Required first</span>}
                     {r.status !== 'approved' && (
                       <span className="badge self-start bg-honey-soft text-ink">
                         Not yet approved — hidden from the public page

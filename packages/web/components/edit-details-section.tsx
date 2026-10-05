@@ -17,7 +17,7 @@ export function EditDetailsSection({
   onSave,
 }: {
   tutorial: Tutorial
-  onSave: (patch: { title: string; description: string | null; difficulty: Difficulty; build_minutes: number | null; age_min: number | null; age_max: number | null; kind: TutorialKind; maturity: TutorialMaturity; safety_declared?: true; toy_name: string | null; toy_brand: string | null; works_with: string | null; no_build_note: string | null; layer_height_mm?: number | null; infill_percent?: number | null; material?: string | null; print_minutes?: number | null; updated_at: string }) => Promise<void>
+  onSave: (patch: { title: string; description: string | null; difficulty: Difficulty; build_minutes: number | null; age_min: number | null; age_max: number | null; kind: TutorialKind; maturity: TutorialMaturity; safety_declared?: true; toy_name: string | null; toy_brand: string | null; works_with: string | null; no_build_note: string | null; done_note: string | null; layer_height_mm?: number | null; infill_percent?: number | null; material?: string | null; print_minutes?: number | null; updated_at: string }) => Promise<void>
 }) {
   const router = useRouter()
   const showToast = useToast()
@@ -46,6 +46,7 @@ export function EditDetailsSection({
         toy_brand: ((formData.get('toy_brand') as string) ?? '').trim() || null,
         works_with: ((formData.get('works_with') as string) ?? '').trim() || null,
         no_build_note: ((formData.get('no_build_note') as string) ?? '').trim() || null,
+        done_note: ((formData.get('done_note') as string) ?? '').trim() || null,
         ...(tutorial.kind === 'assistive_tech'
           ? {
               layer_height_mm: formData.get('layer_height_mm') === '' ? null : Number(formData.get('layer_height_mm')),
@@ -127,6 +128,11 @@ export function EditDetailsSection({
         <label htmlFor="edit-no-build" className="field-label">If someone would rather not build it (optional)</label>
         <input id="edit-no-build" name="no_build_note" maxLength={300} defaultValue={tutorial.no_build_note ?? ''} placeholder="e.g. Organisation 2 keeps printed mounts on the shelf if you would rather not print one." className="field" />
         <p className="mt-1 text-xs leading-relaxed text-muted">Sits next to &ldquo;Get help with this build&rdquo; in the sidebar, before the link to the toy library. Leave blank and we just show the link.</p>
+      </div>
+      <div>
+        <label htmlFor="edit-done-note" className="field-label">Your closing line (optional)</label>
+        <textarea id="edit-done-note" name="done_note" rows={2} maxLength={300} defaultValue={tutorial.done_note ?? ''} placeholder="e.g. That's it. Test it with the lid off before you close it up." className="field" />
+        <p className="mt-1 text-xs leading-relaxed text-muted">Shown after the last step, as a word from you.</p>
       </div>
       <div>
         <label htmlFor="edit-difficulty" className="field-label">Difficulty</label>
