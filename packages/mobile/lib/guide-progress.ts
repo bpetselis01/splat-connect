@@ -1,6 +1,6 @@
 // packages/mobile/lib/guide-progress.ts
 //
-// A parent's ticks on a guide — steps done, tools already owned — kept on the
+// A parent's ticks on a guide — steps done, parts gathered, tools owned — kept on the
 // device, per guide, the way lib/learn.ts keeps Learn progress. Never a
 // source of truth: unreadable storage starts empty, a failed write keeps the
 // tick in memory for this visit.
@@ -9,7 +9,7 @@ import type { TutorialStep } from '@splat-connect/types'
 import { resolveAuthStorage } from './supabase-storage'
 
 // SecureStore keys allow [A-Za-z0-9._-]; a uuid fits.
-export const ticksKey = (kind: 'steps' | 'tools', tutorialId: string) => `guide-${kind}.${tutorialId}`
+export const ticksKey = (kind: 'steps' | 'tools' | 'parts', tutorialId: string) => `guide-${kind}.${tutorialId}`
 
 /** What the device holds, kept only where it names something the guide still has. */
 export function parseTicks(raw: string | null, validIds: readonly string[]): Set<string> {
@@ -44,6 +44,9 @@ export function stepProgress(steps: readonly StepRef[], ticked: ReadonlySet<stri
 export function useDeviceTicks(key: string, validIds: readonly string[]) {
   const storage = resolveAuthStorage()
   const [ticked, setTicked] = useState<Set<string>>(new Set())
+  // Which key and step list the stored ticks were last read for (a failed read
+  // counts): build mode waits for its own steps' read to know where to resume.
+  const [readFor, setReadFor] = useState<string | null>(null)
   // A tap before the read lands wins: the read would otherwise undo it.
   const touched = useRef(false)
   const ids = validIds.join(',')
@@ -57,6 +60,9 @@ export function useDeviceTicks(key: string, validIds: readonly string[]) {
         if (!ignore && !touched.current) setTicked(parseTicks(raw, validIds))
       })
       .catch((err) => console.error('[useDeviceTicks] could not read ticks, keeping them in memory:', err))
+      .finally(() => {
+        if (!ignore) setReadFor(`${key}|${ids}`)
+      })
     return () => {
       ignore = true
     }
@@ -73,6 +79,7 @@ export function useDeviceTicks(key: string, validIds: readonly string[]) {
 
   return {
     ticked,
+    loaded: readFor === `${key}|${ids}`,
     toggle: (id: string) => {
       const next = new Set(ticked)
       if (next.has(id)) next.delete(id)
