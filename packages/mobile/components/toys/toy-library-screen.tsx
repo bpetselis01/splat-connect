@@ -306,7 +306,6 @@ const styles = StyleSheet.create({
   searchBar: {
     borderRadius: theme.radii.pill,
     borderWidth: theme.border.hairline,
-    paddingHorizontal: theme.spacing(4),
     minHeight: 52,
     ...theme.shadow(1),
   },

@@ -295,7 +295,6 @@ const styles = StyleSheet.create({
   searchBar: {
     borderRadius: theme.radii.pill,
     borderWidth: theme.border.hairline,
-    paddingHorizontal: theme.spacing(4),
     // A search field carries no margin of its own (TextField only gives one
     // to non-search fields), so the cards below sat 4px under it.
     marginBottom: SEARCH_GAP,
