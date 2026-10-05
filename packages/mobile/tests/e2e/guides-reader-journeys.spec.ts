@@ -6,60 +6,69 @@ import { addSteps } from './guides-fixtures'
 // community notes. A web build keeps device ticks in localStorage, so a reload is
 // the same proof a relaunch is on a phone.
 
-test('ticked steps survive a reload, and Reset clears them', async ({ page }) => {
+test('ticked steps survive a reload, and build mode resumes where they stopped', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const title = uniqueTitle('E2E Mobile Ticks')
   const id = await createTutorial(contributor.id, { title, status: 'approved' })
-  await addSteps(id, [{ title: 'Open the bay', body: 'One screw.' }, { title: 'Slide it in', body: 'Copper side down.' }])
+  await addSteps(id, [{ title: 'Open the bay', body: 'One screw.' }, { title: 'Slide it in', body: 'Copper side down.' }, { title: 'Close it', body: 'Click.' }])
 
   await page.goto(`/guides/${id}`)
-  await expect(page.getByText('0 of 2 steps done')).toBeVisible()
-  await page.getByLabel('Mark step 1 done').click()
-  await expect(page.getByText('1 of 2 steps done')).toBeVisible()
-  await expect(page.getByText('Pick up at step 2 — Slide it in')).toBeVisible()
+  await page.getByRole('button', { name: 'Start building', exact: true }).click()
+  await page.getByRole('button', { name: 'Start step 1', exact: true }).click()
+  await page.getByRole('button', { name: 'Done, next step', exact: true }).click()
+  await page.getByRole('button', { name: 'Done, next step', exact: true }).click()
+  await expect(page.getByText('Step 3 of 3')).toBeVisible()
 
+  await page.goto(`/guides/${id}`)
+  await expect(page.getByText('2 of 3 steps done')).toBeVisible()
   await page.reload()
-  await expect(page.getByText('1 of 2 steps done')).toBeVisible()
-
-  await page.getByRole('button', { name: 'Reset' }).click()
-  await expect(page.getByText('0 of 2 steps done')).toBeVisible()
-  await page.reload()
-  await expect(page.getByText('0 of 2 steps done')).toBeVisible()
+  await page.getByRole('button', { name: 'Pick up at step 3', exact: true }).click()
+  await expect(page.getByText('Step 3 of 3')).toBeVisible()
+  await expect(page.getByText('Click.')).toBeVisible()
 })
 
-test('ticking every step shows the completion, and un-ticking one withdraws it', async ({ page }) => {
+test('finishing every step shows the completion, and the guide then offers Build it again', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile AllDone'), status: 'approved' })
-  await addSteps(id, [{ body: 'Only step.' }])
+  await addSteps(id, [{ body: 'Only step.' }, { body: 'Second step.' }])
 
   await page.goto(`/guides/${id}`)
-  await page.getByLabel('Mark step 1 done').click()
-  await expect(page.getByText('100%')).toBeVisible()
-  await page.getByLabel('Mark step 1 as not done').click()
-  await expect(page.getByText('0 of 1 steps done')).toBeVisible()
+  await page.getByRole('button', { name: 'Start building', exact: true }).click()
+  await page.getByRole('button', { name: 'Start step 1', exact: true }).click()
+  await page.getByRole('button', { name: 'Done, next step', exact: true }).click()
+  await page.getByRole('button', { name: 'Done', exact: true }).click()
+  await expect(page.getByText('All 2 steps done')).toBeVisible()
+  await page.getByRole('button', { name: 'Back to the guide', exact: true }).click()
+  // No reload: the guide page reads the ticks again when it comes back into focus.
+  await expect(page.getByRole('button', { name: 'Build it again', exact: true })).toBeVisible()
 })
 
-test('a guide with no steps shows no step block, only parts and tools', async ({ page }) => {
+test('a guide with no steps says the steps are in the PDF and makes Download PDF primary', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile NoSteps'), status: 'approved' })
 
   await page.goto(`/guides/${id}`)
+  await expect(page.getByText('The steps are in the PDF.')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Download PDF', exact: true }).first()).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Start building' })).toHaveCount(0)
+  await page.getByRole('tab', { name: 'Parts & tools' }).click()
   await expect(page.getByText('E2E part ×2')).toBeVisible()
-  await expect(page.getByText(/steps done/)).toHaveCount(0)
 })
 
-test('a hundred-and-twenty-step guide opens and ticks its last step', async ({ page }) => {
+test('a sixty-step guide opens in build mode at step 1 of 60 and moves on', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile ManySteps'), status: 'approved' })
   // position is checked 1-60 by the database, so the most a guide can carry is 60.
   await addSteps(id, Array.from({ length: 60 }, (_, i) => ({ body: `Step body ${i + 1}` })))
 
   await page.goto(`/guides/${id}`)
-  await expect(page.getByText('0 of 60 steps done')).toBeVisible()
-  const last = page.getByLabel('Mark step 60 done')
-  await last.scrollIntoViewIfNeeded()
-  await last.click()
-  await expect(page.getByText('1 of 60 steps done')).toBeVisible()
+  await expect(page.getByText('60 steps').first()).toBeVisible()
+  await page.getByRole('button', { name: 'Start building', exact: true }).click()
+  await page.getByRole('button', { name: 'Start step 1', exact: true }).click()
+  await expect(page.getByText('Step 1 of 60')).toBeVisible()
+  await page.getByRole('button', { name: 'Done, next step', exact: true }).click()
+  await expect(page.getByText('Step 2 of 60')).toBeVisible()
+  await expect(page.getByText('Step body 2', { exact: true }).last()).toBeVisible()
 })
 
 test('ticked tools survive a reload', async ({ page }) => {
@@ -67,10 +76,12 @@ test('ticked tools survive a reload', async ({ page }) => {
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile ToolTicks'), status: 'approved' })
 
   await page.goto(`/guides/${id}`)
+  await page.getByRole('tab', { name: 'Parts & tools' }).click()
   await expect(page.getByText('0 of 1 already yours')).toBeVisible()
   await page.getByLabel('I already have E2E tool').click()
   await expect(page.getByText('1 of 1 already yours')).toBeVisible()
   await page.reload()
+  await page.getByRole('tab', { name: 'Parts & tools' }).click()
   await expect(page.getByText('1 of 1 already yours')).toBeVisible()
 })
 
@@ -79,6 +90,7 @@ test('a reader posts a note as a missing step and sees it under Discussion', asy
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile Notes'), status: 'approved' })
 
   await page.goto(`/guides/${id}`)
+  await page.getByRole('tab', { name: /^Notes/ }).click()
   const post = page.getByRole('button', { name: 'Post', exact: true })
   await expect(post).toBeDisabled()
 
@@ -103,6 +115,7 @@ test('a note that fails to post keeps its words and says so', async ({ page }) =
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile NoteFails'), status: 'approved' })
 
   await page.goto(`/guides/${id}`)
+  await page.getByRole('tab', { name: /^Notes/ }).click()
   await page.route(`**/api/tutorials/${id}/notes`, (route) => (route.request().method() === 'POST' ? route.fulfill({ status: 500, contentType: 'application/json', body: '{"error":"boom"}' }) : route.continue()))
   await page.getByRole('button', { name: 'Missing step', exact: true }).click()
   await page.getByLabel('Your note').fill('Keep these words')
@@ -117,6 +130,7 @@ test('the author deletes their own note', async ({ page }) => {
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile NoteDelete'), status: 'approved' })
 
   await page.goto(`/guides/${id}`)
+  await page.getByRole('tab', { name: /^Notes/ }).click()
   await page.getByRole('button', { name: 'Missing step', exact: true }).click()
   await page.getByLabel('Your note').fill('Delete me later')
   await page.getByRole('button', { name: 'Post', exact: true }).click()
