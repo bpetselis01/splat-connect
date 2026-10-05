@@ -37,6 +37,7 @@ const SECTION_ICON: Record<SectionId, ComponentProps<typeof Ionicons>['name']> =
   details: 'document-text-outline',
   steps: 'list-outline',
   safety: 'shield-checkmark-outline',
+  suits: 'people-outline',
   parts: 'hardware-chip-outline',
   tools: 'construct-outline',
   files: 'folder-open-outline',
@@ -126,7 +127,7 @@ export function TutorialHub({ id, justCreated, fromPdf }: { id: string; justCrea
   const missing = getMissingFields(tutorial)
   const sections = sectionsFor(tutorial.kind)
   const incomplete = new Set(missing.map((g) => g.section))
-  const { ready } = sectionProgress(tutorial)
+  const { ready, total } = sectionProgress(tutorial)
   const isDraft = tutorial.status === 'draft'
 
   async function handleSubmit() {
@@ -179,12 +180,12 @@ export function TutorialHub({ id, justCreated, fromPdf }: { id: string; justCrea
           style={styles.bar}
           accessible
           accessibilityRole="progressbar"
-          accessibilityValue={{ min: 0, max: sections.length, now: ready }}
+          accessibilityValue={{ min: 0, max: total, now: ready }}
         >
-          <View testID="hub-progress-fill" style={[styles.barFill, { width: `${(ready / sections.length) * 100}%` }]} />
+          <View testID="hub-progress-fill" style={[styles.barFill, { width: `${(ready / total) * 100}%` }]} />
         </View>
         <Text style={styles.progressText}>
-          {ready} of {sections.length} sections complete
+          {ready} of {total} sections complete
         </Text>
       </View>
 

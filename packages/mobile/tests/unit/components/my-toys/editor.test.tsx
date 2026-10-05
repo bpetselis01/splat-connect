@@ -171,6 +171,10 @@ describe('Editor', () => {
         switch_fitting: null,
         volume: null,
         tutorial_id: null,
+        movement: null,
+        hands: null,
+        play: null,
+        fit: null,
       })
     )
   })

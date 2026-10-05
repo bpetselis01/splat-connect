@@ -13,6 +13,7 @@
 // 250ms: writes queue on one promise chain so a second save always sees the
 // updated_at the first established, rather than racing it into a 400.
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
+import { apiMessage } from '@splat-connect/types'
 import type { BuyLink, Part, Tool, ToolGetBy, TutorialSafetyNote, TutorialStep, TutorialWithDetails } from '@splat-connect/types'
 import { apiClient } from './api-client'
 
@@ -231,7 +232,8 @@ function useTutorialDraft(id: string): TutorialDraft {
           pendingSafety.current ??= safety
         }
         setSaveState('error')
-        setSaveError(SAVE_ERROR)
+        // A refused write carries its own sentence (a range out of bounds); anything else is the generic line.
+        setSaveError(refused ? apiMessage(err, SAVE_ERROR) : SAVE_ERROR)
       })
     return writes.current as Promise<void>
   }
