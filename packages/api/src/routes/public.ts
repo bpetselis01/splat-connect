@@ -183,14 +183,18 @@ publicRoutes.get('/tutorials/:id/notes', async (c) => {
  * answered for anyone lets a stranger narrow it until a member's toy drops out
  * — bisecting their postcode. Signed out, the list is what it was before.
  */
+/** Whether the caller sent a valid session. These routes run before authMiddleware. */
+async function signedIn(c: Context): Promise<boolean> {
+  const header = c.req.header('Authorization')
+  if (!header?.startsWith('Bearer ')) return false
+  const { data } = await createAdminClient().auth.getUser(header.slice(7))
+  return !!data.user
+}
+
 async function publicNear(c: Context): Promise<Near | string> {
   const near = readNear((key) => c.req.query(key))
   if (typeof near === 'string' || !near.near) return near
-  const header = c.req.header('Authorization')
-  const { data } = header?.startsWith('Bearer ')
-    ? await createAdminClient().auth.getUser(header.slice(7))
-    : { data: { user: null } }
-  return data.user ? near : { near: null, within: null }
+  return (await signedIn(c)) ? near : { near: null, within: null }
 }
 
 type ListedToy = {
@@ -1702,12 +1706,14 @@ publicRoutes.post('/contact', async (c) => {
  * The Map tab: toys, printers, events, drop-offs and organisations, grouped by
  * suburb (map.ts). Admin client: the pickup postcodes are not public, and only
  * a suburb-level point built from them leaves here. A family's toy sits at its
- * owner's pickup suburb (Byron, 2026-10-05). `near` counts only for a
- * signed-in caller, as on every other list.
+ * owner's pickup suburb (Byron, 2026-10-05), and only for a signed-in caller:
+ * a logged-out request gets organisations' toys alone, so the families'
+ * suburbs cannot be scraped. `near` likewise counts only when signed in.
  */
 publicRoutes.get('/map', async (c) => {
   const near = await publicNear(c)
   if (typeof near === 'string') return c.json({ error: near }, 400)
+  const member = await signedIn(c)
   const admin = createAdminClient()
   const [toys, printers, events, orgs, unavailable] = await Promise.all([
     admin.from('toys').select('id, name, owner_id, owner_org_id').eq('status', 'published'),
@@ -1729,7 +1735,7 @@ publicRoutes.get('/map', async (c) => {
   const orgById = new Map(orgRows.map((o) => [o.id, o]))
   const hidden = new Set(unavailable)
   const shownToys = ((toys.data ?? []) as Array<{ id: string; name: string; owner_id: string | null; owner_org_id: string | null }>).filter(
-    (t) => !hidden.has(t.id)
+    (t) => !hidden.has(t.id) && (member || !!t.owner_org_id)
   )
   const families = [...new Set(shownToys.map((t) => t.owner_id).filter((id): id is string => !!id))]
   const familyRows = (
