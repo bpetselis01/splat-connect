@@ -18,6 +18,29 @@ export const KIND_ORDER = Object.keys(KINDS) as MapKind[]
 
 /** A place's identity: one suburb in one state. */
 export const placeKey = (p: MapPlace) => `${p.suburb}|${p.state}`
+export const itemKey = (i: MapItem) => `${i.kind}:${i.id}`
+
+/**
+ * One map point per item, for the clustering source. Items in one suburb share
+ * its point, so they fan out on a small spiral (about 100-300 m) to come apart
+ * at full zoom. The spiral is drawing only: it is not where anything is.
+ */
+export function toFeatures(places: MapPlace[]): GeoJSON.FeatureCollection<GeoJSON.Point> {
+  return {
+    type: 'FeatureCollection',
+    features: places.flatMap((p) =>
+      p.items.map((i, n) => {
+        const r = p.items.length === 1 ? 0 : 0.0012 * Math.sqrt(n + 0.5)
+        const a = n * 2.4 // the golden angle, in radians: no two items line up
+        return {
+          type: 'Feature' as const,
+          geometry: { type: 'Point' as const, coordinates: [p.lng + (r * Math.cos(a)) / Math.cos((p.lat * Math.PI) / 180), p.lat + r * Math.sin(a)] },
+          properties: { place: placeKey(p), item: itemKey(i), color: KINDS[i.kind].color },
+        }
+      })
+    ),
+  }
+}
 
 export const MATERIALS = ['PLA', 'PETG', 'TPU'] as const
 export const DISTANCES = [2, 5, 10, 25] as const

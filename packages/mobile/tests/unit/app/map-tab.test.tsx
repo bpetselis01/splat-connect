@@ -14,7 +14,7 @@ jest.mock('../../../lib/capabilities', () => ({
   useCapabilities: () => ({ caps: { profile: { pickup_postcode: mockPostcode } }, loading: false }),
 }))
 jest.mock('../../../components/map/MapCanvas', () => ({
-  MapCanvas: ({ places, onSelect }: { places: MapPlace[]; onSelect: (k: string) => void }) => {
+  MapCanvas: ({ places, onSelect }: { places: MapPlace[]; onSelect: (place: string, item?: string) => void }) => {
     const { Pressable, Text, View } = jest.requireActual('react-native')
     return (
     <View testID="map">

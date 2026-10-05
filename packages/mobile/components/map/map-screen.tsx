@@ -18,7 +18,7 @@ import { theme } from '../../lib/theme'
 import { tabBarClearance } from '../../lib/tab-bar-layout'
 import {
   KINDS, KIND_ORDER, MATERIALS, DISTANCES, NO_FILTERS,
-  applyFilters, filterCount, itemMeta, itemRoute, placeKey,
+  applyFilters, filterCount, itemKey, itemMeta, itemRoute, placeKey,
   type MapFilters, type When,
 } from '../../lib/map-filters'
 import { TextField } from '../ui/TextField'
@@ -50,7 +50,8 @@ export function MapScreen() {
   const [draft, setDraft] = useState<MapFilters>(NO_FILTERS)
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [list, setList] = useState(false)
-  const [selected, setSelected] = useState<string | null>(null)
+  // The tapped dot: its place, and its item.
+  const [selected, setSelected] = useState<{ place: string; item?: string } | null>(null)
   const [query, setQuery] = useState('')
   const [topHeight, setTopHeight] = useState(140)
 
@@ -74,7 +75,8 @@ export function MapScreen() {
       .filter((p) => p.items.length > 0)
   }, [places, kinds, filters, query])
   const total = shown.reduce((n, p) => n + p.items.length, 0)
-  const open = list ? undefined : shown.find((p) => placeKey(p) === selected)
+  const openPlace = list || !selected ? undefined : shown.find((p) => placeKey(p) === selected.place)
+  const open = openPlace && selected?.item ? { ...openPlace, items: openPlace.items.filter((i) => itemKey(i) === selected.item) } : openPlace
   const count = filterCount(filters)
   const bottom = tabBarClearance(insets.bottom)
 
@@ -90,7 +92,7 @@ export function MapScreen() {
   const row = (p: MapPlace) =>
     p.items.map((i) => (
       <ListRow
-        key={`${i.kind}:${i.id}`}
+        key={itemKey(i)}
         thumb={<RowThumb glyph={KINDS[i.kind].icon} tint={KINDS[i.kind].soft} />}
         title={i.title}
         meta={[itemMeta(i), list ? p.suburb : null].filter(Boolean).join(' · ')}
@@ -128,7 +130,12 @@ export function MapScreen() {
     )
   } else {
     body = places ? (
-      <MapCanvas places={shown} selected={selected} onSelect={setSelected} inset={{ top: topHeight, bottom }} />
+      <MapCanvas
+        places={shown}
+        selected={selected?.item ?? null}
+        onSelect={(place, item) => setSelected(place ? { place, item } : null)}
+        inset={{ top: topHeight, bottom }}
+      />
     ) : (
       <View style={[StyleSheet.absoluteFill, styles.loading]} />
     )
@@ -171,7 +178,7 @@ export function MapScreen() {
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
           {KIND_ORDER.map((k) => (
-            <Chip key={k} variant="filter" icon={KINDS[k].icon} label={KINDS[k].label} active={kinds.has(k)} onPress={() => toggleKind(k)} />
+            <Chip key={k} variant="filter" swatch={KINDS[k].color} label={KINDS[k].label} active={kinds.has(k)} onPress={() => toggleKind(k)} />
           ))}
         </ScrollView>
       </View>

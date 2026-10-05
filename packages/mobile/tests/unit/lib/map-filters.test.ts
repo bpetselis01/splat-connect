@@ -1,5 +1,5 @@
 import type { MapPlace } from '@splat-connect/types'
-import { applyFilters, filterCount, itemMeta, itemRoute, KIND_ORDER, NO_FILTERS } from '../../../lib/map-filters'
+import { applyFilters, filterCount, itemMeta, itemRoute, KIND_ORDER, NO_FILTERS, toFeatures } from '../../../lib/map-filters'
 
 const all = new Set(KIND_ORDER)
 // Wed 1 Oct 2026, local time.
@@ -60,4 +60,19 @@ it('itemRoute and itemMeta', () => {
   expect(itemRoute({ kind: 'org', id: 'o1', title: '', meta: null })).toBe('/toy-library/organisation/o1')
   expect(itemMeta({ kind: 'printer', id: 'p', title: '', meta: 'PLA, PETG' })).toBe('Printer · PLA, PETG')
   expect(itemMeta({ kind: 'toy', id: 't', title: '', meta: null })).toBe('Toy')
+})
+
+describe('toFeatures', () => {
+  it('one point per item; a lone item sits on its suburb, several fan out close by', () => {
+    const fc = toFeatures([places[0], place({ suburb: 'Solo', items: [{ kind: 'org', id: 'o', title: 'O', meta: null }] })])
+    expect(fc.features).toHaveLength(4)
+    expect(fc.features[3].geometry.coordinates).toEqual([151.18, -33.9])
+    expect(fc.features[3].properties).toEqual({ place: 'Solo|NSW', item: 'org:o', color: expect.any(String) })
+    const fan = fc.features.slice(0, 3).map((f) => f.geometry.coordinates)
+    expect(new Set(fan.map(String)).size).toBe(3)
+    for (const [lng, lat] of fan) {
+      expect(Math.abs(lng - 151.18)).toBeLessThan(0.005)
+      expect(Math.abs(lat + 33.9)).toBeLessThan(0.005)
+    }
+  })
 })

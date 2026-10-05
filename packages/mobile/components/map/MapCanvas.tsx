@@ -3,21 +3,27 @@
 // The only file that knows which map library draws the Map tab. MapLibre with
 // OpenFreeMap tiles: free, no key, no request cap. Moving to Google means
 // rewriting this file with react-native-maps against the same props.
-import { View, Text, StyleSheet } from 'react-native'
-import { Ionicons } from '@expo/vector-icons'
-import { Map, Camera, Marker, type LngLatBounds } from '@maplibre/maplibre-react-native'
+//
+// Pins are MapLibre's own clustering: a number is a cluster, and tapping it
+// zooms to where it splits; at full zoom every item is its own coloured dot.
+import { useMemo, useRef } from 'react'
+import { StyleSheet } from 'react-native'
+import { Map, Camera, GeoJSONSource, Layer, type CameraRef, type GeoJSONSourceRef, type LngLatBounds } from '@maplibre/maplibre-react-native'
 import type { MapPlace } from '@splat-connect/types'
-import { KINDS, placeKey } from '../../lib/map-filters'
+import { toFeatures } from '../../lib/map-filters'
 import { theme } from '../../lib/theme'
 
 const STYLE = 'https://tiles.openfreemap.org/styles/positron'
 // Sydney, for a first frame with nothing to frame.
 const SYDNEY: LngLatBounds = [150.9, -34.0, 151.35, -33.7]
+const HAS_COUNT = ['has', 'point_count'] as const
 
 export type MapCanvasProps = {
   places: MapPlace[]
+  /** The tapped item's key (kind:id), drawn larger. */
   selected: string | null
-  onSelect: (key: string | null) => void
+  /** A dot was tapped (its place and item keys), or the map itself (null). */
+  onSelect: (place: string | null, item?: string) => void
   /** Space the overlays cover, so framed pins are not hidden under them. */
   inset: { top: number; bottom: number }
 }
@@ -32,59 +38,73 @@ function bounds(places: MapPlace[]): LngLatBounds {
 }
 
 export function MapCanvas({ places, selected, onSelect, inset }: MapCanvasProps) {
+  const camera = useRef<CameraRef>(null)
+  const source = useRef<GeoJSONSourceRef>(null)
+  const data = useMemo(() => toFeatures(places), [places])
+
   return (
-    <Map style={StyleSheet.absoluteFill} mapStyle={STYLE} logo={false} compass={false} onPress={() => onSelect(null)}>
+    <Map
+      style={StyleSheet.absoluteFill}
+      mapStyle={STYLE}
+      logo={false}
+      compass={false}
+      attributionPosition={{ bottom: inset.bottom + 8, left: 12 }}
+      onPress={() => onSelect(null)}
+    >
       <Camera
-        initialViewState={{ bounds: bounds(places), padding: { top: inset.top + 24, bottom: inset.bottom + 24, left: 40, right: 40 } }}
+        ref={camera}
+        initialViewState={{ bounds: bounds(places), padding: { top: inset.top + 32, bottom: inset.bottom + 32, left: 40, right: 40 } }}
       />
-      {places.map((p) => {
-        const key = placeKey(p)
-        const kinds = new Set(p.items.map((i) => i.kind))
-        const one = kinds.size === 1 ? KINDS[p.items[0].kind] : null
-        const on = key === selected
-        return (
-          <Marker
-            key={key}
-            lngLat={[p.lng, p.lat]}
-            anchor="bottom"
-            onPress={() => onSelect(on ? null : key)}
-          >
-            <View
-              style={styles.pin}
-              accessible
-              accessibilityRole="button"
-              accessibilityLabel={`${p.suburb}, ${p.items.length} ${p.items.length === 1 ? 'place' : 'places'}`}
-            >
-              <View style={[styles.bubble, { backgroundColor: one?.color ?? theme.colors.ink }, on && styles.on]}>
-                {one && p.items.length === 1 ? (
-                  <Ionicons name={one.icon} size={15} color={theme.colors.surface} />
-                ) : (
-                  <Text style={styles.count}>{p.items.length}</Text>
-                )}
-              </View>
-              <View style={styles.stem} />
-            </View>
-          </Marker>
-        )
-      })}
+      <GeoJSONSource
+        ref={source}
+        id="places"
+        data={data}
+        cluster
+        clusterRadius={44}
+        clusterMaxZoom={14}
+        onPress={async (e) => {
+          e.stopPropagation()
+          const f = e.nativeEvent.features[0]
+          if (!f || f.geometry.type !== 'Point') return
+          const props = f.properties ?? {}
+          if (props.cluster) {
+            const zoom = await source.current?.getClusterExpansionZoom(props.cluster_id)
+            if (zoom !== undefined) camera.current?.easeTo({ center: f.geometry.coordinates as [number, number], zoom, duration: 500 })
+          } else {
+            onSelect(props.place, props.item)
+          }
+        }}
+      >
+        <Layer
+          type="circle"
+          id="clusters"
+          filter={HAS_COUNT as never}
+          paint={{
+            'circle-color': theme.colors.ink,
+            'circle-radius': ['step', ['get', 'point_count'], 17, 10, 21, 50, 26],
+            'circle-stroke-width': 2.5,
+            'circle-stroke-color': theme.colors.surface,
+          }}
+        />
+        <Layer
+          type="symbol"
+          id="cluster-count"
+          filter={HAS_COUNT as never}
+          layout={{ 'text-field': ['get', 'point_count_abbreviated'], 'text-font': ['Noto Sans Bold'], 'text-size': 14, 'text-allow-overlap': true }}
+          paint={{ 'text-color': theme.colors.surface }}
+        />
+        <Layer
+          type="circle"
+          id="items"
+          filter={['!', HAS_COUNT] as never}
+          paint={{
+            'circle-color': ['get', 'color'],
+            'circle-radius': ['case', ['==', ['get', 'item'], selected ?? ''], 13, 9],
+            'circle-stroke-width': 2.5,
+            'circle-stroke-color': theme.colors.surface,
+          }}
+        />
+      </GeoJSONSource>
     </Map>
   )
 }
-
-const styles = StyleSheet.create({
-  pin: { alignItems: 'center' },
-  bubble: {
-    minWidth: 32,
-    height: 32,
-    paddingHorizontal: 8,
-    borderRadius: theme.radii.pill,
-    borderWidth: 2.5,
-    borderColor: theme.colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...theme.shadow(2),
-  },
-  on: { transform: [{ scale: 1.18 }] },
-  count: { fontFamily: theme.fonts.black, fontSize: 14, color: theme.colors.surface },
-  stem: { width: 2.5, height: 7, backgroundColor: theme.colors.surface },
-})
