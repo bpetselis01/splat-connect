@@ -158,6 +158,13 @@ describe('TutorialView', () => {
     expect(screen.getByRole('link', { name: 'Buy Switch from Jaycar' })).toHaveAttribute('href', 'https://shop.test/switch')
   })
 
+  it('never makes a buy link that is not a web address', () => {
+    const parts = [{ id: 'p1', tutorial_id: 't1', name: 'Switch', quantity: 1, is_optional: false, buy_links: [{ label: 'Evil', url: 'javascript:alert(1)' }, { label: 'Jaycar', url: 'https://shop.test/switch' }] }]
+    render(<TutorialView tutorial={tutorial({ parts })} signedIn={false} />)
+    expect(screen.queryByRole('link', { name: 'Buy Switch from Evil' })).toBeNull()
+    expect(screen.getByRole('link', { name: 'Buy Switch from Jaycar' })).toBeTruthy()
+  })
+
   it('shows each tool’s note and how to get it', () => {
     render(
       <TutorialView

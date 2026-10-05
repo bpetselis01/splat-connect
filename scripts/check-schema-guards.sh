@@ -675,6 +675,10 @@ select * from (values
         and coalesce(qual, with_check) not like '%auth.uid()%'
         and coalesce(qual, with_check) not like '%is_admin()%')),
 
+  ('130 parts and tools buy links are web addresses only',
+   (select count(*) = 2 from pg_constraint
+      where conname in ('parts_buy_links_web', 'tools_buy_links_web'))),
+
   ('120 child_profiles palm_width_mm is ranged 20-250',
    (select count(*) = 1 from pg_constraint
       where conname = 'child_profiles_palm_width_range'

@@ -92,7 +92,12 @@ function listNames(names: string[]): string {
   return names.length <= 1 ? (names[0] ?? '') : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`
 }
 
-function BuyLinks({ item, links }: { item: string; links: BuyLink[] }) {
+// 130 refuses anything but a web address, but a row older than it, or from a
+// database it has not reached, must still never become a javascript: href.
+const isWeb = (url: string) => /^https?:\/\//i.test(url.trim())
+
+function BuyLinks({ item, links: all }: { item: string; links: BuyLink[] }) {
+  const links = all.filter((bl) => isWeb(bl.url))
   if (links.length === 0) return null
   return (
     <span className="flex flex-wrap gap-x-3 gap-y-0.5">
