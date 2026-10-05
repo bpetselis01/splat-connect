@@ -1,9 +1,9 @@
 'use client'
 /**
- * "Who it suits" (127), on the guide editor and the toy editor: the board's
- * child questions, answered from the item's side. Movement, hands and play are
- * chip groups; each measurement is an optional from–to pair. None is required,
- * and an untagged item simply never matches those library filters.
+ * "Who it's for" (128), on the guide editor and the toy editor: the four child
+ * questions — the same answers a child's profile gives — plus Device type on a
+ * guide. Chip groups only; none is required, and an untagged item never
+ * matches those filters or comes up as recommended.
  *
  * Saves itself through the browser client rather than a server action, so a
  * refused value arrives with the API's own sentence (a server action's error
@@ -11,79 +11,66 @@
  * optimistic lock, so `lock` reads it first, the way the server pages do.
  */
 import { useState } from 'react'
-import {
-  CHILD_MEASURES,
-  ENJOYS,
-  HANDS,
-  MOVEMENTS,
-  apiMessage,
-  readSuits,
-  type Suits,
-} from '@splat-connect/types'
+import { CHILD_QUESTIONS, DEVICE_TYPES, ONE_HAND_LABEL, apiMessage, type Suits } from '@splat-connect/types'
 import { browserApiClient } from '@/lib/browser-api-client'
 
-type Option = { value: string; label: string }
-const GROUPS = [
-  { key: 'movement', legend: 'Movement', options: MOVEMENTS as readonly Option[] },
-  { key: 'hands', legend: 'Hands', options: HANDS as readonly Option[] },
-  { key: 'play', legend: 'Play', options: ENJOYS as readonly Option[] },
-] as const
-
-type Text = Record<string, [string, string]>
+type Option = { readonly value: string; readonly label: string }
+const ITEM_LEGEND = { helps_with: 'Helps with', access: 'How a child uses it', press_force: 'Press force it works with', play: 'Play' } as const
+const groupsFor = (guide: boolean): { key: string; legend: string; options: readonly Option[] }[] => [
+  ...(guide ? [{ key: 'device_types', legend: 'What is it?', options: DEVICE_TYPES }] : []),
+  ...CHILD_QUESTIONS.map((q) => ({
+    key: q.item,
+    legend: ITEM_LEGEND[q.item],
+    options: q.item === 'access' ? [...q.options, { value: 'one_hand', label: ONE_HAND_LABEL }] : (q.options as readonly Option[]),
+  })),
+]
 
 export function EditSuitsSection({
   endpoint,
   suits,
+  guide = false,
   lock = false,
   onSaved,
 }: {
   /** e.g. /api/toys/:id or /api/tutorials/:id */
   endpoint: string
   suits: Suits
+  /** A guide also says what it is (device_types); a toy does not. */
+  guide?: boolean
   /** Read updated_at from the endpoint first and send it with the save. */
   lock?: boolean
   onSaved?: (updated: Suits) => void
 }) {
+  const groups = groupsFor(guide)
+  // one_hand rides in the access group as its own chip, as on the filter page.
   const [lists, setLists] = useState<Record<string, string[]>>({
-    movement: suits.movement ?? [],
-    hands: suits.hands ?? [],
+    device_types: suits.device_types ?? [],
+    helps_with: suits.helps_with ?? [],
+    access: [...(suits.access ?? []), ...(suits.one_hand ? ['one_hand'] : [])],
+    press_force: suits.press_force ?? [],
     play: suits.play ?? [],
   })
-  const [fit, setFit] = useState<Text>(() =>
-    Object.fromEntries(CHILD_MEASURES.map((m) => [m.field, [String(suits.fit?.[m.field]?.[0] ?? ''), String(suits.fit?.[m.field]?.[1] ?? '')]]))
-  )
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
 
-  const edit = () => setSaved(false)
   const toggle = (key: string, value: string) => {
-    edit()
+    setSaved(false)
     setLists((l) => ({ ...l, [key]: l[key].includes(value) ? l[key].filter((v) => v !== value) : [...l[key], value] }))
-  }
-  const setEnd = (field: string, end: 0 | 1, text: string) => {
-    edit()
-    setFit((f) => ({ ...f, [field]: end === 0 ? [text, f[field][1]] : [f[field][0], text] }))
   }
 
   async function save() {
     setError(null)
-    const ranges: Record<string, number[]> = {}
-    for (const m of CHILD_MEASURES) {
-      const [lo, hi] = fit[m.field].map((t) => t.trim())
-      if (!lo && !hi) continue
-      if (!lo || !hi) return setError(`${m.label}: fill in both ends of the range, or neither.`)
-      ranges[m.field] = [Number(lo), Number(hi)]
-    }
+    const list = (v: string[]) => (v.length ? v : null)
+    const access = lists.access.filter((a) => a !== 'one_hand')
     const body = {
-      movement: lists.movement.length ? lists.movement : null,
-      hands: lists.hands.length ? lists.hands : null,
-      play: lists.play.length ? lists.play : null,
-      fit: Object.keys(ranges).length ? ranges : null,
+      ...(guide ? { device_types: list(lists.device_types) } : {}),
+      helps_with: list(lists.helps_with),
+      access: list(access),
+      one_hand: lists.access.includes('one_hand'),
+      press_force: list(lists.press_force),
+      play: list(lists.play),
     }
-    const checked = readSuits(body)
-    if (typeof checked === 'string') return setError(checked)
-
     setSaving(true)
     try {
       const updated_at = lock ? (await browserApiClient.get<{ updated_at: string }>(endpoint)).updated_at : undefined
@@ -100,13 +87,13 @@ export function EditSuitsSection({
   return (
     <section className="flex flex-col gap-4 px-5 pb-5" aria-labelledby="suits-h">
       <div>
-        <h3 id="suits-h" className="field-label">Who it suits</h3>
+        <h3 id="suits-h" className="field-label">Who it&apos;s for</h3>
         <p className="m-0 max-w-prose text-xs leading-relaxed text-muted">
-          None of these are required. Filling them in helps families find it with the library filters.
+          None of these are required, but untagged {guide ? 'guides' : 'toys'} never show up in filters or as recommended.
         </p>
       </div>
 
-      {GROUPS.map((g) => (
+      {groups.map((g) => (
         <fieldset key={g.key} className="m-0 border-0 p-0">
           <legend className="field-label">{g.legend}</legend>
           <div className="flex flex-wrap gap-2">
@@ -125,32 +112,10 @@ export function EditSuitsSection({
         </fieldset>
       ))}
 
-      {CHILD_MEASURES.map((m) => (
-        <fieldset key={m.field} className="m-0 border-0 p-0">
-          <legend className="field-label">{m.label}</legend>
-          <div className="flex items-center gap-2">
-            {(['From', 'To'] as const).map((word, end) => (
-              <input
-                key={word}
-                type="number"
-                inputMode="numeric"
-                aria-label={`${m.label} ${word.toLowerCase()}`}
-                placeholder={end === 0 ? `From ${m.min}` : `To ${m.max}`}
-                min={m.min}
-                max={m.max}
-                value={fit[m.field][end]}
-                onChange={(e) => setEnd(m.field, end as 0 | 1, e.target.value)}
-                className="field max-w-[8rem]"
-              />
-            ))}
-          </div>
-        </fieldset>
-      ))}
-
       {error && <p role="alert" className="alert alert-danger">{error}</p>}
       <div className="flex items-center gap-3">
         <button type="button" disabled={saving} onClick={save} className="btn btn-primary btn-sm">
-          {saving ? 'Saving…' : 'Save who it suits'}
+          {saving ? 'Saving…' : "Save who it's for"}
         </button>
         {saved && <span role="status" className="text-sm font-semibold text-brand-dark">Saved</span>}
       </div>
