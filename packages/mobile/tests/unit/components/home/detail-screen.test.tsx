@@ -27,6 +27,8 @@ jest.mock('../../../../lib/supabase', () => ({
   supabase: { storage: { from: () => ({ createSignedUrl: (...a: unknown[]) => mockCreateSignedUrl(...a) }) } },
 }))
 
+const tab = (name: string) => fireEvent.press(screen.getByRole('tab', { name }))
+
 const NO_SAVES = { tutorials: [], toys: [], challenges: [] }
 
 const DETAIL = {
@@ -81,6 +83,7 @@ describe('DetailScreen', () => {
     render(<DetailScreen id="1" />)
     expect(await screen.findByText('Build a Robot Arm')).toBeTruthy()
     expect(apiClient.get).toHaveBeenCalledWith('/api/public/tutorials/1')
+    tab('Parts & tools')
     expect(screen.getByText('Servo Motor ×2')).toBeTruthy()
     expect(screen.getByText('Screwdriver')).toBeTruthy()
   })
@@ -130,6 +133,8 @@ describe('DetailScreen', () => {
       detail: Promise.resolve({ ...DETAIL, prices_checked_on: '2026-08-02', parts: [{ ...DETAIL.parts[0], price_cents: 1250 }] }),
     })
     render(<DetailScreen id="1" />)
+    await screen.findByText('Build a Robot Arm')
+    tab('Parts & tools')
     expect(await screen.findByText('Total')).toBeTruthy()
     expect(screen.getAllByText('$12.50')).toHaveLength(2)
     expect(screen.getByText('Prices checked 2 Aug 2026')).toBeTruthy()
@@ -138,7 +143,9 @@ describe('DetailScreen', () => {
   it('shows the print settings when the guide has any', async () => {
     mockEndpoints({ detail: Promise.resolve({ ...DETAIL, layer_height_mm: 0.2, infill_percent: 25, material: 'PETG', print_minutes: null }) })
     render(<DetailScreen id="1" />)
-    expect(await screen.findByText('Files & print settings')).toBeTruthy()
+    await screen.findByText('Build a Robot Arm')
+    tab('Files')
+    expect(await screen.findByText('Print settings')).toBeTruthy()
     expect(screen.getByText('0.2 mm')).toBeTruthy()
     expect(screen.queryByText('Print time')).toBeNull()
   })
@@ -160,6 +167,7 @@ describe('DetailScreen', () => {
     })
     render(<DetailScreen id="1" />)
     await screen.findByText('Build a Robot Arm')
+    tab('Files')
 
     mockPush.mockClear()
     fireEvent.press(screen.getByLabelText('Ask someone to print'))
@@ -173,7 +181,7 @@ describe('DetailScreen', () => {
         stl_files: [{ id: 's1', tutorial_id: '1', filename: 'mount.stl', file_url: '1/mount.stl' }],
       }),
     })
-    render(<DetailScreen id="1" printWith="o1" />)
+    render(<DetailScreen id="1" printWith="o1" tab="files" />)
     fireEvent.press(await screen.findByLabelText('Ask someone to print'))
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/printing', params: { guide: '1', printWith: 'o1' } })
   })
@@ -188,8 +196,10 @@ describe('DetailScreen', () => {
   it('offers no print for a guide with nothing to print', async () => {
     render(<DetailScreen id="1" />)
     await screen.findByText('Build a Robot Arm')
+    tab('Files')
 
     expect(screen.queryByLabelText('Ask someone to print')).toBeNull()
+    expect(screen.getByText('Nothing to print for this guide.')).toBeTruthy()
   })
 })
 
@@ -268,18 +278,63 @@ describe('DetailScreen thanks', () => {
   it('lists the author’s safety notes', async () => {
     mockEndpoints({ detail: Promise.resolve({ ...DETAIL, safety_notes: [{ id: 'n', tutorial_id: '1', position: 1, title: 'Battery door must be screwed shut', detail: 'Add the screw.' }] }) })
     render(<DetailScreen id="1" />)
-    expect(await screen.findByText('Safety notes')).toBeTruthy()
+    expect(await screen.findByText('Before you start')).toBeTruthy()
     expect(screen.getByText('Battery door must be screwed shut')).toBeTruthy()
   })
+})
 
-  it('logs the build once every step is ticked', async () => {
-    ;(apiClient.post as jest.Mock).mockResolvedValue({ built: true })
-    mockEndpoints({ detail: Promise.resolve({ ...DETAIL, steps: [{ id: 's1', tutorial_id: '1', position: 1, title: 'Open it', body: 'One screw.', photo_url: null }] }) })
+describe('DetailScreen redesigned page', () => {
+  const full = {
+    ...DETAIL,
+    age_min: 3,
+    age_max: 8,
+    toy_name: 'Light-up drum',
+    toy_brand: 'Fisher-Price',
+    works_with: 'Any 3.5mm switch',
+    no_build_note: 'No soldering needed.',
+    access: ['press'],
+    device_types: ['switch'],
+    steps: [
+      { id: 's1', tutorial_id: '1', position: 1, title: 'Open it', body: 'One screw.', photo_url: null },
+      { id: 's2', tutorial_id: '1', position: 2, title: 'Close it', body: 'Two screws.', photo_url: null },
+    ],
+  }
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    mockEndpoints({ detail: Promise.resolve(full) })
+  })
+
+  it('Start building opens the build route', async () => {
     render(<DetailScreen id="1" />)
-    fireEvent.press(await screen.findByLabelText('Mark step 1 done'))
-    fireEvent.press(screen.getByText('Mark this build done'))
-    await waitFor(() => expect(apiClient.post).toHaveBeenCalledWith('/api/tutorials/1/build', {}))
-    expect(await screen.findByText('Build logged — nice work')).toBeTruthy()
+    fireEvent.press(await screen.findByText('Start building'))
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/guides/[id]/build', params: { id: '1' } })
+  })
+
+  it('offers the PDF as the primary action when there are no steps', async () => {
+    mockEndpoints()
+    render(<DetailScreen id="1" />)
+    await screen.findByText('Build a Robot Arm')
+    expect(screen.queryByText('Start building')).toBeNull()
+    expect(screen.getByText('The steps are in the PDF.')).toBeTruthy()
+  })
+
+  it('opens on the tab named by the route param', async () => {
+    render(<DetailScreen id="1" tab="notes" />)
+    await screen.findByText('Build a Robot Arm')
+    expect(screen.getByRole('tab', { name: 'Notes' }).props.accessibilityState.selected).toBe(true)
+    expect(screen.queryByText('Who it\'s for')).toBeNull()
+  })
+
+  it('shows the age range badge, who it is for and the toy on Overview', async () => {
+    render(<DetailScreen id="1" />)
+    expect(await screen.findByText('Age 3–8')).toBeTruthy()
+    expect(screen.getByText("Who it's for")).toBeTruthy()
+    expect(screen.getByText('How a child uses it')).toBeTruthy()
+    expect(screen.getByText('The toy')).toBeTruthy()
+    expect(screen.getByText('Light-up drum · Fisher-Price')).toBeTruthy()
+    expect(screen.getByText('Works with: Any 3.5mm switch')).toBeTruthy()
+    expect(screen.getByText('No soldering needed.')).toBeTruthy()
   })
 })
 
