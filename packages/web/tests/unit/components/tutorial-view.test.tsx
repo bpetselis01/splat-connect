@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { browserApiClient } from '@/lib/browser-api-client'
 import { TutorialView } from '@/components/tutorial-view'
 import type { TutorialWithDetails, Recommendation } from '@splat-connect/types'
 
@@ -9,7 +10,8 @@ vi.mock('next/link', () => ({
   ),
 }))
 vi.mock('next/image', () => ({ default: () => null }))
-vi.mock('next/navigation', () => ({ usePathname: () => '/tutorials/t1' }))
+vi.mock('next/navigation', () => ({ usePathname: () => '/tutorials/t1', useRouter: () => ({ refresh: vi.fn() }) }))
+vi.mock('@/lib/browser-api-client', () => ({ browserApiClient: { post: vi.fn().mockResolvedValue({}) } }))
 
 const stl = [{ id: 's1', tutorial_id: 't1', filename: 'bracket.stl', file_url: 't1/bracket.stl' }]
 
@@ -50,14 +52,17 @@ function tutorial(overrides: Partial<TutorialWithDetails> = {}): TutorialWithDet
 }
 
 describe('TutorialView', () => {
-  // A toy adaptation switched from assistive tech keeps its rows; the section
-  // is about the kind, not about whether rows happen to exist.
-  it('shows 3D-print files only for an assistive-tech tutorial', () => {
+  // Files follow the data, not the kind: STL rows or any print setting show the tab.
+  it('shows the Files tab for any guide with STL files or a print setting, and not otherwise', () => {
     const { unmount } = render(<TutorialView tutorial={tutorial({ stl_files: stl })} signedIn={false} />)
-    expect(screen.queryByText('bracket.stl')).toBeNull()
-    unmount()
-    render(<TutorialView tutorial={tutorial({ kind: 'assistive_tech', stl_files: stl })} signedIn={false} />)
     expect(screen.getByText('bracket.stl')).toBeInTheDocument()
+    unmount()
+    const { unmount: u2 } = render(<TutorialView tutorial={tutorial({ material: 'PETG' })} signedIn={false} />)
+    expect(screen.getByText('PETG')).toBeInTheDocument()
+    u2()
+    render(<TutorialView tutorial={tutorial()} signedIn={false} />)
+    expect(screen.queryByText('Layer height')).toBeNull()
+    expect(screen.queryByText('Request a print →')).toBeNull()
   })
 
   // 080: numbered steps first, and the fit line above the tabs only when given.
@@ -213,5 +218,54 @@ describe('community notes', () => {
     expect(screen.getByText(/since this was written — read before you build\./)).toBeInTheDocument()
     expect(screen.getByText('Use two zip ties.')).toBeInTheDocument()
     expect(screen.getAllByText('Use two zip ties.')).toHaveLength(1)
+  })
+})
+
+describe('who it is for', () => {
+  it('labels device types and the four tags, with one hand beside access, and hides empty groups', () => {
+    render(
+      <TutorialView
+        signedIn
+        tutorial={tutorial({ device_types: ['adapted_toy'], helps_with: ['communicating'], access: ['press'], one_hand: true, press_force: ['light'], play: null } as never)}
+      />
+    )
+    const block = screen.getByRole('region', { name: "Who it's for" })
+    expect(block).toHaveTextContent('Device type')
+    expect(block).toHaveTextContent('Adapted toy')
+    expect(block).toHaveTextContent('Helps with')
+    expect(block).toHaveTextContent('One hand is enough')
+    expect(block).toHaveTextContent('Press force')
+    expect(block).not.toHaveTextContent('Play')
+  })
+
+  it('draws nothing when no tag is set', () => {
+    render(<TutorialView signedIn tutorial={tutorial()} />)
+    expect(screen.queryByRole('region', { name: "Who it's for" })).toBeNull()
+  })
+})
+
+describe('photo captions', () => {
+  it('shows the caption under a photo', () => {
+    render(<TutorialView signedIn tutorial={tutorial({ photo_urls: ['https://test.supabase.co/storage/v1/object/public/photos/a.jpg'], photo_captions: ['The finished bracket'] })} />)
+    expect(screen.getByText('The finished bracket')).toBeInTheDocument()
+  })
+})
+
+describe('pinning community notes', () => {
+  const note = { id: 'n', step_position: 2, author_id: 'p', author_name: 'Priya', body: 'Use two zip ties.', photo_url: null, photo_caption: null, pinned_at: null, pinned_by: null, pinned_by_name: null, created_at: '2026-09-01T00:00:00Z' }
+  const pinnedNote = { ...note, id: 'q', body: 'Mind the lid.', pinned_at: '2026-09-02T00:00:00Z', pinned_by: 'a', pinned_by_name: 'Sam' }
+
+  it('shows no controls to anyone but the author or an admin', () => {
+    render(<TutorialView signedIn tutorial={tutorial()} notes={[note, pinnedNote]} />)
+    expect(screen.queryByRole('button', { name: /pin/i })).toBeNull()
+    expect(screen.queryByText('Use two zip ties.')).toBeNull()
+  })
+
+  it('pins an unpinned note and unpins a pinned one through the api', async () => {
+    render(<TutorialView signedIn canPin tutorial={tutorial()} notes={[note, pinnedNote]} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Pin as revision' }))
+    await waitFor(() => expect(browserApiClient.post).toHaveBeenCalledWith('/api/tutorials/t1/notes/n/pin', {}))
+    fireEvent.click(screen.getByRole('button', { name: 'Unpin' }))
+    await waitFor(() => expect(browserApiClient.post).toHaveBeenCalledWith('/api/tutorials/t1/notes/q/unpin', {}))
   })
 })

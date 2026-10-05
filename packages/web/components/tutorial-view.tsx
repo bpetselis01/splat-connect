@@ -21,9 +21,10 @@
  * The board's guide has a Steps tab and a Community notes tab. Steps exist
  * since 080 (alongside the PDF, which stays the printable download), so the
  * tabs are the ones the data can fill: Steps (when the guide has any), Parts &
- * tools, Files (assistive tech only) and Safety (once the author has affirmed
+ * tools, Files (any guide with STLs or print settings) and Safety (once the author has affirmed
  * the checklist). Community notes' pinned revisions (093) show here, read
- * only, with the banner above the tabs; notes are posted from the app.
+ * only, with the banner above the tabs; notes are posted from the app. The
+ * guide's author and admins (`canPin`) also see the unpinned notes, to pin.
  *
  * `fit` is the board's "Suits Ollie — big button, light press, short hold",
  * worked out by the caller (suitsChild) and drawn above the tabs: a parent
@@ -40,6 +41,7 @@ import Image from 'next/image'
 import { safePhotoSrc } from '@/lib/photo-src'
 import { NotMedicalNote } from '@/components/not-medical-note'
 import { PhotoCarousel } from '@/components/photo-carousel'
+import { NotePinButton } from '@/components/note-pin-button'
 import { SectionTabs } from '@/components/section-tabs'
 import { DIFFICULTY } from '@/components/tutorial-card'
 import { tintFor } from '@/components/card-photo'
@@ -62,8 +64,11 @@ import {
   Wrench,
 } from '@phosphor-icons/react/dist/ssr'
 import {
+  CHILD_QUESTIONS,
+  DEVICE_TYPES,
   KIND_LABEL,
   MATURITY_LABEL,
+  ONE_HAND_LABEL,
   SAFETY_CHECKLIST,
   TOOL_GET_BY_LABEL,
   formatAgeRange,
@@ -114,6 +119,7 @@ export function TutorialView({
   signedIn,
   fit,
   notes,
+  canPin,
 }: {
   tutorial: Viewable
   /** The leader page fetches backing separately; everyone else has it embedded. */
@@ -130,6 +136,8 @@ export function TutorialView({
   fit?: string | null
   /** 093. Pinned revisions show here; posting is on the app. */
   notes?: GuideNote[]
+  /** The guide's author or an admin: Pin / Unpin show, and unpinned notes are listed to pin. */
+  canPin?: boolean
 }) {
   const contributors = tutorial.tutorial_contributors ?? []
   const primaryContributor = contributors.find((c) => c.role === 'primary')
@@ -160,6 +168,7 @@ export function TutorialView({
   const diff = DIFFICULTY[tutorial.difficulty]
   const steps = tutorial.steps ?? []
   const pinned = (notes ?? []).filter((n) => n.pinned_at)
+  const open = canPin ? (notes ?? []).filter((n) => !n.pinned_at) : []
   const total = partsTotalCents(tutorial.parts)
 
   /*
@@ -190,7 +199,24 @@ export function TutorialView({
     ? `${tutorial.safety_declared_at ? 'Safety checklist affirmed by the author and reviewed' : 'Reviewed'} by ${reviewer}${when}.`
     : 'Read by a reviewer before it goes public.'
 
-  const showFiles = tutorial.kind === 'assistive_tech' && tutorial.stl_files.length > 0
+  // Kind no longer decides this: a guide that switched kind keeps its rows, and
+  // a toy adaptation can still carry print settings.
+  const showFiles = tutorial.stl_files.length > 0 || printSettingRows(tutorial).length > 0
+
+  // "Who it's for": the six tags 128 put on a guide, one labelled group each,
+  // empty groups dropped. one_hand rides with How the child uses it.
+  const suitsGroups = [
+    { label: 'Device type', labels: (tutorial.device_types ?? []).map((v) => DEVICE_TYPES.find((o) => o.value === v)?.label) },
+    ...CHILD_QUESTIONS.map((q) => ({
+      label: q.label,
+      labels: [
+        ...((tutorial[q.item] ?? []) as string[]).map((v) => (q.options as readonly { value: string; label: string }[]).find((o) => o.value === v)?.label),
+        ...(q.item === 'access' && tutorial.one_hand ? [ONE_HAND_LABEL] : []),
+      ],
+    })),
+  ]
+    .map((g) => ({ label: g.label, labels: g.labels.filter((l): l is string => Boolean(l)) }))
+    .filter((g) => g.labels.length > 0)
 
   const partsAndTools = (
     <div className="flex flex-col gap-7">
@@ -446,7 +472,25 @@ export function TutorialView({
           )}
         </header>
 
-        <PhotoCarousel urls={tutorial.photo_urls} alt={tutorial.title} />
+        <PhotoCarousel urls={tutorial.photo_urls} captions={tutorial.photo_captions} alt={tutorial.title} />
+
+        {suitsGroups.length > 0 && (
+          <section aria-labelledby="tut-suits-h" className="flex flex-col gap-3">
+            <h2 id="tut-suits-h" className="m-0 font-display text-[22px] font-extrabold text-ink">
+              Who it&apos;s for
+            </h2>
+            <dl className="m-0 flex flex-col gap-2.5">
+              {suitsGroups.map((g) => (
+                <div key={g.label} className="flex flex-wrap items-center gap-2">
+                  <dt className="text-xs font-extrabold uppercase tracking-[.08em] text-muted">{g.label}</dt>
+                  {g.labels.map((l) => (
+                    <dd key={l} className="pill-tag m-0">{l}</dd>
+                  ))}
+                </div>
+              ))}
+            </dl>
+          </section>
+        )}
 
         {fit && (
           <p
@@ -469,7 +513,7 @@ export function TutorialView({
 
         <SectionTabs label="Guide sections" tabs={tabs} />
 
-        {pinned.length > 0 && (
+        {(pinned.length > 0 || open.length > 0) && (
           <section id="tut-revisions" aria-labelledby="tut-revisions-h" className="flex flex-col gap-3">
             <h2 id="tut-revisions-h" className="m-0 font-display text-[22px] font-extrabold text-ink">
               Revisions <span className="text-muted">{pinned.length} pinned</span>
@@ -482,9 +526,26 @@ export function TutorialView({
                   </p>
                   <p className="m-0 mt-1 text-[15px] leading-[1.55] text-ink">{n.body}</p>
                   <p className="m-0 mt-2 text-xs font-bold text-ink">Pinned by {n.pinned_by_name ?? 'Deleted member'}</p>
+                  {canPin && <NotePinButton tutorialId={tutorial.id} noteId={n.id} pinned />}
                 </li>
               ))}
             </ol>
+            {open.length > 0 && (
+              <>
+                <h3 className="m-0 mt-2 text-sm font-extrabold text-muted">Discussion · {open.length}</h3>
+                <ol className="m-0 flex list-none flex-col gap-2.5 p-0">
+                  {open.map((n) => (
+                    <li key={n.id} className="rounded-[var(--radius-inset)] border border-line bg-surface p-4">
+                      <p className="m-0 text-xs font-bold text-muted">
+                        {n.step_position && n.step_position <= steps.length ? `Step ${n.step_position}` : 'Missing step'} · {n.author_name}
+                      </p>
+                      <p className="m-0 mt-1 text-[15px] leading-[1.55] text-ink">{n.body}</p>
+                      <NotePinButton tutorialId={tutorial.id} noteId={n.id} pinned={false} />
+                    </li>
+                  ))}
+                </ol>
+              </>
+            )}
           </section>
         )}
 
