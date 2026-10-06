@@ -3,7 +3,7 @@
 // content instead of spanning the screen edge to edge, and because it lives in
 // the root layout so pushed screens (My, printing) can show it too.
 import { useEffect, type ReactNode } from 'react'
-import { View, Text, Pressable, StyleSheet } from 'react-native'
+import { Keyboard, View, Text, Pressable, StyleSheet } from 'react-native'
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -71,6 +71,15 @@ export function TabBar() {
 
   // A new screen starts with the bar out.
   useEffect(() => setTabBarHidden(false), [pathname])
+  // Android resizes the window for the keyboard, which would lift the bar onto it.
+  useEffect(() => {
+    const shown = Keyboard.addListener('keyboardDidShow', () => setTabBarHidden(true))
+    const gone = Keyboard.addListener('keyboardDidHide', () => setTabBarHidden(false))
+    return () => {
+      shown.remove()
+      gone.remove()
+    }
+  }, [])
   const slide = useAnimatedStyle(() => ({
     transform: [{ translateY: tabBarHidden.value * (TAB_BAR_HEIGHT + rest + theme.spacing(3)) }],
   }))
