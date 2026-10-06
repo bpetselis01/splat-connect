@@ -102,13 +102,29 @@ function Linkified({ text, style }: { text: string; style: StyleProp<TextStyle> 
   )
 }
 
+/** How far under the header a row scrolled into view sits. */
+export const ROW_SCROLL_MARGIN = 72
+
+/** One line of What you'll need: what, and the pill naming the tab it opens. */
+function NeedRow({ testID, icon, text, tab, print, onPress }: { testID: string; icon: React.ComponentProps<typeof Ionicons>['name']; text: string; tab: string; print?: boolean; onPress: () => void }) {
+  return (
+    <Pressable testID={testID} onPress={onPress} accessibilityRole="button" accessibilityLabel={`${text}, opens ${tab}`} style={[styles.needRow, print && styles.needPrint]}>
+      <View style={[styles.needIcon, print && styles.needIconPrint]}>
+        <Ionicons name={icon} size={18} color={print ? theme.colors.ink : theme.colors.primaryDeep} />
+      </View>
+      <Text style={styles.needText}>{text}</Text>
+      <View style={styles.needGo}>
+        <Text style={styles.needGoText}>{tab}</Text>
+        <Ionicons name="chevron-down" size={14} color={theme.colors.primaryDeep} />
+      </View>
+    </Pressable>
+  )
+}
+
 /**
  * "Who it's for" as label → chosen answers, one row per answered question;
  * an answer the parent's first child shares is marked so the chip can say so.
  */
-/** How far under the header a row scrolled into view sits. */
-export const ROW_SCROLL_MARGIN = 72
-
 function whoRows(t: Tutorial, child: ChildProfile | undefined) {
   return CHILD_QUESTIONS.map((q) => {
     const childHas = (v: string) => {
@@ -134,22 +150,6 @@ function whoRows(t: Tutorial, child: ChildProfile | undefined) {
  * takes, with Start building pinned to the bottom; the four tabs below stick
  * to the top as you scroll.
  */
-/** One line of What you'll need: what, and the pill naming the tab it opens. */
-function NeedRow({ testID, icon, text, tab, print, onPress }: { testID: string; icon: React.ComponentProps<typeof Ionicons>['name']; text: string; tab: string; print?: boolean; onPress: () => void }) {
-  return (
-    <Pressable testID={testID} onPress={onPress} accessibilityRole="button" accessibilityLabel={`${text}, opens ${tab}`} style={[styles.needRow, print && styles.needPrint]}>
-      <View style={[styles.needIcon, print && styles.needIconPrint]}>
-        <Ionicons name={icon} size={18} color={print ? theme.colors.ink : theme.colors.primaryDeep} />
-      </View>
-      <Text style={styles.needText}>{text}</Text>
-      <View style={styles.needGo}>
-        <Text style={styles.needGoText}>{tab}</Text>
-        <Ionicons name="chevron-down" size={14} color={theme.colors.primaryDeep} />
-      </View>
-    </Pressable>
-  )
-}
-
 export function DetailScreen({ id, printWith, tab: startTab }: { id: string; printWith?: string; tab?: string }) {
   const router = useRouter()
   const insets = useSafeAreaInsets()
