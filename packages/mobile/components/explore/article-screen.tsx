@@ -14,12 +14,17 @@ import { Screen } from '../ui/Screen'
 import { ToBeCompleted } from '../ui/ToBeCompleted'
 import { EmptyState } from '../ui/EmptyState'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
+import { BarBand } from '../ui/BarBand'
+import { barLift } from '../../lib/tab-bar-layout'
+import { useHideTabBarOnScroll } from '../../lib/tab-bar-visibility'
 
 export function ArticleScreen({ slug }: { slug: string }) {
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const { markRead } = useLearnProgress()
   const scroller = useRef<ScrollView>(null)
+  const hideBar = useHideTabBarOnScroll()
+  const [bandHeight, setBandHeight] = useState(0)
   const [sectionY, setSectionY] = useState<Record<string, number>>({})
   const [read, setRead] = useState(0)
   const index = LEARN_ARTICLES.findIndex((a) => a.slug === slug)
@@ -58,9 +63,10 @@ export function ArticleScreen({ slug }: { slug: string }) {
       <ScrollView
         ref={scroller}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}
-        scrollEventThrottle={32}
+        contentContainerStyle={[styles.content, { paddingBottom: bandHeight + barLift(insets.bottom) + theme.spacing(4) }]}
+        scrollEventThrottle={16}
         onScroll={(e) => {
+          hideBar.onScroll(e)
           const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent
           const room = contentSize.height - layoutMeasurement.height
           setRead(room > 0 ? Math.min(Math.max(contentOffset.y / room, 0), 1) : 1)
@@ -117,7 +123,7 @@ export function ArticleScreen({ slug }: { slug: string }) {
         ))}
       </ScrollView>
 
-      <View style={[styles.foot, { paddingBottom: Math.max(insets.bottom, theme.spacing(3)) }]}>
+      <BarBand style={styles.foot} onHeight={setBandHeight}>
         <AnimatedPressable
           onPress={finish}
           accessibilityRole="button"
@@ -133,7 +139,7 @@ export function ArticleScreen({ slug }: { slug: string }) {
             <Ionicons name={next ? 'arrow-forward' : 'checkmark'} size={22} color={theme.colors.primaryDeep} />
           </View>
         </AnimatedPressable>
-      </View>
+      </BarBand>
     </Screen>
   )
 }
@@ -143,7 +149,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   bar: { height: 4, marginHorizontal: -theme.spacing(4), backgroundColor: theme.colors.surfaceSunken },
   barFill: { height: '100%', backgroundColor: theme.colors.primary },
-  content: { paddingTop: theme.spacing(4), paddingBottom: theme.spacing(8) },
+  content: { paddingTop: theme.spacing(4) },
   place: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.muted, marginTop: theme.spacing(4) },
   title: { fontFamily: theme.fonts.display, fontSize: theme.type.display, color: theme.colors.text, marginTop: theme.spacing(1) },
   intro: { fontFamily: theme.fonts.regular, fontSize: theme.type.heading, color: theme.colors.text, marginTop: theme.spacing(3), marginBottom: theme.spacing(5) },
@@ -157,7 +163,7 @@ const styles = StyleSheet.create({
   callout: { flexDirection: 'row', gap: theme.spacing(3), padding: theme.spacing(5), borderRadius: theme.radii.panel, backgroundColor: theme.colors.accentLight },
   calloutLabel: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.primaryDeep, marginBottom: theme.spacing(1) },
   calloutText: { fontFamily: theme.fonts.bold, fontSize: theme.type.body, color: theme.colors.ink },
-  foot: { marginHorizontal: -theme.spacing(4), paddingHorizontal: theme.spacing(4), paddingTop: theme.spacing(3), borderTopWidth: theme.border.hairline, borderTopColor: theme.colors.border, backgroundColor: theme.colors.surface },
+  foot: { paddingHorizontal: theme.spacing(4), paddingTop: theme.spacing(3), borderTopWidth: theme.border.hairline, borderTopColor: theme.colors.border, backgroundColor: theme.colors.surface },
   next: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3), minHeight: 64, paddingLeft: theme.spacing(5), paddingRight: theme.spacing(2), borderRadius: theme.radii.pill, backgroundColor: theme.colors.accentLight },
   nextLabel: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.primaryDeep },
   nextTitle: { fontFamily: theme.fonts.black, fontSize: theme.type.body, color: theme.colors.text },
