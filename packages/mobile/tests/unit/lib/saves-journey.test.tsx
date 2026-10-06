@@ -107,3 +107,25 @@ it('survives an ids answer from an older API that has no key for a newer kind', 
   expect(result.current.isSaved('parts', 'p1')).toBe(false)
   expect(result.current.isSaved('organisations', 'o1')).toBe(false)
 })
+
+describe('a tap before the saved list arrives', () => {
+  it('keeps a save made while the list is still loading', async () => {
+    const list = deferred()
+    mockGet.mockReturnValue(list.promise)
+    const { result } = renderHook(() => useSaves())
+    await act(async () => { await result.current.toggle('tutorials', 'g1') })
+    await act(async () => { list.resolve(ids({ tutorials: ['other'] })) })
+    expect(result.current.isSaved('tutorials', 'g1')).toBe(true)
+    expect(result.current.isSaved('tutorials', 'other')).toBe(true)
+  })
+
+  it('keeps an unsave made while the list is still loading, though the list still has it', async () => {
+    const list = deferred()
+    mockGet.mockReturnValue(list.promise)
+    const { result } = renderHook(() => useSaves())
+    await act(async () => { await result.current.toggle('tutorials', 'g1') })
+    await act(async () => { await result.current.toggle('tutorials', 'g1') })
+    await act(async () => { list.resolve(ids({ tutorials: ['g1'] })) })
+    expect(result.current.isSaved('tutorials', 'g1')).toBe(false)
+  })
+})
