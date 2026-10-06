@@ -210,6 +210,14 @@ it('the done screen offers Leave feedback, which opens the sheet on the last ste
   expect(mockReplace).not.toHaveBeenCalled()
 })
 
+it('the feedback sheet names the primary contributor, not whoever is listed first', async () => {
+  const guide = { ...GUIDE, tutorial_contributors: [{ profile_id: 'c2', role: 'collaborator', profiles: { name: 'Dan Lee' } }, { profile_id: 'c1', role: 'primary', profiles: { name: 'Mei Tan' } }] }
+  ;(apiClient.get as jest.Mock).mockImplementation((p: string) => (p.endsWith('/notes') ? Promise.resolve([]) : Promise.resolve(guide)))
+  await reachDone()
+  fireEvent.press(screen.getByRole('button', { name: 'Leave feedback' }))
+  expect(screen.getByText('Mei can pin it as a fix so the next builder sees it.')).toBeTruthy()
+})
+
 it('See it on the guide hands the note to the guide and closes build mode', async () => {
   ;(apiClient.post as jest.Mock).mockResolvedValue({ id: 'n9', step_position: 2, author_id: 'me', author_name: 'You', body: 'Great.', photo_url: null, photo_caption: null, pinned_at: null, pinned_by: null, pinned_by_name: null, created_at: '2026-10-07T00:00:00Z' })
   await reachDone()

@@ -39,7 +39,7 @@ type BuildGuide = {
   build_minutes?: number | null
   photo_urls?: string[]
   steps?: TutorialStep[]
-  tutorial_contributors?: { profiles: { name: string } }[]
+  tutorial_contributors?: { role: string; profiles: { name: string } }[]
   safety_notes?: TutorialSafetyNote[]
   parts?: Part[]
   tools?: Tool[]
@@ -400,7 +400,7 @@ export function BuildMode({ id, step: startStep }: { id: string; step?: string }
       <FeedbackSheet
         tutorialId={id}
         steps={steps}
-        authorFirstName={guide.tutorial_contributors?.[0]?.profiles.name.split(' ')[0] ?? 'The author'}
+        authorFirstName={(guide.tutorial_contributors?.find((c) => c.role === 'primary') ?? guide.tutorial_contributors?.[0])?.profiles.name.split(' ')[0] ?? 'The author'}
         initialStep={lastStep.current ?? undefined}
         open={feedbackOpen}
         onClose={() => setFeedbackOpen(false)}
