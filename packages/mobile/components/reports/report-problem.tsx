@@ -32,6 +32,7 @@ const REASONS_FOR: Partial<Record<ReportSubjectKind, Reason[]>> = {
   toy: ['arrived_broken', 'safety', 'wrong_info', 'conduct', 'other'],
   person: ['conduct', 'safety', 'no_show', 'other'],
   organisation: ['conduct', 'safety', 'wrong_info', 'other'],
+  note: ['safety', 'wrong_info', 'conduct', 'other'],
 }
 
 export function ReportProblem({

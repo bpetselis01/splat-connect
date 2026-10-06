@@ -29,8 +29,17 @@ const asMember = () =>
   })
 
 describe('118 member report kinds', () => {
-  it.each(['guide', 'toy', 'exchange', 'build', 'print_job', 'person', 'organisation', 'other'])('files a report about a %s', async (kind) => {
+  it.each(['guide', 'toy', 'exchange', 'build', 'note', 'print_job', 'person', 'organisation', 'other'])('files a report about a %s', async (kind) => {
     expect((await file(kind)).status).toBe(201)
+  })
+
+  it('files a report about one note, keeping the note id (132)', async () => {
+    const subject_id = crypto.randomUUID()
+    const res = await file('note', 'wrong_info', { subject_id, subject_label: "Sam R's note on Switch toy guide" })
+    expect(res.status).toBe(201)
+    expect(await res.json()).toMatchObject({ subject_kind: 'note', subject_id, category: 'wrong_info' })
+    const { data } = await adminClient().from('member_reports').select('subject_kind').eq('subject_id', subject_id).single()
+    expect(data?.subject_kind).toBe('note')
   })
 
   it.each(['safety', 'wrong_info', 'other'])('files a guide report under %s, keeping the guide id and label', async (category) => {
