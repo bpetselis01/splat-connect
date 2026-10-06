@@ -26,7 +26,7 @@ const GUIDE = {
     { id: 's2', tutorial_id: 'g', position: 2, title: 'Close it', body: 'Fit the lid.', photo_url: null },
   ],
 }
-const PINNED = { id: 'k1', body: 'Use a longer screw', step_position: 2, pinned_at: '2026-09-01', pinned_by_name: 'Sam', author_name: 'Al' }
+const PINNED = { id: 'k1', body: 'Use a longer screw', step_position: 2, pinned_at: '2026-09-01', pinned_by_name: 'Sam', author_name: 'Al', created_at: '2026-09-01T00:00:00Z', photo_url: null, photo_caption: null }
 
 function setup(notes: unknown[] = []) {
   ;(apiClient.get as jest.Mock).mockImplementation((p: string) => (p.endsWith('/notes') ? Promise.resolve(notes) : Promise.resolve(GUIDE)))
@@ -75,8 +75,12 @@ it('shows a pinned note on its step only', async () => {
   expect(screen.queryByText(/Use a longer screw/)).toBeNull()
   fireEvent.press(screen.getByText('Next'))
   expect(await screen.findByText('Use a longer screw')).toBeTruthy()
-  expect(screen.getByText('Fix · pinned by Sam')).toBeTruthy()
-  expect(screen.getByText('1 note on this step')).toBeTruthy()
+  expect(screen.getByText('Notes from builders')).toBeTruthy()
+  expect(screen.getByText('Approved by Sam')).toBeTruthy()
+  expect(screen.getByText('Al')).toBeTruthy()
+  fireEvent.press(screen.getByText('Notes from builders'))
+  expect(screen.queryByText('Use a longer screw')).toBeNull()
+  fireEvent.press(screen.getByText('Notes from builders'))
   fireEvent.press(screen.getByLabelText('Previous step'))
   expect(screen.queryByText(/Use a longer screw/)).toBeNull()
 })
@@ -168,4 +172,17 @@ it('opens a step photo full screen and comes back to the same step', async () =>
   fireEvent.press(await screen.findByLabelText('Open the photo for step 1 full screen'))
   fireEvent.press(screen.getByLabelText('Close photo'))
   expect(screen.getByText('Step 1 of 2')).toBeTruthy()
+})
+
+it('reads an approved note and its photo on the step, and leaves the rest to Notes', async () => {
+  const withPhoto = { ...PINNED, photo_url: 'https://x.test/n.jpg', photo_caption: 'Foam under the switch' }
+  const open = { id: 'k2', body: 'Worked for me', step_position: 2, pinned_at: null, pinned_by_name: null, author_name: 'Bo', created_at: '2026-09-02T00:00:00Z', photo_url: null, photo_caption: null }
+  setup([withPhoto, open])
+  render(<BuildMode id="g" step="2" />)
+  fireEvent.press(await screen.findByLabelText("Open Al's photo full screen"))
+  expect(screen.getAllByLabelText('Foam under the switch')).toHaveLength(2) // the note's photo and the viewer's
+  fireEvent.press(screen.getByLabelText('Close photo'))
+  expect(screen.queryByText('Worked for me')).toBeNull()
+  fireEvent.press(screen.getByText("1 more note in the guide's Notes"))
+  expect(mockReplace).toHaveBeenCalledWith({ pathname: '/guides/[id]', params: { id: 'g', tab: 'notes' } })
 })

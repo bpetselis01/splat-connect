@@ -14,11 +14,12 @@ import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useKeepAwake } from 'expo-keep-awake'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { SAFETY_CHECKLIST, type Part, type Tool, type TutorialSafetyNote, type TutorialStep } from '@splat-connect/types'
+import { SAFETY_CHECKLIST, initials, type GuideNote, type Part, type Tool, type TutorialSafetyNote, type TutorialStep } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { stepProgress, ticksKey, useDeviceTicks, useGatherTicks } from '../../lib/guide-progress'
 import { useGuideNotes } from '../../lib/guide-notes'
 import { sentences } from '../../lib/sentences'
+import { relativeTime } from '../../lib/notifications'
 import { theme } from '../../lib/theme'
 import { Button } from '../ui/Button'
 import { Skeleton } from '../ui/Skeleton'
@@ -59,7 +60,8 @@ export function BuildMode({ id, step: startStep }: { id: string; step?: string }
   const [at, setAt] = useState<number | null>(null)
   const [sheet, setSheet] = useState<'steps' | 'gather' | null>(null)
   const [checksOpen, setChecksOpen] = useState(false)
-  const [viewing, setViewing] = useState<string | null>(null)
+  const [viewing, setViewing] = useState<{ uri: string; caption: string | null } | null>(null)
+  const [notesOpen, setNotesOpen] = useState(true)
   const [built, setBuilt] = useState(false)
   const [flash, setFlash] = useFlash()
 
@@ -197,7 +199,7 @@ export function BuildMode({ id, step: startStep }: { id: string; step?: string }
           <>
             {step.photo_url ? (
               <Pressable
-                onPress={() => setViewing(step.photo_url)}
+                onPress={() => setViewing({ uri: step.photo_url!, caption: step.title ?? null })}
                 accessibilityRole="imagebutton"
                 accessibilityLabel={`Open the photo for step ${at} full screen`}
               >
@@ -234,19 +236,39 @@ export function BuildMode({ id, step: startStep }: { id: string; step?: string }
                 </View>
               </View>
             ) : null}
-            {pinned.map((n) => (
-              <View key={n.id} style={styles.fix}>
-                <Ionicons name="pin" size={18} color={theme.colors.ink} />
-                <View style={styles.flex}>
-                  <Text style={styles.cardHead}>{`Fix · pinned by ${n.pinned_by_name ?? 'the author'}`}</Text>
-                  <Text style={styles.noteText}>{n.body}</Text>
-                </View>
+            {/* Notes the guide's contributors approved (pinned), read here on
+                the step; the rest of the discussion stays on the Notes tab. */}
+            {pinned.length ? (
+              <View style={styles.notes}>
+                <Pressable
+                  onPress={() => setNotesOpen(!notesOpen)}
+                  accessibilityRole="button"
+                  accessibilityState={{ expanded: notesOpen }}
+                  style={styles.notesHead}
+                >
+                  <Ionicons name="chatbubble-ellipses-outline" size={20} color={theme.colors.violet} />
+                  <Text style={[styles.rowTitle, styles.flex]}>Notes from builders</Text>
+                  <View style={styles.count}><Text style={styles.countText}>{pinned.length}</Text></View>
+                  <Text style={styles.toggle}>{notesOpen ? 'Hide' : 'Show'}</Text>
+                </Pressable>
+                {notesOpen ? (
+                  <View style={styles.notesBody}>
+                    {pinned.map((n) => (
+                      <StepNote key={n.id} note={n} onPhoto={(uri) => setViewing({ uri, caption: n.photo_caption })} />
+                    ))}
+                    {onStep > pinned.length ? (
+                      <Pressable onPress={toNotes} accessibilityRole="link" style={styles.notesLink}>
+                        <Text style={styles.link}>{`${plural(onStep - pinned.length, 'more note')} in the guide's Notes`}</Text>
+                        <Ionicons name="chevron-forward" size={16} color={theme.colors.primaryDeep} />
+                      </Pressable>
+                    ) : null}
+                  </View>
+                ) : null}
               </View>
-            ))}
-            {onStep ? (
+            ) : onStep ? (
               <Pressable onPress={toNotes} accessibilityRole="link" style={styles.notesLink}>
                 <Ionicons name="chatbubble-outline" size={20} color={theme.colors.primaryDeep} />
-                <Text style={styles.link}>{`${plural(onStep, 'note')} on this step`}</Text>
+                <Text style={styles.link}>{`${plural(onStep, 'note')} on this step in the guide's Notes`}</Text>
               </Pressable>
             ) : null}
           </>
@@ -307,7 +329,7 @@ export function BuildMode({ id, step: startStep }: { id: string; step?: string }
       ) : null}
 
       <PhotoViewer
-        photos={viewing ? [{ uri: viewing, caption: step?.title ?? null }] : []}
+        photos={viewing ? [viewing] : []}
         index={viewing ? 0 : null}
         onClose={() => setViewing(null)}
       />
@@ -368,7 +390,48 @@ export function BuildMode({ id, step: startStep }: { id: string; step?: string }
   )
 }
 
+/** One approved note on a step: who, who approved it, the note, its photo. */
+function StepNote({ note, onPhoto }: { note: GuideNote; onPhoto: (uri: string) => void }) {
+  return (
+    <View style={styles.note}>
+      <View style={styles.avatar}><Text style={styles.avatarText}>{initials(note.author_name, '?')}</Text></View>
+      <View style={[styles.flex, styles.noteMain]}>
+        <View style={styles.noteTop}>
+          <Text style={styles.noteAuthor}>{note.author_name}</Text>
+          <View style={styles.approved}>
+            <Ionicons name="pin" size={12} color={theme.colors.ink} />
+            <Text style={styles.approvedText}>{`Approved by ${(note.pinned_by_name ?? 'the author').split(' ')[0]}`}</Text>
+          </View>
+        </View>
+        <Text style={styles.noteText}>{note.body}</Text>
+        {note.photo_url ? (
+          <Pressable onPress={() => onPhoto(note.photo_url!)} accessibilityRole="imagebutton" accessibilityLabel={`Open ${note.author_name}'s photo full screen`}>
+            <Image source={{ uri: note.photo_url }} style={styles.notePhoto} accessibilityLabel={note.photo_caption ?? `Photo from ${note.author_name}`} />
+          </Pressable>
+        ) : null}
+        <Text style={styles.noteWhen}>{relativeTime(note.created_at)}</Text>
+      </View>
+    </View>
+  )
+}
+
 const styles = StyleSheet.create({
+  notes: { borderRadius: theme.radii.panel, borderWidth: theme.border.hairline, borderColor: theme.colors.border, backgroundColor: theme.colors.surface, overflow: 'hidden' },
+  notesHead: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3), minHeight: 60, paddingHorizontal: theme.spacing(5) },
+  count: { paddingHorizontal: theme.spacing(2), paddingVertical: 2, borderRadius: theme.radii.pill, backgroundColor: theme.colors.violetSoft },
+  countText: { fontFamily: theme.fonts.black, fontSize: theme.type.caption, color: theme.colors.ink },
+  toggle: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.primaryDeep },
+  notesBody: { paddingHorizontal: theme.spacing(5), paddingBottom: theme.spacing(5), gap: theme.spacing(4) },
+  note: { flexDirection: 'row', gap: theme.spacing(3) },
+  noteMain: { gap: theme.spacing(1) },
+  avatar: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.accentLight },
+  avatarText: { fontFamily: theme.fonts.black, fontSize: theme.type.caption, color: theme.colors.primaryDeep },
+  noteTop: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: theme.spacing(2) },
+  noteAuthor: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink },
+  approved: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: theme.spacing(2), paddingVertical: 2, borderRadius: theme.radii.pill, backgroundColor: theme.colors.violetSoft },
+  approvedText: { fontFamily: theme.fonts.black, fontSize: theme.type.caption, color: theme.colors.ink },
+  notePhoto: { width: '100%', aspectRatio: 4 / 3, borderRadius: theme.radii.field, backgroundColor: theme.colors.surfaceSunken, marginTop: theme.spacing(1) },
+  noteWhen: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted },
   page: { flex: 1, backgroundColor: theme.colors.background },
   flex: { flex: 1 },
   center: { textAlign: 'center' },
