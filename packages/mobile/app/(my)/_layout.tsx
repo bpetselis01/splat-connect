@@ -1,7 +1,7 @@
 // Everything behind the Me tab. Pushed over the tabs, not presented: a row on
 // Me slides its screen in and the back chevron returns to Me.
 import { Redirect, Stack } from 'expo-router'
-import { stackScreenOptions, noBarClearance } from '../../lib/nav-options'
+import { stackScreenOptions } from '../../lib/nav-options'
 import { useAuthGate } from '../../lib/use-auth-gate'
 import { HeaderAddButton } from '../../components/ui/HeaderAddButton'
 import { savedTitle } from '../../components/saved/saved-list-screen'
@@ -19,7 +19,7 @@ export default function MyLayout() {
       <Stack.Screen name="account/index" options={{ title: 'Account' }} />
       <Stack.Screen name="account/child/[id]" options={{ title: 'Child profile' }} />
       {/* Draws its own back disc and headings, like the sign-in screens it shares parts with. */}
-      <Stack.Screen name="account/delete" options={{ headerShown: false, ...noBarClearance }} />
+      <Stack.Screen name="account/delete" options={{ headerShown: false }} />
       {/* Every screen is named here: an undeclared one takes its route name as the
           header title, so /toys would say "toys/index" over the top of it. */}
       <Stack.Screen
@@ -38,8 +38,8 @@ export default function MyLayout() {
       <Stack.Screen name="toys/[id]/index" options={{ title: 'Your toy' }} />
       <Stack.Screen name="toys/[id]/edit" options={{ title: 'Edit listing' }} />
       <Stack.Screen name="exchanges/index" options={{ title: 'My exchanges' }} />
-      <Stack.Screen name="exchanges/[id]" options={{ title: 'Exchange', ...noBarClearance }} />
-      <Stack.Screen name="exchanges/build/[id]" options={{ title: 'Build', ...noBarClearance }} />
+      <Stack.Screen name="exchanges/[id]" options={{ title: 'Exchange' }} />
+      <Stack.Screen name="exchanges/build/[id]" options={{ title: 'Build' }} />
       <Stack.Screen name="exchanges/build/ask/[id]" options={{ title: 'Ask first' }} />
       <Stack.Screen name="challenges/index" options={{ title: 'Design challenges' }} />
       <Stack.Screen name="saved/index" options={{ title: 'Saved' }} />
@@ -67,8 +67,8 @@ export default function MyLayout() {
       <Stack.Screen name="organisation/profile"options={{ title: 'Organisation profile' }} />
       <Stack.Screen name="events" options={{ title: 'My events' }} />
       {/* 077: a conversation with an organisation, from either side. */}
-      <Stack.Screen name="messages/[cid]" options={{ title: 'Conversation', ...noBarClearance }} />
-      <Stack.Screen name="messages/org/[orgId]" options={{ title: 'Message', ...noBarClearance }} />
+      <Stack.Screen name="messages/[cid]" options={{ title: 'Conversation' }} />
+      <Stack.Screen name="messages/org/[orgId]" options={{ title: 'Message' }} />
       <Stack.Screen name="news/[kind]/[id]" options={{ title: '' }} />
       <Stack.Screen name="admin" options={{ title: 'Admin' }} />
     </Stack>

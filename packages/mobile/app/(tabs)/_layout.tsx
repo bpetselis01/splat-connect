@@ -1,18 +1,21 @@
 import { View } from 'react-native'
 import { theme } from '../../lib/theme'
 import { Redirect, Tabs } from 'expo-router'
+import { TabBar } from '../../components/tab-bar'
 import { useAuthGate } from '../../lib/use-auth-gate'
+import { useCapabilities } from '../../lib/capabilities'
 
 export default function TabsLayout() {
   const gate = useAuthGate()
+  const { caps } = useCapabilities()
   if (gate === 'loading') return null
   if (gate !== 'ok') return <Redirect href={gate} />
 
+  const badges = { inbox: caps?.unread.total ?? 0, me: caps?.exchangeActions ?? 0 }
   return (
     <View style={{ flex: 1 }}>
       <Tabs
-        // The bar is global (components/tab-bar.tsx, rendered by the root layout).
-        tabBar={() => null}
+        tabBar={(props) => <TabBar {...props} badges={badges} />}
         screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: theme.colors.background } }}
         // Back from a screen opened into a hidden tab returns to the tab that
         // opened it, not to the first tab.

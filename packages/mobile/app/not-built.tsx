@@ -11,12 +11,9 @@ import { PENDING, isPendingId } from '@splat-connect/types'
 import { pendingIcon } from '../lib/pending-icons'
 import { Button } from '../components/ui/Button'
 import { AuthStage, Heading, Lede, pill } from '../components/auth/parts'
-import { useAuth } from '../lib/auth-context'
 
 export default function NotBuiltYet() {
   const router = useRouter()
-  // It opens before sign-in too, when there is no tab bar to clear.
-  const { session } = useAuth()
   const { feature } = useLocalSearchParams<{ feature?: string }>()
   const item =
     feature && isPendingId(feature)
@@ -24,7 +21,7 @@ export default function NotBuiltYet() {
       : { title: 'Not built yet', blurb: "This part of SPLAT Connect isn't ready yet.", icon: pendingIcon('') }
 
   return (
-    <AuthStage back={false} barBelow={!!session}>
+    <AuthStage back={false}>
       <View style={styles.tile}>
         <Ionicons name={item.icon} size={40} color={theme.colors.ink} />
       </View>

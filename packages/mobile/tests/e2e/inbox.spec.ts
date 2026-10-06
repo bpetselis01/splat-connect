@@ -98,7 +98,6 @@ test('the same inbox is reachable behind MY SPLAT, without the tab header', asyn
 
   await expect(page.getByText('Robin joined your design challenge')).toBeVisible()
   // The native header says "Notifications" there, so the tab's own "Inbox"
-  // title must not also be on the page: the only "Inbox" left is the bar's tab.
-  await expect(page.getByText('Inbox', { exact: true })).toHaveCount(1)
-  await expect(page.getByRole('tab', { name: 'Inbox' })).toBeVisible()
+  // title must not also be on the page.
+  await expect(page.getByText('Inbox', { exact: true })).toBeHidden()
 })

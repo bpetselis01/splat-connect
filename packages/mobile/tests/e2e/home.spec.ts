@@ -14,7 +14,7 @@ import {
  * .maestro/flows/home-shell.yaml.
  */
 
-test('Pick up where you left off is absent until a guide is opened, then reopens it under the tab bar and Back goes Home', async ({ page }) => {
+test('Pick up where you left off is absent until a guide is opened, then reopens it with no tab bar and Back goes Home', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const title = uniqueTitle('E2E Recent Guide')
   await createTutorial(contributor.id, { title, status: 'approved' })
@@ -33,9 +33,9 @@ test('Pick up where you left off is absent until a guide is opened, then reopens
   await expect(page.getByText('Pick up where you left off')).toBeVisible()
   await page.getByRole('button', { name: new RegExp(`^${title}`) }).click()
 
-  // The bar floats over every guide page, so Home is still one tap away.
+  // A guide opened from a recents row is a drill-down: no tab bar over it.
   await expect(page.getByRole('tab', { name: 'Overview' })).toBeVisible()
-  await expect(page.getByRole('tab', { name: 'Home' })).toBeVisible()
+  await expect(page.getByRole('tab', { name: 'Home' })).toHaveCount(0)
 
   // Back returns to the opener (Home), not to the Guides list.
   await page.getByRole('button', { name: 'Back', exact: true }).click()

@@ -1,30 +1,31 @@
 // A floating glass pill with four ordinary tabs — Home, Map, Inbox, Me.
 // Ours rather than react-navigation's because the pill floats over the
-// content instead of spanning the screen edge to edge, and because it lives in
-// the root layout so pushed screens (My, printing) can show it too.
+// content instead of spanning the screen edge to edge.
 import { useEffect, type ReactNode } from 'react'
-import { Keyboard, View, Text, Pressable, StyleSheet } from 'react-native'
+import { View, Text, Pressable, StyleSheet } from 'react-native'
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSequence,
   withSpring,
 } from 'react-native-reanimated'
-import { usePathname, useRouter, useSegments } from 'expo-router'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
+// expo-router 57 vendors react-navigation internally rather than depending on
+// the npm package, so the type comes from expo-router's own re-export.
+import type { BottomTabBarProps } from 'expo-router/js-tabs'
 import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
 import { BlurView } from 'expo-blur'
 import { theme } from '../lib/theme'
 import { TAB_BAR_HEIGHT, TAB_BAR_OFFSET } from '../lib/tab-bar-layout'
-import { tabBarFor, type BarTab } from '../lib/tab-bar-routes'
-import { setTabBarHidden, tabBarHidden } from '../lib/tab-bar-visibility'
-import { useAuth } from '../lib/auth-context'
-import { useCapabilities } from '../lib/capabilities'
+
+// Roots that show the bar. Guides and Toys are hidden tabs reached from Home:
+// they show the bar with Home lit. Explore is a pushed place, never a root.
+export const BAR_ROOTS = new Set(['home', 'map', 'inbox', 'me', 'guides', 'toy-library'])
+const BUTTONS = ['home', 'map', 'inbox', 'me']
 
 // Outline always, as the board draws it: the lit tab changes colour and gets
 // the pill, not a filled glyph.
-const ICONS: Record<BarTab, keyof typeof Ionicons.glyphMap> = {
+const ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   home: 'home-outline',
   map: 'map-outline',
   inbox: 'file-tray-outline',
@@ -49,99 +50,79 @@ function SpringIcon({ focused, children }: { focused: boolean; children: ReactNo
   return <Animated.View style={style}>{children}</Animated.View>
 }
 
-const TABS: { name: BarTab; label: string }[] = [
-  { name: 'home', label: 'Home' },
-  { name: 'map', label: 'Map' },
-  { name: 'inbox', label: 'Inbox' },
-  { name: 'me', label: 'Me' },
-]
+/** Per-tab counts: unread on Inbox, things waiting on you on Me. */
+type Props = BottomTabBarProps & { badges: Record<string, number> }
 
-/**
- * The app-wide bar: it floats over every signed-in screen the route table says
- * should have it, and tucks away as a reading page scrolls down.
- */
-export function TabBar() {
-  const { session } = useAuth()
-  const { caps } = useCapabilities()
-  const router = useRouter()
-  const segments = useSegments()
-  const pathname = usePathname()
-  const insets = useSafeAreaInsets()
-  const rest = Math.max(insets.bottom, TAB_BAR_OFFSET)
+export function TabBar({ state, descriptors, navigation, insets, badges }: Props) {
+  // The bar shows on tab roots only: a screen pushed on a tab's stack, and
+  // Explore, go without it.
+  const current = state.routes[state.index]
+  const nested = current?.state as { index?: number; routes?: { name: string }[] } | undefined
+  const depth = nested?.index ?? 0
+  // A screen opened into an unvisited stack is the only one in it (depth 0), so
+  // the stack's root is told by name. Before the stack has reported a state at
+  // all (the first screen of a stack that was unmounted) the name is only in
+  // the params the tab was navigated with.
+  const child = nested?.routes?.[depth]?.name ?? (current?.params as { screen?: string } | undefined)?.screen
+  if (!current || !BAR_ROOTS.has(current.name) || depth > 0 || (child && child !== 'index')) return null
 
-  // A new screen starts with the bar out.
-  useEffect(() => setTabBarHidden(false), [pathname])
-  // Android resizes the window for the keyboard, which would lift the bar onto it.
-  useEffect(() => {
-    const shown = Keyboard.addListener('keyboardDidShow', () => setTabBarHidden(true))
-    const gone = Keyboard.addListener('keyboardDidHide', () => setTabBarHidden(false))
-    return () => {
-      shown.remove()
-      gone.remove()
-    }
-  }, [])
-  // Worked out here: theme.spacing is a JS function the UI thread cannot call.
-  const travel = TAB_BAR_HEIGHT + rest + theme.spacing(3)
-  const slide = useAnimatedStyle(() => ({
-    transform: [{ translateY: tabBarHidden.value * travel }],
-  }))
-
-  const { show, lit } = tabBarFor(segments)
-  if (!session || !show) return null
-
-  const badges: Record<string, number> = { inbox: caps?.unread?.total ?? 0, me: caps?.exchangeActions ?? 0 }
-  const items = TABS.map(({ name, label }) => {
-    const focused = name === lit
-    const icon = ICONS[name]
-    const badge = badges[name] ?? 0
-    const noun = name === 'inbox' ? 'unread' : 'waiting'
-    const onPress = () => {
-      // Selection feedback, not impact: a tab change is a selection in iOS's
-      // haptic grammar. Fire-and-forget — web rejects, not no-ops.
-      Haptics.selectionAsync().catch(() => {})
-      // navigate, not push: it unwinds to the tab's root, even from deep in a
-      // stack, or off a screen pushed over the tabs.
-      router.navigate(`/${name}`)
-    }
-    const tint = focused ? theme.colors.primaryDeep : theme.colors.muted
-    return (
-      <Pressable
-        key={name}
-        onPress={onPress}
-        accessibilityRole="tab"
-        accessibilityState={{ selected: focused }}
-        accessibilityLabel={badge > 0 ? `${label}, ${badge} ${noun}` : label}
-        style={[styles.item, focused && styles.itemOn]}
-      >
-        <SpringIcon focused={focused}>
-          <Ionicons name={icon} size={24} color={tint} />
-        </SpringIcon>
-        <Text maxFontSizeMultiplier={1.3} style={[styles.label, { color: tint }]}>{label}</Text>
-        {badge > 0 ? (
-          <View pointerEvents="none" style={styles.badgeAnchor}>
-            <View testID="tab-badge" style={styles.badge}>
-              <Text style={styles.badgeText}>{(badge > 99 ? '99+' : String(badge))}</Text>
+  const lit = BUTTONS.includes(current.name) ? current.name : 'home'
+  const items = BUTTONS.flatMap((name) => state.routes.filter((r) => r.name === name))
+    .map((route) => {
+      const focused = route.name === lit
+      const label = descriptors[route.key].options.title ?? route.name
+      const icon = ICONS[route.name] ?? ICONS.home
+      const badge = badges[route.name] ?? 0
+      const noun = route.name === 'inbox' ? 'unread' : 'waiting'
+      const onPress = () => {
+        const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true })
+        // Not `!focused`: Home is lit on the Guides and Toys roots too, and
+        // tapping it there must still go back to Home.
+        if (route.key !== current.key && !event.defaultPrevented) {
+          // Selection feedback, not impact: a tab change is a selection in
+          // iOS's haptic grammar. Fire-and-forget — web rejects, not no-ops.
+          Haptics.selectionAsync().catch(() => {})
+          navigation.navigate(route.name)
+        }
+      }
+      const tint = focused ? theme.colors.primaryDeep : theme.colors.muted
+      return (
+        <Pressable
+          key={route.key}
+          onPress={onPress}
+          accessibilityRole="tab"
+          accessibilityState={{ selected: focused }}
+          accessibilityLabel={badge > 0 ? `${label}, ${badge} ${noun}` : label}
+          style={[styles.item, focused && styles.itemOn]}
+        >
+          <SpringIcon focused={focused}>
+            <Ionicons name={icon} size={24} color={tint} />
+          </SpringIcon>
+          <Text maxFontSizeMultiplier={1.3} style={[styles.label, { color: tint }]}>{label}</Text>
+          {badge > 0 ? (
+            <View pointerEvents="none" style={styles.badgeAnchor}>
+              <View testID="tab-badge" style={styles.badge}>
+                <Text style={styles.badgeText}>{(badge > 99 ? '99+' : String(badge))}</Text>
+              </View>
             </View>
-          </View>
-        ) : null}
-      </Pressable>
-    )
-  })
+          ) : null}
+        </Pressable>
+      )
+    })
 
-  // Floats over the content so a list scrolls behind the glass; screens
+  // Floats over the content so a list scrolls behind the glass; tab roots
   // reserve tabBarClearance. Sits on the home indicator where there is one.
   return (
-    <Animated.View testID="tab-bar" style={[styles.bar, { bottom: rest }, slide]}>
+    <View testID="tab-bar" style={[styles.bar, { bottom: Math.max(insets.bottom, TAB_BAR_OFFSET) }]}>
       <BlurView intensity={60} tint={theme.dark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
       {items}
-    </Animated.View>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
   bar: {
     position: 'absolute',
-    zIndex: 10,
     left: 14,
     right: 14,
     flexDirection: 'row',

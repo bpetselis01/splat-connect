@@ -548,6 +548,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: theme.spacing(2),
     paddingTop: theme.spacing(2),
+    borderTopWidth: theme.border.hairline,
+    borderTopColor: theme.colors.border,
   },
   footText: { flex: 1, fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.muted },
   footButton: { paddingHorizontal: theme.spacing(4), minHeight: 44 },

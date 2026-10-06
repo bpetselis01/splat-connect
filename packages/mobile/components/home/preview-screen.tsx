@@ -1,5 +1,6 @@
 import { View, ActivityIndicator, StyleSheet, Linking } from 'react-native'
 import { WebView } from 'react-native-webview'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { theme } from '../../lib/theme'
 import { Button } from '../ui/Button'
 import { EmptyState } from '../ui/EmptyState'
@@ -10,6 +11,7 @@ import { EmptyState } from '../ui/EmptyState'
  * and zooms, which the in-app viewer cannot.
  */
 export function PreviewScreen({ pdfUrl }: { pdfUrl: string | null }) {
+  const insets = useSafeAreaInsets()
   if (!pdfUrl) {
     return (
       <View style={styles.center}>
@@ -34,7 +36,7 @@ export function PreviewScreen({ pdfUrl }: { pdfUrl: string | null }) {
           </View>
         )}
       />
-      <View style={styles.footer}>
+      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, theme.spacing(3)) }]}>
         <Button label="Open in browser" onPress={() => Linking.openURL(pdfUrl)} style={styles.open} />
       </View>
     </View>
@@ -48,7 +50,10 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', backgroundColor: theme.colors.background },
   footer: {
     paddingHorizontal: theme.spacing(4),
-    paddingVertical: theme.spacing(3),
+    paddingTop: theme.spacing(3),
+    backgroundColor: theme.colors.surface,
+    borderTopWidth: theme.border.hairline,
+    borderTopColor: theme.colors.border,
   },
   open: { minHeight: 56 },
 })

@@ -19,7 +19,6 @@ import {
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { tabBarClearance } from '../../lib/tab-bar-layout'
 import { theme } from '../../lib/theme'
 import { BackButton } from '../ui/BackButton'
 import { Screen } from '../ui/Screen'
@@ -39,13 +38,10 @@ export function AuthStage({
   children,
   back = true,
   foot = true,
-  barBelow = false,
 }: {
   children: React.ReactNode
   back?: boolean
   foot?: boolean
-  /** The tab bar floats over the bottom of this screen. */
-  barBelow?: boolean
 }) {
   const insets = useSafeAreaInsets()
   return (
@@ -61,7 +57,7 @@ export function AuthStage({
         <ScrollView
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={[styles.scroll, { paddingBottom: barBelow ? tabBarClearance(insets.bottom) : insets.bottom + theme.spacing(8) }]}
+          contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + theme.spacing(8) }]}
         >
           <View style={styles.column}>
             {children}

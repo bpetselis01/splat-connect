@@ -1,6 +1,5 @@
 import { View, Text } from 'react-native'
 import { Stack } from 'expo-router'
-import { TabBar } from '../../../components/tab-bar'
 import { stackScreenOptions } from '../../../lib/nav-options'
 import { renderRouter, screen, testRouter, fireEvent, act } from 'expo-router/testing-library'
 
@@ -10,7 +9,6 @@ import { renderRouter, screen, testRouter, fireEvent, act } from 'expo-router/te
 // the real stack layouts on expo-router's own router, with stub screens.
 
 jest.mock('../../../lib/use-auth-gate', () => ({ useAuthGate: () => 'ok' }))
-jest.mock('../../../lib/auth-context', () => ({ useAuth: () => ({ session: { user: { id: 'me' } } }) }))
 jest.mock('../../../lib/capabilities', () => ({ useCapabilities: () => ({ caps: null }) }))
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 
@@ -24,12 +22,7 @@ const Stub = (name: string) =>
   }
 
 const routes = () => ({
-  _layout: () => (
-    <>
-      <Stack screenOptions={{ headerShown: false }} />
-      <TabBar />
-    </>
-  ),
+  _layout: () => <Stack screenOptions={{ headerShown: false }} />,
   '(my)/_layout': () => <Stack screenOptions={stackScreenOptions} />,
   '(my)/toys/index': Stub('My toys'),
   '(tabs)/_layout': require('../../../app/(tabs)/_layout'),
@@ -113,41 +106,33 @@ describe('Back from a screen opened into a hidden tab', () => {
   })
 })
 
-describe('The floating bar on every signed-in screen', () => {
+describe('The floating bar on a screen opened into a hidden tab', () => {
   const bar = () => screen.queryByTestId('tab-bar')
-  const lit = (label: string) => screen.getByLabelText(label).props.accessibilityState.selected
 
-  it('shows on a guide or toy opened straight from Home, with Home lit', () => {
+  it('is off a guide or toy opened straight from Home, as from a recents row', () => {
     app = renderRouter(routes(), { initialUrl: '/home' })
     expect(bar()).not.toBeNull()
     testRouter.push('/guides/abc')
-    expect(bar()).not.toBeNull()
-    expect(lit('Home')).toBe(true)
+    expect(bar()).toBeNull()
     testRouter.navigate('/home')
     testRouter.push('/toy-library/xyz')
+    expect(bar()).toBeNull()
+  })
+
+  it('stays on the list roots', () => {
+    app = renderRouter(routes(), { initialUrl: '/home' })
+    testRouter.push('/guides')
+    expect(bar()).not.toBeNull()
+    testRouter.navigate('/home')
+    testRouter.push('/toy-library')
     expect(bar()).not.toBeNull()
   })
 
-  it('shows on a screen pushed over the tabs, lighting the tab it was opened from', () => {
-    app = renderRouter(routes(), { initialUrl: '/inbox' })
-    testRouter.push('/toys')
+  it('returns on the list root after a detail opened first', () => {
+    app = renderRouter(routes(), { initialUrl: '/home' })
+    testRouter.push('/guides/abc')
+    testRouter.navigate('/home')
+    testRouter.push('/guides')
     expect(bar()).not.toBeNull()
-    expect(lit('Inbox')).toBe(true)
-  })
-
-  it('Home from deep in a guide trail lands on Home', () => {
-    app = renderRouter(routes(), { initialUrl: '/home' })
-    testRouter.push('/guides/first')
-    testRouter.push('/guides/second')
-    act(() => fireEvent.press(screen.getByLabelText('Home')))
-    expect(app.getPathname()).toBe('/home')
-  })
-
-  it('a tab from a screen pushed over the tabs returns to that tab root', () => {
-    app = renderRouter(routes(), { initialUrl: '/home' })
-    testRouter.push('/toys')
-    act(() => fireEvent.press(screen.getByLabelText('Me')))
-    expect(app.getPathname()).toBe('/me')
-    expect(screen.queryByText('My toys')).toBeNull()
   })
 })

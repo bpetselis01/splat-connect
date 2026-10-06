@@ -333,6 +333,8 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
   },
   footer: {
+    borderTopWidth: theme.border.hairline,
+    borderTopColor: theme.colors.border,
     paddingVertical: theme.spacing(3),
   },
 })

@@ -28,9 +28,6 @@ import { Toast, useToast } from '../ui/Toast'
 import { PhotoCarousel } from '../ui/PhotoCarousel'
 import { PhotoViewer } from '../ui/PhotoViewer'
 import { Button } from '../ui/Button'
-import { BarBand } from '../ui/BarBand'
-import { barLift } from '../../lib/tab-bar-layout'
-import { useHideTabBarOnScroll } from '../../lib/tab-bar-visibility'
 import { Section } from '../ui/Section'
 import { Segmented } from '../ui/Segmented'
 import { Skeleton } from '../ui/Skeleton'
@@ -151,8 +148,6 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
   const { notes, reload } = useGuideNotes(id)
   const { caps } = useCapabilities()
   const scroller = useRef<ScrollView>(null)
-  const hideBar = useHideTabBarOnScroll()
-  const [bandHeight, setBandHeight] = useState(0)
   const [tab, setTab] = useState<Tab>(startTab === 'notes' || startTab === 'parts' || startTab === 'files' ? startTab : 'overview')
   const [tabsY, setTabsY] = useState(0)
   const stepIds = (tutorial?.steps ?? []).map((s) => s.id)
@@ -288,13 +283,7 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
 
   return (
     <View style={styles.container}>
-      <ScrollView
-        ref={scroller}
-        style={styles.container}
-        contentContainerStyle={{ paddingBottom: bandHeight + barLift(insets.bottom) + theme.spacing(4) }}
-        stickyHeaderIndices={[1]}
-        {...hideBar}
-      >
+      <ScrollView ref={scroller} style={styles.container} contentContainerStyle={styles.scroll} stickyHeaderIndices={[1]}>
         <View style={styles.pad}>
           {/* Bleeds to the screen's edges and up under the header, as the board's hero does. */}
           <View style={styles.hero}>
@@ -633,9 +622,9 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
         onClose={() => setViewing(null)}
       />
 
-      <Toast toast={toaster.toast} onHide={toaster.hide} style={{ bottom: barLift(insets.bottom) + 84 }} />
+      <Toast toast={toaster.toast} onHide={toaster.hide} style={{ bottom: Math.max(insets.bottom, theme.spacing(3)) + 84 }} />
 
-      <BarBand style={styles.actionBar} onHeight={setBandHeight}>
+      <View style={[styles.actionBar, { paddingBottom: Math.max(insets.bottom, theme.spacing(3)) }]}>
         {steps.length ? (
           <Button
             label={progress.allDone ? 'Build it again' : progress.resume ? `Pick up at step ${progress.resume.position}` : 'Start building'}
@@ -645,13 +634,14 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
         ) : (
           <Button label="Download PDF" onPress={openPreview} style={styles.primaryAction} />
         )}
-      </BarBand>
+      </View>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
+  scroll: { paddingBottom: theme.spacing(8) },
   pad: { paddingHorizontal: theme.spacing(4) },
   flex: { flex: 1 },
   onColor: { color: theme.colors.onColor },
@@ -745,6 +735,6 @@ const styles = StyleSheet.create({
   setting: { width: '48%', padding: theme.spacing(2), borderRadius: theme.radii.field, backgroundColor: theme.colors.surfaceSunken },
   settingKey: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.muted },
   settingValue: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink },
-  actionBar: { paddingHorizontal: theme.spacing(4), paddingTop: theme.spacing(3) },
+  actionBar: { paddingHorizontal: theme.spacing(4), paddingTop: theme.spacing(3), borderTopWidth: theme.border.hairline, borderTopColor: theme.colors.border, backgroundColor: theme.colors.surface },
   primaryAction: { minHeight: 56 },
 })

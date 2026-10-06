@@ -2,7 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react-native'
 import { FEATURES } from '../../../lib/home-shortcuts'
 import { stackScreenOptions } from '../../../lib/nav-options'
 import { BackButton } from '../../../components/ui/BackButton'
-import { tabBarFor } from '../../../lib/tab-bar-routes'
+import { BAR_ROOTS } from '../../../components/tab-bar'
 
 // Home pushes straight to a screen that may be the first of its stack (a hidden
 // tab's stack was never opened, so React Navigation makes that screen the
@@ -86,14 +86,14 @@ describe.each(hrefs)('Home shortcut %s', (href) => {
   it('leaves a way back when it is the first screen of its stack', () => {
     const file = ROUTES[href]
     expect(file).toBeDefined()
-    // The bar shows on every signed-in screen but chats, sheets and build mode,
-    // and Home is on it.
-    const segments = path.relative(APP, file).replace(/\.tsx$/, '').split(path.sep).filter((s: string) => s !== 'index')
-    if (tabBarFor(segments).show) return
     const { dir, name } = layoutOf(file)
     // (my) and printing sit in the root stack beside (tabs): their first screen
     // inherits that stack's back. Only a stack inside the tabs has nothing under it.
     if (!dir.includes('(tabs)')) return
+    // A screen straight under (tabs) is a tab root: the bar is the way out.
+    if (path.basename(dir) === '(tabs)') return expect(BAR_ROOTS.has(name)).toBe(true)
+    // A stack root that is itself a bar root keeps the bar.
+    if (name === 'index' && BAR_ROOTS.has(path.basename(dir))) return
     const opts = screensOf(dir)[name] ?? {}
     expect(opts.headerShown).not.toBe(false)
     const left = (opts.headerLeft ?? stackScreenOptions.headerLeft)({ canGoBack: false })
