@@ -106,6 +106,9 @@ function Linkified({ text, style }: { text: string; style: StyleProp<TextStyle> 
  * "Who it's for" as label → chosen answers, one row per answered question;
  * an answer the parent's first child shares is marked so the chip can say so.
  */
+/** How far under the header a row scrolled into view sits. */
+export const ROW_SCROLL_MARGIN = 72
+
 function whoRows(t: Tutorial, child: ChildProfile | undefined) {
   return CHILD_QUESTIONS.map((q) => {
     const childHas = (v: string) => {
@@ -204,7 +207,7 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
     // ponytail: measureLayout against the inner node; if RN drops getInnerViewNode, sum onLayout offsets instead.
     ;(row as unknown as { measureLayout: (n: unknown, ok: (x: number, y: number) => void, fail: () => void) => void }).measureLayout(
       inner,
-      (_x, y) => scroller.current?.scrollTo({ y: Math.max(0, y - 72), animated: true }),
+      (_x, y) => scroller.current?.scrollTo({ y: Math.max(0, y - ROW_SCROLL_MARGIN), animated: true }),
       () => {}
     )
   }
@@ -649,22 +652,22 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
               )}
               {tutorial.stl_files.length > 0 ? (
                 <View ref={printCard} collapsable={false} testID="print-card">
-                <AnimatedPressable
-                  onPress={() => router.push({ pathname: '/printing', params: printWith ? { guide: tutorial.id, printWith } : { guide: tutorial.id } })}
-                  accessibilityRole="button"
-                  accessibilityLabel="Ask someone to print"
-                  accessibilityHint="Pick up to three printers nearby"
-                  pressScale={0.985}
-                  style={[styles.printCardFilled, styles.flush, highlight === 'print' && styles.printRing]}
-                >
-                  <View style={styles.printHeader}>
-                    <Text style={styles.printTitleOn}>Ask someone to print</Text>
-                    <Ionicons name="chevron-forward" size={16} color={theme.colors.onColor} />
-                  </View>
-                  <Text style={styles.printHintOn}>
-                    {tutorial.stl_files.length} printable part{tutorial.stl_files.length === 1 ? '' : 's'} · pick up to three printers nearby
-                  </Text>
-                </AnimatedPressable>
+                  <AnimatedPressable
+                    onPress={() => router.push({ pathname: '/printing', params: printWith ? { guide: tutorial.id, printWith } : { guide: tutorial.id } })}
+                    accessibilityRole="button"
+                    accessibilityLabel="Ask someone to print"
+                    accessibilityHint="Pick up to three printers nearby"
+                    pressScale={0.985}
+                    style={[styles.printCardFilled, styles.flush, highlight === 'print' && styles.printRing]}
+                  >
+                    <View style={styles.printHeader}>
+                      <Text style={styles.printTitleOn}>Ask someone to print</Text>
+                      <Ionicons name="chevron-forward" size={16} color={theme.colors.onColor} />
+                    </View>
+                    <Text style={styles.printHintOn}>
+                      {tutorial.stl_files.length} printable part{tutorial.stl_files.length === 1 ? '' : 's'} · pick up to three printers nearby
+                    </Text>
+                  </AnimatedPressable>
                 </View>
               ) : null}
               {settings.length ? (

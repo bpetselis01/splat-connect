@@ -1,6 +1,6 @@
 import { Linking, ScrollView } from 'react-native'
 import { act, render, screen, fireEvent, waitFor } from '@testing-library/react-native'
-import { DetailScreen, linkSite, splitLead } from '../../../../components/home/detail-screen'
+import { DetailScreen, ROW_SCROLL_MARGIN, linkSite, splitLead } from '../../../../components/home/detail-screen'
 import { apiClient } from '../../../../lib/api-client'
 
 // Ionicons loads its font asynchronously and setStates after the test ends;
@@ -320,6 +320,7 @@ describe('DetailScreen', () => {
       mockEndpoints({ detail: Promise.resolve({ ...DETAIL, stl_files: [{ id: 'f1', tutorial_id: '1', filename: 'base.stl', file_url: '1/base.stl', print_minutes: null, filament_grams: null, material: null }] }) })
       render(<DetailScreen id="1" />)
       await screen.findByText('Build a Robot Arm')
+      const CARD_Y = 900
       // The jump measures the print card against the scroller's inner node, then scrolls to it.
       const scroller = screen.UNSAFE_getByType(ScrollView).instance as unknown as { getInnerViewNode: () => unknown; scrollTo: jest.Mock }
       scroller.getInnerViewNode = () => ({})
@@ -328,10 +329,10 @@ describe('DetailScreen', () => {
       expect(screen.getByRole('tab', { name: 'Files', selected: true })).toBeTruthy()
       // The card exists once Files has rendered; measure it before the next frame fires.
       const card = screen.UNSAFE_getAllByProps({ testID: 'print-card' }).map((n) => n.instance).find(Boolean) as unknown as { measureLayout: jest.Mock }
-      card.measureLayout = jest.fn((_n, ok: (x: number, y: number) => void) => ok(0, 900))
+      card.measureLayout = jest.fn((_n, ok: (x: number, y: number) => void) => ok(0, CARD_Y))
       act(() => { jest.advanceTimersByTime(50) })
       expect(card.measureLayout).toHaveBeenCalled()
-      expect(scrollTo).toHaveBeenLastCalledWith({ y: 828, animated: true })
+      expect(scrollTo).toHaveBeenLastCalledWith({ y: CARD_Y - ROW_SCROLL_MARGIN, animated: true })
       expect(JSON.stringify(screen.toJSON())).toContain('"borderWidth":3')
       act(() => { jest.advanceTimersByTime(1700) })
       expect(JSON.stringify(screen.toJSON())).not.toContain('"borderWidth":3')

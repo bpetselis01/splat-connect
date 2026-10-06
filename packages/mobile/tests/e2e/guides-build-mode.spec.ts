@@ -181,13 +181,15 @@ test('Leave feedback at the end posts and lands on the same guide page with the 
   await page.getByLabel('Your note').fill(body)
   const post = page.waitForResponse((r) => r.url().endsWith(`/tutorials/${id}/notes`) && r.request().method() === 'POST')
   await page.getByRole('button', { name: 'Post', exact: true }).click()
-  const created = await (await post).json()
+  const res = await post
+  expect(res.status()).toBe(201)
+  const created = await res.json()
   expect(created.step_position).toBe(2)
   await expect(page.getByRole('heading', { name: 'Feedback posted' })).toBeVisible()
   await page.getByRole('button', { name: 'See it on the guide' }).click()
 
   await expect(page).toHaveURL(new RegExp(`/guides/${id}$`))
-  expect(await page.evaluate(() => history.length)).toBe(before + 1)   // one push, one pop: no second guide page
+  expect(await page.evaluate(() => history.length)).toBe(before + 1)   // net one entry: the build screen, not a second guide page
   await expect(page.getByRole('tab', { name: 'Feedback (1)', selected: true })).toBeVisible()
   await expect(page.getByTestId(`note-row-${created.id}`)).toBeInViewport()
   await expect(page.getByText('Your feedback is on the guide')).toBeVisible()
