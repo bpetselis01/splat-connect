@@ -6,7 +6,7 @@
 # covers the platform.
 #
 # The guide is seeded by scripts/provision-device-parent.mjs (two photos, two
-# steps), the same way toy-photos-carousel.yaml gets its toy: whether the first
+# steps and one STL part), the same way toy-photos-carousel.yaml gets its toy: whether the first
 # guide in the library happens to have two photos is someone else's upload.
 #
 # DEVICE_EMAIL / DEVICE_PASSWORD come from `maestro test --env` — see
