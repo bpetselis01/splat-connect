@@ -28,7 +28,7 @@ describe('ArticleScreen', () => {
 
     expect(screen.getByText(`Learn · 1 of ${LEARN_ARTICLES.length}`)).toBeTruthy()
     for (const section of article.sections) {
-      expect(screen.getByText(section.heading)).toBeTruthy()
+      expect(screen.getByRole('header', { name: section.heading })).toBeTruthy()
       for (const paragraph of section.paragraphs) {
         expect(screen.getByText(paragraph)).toBeTruthy()
       }
@@ -63,5 +63,12 @@ describe('ArticleScreen', () => {
     render(<ArticleScreen slug="does-not-exist" />)
 
     expect(screen.getByText("We couldn't find that article.")).toBeTruthy()
+  })
+
+  it('lists its headings under In this article, and a reading bar that starts empty', () => {
+    render(<ArticleScreen slug={LEARN_ARTICLES[0].slug} />)
+    expect(screen.getByText('In this article')).toBeTruthy()
+    for (const section of LEARN_ARTICLES[0].sections) expect(screen.getByLabelText(`Go to ${section.heading}`)).toBeTruthy()
+    expect(screen.getByLabelText('Reading progress').props.accessibilityValue.now).toBe(0)
   })
 })
