@@ -18,7 +18,7 @@ describe('ReportProblem', () => {
     fireEvent.press(screen.getByRole('radio', { name: 'Didn’t show up' }))
     fireEvent.changeText(screen.getByLabelText('What happened?'), 'Nobody came.')
     // On by default, as the board draws it; the reporter can say no.
-    fireEvent.press(screen.getByRole('button', { name: 'OK to contact me about this' }))
+    fireEvent.press(screen.getByRole('checkbox', { name: /OK to contact me about this/ }))
     fireEvent.press(screen.getByRole('button', { name: 'Send report' }))
     await waitFor(() =>
       expect(mockPost).toHaveBeenCalledWith('/api/reports', {
