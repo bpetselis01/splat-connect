@@ -43,7 +43,6 @@ export default function GuidesStackLayout() {
           // rest position would put Create draft under the fold.
           sheetAllowedDetents: [1.0],
           headerLeft: () => <CloseButton />,
-          headerRight: () => null,
         }}
       />
       <Stack.Screen name="[id]/index" options={{ title: 'Guide' }} />

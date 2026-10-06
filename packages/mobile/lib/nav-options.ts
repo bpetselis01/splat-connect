@@ -2,7 +2,6 @@
 import { createElement } from 'react'
 import { theme } from './theme'
 import { BackButton } from '../components/ui/BackButton'
-import { HomeButton } from '../components/ui/HomeButton'
 
 /**
  * Shared native-header styling for every drill-down stack. Kept in one place so
@@ -29,10 +28,5 @@ export const stackScreenOptions = {
   // Always drawn, not only when `canGoBack`: a hidden tab's stack opened by a
   // Home shortcut holds that one screen, and BackButton goes Home from there.
   headerLeft: () => createElement(BackButton),
-  // Option B (2026-10-06): Home is one tap from any screen without the tab
-  // bar. Tab roots draw no header, so this never doubles the bar's Home. A
-  // screen with its own right-hand button wraps it in WithHome; a sheet or
-  // first-run flow turns it off with headerRight: () => null.
-  headerRight: () => createElement(HomeButton),
   contentStyle: { backgroundColor: theme.colors.background },
 }

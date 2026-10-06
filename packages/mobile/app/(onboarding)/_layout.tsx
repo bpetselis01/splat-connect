@@ -13,7 +13,7 @@ export default function OnboardingLayout() {
   if (gate !== 'ok') return <Redirect href={gate} />
 
   return (
-    <Stack screenOptions={{ ...stackScreenOptions, headerBackTitle: 'Back', headerRight: () => null }}>
+    <Stack screenOptions={{ ...stackScreenOptions, headerBackTitle: 'Back' }}>
       <Stack.Screen name="child" options={{ title: 'Child profile' }} />
     </Stack>
   )

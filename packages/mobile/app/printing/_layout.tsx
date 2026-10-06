@@ -20,7 +20,7 @@ export default function PrintingLayout() {
           dismissed with an ✕ rather than gone back from. */}
       <Stack.Screen
         name="request"
-        options={{ title: 'Request a print', presentation: 'modal', headerLeft: () => <CloseButton />, headerRight: () => null }}
+        options={{ title: 'Request a print', presentation: 'modal', headerLeft: () => <CloseButton /> }}
       />
       <Stack.Screen name="jobs/[id]" options={{ title: 'Print job' }} />
       <Stack.Screen name="basics" options={{ title: 'Printing basics' }} />
