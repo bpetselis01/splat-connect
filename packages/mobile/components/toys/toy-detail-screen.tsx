@@ -7,6 +7,8 @@ import { Ionicons } from '@expo/vector-icons'
 import { gradeOf, PICK_KIND_LABEL, toyFacts, toyHolderName, type OfferType, type Toy, type ToyDetail } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
+import { tabBarClearance } from '../../lib/tab-bar-layout'
+import { useHideTabBarOnScroll } from '../../lib/tab-bar-visibility'
 import { useSaves } from '../../lib/saves'
 import { recordRecent } from '../../lib/recents'
 import { useCapabilities } from '../../lib/capabilities'
@@ -41,6 +43,7 @@ export function ToyDetailScreen({ id }: { id: string }) {
   const [viewing, setViewing] = useState<number | null>(null)
   const toaster = useToast()
   const insets = useSafeAreaInsets()
+  const hideBar = useHideTabBarOnScroll()
 
   useEffect(() => {
     let ignore = false
@@ -153,7 +156,7 @@ export function ToyDetailScreen({ id }: { id: string }) {
 
   return (
     <View style={styles.container}>
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.container} contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance(insets.bottom) }]} {...hideBar}>
       <View style={styles.hero}>
         <PhotoCarousel
           urls={toy.photo_urls}
@@ -277,14 +280,14 @@ export function ToyDetailScreen({ id }: { id: string }) {
       ) : null}
     </ScrollView>
     <PhotoViewer photos={toy.photo_urls.map((uri) => ({ uri }))} index={viewing} onClose={() => setViewing(null)} />
-    <Toast toast={toaster.toast} onHide={toaster.hide} style={{ bottom: insets.bottom + theme.spacing(4) }} />
+    <Toast toast={toaster.toast} onHide={toaster.hide} style={{ bottom: tabBarClearance(insets.bottom) + theme.spacing(4) }} />
     </View>
   )
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  content: { paddingHorizontal: theme.spacing(4), paddingBottom: theme.spacing(10), gap: theme.spacing(4) },
+  content: { paddingHorizontal: theme.spacing(4), gap: theme.spacing(4) },
   hero: { marginHorizontal: -theme.spacing(4), marginBottom: -theme.spacing(1) },
   heroActions: { position: 'absolute', top: theme.spacing(3), right: theme.spacing(3) },
   pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2) },

@@ -36,6 +36,9 @@ import { useCapabilities } from '../../lib/capabilities'
 import { doorRoute, sinceYear } from '../../lib/org-profile'
 import { recordRecent } from '../../lib/recents'
 import { theme } from '../../lib/theme'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { tabBarClearance } from '../../lib/tab-bar-layout'
+import { useHideTabBarOnScroll } from '../../lib/tab-bar-visibility'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
 import { Card } from '../ui/Card'
 import { ToBeCompleted } from '../ui/ToBeCompleted'
@@ -77,6 +80,8 @@ export function OrgProfileScreen({ id }: { id: string }) {
   const [error, setError] = useState(false)
   const [reloadKey, setReloadKey] = useState(0)
   const [allGuides, setAllGuides] = useState(false)
+  const insets = useSafeAreaInsets()
+  const hideBar = useHideTabBarOnScroll()
   const [allToys, setAllToys] = useState(false)
 
   useEffect(() => {
@@ -170,7 +175,7 @@ export function OrgProfileScreen({ id }: { id: string }) {
   const meta = [org.kind ?? org.description, place, since ? `On SPLAT since ${since}` : null].filter(Boolean).join(' · ')
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.container} contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance(insets.bottom) }]} {...hideBar}>
       <View style={styles.cover}>
         {org.cover_url ? <Image source={{ uri: org.cover_url }} style={StyleSheet.absoluteFill} accessibilityIgnoresInvertColors /> : null}
       </View>
@@ -554,7 +559,7 @@ function OrgButtons({
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  content: { padding: theme.spacing(4), paddingBottom: theme.spacing(10) },
+  content: { padding: theme.spacing(4) },
   flex: { flex: 1, minWidth: 0 },
   reportLine: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', marginTop: theme.spacing(4) },
   reportText: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted },

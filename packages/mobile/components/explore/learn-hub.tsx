@@ -7,6 +7,9 @@ import type { LearnCourse } from '@splat-connect/types'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { theme } from '../../lib/theme'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { tabBarClearance } from '../../lib/tab-bar-layout'
+import { useHideTabBarOnScroll } from '../../lib/tab-bar-visibility'
 import { apiClient } from '../../lib/api-client'
 import { useLearnProgress } from '../../lib/learn'
 import { LEARN_ARTICLES, type LearnArticle } from '../../lib/learn-content'
@@ -41,6 +44,8 @@ export function LearnHub() {
   // the articles ship inside the app. Hidden hides it from everyone here,
   // admins included: the course an admin previews is the web's. A failed read
   // keeps the app's own words.
+  const insets = useSafeAreaInsets()
+  const hideBar = useHideTabBarOnScroll()
   const [course, setCourse] = useState<LearnCourse | null>(null)
   useEffect(() => {
     let ignore = false
@@ -67,7 +72,7 @@ export function LearnHub() {
 
   return (
     <Screen>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: tabBarClearance(insets.bottom) }} {...hideBar}>
         {course?.title ? (
           <Text accessibilityRole="header" style={styles.courseTitle}>
             {course.title}
@@ -200,7 +205,6 @@ export function LearnHub() {
 }
 
 const styles = StyleSheet.create({
-  content: { paddingBottom: theme.spacing(8) },
   flex: { flex: 1 },
   onColor: { color: theme.colors.onColor },
   muted: { color: theme.colors.muted },

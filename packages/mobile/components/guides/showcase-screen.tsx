@@ -8,6 +8,9 @@ import { KIND_LABEL, guideMeta, nextBadgeLine, plural } from '@splat-connect/typ
 import { apiClient } from '../../lib/api-client'
 import { useAuth } from '../../lib/auth-context'
 import { theme } from '../../lib/theme'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { tabBarClearance } from '../../lib/tab-bar-layout'
+import { useHideTabBarOnScroll } from '../../lib/tab-bar-visibility'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
 import { Card } from '../ui/Card'
 import { Badge } from '../ui/Badge'
@@ -84,6 +87,8 @@ function ToyRow({ toy }: { toy: ShelfToy }) {
  */
 export function ShowcaseScreen({ kind, id }: { kind: ShowcaseKind; id: string }) {
   const router = useRouter()
+  const insets = useSafeAreaInsets()
+  const hideBar = useHideTabBarOnScroll()
   const { session } = useAuth()
   const [profile, setProfile] = useState<ShowcaseProfile | null>(null)
   const [loading, setLoading] = useState(true)
@@ -152,7 +157,7 @@ export function ShowcaseScreen({ kind, id }: { kind: ShowcaseKind; id: string })
   const next = person && session?.user.id === id ? nextBadgeLine({ guides: guides.length, builds: person.builds ?? 0 }) : null
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.container} contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance(insets.bottom) }]} {...hideBar}>
       <Card style={styles.header}>
         <View style={[styles.avatar, kind === 'org' && styles.avatarSquare]}>
           <Text style={styles.avatarInitial}>{profile.name.charAt(0).toUpperCase()}</Text>
@@ -230,7 +235,7 @@ export function ShowcaseScreen({ kind, id }: { kind: ShowcaseKind; id: string })
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  content: { padding: theme.spacing(4), paddingBottom: theme.spacing(10) },
+  content: { padding: theme.spacing(4) },
   // The board's profile header card is 22px, the one radius it keeps for it.
   header: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(4), marginBottom: theme.spacing(6), borderRadius: 22 },
   avatar: {
