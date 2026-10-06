@@ -91,6 +91,9 @@ function mockEndpoints({
 }
 
 describe('DetailScreen', () => {
+  let webUrl: string | undefined
+  beforeEach(() => { webUrl = process.env.EXPO_PUBLIC_WEB_URL })
+  afterEach(() => { if (webUrl === undefined) delete process.env.EXPO_PUBLIC_WEB_URL; else process.env.EXPO_PUBLIC_WEB_URL = webUrl })
   beforeEach(() => {
     jest.clearAllMocks()
     mockEndpoints()

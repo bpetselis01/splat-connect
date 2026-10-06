@@ -12,6 +12,9 @@ jest.mock('react-native-webview', () => {
 })
 
 describe('PreviewScreen', () => {
+  let webUrl: string | undefined
+  beforeEach(() => { webUrl = process.env.EXPO_PUBLIC_WEB_URL })
+  afterEach(() => { if (webUrl === undefined) delete process.env.EXPO_PUBLIC_WEB_URL; else process.env.EXPO_PUBLIC_WEB_URL = webUrl })
   it('renders a WebView with the given pdf url', () => {
     render(<PreviewScreen pdfUrl="https://example.com/robot-arm.pdf" tutorialId="abc" />)
     const webview = screen.getByTestId('webview')

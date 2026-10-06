@@ -10,6 +10,8 @@ const steps = [1, 2].map((p) => ({ id: `s${p}`, tutorial_id: 'g', position: p, t
 const theirs = { id: 'theirs', step_position: 1, author_id: 'p', author_name: 'Sam R', body: 'Hi', photo_url: null, photo_caption: null, pinned_at: null, pinned_by: null, pinned_by_name: null, created_at: '2026-09-01T00:00:00Z' }
 const props = { tutorialId: 'g', guideTitle: 'Switch', authorName: 'Mei Tan', steps: steps as never, reload: jest.fn(), canPin: false, viewerId: 'me', viewerName: 'Me' }
 
+afterEach(() => jest.restoreAllMocks())
+
 // The real ReportProblem re-renders on every keystroke and hands a new `open`
 // each time; the sheet must open once and then behave like any sheet.
 it('the real report sheet keeps typed text and stays closed after Close', () => {

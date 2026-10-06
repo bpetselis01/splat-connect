@@ -28,6 +28,9 @@ const GUIDE = { id: 'g', title: 'Light Touch Switch', stl_files: [
 ] }
 const page = (m: object) => act(() => { onMessage?.({ nativeEvent: { data: JSON.stringify(m) } }) })
 
+let webUrl: string | undefined
+beforeEach(() => { webUrl = process.env.EXPO_PUBLIC_WEB_URL })
+afterEach(() => { if (webUrl === undefined) delete process.env.EXPO_PUBLIC_WEB_URL; else process.env.EXPO_PUBLIC_WEB_URL = webUrl })
 beforeEach(() => { jest.clearAllMocks(); mockGet.mockResolvedValue(GUIDE); mockSign.mockResolvedValue({ data: { signedUrl: 'https://s/signed.stl' }, error: null }) })
 
 it('names the part, signs its path and loads it into the page once the page is ready', async () => {

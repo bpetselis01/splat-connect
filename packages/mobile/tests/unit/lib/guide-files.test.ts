@@ -10,8 +10,9 @@ describe('stlName', () => {
 })
 
 describe('webGuideUrl', () => {
-  const was = process.env.EXPO_PUBLIC_WEB_URL
-  afterEach(() => { process.env.EXPO_PUBLIC_WEB_URL = was })
+  let webUrl: string | undefined
+  beforeEach(() => { webUrl = process.env.EXPO_PUBLIC_WEB_URL })
+  afterEach(() => { if (webUrl === undefined) delete process.env.EXPO_PUBLIC_WEB_URL; else process.env.EXPO_PUBLIC_WEB_URL = webUrl })
   it('points at the guide on the website', () => {
     process.env.EXPO_PUBLIC_WEB_URL = 'https://splat.example'
     expect(webGuideUrl('abc')).toBe('https://splat.example/tutorials/abc')
