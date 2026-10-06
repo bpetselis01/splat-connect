@@ -25,7 +25,7 @@ it('ticks a part and keeps it on the device', async () => {
   expect(await screen.findByText('0 of 2 gathered')).toBeTruthy()
   fireEvent.press(screen.getByLabelText('Glue: gathered'))
   expect(screen.getByText('1 of 2 gathered')).toBeTruthy()
-  expect(mockSetItem).toHaveBeenLastCalledWith('guide-parts.g', '["p2"]')
+  expect(mockSetItem).toHaveBeenLastCalledWith('guide-parts.g.signed-out', '["p2"]')
 })
 
 it('totals the prices and says when they were checked', async () => {

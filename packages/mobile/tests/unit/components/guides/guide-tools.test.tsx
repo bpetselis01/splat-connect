@@ -28,7 +28,7 @@ it('ticks the tools you already have and links to Learn', async () => {
   expect(screen.getByText(/Not in the parts total/)).toBeTruthy()
   fireEvent.press(screen.getByLabelText('I already have Hot glue gun'))
   expect(screen.getByText('1 of 2 already yours')).toBeTruthy()
-  expect(mockSetItem).toHaveBeenLastCalledWith('guide-tools.g', '["t2"]')
+  expect(mockSetItem).toHaveBeenLastCalledWith('guide-tools.g.signed-out', '["t2"]')
   fireEvent.press(screen.getByLabelText('Tools and materials on Learn'))
   expect(mockPush).toHaveBeenCalledWith('/explore/learn/tools-and-materials')
 })

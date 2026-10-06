@@ -42,20 +42,20 @@ it('un-ticks a tool on a second tap', async () => {
   fireEvent.press(await screen.findByLabelText('I already have Tool 1'))
   fireEvent.press(screen.getByLabelText('I do not have Tool 1'))
   expect(screen.getByText('0 of 1 already yours')).toBeTruthy()
-  expect(mockSetItem).toHaveBeenLastCalledWith('guide-tools.g', '[]')
+  expect(mockSetItem).toHaveBeenLastCalledWith('guide-tools.g.signed-out', '[]')
 })
 
 it('restores tools saved on the device, ignoring ones the guide dropped', async () => {
   mockGetItem.mockResolvedValue('["t1","removed"]')
   render(<Tools tools={[tool(1), tool(2)]} />)
   expect(await screen.findByText('1 of 2 already yours')).toBeTruthy()
-  expect(mockGetItem).toHaveBeenCalledWith('guide-tools.g')
+  expect(mockGetItem).toHaveBeenCalledWith('guide-tools.g.signed-out')
 })
 
 it('keeps tool ticks apart from step ticks for the same guide', async () => {
   render(<Tools tools={[tool(1)]} />)
   await waitFor(() => expect(mockGetItem).toHaveBeenCalled())
-  expect(mockGetItem).not.toHaveBeenCalledWith('guide-steps.g')
+  expect(mockGetItem).not.toHaveBeenCalledWith('guide-steps.g.signed-out')
 })
 
 it('counts 80 tools and ticks the last', async () => {

@@ -24,7 +24,7 @@ afterEach(() => jest.restoreAllMocks())
 describe('ticksKey', () => {
   it('keeps steps and tools ticks apart for the same guide', () => {
     expect(ticksKey('steps', 'g')).not.toBe(ticksKey('tools', 'g'))
-    expect(ticksKey('tools', 'g')).toBe('guide-tools.g')
+    expect(ticksKey('tools', 'g')).toBe('guide-tools.g.signed-out')
   })
 })
 
@@ -119,12 +119,12 @@ describe('useDeviceTicks journeys', () => {
   })
 
   it('reads the new guide’s ticks when the key changes', async () => {
-    mockGetItem.mockImplementation((k: string) => Promise.resolve(k === 'guide-steps.g2' ? '["x"]' : '["a"]'))
+    mockGetItem.mockImplementation((k: string) => Promise.resolve(k === 'guide-steps.g2.signed-out' ? '["x"]' : '["a"]'))
     const { result, rerender } = renderHook(({ k, ids }: { k: string; ids: string[] }) => useDeviceTicks(k, ids), {
       initialProps: { k: key, ids: ['a'] },
     })
     await waitFor(() => expect(result.current.ticked.has('a')).toBe(true))
-    rerender({ k: 'guide-steps.g2', ids: ['x'] })
+    rerender({ k: 'guide-steps.g2.signed-out', ids: ['x'] })
     await waitFor(() => expect(result.current.ticked.has('x')).toBe(true))
     expect(result.current.ticked.has('a')).toBe(false)
   })

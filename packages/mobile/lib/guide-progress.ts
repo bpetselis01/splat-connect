@@ -1,15 +1,23 @@
 // packages/mobile/lib/guide-progress.ts
 //
 // A parent's ticks on a guide — steps done, parts gathered, tools owned — kept on the
-// device, per guide, the way lib/learn.ts keeps Learn progress. Never a
+// device, per guide and per account, the way lib/learn.ts keeps Learn progress. Never a
 // source of truth: unreadable storage starts empty, a failed write keeps the
 // tick in memory for this visit.
 import { useEffect, useRef, useState } from 'react'
 import type { TutorialStep } from '@splat-connect/types'
 import { resolveAuthStorage } from './supabase-storage'
 
+// Per account, like recents: on a shared phone the next account must not see
+// which guides the last one built. Set by auth-context as the session changes.
+let owner: string | null = null
+export const setTicksOwner = (userId: string | null) => {
+  owner = userId
+}
+
 // SecureStore keys allow [A-Za-z0-9._-]; a uuid fits.
-export const ticksKey = (kind: 'steps' | 'tools' | 'parts', tutorialId: string) => `guide-${kind}.${tutorialId}`
+export const ticksKey = (kind: 'steps' | 'tools' | 'parts', tutorialId: string) =>
+  `guide-${kind}.${tutorialId}.${owner ?? 'signed-out'}`
 
 /** What the device holds, kept only where it names something the guide still has. */
 export function parseTicks(raw: string | null, validIds: readonly string[]): Set<string> {
