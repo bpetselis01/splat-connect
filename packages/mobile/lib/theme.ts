@@ -55,6 +55,10 @@ const LIGHT = {
     inverse: '#1c2530',
     onInverse: '#ffffff',
     scrim: 'rgba(28,37,48,0.4)',
+    // The full-screen photo viewer is dark in both modes: a photo reads best on black.
+    photoGround: '#000000',
+    photoScrim: 'rgba(0,0,0,0.55)',
+    photoHint: 'rgba(255,255,255,0.75)',
     glass: 'rgba(255,255,255,0.86)',
     // The board's tab bar: 62% white over the blur.
     tabGlass: 'rgba(255,255,255,0.62)',
@@ -111,6 +115,9 @@ const DARK: typeof LIGHT = {
     inverse: '#e8ecf0',
     onInverse: '#1c2530',
     scrim: 'rgba(0,0,0,0.55)',
+    photoGround: '#000000',
+    photoScrim: 'rgba(0,0,0,0.55)',
+    photoHint: 'rgba(255,255,255,0.75)',
     glass: 'rgba(27,34,42,0.88)',
     tabGlass: 'rgba(27,34,42,0.62)',
     tabOn: 'rgba(23,50,70,0.9)',

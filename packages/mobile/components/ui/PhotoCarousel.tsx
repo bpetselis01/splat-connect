@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { View, Text, Image, StyleSheet, useWindowDimensions, type ScrollView, type ViewStyle } from 'react-native'
+import { View, Text, Image, Pressable, StyleSheet, useWindowDimensions, type ScrollView, type ViewStyle } from 'react-native'
 import Animated, {
   useAnimatedScrollHandler,
   useAnimatedStyle,
@@ -35,6 +35,7 @@ export function PhotoCarousel({
   emptyIcon = 'cube-outline',
   onIndexChange,
   index,
+  onPress,
 }: {
   urls: string[]
   /** Which photo shows the accessibility switch, flagged as it comes past. */
@@ -45,6 +46,8 @@ export function PhotoCarousel({
   onIndexChange?: (index: number) => void
   /** Scroll to this photo — the thumbnail strip's tap. */
   index?: number
+  /** A tap on a photo, by its index: the guide page opens it full screen. */
+  onPress?: (index: number) => void
 }) {
   const { width: screenWidth } = useWindowDimensions()
   // Measured rather than assumed: this sits inside padded screens as well as
@@ -93,15 +96,22 @@ export function PhotoCarousel({
         // as though there were something just off screen.
         scrollEnabled={urls.length > 1}
       >
-        {urls.map((url) => (
-          <View key={url} style={{ width, height }}>
+        {urls.map((url, i) => (
+          <Pressable
+            key={url}
+            disabled={!onPress}
+            onPress={() => onPress?.(i)}
+            accessibilityRole={onPress ? 'imagebutton' : undefined}
+            accessibilityLabel={onPress ? `Open photo ${i + 1} full screen` : undefined}
+            style={{ width, height }}
+          >
             <Image source={{ uri: url }} style={styles.photo} />
             {switchUrl === url && (
               <View style={styles.flag}>
                 <Text style={styles.flagText}>Shows the switch</Text>
               </View>
             )}
-          </View>
+          </Pressable>
         ))}
       </Animated.ScrollView>
 
