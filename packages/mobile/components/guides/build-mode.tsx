@@ -8,7 +8,7 @@
 // "Next" ticks the step in the same device ticks the guide page shows, so the
 // page's "Pick up at step N" and this screen agree, and a reopened build
 // resumes. The screen stays awake while it is open.
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { View, Text, Image, ScrollView, Pressable, Modal, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -18,6 +18,7 @@ import { SAFETY_CHECKLIST, initials, type GuideNote, type Part, type Tool, type 
 import { apiClient } from '../../lib/api-client'
 import { stepProgress, ticksKey, useDeviceTicks, useGatherTicks } from '../../lib/guide-progress'
 import { useGuideNotes } from '../../lib/guide-notes'
+import { setGuideFocus } from '../../lib/guide-focus'
 import { sentences } from '../../lib/sentences'
 import { relativeTime } from '../../lib/notifications'
 import { theme } from '../../lib/theme'
@@ -26,6 +27,7 @@ import { Skeleton } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { FlashLine, useFlash } from '../ui/Flash'
 import { PhotoViewer } from '../ui/PhotoViewer'
+import { FeedbackSheet } from './feedback-sheet'
 import { GuideParts } from './guide-parts'
 import { GuideTools } from './guide-tools'
 
@@ -37,6 +39,7 @@ type BuildGuide = {
   build_minutes?: number | null
   photo_urls?: string[]
   steps?: TutorialStep[]
+  tutorial_contributors?: { profiles: { name: string } }[]
   safety_notes?: TutorialSafetyNote[]
   parts?: Part[]
   tools?: Tool[]
@@ -63,6 +66,8 @@ export function BuildMode({ id, step: startStep }: { id: string; step?: string }
   const [viewing, setViewing] = useState<{ uri: string; caption: string | null } | null>(null)
   const [notesOpen, setNotesOpen] = useState(true)
   const [built, setBuilt] = useState(false)
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
+  const lastStep = useRef<number | null>(null)
   const [flash, setFlash] = useFlash()
 
   useEffect(() => {
@@ -84,8 +89,13 @@ export function BuildMode({ id, step: startStep }: { id: string; step?: string }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [guide, ticked, loaded])
 
+  // The last step whose body was on screen: the feedback sheet opens on it.
+  useEffect(() => {
+    if (at && at >= 1 && at <= (guide?.steps?.length ?? 0)) lastStep.current = at
+  }, [at, guide])
+
   const close = () => router.back()
-  const toNotes = () => router.replace({ pathname: '/guides/[id]', params: { id, tab: 'notes' } })
+  const toFeedback = () => { setGuideFocus({ tutorialId: id, noteId: null }); router.back() }
   const head = (label: string, withSteps = false) => (
     <View style={[styles.head, { paddingTop: insets.top + theme.spacing(2) }]}>
       <Pressable onPress={close} accessibilityRole="button" accessibilityLabel="Close build mode" hitSlop={6} style={styles.round}>
@@ -237,7 +247,7 @@ export function BuildMode({ id, step: startStep }: { id: string; step?: string }
               </View>
             ) : null}
             {/* Notes the guide's contributors approved (pinned), read here on
-                the step; the rest of the discussion stays on the Notes tab. */}
+                the step; the rest of the discussion stays on the Feedback tab. */}
             {pinned.length ? (
               <View style={styles.notes}>
                 <Pressable
@@ -257,8 +267,8 @@ export function BuildMode({ id, step: startStep }: { id: string; step?: string }
                       <StepNote key={n.id} note={n} onPhoto={(uri) => setViewing({ uri, caption: n.photo_caption })} />
                     ))}
                     {onStep > pinned.length ? (
-                      <Pressable onPress={toNotes} accessibilityRole="link" style={styles.notesLink}>
-                        <Text style={styles.link}>{`${plural(onStep - pinned.length, 'more note')} in the guide's Notes`}</Text>
+                      <Pressable onPress={toFeedback} accessibilityRole="link" style={styles.notesLink}>
+                        <Text style={styles.link}>{`${plural(onStep - pinned.length, 'more note')} in the guide's Feedback`}</Text>
                         <Ionicons name="chevron-forward" size={16} color={theme.colors.primaryDeep} />
                       </Pressable>
                     ) : null}
@@ -266,9 +276,9 @@ export function BuildMode({ id, step: startStep }: { id: string; step?: string }
                 ) : null}
               </View>
             ) : onStep ? (
-              <Pressable onPress={toNotes} accessibilityRole="link" style={styles.notesLink}>
+              <Pressable onPress={toFeedback} accessibilityRole="link" style={styles.notesLink}>
                 <Ionicons name="chatbubble-outline" size={20} color={theme.colors.primaryDeep} />
-                <Text style={styles.link}>{`${plural(onStep, 'note')} on this step in the guide's Notes`}</Text>
+                <Text style={styles.link}>{`${plural(onStep, 'note')} on this step in the guide's Feedback`}</Text>
               </Pressable>
             ) : null}
           </>
@@ -306,7 +316,7 @@ export function BuildMode({ id, step: startStep }: { id: string; step?: string }
             />
             <FlashLine message={flash} />
             <View style={styles.pair}>
-              <Button label="Leave a note" variant="secondary" onPress={toNotes} style={styles.flex} />
+              <Button label="Leave feedback" variant="secondary" onPress={() => setFeedbackOpen(true)} style={styles.flex} />
               <Button label="Back to the guide" variant="ghost" onPress={close} style={styles.flex} />
             </View>
           </View>
@@ -386,6 +396,17 @@ export function BuildMode({ id, step: startStep }: { id: string; step?: string }
           </ScrollView>
         </View>
       </Modal>
+
+      <FeedbackSheet
+        tutorialId={id}
+        steps={steps}
+        authorFirstName={guide.tutorial_contributors?.[0]?.profiles.name.split(' ')[0] ?? 'The author'}
+        initialStep={lastStep.current ?? undefined}
+        open={feedbackOpen}
+        onClose={() => setFeedbackOpen(false)}
+        onPosted={() => {}}
+        onSeeOnGuide={(note) => { setFeedbackOpen(false); setGuideFocus({ tutorialId: id, noteId: note.id }); router.back() }}
+      />
     </View>
   )
 }

@@ -7,6 +7,8 @@ const mockKeepAwake = jest.fn()
 jest.mock('expo-keep-awake', () => ({ useKeepAwake: () => mockKeepAwake() }))
 jest.mock('react-native-safe-area-context', () => ({ useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }) }))
 jest.mock('../../../../lib/api-client', () => ({ apiClient: { get: jest.fn(), post: jest.fn() } }))
+const mockSetFocus = jest.fn()
+jest.mock('../../../../lib/guide-focus', () => ({ setGuideFocus: (...a: unknown[]) => mockSetFocus(...a) }))
 const mockReplace = jest.fn()
 const mockBack = jest.fn()
 jest.mock('expo-router', () => ({ useRouter: () => ({ replace: mockReplace, back: mockBack }) }))
@@ -19,6 +21,7 @@ jest.mock('../../../../lib/supabase-storage', () => ({
 const GUIDE = {
   id: 'g',
   title: 'Robot Arm',
+  tutorial_contributors: [{ profile_id: 'c1', role: 'primary', profiles: { name: 'Mei Tan' } }],
   safety_declared_at: '2026-08-01',
   safety_notes: [{ id: 'n1', tutorial_id: 'g', position: 1, title: 'Screw the battery door shut', detail: 'Use the supplied screw.' }],
   steps: [
@@ -85,7 +88,7 @@ it('shows a pinned note on its step only', async () => {
   expect(screen.queryByText(/Use a longer screw/)).toBeNull()
 })
 
-it('logs the build once from the done screen, then offers a note', async () => {
+it('logs the build once from the done screen, then offers feedback', async () => {
   ;(apiClient.post as jest.Mock).mockResolvedValue({ built: true })
   render(<BuildMode id="g" />)
   fireEvent.press(await screen.findByText('Start step 1'))
@@ -98,8 +101,7 @@ it('logs the build once from the done screen, then offers a note', async () => {
   expect(await screen.findByText('Added to My SPLAT')).toBeTruthy()
   fireEvent.press(screen.getByText('Added to My SPLAT'))
   expect(apiClient.post).toHaveBeenCalledTimes(1)
-  fireEvent.press(screen.getByText('Leave a note'))
-  expect(mockReplace).toHaveBeenCalledWith({ pathname: '/guides/[id]', params: { id: 'g', tab: 'notes' } })
+  expect(screen.getByRole('button', { name: 'Leave feedback' })).toBeTruthy()
 })
 
 // 129: a step's tip and minutes on its screen, and the author's closing line when done.
@@ -183,6 +185,60 @@ it('reads an approved note and its photo on the step, and leaves the rest to Not
   expect(screen.getAllByLabelText('Foam under the switch')).toHaveLength(2) // the note's photo and the viewer's
   fireEvent.press(screen.getByLabelText('Close photo'))
   expect(screen.queryByText('Worked for me')).toBeNull()
-  fireEvent.press(screen.getByText("1 more note in the guide's Notes"))
-  expect(mockReplace).toHaveBeenCalledWith({ pathname: '/guides/[id]', params: { id: 'g', tab: 'notes' } })
+  fireEvent.press(screen.getByText("1 more note in the guide's Feedback"))
+  expect(mockSetFocus).toHaveBeenCalledWith({ tutorialId: 'g', noteId: null })
+  expect(mockBack).toHaveBeenCalled()
+  expect(mockReplace).not.toHaveBeenCalled()
+})
+
+async function reachDone() {
+  render(<BuildMode id="g" />)
+  fireEvent.press(await screen.findByText('Start step 1'))
+  fireEvent.press(screen.getByText('Next'))
+  fireEvent.press(screen.getByText('Done'))
+  await screen.findByText('All 2 steps done')
+}
+
+it('the done screen offers Leave feedback, which opens the sheet on the last step viewed', async () => {
+  await reachDone()
+  fireEvent.press(screen.getByRole('button', { name: 'Leave feedback' }))
+  expect(screen.getByText('How did it go?')).toBeTruthy()
+  expect(screen.getByText('Mei can pin it as a fix so the next builder sees it.')).toBeTruthy()
+  // Step 2 was the last step on screen, so Post needs only a body.
+  fireEvent.changeText(screen.getByLabelText('Your note'), 'Great.')
+  expect(screen.getByRole('button', { name: 'Post' }).props.accessibilityState?.disabled).toBeFalsy()
+  expect(mockReplace).not.toHaveBeenCalled()
+})
+
+it('See it on the guide hands the note to the guide and closes build mode', async () => {
+  ;(apiClient.post as jest.Mock).mockResolvedValue({ id: 'n9', step_position: 2, author_id: 'me', author_name: 'You', body: 'Great.', photo_url: null, photo_caption: null, pinned_at: null, pinned_by: null, pinned_by_name: null, created_at: '2026-10-07T00:00:00Z' })
+  await reachDone()
+  fireEvent.press(screen.getByRole('button', { name: 'Leave feedback' }))
+  fireEvent.changeText(screen.getByLabelText('Your note'), 'Great.')
+  fireEvent.press(screen.getByRole('button', { name: 'Post' }))
+  await screen.findByText('Feedback posted')
+  fireEvent.press(screen.getByRole('button', { name: 'See it on the guide' }))
+  expect(mockSetFocus).toHaveBeenCalledWith({ tutorialId: 'g', noteId: 'n9' })
+  expect(mockBack).toHaveBeenCalled()
+})
+
+it('a failed post keeps build mode where it is', async () => {
+  ;(apiClient.post as jest.Mock).mockRejectedValue(new Error('API POST failed with status 401'))
+  await reachDone()
+  fireEvent.press(screen.getByRole('button', { name: 'Leave feedback' }))
+  fireEvent.changeText(screen.getByLabelText('Your note'), 'Great.')
+  fireEvent.press(screen.getByRole('button', { name: 'Post' }))
+  expect(await screen.findByText(/status 401|Could not post/)).toBeTruthy()
+  expect(mockSetFocus).not.toHaveBeenCalled()
+  expect(mockBack).not.toHaveBeenCalled()
+})
+
+it('the notes link on a step opens the guide’s Feedback tab by hand-off, not a second copy', async () => {
+  setup([{ ...PINNED, pinned_at: null, step_position: 1 }])
+  render(<BuildMode id="g" />)
+  fireEvent.press(await screen.findByText('Start step 1'))
+  fireEvent.press(screen.getByText("1 note on this step in the guide's Feedback"))
+  expect(mockSetFocus).toHaveBeenCalledWith({ tutorialId: 'g', noteId: null })
+  expect(mockBack).toHaveBeenCalled()
+  expect(mockReplace).not.toHaveBeenCalled()
 })
