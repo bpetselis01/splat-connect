@@ -25,7 +25,7 @@ it('hides before sign-in, in a first run, in chats, sheets and build mode', () =
     ['(my)', 'exchanges', '[id]'], ['(my)', 'exchanges', 'build', '[id]'],
     ['(my)', 'messages', '[cid]'], ['(my)', 'messages', 'org', '[orgId]'],
     ['(tabs)', 'explore', 'challenges', '[id]'], ['printing', 'jobs', '[id]'],
-    ['(tabs)', 'guides', '[id]', 'build'], ['(tabs)', 'guides', 'new'], ['printing', 'request'],
+    ['(tabs)', 'guides', '[id]', 'build'], ['(tabs)', 'guides', 'new'], ['printing', 'request'], ['(my)', 'account', 'delete'],
     ['somewhere-new'],
   ]) expect(tabBarFor(s).show).toBe(false)
 })

@@ -16,6 +16,8 @@ const RULES: Rule[] = [
   { path: '(my)/messages/*', show: false, lit: 'home' },
   { path: '(tabs)/explore/challenges/[id]', show: false, lit: 'home' },
   { path: 'printing/jobs/[id]', show: false, lit: 'home' },
+  // Deleting the account has its own close and nowhere to wander off to.
+  { path: '(my)/account/delete', show: false, lit: 'me' },
   // Sheets and build mode cover the bar on a phone; web draws them as plain screens.
   { path: '(tabs)/guides/new', show: false, lit: 'home' },
   { path: '(tabs)/guides/[id]/build', show: false, lit: 'home' },
