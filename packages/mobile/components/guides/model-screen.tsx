@@ -20,7 +20,7 @@ import { EmptyState } from '../ui/EmptyState'
 import { Skeleton } from '../ui/Skeleton'
 
 type PageMessage = { type: 'ready' | 'loaded' | 'toobig' | 'error'; message?: string }
-type State = 'loading' | 'ready' | 'shown' | 'toobig' | 'error' | 'missing'
+type State = 'loading' | 'shown' | 'toobig' | 'error' | 'missing'
 
 export function ModelScreen({ id, file }: { id: string; file: string }) {
   const router = useRouter()
@@ -32,13 +32,14 @@ export function ModelScreen({ id, file }: { id: string; file: string }) {
   const [state, setState] = useState<State>('loading')
   const [attempt, setAttempt] = useState(0)
   const [hint, setHint] = useState(true)
+  const injectedUrl = useRef<string | null>(null)
 
   const part = files?.find((f) => f.id === file) ?? null
   const index = files && part ? files.indexOf(part) : -1
 
   useEffect(() => {
     apiClient.get<{ stl_files: StlFile[] }>(`/api/public/tutorials/${id}`).then((g) => setFiles(g.stl_files)).catch(() => setState('error'))
-  }, [id])
+  }, [id, attempt])
 
   useEffect(() => {
     if (!files) return
@@ -48,13 +49,14 @@ export function ModelScreen({ id, file }: { id: string; file: string }) {
       if (!live) return
       if (error || !data) setState('error')
       else setUrl(data.signedUrl)
-    })
+    }).catch(() => { if (live) setState('error') })
     return () => { live = false }
   }, [files, part, attempt])
 
   // Load once both the page and the URL are in: whichever lands second fires it.
   useEffect(() => {
-    if (!pageReady || !url || state === 'error' || state === 'toobig') return
+    if (!pageReady || !url || injectedUrl.current === url || state === 'error' || state === 'toobig') return
+    injectedUrl.current = url
     web.current?.injectJavaScript(`window.__load(${JSON.stringify(url)}, ${STL_PREVIEW_MAX_BYTES}); true;`)
   }, [pageReady, url, state])
 
@@ -70,7 +72,7 @@ export function ModelScreen({ id, file }: { id: string; file: string }) {
   }
 
   function retry() {
-    setState('loading'); setUrl(null); setAttempt((n) => n + 1)
+    setState('loading'); setUrl(null); setFiles(null); setPageReady(false); injectedUrl.current = null; setAttempt((n) => n + 1)
   }
 
   const title = part ? `${stlName(part.filename)} · ${part.filename}` : '3D view'

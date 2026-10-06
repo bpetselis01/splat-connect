@@ -42,6 +42,7 @@ it('names the part, signs its path and loads it into the page once the page is r
   await waitFor(() => expect(mockInject).toHaveBeenCalledWith(expect.stringContaining('window.__load("https://s/signed.stl", 26214400)')))
   expect(screen.getByText('Drag to turn · pinch to zoom')).toBeTruthy()
   page({ type: 'loaded' })
+  expect(mockInject).toHaveBeenCalledTimes(1)
 })
 
 it('shows the error state with Retry when signing fails, and never injects', async () => {
@@ -91,4 +92,32 @@ it('✕ goes back; Ask someone to print opens the printer finder for this guide'
 it('a file id the guide does not have shows not found', async () => {
   render(<ModelScreen id="g" file="nope" />)
   expect(await screen.findByText('This part is no longer on the guide.')).toBeTruthy()
+})
+
+it('Retry after an error reloads the page and injects only once it posts ready again', async () => {
+  mockSign.mockResolvedValueOnce({ data: null, error: { message: 'x' } })
+  render(<ModelScreen id="g" file="f1" />)
+  await screen.findByText("Couldn't load this part.")
+  page({ type: 'ready' })
+  mockSign.mockResolvedValue({ data: { signedUrl: 'https://s/new.stl' }, error: null })
+  fireEvent.press(screen.getByRole('button', { name: 'Retry' }))
+  await waitFor(() => expect(mockSign).toHaveBeenCalledTimes(2))
+  await screen.findByTestId('webview')
+  expect(mockInject).not.toHaveBeenCalled()
+  page({ type: 'ready' })
+  await waitFor(() => expect(mockInject).toHaveBeenCalledWith(expect.stringContaining('https://s/new.stl')))
+})
+
+it('Retry refetches the guide when that fetch failed', async () => {
+  mockGet.mockRejectedValueOnce(new Error('offline'))
+  render(<ModelScreen id="g" file="f1" />)
+  await screen.findByText("Couldn't load this part.")
+  fireEvent.press(screen.getByRole('button', { name: 'Retry' }))
+  expect(await screen.findByText('Lts base · lts_base.stl')).toBeTruthy()
+})
+
+it('a rejected signing call lands in the error state', async () => {
+  mockSign.mockRejectedValue(new Error('network'))
+  render(<ModelScreen id="g" file="f1" />)
+  expect(await screen.findByText("Couldn't load this part.")).toBeTruthy()
 })
