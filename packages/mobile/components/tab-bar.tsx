@@ -80,8 +80,10 @@ export function TabBar() {
       gone.remove()
     }
   }, [])
+  // Worked out here: theme.spacing is a JS function the UI thread cannot call.
+  const travel = TAB_BAR_HEIGHT + rest + theme.spacing(3)
   const slide = useAnimatedStyle(() => ({
-    transform: [{ translateY: tabBarHidden.value * (TAB_BAR_HEIGHT + rest + theme.spacing(3)) }],
+    transform: [{ translateY: tabBarHidden.value * travel }],
   }))
 
   const { show, lit } = tabBarFor(segments)
