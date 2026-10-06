@@ -44,13 +44,14 @@ describe('POST /:id/recommendations', () => {
 
   // Position is the order the editor sent, from 1: it is what the public page
   // sorts by and what 048's unique constraint counts to enforce the cap.
-  it('replaces the list and numbers rows by position from 1', async () => {
-    const res = await post({ recommendations: [{ recommended_id: 'a' }, { recommended_id: 'b' }] })
+  it('replaces the list, numbers rows by position from 1, and marks Required first only on a literal true (129)', async () => {
+    const res = await post({ recommendations: [{ recommended_id: 'a' }, { recommended_id: 'b', required: true }, { recommended_id: 'c', required: 'yes' }] })
     expect(res.status).toBe(201)
     expect(mockDelete).toHaveBeenCalled()
     expect(mockInsert.mock.calls[0][0]).toEqual([
-      { tutorial_id: 'tutorial-1', recommended_id: 'a', position: 1 },
-      { tutorial_id: 'tutorial-1', recommended_id: 'b', position: 2 },
+      { tutorial_id: 'tutorial-1', recommended_id: 'a', position: 1, required: false },
+      { tutorial_id: 'tutorial-1', recommended_id: 'b', position: 2, required: true },
+      { tutorial_id: 'tutorial-1', recommended_id: 'c', position: 3, required: false },
     ])
   })
 
