@@ -15,9 +15,14 @@ jest.mock('../../../../lib/supabase-storage', () => ({
 
 jest.mock('../../../../lib/api-client', () => ({ apiClient: { get: jest.fn(), post: jest.fn() } }))
 
-jest.mock('../../../../lib/capabilities', () => ({ useCapabilities: () => ({ caps: { profile: { id: 'me' } } }) }))
+jest.mock('../../../../lib/capabilities', () => ({ useCapabilities: () => ({ caps: { profile: { id: 'me', name: 'Me' } } }) }))
 
 const mockPush = jest.fn()
+jest.mock('../../../../lib/guide-focus', () => {
+  const actual = jest.requireActual('../../../../lib/guide-focus')
+  return { ...actual, takeGuideFocus: jest.fn(actual.takeGuideFocus) }
+})
+import { setGuideFocus, takeGuideFocus } from '../../../../lib/guide-focus'
 const mockFocus: (() => void)[] = []
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush }),
@@ -549,5 +554,64 @@ describe('linkSite', () => {
     expect(linkSite('https://evil.example\\@github.com')).toBeNull()
     expect(linkSite('https://evil.example\\github.com')).toBeNull()
     expect(linkSite('https://evil.example/a@github.com')).toBeNull()
+  })
+})
+
+describe('DetailScreen Feedback hand-off', () => {
+  const NOTE = { id: 'new', step_position: 1, author_id: 'me', author_name: 'You', body: 'Posted from build mode.', photo_url: null, photo_caption: null, pinned_at: null, pinned_by: null, pinned_by_name: null, created_at: '2026-10-07T00:00:00Z' }
+  const withNote = () =>
+    (apiClient.get as jest.Mock).mockImplementation((p: string) => (p.endsWith('/notes') ? Promise.resolve([NOTE]) : p === '/api/saves/ids' ? Promise.resolve(NO_SAVES) : p === '/api/child-profiles' ? Promise.resolve([]) : Promise.resolve(DETAIL)))
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    mockFocus.length = 0
+    mockEndpoints()
+  })
+
+  it('on refocus with a pending focus it opens Feedback, reloads and rings the note', async () => {
+    render(<DetailScreen id="1" />)
+    await screen.findByText('Build a Robot Arm')
+    withNote()
+    setGuideFocus({ tutorialId: '1', noteId: 'new' })
+    act(() => { mockFocus.forEach((cb) => cb()) })
+    expect(takeGuideFocus).toHaveBeenCalledWith('1')
+    expect(screen.getByRole('tab', { name: /^Feedback/, selected: true })).toBeTruthy()
+    expect(await screen.findByText('Posted from build mode.')).toBeTruthy()
+    expect(screen.getByTestId('note-row-new').props.style).toEqual(expect.arrayContaining([expect.objectContaining({ borderWidth: 2 })]))
+    expect(screen.getByText('Your feedback is on the guide')).toBeTruthy()
+  })
+
+  it('a focus with no note opens Feedback without a toast', async () => {
+    render(<DetailScreen id="1" />)
+    await screen.findByText('Build a Robot Arm')
+    setGuideFocus({ tutorialId: '1', noteId: null })
+    act(() => { mockFocus.forEach((cb) => cb()) })
+    expect(screen.getByRole('tab', { name: /^Feedback/, selected: true })).toBeTruthy()
+    expect(screen.queryByText('Your feedback is on the guide')).toBeNull()
+  })
+
+  it('a focus for another guide is left alone', async () => {
+    render(<DetailScreen id="1" />)
+    await screen.findByText('Build a Robot Arm')
+    setGuideFocus({ tutorialId: 'other', noteId: 'x' })
+    act(() => { mockFocus.forEach((cb) => cb()) })
+    expect(screen.getByRole('tab', { name: 'Overview', selected: true })).toBeTruthy()
+    expect(takeGuideFocus('other')).toEqual({ tutorialId: 'other', noteId: 'x' })
+  })
+
+  it('a post from the Feedback tab rings the new note too', async () => {
+    ;(apiClient.post as jest.Mock).mockResolvedValue(NOTE)
+    render(<DetailScreen id="1" />)
+    await screen.findByText('Build a Robot Arm')
+    tab('Feedback')
+    withNote()
+    fireEvent.press(screen.getByTestId('feedback-composer'))
+    fireEvent.press(screen.getByText('Missing step'))
+    fireEvent.changeText(screen.getByLabelText('Your note'), 'Posted from build mode.')
+    fireEvent.press(screen.getByRole('button', { name: 'Post' }))
+    await screen.findByText('Feedback posted')
+    fireEvent.press(screen.getByRole('button', { name: 'See it on the guide' }))
+    expect(await screen.findByTestId('note-row-new')).toBeTruthy()
+    expect(screen.getByText('Your feedback is on the guide')).toBeTruthy()
   })
 })

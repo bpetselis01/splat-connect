@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type ComponentRef } from 'react'
 import { View, Text, ScrollView, Pressable, Linking, StyleSheet, type StyleProp, type TextStyle } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -16,6 +16,7 @@ import { useMyChildren } from '../../lib/my-children'
 import { useCapabilities } from '../../lib/capabilities'
 import { useGuideNotes, noteSummary, stepLabel } from '../../lib/guide-notes'
 import { theme } from '../../lib/theme'
+import { takeGuideFocus } from '../../lib/guide-focus'
 import { Byline, Provenance, type ProvenanceContributor, type ProvenanceOrg } from '../guides/provenance'
 import { PicksRow } from '../guides/picks-row'
 import { GuideParts } from '../guides/guide-parts'
@@ -166,6 +167,7 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
   const scroller = useRef<ScrollView>(null)
   const [tab, setTab] = useState<Tab>(startTab === 'notes' || startTab === 'parts' || startTab === 'files' ? startTab : 'overview')
   const [tabsY, setTabsY] = useState(0)
+  const [highlightId, setHighlightId] = useState<string | null>(null)
   const [highlight, setHighlight] = useState<'print' | null>(null)
   const highlightTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   useEffect(() => () => { if (highlightTimer.current) clearTimeout(highlightTimer.current) }, [])
@@ -177,9 +179,27 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
   useFocusEffect(
     useCallback(() => {
       reread()
+      const focus = takeGuideFocus(id)
+      if (focus) {
+        void reload()
+        setTab('notes')
+        setHighlightId(focus.noteId)
+        if (focus.noteId) toaster.show('Your feedback is on the guide')
+      }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
+    }, [id])
   )
+
+  const scrollToRow = (row: ComponentRef<typeof View>) => {
+    const inner = (scroller.current as unknown as { getInnerViewNode?: () => unknown } | null)?.getInnerViewNode?.()
+    if (!inner) return
+    // ponytail: measureLayout against the inner node; if RN drops getInnerViewNode, sum onLayout offsets instead.
+    ;(row as unknown as { measureLayout: (n: unknown, ok: (x: number, y: number) => void, fail: () => void) => void }).measureLayout(
+      inner,
+      (_x, y) => scroller.current?.scrollTo({ y: Math.max(0, y - 72), animated: true }),
+      () => {}
+    )
+  }
 
   // "Pick up where you left off": once per open, when the guide has loaded.
   useEffect(() => {
@@ -453,7 +473,7 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
                       )
                     })}
                   </View>
-                  {summary.extras.length ? <Text style={styles.extras}>{`+ ${summary.extras.length} step${summary.extras.length === 1 ? '' : 's'} added by builders, in Notes.`}</Text> : null}
+                  {summary.extras.length ? <Text style={styles.extras}>{`+ ${summary.extras.length} step${summary.extras.length === 1 ? '' : 's'} added by builders, in Feedback.`}</Text> : null}
                 </View>
               ) : null}
 
@@ -628,6 +648,9 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
               canPin={!!thanks?.own || !!caps?.isAdmin}
               viewerId={caps?.profile.id ?? null}
               viewerName={caps?.profile.name ?? null}
+              highlightId={highlightId}
+              onHighlightRow={scrollToRow}
+              onPosted={(note) => { setHighlightId(note.id); toaster.show('Your feedback is on the guide') }}
             />
           )}
         </View>
