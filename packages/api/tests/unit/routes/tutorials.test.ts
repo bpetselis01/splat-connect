@@ -126,7 +126,7 @@ describe('GET /:id', () => {
   //        of crashing with a null data error when the component tries to render
   it('returns 404 when tutorial not found', async () => {
     mockUserClient.from.mockReturnValue({
-      select: () => ({ eq: () => ({ order: () => ({ order: () => ({ order: () => ({ single: () => ({ data: null, error: { message: 'not found' } }) }) }) }) }) }),
+      select: () => ({ eq: () => ({ order: () => ({ order: () => ({ order: () => ({ single: () => ({ data: null, error: { code: 'PGRST116', message: 'not found' } }) }) }) }) }) }),
     })
     const res = await makeApp().request('/nonexistent')
     expect(res.status).toBe(404)

@@ -5,6 +5,7 @@
  * its tutorial_contributors row (JWT-context issues with the insert), so it
  * must set ownership itself.
  */
+import { singleRowStatus } from '../single-row.js'
 import { Hono } from 'hono'
 import { nameFormerContributors } from '../former-contributor.js'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
@@ -101,7 +102,7 @@ reviewer:reviewed_by(name), reviewed_for:reviewed_for_org_id(name)'
     .order('position', { referencedTable: 'steps', ascending: true })
     .order('position', { referencedTable: 'safety_notes', ascending: true })
     .single()
-  if (error) return c.json({ error: error.message }, 404)
+  if (error) return c.json({ error: error.message }, singleRowStatus(error))
 
   // A target the caller cannot read arrives as `tutorials: null`: RLS hides
   // other people's unapproved rows, and the picker only ever offered approved

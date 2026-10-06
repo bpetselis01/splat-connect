@@ -8,6 +8,7 @@
  * `role` and `email` are frozen by the profiles_freeze_identity trigger
  * (009) — role was an escalation path, and email mirrors auth.users.
  */
+import { singleRowStatus } from '../single-row.js'
 import { Hono } from 'hono'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { pickEditable } from './pick-editable.js'
@@ -23,7 +24,7 @@ contributors.get('/me', async (c) => {
     .select('*')
     .eq('id', c.get('userId'))
     .single()
-  if (error) return c.json({ error: error.message }, 404)
+  if (error) return c.json({ error: error.message }, singleRowStatus(error))
   return c.json(data)
 })
 
