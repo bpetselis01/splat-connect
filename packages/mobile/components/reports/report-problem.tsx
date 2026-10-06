@@ -1,3 +1,4 @@
+import type React from 'react'
 // packages/mobile/components/reports/report-problem.tsx
 /**
  * The board's quiet "Report a problem" link, and the sheet it opens. Files a
@@ -30,6 +31,7 @@ export function ReportProblem({
   subjectLabel,
   item,
   who,
+  trigger,
 }: {
   subjectKind: ReportSubjectKind
   subjectId: string | null
@@ -39,6 +41,8 @@ export function ReportProblem({
   item?: string
   /** The other party, when there is one (MB repWho). */
   who?: string
+  /** Draws the opener in place of the Report a problem link (an action row's button). */
+  trigger?: (open: () => void) => React.ReactNode
 }) {
   const [open, setOpen] = useState(false)
   const [reason, setReason] = useState<string | null>(null)
@@ -85,10 +89,14 @@ export function ReportProblem({
 
   return (
     <>
-      <Pressable onPress={start} accessibilityRole="button" hitSlop={8} style={styles.link}>
-        <Ionicons name="flag-outline" size={14} color={theme.colors.muted} />
-        <Text style={styles.linkText}>Report a problem</Text>
-      </Pressable>
+      {trigger ? (
+        trigger(start)
+      ) : (
+        <Pressable onPress={start} accessibilityRole="button" hitSlop={8} style={styles.link}>
+          <Ionicons name="flag-outline" size={14} color={theme.colors.muted} />
+          <Text style={styles.linkText}>Report a problem</Text>
+        </Pressable>
+      )}
 
       <Modal visible={open} animationType="slide" transparent onRequestClose={() => setOpen(false)}>
         <View style={styles.backdrop}>
