@@ -105,10 +105,33 @@ linked natively through `expo`).
 - Opening at a step: the route takes `?step=N`; the guide page's step rows
   pass it. Without it, build mode resumes at the first unticked step as today.
 
-## Out of scope (mocked, not built here)
+## Round 2: PDF preview and Learn (built 2026-10-06)
 
-PDF preview, Learn hub and article redesigns; the guide library; the guide
-editor's long-step prompt.
+From the first-round boards Preview, LearnHub and Article, with the device
+review's rules applied: one face for values (Nunito; the numeral face only for
+prices), 20pt card padding, one section gap, no fixed line height in cards.
+
+- **PDF preview** (`components/home/preview-screen.tsx`): titled "Guide PDF";
+  the PDF on a sunken ground with a loading spinner; a bottom bar with
+  `Open in browser` (sentence case), which is where printing and sharing
+  happen. Print and Share buttons were drawn but need native modules
+  (expo-print, a share of a 60-second signed URL), so they are not built.
+- **Learn hub** (`components/explore/learn-hub.tsx`): course title, an intro
+  that counts the reads and minutes; an Up next card (tinted, so it holds in
+  dark mode) with one progress segment per article and `Keep reading`; Start
+  here as a path, each node joined by a line, read nodes ticked, the next one
+  highlighted; Going deeper as three tiles; a `Ready to build something?` card
+  into Guides. The all-read and hidden-course states stay.
+- **Article** (`components/explore/article-screen.tsx`): a reading bar that
+  fills as you scroll; `Learn · n of 6 · m min`; title and intro; an
+  `In this article` list that scrolls to each heading; the callout labelled
+  `Worth remembering`; a pinned Next bar (`Next · m min` and the title) that
+  marks the article read, or `Back to Learn` on the last one. The hero slot
+  stays To be completed (pending registry).
+
+## Out of scope
+
+The guide library; the guide editor's long-step prompt; pinch-zoom on Android.
 
 ## Testing
 
