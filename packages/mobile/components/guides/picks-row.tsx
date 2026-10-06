@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
     overflow: 'hidden',
   },
-  photo: { width: CARD_W, height: 112, backgroundColor: theme.colors.surfaceSunken },
+  photo: { width: CARD_W, height: 132, backgroundColor: theme.colors.surfaceSunken },
   photoBlank: { backgroundColor: theme.colors.accentLight },
   first: {
     position: 'absolute',

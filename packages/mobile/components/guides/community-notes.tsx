@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
   pinnedNote: { backgroundColor: theme.colors.honeySoft },
   meta: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.caption, color: theme.colors.muted },
   body: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.text, lineHeight: 20 },
-  photo: { width: '100%', aspectRatio: 4 / 3, borderRadius: theme.radii.field, backgroundColor: theme.colors.surfaceSunken },
+  photo: { width: '100%', aspectRatio: 7 / 6, borderRadius: theme.radii.field, backgroundColor: theme.colors.surfaceSunken },
   actions: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: theme.spacing(2) },
   pinnedBy: { fontFamily: theme.fonts.black, fontSize: theme.type.caption, color: theme.colors.ink },
   form: { marginTop: theme.spacing(3), padding: theme.spacing(3), gap: theme.spacing(2), borderRadius: theme.radii.panel, borderWidth: theme.border.hairline, borderColor: theme.colors.border, backgroundColor: theme.colors.surface },

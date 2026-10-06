@@ -34,7 +34,7 @@ import { Skeleton } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
 
-const HERO_HEIGHT = 220
+const HERO_HEIGHT = 264
 // Same face as the prose around it: a bolder nested face is measured wrong on iOS and clips.
 const linkStyle: TextStyle = { color: theme.colors.primaryDeep, textDecorationLine: 'underline' }
 
@@ -209,7 +209,7 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
   if (loading) {
     return (
       <View style={styles.loading}>
-        <Skeleton width="100%" height={200} style={styles.loadingPhoto} />
+        <Skeleton width="100%" height={264} style={styles.loadingPhoto} />
         <Skeleton width="70%" height={22} />
         <Skeleton width="90%" height={14} />
         <Skeleton width="50%" height={14} />

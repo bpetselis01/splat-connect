@@ -589,7 +589,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
     backgroundColor: theme.colors.surface,
   },
-  shotImage: { width: '100%', aspectRatio: 4 / 3, backgroundColor: theme.colors.surfaceSunken },
+  shotImage: { width: '100%', aspectRatio: 7 / 6, backgroundColor: theme.colors.surfaceSunken },
   shotCaption: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: theme.spacing(3), paddingVertical: theme.spacing(2) },
   shotText: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.text },
   brief: { padding: theme.spacing(3), borderRadius: theme.radii.field, backgroundColor: theme.colors.surfaceSunken, gap: theme.spacing(1) },

@@ -109,7 +109,7 @@ export function ToyDetailScreen({ id }: { id: string }) {
   if (loading) {
     return (
       <View style={styles.loading}>
-        <Skeleton width="100%" height={180} style={styles.loadingPhoto} />
+        <Skeleton width="100%" height={288} style={styles.loadingPhoto} />
         <Skeleton width="70%" height={22} />
         <Skeleton width="90%" height={14} />
         <Skeleton width="50%" height={14} />
@@ -157,7 +157,7 @@ export function ToyDetailScreen({ id }: { id: string }) {
       <View style={styles.hero}>
         <PhotoCarousel
           urls={toy.photo_urls}
-          height={240}
+          height={288}
           switchUrl={toy.switch_adapted ? toy.switch_photo_url : null}
           onPress={setViewing}
         />

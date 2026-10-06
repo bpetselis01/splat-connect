@@ -463,7 +463,7 @@ const styles = StyleSheet.create({
   who: { fontFamily: theme.fonts.black, fontSize: theme.type.body, color: theme.colors.ink },
   meta: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.caption, lineHeight: 18, color: theme.colors.muted },
   note: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, lineHeight: 19, color: theme.colors.ink },
-  photo: { width: '100%', height: 150, borderRadius: 18 },
+  photo: { width: '100%', height: 180, borderRadius: 18 },
   kgRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   kgBox: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   kgLabel: { fontFamily: theme.fonts.black, fontSize: theme.type.caption, color: theme.colors.ink },

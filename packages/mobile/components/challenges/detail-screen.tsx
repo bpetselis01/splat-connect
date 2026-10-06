@@ -834,7 +834,7 @@ const styles = StyleSheet.create({
   eventText: { flex: 1, paddingBottom: theme.spacing(3) },
   eventTitle: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink },
   eventDate: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted },
-  hero: { height: 160, borderRadius: 16, width: '100%' },
+  hero: { height: 192, borderRadius: 16, width: '100%' },
   note: { gap: 2, padding: theme.spacing(3), borderRadius: 14, backgroundColor: theme.colors.apricotSoft },
   noteLead: { fontFamily: theme.fonts.black, fontSize: theme.type.caption, lineHeight: 20, color: theme.colors.ink },
   noteText: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, lineHeight: 20, color: theme.colors.ink },

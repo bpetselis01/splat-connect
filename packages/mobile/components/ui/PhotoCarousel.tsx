@@ -31,7 +31,7 @@ const DOT = 9
 export function PhotoCarousel({
   urls,
   switchUrl,
-  height = 220,
+  height = 264,
   emptyIcon = 'cube-outline',
   onIndexChange,
   index,

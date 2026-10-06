@@ -569,7 +569,7 @@ const styles = StyleSheet.create({
   },
   money: { fontFamily: theme.fonts.numeral, fontSize: theme.type.title, color: theme.colors.ink },
   code: { fontFamily: theme.fonts.numeral, fontSize: theme.type.heading, color: theme.colors.primaryDeep },
-  photo: { height: 140, borderRadius: theme.radii.field, backgroundColor: theme.colors.surface },
+  photo: { height: 168, borderRadius: theme.radii.field, backgroundColor: theme.colors.surface },
   log: { gap: theme.spacing(2) },
   footer: {
     borderTopWidth: theme.border.hairline,
