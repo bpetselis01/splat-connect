@@ -14,7 +14,7 @@ import {
  * .maestro/flows/home-shell.yaml.
  */
 
-test('Pick up where you left off is absent until a guide is opened, then reopens it with no tab bar and Back goes Home', async ({ page }) => {
+test('Pick up where you left off is absent until a guide is opened, then reopens it with no tab bar and the ✕ goes Home', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const title = uniqueTitle('E2E Recent Guide')
   await createTutorial(contributor.id, { title, status: 'approved' })
@@ -27,8 +27,8 @@ test('Pick up where you left off is absent until a guide is opened, then reopens
   await page.getByText(title).click()
   await expect(page.getByRole('tab', { name: 'Overview' })).toBeVisible()
 
-  // A guide opened in the Guides stack is a drill-down: Back to the root, which shows the bar.
-  await page.getByRole('button', { name: 'Back', exact: true }).click()
+  // A guide opened in the Guides stack is a drill-down: the ✕ closes to the list, which shows the bar.
+  await page.getByRole('button', { name: 'Close', exact: true }).click()
   await page.getByRole('tab', { name: 'Home' }).click()
   await expect(page.getByText('Pick up where you left off')).toBeVisible()
   await page.getByRole('button', { name: new RegExp(`^${title}`) }).click()
@@ -37,8 +37,8 @@ test('Pick up where you left off is absent until a guide is opened, then reopens
   await expect(page.getByRole('tab', { name: 'Overview' })).toBeVisible()
   await expect(page.getByRole('tab', { name: 'Home' })).toHaveCount(0)
 
-  // Back returns to the opener (Home), not to the Guides list.
-  await page.getByRole('button', { name: 'Back', exact: true }).click()
+  // The ✕ closes to the opener (Home), not to the Guides list.
+  await page.getByRole('button', { name: 'Close', exact: true }).click()
   await expect(page).toHaveURL(/\/home$/)
   await expect(page.getByRole('tab')).toHaveCount(4)
 })
@@ -81,8 +81,8 @@ test('the Inbox badge and the Today card drop by the rows read', async ({ page }
   expect((await marked).status()).toBe(204)
 
   // Exactly the one row opened: 3 -> 2, in the bar and on the Today card.
-  // The challenge opened over the Inbox is a drill-down with no bar; Back first.
-  await page.getByRole('button', { name: 'Back', exact: true }).click()
+  // The challenge opened over the Inbox is a drill-down with no bar; the ✕ first.
+  await page.getByRole('button', { name: 'Close', exact: true }).click()
   await page.getByRole('tab', { name: /^Home/ }).click()
   await expect(page.getByRole('tab', { name: 'Inbox, 2 unread' })).toBeVisible()
   await expect(page.getByRole('button', { name: /^2 new messages/ })).toBeVisible()
