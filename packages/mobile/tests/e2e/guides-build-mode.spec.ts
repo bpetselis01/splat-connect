@@ -99,7 +99,7 @@ test('a pinned note shows on its own step only, with who approved it, and the un
   await expect(page.getByText('Dan Builder', { exact: true })).toBeVisible()
   // The unpinned one stays in the guide's Notes, and the link says how many.
   await expect(page.getByText('An unpinned thought.')).toHaveCount(0)
-  await expect(page.getByText("1 more note in the guide's Notes")).toBeVisible()
+  await expect(page.getByText("1 more note in the guide's Feedback")).toBeVisible()
 
   await page.getByRole('button', { name: 'Next', exact: true }).click()
   await expect(page.getByText('Step 3 of 3')).toBeVisible()
@@ -157,4 +157,55 @@ test('a build that fails to log says so and can be tried again', async ({ page }
   await page.unroute(`**/api/tutorials/${id}/build`)
   await page.getByRole('button', { name: 'Add to My SPLAT', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Added to My SPLAT', exact: true })).toBeVisible()
+})
+
+test('Leave feedback at the end posts and lands on the same guide page with the note in view', async ({ page }) => {
+  await signInAsNewContributor(page)
+  const author = await createContributor()
+  await renameProfile(author.id, 'Mei Author')
+  const id = await createTutorial(author.id, { title: uniqueTitle('E2E Build Feedback') })
+  await addSteps(id, STEPS.slice(0, 2))
+
+  await page.goto(`/guides/${id}`)
+  const before = await page.evaluate(() => history.length)
+  await page.getByRole('button', { name: 'Start building', exact: true }).click()
+  await page.getByRole('button', { name: 'Start step 1' }).click()
+  await page.getByRole('button', { name: 'Next', exact: true }).click()
+  await page.getByRole('button', { name: 'Done', exact: true }).click()
+  await expect(page.getByText('You built it!')).toBeVisible()
+
+  await page.getByRole('button', { name: 'Leave feedback' }).click()
+  await expect(page.getByText('Mei can pin it as a fix so the next builder sees it.')).toBeVisible()
+  // Step 2 was the last on screen, so it is already chosen: no chip tap needed.
+  const body = `Great build ${Date.now()}`
+  await page.getByLabel('Your note').fill(body)
+  const post = page.waitForResponse((r) => r.url().endsWith(`/tutorials/${id}/notes`) && r.request().method() === 'POST')
+  await page.getByRole('button', { name: 'Post', exact: true }).click()
+  const created = await (await post).json()
+  expect(created.step_position).toBe(2)
+  await expect(page.getByRole('heading', { name: 'Feedback posted' })).toBeVisible()
+  await page.getByRole('button', { name: 'See it on the guide' }).click()
+
+  await expect(page).toHaveURL(new RegExp(`/guides/${id}$`))
+  expect(await page.evaluate(() => history.length)).toBe(before + 1)   // one push, one pop: no second guide page
+  await expect(page.getByRole('tab', { name: 'Feedback (1)', selected: true })).toBeVisible()
+  await expect(page.getByTestId(`note-row-${created.id}`)).toBeInViewport()
+  await expect(page.getByText('Your feedback is on the guide')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Build it again' })).toBeVisible()
+})
+
+test('the step link to feedback hands off to the guide instead of opening a second copy', async ({ page }) => {
+  await signInAsNewContributor(page)
+  const author = await createContributor()
+  const builder = await createContributor()
+  const id = await createTutorial(author.id, { title: uniqueTitle('E2E Build Feedback Link') })
+  await addSteps(id, STEPS.slice(0, 1))
+  await addNote(id, builder.id, { step_position: 1, body: 'A tip on step 1.' })
+  await page.goto(`/guides/${id}`)
+  await page.getByRole('button', { name: 'Start building', exact: true }).click()
+  await page.getByRole('button', { name: 'Start step 1' }).click()
+  await page.getByText("1 note on this step in the guide's Feedback").click()
+  await expect(page).toHaveURL(new RegExp(`/guides/${id}$`))
+  await expect(page.getByRole('tab', { name: /^Feedback/, selected: true })).toBeVisible()
+  await expect(page.getByText('A tip on step 1.')).toBeVisible()
 })

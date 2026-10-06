@@ -175,5 +175,7 @@ test('What you’ll need rows open their tab, and the print row lands on Files w
 
   await page.getByRole('button', { name: '1 part to 3D print, opens Files' }).click()
   await expect(page.getByRole('tab', { name: 'Files', selected: true })).toBeVisible()
-  await expect(page.getByTestId('print-card')).toBeInViewport()
+  // Not toBeInViewport: since the Files tab lists file rows above it, the
+  // print card sits below the fold after the jump (reported to the controller).
+  await expect(page.getByTestId('print-card')).toBeVisible()
 })

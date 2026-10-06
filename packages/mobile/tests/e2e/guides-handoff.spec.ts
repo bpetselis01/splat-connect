@@ -38,7 +38,7 @@ test('Ask someone to print opens the printer finder for this guide, and the requ
 
   await page.goto(`/guides/${guide}`)
   await page.getByRole('tab', { name: 'Files' }).click()
-  await expect(page.getByText('mount.stl')).toBeVisible()
+  await expect(page.getByText('Mount', { exact: true })).toBeVisible()
   await expect(page.getByText('1 printable part · pick up to three printers nearby')).toBeVisible()
   await page.getByRole('button', { name: 'Ask someone to print' }).click()
 
@@ -63,11 +63,11 @@ test('Ask someone to print opens the printer finder for this guide, and the requ
 test('a guide with no printable files offers no printing, and says so', async ({ page }) => {
   const author = await createContributor()
   await signInAsNewContributor(page)
-  const guide = await createTutorial(author.id, { title: uniqueTitle('E2E Nothing To Print') })
+  const guide = await createTutorial(author.id, { title: uniqueTitle('E2E Nothing To Print'), withPdf: false })
 
   await page.goto(`/guides/${guide}`)
   await page.getByRole('tab', { name: 'Files' }).click()
-  await expect(page.getByText('Nothing to print for this guide.')).toBeVisible()
+  await expect(page.getByText('Nothing to download for this guide.')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Ask someone to print' })).toHaveCount(0)
 })
 

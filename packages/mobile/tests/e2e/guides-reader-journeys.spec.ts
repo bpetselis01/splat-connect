@@ -90,10 +90,11 @@ test('a reader posts a note as a missing step and sees it under Discussion', asy
 
   await page.goto(`/guides/${id}`)
   await page.getByRole('tab', { name: /^Feedback/ }).click()
+  await page.getByTestId('feedback-composer').click()
   const post = page.getByRole('button', { name: 'Post', exact: true })
   await expect(post).toBeDisabled()
 
-  await page.getByRole('button', { name: 'Missing step', exact: true }).click()
+  await page.getByText('Missing step', { exact: true }).click()
   await page.getByLabel('Your note').fill('   ')
   await expect(post).toBeDisabled()
 
@@ -103,10 +104,10 @@ test('a reader posts a note as a missing step and sees it under Discussion', asy
   await post.click()
   expect((await posted).status()).toBe(201)
 
+  await expect(page.getByRole('heading', { name: 'Feedback posted' })).toBeVisible()
+  await page.getByRole('button', { name: 'See it on the guide' }).click()
   await expect(page.getByText(note)).toBeVisible()
-  await expect(page.getByText('Community notes 1')).toBeVisible()
-  // The form emptied.
-  await expect(page.getByLabel('Your note')).toHaveValue('')
+  await expect(page.getByRole('tab', { name: 'Feedback (1)' })).toBeVisible()
 })
 
 test('a note that fails to post keeps its words and says so', async ({ page }) => {
@@ -116,7 +117,8 @@ test('a note that fails to post keeps its words and says so', async ({ page }) =
   await page.goto(`/guides/${id}`)
   await page.getByRole('tab', { name: /^Feedback/ }).click()
   await page.route(`**/api/tutorials/${id}/notes`, (route) => (route.request().method() === 'POST' ? route.fulfill({ status: 500, contentType: 'application/json', body: '{"error":"boom"}' }) : route.continue()))
-  await page.getByRole('button', { name: 'Missing step', exact: true }).click()
+  await page.getByTestId('feedback-composer').click()
+  await page.getByText('Missing step', { exact: true }).click()
   await page.getByLabel('Your note').fill('Keep these words')
   await page.getByRole('button', { name: 'Post', exact: true }).click()
 
@@ -130,12 +132,19 @@ test('the author deletes their own note', async ({ page }) => {
 
   await page.goto(`/guides/${id}`)
   await page.getByRole('tab', { name: /^Feedback/ }).click()
-  await page.getByRole('button', { name: 'Missing step', exact: true }).click()
+  await page.getByTestId('feedback-composer').click()
+  await page.getByText('Missing step', { exact: true }).click()
   await page.getByLabel('Your note').fill('Delete me later')
+  const posted = page.waitForResponse((r) => r.url().includes(`/api/tutorials/${id}/notes`) && r.request().method() === 'POST')
   await page.getByRole('button', { name: 'Post', exact: true }).click()
+  const created = await (await posted).json()
+  await page.getByRole('button', { name: 'See it on the guide' }).click()
   await expect(page.getByText('Delete me later')).toBeVisible()
 
-  await page.getByRole('button', { name: 'Delete', exact: true }).click()
+  await page.getByTestId(`note-menu-${created.id}`).click()
+  const del = page.waitForResponse((r) => r.url().includes(`/notes/${created.id}`) && r.request().method() === 'DELETE')
+  await page.getByText('Delete', { exact: true }).click()
+  expect((await del).status()).toBeLessThan(300)
   await expect(page.getByText('Delete me later')).toHaveCount(0)
-  await expect(page.getByText('Community notes 0')).toBeVisible()
+  await expect(page.getByRole('tab', { name: 'Feedback', exact: true })).toBeVisible()
 })
