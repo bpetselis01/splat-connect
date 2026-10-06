@@ -550,12 +550,12 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
               <GuideTools tools={tutorial.tools} ticks={gather.tools} />
             </>
           ) : tab === 'files' ? (
-            <>
-              <Section title="Guide PDF" hint="The same guide, to print and keep by the bench.">
+            <View style={styles.stack}>
+              <Section title="Guide PDF" hint="The same guide, to print and keep by the bench." style={styles.flush}>
                 <Button label="Download PDF" variant="secondary" onPress={openPreview} />
               </Section>
               {settings.length ? (
-                <Section title="Print settings">
+                <Section title="Print settings" style={styles.flush}>
                   <View style={styles.settings}>
                     {settings.map((r) => (
                       <View key={r.k} style={styles.setting}>
@@ -570,7 +570,7 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
                   than on its kind: a print request's parts ARE those files. */}
               {tutorial.stl_files.length > 0 ? (
                 <>
-                  <Section title="Printable parts">
+                  <Section title="Printable parts" style={styles.flush}>
                     {tutorial.stl_files.map((f) => (
                       <View key={f.id} style={styles.fileRow}>
                         <Ionicons name="cube-outline" size={17} color={theme.colors.primary} />
@@ -584,7 +584,7 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
                     accessibilityLabel="Ask someone to print"
                     accessibilityHint="Pick up to three printers nearby"
                     pressScale={0.985}
-                    style={styles.printCard}
+                    style={[styles.printCard, styles.flush]}
                   >
                     <View style={styles.printHeader}>
                       <Text style={styles.printTitle}>Ask someone to print</Text>
@@ -599,7 +599,7 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
               ) : (
                 <Text style={styles.small}>Nothing to print for this guide.</Text>
               )}
-            </>
+            </View>
           ) : (
             <CommunityNotes
               tutorialId={tutorial.id}
