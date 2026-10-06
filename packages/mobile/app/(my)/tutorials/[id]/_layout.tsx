@@ -3,6 +3,7 @@
 // One provider for the whole editor stack, so a section's save is already
 // reflected on the hub when you go back — no refetch on focus, and no second
 // copy of the draft to fall out of step with the first.
+import { WithHome } from '../../../../components/ui/HomeButton'
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
 import { TutorialDraftProvider, useDraft } from '../../../../lib/use-tutorial-draft'
 import { stackScreenOptions } from '../../../../lib/nav-options'
@@ -51,7 +52,7 @@ function EditorStack() {
         // body it shifted the content by a line every time it changed. One
         // declaration here covers all seven screens, and it sits inside the
         // provider so it reads the same draft they write.
-        headerRight: SAVE_CHIP_LABEL[saveState] ? () => <SaveChip /> : undefined,
+        headerRight: () => <WithHome>{SAVE_CHIP_LABEL[saveState] ? <SaveChip /> : null}</WithHome>,
       }}
     >
       <Stack.Screen

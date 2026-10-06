@@ -11,10 +11,14 @@ jest.mock('react-native-safe-area-context', () => ({
   ...jest.requireActual('react-native-safe-area-context/jest/mock').default,
   useSafeAreaInsets: () => INSETS,
 }))
+const mockNavigate = jest.fn()
 jest.mock('expo-router', () => ({
-  useRouter: () => ({ back: jest.fn(), push: jest.fn() }),
+  useRouter: () => ({ back: jest.fn(), push: jest.fn(), navigate: mockNavigate }),
   useLocalSearchParams: () => ({ feature: 'google-sign-in' }),
 }))
+// Signed out unless a test says otherwise: the screen opens before sign-in too.
+let mockSession: { user: { id: string } } | null = null
+jest.mock('../../../lib/auth-context', () => ({ useAuth: () => ({ session: mockSession }) }))
 
 const flat = (style: unknown) => (StyleSheet.flatten(style as ViewStyle) ?? {}) as ViewStyle
 
@@ -46,5 +50,24 @@ describe('Not built yet layout', () => {
       expect(el.props.maxFontSizeMultiplier).toBeGreaterThanOrEqual(1)
       expect(el.props.maxFontSizeMultiplier).toBeLessThanOrEqual(1.6)
     }
+  })
+})
+
+describe('Not built yet, signed in', () => {
+  afterEach(() => { mockSession = null })
+
+  it('offers Home beside Go back once signed in, and goes there', () => {
+    mockSession = { user: { id: 'me' } }
+    render(<NotBuilt />)
+    const home = screen.getByTestId('not-built-home')
+    expect(home).toBeTruthy()
+    const { fireEvent } = jest.requireActual('@testing-library/react-native')
+    fireEvent.press(home)
+    expect(mockNavigate).toHaveBeenCalledWith('/home')
+  })
+
+  it('shows no Home before sign-in', () => {
+    render(<NotBuilt />)
+    expect(screen.queryByTestId('not-built-home')).toBeNull()
   })
 })

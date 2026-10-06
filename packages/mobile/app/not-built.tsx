@@ -11,9 +11,12 @@ import { PENDING, isPendingId } from '@splat-connect/types'
 import { pendingIcon } from '../lib/pending-icons'
 import { Button } from '../components/ui/Button'
 import { AuthStage, Heading, Lede, pill } from '../components/auth/parts'
+import { useAuth } from '../lib/auth-context'
 
 export default function NotBuiltYet() {
   const router = useRouter()
+  // It opens before sign-in too; Home only means something once signed in.
+  const { session } = useAuth()
   const { feature } = useLocalSearchParams<{ feature?: string }>()
   const item =
     feature && isPendingId(feature)
@@ -31,6 +34,7 @@ export default function NotBuiltYet() {
       <Heading center>{item.title}</Heading>
       <Lede center>{item.blurb}</Lede>
       <Button testID="not-built-back" label="Go back" variant="secondary" style={pill} onPress={() => router.back()} />
+      {session ? <Button testID="not-built-home" label="Home" variant="ghost" style={pill} onPress={() => router.navigate('/home')} /> : null}
     </AuthStage>
   )
 }

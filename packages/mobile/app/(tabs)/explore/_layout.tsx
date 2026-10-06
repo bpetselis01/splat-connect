@@ -1,4 +1,5 @@
 // packages/mobile/app/(tabs)/explore/_layout.tsx
+import { WithHome } from '../../../components/ui/HomeButton'
 import { Stack, useRouter } from 'expo-router'
 import { useTabFocused } from '../../../lib/use-tab-focused'
 import { stackScreenOptions } from '../../../lib/nav-options'
@@ -37,7 +38,7 @@ export default function ExploreStackLayout() {
         name="challenges/index"
         options={{
           title: 'Design challenges',
-          headerRight: () => <HeaderAddButton label="Submit an idea" href="/explore/challenges/new" />,
+          headerRight: () => <WithHome><HeaderAddButton label="Submit an idea" href="/explore/challenges/new" /></WithHome>,
         }}
       />
       {/* The brief carries its own title, so the header stays generic rather
@@ -53,6 +54,7 @@ export default function ExploreStackLayout() {
         options={{
           title: 'Ask for a build',
           presentation: 'formSheet',
+          headerRight: () => null,
           // An opaque header, so the form starts below it: on iOS the sheet's
           // header floated over the top of the content.
           headerTransparent: false,
