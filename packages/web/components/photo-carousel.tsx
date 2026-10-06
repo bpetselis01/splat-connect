@@ -26,12 +26,15 @@ import { safePhotoSrc } from '@/lib/photo-src'
 export function PhotoCarousel({
   urls,
   switchUrl,
+  captions,
   alt,
   className = 'aspect-[16/10]',
 }: {
   urls: string[]
   /** Which photo shows the accessibility switch, flagged as it comes past. */
   switchUrl?: string | null
+  /** 087. Parallel to urls: the author's caption shows under the photo and is its alt; the title is the fallback. */
+  captions?: (string | null)[]
   alt: string
   className?: string
 }) {
@@ -51,13 +54,16 @@ export function PhotoCarousel({
 
   if (urls.length === 1) {
     return (
-      <div className={`relative ${className} w-full overflow-hidden rounded-card bg-sunken shadow-e2`}>
-        <Image
-          src={safePhotoSrc(urls[0]) ?? '/illustrations/adapted-toy.svg'}
-          alt={alt}
-          fill
-          className="object-cover"
-        />
+      <div className="flex flex-col gap-2">
+        <div className={`relative ${className} w-full overflow-hidden rounded-card bg-sunken shadow-e2`}>
+          <Image
+            src={safePhotoSrc(urls[0]) ?? '/illustrations/adapted-toy.svg'}
+            alt={captions?.[0] || alt}
+            fill
+            className="object-cover"
+          />
+        </div>
+        {captions?.[0] && <p className="m-0 text-sm font-semibold text-muted">{captions[0]}</p>}
       </div>
     )
   }
@@ -91,7 +97,7 @@ export function PhotoCarousel({
             <div key={url} className="relative h-full w-full shrink-0 snap-center">
               <Image
                 src={safePhotoSrc(url) ?? '/illustrations/adapted-toy.svg'}
-                alt={urls.length > 1 ? `${alt} — photo ${i + 1} of ${urls.length}` : alt}
+                alt={captions?.[i] || `${alt} — photo ${i + 1} of ${urls.length}`}
                 fill
                 sizes="(max-width: 768px) 100vw, 50vw"
                 className="object-cover"
@@ -134,6 +140,8 @@ export function PhotoCarousel({
           {index + 1} / {urls.length}
         </p>
       </div>
+
+      {captions?.[index] && <p className="m-0 text-center text-sm font-semibold text-muted">{captions[index]}</p>}
 
       {/* The current dot stretches into a bar rather than changing colour: at
           8px a colour change is the one thing a photograph behind it can hide. */}

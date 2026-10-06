@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
   half: { flexBasis: '48%', flexGrow: 1 },
   eyebrow: {
     fontFamily: theme.fonts.black,
-    fontSize: 12,
+    fontSize: theme.type.caption,
     letterSpacing: 1.2,
     textTransform: 'uppercase',
     color: theme.colors.muted,

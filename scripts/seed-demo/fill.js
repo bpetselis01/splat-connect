@@ -206,7 +206,7 @@ async function plan() {
         works_with: 'Any 3.5 mm mono switch. See the Light Touch Switch and Low Profile Switch guides.',
       })
     } else {
-      Object.assign(patch, { switch_target: 'large', switch_force: 'light', switch_hold: 'moment' })
+      Object.assign(patch, { access: ['press'], press_force: ['light'] })
     }
     push(change('tutorials', g, patch))
   })

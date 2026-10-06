@@ -41,6 +41,8 @@ export function PhotoTiles({
   switchUrl,
   upload,
   onSave,
+  captions,
+  onSaveCaptions,
   idPrefix,
 }: {
   urls: string[]
@@ -49,6 +51,10 @@ export function PhotoTiles({
   /** Sends the bytes and returns the stored URL. */
   upload: (file: File) => Promise<string>
   onSave: (next: PhotoSave) => Promise<void>
+  /** Parallel to urls. Undefined turns the caption inputs off — only a guide has them (087). */
+  captions?: (string | null)[]
+  /** The whole aligned list, saved when a caption input loses focus with a changed value. */
+  onSaveCaptions?: (captions: (string | null)[]) => Promise<void>
   /** Namespaces the radio group and input ids when two of these share a page. */
   idPrefix: string
 }) {
@@ -141,6 +147,17 @@ export function PhotoTiles({
     )
   }
 
+  function saveCaption(i: number, text: string) {
+    const next = urls.map((_, j) => (j === i ? text.trim() || null : (captions?.[j] ?? null)))
+    if (next[i] === (captions?.[i] ?? null) || !onSaveCaptions) return
+    setBusy(true)
+    setError(null)
+    onSaveCaptions(next)
+      .then(() => showToast('Caption saved'))
+      .catch((err) => setError(err instanceof Error ? err.message : 'Could not save that. Please try again.'))
+      .finally(() => setBusy(false))
+  }
+
   function makeCover(url: string) {
     save(
       { photo_urls: [url, ...urls.filter((u) => u !== url)], ...(tagging ? { switch_photo_url: switchUrl } : {}) },
@@ -211,6 +228,19 @@ export function PhotoTiles({
                 ×
               </button>
             </div>
+
+            {onSaveCaptions && (
+              <input
+                type="text"
+                maxLength={60}
+                aria-label={`Caption for photo ${i + 1}`}
+                placeholder="Caption (optional)"
+                defaultValue={captions?.[i] ?? ''}
+                disabled={busy}
+                onBlur={(e) => saveCaption(i, e.target.value)}
+                className="field text-xs"
+              />
+            )}
 
             {tagging && (
               <label className="flex cursor-pointer items-center gap-2 text-xs font-bold">

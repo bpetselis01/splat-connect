@@ -180,7 +180,7 @@ export function MakersWantedScreen() {
               hitSlop={8}
               style={styles.addButton}
             >
-              <Ionicons name="add" size={24} color={theme.colors.surface} />
+              <Ionicons name="add" size={24} color={theme.colors.onColor} />
             </Pressable>
           ),
         }}
@@ -476,7 +476,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     textAlign: 'center',
     fontFamily: theme.fonts.black,
-    fontSize: 11,
+    fontSize: theme.type.micro,
     lineHeight: 18,
     color: theme.colors.ink,
   },
@@ -492,7 +492,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
     backgroundColor: theme.colors.surface,
   },
-  emptyTitle: { fontFamily: theme.fonts.display, fontSize: 17, color: theme.colors.text, textAlign: 'center' },
+  emptyTitle: { fontFamily: theme.fonts.display, fontSize: theme.type.body, color: theme.colors.text, textAlign: 'center' },
   emptyBody: {
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.caption,
@@ -512,8 +512,8 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: theme.radii.pill,
   },
-  pillText: { fontFamily: theme.fonts.black, fontSize: 11, color: theme.colors.ink },
-  where: { flexShrink: 1, fontFamily: theme.fonts.semiBold, fontSize: 12, color: theme.colors.muted },
+  pillText: { fontFamily: theme.fonts.black, fontSize: theme.type.micro, color: theme.colors.ink },
+  where: { flexShrink: 1, fontFamily: theme.fonts.semiBold, fontSize: theme.type.caption, color: theme.colors.muted },
   guideRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3) },
   tile: { width: 52, height: 52, borderRadius: theme.radii.field, alignItems: 'center', justifyContent: 'center' },
   guideBody: { flex: 1, minWidth: 0 },
@@ -521,7 +521,7 @@ const styles = StyleSheet.create({
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(1.5), marginTop: theme.spacing(1) },
   pill: {
     fontFamily: theme.fonts.black,
-    fontSize: 11,
+    fontSize: theme.type.micro,
     color: theme.colors.ink,
     paddingHorizontal: 8,
     paddingVertical: 2,
@@ -541,7 +541,7 @@ const styles = StyleSheet.create({
   briefWho: { fontFamily: theme.fonts.black, color: theme.colors.ink },
   facts: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(3) },
   fact: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  factText: { fontFamily: theme.fonts.bold, fontSize: 12, color: theme.colors.muted },
+  factText: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.muted },
   foot: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -551,7 +551,7 @@ const styles = StyleSheet.create({
     borderTopWidth: theme.border.hairline,
     borderTopColor: theme.colors.border,
   },
-  footText: { flex: 1, fontFamily: theme.fonts.bold, fontSize: 12, color: theme.colors.muted },
+  footText: { flex: 1, fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.muted },
   footButton: { paddingHorizontal: theme.spacing(4), minHeight: 44 },
   moneyNote: {
     padding: theme.spacing(4),
@@ -560,7 +560,7 @@ const styles = StyleSheet.create({
   },
   moneyKicker: {
     fontFamily: theme.fonts.black,
-    fontSize: 11,
+    fontSize: theme.type.micro,
     letterSpacing: 0.9,
     textTransform: 'uppercase',
     color: theme.colors.ink,

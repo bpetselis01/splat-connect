@@ -217,7 +217,7 @@ it('puts the steps, skipping a step with no instructions', async () => {
   })
 
   expect(mockPut).toHaveBeenCalledWith('/api/tutorials/t1/steps', {
-    steps: [{ title: 'Open', body: 'Unscrew it', photo_url: null }],
+    steps: [{ title: 'Open', body: 'Unscrew it', photo_url: null, tip: null, minutes: null }],
   })
   expect(draft.tutorial?.steps).toEqual(saved)
 })

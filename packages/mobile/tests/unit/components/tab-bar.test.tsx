@@ -3,6 +3,7 @@ import { StyleSheet } from 'react-native'
 import { BlurView } from 'expo-blur'
 import { TabBar } from '../../../components/tab-bar'
 import { tabBarClearance } from '../../../lib/tab-bar-layout'
+import { theme } from '../../../lib/theme'
 
 const routes = ['home', 'map', 'inbox', 'me', 'guides', 'toy-library', 'explore'].map((name, i) => ({ key: `${name}-${i}`, name }))
 const titles: Record<string, string> = {
@@ -118,7 +119,7 @@ it('the unread badge is dangerDeep with white 10.5 text, a white ring and the bo
   render(<TabBar {...props} badges={{ inbox: 3 }} />)
   const pill = StyleSheet.flatten(screen.getByTestId('tab-badge').props.style)
   expect(pill).toMatchObject({
-    backgroundColor: '#b83a3a', minWidth: 21, height: 21, borderWidth: 2, borderColor: 'rgba(255,255,255,0.9)',
+    backgroundColor: '#b83a3a', minWidth: 21, height: 21, borderWidth: 2, borderColor: theme.colors.surface,
   })
-  expect(StyleSheet.flatten(screen.getByText('3').props.style)).toMatchObject({ color: '#ffffff', fontSize: 10.5, lineHeight: 17 })
+  expect(StyleSheet.flatten(screen.getByText('3').props.style)).toMatchObject({ color: '#ffffff', fontSize: theme.type.micro, lineHeight: 17 })
 })

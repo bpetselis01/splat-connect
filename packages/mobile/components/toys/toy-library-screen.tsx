@@ -1,26 +1,27 @@
 // packages/mobile/components/toys/toy-library-screen.tsx
 //
-// The Toy library tab, as the board draws it (#toy_library): the same
-// row-card idiom as Guides so the two tabs read as one app — greeting and
-// mascot, Toys / Organisations, a Filters button that unfolds the chips, a heading with the
-// count, then cards carrying status, Wired, a plain-language condition grade
-// and the holder.
+// The Toy library tab (spec 2026-10-05-library-redesign), built like Guides so
+// the two read as one app: a hero (title, one line, mascot), search with one
+// filter button that opens the full filter page, the chosen filters as tags,
+// then cards carrying availability, a plain-language condition grade and the holder.
 import { useEffect, useState } from 'react'
 import { View, Text, FlatList, RefreshControl, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import type { ToyWithOwner } from '@splat-connect/types'
-import { gradeOf, GRADES, toyHolderName, type GradeKey } from '@splat-connect/types'
+import { gradeOf, toyHolderName, type GradeKey } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { theme } from '../../lib/theme'
 import { tabBarClearance } from '../../lib/tab-bar-layout'
 import { scrollFrame, scrollContent, SEARCH_GAP } from '../../lib/layout'
 import { useSaves } from '../../lib/saves'
-import { Chip } from '../ui/Chip'
-import { FilterPanel } from '../ui/FilterPanel'
 import { TextField } from '../ui/TextField'
+import { FilterButton } from '../ui/FilterControls'
+import { FilterPage, FilterTagRow, filterTags, type FilterValues } from '../library/filter-page'
+import { TOY_DEFAULTS, toyGroups, toyMatches, withChildSuggestion } from '../../lib/library-filters'
+import { useMyChildren } from '../../lib/my-children'
 import { Screen } from '../ui/Screen'
 import { Button } from '../ui/Button'
 import { SkeletonRow } from '../ui/Skeleton'
@@ -28,7 +29,6 @@ import { EmptyState } from '../ui/EmptyState'
 import { Badge } from '../ui/Badge'
 import { SaveButton } from '../ui/SaveButton'
 import { CornerMenu } from '../ui/CornerMenu'
-import { Segmented } from '../ui/Segmented'
 import { TabHero } from '../ui/TabHero'
 import { RowCard, MetaItem } from '../ui/RowCard'
 import { useCapabilities } from '../../lib/capabilities'
@@ -61,17 +61,16 @@ export function ToyLibraryScreen() {
   const insets = useSafeAreaInsets()
   const router = useRouter()
   const saves = useSaves()
-  const { caps, loading: capsLoading } = useCapabilities()
+  const { caps } = useCapabilities()
+  const children = useMyChildren()
   const [toys, setToys] = useState<Array<ToyWithOwner & { km?: number | null }>>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
-  const [condition, setCondition] = useState<GradeKey | null>(null)
-  const [switchAdaptedOnly, setSwitchAdaptedOnly] = useState(false)
-  const [availableOnly, setAvailableOnly] = useState(false)
-  const [newest, setNewest] = useState(false)
-  const [nearest, setNearest] = useState(false)
+  const [filters, setFilters] = useState<FilterValues>(TOY_DEFAULTS)
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const postcode = nearParam(caps?.profile.pickup_postcode)
+  const nearest = filters.sort === 'near' && !!postcode
   // Bumping this re-runs the fetch — the retry button's and pull-to-refresh's
   // shared handle.
   const [reloadKey, setReloadKey] = useState(0)
@@ -84,9 +83,16 @@ export function ToyLibraryScreen() {
 
   const clearFilters = () => {
     setSearch('')
-    setCondition(null)
-    setSwitchAdaptedOnly(false)
-    setAvailableOnly(false)
+    setFilters(TOY_DEFAULTS)
+  }
+
+  // Organisations is a place, not a filter: choosing it on the filter page goes there.
+  const apply = (v: FilterValues) => {
+    setFiltersOpen(false)
+    if (v.show === 'orgs') {
+      setFilters({ ...v, show: 'toys' })
+      router.push('/toy-library/organisations')
+    } else setFilters(v)
   }
 
   useEffect(() => {
@@ -118,19 +124,13 @@ export function ToyLibraryScreen() {
   // Every published toy is already loaded (the endpoint isn't paged), so every
   // filter runs client-side, same as web's toy-library-client.tsx.
   const q = search.trim().toLowerCase()
-  const visible = toys.filter(
-    (t) =>
-      (!q || t.name.toLowerCase().includes(q)) &&
-      (!condition || gradeOf(t.condition).key === condition) &&
-      (!switchAdaptedOnly || t.switch_adapted) &&
-      // A person's toy is one unit; an organisation's may run out without the
-      // row going away, and that is the only "not available" a public toy has.
-      (!availableOnly || t.quantity > 0)
-  )
-  if (newest) visible.sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))
-  const filtered = !!q || !!condition || switchAdaptedOnly || availableOnly
-  const activeCount = [!!condition, switchAdaptedOnly, availableOnly, newest, nearest].filter(Boolean).length
-  const heading = filtered ? 'Matching toys' : newest ? 'Newest first' : nearest ? 'Nearest first' : 'All toys'
+  const matching = (draft: FilterValues) => toys.filter((t) => (!q || t.name.toLowerCase().includes(q)) && toyMatches(t, draft))
+  const visible = matching(filters)
+  if (filters.sort === 'new') visible.sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))
+  const groups = toyGroups(!!postcode)
+  const tags = filterTags(groups, filters, TOY_DEFAULTS, ['sort', 'show'])
+  const filtered = tags.length > 0 || !!q
+  const heading = filtered ? 'Matching toys' : 'All toys'
 
   return (
     <Screen ownHeader>
@@ -138,7 +138,7 @@ export function ToyLibraryScreen() {
         data={loading || error ? [] : visible}
         // The filters are part of each row's key so a new filter replays the
         // rows' entrance without remounting the header.
-        keyExtractor={(t) => `${condition ?? 'any'}:${t.id}`}
+        keyExtractor={(t) => t.id}
         showsVerticalScrollIndicator={false}
         style={scrollFrame}
         contentContainerStyle={[scrollContent, { paddingBottom: tabBarClearance(insets.bottom) }]}
@@ -148,63 +148,23 @@ export function ToyLibraryScreen() {
         }
         ListHeaderComponent={
           <View style={styles.header}>
-            <TabHero greeting="Given by families near you" title="Toy library" pose="hold" />
+            <TabHero title="Toy library" line="Adapted toys you can ask for, given by families and organisations near you." pose="hold" />
 
-            {/* Organisations is a place, not a filter, so choosing it goes
-                there; the switch always shows Toys as where you are. */}
-            <Segmented
-              label="Browse"
-              variant="tint"
-              options={[
-                { value: 'toys', label: 'Toys' },
-                { value: 'orgs', label: 'Organisations' },
-              ]}
-              value="toys"
-              onChange={(v) => {
-                if (v === 'orgs') router.push('/toy-library/organisations')
-              }}
-            />
-
-            <TextField
-              icon="search"
-              placeholder="Search by toy name"
-              value={search}
-              onChangeText={setSearch}
-              boxStyle={styles.searchBar}
-              search
-            />
-
-            <FilterPanel activeCount={activeCount}>
-              <Chip
-                variant="filter"
-                icon="checkmark-circle-outline"
-                label="Available"
-                active={availableOnly}
-                onPress={() => setAvailableOnly((v) => !v)}
-              />
-              <Chip
-                variant="filter"
-                icon="flash-outline"
-                label="Switch-adapted"
-                active={switchAdaptedOnly}
-                onPress={() => setSwitchAdaptedOnly((v) => !v)}
-              />
-              <Chip variant="filter" icon="time-outline" label="Newest" active={newest} onPress={() => setNewest((v) => !v)} />
-              {capsLoading ? null : postcode ? (
-                <Chip variant="filter" icon="navigate-outline" label="Nearest first" active={nearest} onPress={() => setNearest((v) => !v)} />
-              ) : (
-                <Chip variant="filter" icon="navigate-outline" label="Add your postcode" active={false} onPress={() => router.push('/account')} />
-              )}
-              {GRADES.map((g) => (
-                <Chip
-                  key={g.key}
-                  variant="filter"
-                  label={g.label}
-                  active={condition === g.key}
-                  onPress={() => setCondition((cur) => (cur === g.key ? null : g.key))}
+            <View style={styles.searchRow}>
+              <View style={styles.flex}>
+                <TextField
+                  icon="search"
+                  placeholder="Search toys"
+                  value={search}
+                  onChangeText={setSearch}
+                  boxStyle={styles.searchBar}
+                  search
                 />
-              ))}
-            </FilterPanel>
+              </View>
+              <FilterButton count={tags.length} onPress={() => setFiltersOpen(true)} />
+            </View>
+
+            <FilterTagRow tags={tags} value={filters} onChange={setFilters} />
 
             {!loading && !error ? (
               <View style={styles.headingRow}>
@@ -212,7 +172,7 @@ export function ToyLibraryScreen() {
                   {heading}
                 </Text>
                 <Text style={styles.count}>
-                  {visible.length} toy{visible.length === 1 ? '' : 's'}
+                  {`${visible.length} toy${visible.length === 1 ? '' : 's'} · ${nearest ? 'Nearest first' : 'Newest first'}`}
                 </Text>
               </View>
             ) : null}
@@ -288,6 +248,16 @@ export function ToyLibraryScreen() {
           )
         }}
       />
+      <FilterPage
+        visible={filtersOpen}
+        groups={groups}
+        start={withChildSuggestion(filters, children[0])}
+        defaults={TOY_DEFAULTS}
+        count={(draft) => matching(draft).length}
+        noun={['toy', 'toys']}
+        onApply={apply}
+        onClose={() => setFiltersOpen(false)}
+      />
       <CornerMenu
         label="Toy actions"
         items={[
@@ -306,12 +276,13 @@ const styles = StyleSheet.create({
   searchBar: {
     borderRadius: theme.radii.pill,
     borderWidth: theme.border.hairline,
-    paddingHorizontal: theme.spacing(4),
     minHeight: 52,
     ...theme.shadow(1),
   },
+  searchRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2) },
+  flex: { flex: 1 },
   headingRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
-  heading: { fontFamily: theme.fonts.display, fontSize: 20, lineHeight: 26, color: theme.colors.ink },
+  heading: { fontFamily: theme.fonts.display, fontSize: theme.type.heading, lineHeight: 26, color: theme.colors.ink },
   count: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.muted },
   meta: { gap: 6, alignItems: 'flex-start' },
   retry: { marginTop: theme.spacing(5), alignSelf: 'center', paddingHorizontal: theme.spacing(8) },

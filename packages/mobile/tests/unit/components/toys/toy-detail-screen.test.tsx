@@ -156,7 +156,7 @@ describe('ToyDetailScreen', () => {
     render(<ToyDetailScreen id="toy1" />)
     await screen.findByText('Bubble machine')
     expect(screen.getByText('TAD Australia')).toBeTruthy()
-    expect(screen.getByText('· 4 available')).toBeTruthy()
+    expect(screen.getByText(/^Held by TAD Australia · 4 available/)).toBeTruthy()
     // Same precedent as guides/provenance.tsx's pressable byline name: a name
     // pressable inside a sentence reads as a link, not an unlabelled button.
     expect(screen.getByRole('link', { name: 'TAD Australia' })).toBeTruthy()
@@ -325,7 +325,7 @@ describe('ToyDetailScreen', () => {
       ),
     })
     render(<ToyDetailScreen id="toy1" />)
-    expect(await screen.findByText('· Newcastle, NSW')).toBeTruthy()
+    expect(await screen.findByText(/ · \d+ available · Newcastle, NSW$/)).toBeTruthy()
   })
 
   it('hides the request button on a paused toy and says why', async () => {

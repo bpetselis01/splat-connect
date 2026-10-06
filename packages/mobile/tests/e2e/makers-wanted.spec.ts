@@ -14,7 +14,7 @@ import { adminClient, createContributor, createTutorial, signIn, signInAsNewCont
 
 async function postRequest(page: import('@playwright/test').Page, title: string) {
   await page.goto('/explore/makers-wanted/new')
-  await page.getByLabel('Search guides').fill(title)
+  await page.getByLabel('Search guides', { exact: true }).fill(title)
   await page.getByRole('radio', { name: title }).click()
   await page.getByPlaceholder('Newtown').fill('Glebe')
   await page.getByRole('checkbox', { name: /You cover the parts/ }).click()
@@ -34,7 +34,7 @@ test('the ask form complains about the guide, then the suburb, then the parts pr
   await page.getByRole('button', { name: 'Post to Makers wanted' }).click()
   await expect(page.getByText('Pick the guide you want built.')).toBeVisible()
 
-  await page.getByLabel('Search guides').fill(title)
+  await page.getByLabel('Search guides', { exact: true }).fill(title)
   await page.getByRole('radio', { name: title }).click()
   await page.getByRole('button', { name: 'Post to Makers wanted' }).click()
   await expect(page.getByText('Say which suburb you are in — never your address.')).toBeVisible()

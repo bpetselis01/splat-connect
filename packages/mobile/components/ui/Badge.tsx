@@ -49,5 +49,5 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     alignSelf: 'flex-start',
   },
-  text: { fontFamily: theme.fonts.black, fontSize: 11 },
+  text: { fontFamily: theme.fonts.black, fontSize: theme.type.micro },
 })

@@ -30,7 +30,7 @@ jest.mock('../../../../lib/use-tutorial-draft', () => ({ useDraft: () => mockDra
 
 const step = (n: number, over: object = {}) => ({ id: `s${n}`, tutorial_id: 't1', position: n, title: `Title ${n}`, body: `Body ${n}`, photo_url: null, ...over })
 const withSteps = (steps: object[]) => { mockDraft.tutorial = { id: 't1', kind: 'toy_adaptation', status: 'draft', steps, parts: [], tools: [], stl_files: [], photo_urls: [], title: 'T', difficulty: 'easy', safety_declared_at: null, build_minutes: 5 } }
-const lastRows = () => mockDraft.replaceSteps.mock.lastCall![0] as { title: string | null; body: string; photo_url: string | null }[]
+const lastRows = () => mockDraft.replaceSteps.mock.lastCall![0] as { title: string | null; body: string; photo_url: string | null; tip?: string | null; minutes?: number | null }[]
 
 beforeEach(() => {
   jest.clearAllMocks()
@@ -52,14 +52,14 @@ describe('adding, editing and removing steps', () => {
     render(<StepsSection />)
     fireEvent.press(screen.getByTestId('steps-add'))
     expect(screen.getByText('Add the instructions to save this step')).toBeTruthy()
-    expect(lastRows()).toEqual([{ title: null, body: '', photo_url: null }])
+    expect(lastRows()).toEqual([{ title: null, body: '', photo_url: null, tip: null, minutes: null }])
   })
 
   it('sends the whole list on every keystroke', () => {
     withSteps([step(1)])
     render(<StepsSection />)
     fireEvent.changeText(screen.getByLabelText('Step 1 instructions'), 'Twist the cap')
-    expect(lastRows()).toEqual([{ title: 'Title 1', body: 'Twist the cap', photo_url: null }])
+    expect(lastRows()).toEqual([{ title: 'Title 1', body: 'Twist the cap', photo_url: null, tip: null, minutes: null }])
   })
 
   it('keeps emoji, quotes and markup in a title and body', () => {
@@ -75,6 +75,20 @@ describe('adding, editing and removing steps', () => {
     render(<StepsSection />)
     expect(screen.getByLabelText('Step 1 title').props.maxLength).toBe(120)
     expect(screen.getByLabelText('Step 1 instructions').props.maxLength).toBe(2000)
+  })
+
+  it('sends a tip and whole minutes, clamped to 1-600, blank as null', () => {
+    withSteps([step(1)])
+    render(<StepsSection />)
+    expect(screen.getByLabelText('Step 1 tip').props.maxLength).toBe(300)
+    fireEvent.changeText(screen.getByLabelText('Step 1 tip'), 'Mind the edge')
+    expect(lastRows()[0]).toMatchObject({ tip: 'Mind the edge', minutes: null })
+    fireEvent.changeText(screen.getByLabelText('Step 1 minutes'), '15')
+    expect(lastRows()[0].minutes).toBe(15)
+    fireEvent.changeText(screen.getByLabelText('Step 1 minutes'), '9999')
+    expect(lastRows()[0].minutes).toBe(600)
+    fireEvent.changeText(screen.getByLabelText('Step 1 minutes'), '')
+    expect(lastRows()[0].minutes).toBeNull()
   })
 
   it('removes a step and renumbers the rest', () => {
@@ -236,7 +250,7 @@ describe('step photos', () => {
     withSteps([step(1, { photo_url: 'p.jpg' })])
     render(<StepsSection />)
     fireEvent.press(screen.getByText('Remove photo'))
-    expect(lastRows()).toEqual([{ title: 'Title 1', body: 'Body 1', photo_url: null }])
+    expect(lastRows()).toEqual([{ title: 'Title 1', body: 'Body 1', photo_url: null, tip: null, minutes: null }])
   })
 
   it('labels the button Replace photo once a step has one', () => {
@@ -255,7 +269,7 @@ describe('step photos', () => {
     await waitFor(() => expect(screen.getByText('Uploading…')).toBeTruthy())
     fireEvent.changeText(screen.getByLabelText('Step 1 instructions'), 'Typed during the upload')
     await act(async () => { finish({ url: 'late.jpg' }) })
-    expect(lastRows()[0]).toEqual({ title: 'Title 1', body: 'Typed during the upload', photo_url: 'late.jpg' })
+    expect(lastRows()[0]).toEqual({ title: 'Title 1', body: 'Typed during the upload', photo_url: 'late.jpg', tip: null, minutes: null })
     expect(screen.getByLabelText('Step 1 instructions').props.value).toBe('Typed during the upload')
   })
 
@@ -269,7 +283,7 @@ describe('step photos', () => {
     await waitFor(() => expect(screen.getByText('Uploading…')).toBeTruthy())
     fireEvent.press(screen.getByTestId('step-remove-0'))
     await act(async () => { finish({ url: 'late.jpg' }) })
-    expect(lastRows()).toEqual([{ title: 'Title 2', body: 'Body 2', photo_url: 'late.jpg' }])
+    expect(lastRows()).toEqual([{ title: 'Title 2', body: 'Body 2', photo_url: 'late.jpg', tip: null, minutes: null }])
   })
 })
 

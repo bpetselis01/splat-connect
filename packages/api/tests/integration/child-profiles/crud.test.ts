@@ -181,29 +181,29 @@ describe('child profiles collection', () => {
     expect(patch.status).toBe(400)
   })
 
-  it('round-trips the board questions and de-duplicates everyday needs', async () => {
+  it('round-trips the four child questions and de-duplicates the lists', async () => {
     const created = await app.request('/api/child-profiles', authed(parent.token, {
       method: 'POST',
       body: JSON.stringify({
-        name: 'Board', working_hand: 'right', press_force: 'light', aim: 'large', hold: 'second',
-        everyday_needs: ['quiet', 'wipeable', 'quiet'],
+        name: 'Board', helps_with: ['seeing', 'calm', 'seeing'], access: ['touch', 'eyes'], one_hand: true,
+        press_force: 'light', enjoys: ['light', 'pretend'], everyday_needs: ['quiet', 'wipeable', 'quiet'],
       }),
     }))
     expect(created.status).toBe(201)
     const row = (await created.json()) as Record<string, unknown> & { id: string }
-    expect(row).toMatchObject({ working_hand: 'right', press_force: 'light', aim: 'large', hold: 'second', everyday_needs: ['quiet', 'wipeable'] })
+    expect(row).toMatchObject({ helps_with: ['seeing', 'calm'], access: ['touch', 'eyes'], one_hand: true, press_force: 'light', enjoys: ['light', 'pretend'], everyday_needs: ['quiet', 'wipeable'] })
 
     // Clearing an answer is a null, and needs can be emptied.
     const patch = await app.request(`/api/child-profiles/${row.id}`, authed(parent.token, {
       method: 'PATCH',
-      body: JSON.stringify({ working_hand: 'not_sure', aim: null, everyday_needs: [] }),
+      body: JSON.stringify({ press_force: null, access: [], everyday_needs: [] }),
     }))
     expect(patch.status).toBe(200)
-    expect(await patch.json()).toMatchObject({ working_hand: 'not_sure', press_force: 'light', aim: null, everyday_needs: [] })
+    expect(await patch.json()).toMatchObject({ helps_with: ['seeing', 'calm'], press_force: null, access: [], everyday_needs: [] })
   })
 
   it('400s on a value outside a question\'s vocabulary', async () => {
-    for (const body of [{ working_hand: 'both' }, { press_force: 3 }, { hold: 'forever' }, { everyday_needs: ['loud'] }, { everyday_needs: 'quiet' }]) {
+    for (const body of [{ helps_with: ['walking'] }, { press_force: 3 }, { access: 'press' }, { one_hand: 'yes' }, { enjoys: ['fireworks'] }, { everyday_needs: ['loud'] }, { everyday_needs: 'quiet' }]) {
       const res = await app.request('/api/child-profiles', authed(parent.token, { method: 'POST', body: JSON.stringify(body) }))
       expect(res.status, JSON.stringify(body)).toBe(400)
     }

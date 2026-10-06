@@ -21,6 +21,7 @@ import { StepPills, type StepPillItem } from '../ui/StepPills'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { ErrorRow } from '../ui/ErrorRow'
+import { SuitsFields, suitsForm, suitsPayload, type SuitsForm } from '../suits/suits-fields'
 import { PicksEditor } from './picks-editor'
 
 /** Mirrors 053's file_size_limit on the photo buckets. */
@@ -56,6 +57,7 @@ export function Editor({ id }: { id: string }) {
   const [batteries, setBatteries] = useState('')
   const [switchFitting, setSwitchFitting] = useState('')
   const [volume, setVolume] = useState('')
+  const [suits, setSuits] = useState<SuitsForm>(() => suitsForm({}))
   const [guideId, setGuideId] = useState<string | null>(null)
   const [guides, setGuides] = useState<{ id: string; title: string }[]>([])
   const [saving, setSaving] = useState(false)
@@ -100,6 +102,7 @@ export function Editor({ id }: { id: string }) {
         setSwitchFitting(found.switch_fitting ?? '')
         setVolume(found.volume ?? '')
         setGuideId(found.tutorial_id ?? null)
+        setSuits(suitsForm(found))
         setTransactions(tx)
       })
       .catch((err) => {
@@ -173,6 +176,7 @@ export function Editor({ id }: { id: string }) {
     : 0
 
   async function handleSaveDetails() {
+    const suitsFields = suitsPayload(suits, false)
     setSaving(true)
     setSaveError(null)
     try {
@@ -187,6 +191,7 @@ export function Editor({ id }: { id: string }) {
         switch_fitting: switchFitting.trim() || null,
         volume: volume.trim() || null,
         tutorial_id: guideId,
+        ...suitsFields,
       })
       setToy((prev) => (prev ? { ...prev, ...updated } : updated))
     } catch (err) {
@@ -454,6 +459,9 @@ export function Editor({ id }: { id: string }) {
               ))}
             </View>
 
+            <Text style={styles.sectionTitle}>Who it's for</Text>
+            <SuitsFields value={suits} onChange={setSuits} guide={false} />
+
             <ErrorRow message={saveError} />
             <Button label="Save details" onPress={handleSaveDetails} loading={saving} />
           </View>
@@ -638,6 +646,12 @@ export function Editor({ id }: { id: string }) {
 
 const styles = StyleSheet.create({
   body: { flex: 1, marginTop: theme.spacing(3) },
+  sectionTitle: {
+    fontFamily: theme.fonts.bold,
+    fontSize: theme.type.label,
+    color: theme.colors.ink,
+    marginTop: theme.spacing(6),
+  },
   label: {
     fontFamily: theme.fonts.bold,
     fontSize: theme.type.label,
@@ -698,7 +712,7 @@ const styles = StyleSheet.create({
   },
   coverFlagText: {
     fontFamily: theme.fonts.black,
-    fontSize: 10,
+    fontSize: theme.type.micro,
     color: theme.colors.ink,
     textAlign: 'center',
     textTransform: 'uppercase',

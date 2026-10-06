@@ -51,7 +51,7 @@ export function Segmented<T extends string>({
             >
               {/* Uppercased in style, not in the string, so a screen reader is
                   handed "Sign in" rather than something it may spell out. */}
-              <Text numberOfLines={1} style={[styles.boxText, on && styles.pillTextOn]}>
+              <Text numberOfLines={1} style={[styles.boxText, on && styles.boxTextOn]}>
                 {o.label}
               </Text>
             </Pressable>
@@ -140,7 +140,8 @@ const styles = StyleSheet.create({
     color: theme.colors.ink,
     textAlign: 'center',
   },
-  pillTextOn: { color: theme.colors.surface },
+  pillTextOn: { color: theme.colors.onColor },
+  boxTextOn: { color: theme.colors.onInverse },
   pillTint: { backgroundColor: theme.colors.accentLight, borderColor: theme.colors.primary },
   pillTextTint: { color: theme.colors.primaryDeep },
   boxShadow: {
@@ -165,10 +166,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing(2),
   },
   boxDivider: { borderLeftWidth: theme.border.hairline, borderLeftColor: theme.colors.ink },
-  boxOn: { backgroundColor: theme.colors.ink },
+  boxOn: { backgroundColor: theme.colors.inverse },
   boxText: {
     fontFamily: theme.fonts.black,
-    fontSize: 12,
+    fontSize: theme.type.caption,
     // Web sets these labels in IBM Plex Mono. The phone loads Nunito and
     // Jersey 10 only, and a fourth family for two words is not worth the
     // bundle; Nunito Black uppercase at web's 0.05em tracking is the match.

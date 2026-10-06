@@ -8,6 +8,7 @@ import { MarkBuildDoneButton } from '@/components/mark-build-done-button'
 import { apiClient } from '@/lib/api-client'
 import { getSavedIds } from '@/lib/saves'
 import { getMyChildren } from '@/lib/my-children'
+import { getCapabilities } from '@/lib/capabilities'
 import { TutorialView } from '@/components/tutorial-view'
 import { fitLine, type GuideNote, type TutorialWithDetails, type TutorialOrg } from '@splat-connect/types'
 
@@ -44,6 +45,8 @@ export default async function TutorialPage({
           .catch(() => ({ thanked: false, own: false }))
 
   const signedIn = saved !== null
+  // The api re-checks both on pin; this only decides whether to draw the buttons.
+  const canPin = signedIn && (thanks.own || !!(await getCapabilities())?.isAdmin)
   const fit = signedIn ? fitLine(tutorial, await getMyChildren()) : null
 
   return (
@@ -62,6 +65,7 @@ export default async function TutorialPage({
         signedIn={signedIn}
         fit={fit}
         notes={notes}
+        canPin={canPin}
         actions={
           /* The board gives a guest Share alone: saving and thanking both need
              an account, and the rail already says so under the button. */

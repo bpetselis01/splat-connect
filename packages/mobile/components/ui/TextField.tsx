@@ -74,7 +74,7 @@ export function TextField({
       {hint ? <Text style={styles.hint}>{hint}</Text> : null}
       <Animated.View
         testID={boxTestID}
-        style={[styles.box, icon || trailing ? styles.boxRow : null, boxStyle, ring]}
+        style={[styles.box, icon || trailing ? styles.boxRow : null, icon ? styles.boxIcon : null, boxStyle, ring]}
       >
         {icon ? (
           <Ionicons name={icon} size={19} color={theme.colors.muted} style={styles.icon} />
@@ -120,6 +120,9 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
   },
   boxRow: { flexDirection: 'row', alignItems: 'center' },
+  // The input drops its own padding beside an icon, so the box keeps the icon
+  // off the edge; without this a pill's curve swallowed it.
+  boxIcon: { paddingHorizontal: theme.spacing(4) },
   icon: { marginRight: theme.spacing(2) },
   inputWithIcon: { flex: 1, paddingHorizontal: 0 },
   inputFlex: { flex: 1 },

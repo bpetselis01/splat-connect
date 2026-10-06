@@ -41,10 +41,10 @@ function child(overrides: Partial<ChildProfile> = {}): ChildProfile {
     forearm_length_mm: null,
     hand_dominance: null,
     sensory_preferences: [],
-    working_hand: null,
+    helps_with: [],
+    access: [],
+    one_hand: false,
     press_force: null,
-    aim: null,
-    hold: null,
     everyday_needs: [],
     created_at: '2026-01-01T00:00:00Z',
     updated_at: '2026-01-01T00:00:00Z',
@@ -53,8 +53,8 @@ function child(overrides: Partial<ChildProfile> = {}): ChildProfile {
 }
 
 const NEW_FIELDS = [
-  'name', 'age', 'working_hand', 'press_force', 'aim', 'hold', 'everyday_needs',
-  'enjoys', 'palm_width_mm', 'reach_cm', 'tray_mm',
+  'name', 'age', 'helps_with', 'access', 'one_hand', 'press_force', 'enjoys', 'everyday_needs',
+  'palm_width_mm', 'reach_cm', 'tray_mm',
 ]
 
 describe('ChildEditor', () => {
@@ -87,40 +87,46 @@ describe('ChildEditor', () => {
     expect(screen.getByText(/not a medical/)).toBeInTheDocument()
   })
 
-  it("draws the board's cards and asks none of the retired questions", () => {
+  it("draws the cards and asks the four child questions, none of the retired ones", () => {
     render(<ChildEditor child={null} />)
-    for (const name of ['Basics', 'Ability profile', 'Everyday needs', 'Play', 'Measurements']) {
+    for (const name of ['Basics', 'Who they are', 'Good to know', 'Measurements']) {
       expect(screen.getByRole('region', { name })).toBeInTheDocument()
     }
-    expect(screen.queryByRole('region', { name: 'Customization' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Play' })).not.toBeInTheDocument()
     expect(screen.queryByText(/MACS|BFMF|Grip type|Palm width|Sensory/)).not.toBeInTheDocument()
-    for (const q of ['Which hand does most of the work?', 'How much force can they apply?', 'Can they aim at a target?', 'How long can they hold a press?']) {
-      expect(screen.getByRole('group', { name: q })).toBeInTheDocument()
+    // Each question is a fieldset, with the chips grouped inside it.
+    for (const q of ['Helps with', 'How the child uses it', 'Press force', 'Play']) {
+      expect(screen.getAllByRole('group', { name: q }).length).toBeGreaterThan(0)
     }
+    expect(screen.queryByText('Which hand does most of the work?')).not.toBeInTheDocument()
     // One save for the whole page.
     expect(screen.getAllByRole('button', { name: /save|create/i })).toHaveLength(1)
   })
 
   it('toggles a single-choice chip on, across, and off again', () => {
     render(<ChildEditor child={null} />)
-    const hand = within(screen.getByRole('group', { name: 'Which hand does most of the work?' }))
-    fireEvent.click(hand.getByRole('button', { name: 'Left' }))
-    expect(hand.getByRole('button', { name: 'Left' })).toHaveAttribute('aria-pressed', 'true')
-    fireEvent.click(hand.getByRole('button', { name: 'Right' }))
-    expect(hand.getByRole('button', { name: 'Left' })).toHaveAttribute('aria-pressed', 'false')
-    expect(hand.getByRole('button', { name: 'Right' })).toHaveAttribute('aria-pressed', 'true')
-    fireEvent.click(hand.getByRole('button', { name: 'Right' }))
-    expect(hand.getByRole('button', { name: 'Right' })).toHaveAttribute('aria-pressed', 'false')
+    const force = within(screen.getByRole('group', { name: 'Press force' }))
+    fireEvent.click(force.getByRole('button', { name: 'Light' }))
+    expect(force.getByRole('button', { name: 'Light' })).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(force.getByRole('button', { name: 'Full' }))
+    expect(force.getByRole('button', { name: 'Light' })).toHaveAttribute('aria-pressed', 'false')
+    expect(force.getByRole('button', { name: 'Full' })).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(force.getByRole('button', { name: 'Full' }))
+    expect(force.getByRole('button', { name: 'Full' })).toHaveAttribute('aria-pressed', 'false')
   })
 
-  it('creates the profile with only the board fields and swaps the URL to its id', async () => {
+  it('creates the profile with only the form fields and swaps the URL to its id', async () => {
     vi.mocked(browserApiClient.post).mockResolvedValue(child({ id: 'new-id', name: 'Emma' }))
     render(<ChildEditor child={null} />)
 
     fireEvent.change(screen.getByLabelText('Name or nickname'), { target: { value: ' Emma ' } })
     fireEvent.change(screen.getByLabelText('Age'), { target: { value: '6' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Seeing' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Feeling calm' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Light touch' }))
+    // The One hand chip sits with How they use it but is its own boolean.
+    fireEvent.click(screen.getByRole('button', { name: 'One hand is enough' }))
     fireEvent.click(screen.getByRole('button', { name: 'Light' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Yes, large' }))
     fireEvent.click(screen.getByRole('button', { name: 'Quiet toys only' }))
     fireEvent.click(screen.getByRole('button', { name: 'Wipeable' }))
     fireEvent.click(screen.getByRole('button', { name: 'Create profile' }))
@@ -130,25 +136,26 @@ describe('ChildEditor', () => {
     expect(path).toBe('/api/child-profiles')
     expect(Object.keys(body as object).sort()).toEqual([...NEW_FIELDS].sort())
     expect(body).toEqual({
-      name: 'Emma', age: 6, working_hand: null, press_force: 'light', aim: 'large', hold: null,
-      everyday_needs: ['quiet', 'wipeable'],
-      enjoys: [], palm_width_mm: null, reach_cm: null, tray_mm: null,
+      name: 'Emma', age: 6, helps_with: ['seeing', 'calm'], access: ['touch'], one_hand: true, press_force: 'light',
+      enjoys: [], everyday_needs: ['quiet', 'wipeable'],
+      palm_width_mm: null, reach_cm: null, tray_mm: null,
     })
     expect(replace).toHaveBeenCalledWith('/dashboard/child/new-id')
   })
 
   it('PATCHes an existing child from its stored answers, unticking a need', async () => {
     vi.mocked(browserApiClient.patch).mockResolvedValue(child({ name: 'Emma' }))
-    render(<ChildEditor child={child({ id: 'c1', name: 'Emma', working_hand: 'left', everyday_needs: ['quiet', 'wipeable'] })} />)
+    render(<ChildEditor child={child({ id: 'c1', name: 'Emma', helps_with: ['seeing'], one_hand: true, everyday_needs: ['quiet', 'wipeable'] })} />)
 
-    expect(screen.getByRole('button', { name: 'Left' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Seeing' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'One hand is enough' })).toHaveAttribute('aria-pressed', 'true')
     fireEvent.click(screen.getByRole('button', { name: 'Quiet toys only' }))
     fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
 
     await screen.findByText('Saved')
     expect(browserApiClient.patch).toHaveBeenCalledWith(
       '/api/child-profiles/c1',
-      expect.objectContaining({ name: 'Emma', working_hand: 'left', everyday_needs: ['wipeable'] })
+      expect.objectContaining({ name: 'Emma', helps_with: ['seeing'], one_hand: true, everyday_needs: ['wipeable'] })
     )
   })
 
@@ -158,16 +165,16 @@ describe('ChildEditor', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Create profile' }))
     await screen.findByText('Saved')
     expect(browserApiClient.post).toHaveBeenCalledWith('/api/child-profiles', {
-      name: null, age: null, working_hand: null, press_force: null, aim: null, hold: null, everyday_needs: [],
-      enjoys: [], palm_width_mm: null, reach_cm: null, tray_mm: null,
+      name: null, age: null, helps_with: [], access: [], one_hand: false, press_force: null, enjoys: [], everyday_needs: [],
+      palm_width_mm: null, reach_cm: null, tray_mm: null,
     })
   })
 
-  // 120: Play and the three measurements are editable here, not only in mobile's wizard.
+  // Play is a question in "Who they are"; the three measurements are editable here too.
   it('shows and edits what the child enjoys and their measurements', async () => {
     vi.mocked(browserApiClient.patch).mockResolvedValue(child())
     render(<ChildEditor child={child({ id: 'c1', enjoys: ['water'], palm_width_mm: 62, tray_mm: 15 })} />)
-    const play = within(screen.getByRole('group', { name: 'What does your child enjoy?' }))
+    const play = within(screen.getAllByRole('group', { name: 'Play' })[0])
     expect(play.getByRole('button', { name: 'Bubbles and water' })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByLabelText('Hand width (mm)')).toHaveValue(62)
 

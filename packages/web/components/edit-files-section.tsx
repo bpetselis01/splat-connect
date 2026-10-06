@@ -9,14 +9,17 @@ import { useToast } from '@/components/toast'
 export function EditFilesSection({
   tutorialId,
   photoUrls,
+  photoCaptions,
   currentPdfUrl,
   onSavePhotos,
   onSave,
 }: {
   tutorialId: string
   photoUrls: string[]
+  photoCaptions?: (string | null)[]
   currentPdfUrl: string | null
-  onSavePhotos: (photoUrls: string[]) => Promise<void>
+  /** Captions ride along only when a caption was edited; add/remove/cover leave them to the api's realign. */
+  onSavePhotos: (photoUrls: string[], photoCaptions?: (string | null)[]) => Promise<void>
   onSave: (pdfUrl: string | null) => Promise<void>
 }) {
   // WHY: Previously, picking a file immediately uploaded it to cloud storage —
@@ -86,6 +89,8 @@ export function EditFilesSection({
           urls={photoUrls}
           upload={(file) => uploadFile('/api/upload/photo', file)}
           onSave={({ photo_urls }) => onSavePhotos(photo_urls)}
+          captions={photoCaptions ?? []}
+          onSaveCaptions={(captions) => onSavePhotos(photoUrls, captions)}
         />
       </div>
       <div>

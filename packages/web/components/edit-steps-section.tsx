@@ -17,7 +17,7 @@ import { browserApiClient } from '@/lib/browser-api-client'
 import { safePhotoSrc } from '@/lib/photo-src'
 import { useToast } from '@/components/toast'
 
-export type StepInput = { title: string | null; body: string; photo_url: string | null }
+export type StepInput = { title: string | null; body: string; photo_url: string | null; tip: string | null; minutes: number | null }
 type Row = StepInput & { key: string }
 
 const MAX_STEPS = 60
@@ -34,7 +34,7 @@ export function EditStepsSection({
   const router = useRouter()
   const showToast = useToast()
   const [rows, setRows] = useState<Row[]>(() =>
-    steps.map((s) => ({ key: s.id, title: s.title, body: s.body, photo_url: s.photo_url }))
+    steps.map((s) => ({ key: s.id, title: s.title, body: s.body, photo_url: s.photo_url, tip: s.tip ?? null, minutes: s.minutes ?? null }))
   )
   const [dirty, setDirty] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -78,7 +78,7 @@ export function EditStepsSection({
     setSaving(true)
     setError(null)
     try {
-      await onSave(rows.map(({ title, body, photo_url }) => ({ title: title?.trim() || null, body, photo_url })))
+      await onSave(rows.map(({ title, body, photo_url, tip, minutes }) => ({ title: title?.trim() || null, body, photo_url, tip: tip?.trim() || null, minutes })))
       setDirty(false)
       showToast('Steps saved')
       router.refresh()
@@ -152,6 +152,33 @@ export function EditStepsSection({
                 onChange={(e) => edit(r.key, { body: e.target.value })}
                 className="field"
               />
+              <div className="flex items-center gap-2">
+                <label htmlFor={`step-${r.key}-tip`} className="sr-only">
+                  Step {n} tip
+                </label>
+                <input
+                  id={`step-${r.key}-tip`}
+                  value={r.tip ?? ''}
+                  maxLength={300}
+                  placeholder="Tip (optional)"
+                  onChange={(e) => edit(r.key, { tip: e.target.value })}
+                  className="field flex-1"
+                />
+                <label htmlFor={`step-${r.key}-minutes`} className="sr-only">
+                  Step {n} minutes
+                </label>
+                <input
+                  id={`step-${r.key}-minutes`}
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={600}
+                  value={r.minutes ?? ''}
+                  placeholder="min"
+                  onChange={(e) => edit(r.key, { minutes: e.target.value === '' ? null : Number(e.target.value) })}
+                  className="field w-24"
+                />
+              </div>
               <div className="flex flex-wrap items-center gap-3">
                 {src && (
                   <span className="relative h-20 w-28 overflow-hidden rounded-[var(--radius-field)] bg-sunken">
@@ -189,7 +216,7 @@ export function EditStepsSection({
       {rows.length < MAX_STEPS && (
         <button
           type="button"
-          onClick={() => change([...rows, { key: crypto.randomUUID(), title: null, body: '', photo_url: null }])}
+          onClick={() => change([...rows, { key: crypto.randomUUID(), title: null, body: '', photo_url: null, tip: null, minutes: null }])}
           className="btn btn-quiet btn-sm self-start"
         >
           <Plus size={16} weight="bold" aria-hidden="true" />

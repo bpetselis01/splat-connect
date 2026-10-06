@@ -67,6 +67,22 @@ describe('toys CRUD', () => {
     expect(patched.status).toBe('draft')
   })
 
+  // 128: who it's for round-trips on a toy, a value that is not an answer is a
+  // 400, and device_types (guides only) is never written.
+  it('saves the tags and refuses a value that is not an answer', async () => {
+    const created = (await (await req('/', owner.token, { method: 'POST', body: JSON.stringify({ name: 'Penguins', condition: 7 }) })).json()) as { id: string }
+    const ok = await req(`/${created.id}`, owner.token, {
+      method: 'PATCH',
+      body: JSON.stringify({ access: ['press', 'head'], play: ['move'], one_hand: true, press_force: ['light'], device_types: ['switch'] }),
+    })
+    expect(ok.status).toBe(200)
+    const saved = (await ok.json()) as Record<string, unknown>
+    expect(saved).toMatchObject({ access: ['press', 'head'], play: ['move'], one_hand: true, press_force: ['light'], helps_with: null })
+    expect(saved).not.toHaveProperty('device_types')
+    const bad = await req(`/${created.id}`, owner.token, { method: 'PATCH', body: JSON.stringify({ access: ['wave'] }) })
+    expect(bad.status).toBe(400)
+  })
+
   it('returns 404 (never 403) when another owner touches the toy, and 404 for a malformed id', async () => {
     const create = await req('/', owner.token, {
       method: 'POST',

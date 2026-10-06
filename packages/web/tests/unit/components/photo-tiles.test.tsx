@@ -230,4 +230,23 @@ describe('PhotoTiles', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('That photo is 18.2 MB')
     expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ photo_urls: [A, B, 'u1'] }))
   })
+
+  it('saves an edited caption as the whole aligned list, and nothing when it is unchanged', async () => {
+    const onSaveCaptions = vi.fn().mockResolvedValue(undefined)
+    render(
+      <ToastProvider>
+        <PhotoTiles idPrefix="t" urls={[A, B]} captions={['Front']} upload={vi.fn()} onSave={vi.fn()} onSaveCaptions={onSaveCaptions} />
+      </ToastProvider>
+    )
+    fireEvent.blur(screen.getByLabelText('Caption for photo 1'))
+    expect(onSaveCaptions).not.toHaveBeenCalled()
+    fireEvent.change(screen.getByLabelText('Caption for photo 2'), { target: { value: ' Back ' } })
+    fireEvent.blur(screen.getByLabelText('Caption for photo 2'))
+    await waitFor(() => expect(onSaveCaptions).toHaveBeenCalledWith(['Front', 'Back']))
+  })
+
+  it('has no caption inputs unless asked', () => {
+    setup()
+    expect(screen.queryByLabelText('Caption for photo 1')).toBeNull()
+  })
 })

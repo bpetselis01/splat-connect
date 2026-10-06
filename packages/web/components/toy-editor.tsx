@@ -27,6 +27,7 @@ import {
 import type { Toy, OfferType } from '@splat-connect/types'
 import { Stepper } from '@/components/stepper'
 import { ToyDetailsForm, type ToyDetailsInput } from '@/components/toy-details-form'
+import { EditSuitsSection } from '@/components/edit-suits-section'
 import { ToyPhotosSection } from '@/components/toy-photos-section'
 import { DeleteEntityButton } from '@/components/delete-entity-button'
 import { ToastProvider } from '@/components/toast'
@@ -321,6 +322,7 @@ export function ToyEditor({
             content: (
               <div className="panel pt-5">
                 <ToyDetailsForm toy={toy} guides={guides} onSave={saveDetails} />
+                <EditSuitsSection endpoint={`/api/toys/${toy.id}`} suits={toy} onSaved={(u) => setToy((t) => ({ ...t, ...u }))} />
               </div>
             ),
           },

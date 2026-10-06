@@ -507,7 +507,7 @@ const styles = StyleSheet.create({
   tabTextOn: { fontFamily: theme.fonts.black, color: theme.colors.ink },
   count: {
     fontFamily: theme.fonts.black,
-    fontSize: 11,
+    fontSize: theme.type.micro,
     color: theme.colors.ink,
     backgroundColor: theme.colors.apricotSoft,
     borderRadius: theme.radii.pill,
@@ -533,7 +533,7 @@ const styles = StyleSheet.create({
   center: { textAlign: 'center' },
   eyebrow: {
     fontFamily: theme.fonts.black,
-    fontSize: 12,
+    fontSize: theme.type.caption,
     letterSpacing: 1.2,
     textTransform: 'uppercase',
     color: theme.colors.muted,

@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
   avatarSquare: { borderRadius: theme.radii.field },
   avatarInitial: { fontFamily: theme.fonts.bold, fontSize: theme.type.title, color: theme.colors.primaryDeep },
   headerBody: { flex: 1 },
-  name: { fontFamily: theme.fonts.display, fontSize: 22, color: theme.colors.text },
+  name: { fontFamily: theme.fonts.display, fontSize: theme.type.title, color: theme.colors.text },
   role: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.label, color: theme.colors.text, marginTop: theme.spacing(1) },
   orgChip: {
     flexDirection: 'row',
@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
   section: { marginBottom: theme.spacing(6) },
   // Say thanks and Report a problem share one row, as on the board.
   actions: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3) },
-  sectionTitle: { fontFamily: theme.fonts.display, fontSize: 18, color: theme.colors.text, marginBottom: theme.spacing(3) },
+  sectionTitle: { fontFamily: theme.fonts.display, fontSize: theme.type.heading, color: theme.colors.text, marginBottom: theme.spacing(3) },
   rowPress: { marginBottom: theme.spacing(3) },
   // The board's list row: a 50px tile, a 14px title, 18px corners.
   card: {
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   cardBody: { flex: 1, justifyContent: 'center', gap: theme.spacing(2) },
-  cardTitle: { fontFamily: theme.fonts.black, color: theme.colors.text, fontSize: 14, lineHeight: 19 },
+  cardTitle: { fontFamily: theme.fonts.black, color: theme.colors.text, fontSize: theme.type.label, lineHeight: 19 },
   badgeRow: { flexDirection: 'row', gap: theme.spacing(2) },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2) },
   chip: {

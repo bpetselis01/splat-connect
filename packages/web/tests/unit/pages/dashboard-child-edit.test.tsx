@@ -48,10 +48,10 @@ const child = (over: Partial<ChildProfile>): ChildProfile => ({
   forearm_length_mm: null,
   hand_dominance: null,
   sensory_preferences: [],
-  working_hand: null,
+  helps_with: [],
+  access: [],
+  one_hand: false,
   press_force: null,
-  aim: null,
-  hold: null,
   everyday_needs: [],
   created_at: '2026-01-01T00:00:00Z',
   updated_at: '2026-01-01T00:00:00Z',
@@ -62,12 +62,12 @@ describe('EditChildPage', () => {
   beforeEach(() => vi.clearAllMocks())
 
   it('seeds the form from the requested child', async () => {
-    vi.mocked(apiClient.get).mockResolvedValue([child({ id: 'c1', name: 'Emma', age: 7, hold: 'second' })])
+    vi.mocked(apiClient.get).mockResolvedValue([child({ id: 'c1', name: 'Emma', age: 7, helps_with: ['seeing'] })])
     render(await EditChildPage({ params: Promise.resolve({ id: 'c1' }) }))
-    expect(screen.getByRole('region', { name: 'Ability profile' })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Who they are' })).toBeInTheDocument()
     expect(screen.getByLabelText('Name or nickname')).toHaveValue('Emma')
     expect(screen.getByLabelText('Age')).toHaveValue(7)
-    expect(screen.getByRole('button', { name: 'A second' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Seeing' })).toHaveAttribute('aria-pressed', 'true')
   })
 
   // Chain: the heading has to agree with the list, and the list numbers unnamed

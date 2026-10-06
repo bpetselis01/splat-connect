@@ -1,5 +1,7 @@
 import { renderHook, act, waitFor } from '@testing-library/react-native'
-import { recordRecent, useRecents, parseRecents, resetRecentsCache, RECENTS_KEY } from '../../../lib/recents'
+import { recordRecent, useRecents, parseRecents, resetRecentsCache, setRecentsOwner, recentsKeyFor } from '../../../lib/recents'
+
+const RECENTS_KEY = recentsKeyFor('u1')
 
 const mockDisk = new Map<string, string>()
 const mockSetItem = jest.fn((k: string, v: string) => { mockDisk.set(k, v); return Promise.resolve() })
@@ -7,7 +9,7 @@ jest.mock('../../../lib/supabase-storage', () => ({
   resolveAuthStorage: () => ({
     getItem: (k: string) => Promise.resolve(mockDisk.get(k) ?? null),
     setItem: (k: string, v: string) => mockSetItem(k, v),
-    removeItem: jest.fn(),
+    removeItem: (k: string) => { mockDisk.delete(k); return Promise.resolve() },
   }),
 }))
 
@@ -20,6 +22,10 @@ const saved = (n: number) =>
 beforeEach(() => {
   jest.clearAllMocks()
   mockDisk.clear()
+  resetRecentsCache() // nothing left over to carry into the next owner
+  setRecentsOwner(null)
+  setRecentsOwner('u1')
+  // The owner switch starts a read of an empty disk; each test writes its own first.
   resetRecentsCache()
   jest.useRealTimers()
 })
@@ -158,4 +164,52 @@ describe('recents journey', () => {
     await waitFor(() => expect(mockSetItem).toHaveBeenCalled())
     expect(result.current.recents).toHaveLength(1)
   })
+})
+
+describe('one list per account', () => {
+  it('each account sees only its own list, and switching back brings the first one back', async () => {
+    const { result } = renderHook(() => useRecents())
+    act(() => recordRecent(item('a')))
+    await waitFor(() => expect(mockDisk.get(recentsKeyFor('u1'))).toContain('guide:a'))
+
+    act(() => setRecentsOwner('u2'))
+    const second = renderHook(() => useRecents())
+    await waitFor(() => expect(second.result.current.ready).toBe(true))
+    expect(second.result.current.recents).toEqual([])
+    act(() => recordRecent(item('b')))
+    await waitFor(() => expect(mockDisk.get(recentsKeyFor('u2'))).toContain('guide:b'))
+    expect(mockDisk.get(recentsKeyFor('u1'))).not.toContain('guide:b')
+
+    act(() => setRecentsOwner('u1'))
+    const back = renderHook(() => useRecents())
+    await waitFor(() => expect(back.result.current.recents.map((r) => r.key)).toEqual(['guide:a']))
+    expect(result.current.recents.map((r) => r.key)).toEqual(['guide:a'])
+  })
+
+  it('signed out, nothing is written', async () => {
+    act(() => setRecentsOwner(null))
+    act(() => recordRecent(item('x')))
+    await new Promise((r) => setTimeout(r, 20))
+    expect(mockSetItem).not.toHaveBeenCalled()
+  })
+
+  it('the first account to load inherits the old shared list, which is then removed', async () => {
+    mockDisk.set('home-recents', JSON.stringify(saved(2)))
+    const { result } = renderHook(() => useRecents())
+    await waitFor(() => expect(result.current.recents).toHaveLength(2))
+    expect(mockDisk.has('home-recents')).toBe(false)
+    act(() => recordRecent(item('n')))
+    await waitFor(() => expect(parseRecents(mockDisk.get(recentsKeyFor('u1')) ?? null)).toHaveLength(3))
+  })
+
+  it('a visit recorded before the session is read joins the account that then loads', async () => {
+    act(() => setRecentsOwner(null))
+    act(() => recordRecent(item('early')))
+    act(() => setRecentsOwner('u3'))
+    await waitFor(() => expect(mockDisk.get(recentsKeyFor('u3'))).toContain('guide:early'))
+  })
+})
+
+it("an account's key is one iOS's secure store accepts (letters, digits, '.', '-', '_')", () => {
+  expect(recentsKeyFor('4f1c2a9e-1d2b-4c3d-9e8f-0a1b2c3d4e5f')).toMatch(/^[A-Za-z0-9._-]+$/)
 })

@@ -64,22 +64,23 @@ export function Mascot({ pose, size }: { pose: MascotPose; size: number }) {
   )
 }
 
+/** A library's hero: the title, one sentence on what the page is for, and the mascot. */
 export function TabHero({
-  greeting,
   title,
+  line,
   pose = 'wave',
 }: {
-  greeting: string
   title: string
+  line: string
   pose?: MascotPose
 }) {
   return (
     <View style={styles.row}>
       <View style={styles.text}>
-        <Text style={styles.greeting}>{greeting}</Text>
         <Text style={styles.title} accessibilityRole="header">
           {title}
         </Text>
+        <Text style={styles.line}>{line}</Text>
       </View>
       <Mascot pose={pose} size={76} />
     </View>
@@ -96,6 +97,6 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing(4),
   },
   text: { flex: 1 },
-  greeting: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.muted },
-  title: { fontFamily: theme.fonts.display, fontSize: 28, lineHeight: 34, color: theme.colors.ink },
+  line: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, lineHeight: 20, color: theme.colors.muted, marginTop: theme.spacing(1) },
+  title: { fontFamily: theme.fonts.display, fontSize: theme.type.display, lineHeight: 34, color: theme.colors.ink },
 })

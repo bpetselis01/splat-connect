@@ -34,6 +34,13 @@ jest.mock('../../../../lib/capabilities', () => ({
   useCapabilities: () => ({ caps: mockCaps.current, loading: false, refresh: jest.fn() }),
 }))
 
+// Open the filter page, press each option, then Show: choices apply only then.
+async function applyFilters(labels: string[]) {
+  fireEvent.press(await screen.findByRole('button', { name: /^Filters/ }))
+  for (const l of labels) fireEvent.press(screen.getByText(l))
+  fireEvent.press(screen.getByText(/^Show \d+ toys?$/))
+}
+
 const toy = (over: object) => ({
   id: 'toy1',
   owner_id: 'u1',
@@ -55,6 +62,12 @@ const toy = (over: object) => ({
   ...over,
 })
 
+// The screen also reads the parent's child profiles on mount; answer that by
+// path so a queued toy-list response is never spent on it.
+function toysInOrder(...replies: unknown[]) {
+  const q = [...replies]
+  mockGet.mockImplementation((path: string) => (path === '/api/child-profiles' ? Promise.resolve([]) : q.length ? Promise.resolve(q.shift()) : Promise.resolve([])))
+}
 beforeEach(() => {
   jest.clearAllMocks()
   mockCaps.current = null
@@ -62,11 +75,11 @@ beforeEach(() => {
 })
 
 describe('ToyLibraryScreen', () => {
-  it('asks for a postcode before it can sort nearest first', async () => {
+  it('offers Nearest first only once the profile has a postcode', async () => {
     render(<ToyLibraryScreen />)
     fireEvent.press(await screen.findByRole('button', { name: 'Filters' }))
-    fireEvent.press(await screen.findByText('Add your postcode'))
-    expect(mockPush).toHaveBeenCalledWith('/account')
+    expect(screen.getByRole('radio', { name: 'Newest' })).toBeTruthy()
+    expect(screen.queryByText('Nearest first')).toBeNull()
   })
 
   it('sorts nearest first from the profile postcode, with km on each toy', async () => {
@@ -75,9 +88,9 @@ describe('ToyLibraryScreen', () => {
       Promise.resolve(path === '/api/public/toys?near=2000' ? [toy({ id: 't1', name: 'Bubble machine', km: 3 })] : [])
     )
     render(<ToyLibraryScreen />)
-    fireEvent.press(await screen.findByRole('button', { name: 'Filters' }))
-    fireEvent.press(await screen.findByText('Nearest first'))
+    await applyFilters(['Nearest first'])
     expect(await screen.findByText('3 km')).toBeTruthy()
+    expect(screen.getByText('1 toy · Nearest first')).toBeTruthy()
     expect(mockGet).toHaveBeenCalledWith('/api/public/toys?near=2000')
   })
 
@@ -93,7 +106,7 @@ describe('ToyLibraryScreen', () => {
     mockGet.mockResolvedValue([toy({ id: 't1', name: 'Bubble machine' }), toy({ id: 't2', name: 'Switch car' })])
     render(<ToyLibraryScreen />)
     await screen.findByText('Bubble machine')
-    fireEvent.changeText(screen.getByPlaceholderText('Search by toy name'), 'switch')
+    fireEvent.changeText(screen.getByPlaceholderText('Search toys'), 'switch')
     expect(screen.queryByText('Bubble machine')).toBeNull()
     expect(screen.getByText('Switch car')).toBeTruthy()
   })
@@ -149,7 +162,7 @@ describe('ToyLibraryScreen', () => {
     ])
     render(<ToyLibraryScreen />)
     await screen.findByText('Bubble machine')
-    // One pill, plus the filter chip of the same name.
+    // One pill on the card; the filter option is not drawn until the page opens.
     expect(screen.getAllByText('Switch-adapted', { includeHiddenElements: true }).length).toBe(1)
   })
 
@@ -160,11 +173,11 @@ describe('ToyLibraryScreen', () => {
     ])
     render(<ToyLibraryScreen />)
     await screen.findByText('Good toy')
-    fireEvent.press(screen.getByRole('button', { name: 'Filters' }))
-    fireEvent.press(screen.getByRole('button', { name: 'Needs a fix' }))
+    await applyFilters(['Needs a fix'])
     expect(screen.queryByText('Good toy')).toBeNull()
     expect(screen.getByText('Worn toy')).toBeTruthy()
-    fireEvent.press(screen.getByRole('button', { name: 'Good' }))
+    fireEvent.press(screen.getByRole('button', { name: 'Remove filter: Needs a fix' }))
+    await applyFilters(['Good'])
     expect(screen.getByText('Good toy')).toBeTruthy()
     expect(screen.queryByText('Worn toy')).toBeNull()
   })
@@ -176,8 +189,7 @@ describe('ToyLibraryScreen', () => {
     ])
     render(<ToyLibraryScreen />)
     await screen.findByText('Plain toy')
-    fireEvent.press(screen.getByRole('button', { name: 'Filters' }))
-    fireEvent.press(screen.getByRole('button', { name: 'Switch-adapted' }))
+    await applyFilters(['Switch-adapted'])
     expect(screen.queryByText('Plain toy')).toBeNull()
     expect(screen.getByText('Adapted toy')).toBeTruthy()
   })
@@ -205,7 +217,9 @@ describe('ToyLibraryScreen', () => {
     fireEvent.press(screen.getByLabelText('Toy actions'))
     fireEvent.press(screen.getByLabelText('Give a toy'))
     expect(mockPush).toHaveBeenCalledWith('/toys/new')
-    fireEvent.press(screen.getByRole('tab', { name: 'Organisations' }))
+    fireEvent.press(screen.getByRole('button', { name: 'Filters' }))
+    fireEvent.press(screen.getByRole('radio', { name: 'Organisations' }))
+    fireEvent.press(screen.getByText(/^Show \d+ toys?$/))
     expect(mockPush).toHaveBeenCalledWith('/toy-library/organisations')
   })
 
@@ -217,44 +231,44 @@ describe('ToyLibraryScreen', () => {
     ])
     render(<ToyLibraryScreen />)
     await screen.findByText('Older toy')
-    fireEvent.press(screen.getByRole('button', { name: 'Filters' }))
-    fireEvent.press(screen.getByRole('button', { name: 'Available' }))
+    await applyFilters(['Available now'])
     expect(screen.queryByText('Gone toy')).toBeNull()
     expect(screen.getByText('Matching toys')).toBeTruthy()
-    fireEvent.press(screen.getByRole('button', { name: 'Newest' }))
+    expect(screen.getByText('2 toys · Newest first')).toBeTruthy()
     expect(screen.getAllByText(/^(Older|Newer) toy$/).map((t) => t.props.children)).toEqual(['Newer toy', 'Older toy'])
   })
 
   it('shows an error message when apiClient.get rejects, and retries', async () => {
-    mockGet.mockRejectedValueOnce(new Error('API GET failed with status 500'))
+    toysInOrder(Promise.reject(new Error('API GET failed with status 500')))
     render(<ToyLibraryScreen />)
     expect(await screen.findByText("Couldn't load toys.")).toBeTruthy()
-    mockGet.mockResolvedValue([toy({ id: 't1', name: 'Bubble machine' })])
+    toysInOrder([toy({ id: 't1', name: 'Bubble machine' })])
     fireEvent.press(screen.getByRole('button', { name: 'Try again' }))
     expect(await screen.findByText('Bubble machine')).toBeTruthy()
   })
 
-  it('keeps the chips behind one Filters button with a count of what is on', async () => {
+  it('keeps the options behind one Filters button with a count of what is on', async () => {
     mockGet.mockResolvedValue([toy({ id: 't1', name: 'Bubble machine' })])
     render(<ToyLibraryScreen />)
     await screen.findByText('Bubble machine')
-    expect(screen.queryByRole('button', { name: 'Available' })).toBeNull()
-    fireEvent.press(screen.getByRole('button', { name: 'Filters' }))
-    fireEvent.press(screen.getByRole('button', { name: 'Available' }))
-    expect(screen.getByRole('button', { name: 'Filters, 1 active' })).toBeTruthy()
+    expect(screen.queryByText('Available now')).toBeNull()
+    await applyFilters(['Available now'])
+    expect(screen.getByRole('button', { name: 'Filters, 1 on' })).toBeTruthy()
   })
 
   it('shows the count line', async () => {
     mockGet.mockResolvedValue([toy({ id: 't1', name: 'Bubble machine' }), toy({ id: 't2', name: 'Switch car' })])
     render(<ToyLibraryScreen />)
-    await waitFor(() => expect(screen.getByText('2 toys')).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('2 toys · Newest first')).toBeTruthy())
+    expect(screen.getByText('All toys')).toBeTruthy()
+    expect(screen.getByText('Toy library')).toBeTruthy()
   })
 
   it('clears every filter from the empty state in one tap', async () => {
     mockGet.mockResolvedValue([toy({ id: 't1', name: 'Bubble machine' })])
     render(<ToyLibraryScreen />)
     await screen.findByText('Bubble machine')
-    fireEvent.changeText(screen.getByPlaceholderText('Search by toy name'), 'zzz')
+    fireEvent.changeText(screen.getByPlaceholderText('Search toys'), 'zzz')
     fireEvent.press(screen.getByText('Clear filters'))
     expect(screen.getByText('Bubble machine')).toBeTruthy()
     expect(mockPush).not.toHaveBeenCalledWith(expect.objectContaining({ pathname: '/not-built' }))

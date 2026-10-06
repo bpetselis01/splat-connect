@@ -32,13 +32,13 @@ export function PicksRow({
       </Text>
       <Text style={styles.hint}>Up to three guides {firstName} points you at next.</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.content}>
-        {picks.map(({ tutorials: t }) => (
+        {picks.map(({ tutorials: t, required }) => (
           <AnimatedPressable
             key={t.id}
             onPress={() => onOpen(t.id)}
             pressScale={0.97}
             accessibilityRole="button"
-            accessibilityLabel={t.title}
+            accessibilityLabel={required ? `${t.title}, required first` : t.title}
           >
             <View style={styles.card}>
               {t.toy_photo_url ? (
@@ -50,6 +50,8 @@ export function PicksRow({
                 {t.title}
               </Text>
               <Badge status={t.difficulty} />
+              {/* 129: make this one before the guide you are on. */}
+              {required ? <Badge status="pending" label="Required first" /> : null}
             </View>
           </AnimatedPressable>
         ))}
@@ -62,8 +64,8 @@ export function PicksRow({
 const styles = StyleSheet.create({
   wrap: { marginTop: theme.spacing(6) },
   // The board's section heading and its muted hint.
-  heading: { fontFamily: theme.fonts.display, fontSize: 18, color: theme.colors.text },
-  hint: { fontFamily: theme.fonts.regular, fontSize: 13, color: theme.colors.muted, marginBottom: theme.spacing(2) },
+  heading: { fontFamily: theme.fonts.display, fontSize: theme.type.heading, color: theme.colors.text },
+  hint: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted, marginBottom: theme.spacing(2) },
   content: { gap: 10, paddingRight: 6, paddingBottom: 8, paddingLeft: 2 },
   card: {
     width: 124,

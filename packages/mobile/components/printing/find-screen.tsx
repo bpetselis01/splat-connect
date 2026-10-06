@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
   chips: { gap: theme.spacing(2) },
   eyebrow: {
     fontFamily: theme.fonts.black,
-    fontSize: 12,
+    fontSize: theme.type.caption,
     letterSpacing: 1.2,
     textTransform: 'uppercase',
     color: theme.colors.muted,
@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2) },
   tag: {
     fontFamily: theme.fonts.black,
-    fontSize: 12,
+    fontSize: theme.type.caption,
     color: theme.colors.ink,
     backgroundColor: theme.colors.surfaceSunken,
     borderRadius: theme.radii.pill,

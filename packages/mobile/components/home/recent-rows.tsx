@@ -64,8 +64,8 @@ const styles = StyleSheet.create({
   },
   icon: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   text: { flex: 1, minWidth: 0 },
-  title: { fontFamily: theme.fonts.bold, fontSize: 14.5, lineHeight: 18, color: theme.colors.ink },
-  subtitle: { fontFamily: theme.fonts.regular, fontSize: 13, color: theme.colors.muted },
+  title: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, lineHeight: 18, color: theme.colors.ink },
+  subtitle: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted },
   pill: { paddingHorizontal: 9, paddingVertical: 3, borderRadius: theme.radii.pill, backgroundColor: theme.colors.surfaceSunken },
-  pillText: { fontFamily: theme.fonts.black, fontSize: 11.5, color: theme.colors.ink },
+  pillText: { fontFamily: theme.fonts.black, fontSize: theme.type.micro, color: theme.colors.ink },
 })

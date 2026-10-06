@@ -1,3 +1,4 @@
+import { Linking } from 'react-native'
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { GuideTools } from '../../../../components/guides/guide-tools'
 
@@ -17,7 +18,7 @@ const tools = [
 it('ticks the tools you already have and links to Learn', async () => {
   render(<GuideTools tutorialId="g" tools={tools} />)
   expect(await screen.findByText('0 of 2 already yours')).toBeTruthy()
-  expect(screen.getByText('Not counted in the total above — tools are a one-off.')).toBeTruthy()
+  expect(screen.getByText('Not counted in the parts total — tools are a one-off.')).toBeTruthy()
   fireEvent.press(screen.getByLabelText('I already have Hot glue gun'))
   expect(screen.getByText('1 of 2 already yours')).toBeTruthy()
   expect(mockSetItem).toHaveBeenLastCalledWith('guide-tools.g', '["t2"]')
@@ -29,4 +30,11 @@ it('says why each tool and how to get it', async () => {
   render(<GuideTools tutorialId="g" tools={[{ ...tools[1], note: 'Anchoring the jack', get_by: 'borrow' }]} />)
   expect(await screen.findByText('Anchoring the jack')).toBeTruthy()
   expect(screen.getByText('Borrow')).toBeTruthy()
+})
+
+it('links each tool to where it is sold', async () => {
+  const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(true)
+  render(<GuideTools tutorialId="g" tools={[{ ...tools[0], buy_links: [{ label: 'Bunnings', url: 'https://b.test/x' }] }]} />)
+  fireEvent.press(await screen.findByText('Bunnings'))
+  expect(open).toHaveBeenCalledWith('https://b.test/x')
 })

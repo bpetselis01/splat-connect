@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surfaceSunken,
     marginBottom: theme.spacing(3),
   },
-  title: { fontFamily: theme.fonts.display, fontSize: 22, color: theme.colors.ink, lineHeight: 28 },
+  title: { fontFamily: theme.fonts.display, fontSize: theme.type.title, color: theme.colors.ink, lineHeight: 28 },
   badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2), marginTop: theme.spacing(2) },
   byline: {
     fontFamily: theme.fonts.semiBold,

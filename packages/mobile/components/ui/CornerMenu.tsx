@@ -118,12 +118,12 @@ export function CornerMenu({ label, items }: { label: string; items: CornerMenuI
           style={styles.trigger}
         >
           <Animated.View style={menuIcon}>
-            <Ionicons name="grid-outline" size={20} color={theme.colors.surface} />
+            <Ionicons name="grid-outline" size={20} color={theme.colors.onInverse} />
           </Animated.View>
           {/* Absolute so the two glyphs share one box and neither shifts the
               other while they cross. */}
           <Animated.View style={[styles.triggerIcon, closeIcon]}>
-            <Ionicons name="close" size={22} color={theme.colors.surface} />
+            <Ionicons name="close" size={22} color={theme.colors.onInverse} />
           </Animated.View>
         </AnimatedPressable>
       </View>
@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(18, 40, 58, 0.28)',
+    backgroundColor: theme.colors.scrim,
   },
   zone: {
     position: 'absolute',
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: theme.radii.pill,
-    backgroundColor: theme.colors.ink,
+    backgroundColor: theme.colors.inverse,
     alignItems: 'center',
     justifyContent: 'center',
     ...theme.shadow(3),
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
   },
   countText: {
     fontFamily: theme.fonts.numeral,
-    fontSize: 17,
+    fontSize: theme.type.body,
     color: theme.colors.ink,
   },
 })

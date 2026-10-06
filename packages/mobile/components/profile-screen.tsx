@@ -231,10 +231,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { fontFamily: theme.fonts.display, fontSize: 19, color: theme.colors.ink },
+  avatarText: { fontFamily: theme.fonts.display, fontSize: theme.type.heading, color: theme.colors.ink },
   idBody: { flex: 1, minWidth: 0 },
-  idName: { fontFamily: theme.fonts.display, fontSize: 18, color: theme.colors.ink },
-  idEmail: { fontFamily: theme.fonts.numeral, fontSize: 12, color: theme.colors.muted },
+  idName: { fontFamily: theme.fonts.display, fontSize: theme.type.heading, color: theme.colors.ink },
+  idEmail: { fontFamily: theme.fonts.numeral, fontSize: theme.type.caption, color: theme.colors.muted },
   sectionGap: { marginTop: 18 },
   detail: { gap: 9 },
   nameCard: {

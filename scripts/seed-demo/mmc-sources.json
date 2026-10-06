@@ -1,0 +1,96 @@
+{
+  "mounting": {
+    "repo": "Switch-Mounting-Plate-GoPro-Compatible",
+    "title": "Switch Mounting Plate (GoPro Compatible)",
+    "description": "A 3D-printable plate that holds an assistive switch and bolts onto standard GoPro-style mounts, so a switch can be clamped to a wheelchair, tray or table arm and positioned exactly where the child can reach it.",
+    "license": "CERN-OHL-W v2 (hardware), CC BY-SA 4.0 (docs)",
+    "photos": [
+      "https://raw.githubusercontent.com/makersmakingchange/Switch-Mounting-Plate-GoPro-Compatible/main/Photos/Switch_Plate_GoPro_Compatible.jpg",
+      "https://raw.githubusercontent.com/makersmakingchange/Switch-Mounting-Plate-GoPro-Compatible/main/Photos/Switch_Plate_GoPro_Compatible_Assembled.jpg"
+    ],
+    "stls": [
+      "https://raw.githubusercontent.com/makersmakingchange/Switch-Mounting-Plate-GoPro-Compatible/main/Build_Files/3D_Printing_Files/Switch_Plate_GoPro_Compatible.stl"
+    ],
+    "pdf": "https://raw.githubusercontent.com/makersmakingchange/Switch-Mounting-Plate-GoPro-Compatible/main/Documentation/Switch_Plate_GoPro_Compatible_Maker_Guide.pdf"
+  },
+  "controller": {
+    "repo": "Analog-Thumbstick",
+    "title": "Analog Thumbstick",
+    "description": "A small low-force analog joystick with a U-shaped topper that plugs into the Xbox Adaptive Controller through 3.5 mm jacks, giving kids with limited hand strength a way to play console games.",
+    "license": "CERN-OHL-P (hardware), CC BY-SA 4.0 (docs); GitHub reports CC0-1.0",
+    "photos": [
+      "https://raw.githubusercontent.com/makersmakingchange/Analog-Thumbstick/main/Photos/joystick%20with%20top.jpg",
+      "https://raw.githubusercontent.com/makersmakingchange/Analog-Thumbstick/main/Photos/plugged%20into%20xac.jpg"
+    ],
+    "stls": [
+      "https://raw.githubusercontent.com/makersmakingchange/Analog-Thumbstick/main/Build_Files/joystick_base.stl",
+      "https://raw.githubusercontent.com/makersmakingchange/Analog-Thumbstick/main/Build_Files/joystick_top.stl",
+      "https://raw.githubusercontent.com/makersmakingchange/Analog-Thumbstick/main/Build_Files/U-shaped_Joystick_Topper.stl"
+    ],
+    "pdf": "https://raw.githubusercontent.com/makersmakingchange/Analog-Thumbstick/main/Documentation/Analog_Thumbstick_Assembly_Guide.pdf"
+  },
+  "communication": {
+    "repo": "Project-Core-3D-Symbols",
+    "title": "Project Core 3D Symbols",
+    "description": "A set of 3D-printable tactile symbols for the Universal Core Vocabulary words (like go, stop, more, want), colour-coded by word type, so children who use AAC or are blind or low-vision can touch and combine words to communicate.",
+    "license": "CC BY 4.0 (symbols), CC BY-SA 4.0 (docs)",
+    "photos": [
+      "https://raw.githubusercontent.com/makersmakingchange/Project-Core-3D-Symbols/main/Photos/Project-Core-3D-Symbol_Starter-Set.jpg",
+      "https://raw.githubusercontent.com/makersmakingchange/Project-Core-3D-Symbols/main/Photos/Project-Core-3D-Symbol-Make.jpg"
+    ],
+    "stls": [
+      "https://raw.githubusercontent.com/makersmakingchange/Project-Core-3D-Symbols/main/Build_Files/3D_Print_Files/go_red_v4.stl",
+      "https://raw.githubusercontent.com/makersmakingchange/Project-Core-3D-Symbols/main/Build_Files/3D_Print_Files/stop_red_v4.stl",
+      "https://raw.githubusercontent.com/makersmakingchange/Project-Core-3D-Symbols/main/Build_Files/3D_Print_Files/can_red_v4.stl"
+    ],
+    "pdf": "https://raw.githubusercontent.com/makersmakingchange/Project-Core-3D-Symbols/main/Documentation/Project-Core-3D-Symbols_3D_Print_Guide_v1.0.pdf"
+  },
+  "vision": {
+    "repo": "tactile-maps",
+    "title": "Tactile Maps",
+    "description": "3D-printable and glue-together tactile maps and road-feature pieces (intersections, crossings, bus stops, roundabouts) that let blind or low-vision people feel a route and learn to navigate it.",
+    "license": "CERN-OHL-P (hardware), CC BY-SA 4.0 (docs)",
+    "photos": [
+      "https://raw.githubusercontent.com/makersmakingchange/tactile-maps/main/Photos/TIntersection.jpg",
+      "https://raw.githubusercontent.com/makersmakingchange/tactile-maps/main/Photos/featurePieces.jpg"
+    ],
+    "stls": [
+      "https://raw.githubusercontent.com/makersmakingchange/tactile-maps/main/Build_Files/3D_Printing_Files/TIntersectionMap.stl",
+      "https://raw.githubusercontent.com/makersmakingchange/tactile-maps/main/Build_Files/3D_Printing_Files/busStopPiece.stl",
+      "https://raw.githubusercontent.com/makersmakingchange/tactile-maps/main/Build_Files/3D_Printing_Files/pedestrianCrossingPiece.stl"
+    ],
+    "pdf": "https://raw.githubusercontent.com/makersmakingchange/tactile-maps/main/Documentation/Tactile_Maps_Maker_Guide_v1.0.pdf"
+  },
+  "sensory": {
+    "repo": "Musical_Grasping_Training_Aid",
+    "title": "Musical Grasping Training Aid",
+    "description": "A hand-held tube that plays music while it is squeezed, encouraging children to practise grasping; the sound and feel make it a rewarding sensory toy.",
+    "license": "CERN-OHL-W v2 (hardware), CC BY-SA 4.0 (docs)",
+    "photos": [
+      "https://raw.githubusercontent.com/makersmakingchange/Musical_Grasping_Training_Aid/main/Photos/Musical_Grasping_Training_Aid.jpg",
+      "https://raw.githubusercontent.com/makersmakingchange/Musical_Grasping_Training_Aid/main/Photos/Musical_Grasping_Training_Aid_User_Interface.jpg"
+    ],
+    "stls": [
+      "https://raw.githubusercontent.com/makersmakingchange/Musical_Grasping_Training_Aid/main/Build_Files/3D_Printing_Files/MGTA_Battery_Tube_Half.stl",
+      "https://raw.githubusercontent.com/makersmakingchange/Musical_Grasping_Training_Aid/main/Build_Files/3D_Printing_Files/MGTA_Electronics_Tube_Half.stl",
+      "https://raw.githubusercontent.com/makersmakingchange/Musical_Grasping_Training_Aid/main/Build_Files/3D_Printing_Files/MGTA_Speaker_End_Cap.stl"
+    ],
+    "pdf": "https://raw.githubusercontent.com/makersmakingchange/Musical_Grasping_Training_Aid/main/Documentation/Musical_Grasping_Training_Aid_User_Guide.pdf"
+  },
+  "daily_living": {
+    "repo": "Adaptive_Utensil_Handles_for_IKEA_IDENTITET",
+    "title": "Adaptive Utensil Handles (IKEA Identitet)",
+    "description": "A kit of 3D-printed handle shapes (round, finger grip, straight, sphere, Velcro strap) that fit IKEA Identitet kids' forks and spoons, so children with weak or limited grip can feed themselves.",
+    "license": "CC BY-NC-SA 4.0 (non-commercial; check before any commercial use)",
+    "photos": [
+      "https://raw.githubusercontent.com/makersmakingchange/Adaptive_Utensil_Handles_for_IKEA_IDENTITET/main/Photos/Adaptive_Utensil_Handles.png",
+      "https://raw.githubusercontent.com/makersmakingchange/Adaptive_Utensil_Handles_for_IKEA_IDENTITET/main/Photos/IKEA_FingerGrip.JPG"
+    ],
+    "stls": [
+      "https://raw.githubusercontent.com/makersmakingchange/Adaptive_Utensil_Handles_for_IKEA_IDENTITET/main/Build_Files/3D_Printing_Files/IKEA_RoundedGrip.STL",
+      "https://raw.githubusercontent.com/makersmakingchange/Adaptive_Utensil_Handles_for_IKEA_IDENTITET/main/Build_Files/3D_Printing_Files/IKEA_FingerGrip.STL",
+      "https://raw.githubusercontent.com/makersmakingchange/Adaptive_Utensil_Handles_for_IKEA_IDENTITET/main/Build_Files/3D_Printing_Files/IKEA_Core-Spoon.STL"
+    ],
+    "pdf": "https://raw.githubusercontent.com/makersmakingchange/Adaptive_Utensil_Handles_for_IKEA_IDENTITET/main/Documentation/Adaptive_Utensils_User_Guide.pdf"
+  }
+}

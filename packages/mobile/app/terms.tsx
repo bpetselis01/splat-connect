@@ -114,7 +114,7 @@ export default function TermsGate() {
 const styles = StyleSheet.create({
   eyebrow: {
     fontFamily: theme.fonts.black,
-    fontSize: 12,
+    fontSize: theme.type.caption,
     letterSpacing: 1.2,
     textTransform: 'uppercase',
     color: theme.colors.muted,
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
   },
   block: { gap: theme.spacing(1) },
-  blockHeading: { fontFamily: theme.fonts.display, fontSize: 16, color: theme.colors.ink },
+  blockHeading: { fontFamily: theme.fonts.display, fontSize: theme.type.body, color: theme.colors.ink },
   blockBody: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, lineHeight: 21, color: theme.colors.muted },
   check: { flexDirection: 'row', gap: theme.spacing(2.5), alignItems: 'flex-start' },
   checkText: { flex: 1, fontFamily: theme.fonts.semiBold, fontSize: theme.type.label, color: theme.colors.ink },

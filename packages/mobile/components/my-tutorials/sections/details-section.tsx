@@ -11,9 +11,6 @@ import {
   BUILD_TIME_OPTIONS,
   KIND_LABEL,
   MATURITY_LABEL,
-  SWITCH_FORCE_LABEL,
-  SWITCH_HOLD_LABEL,
-  SWITCH_TARGET_LABEL,
   formatBuildTime,
 } from '@splat-connect/types'
 import { useDraft } from '../../../lib/use-tutorial-draft'
@@ -40,15 +37,6 @@ const MATURITY_OPTIONS = (Object.keys(MATURITY_LABEL) as TutorialMaturity[]).map
   value: m,
 }))
 
-// 080: what the switch asks of a child, in the fit line's own words. Tapping the
-// chosen chip clears it — every tag is optional.
-const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
-const SWITCH_ROWS = [
-  { field: 'switch_target', label: 'Target', labels: SWITCH_TARGET_LABEL },
-  { field: 'switch_force', label: 'Press', labels: SWITCH_FORCE_LABEL },
-  { field: 'switch_hold', label: 'Hold', labels: SWITCH_HOLD_LABEL },
-] as const
-
 export function DetailsSection() {
   const router = useRouter()
   const { tutorial, save, saveError } = useDraft()
@@ -71,6 +59,58 @@ export function DetailsSection() {
           multiline
           onChangeText={(text) => save({ description: text.trim() ? text : null })}
         />
+
+        {/* Web's toy fields (edit-details-section.tsx): shown for every kind,
+            lengths are the API's (80/80/300/300), blank clears to null. */}
+        <Text style={styles.label}>The toy you start with</Text>
+        <TextField
+          label="Toy"
+          accessibilityLabel="Toy"
+          maxLength={80}
+          defaultValue={tutorial.toy_name ?? ''}
+          onChangeText={(text) => save({ toy_name: text.trim() ? text : null })}
+        />
+        <TextField
+          label="Made by (optional)"
+          accessibilityLabel="Made by"
+          placeholder="e.g. ZURU"
+          maxLength={80}
+          defaultValue={tutorial.toy_brand ?? ''}
+          onChangeText={(text) => save({ toy_brand: text.trim() ? text : null })}
+        />
+        <TextField
+          label="Works with"
+          accessibilityLabel="Works with"
+          placeholder="Any 3.5mm switch - Jelly Bean, Big Red, or a printed lever switch."
+          maxLength={300}
+          defaultValue={tutorial.works_with ?? ''}
+          onChangeText={(text) => save({ works_with: text.trim() ? text : null })}
+        />
+        <Text style={styles.hint}>
+          The switches this build accepts. Shown as its own card in the guide sidebar - a parent checks it before they start.
+        </Text>
+        <TextField
+          label="If someone would rather not build it (optional)"
+          accessibilityLabel="If someone would rather not build it"
+          placeholder="e.g. Organisation 2 keeps printed mounts on the shelf if you would rather not print one."
+          maxLength={300}
+          defaultValue={tutorial.no_build_note ?? ''}
+          onChangeText={(text) => save({ no_build_note: text.trim() ? text : null })}
+        />
+        <Text style={styles.hint}>
+          Sits next to "Get help with this build" in the sidebar, before the link to the toy library. Leave blank and we just show the link.
+        </Text>
+
+        <TextField
+          label="Your closing line (optional)"
+          accessibilityLabel="Your closing line"
+          placeholder="e.g. Nice work - show us how it turned out."
+          multiline
+          maxLength={300}
+          defaultValue={tutorial.done_note ?? ''}
+          onChangeText={(text) => save({ done_note: text.trim() ? text : null })}
+        />
+        <Text style={styles.hint}>Shown to the builder once every step is ticked off. Leave blank to skip it.</Text>
 
         <Text style={styles.label}>Kind</Text>
         <View style={styles.chipRow}>
@@ -146,23 +186,6 @@ export function DetailsSection() {
           ))}
         </View>
         <Text style={styles.hint}>Only complete guides appear in the public library listing.</Text>
-
-        <Text style={styles.label}>What the switch asks</Text>
-        {SWITCH_ROWS.map((row) => (
-          <View key={row.field} style={styles.chipRow} accessibilityLabel={row.label}>
-            {Object.entries(row.labels).map(([value, label]) => (
-              <Chip
-                key={value}
-                label={cap(label)}
-                active={tutorial[row.field] === value}
-                onPress={() => save({ [row.field]: tutorial[row.field] === value ? null : value })}
-              />
-            ))}
-          </View>
-        ))}
-        <Text style={styles.hint}>
-          A parent whose child can manage all of these sees "Suits" their child on the guide.
-        </Text>
 
         <Button label="Backing" variant="secondary" onPress={() => router.push(`/tutorials/${tutorial.id}/backing`)} />
 

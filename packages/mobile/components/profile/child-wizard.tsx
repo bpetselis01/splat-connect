@@ -1,16 +1,16 @@
 // packages/mobile/components/profile/child-wizard.tsx
 // The child profile wizard, (onboarding)/child — the phone twin of web's
 // components/child-wizard.tsx, so the two first runs match: name and age, the
-// four switch questions, the room, then the board's Play and Measurements
-// (120; web's wizard has not caught up). One question a screen, every one
-// skippable. Continue saves what the step answered; Skip saves nothing, because
+// four child questions (128's CHILD_QUESTIONS — the same answers guides are
+// tagged with), then the room. One question a screen, every one skippable.
+// Measurements live in the child editor, not here. Continue saves what the step answered; Skip saves nothing, because
 // not answering is not the same as answering blank.
 //
 // Edits the account's first child and creates one on the first answered step —
 // useChildProfile's no-argument mode, the same rule web's wizard follows.
 import { useEffect, useState } from 'react'
 import { ScrollView, View, Text, StyleSheet } from 'react-native'
-import { CHILD_MEASURES, CHILD_QUESTIONS, ENJOYS, type ChildAnswers, type ChildMeasureField, type ChildProfile } from '@splat-connect/types'
+import { CHILD_QUESTIONS, ONE_HAND_LABEL, type ChildAnswers } from '@splat-connect/types'
 import { theme } from '../../lib/theme'
 import { readAge } from '../../lib/child-age'
 import { useChildProfile } from '../../lib/use-child-profile'
@@ -18,57 +18,33 @@ import { Button } from '../ui/Button'
 import { TextField } from '../ui/TextField'
 import { Mascot, type MascotPose } from '../ui/TabHero'
 import { ChildDone } from './child-done'
-import { ChoiceChips, ManyChips, MeasureField, NeedsChips } from './fields'
+import { ChoiceChips, ManyChips, NeedsChips } from './fields'
 
-/** What the wizard writes: the board's questions (079) plus Play and Measurements (120). */
-type Answers = ChildAnswers & Pick<ChildProfile, 'enjoys' | ChildMeasureField>
+type Answers = ChildAnswers
+type Kind = 'about' | 'question' | 'room'
 
-type Kind = 'about' | 'question' | 'room' | 'play' | 'measure'
-
-// Six screens from 079 (not the board's About/Hands/Movement — those answers
-// have no columns, and the four questions are what suitsChild matches on),
-// then the board's last two. `line` is what web's mascot says on the step;
-// `help` is the board's sentence under the heading, where it has one; `pose`
-// is the bear beside the line (MB's poses, web's POSE).
-// Play is data capture only (Byron 2026-10-02): the board's "We will put those
-// toys first." is kept as drawn, but nothing sorts or matches on `enjoys` yet.
-const STEPS: { kind: Kind; heading: string; line: string; pose: MascotPose; help?: string; fields: (keyof Answers)[] }[] = [
+// `line` is what the mascot says on the step; `pose` is the bear beside it.
+const LINES: Record<(typeof CHILD_QUESTIONS)[number]['child'], [string, MascotPose]> = {
+  helps_with: ['This is how we put the right guides first.', 'think'],
+  access: ['Any part of the body counts, and so does just watching.', 'hold'],
+  press_force: ['This decides how easy a switch needs to be to press.', 'think'],
+  enjoys: ['Lights and sound are the classic reward. Some children prefer calm.', 'party'],
+}
+const STEPS: { kind: Kind; q?: (typeof CHILD_QUESTIONS)[number]; heading: string; line: string; pose: MascotPose; help?: string; fields: (keyof Answers)[] }[] = [
   { kind: 'about', heading: 'Who are we finding toys for?', line: 'Hi! A few quick questions. Skip any you like.', pose: 'wave', fields: ['name', 'age'] },
-  ...CHILD_QUESTIONS.map((q, i) => ({
+  ...CHILD_QUESTIONS.map((q) => ({
     kind: 'question' as const,
+    q,
     heading: q.prompt,
-    line: [
-      'Whichever hand they reach with first is the right answer.',
-      'This decides how easy a switch needs to be to press.',
-      'Big targets are easier. Either answer helps.',
-      'Some switches want a tap, some a hold.',
-    ][i],
-    pose: (['think', 'hold', 'think', 'hold'] as const)[i],
-    fields: [q.field] as (keyof Answers)[],
+    help: q.hint,
+    line: LINES[q.child][0],
+    pose: LINES[q.child][1],
+    fields: (q.child === 'access' ? ['access', 'one_hand'] : [q.child]) as (keyof Answers)[],
   })),
-  { kind: 'room', heading: 'What matters in the room?', line: 'Rather than in the hand. Pick any that apply.', pose: 'party', fields: ['everyday_needs'] },
-  {
-    kind: 'play',
-    heading: 'What does your child enjoy?',
-    help: 'We will put those toys first.',
-    line: 'Lights and sound are the classic reward. Some children prefer calm.',
-    pose: 'party',
-    fields: ['enjoys'],
-  },
-  {
-    kind: 'measure',
-    heading: 'Any measurements? (optional)',
-    help: 'Only for printed grips and mounts.',
-    line: 'Almost done. This one is fine to skip.',
-    pose: 'think',
-    fields: CHILD_MEASURES.map((m) => m.field),
-  },
+  { kind: 'room', heading: 'Good to know', help: 'Notes for whoever makes or lends a toy. Pick any that apply.', line: 'Almost done.', pose: 'party', fields: ['everyday_needs'] },
 ]
 
-const EMPTY: Answers = {
-  name: null, age: null, working_hand: null, press_force: null, aim: null, hold: null, everyday_needs: [],
-  enjoys: [], palm_width_mm: null, reach_cm: null, tray_mm: null,
-}
+const EMPTY: Answers = { name: null, age: null, helps_with: [], access: [], one_hand: false, press_force: null, enjoys: [], everyday_needs: [] }
 
 export function ChildWizard() {
   const { profile, loading, save } = useChildProfile()
@@ -95,6 +71,7 @@ export function ChildWizard() {
       const v = draft[f]
       const before = profile?.[f]
       if (Array.isArray(v)) return v.length > 0 || (Array.isArray(before) && before.length > 0)
+      if (typeof v === 'boolean') return v || before === true
       return v !== null || (before != null && !Array.isArray(before))
     })
     const fields: Partial<Answers> = Object.fromEntries(answered.map((f) => [f, draft[f]]))
@@ -104,6 +81,7 @@ export function ChildWizard() {
   }
 
   const current = STEPS[step]
+  const name = draft.name?.trim() || profile?.name?.trim() || 'your child'
 
   if (done) {
     return (
@@ -124,7 +102,7 @@ export function ChildWizard() {
         ))}
       </View>
       <Text style={styles.stepOf}>STEP {step + 1} OF {STEPS.length}</Text>
-      <Text accessibilityRole="header" style={styles.heading}>{current.heading}</Text>
+      <Text accessibilityRole="header" style={styles.heading}>{current.heading.replace('{name}', name)}</Text>
       <View style={styles.says}>
         <Mascot pose={current.pose} size={74} />
         <Text style={styles.saysText}>{current.line}</Text>
@@ -150,20 +128,27 @@ export function ChildWizard() {
             }}
           />
         </>
-      ) : current.kind === 'question' ? (
-        (() => {
-          const q = CHILD_QUESTIONS[step - 1]
-          return <ChoiceChips options={q.options} value={draft[q.field]} onChange={(v) => set({ [q.field]: v })} />
-        })()
-      ) : current.kind === 'room' ? (
-        <NeedsChips value={draft.everyday_needs} onChange={(v) => set({ everyday_needs: v })} />
-      ) : current.kind === 'play' ? (
-        <ManyChips options={ENJOYS} value={draft.enjoys} onChange={(v) => set({ enjoys: v })} />
+      ) : current.kind === 'question' && current.q ? (
+        current.q.child === 'press_force' ? (
+          <ChoiceChips options={current.q.options} value={draft.press_force} onChange={(v) => set({ press_force: v as Answers['press_force'] })} />
+        ) : (
+          <>
+            <ManyChips
+              options={current.q.options as readonly { value: string; label: string }[]}
+              value={draft[current.q.child] as string[]}
+              onChange={(v) => set({ [current.q!.child]: v })}
+            />
+            {current.q.child === 'access' ? (
+              <ManyChips
+                options={[{ value: 'one_hand', label: `${ONE_HAND_LABEL} for ${name}` }]}
+                value={draft.one_hand ? ['one_hand'] : []}
+                onChange={(v) => set({ one_hand: v.length > 0 })}
+              />
+            ) : null}
+          </>
+        )
       ) : (
-        CHILD_MEASURES.map((m) => (
-          // An out-of-range number is not an answer: it stays on screen with its range.
-          <MeasureField key={m.field} measure={m} value={draft[m.field]} onChange={(v) => set({ [m.field]: v ?? null })} />
-        ))
+        <NeedsChips value={draft.everyday_needs} onChange={(v) => set({ everyday_needs: v })} />
       )}
 
       <View style={styles.actions}>
@@ -181,9 +166,8 @@ export function ChildWizard() {
 
 function pick(p: Answers): Answers {
   return {
-    name: p.name, age: p.age, working_hand: p.working_hand, press_force: p.press_force,
-    aim: p.aim, hold: p.hold, everyday_needs: p.everyday_needs ?? [],
-    enjoys: p.enjoys ?? [], palm_width_mm: p.palm_width_mm, reach_cm: p.reach_cm, tray_mm: p.tray_mm,
+    name: p.name, age: p.age, helps_with: p.helps_with ?? [], access: p.access ?? [], one_hand: p.one_hand === true,
+    press_force: p.press_force, enjoys: p.enjoys ?? [], everyday_needs: p.everyday_needs ?? [],
   }
 }
 
@@ -211,7 +195,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.accentFaint,
     marginBottom: theme.spacing(5),
   },
-  saysText: { flex: 1, fontFamily: theme.fonts.semiBold, fontSize: 13.5, lineHeight: 20, color: theme.colors.ink },
+  saysText: { flex: 1, fontFamily: theme.fonts.semiBold, fontSize: theme.type.caption, lineHeight: 20, color: theme.colors.ink },
   help: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.label, color: theme.colors.text, lineHeight: 21, marginTop: -theme.spacing(3), marginBottom: theme.spacing(4) },
   private: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted, marginTop: theme.spacing(3), textAlign: 'center' },
   actions: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: theme.spacing(5) },

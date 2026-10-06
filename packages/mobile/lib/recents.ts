@@ -1,9 +1,11 @@
 // packages/mobile/lib/recents.ts
 //
-// "Pick up where you left off": the last few things opened, newest first, kept
-// on the device. Device-wide rather than per user, because screens record with
-// a plain call and have no signed-in user to hand. Never a source of truth:
-// unreadable storage starts empty, a failed write keeps the list in memory.
+// "Pick up where you left off": the last ten things opened, newest first, kept
+// on the device, one list per signed-in account (Byron, 2026-10-05). Screens
+// record with a plain call; the auth context tells this module whose list is
+// current (setRecentsOwner). The eleventh entry pushes the oldest out, so
+// storage never grows. Never a source of truth: unreadable storage starts
+// empty, a failed write keeps the list in memory.
 import { useEffect, useState } from 'react'
 import type { Href } from 'expo-router'
 import { resolveAuthStorage } from './supabase-storage'
@@ -18,8 +20,12 @@ export type Recent = {
   at: number
 }
 
+/** The device-wide key from before lists were per account; adopted once, then removed. */
 export const RECENTS_KEY = 'home-recents'
-const CAP = 10
+// A dot, not a colon: iOS's secure store takes only letters, digits, '.', '-' and '_' in a key.
+export const recentsKeyFor = (userId: string) => `${RECENTS_KEY}.${userId}`
+export const RECENTS_CAP = 10
+const CAP = RECENTS_CAP
 const KINDS = ['guide', 'toy', 'event', 'printer', 'recycling', 'challenge', 'organisation']
 
 function isRecent(x: unknown): x is Recent {
@@ -46,6 +52,7 @@ export function parseRecents(raw: string | null): Recent[] {
   }
 }
 
+let owner: string | null = null
 let list: Recent[] = []
 let loaded = false
 let loading: Promise<void> | null = null
@@ -60,26 +67,62 @@ export function resetRecentsCache() {
   notify()
 }
 
+/** Whose list is current: the signed-in account's id, or null when signed out (nothing is kept). */
+export function setRecentsOwner(userId: string | null) {
+  if (userId === owner) return
+  // On a cold start a screen can open and record before the session is read
+  // (a link straight to a guide); that visit belongs to the account that loads.
+  const carried = owner === null ? list : []
+  owner = userId
+  list = carried
+  loaded = false
+  loading = null
+  notify()
+  // A screen already showing the list (Home, on a cold start) needs the new
+  // account's list read now; it will not ask again.
+  if (owner) void load().then(() => (carried.length ? persist() : undefined))
+}
+
+async function readFor(userId: string): Promise<string | null> {
+  const storage = resolveAuthStorage()
+  const raw = await storage.getItem(recentsKeyFor(userId))
+  if (raw !== null) return raw
+  // The first account to load on this device inherits the old shared list.
+  const legacy = await storage.getItem(RECENTS_KEY)
+  if (legacy !== null) await storage.removeItem(RECENTS_KEY)
+  return legacy
+}
+
 function load() {
-  loading ??= resolveAuthStorage()
-    .getItem(RECENTS_KEY)
+  const forOwner = owner
+  if (!forOwner) {
+    loaded = true
+    return Promise.resolve()
+  }
+  if (loading) return loading
+  // A read overtaken by an owner switch or a reset lands on nothing.
+  const read: Promise<void> = readFor(forOwner)
     .then((raw) => {
+      if (loading !== read) return
       // Anything recorded before the read landed stays on top.
       const mine = new Set(list.map((r) => r.key))
       list = [...list, ...parseRecents(raw).filter((r) => !mine.has(r.key))].slice(0, CAP)
     })
     .catch((err) => console.error('[recents] could not read recents, starting empty:', err))
     .finally(() => {
+      if (loading !== read) return
       loaded = true
       notify()
     })
-  return loading
+  loading = read
+  return read
 }
 
 function persist() {
+  if (!owner) return
   try {
     resolveAuthStorage()
-      .setItem(RECENTS_KEY, JSON.stringify(list))
+      .setItem(recentsKeyFor(owner), JSON.stringify(list))
       .catch((err) => console.error('[recents] could not save recents, keeping them in memory:', err))
   } catch (err) {
     console.error('[recents] could not save recents, keeping them in memory:', err)

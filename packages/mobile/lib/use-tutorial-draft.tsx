@@ -13,6 +13,7 @@
 // 250ms: writes queue on one promise chain so a second save always sees the
 // updated_at the first established, rather than racing it into a 400.
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
+import { apiMessage } from '@splat-connect/types'
 import type { BuyLink, Part, Tool, ToolGetBy, TutorialSafetyNote, TutorialStep, TutorialWithDetails } from '@splat-connect/types'
 import { apiClient } from './api-client'
 
@@ -40,6 +41,9 @@ export interface StepRow {
   title: string | null
   body: string
   photo_url: string | null
+  /** 129. Optional tip (≤300) and minutes (1–600). */
+  tip?: string | null
+  minutes?: number | null
 }
 
 /** One editable safety note (090). Blank-titled rows are never sent. */
@@ -167,7 +171,7 @@ function useTutorialDraft(id: string): TutorialDraft {
   async function putSteps(rows: StepRow[]) {
     const steps = rows
       .filter((r) => r.body.trim())
-      .map((r) => ({ title: r.title?.trim() || null, body: r.body, photo_url: r.photo_url }))
+      .map((r) => ({ title: r.title?.trim() || null, body: r.body, photo_url: r.photo_url, tip: r.tip?.trim() || null, minutes: r.minutes ?? null }))
     const saved = await apiClient.put<TutorialStep[]>(`/api/tutorials/${id}/steps`, { steps })
     setTutorial((prev) => (prev ? { ...prev, steps: saved } : prev))
   }
@@ -231,7 +235,8 @@ function useTutorialDraft(id: string): TutorialDraft {
           pendingSafety.current ??= safety
         }
         setSaveState('error')
-        setSaveError(SAVE_ERROR)
+        // A refused write carries its own sentence (a range out of bounds); anything else is the generic line.
+        setSaveError(refused ? apiMessage(err, SAVE_ERROR) : SAVE_ERROR)
       })
     return writes.current as Promise<void>
   }

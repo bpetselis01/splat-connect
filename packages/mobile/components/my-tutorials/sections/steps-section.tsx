@@ -23,6 +23,12 @@ import { DraftGate } from './draft-gate'
 
 const MAX_STEPS = 60
 
+/** Blank clears; otherwise the API's 1-600 whole minutes. */
+function parseMinutes(text: string): number | null {
+  const n = parseInt(text.replace(/\D/g, ''), 10)
+  return Number.isNaN(n) ? null : Math.min(600, Math.max(1, n))
+}
+
 // The editor mounts once the draft has arrived (see DraftGate).
 export function StepsSection() {
   return <DraftGate>{() => <StepsEditor />}</DraftGate>
@@ -34,7 +40,7 @@ function StepsEditor() {
   // after the rows were edited, moved or removed still finds the row it was for.
   const nextKey = useRef(0)
   const [rows, setRows] = useState<(StepRow & { k: number })[]>(() =>
-    (tutorial?.steps ?? []).map((s) => ({ title: s.title, body: s.body, photo_url: s.photo_url, k: nextKey.current++ }))
+    (tutorial?.steps ?? []).map((s) => ({ title: s.title, body: s.body, photo_url: s.photo_url, tip: s.tip ?? null, minutes: s.minutes ?? null, k: nextKey.current++ }))
   )
   const rowsRef = useRef(rows)
   const [uploading, setUploading] = useState<number | null>(null)
@@ -152,6 +158,21 @@ function StepsEditor() {
               value={row.body}
               onChangeText={(text) => update(i, { body: text })}
             />
+            <TextField
+              accessibilityLabel={`Step ${i + 1} tip`}
+              placeholder="A tip or caution (optional)"
+              maxLength={300}
+              value={row.tip ?? ''}
+              onChangeText={(text) => update(i, { tip: text })}
+            />
+            <TextField
+              accessibilityLabel={`Step ${i + 1} minutes`}
+              placeholder="Minutes this step takes (optional)"
+              keyboardType="number-pad"
+              maxLength={3}
+              value={row.minutes == null ? '' : String(row.minutes)}
+              onChangeText={(text) => update(i, { minutes: parseMinutes(text) })}
+            />
             <View style={styles.photoRow}>
               {row.photo_url ? (
                 <Image source={{ uri: row.photo_url }} style={styles.thumb} accessibilityIgnoresInvertColors />
@@ -178,7 +199,7 @@ function StepsEditor() {
             label="+ Add a step"
             variant="ghost"
             style={styles.add}
-            onPress={() => commit([...rowsRef.current, { title: null, body: '', photo_url: null, k: nextKey.current++ }])}
+            onPress={() => commit([...rowsRef.current, { title: null, body: '', photo_url: null, tip: null, minutes: null, k: nextKey.current++ }])}
           />
         ) : null}
         <ErrorRow message={localError ?? saveError} />
@@ -214,7 +235,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: theme.colors.accentLight,
   },
-  numText: { fontFamily: theme.fonts.display, fontSize: 13, color: theme.colors.primaryDeep },
+  numText: { fontFamily: theme.fonts.display, fontSize: theme.type.caption, color: theme.colors.primaryDeep },
   // The board's dashed full-width "+ Add" under a section's cards.
   add: {
     borderStyle: 'dashed',

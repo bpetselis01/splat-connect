@@ -13,7 +13,7 @@ import { AnimatedPressable } from './AnimatedPressable'
 type ButtonVariant = 'primary' | 'accent' | 'secondary' | 'ghost' | 'danger'
 
 const VARIANTS: Record<ButtonVariant, { container: ViewStyle; text: TextStyle }> = {
-  primary: { container: { backgroundColor: theme.colors.primary, ...theme.shadow(2) }, text: { color: '#ffffff' } },
+  primary: { container: { backgroundColor: theme.colors.primary, ...theme.shadow(2) }, text: { color: theme.colors.onColor } },
   accent: { container: { backgroundColor: theme.colors.apricot, ...theme.shadow(2) }, text: { color: theme.colors.ink } },
   secondary: { container: { backgroundColor: theme.colors.surface, ...theme.shadow(1) }, text: { color: theme.colors.ink } },
   // Ghost is the one flat button: no border, no shadow — a quiet text action.

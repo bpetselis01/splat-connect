@@ -1,7 +1,8 @@
 'use client'
 /**
  * The child profile as six short steps, all skippable: name and age, the four
- * switch questions, then the room it is used in.
+ * child questions (128 — the same answers guides are tagged with), then the
+ * room's Good to know notes. Measurements are the editor's, not the wizard's.
  *
  * Different from the editor at /dashboard/child/[id], and deliberately so. The
  * editor is one page with one save, which is right for coming back to a profile
@@ -25,7 +26,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, ArrowRight, CheckCircle, Minus, Plus } from '@phosphor-icons/react/dist/ssr'
 import { browserApiClient } from '@/lib/browser-api-client'
-import { ChoiceChips, NeedsChips, answersOf } from '@/components/child-editor'
+import { ChildQuestion, NeedsChips, answersOf } from '@/components/child-editor'
 import { SplatMascot, type MascotPose } from '@/components/splat-mascot'
 import { CHILD_QUESTIONS, type ChildAnswers, type ChildProfile } from '@splat-connect/types'
 
@@ -109,30 +110,31 @@ const STEPS = [
     help: 'A name helps us talk about them naturally. It is never shared.',
   },
   ...CHILD_QUESTIONS.map((q) => ({
-    id: q.field,
-    label: { working_hand: 'Hand', press_force: 'Force', aim: 'Aim', hold: 'Hold' }[q.field],
+    id: q.child,
+    label: { helps_with: 'Helps', access: 'How', press_force: 'Press', enjoys: 'Play' }[q.child],
     heading: q.prompt,
+    help: q.hint,
   })),
-  { id: 'needs', label: 'Room', heading: 'What matters in the room?', help: 'Rather than in the hand. Pick any that apply.' },
+  { id: 'needs', label: 'Notes', heading: 'Good to know', help: 'Notes for whoever makes or lends a toy. Pick any that apply.' },
 ]
 
 /** The mascot's pose per step, as the board poses it. */
-const POSE: MascotPose[] = ['wave', 'think', 'hold', 'think', 'hold', 'party']
+const POSE: MascotPose[] = ['wave', 'think', 'hold', 'think', 'party', 'party']
 
 /** What the mascot says on each step. Short, and never about the child. */
 const MASCOT = [
   'Hi! A few quick questions. Skip any you like.',
-  'Whichever hand they reach with first is the right answer.',
+  'This is how we put the right guides first.',
+  'Any part of the body counts, and so does just watching.',
   'This decides how easy a switch needs to be to press.',
-  'Big targets are easier. Either answer helps.',
-  'Some switches want a tap, some a hold.',
+  'Lights and sound are the classic reward. Some children prefer calm.',
   'Almost done. This one is fine to skip.',
 ] as const
 
 /** The fields each step writes on Continue. */
 const STEP_FIELDS: (keyof ChildAnswers)[][] = [
   ['name', 'age'],
-  ...CHILD_QUESTIONS.map((q) => [q.field]),
+  ...CHILD_QUESTIONS.map((q): (keyof ChildAnswers)[] => (q.child === 'access' ? ['access', 'one_hand'] : [q.child])),
   ['everyday_needs'],
 ]
 
@@ -167,11 +169,13 @@ export function ChildWizard({ child: initial }: { child: ChildProfile | null }) 
 
   async function advance() {
     // Save only what this step asked, and only if it was answered — an empty
-    // step is the same as a skip. The one exception is needs a parent has just
-    // unticked: an empty list then is an answer, and must reach the database.
+    // step is the same as a skip. The one exception is a list or flag a parent
+    // has just cleared: empty then is an answer, and must reach the database.
     const answered = (f: keyof ChildAnswers) => {
       const v = answers[f]
-      if (Array.isArray(v)) return v.length > 0 || (child?.everyday_needs.length ?? 0) > 0
+      const before = child?.[f]
+      if (Array.isArray(v)) return v.length > 0 || (Array.isArray(before) && before.length > 0)
+      if (typeof v === 'boolean') return v || before === true
       return v !== null
     }
     const fields = Object.fromEntries(
@@ -240,7 +244,7 @@ export function ChildWizard({ child: initial }: { child: ChildProfile | null }) 
             Step {step + 1} of {STEPS.length}
           </p>
           <h1 className="m-0 mb-1.5 mt-2 font-display text-[34px] font-extrabold leading-[1.15] text-ink">
-            {current.heading}
+            {current.heading.replace('{name}', answers.name?.trim() || 'your child')}
           </h1>
           {'help' in current && (
             <p className="m-0 text-[17px] leading-[1.5] text-muted">{current.help}</p>
@@ -253,13 +257,13 @@ export function ChildWizard({ child: initial }: { child: ChildProfile | null }) 
             {CHILD_QUESTIONS.map(
               (q, i) =>
                 step === i + 1 && (
-                  <ChoiceChips
-                    key={q.field}
-                    legend={q.prompt}
+                  <ChildQuestion
+                    key={q.child}
+                    q={q}
+                    legend={q.label}
                     hideLegend
-                    options={q.options}
-                    value={answers[q.field]}
-                    onChange={(v) => setAnswers((a) => ({ ...a, [q.field]: v }))}
+                    answers={answers}
+                    set={(patch) => setAnswers((a) => ({ ...a, ...patch }))}
                   />
                 )
             )}

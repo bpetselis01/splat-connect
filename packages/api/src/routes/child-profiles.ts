@@ -27,7 +27,7 @@
  * confirm the row exists.
  */
 import { Hono } from 'hono'
-import { AIM, CHILD_MEASURES, ENJOYS, EVERYDAY_NEEDS, HOLD, PRESS_FORCE, WORKING_HAND } from '@splat-connect/types'
+import { ACCESS, CHILD_MEASURES, ENJOYS, EVERYDAY_NEEDS, HELPS_WITH, PRESS_FORCE } from '@splat-connect/types'
 import { createUserClient } from '../supabase/client.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { pickEditable } from './pick-editable.js'
@@ -39,26 +39,27 @@ const childProfiles = new Hono<{ Variables: AuthVariables }>()
 // set by the server; id/role/etc. from the body are ignored — trust-boundary
 // input filtering.
 //
-// Only the board's questions are writable: the four switch questions and the
-// room (079), and the Play and Measurements steps (120). The older ability/
+// Only the questions the forms ask are writable: the four child questions
+// (128's CHILD_QUESTIONS), everyday needs (079) and the measurements (120). The older ability/
 // needs columns (MACS, BFMF, grip, sensory…) are no longer asked, so they are
 // no longer accepted either — APP 3 minimisation. palm_width_mm came back in
 // 120 by decision (2026-09-30: "Measurements as an optional step"). The rest
 // stay in the table and still come back on GET until a decision drops them.
 const EDITABLE = [
-  'name', 'age', 'working_hand', 'press_force', 'aim', 'hold', 'everyday_needs',
-  'enjoys', 'palm_width_mm', 'reach_cm', 'tray_mm',
+  'name', 'age', 'helps_with', 'access', 'one_hand', 'press_force', 'enjoys',
+  'everyday_needs', 'palm_width_mm', 'reach_cm', 'tray_mm',
 ] as const
 
 const valuesOf = (vocab: readonly { value: string }[]) => vocab.map((o) => o.value) as readonly string[]
 const SINGLE_CHOICE: Record<string, readonly string[]> = {
-  working_hand: valuesOf(WORKING_HAND),
   press_force: valuesOf(PRESS_FORCE),
-  aim: valuesOf(AIM),
-  hold: valuesOf(HOLD),
 }
-const NEEDS = valuesOf(EVERYDAY_NEEDS)
-const ENJOY_VALUES = valuesOf(ENJOYS)
+const MANY_CHOICE: Record<string, readonly string[]> = {
+  helps_with: valuesOf(HELPS_WITH),
+  access: valuesOf(ACCESS),
+  enjoys: valuesOf(ENJOYS),
+  everyday_needs: valuesOf(EVERYDAY_NEEDS),
+}
 
 /**
  * Returns the whitelisted subset of a request body, a string naming the first
@@ -73,20 +74,13 @@ function editableFrom(body: unknown): Record<string, unknown> | string | null {
     const v = row[key]
     if (v !== undefined && v !== null && !allowed.includes(v as string)) return `${key} must be one of ${allowed.join(', ')}`
   }
-  const needs = row.everyday_needs
-  if (needs !== undefined) {
-    if (!Array.isArray(needs) || needs.some((n) => !NEEDS.includes(n as string))) {
-      return `everyday_needs must be a list drawn from ${NEEDS.join(', ')}`
-    }
-    row.everyday_needs = [...new Set(needs)]
+  for (const [key, allowed] of Object.entries(MANY_CHOICE)) {
+    const v = row[key]
+    if (v === undefined) continue
+    if (!Array.isArray(v) || v.some((x) => !allowed.includes(x as string))) return `${key} must be a list drawn from ${allowed.join(', ')}`
+    row[key] = [...new Set(v)]
   }
-  const enjoys = row.enjoys
-  if (enjoys !== undefined) {
-    if (!Array.isArray(enjoys) || enjoys.some((e) => !ENJOY_VALUES.includes(e as string))) {
-      return `enjoys must be a list drawn from ${ENJOY_VALUES.join(', ')}`
-    }
-    row.enjoys = [...new Set(enjoys)]
-  }
+  if (row.one_hand !== undefined && typeof row.one_hand !== 'boolean') return 'one_hand must be true or false'
   // 120's CHECKs hold the same ranges; answering here keeps a typo from
   // surfacing as a 500 naming a constraint.
   for (const m of CHILD_MEASURES) {

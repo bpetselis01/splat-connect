@@ -2,6 +2,21 @@ import { Hono } from 'hono'
 import { createUserClient } from '../supabase/client.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
+/**
+ * A part's or tool's shop links: each a short label and a web address. Both
+ * clients render the url as a link (web as an href), so anything but http(s)
+ * — javascript:, data:, another app's scheme — is refused here.
+ */
+export function buyLinksError(links: unknown, what: string): string | null {
+  if (links == null) return null
+  if (!Array.isArray(links)) return `${what}'s buy links must be a list`
+  for (const l of links as { label?: unknown; url?: unknown }[]) {
+    if (!l || typeof l.label !== 'string' || !l.label.trim() || l.label.length > 80) return `${what}: each buy link needs a shop name of up to 80 characters`
+    if (typeof l.url !== 'string' || l.url.length > 500 || !/^https?:\/\/[^\s]+$/i.test(l.url.trim())) return `${what}: a buy link must be a web address starting https://`
+  }
+  return null
+}
+
 // Shared by parts.ts, tools.ts, stl-files.ts: each sub-resource is fully
 // replaced on POST (delete all, then insert the new list) and cleared with
 // DELETE. Only the table, URL segment, body key, and per-row mapping differ.

@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
   meta: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.caption, color: theme.colors.muted },
   badge: {
     fontFamily: theme.fonts.black,
-    fontSize: 11,
+    fontSize: theme.type.micro,
     color: theme.colors.ink,
     borderRadius: theme.radii.pill,
     paddingHorizontal: 9,

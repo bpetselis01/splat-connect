@@ -77,8 +77,8 @@ describe('getMissingFields', () => {
 })
 
 describe('sectionsFor', () => {
-  it('gives a toy adaptation six sections and no STL', () => {
-    expect(sectionsFor('toy_adaptation')).toEqual(['details', 'steps', 'parts', 'tools', 'safety', 'files'])
+  it('gives a toy adaptation eight sections and no STL', () => {
+    expect(sectionsFor('toy_adaptation')).toEqual(['details', 'steps', 'parts', 'tools', 'safety', 'suits', 'picks', 'files'])
   })
 
   it('adds STL for assistive tech', () => {
@@ -88,6 +88,8 @@ describe('sectionsFor', () => {
       'parts',
       'tools',
       'safety',
+      'suits',
+      'picks',
       'files',
       'stl',
     ])
@@ -121,6 +123,19 @@ describe('sectionSummary', () => {
     expect(sectionSummary('files', base())).toBe('PDF and photo added')
   })
 
+  // 128: Who it's for counts every tag answer; one_hand is one answer.
+  it('counts the tag answers on Who it’s for, and invites when there are none', () => {
+    expect(sectionSummary('suits', base())).toBe('Optional - helps families find it')
+    const tagged = base({ device_types: ['switch'], helps_with: ['moving', 'calm'], access: ['press'], one_hand: true, press_force: ['light'], play: ['sound'] } as never)
+    expect(sectionSummary('suits', tagged)).toBe('7 answers')
+  })
+
+  it('counts the picks, and an empty picks row is an invitation not a gap', () => {
+    expect(sectionSummary('picks', base())).toBe('Optional - up to three guides to read next')
+    expect(sectionSummary('picks', base({ tutorial_recommendations: [{}, {}] } as never))).toBe('2 guides')
+    expect(getMissingFields(base()).some((g) => g.section === 'picks')).toBe(false)
+  })
+
   // 080: optional, so the empty line is an invitation rather than a gap.
   it('counts steps, and says nothing is there yet without calling it missing', () => {
     expect(sectionSummary('steps', base())).toBe('0 steps - nothing yet')
@@ -135,6 +150,8 @@ describe('SECTION_LABEL', () => {
       details: 'Details',
       steps: 'Steps',
       safety: 'Safety',
+      suits: "Who it's for",
+      picks: 'Worth a look',
       parts: 'Parts',
       tools: 'Tools',
       files: 'Files',

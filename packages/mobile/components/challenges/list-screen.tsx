@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
   card: { gap: theme.spacing(1.5), padding: theme.spacing(4) },
   metaRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: theme.spacing(2) },
   cardMeta: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.caption, color: theme.colors.muted },
-  cardTitle: { fontFamily: theme.fonts.display, fontSize: 17, color: theme.colors.text, lineHeight: 22 },
+  cardTitle: { fontFamily: theme.fonts.display, fontSize: theme.type.body, color: theme.colors.text, lineHeight: 22 },
   cardSummary: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted, lineHeight: 19 },
   filterRow: { gap: theme.spacing(2), paddingBottom: theme.spacing(4) },
 })

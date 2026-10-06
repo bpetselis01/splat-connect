@@ -14,7 +14,9 @@ import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { toyPhotoUrl } from '../photo-storage.js'
 import { withPhotoUrl } from './toy-ideas.js'
 import { readNear, byDistance, pickupPostcodes, type Near } from '../distance.js'
-import { autoPicks, buildCalendar, contributorBadges, gradeOf, mergeLearnCourse, partsTotalCents, readMinutes } from '@splat-connect/types'
+import { groupPlaces, type Located } from '../map.js'
+import { addressQuery, geocodeAll, type Point } from '../geocode.js'
+import { isPast, autoPicks, buildCalendar, contributorBadges, gradeOf, mergeLearnCourse, partsTotalCents, readMinutes } from '@splat-connect/types'
 import type {
   ImpactSummary,
   ImpactEntity,
@@ -104,7 +106,7 @@ publicRoutes.get('/tutorials/:id', async (c) => {
     .select(
       '*, thanks_count, parts(*), tools(*), stl_files(*), steps:tutorial_steps(*), safety_notes:tutorial_safety_notes(*), tutorial_contributors(profile_id, role, former_names, former_count, profiles(name)), ' +
         'tutorial_orgs(status, organizations(id, name)), ' +
-        'tutorial_recommendations!tutorial_id(position, tutorials!recommended_id(id, title, kind, difficulty, toy_photo_url, status, maturity)), ' +
+        'tutorial_recommendations!tutorial_id(position, required, tutorials!recommended_id(id, title, kind, difficulty, toy_photo_url, status, maturity)), ' +
         'reviewer:reviewed_by(name), reviewed_for:reviewed_for_org_id(name)'
     )
     .eq('id', c.req.param('id'))
@@ -182,14 +184,18 @@ publicRoutes.get('/tutorials/:id/notes', async (c) => {
  * answered for anyone lets a stranger narrow it until a member's toy drops out
  * — bisecting their postcode. Signed out, the list is what it was before.
  */
+/** Whether the caller sent a valid session. These routes run before authMiddleware. */
+async function signedIn(c: Context): Promise<boolean> {
+  const header = c.req.header('Authorization')
+  if (!header?.startsWith('Bearer ')) return false
+  const { data } = await createAdminClient().auth.getUser(header.slice(7))
+  return !!data.user
+}
+
 async function publicNear(c: Context): Promise<Near | string> {
   const near = readNear((key) => c.req.query(key))
   if (typeof near === 'string' || !near.near) return near
-  const header = c.req.header('Authorization')
-  const { data } = header?.startsWith('Bearer ')
-    ? await createAdminClient().auth.getUser(header.slice(7))
-    : { data: { user: null } }
-  return data.user ? near : { near: null, within: null }
+  return (await signedIn(c)) ? near : { near: null, within: null }
 }
 
 type ListedToy = {
@@ -1695,6 +1701,164 @@ publicRoutes.post('/contact', async (c) => {
   }
 
   return c.json({ ok: true }, 201)
+})
+
+/**
+ * The Map tab: toys, printers, events, drop-offs and organisations, each at a
+ * point (map.ts, spec 2026-10-05-map-addresses). An organisation and what it
+ * owns sit at its pickup address, which is public (Byron, 2026-10-05); an
+ * event at its venue; a family's toy or a personal printer at the centre of
+ * its suburb, never a street. Family toys go to signed-in callers only, so the
+ * families' suburbs cannot be scraped. `near` likewise counts only when signed in.
+ */
+publicRoutes.get('/map', async (c) => {
+  const near = await publicNear(c)
+  if (typeof near === 'string') return c.json({ error: near }, 400)
+  const member = await signedIn(c)
+  const admin = createAdminClient()
+  const [toys, printers, events, orgs, unavailable] = await Promise.all([
+    admin.from('toys').select('id, name, owner_id, owner_org_id').eq('status', 'published'),
+    admin.from('printers').select('id, name, materials, suburb, state, postcode, owner_org_id').eq('accepting', true),
+    admin
+      .from('org_events')
+      .select('id, org_id, title, starts_at, ends_at, location, suburb, state')
+      .eq('status', 'published')
+      .eq('format', 'in_person')
+      .is('cancelled_at', null),
+    admin
+      .from('organizations')
+      .select('id, name, status, suburb, state, pickup_line1, pickup_suburb, pickup_state, pickup_postcode, recycling_materials'),
+    atCapacityToyIds(admin, null, true),
+  ])
+  const failed = [toys, printers, events, orgs].find((r) => r.error)
+  if (failed || unavailable === null) return c.json({ error: 'Failed to load the map' }, 500)
+
+  type Org = {
+    id: string
+    name: string
+    status: string
+    suburb: string | null
+    state: string | null
+    pickup_line1: string | null
+    pickup_suburb: string | null
+    pickup_state: string | null
+    pickup_postcode: string | null
+    recycling_materials: string[] | null
+  }
+  const orgRows = (orgs.data ?? []) as Org[]
+  const orgById = new Map(orgRows.map((o) => [o.id, o]))
+  // Where an organisation and everything it owns is pinned: the address its
+  // leaders set, or its suburb when they have not given a street.
+  const orgAt = (o: Org) => {
+    const suburb = o.pickup_suburb ?? o.suburb
+    const state = o.pickup_state ?? o.state
+    const line1 = o.pickup_line1?.trim() || null
+    return {
+      suburb,
+      state,
+      postcode: o.pickup_postcode,
+      address: line1,
+      query: addressQuery([line1, [suburb, state, o.pickup_postcode].filter(Boolean).join(' ')]),
+    }
+  }
+  const suburbAt = (suburb: string | null, state: string | null, postcode: string | null) => ({
+    suburb,
+    state,
+    postcode,
+    address: null,
+    query: suburb ? addressQuery([[suburb, state, postcode].filter(Boolean).join(' ')]) : null,
+  })
+
+  const sameSuburb = (a: string | null | undefined, b: string | null | undefined) => !!a && !!b && a.trim().toLowerCase() === b.trim().toLowerCase()
+
+  const hidden = new Set(unavailable)
+  const shownToys = ((toys.data ?? []) as Array<{ id: string; name: string; owner_id: string | null; owner_org_id: string | null }>).filter(
+    (t) => !hidden.has(t.id) && (member || !!t.owner_org_id)
+  )
+  const families = [...new Set(shownToys.map((t) => t.owner_id).filter((id): id is string => !!id))]
+  const familyRows = (
+    await Promise.all(chunk(families).map((ids) => admin.from('profiles').select('id, name, pickup_suburb, pickup_state, pickup_postcode').in('id', ids)))
+  ).flatMap((r) => (r.data ?? []) as Array<{ id: string; name: string | null; pickup_suburb: string | null; pickup_state: string | null; pickup_postcode: string | null }>)
+  const family = new Map(familyRows.map((p) => [p.id, p]))
+
+  const rows: Located[] = []
+  for (const t of shownToys) {
+    const o = t.owner_org_id ? orgById.get(t.owner_org_id) : undefined
+    const p = t.owner_id ? family.get(t.owner_id) : undefined
+    rows.push(
+      o
+        ? { kind: 'toy', id: t.id, title: t.name, meta: o.name, ...orgAt(o) }
+        : { kind: 'toy', id: t.id, title: t.name, meta: p?.name ?? null, ...suburbAt(p?.pickup_suburb ?? null, p?.pickup_state ?? null, p?.pickup_postcode ?? null) }
+    )
+  }
+  for (const r of (printers.data ?? []) as Array<{
+    id: string
+    name: string
+    materials: string[] | null
+    suburb: string | null
+    state: string | null
+    postcode: string | null
+    owner_org_id: string | null
+  }>) {
+    const materials = r.materials ?? []
+    const o = r.owner_org_id ? orgById.get(r.owner_org_id) : undefined
+    rows.push({
+      kind: 'printer',
+      id: r.id,
+      title: r.name,
+      meta: materials.join(', ') || null,
+      materials,
+      ...(o ? orgAt(o) : suburbAt(r.suburb, r.state, r.postcode)),
+    })
+  }
+  for (const e of (events.data ?? []) as Array<{
+    id: string
+    org_id: string
+    title: string
+    starts_at: string
+    ends_at: string | null
+    location: string | null
+    suburb: string | null
+    state: string | null
+  }>) {
+    if (isPast(e.starts_at, e.ends_at)) continue
+    const host = orgById.get(e.org_id)
+    rows.push({
+      kind: 'event',
+      id: e.id,
+      title: e.title,
+      meta: host?.name ?? null,
+      starts_at: e.starts_at,
+      suburb: e.suburb,
+      state: e.state,
+      postcode: host?.pickup_postcode ?? null,
+      address: e.location?.trim() || null,
+      // Events have no postcode of their own; one in its host's suburb borrows
+      // the host's, so "University Drive, Callaghan" resolves to the same
+      // stretch of road as the host rather than another one.
+      query: addressQuery([
+        e.location,
+        [e.suburb, e.state, sameSuburb(e.suburb, host?.pickup_suburb ?? host?.suburb) ? host?.pickup_postcode : null].filter(Boolean).join(' '),
+      ]),
+    })
+  }
+  for (const o of orgRows) {
+    if (o.status === 'suspended') continue
+    rows.push({ kind: 'org', id: o.id, title: o.name, meta: null, ...orgAt(o) })
+    const materials = o.recycling_materials ?? []
+    if (materials.length) rows.push({ kind: 'dropoff', id: o.id, title: o.name, meta: `Takes ${materials.join(', ')}`, materials, ...orgAt(o) })
+  }
+
+  const postcodes = [...new Set([...rows.map((r) => r.postcode?.trim()), near.near].filter((p): p is string => !!p))]
+  const [centreRows, points] = await Promise.all([
+    Promise.all(chunk(postcodes).map((ids) => admin.from('postcode_centroids').select('postcode, lat, lng').in('postcode', ids))).then((rs) =>
+      rs.flatMap((r) => (r.data ?? []) as Array<{ postcode: string } & Point>)
+    ),
+    geocodeAll(rows.map((r) => r.query)),
+  ])
+  const centres = new Map(centreRows.map((r) => [r.postcode, { lat: r.lat, lng: r.lng }]))
+  const places = groupPlaces(rows, points, centres, near.near ? centres.get(near.near) ?? null : null)
+  return c.json(near.within === null ? places : places.filter((p) => p.km !== null && p.km <= near.within!))
 })
 
 export default publicRoutes

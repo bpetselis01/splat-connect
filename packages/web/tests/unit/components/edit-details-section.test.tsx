@@ -71,6 +71,17 @@ describe('EditDetailsSection', () => {
     )
   })
 
+  it('sends the closing line trimmed, and null when blank', async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined)
+    render(<EditDetailsSection tutorial={tutorial} onSave={onSave} />)
+    fireEvent.change(screen.getByLabelText('Your closing line (optional)'), { target: { value: '  All done  ' } })
+    fireEvent.click(screen.getByText('Save details'))
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ done_note: 'All done' })))
+    fireEvent.change(screen.getByLabelText('Your closing line (optional)'), { target: { value: ' ' } })
+    fireEvent.click(screen.getByText('Save details'))
+    await waitFor(() => expect(onSave).toHaveBeenLastCalledWith(expect.objectContaining({ done_note: null })))
+  })
+
   it('shows the conflict message when onSave signals a conflict', async () => {
     const onSave = vi.fn().mockRejectedValue(new Error('conflict'))
     render(<EditDetailsSection tutorial={tutorial} onSave={onSave} />)

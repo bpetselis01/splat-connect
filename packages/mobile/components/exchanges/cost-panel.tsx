@@ -243,7 +243,7 @@ export function CostPanel({
 
 const styles = StyleSheet.create({
   block: { gap: theme.spacing(2), padding: theme.spacing(4), borderRadius: theme.radii.panel },
-  eyebrow: { fontFamily: theme.fonts.black, fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', color: theme.colors.ink },
+  eyebrow: { fontFamily: theme.fonts.black, fontSize: theme.type.caption, letterSpacing: 1, textTransform: 'uppercase', color: theme.colors.ink },
   body: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted, lineHeight: 21 },
   flex: { flex: 1 },
   line: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: theme.spacing(3) },
@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
   payBack: { alignSelf: 'flex-start', borderRadius: theme.radii.panel, padding: theme.spacing(3), gap: 2 },
   payBackYou: { backgroundColor: theme.colors.honeySoft },
   payBackThem: { backgroundColor: theme.colors.mintSoft },
-  payBackLabel: { fontFamily: theme.fonts.black, fontSize: 11, letterSpacing: 0.8, textTransform: 'uppercase', color: theme.colors.ink },
+  payBackLabel: { fontFamily: theme.fonts.black, fontSize: theme.type.micro, letterSpacing: 0.8, textTransform: 'uppercase', color: theme.colors.ink },
   payBackAmount: { fontFamily: theme.fonts.numeral, fontSize: theme.type.title, color: theme.colors.ink },
   methodRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2) },
   form: { gap: theme.spacing(2), marginTop: theme.spacing(2) },

@@ -31,36 +31,42 @@ import {
   NotePencil,
   Gift,
   X,
-  SquaresFour,
+  ArrowsDownUp,
   Wrench,
   Clock,
-  Dog,
   CircleHalf,
   Fire,
   Timer,
   HourglassMedium,
   Cube,
-  CheckCircle,
-  HandTap,
+  UserCircle,
+  Package,
 } from '@phosphor-icons/react/dist/ssr'
 import Link from 'next/link'
 import { TutorialCard } from '@/components/tutorial-card'
 import { BrowseHero } from '@/components/browse-hero'
-import { SortControl } from '@/components/sort-control'
 import { SplatMascot } from '@/components/splat-mascot'
 import {
   SORTS,
   filterGuides,
   sortGuides,
   type Filters,
-  type SortDir,
   type SortKey,
 } from '@/lib/library-filter'
-import type { Tutorial } from '@splat-connect/types'
+import {
+  ACCESS,
+  CHILD_QUESTIONS,
+  DEVICE_TYPES,
+  NO_SUITS_FILTER,
+  ONE_HAND_LABEL,
+  type ChildTags,
+  type SuitsFilter,
+  type Tutorial,
+} from '@splat-connect/types'
 
 export type LibraryStats = { guides: number; contributors: number; organisations: number }
 
-type Icon = typeof Dog
+type Icon = typeof Wrench
 type Facet = {
   key: keyof Filters
   label: string
@@ -70,15 +76,6 @@ type Facet = {
 
 // The board's FAC, verbatim in labels and glyphs.
 const FACETS: Facet[] = [
-  {
-    key: 'type',
-    label: 'Guide type',
-    Icon: SquaresFour,
-    opts: [
-      { value: 'toy_adaptation', label: 'Toy adaptation guide', Icon: Dog },
-      { value: 'assistive_tech', label: 'Assistive tech guide', Icon: Wrench },
-    ],
-  },
   {
     key: 'skill',
     label: 'Your skill level',
@@ -101,42 +98,63 @@ const FACETS: Facet[] = [
   },
 ]
 
+type TagKey = Exclude<keyof SuitsFilter, 'one_hand'>
+/** The tag questions as chips: the four child ones, then the guide's device type. "One hand is enough" rides in the access group as its own chip. */
+const CHILD_GROUPS: { key: TagKey; label: string; options: readonly { value: string; label: string }[] }[] =
+  CHILD_QUESTIONS.map((q) => ({
+    key: q.item,
+    label: q.label,
+    options: q.item === 'access' ? [...ACCESS, { value: 'one_hand', label: ONE_HAND_LABEL }] : q.options,
+  }))
+const GUIDE_GROUPS: typeof CHILD_GROUPS = [{ key: 'device_types', label: 'Device type', options: DEVICE_TYPES }]
+
 export function LibraryClient({
   tutorials,
   stats,
   savedIds,
   signedIn,
   initialSearch = '',
-  suits = null,
+  child = null,
 }: {
   tutorials: Tutorial[]
   stats: LibraryStats | null
   savedIds: string[]
   signedIn: boolean
   initialSearch?: string
-  /** The guides that suit one of the parent's children (080), or null to say nothing. */
-  suits?: { ids: string[]; name: string } | null
+  /** The signed-in parent's first child: Recommended puts their matches first. */
+  child?: (ChildTags & { name?: string | null }) | null
 }) {
   // A Set rather than repeated .includes: this is the busiest page on the site
   // and the lookup runs once per card.
   const saved = new Set(savedIds)
   const [search, setSearch] = useState(initialSearch)
   const [filters, setFilters] = useState<Filters>({})
-  const [sortKey, setSortKey] = useState<SortKey>('new')
-  const [dir, setDir] = useState<SortDir>('desc')
-  const [suitsOnly, setSuitsOnly] = useState(false)
-  const suitsSet = new Set(suits?.ids ?? [])
-  const suitsLabel = suits ? `Suits ${suits.name}` : ''
+  const [sortKey, setSortKey] = useState<SortKey>('recommended')
+  const suits = filters.suits ?? NO_SUITS_FILTER
+  const childName = child?.name?.trim() || null
 
   // Tapping the chosen option clears it — one choice per facet, as the board has it.
   function toggle(key: keyof Filters, value: string) {
     setFilters((f) => ({ ...f, [key]: f[key] === value ? undefined : value }))
   }
 
-  const shown = sortGuides(filterGuides(tutorials, filters, search), sortKey, dir).filter(
-    (t) => !suitsOnly || suitsSet.has(t.id)
-  )
-  const { limit, more } = useShowMore(JSON.stringify([filters, search, sortKey, dir, suitsOnly]))
+  const chosen = (key: TagKey, value: string) =>
+    value === 'one_hand' ? suits.one_hand : (suits[key] as string[]).includes(value)
+
+  // Any number of choices per tag group.
+  function toggleTag(key: TagKey, value: string) {
+    const next: SuitsFilter =
+      value === 'one_hand'
+        ? { ...suits, one_hand: !suits.one_hand }
+        : {
+            ...suits,
+            [key]: chosen(key, value) ? (suits[key] as string[]).filter((v) => v !== value) : [...suits[key], value],
+          }
+    setFilters((f) => ({ ...f, suits: next }))
+  }
+
+  const shown = sortGuides(filterGuides(tutorials, filters, search), sortKey, child)
+  const { limit, more } = useShowMore(JSON.stringify([filters, search, sortKey]))
 
   const active = [
     ...FACETS.flatMap((f) =>
@@ -144,14 +162,17 @@ export function LibraryClient({
         .filter((o) => filters[f.key] === o.value)
         .map((o) => ({ label: o.label, clear: () => toggle(f.key, o.value) }))
     ),
+    ...[...CHILD_GROUPS, ...GUIDE_GROUPS].flatMap((g) =>
+      g.options
+        .filter((o) => chosen(g.key, o.value))
+        .map((o) => ({ label: o.label, clear: () => toggleTag(g.key, o.value) }))
+    ),
     ...(search ? [{ label: `“${search}”`, clear: () => setSearch('') }] : []),
-    ...(suitsOnly ? [{ label: suitsLabel, clear: () => setSuitsOnly(false) }] : []),
   ]
 
   function clearAll() {
     setFilters({})
     setSearch('')
-    setSuitsOnly(false)
   }
 
   // The wizard keeps a profile, which needs an account. Signing up first, with
@@ -203,26 +224,41 @@ export function LibraryClient({
       <div id="guide-grid" className="browse-layout scroll-mt-24">
         <BrowseFilters onClear={clearAll}>
 
-          {suits && (
-            <fieldset>
-              <legend>
-                <HandTap size={18} weight="duotone" className="text-brand-dark" aria-hidden="true" />
-                For your child
-              </legend>
-              <div className="flex flex-wrap gap-2">
+          <fieldset>
+            <legend>
+              <ArrowsDownUp size={18} weight="duotone" className="text-brand-dark" aria-hidden="true" />
+              Sort by
+            </legend>
+            <div className="flex flex-wrap gap-2">
+              {SORTS.map((o) => (
                 <button
+                  key={o.key}
                   type="button"
-                  aria-pressed={suitsOnly}
-                  onClick={() => setSuitsOnly(!suitsOnly)}
-                  className="chip gap-1.5"
+                  aria-pressed={sortKey === o.key}
+                  onClick={() => setSortKey(o.key)}
+                  className="chip"
                 >
-                  <CheckCircle size={14} weight="bold" className="text-brand-dark" aria-hidden="true" />
-                  {suitsLabel}
-                  <span className="text-muted">· {suits.ids.length}</span>
+                  {o.label}
                 </button>
-              </div>
-            </fieldset>
-          )}
+              ))}
+            </div>
+          </fieldset>
+
+          <h3 className="m-0 flex items-center gap-1.5 font-display text-base font-extrabold text-ink">
+            <UserCircle size={18} weight="duotone" className="text-brand-dark" aria-hidden="true" />
+            About {childName ?? 'your child'}
+          </h3>
+          {CHILD_GROUPS.map((g) => (
+            <TagGroup key={g.key} group={g} chosen={chosen} onToggle={toggleTag} />
+          ))}
+
+          <h3 className="m-0 flex items-center gap-1.5 font-display text-base font-extrabold text-ink">
+            <Package size={18} weight="duotone" className="text-brand-dark" aria-hidden="true" />
+            About the guide
+          </h3>
+          {GUIDE_GROUPS.map((g) => (
+            <TagGroup key={g.key} group={g} chosen={chosen} onToggle={toggleTag} />
+          ))}
 
           {FACETS.map((f) => (
             <fieldset key={f.key}>
@@ -273,23 +309,10 @@ export function LibraryClient({
 
         <div>
           <div className="browse-head">
-            <h2>{suitsOnly && active.length === 1 ? suitsLabel : 'All guides'}</h2>
-            <div className="flex items-center gap-2.5">
-              <span aria-live="polite" className="text-sm font-bold text-muted">
-                {shown.length} guide{shown.length === 1 ? '' : 's'}
-              </span>
-              <SortControl
-                sorts={SORTS}
-                label="Sort guides by"
-                sortKey={sortKey}
-                dir={dir}
-                onPick={(key) => {
-                  setSortKey(key)
-                  setDir(SORTS.find((s) => s.key === key)!.dir)
-                }}
-                onFlip={() => setDir(dir === 'asc' ? 'desc' : 'asc')}
-              />
-            </div>
+            <h2>All guides</h2>
+            <span aria-live="polite" className="text-sm font-bold text-muted">
+              {shown.length} guide{shown.length === 1 ? '' : 's'}
+            </span>
           </div>
 
           {/* Always drawn, as on the board: the row holds its 36px when empty
@@ -351,5 +374,34 @@ export function LibraryClient({
         </div>
       </div>
     </div>
+  )
+}
+
+function TagGroup({
+  group,
+  chosen,
+  onToggle,
+}: {
+  group: (typeof CHILD_GROUPS)[number]
+  chosen: (key: TagKey, value: string) => boolean
+  onToggle: (key: TagKey, value: string) => void
+}) {
+  return (
+    <fieldset>
+      <legend>{group.label}</legend>
+      <div className="flex flex-wrap gap-2">
+        {group.options.map((o) => (
+          <button
+            key={o.value}
+            type="button"
+            aria-pressed={chosen(group.key, o.value)}
+            onClick={() => onToggle(group.key, o.value)}
+            className="chip"
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </fieldset>
   )
 }

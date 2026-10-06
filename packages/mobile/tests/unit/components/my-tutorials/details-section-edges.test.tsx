@@ -9,7 +9,7 @@ jest.mock('../../../../lib/auth-context', () => ({ useAuth: jest.fn() }))
 const base = () => ({
   id: 't1', title: 'Roaring dinosaur', description: null, kind: 'toy_adaptation', difficulty: 'easy', maturity: 'complete', status: 'draft',
   safety_declared_at: null, build_minutes: 30, tutorial_pdf_url: null, photo_urls: [], parts: [], tools: [], stl_files: [],
-  age_min: null, age_max: null, switch_target: null, switch_force: null, switch_hold: null,
+  age_min: null, age_max: null,
 }) as Record<string, unknown>
 const mockDraft = {
   tutorial: base(), loading: false, loadError: false, saveState: 'idle', saveError: null as string | null,
@@ -94,12 +94,9 @@ describe('chips', () => {
     expect(lastSave()).toEqual({ difficulty: 'easy' })
   })
 
-  it('clears a switch tag when the chosen chip is pressed, and sets another when not chosen', () => {
-    mockDraft.tutorial = { ...base(), switch_force: 'light' }
+  it('no longer asks what the switch asks', () => {
     render(<DetailsSection />)
-    const light = screen.getAllByText(/^Light/)[0]
-    fireEvent.press(light)
-    expect(lastSave()).toEqual({ switch_force: null })
+    expect(screen.queryByText('What the switch asks')).toBeNull()
   })
 
   it('opens Backing for this guide', () => {

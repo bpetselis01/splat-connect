@@ -146,7 +146,7 @@ export function ReportProblem({
 const styles = StyleSheet.create({
   link: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(1), minHeight: 36 },
   linkText: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.muted },
-  backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(28,37,48,0.4)' },
+  backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: theme.colors.scrim },
   sheet: {
     maxHeight: '85%',
     backgroundColor: theme.colors.surface,

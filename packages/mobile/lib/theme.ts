@@ -9,8 +9,12 @@
 // The hard offset shadows and 6-10px radii of the Pixel pass are gone. Ironically
 // this lands close to where mobile was before Pixel — that file's own header
 // recorded removing "the blurred shadow and 14-18px radii of the soft pass".
-export const theme = {
-  colors: {
+import { Appearance } from 'react-native'
+
+// Chosen once, when the app opens: every StyleSheet below reads it at import.
+const dark = Appearance.getColorScheme() === 'dark'
+
+const LIGHT = {
     primary: '#1998d5',
     primaryDark: '#1179b0',
     primaryDeep: '#0f5f8c',
@@ -44,6 +48,18 @@ export const theme = {
     // only 3.82:1. Same move as successDeep.
     dangerDeep: '#b83a3a',
     dangerSoft: '#fde3e3',
+    // Roles a single value cannot fill in both modes (dark mode, 2026-10-05):
+    // text and icons on a coloured fill, the dark pills and their text, the
+    // dimmed backdrop, and the frosted white of the tab bar and map credit.
+    onColor: '#ffffff',
+    inverse: '#1c2530',
+    onInverse: '#ffffff',
+    scrim: 'rgba(28,37,48,0.4)',
+    glass: 'rgba(255,255,255,0.86)',
+    // The board's tab bar: 62% white over the blur.
+    tabGlass: 'rgba(255,255,255,0.62)',
+    tabOn: 'rgba(220,240,251,0.85)',
+    shadow: '#1c2530',
     // Badge tones — the same bg/fg pairs as web's badge.tsx. tone.test guards
     // contrast. Soft Pop inks every tint rather than using a per-hue deep
     // shade, so all seven share one foreground.
@@ -59,7 +75,67 @@ export const theme = {
       medium: { bg: '#fff0cc', text: '#1c2530' },
       hard: { bg: '#ffe9de', text: '#1c2530' },
     },
-  },
+  }
+
+// The same roles for dark mode (mockup: https://claude.ai/artifact/CsJhF8jUE4m76VBAaJzBNf).
+// Accents brighten to hold on dark grounds; soft tints become deep tints of
+// the same hue; the badge tones keep one light foreground, as light keeps one ink.
+const DARK: typeof LIGHT = {
+    primary: '#3aaee6',
+    primaryDark: '#3aa3dc',
+    primaryDeep: '#8fd3f7',
+    background: '#12171d',
+    surface: '#1b222a',
+    surfaceSunken: '#252e38',
+    accentLight: '#173246',
+    accentFaint: '#142838',
+    text: '#e8ecf0',
+    ink: '#e8ecf0',
+    muted: '#9aa6b4',
+    border: 'rgba(232,236,240,0.12)',
+    apricot: '#ff9a72',
+    apricotSoft: '#3b2720',
+    mint: '#2cc5b8',
+    mintSoft: '#14332f',
+    honey: '#ffbe45',
+    honeySoft: '#3a3017',
+    violet: '#a08cf5',
+    violetSoft: '#2a2442',
+    success: '#46b883',
+    successDeep: '#237e51',
+    successSoft: '#16302a',
+    danger: '#f06b6b',
+    dangerDeep: '#b83a3a',
+    dangerSoft: '#3a1e1f',
+    onColor: '#ffffff',
+    inverse: '#e8ecf0',
+    onInverse: '#1c2530',
+    scrim: 'rgba(0,0,0,0.55)',
+    glass: 'rgba(27,34,42,0.88)',
+    tabGlass: 'rgba(27,34,42,0.62)',
+    tabOn: 'rgba(23,50,70,0.9)',
+    shadow: '#000000',
+    tone: {
+      sunken: { bg: '#252e38', fg: '#e8ecf0' },
+      honey: { bg: '#3a3017', fg: '#e8ecf0' },
+      mint: { bg: '#14332f', fg: '#e8ecf0' },
+      apricot: { bg: '#3b2720', fg: '#e8ecf0' },
+      brand: { bg: '#173246', fg: '#e8ecf0' },
+    },
+    difficulty: {
+      easy: { bg: '#14332f', text: '#e8ecf0' },
+      medium: { bg: '#3a3017', text: '#e8ecf0' },
+      hard: { bg: '#3b2720', text: '#e8ecf0' },
+    },
+  }
+
+/** Both palettes, for the contrast tests; the app reads theme.colors. */
+export const PALETTES = { light: LIGHT, dark: DARK }
+
+export const theme = {
+  /** The phone's Light/Dark setting when the app opened; a change reloads the app (lib/appearance.ts). */
+  dark,
+  colors: dark ? DARK : LIGHT,
   fonts: {
     regular: 'Nunito_400Regular',
     medium: 'Nunito_500Medium',
@@ -71,7 +147,9 @@ export const theme = {
     // Counts and money, with tabular figures at the call site.
     numeral: 'JetBrainsMono_400Regular',
   },
-  type: { title: 24, heading: 19, body: 16, label: 14, caption: 13 },
+  // The only text sizes in the app; tests/unit/lib/type-scale.test.ts fails on
+  // a raw number. hero is the one big figure (recycling), display the tab heroes.
+  type: { hero: 44, display: 28, title: 24, heading: 19, body: 16, label: 14, caption: 13, micro: 11 },
   spacing: (n: number) => n * 4,
   // One hairline. `thick` survives for the few places that need a real edge,
   // but Soft Pop separates with elevation rather than with borders.

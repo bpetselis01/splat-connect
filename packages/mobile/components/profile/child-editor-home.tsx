@@ -1,19 +1,18 @@
 // packages/mobile/components/profile/child-editor-home.tsx
 // One child's profile as one page, the same questions web's
-// components/child-editor.tsx asks: Basics (name, age), the four switch
-// questions, the everyday needs of the room, and the wizard's Play and
-// Measurements steps (120). Every answer autosaves through useChildProfile,
+// components/child-editor.tsx asks: Basics (name, age), the four child
+// questions (128 — the same answers guides are tagged with), the room's
+// everyday needs, and the Measurements (120). Every answer autosaves through useChildProfile,
 // the mobile pattern, with a "Saved" line to confirm it; a measurement out of
 // its range shows the range and is not saved.
 //
 // The older ability / everyday-needs / customisation sheets (MACS, BFMF, grip,
 // wrist and forearm…) are gone: those columns stay in the database but nothing
-// asks for them now (APP 3 minimisation). What a child enjoys is kept for a
-// future recommender; nothing sorts or matches on it yet. These are plain-language preferences for
+// asks for them now (APP 3 minimisation). These are plain-language preferences for
 // ranking guides, never a clinical assessment — see docs/REGULATORY-CHANGES.md.
 import { ScrollView, View, Text, Linking, StyleSheet } from 'react-native'
 import { Stack, useRouter } from 'expo-router'
-import { CHILD_MEASURES, CHILD_QUESTIONS, ENJOYS } from '@splat-connect/types'
+import { CHILD_MEASURES, CHILD_QUESTIONS, ONE_HAND_LABEL } from '@splat-connect/types'
 import { NotMedicalNote } from '../ui/NotMedicalNote'
 import { apiClient } from '../../lib/api-client'
 import { confirmDestructive, notify } from '../../lib/confirm'
@@ -98,27 +97,28 @@ export function ChildEditorHome({ childId }: { childId: string }) {
         />
       </Section>
 
-      <Section
-        title="Ability profile"
-        hint="Used to rank guides by whether the switch they call for is one your child can operate."
-      >
-        {CHILD_QUESTIONS.map((q) => (
-          <ChoiceChips
-            key={q.field}
-            label={q.prompt}
-            options={q.options}
-            value={profile[q.field]}
-            onChange={(v) => save({ [q.field]: v })}
-          />
-        ))}
+      <Section title="Who they are" hint="Guides tagged with the same answers come first under Recommended.">
+        {CHILD_QUESTIONS.map((q) =>
+          q.child === 'press_force' ? (
+            <ChoiceChips key={q.child} label={q.label} options={q.options} value={profile.press_force} onChange={(v) => save({ press_force: v as typeof profile.press_force })} />
+          ) : (
+            <View key={q.child}>
+              <Text style={styles.label}>{q.label}</Text>
+              <ManyChips
+                options={q.options as readonly { value: string; label: string }[]}
+                value={(profile[q.child] ?? []) as string[]}
+                onChange={(v) => save({ [q.child]: v })}
+              />
+              {q.child === 'access' ? (
+                <ManyChips options={[{ value: 'one_hand', label: ONE_HAND_LABEL }]} value={profile.one_hand ? ['one_hand'] : []} onChange={(v) => save({ one_hand: v.length > 0 })} />
+              ) : null}
+            </View>
+          )
+        )}
       </Section>
 
-      <Section title="Everyday needs" hint="What matters in the room, rather than in the hand.">
+      <Section title="Good to know" hint="Notes for whoever makes or lends a toy.">
         <NeedsChips value={profile.everyday_needs ?? []} onChange={(v) => save({ everyday_needs: v })} />
-      </Section>
-
-      <Section title="Play" hint="What does your child enjoy?">
-        <ManyChips options={ENJOYS} value={profile.enjoys ?? []} onChange={(v) => save({ enjoys: v })} />
       </Section>
 
       <Section title="Measurements" hint="Optional. Only for printed grips and mounts.">
@@ -159,6 +159,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing(5),
   },
   link: { textDecorationLine: 'underline' },
+  label: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.ink, marginBottom: theme.spacing(2) },
   saved: {
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.caption,

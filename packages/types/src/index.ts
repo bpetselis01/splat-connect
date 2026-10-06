@@ -9,7 +9,15 @@ export type { PicksMode, ToyPick, ToyPickInput } from './toy-picks'
 import type { PicksMode, ToyPick } from './toy-picks'
 export { contributorBadges, nextBadgeThreshold, nextBadgeLine, BADGE_RULES } from './contributor-badges'
 export { ABOUT_LEAD, ABOUT_PILLARS, ABOUT_TEAM_BLURB, CONTACT_TIMES } from './about'
-export { matchesForChild, childNeedsLine } from './child-matches'
+export {
+  DEVICE_TYPES, HELPS_WITH, ACCESS, ONE_HAND_LABEL, CHILD_QUESTIONS, SUITS_FIELDS, GUIDE_SUITS_FIELDS, NO_SUITS_FILTER,
+  readSuits, matchesSuits, suitsFilterCount, recommendScore, byRecommended, fitLine, matchesForChild,
+} from './suits'
+export type { DeviceType, HelpsWith, Access, Suits, SuitsFilter, ChildTags } from './suits'
+export { PRESS_FORCE, ENJOYS } from './suits'
+export type { PressForce, Enjoy } from './suits'
+import type { Access, Enjoy, HelpsWith, PressForce, Suits } from './suits'
+import { HELPS_WITH, PRESS_FORCE } from './suits'
 export {
   LEARN_COURSE, LEARN_SHOWN_AS, LESSON_KIND_LABEL,
   learnLessons, lessonBySlug, unitOf, nextAfter, courseHours, readLearnCourse, mergeLearnCourse,
@@ -75,15 +83,15 @@ export interface ChildProfile {
   forearm_length_mm: number | null
   hand_dominance: string | null
   sensory_preferences: string[]
-  /** The board's four switch questions and the room it is used in (079).
-   *  The fields above are no longer asked; they stay until a decision drops them. */
-  working_hand: WorkingHand | null
+  /** The four child questions (128, CHILD_QUESTIONS): the same answers a guide
+   *  or toy is tagged with, so Recommended counts what they share. */
+  helps_with: HelpsWith[]
+  access: Access[]
+  one_hand: boolean
   press_force: PressForce | null
-  aim: Aim | null
-  hold: Hold | null
-  everyday_needs: EverydayNeed[]
-  /** 120. "What does your child enjoy?" — kept for a future recommender; nothing sorts or matches on it. */
   enjoys: Enjoy[]
+  /** 079. Profile-only notes; nothing matches on them. */
+  everyday_needs: EverydayNeed[]
   /** 120. Optional, for printed grips and mounts. palm_width_mm (above) is the third. */
   reach_cm: number | null
   tray_mm: number | null
@@ -92,28 +100,6 @@ export interface ChildProfile {
 }
 
 // 079 — the child profile's questions, in the board's order and words.
-export const WORKING_HAND = [
-  { value: 'left', label: 'Left' },
-  { value: 'right', label: 'Right' },
-  { value: 'either', label: 'Either' },
-  { value: 'not_sure', label: 'Not sure' },
-] as const
-export const PRESS_FORCE = [
-  { value: 'very_light', label: 'Very light' },
-  { value: 'light', label: 'Light' },
-  { value: 'moderate', label: 'Moderate' },
-  { value: 'full', label: 'Full' },
-] as const
-export const AIM = [
-  { value: 'small', label: 'Yes, small' },
-  { value: 'large', label: 'Yes, large' },
-  { value: 'not_reliably', label: 'Not reliably' },
-] as const
-export const HOLD = [
-  { value: 'moment', label: 'A moment' },
-  { value: 'second', label: 'A second' },
-  { value: 'as_long', label: 'As long as needed' },
-] as const
 export const EVERYDAY_NEEDS = [
   { value: 'quiet', label: 'Quiet toys only' },
   { value: 'no_flashing', label: 'No flashing lights' },
@@ -123,16 +109,6 @@ export const EVERYDAY_NEEDS = [
   { value: 'travels_bag', label: 'Travels in a bag' },
 ] as const
 
-// 120 — the board's Play step (MB wizard), in its order and words.
-export const ENJOYS = [
-  { value: 'light', label: 'Lights' },
-  { value: 'sound', label: 'Music and sound' },
-  { value: 'move', label: 'Things that move' },
-  { value: 'soft', label: 'Soft and cuddly' },
-  { value: 'calm', label: 'Calm and sensory' },
-  { value: 'water', label: 'Bubbles and water' },
-] as const
-export type Enjoy = (typeof ENJOYS)[number]['value']
 
 /** 120 — the board's three optional measurements, with the range the API and
  *  the table both enforce. One list for the wizard, both editors and the route. */
@@ -152,36 +128,22 @@ export function readMeasure(m: ChildMeasure, text: string): number | null | unde
   const n = Number(text)
   return Number.isFinite(n) && n >= m.min && n <= m.max ? n : undefined
 }
-export type WorkingHand = (typeof WORKING_HAND)[number]['value']
-export type PressForce = (typeof PRESS_FORCE)[number]['value']
-export type Aim = (typeof AIM)[number]['value']
-export type Hold = (typeof HOLD)[number]['value']
 export type EverydayNeed = (typeof EVERYDAY_NEEDS)[number]['value']
 
-/** The board's four switch questions, in its order and words — one list for
- *  web's form and wizard and mobile's, so the four cannot drift apart. */
-export const CHILD_QUESTIONS = [
-  { field: 'working_hand', prompt: 'Which hand does most of the work?', options: WORKING_HAND },
-  { field: 'press_force', prompt: 'How much force can they apply?', options: PRESS_FORCE },
-  { field: 'aim', prompt: 'Can they aim at a target?', options: AIM },
-  { field: 'hold', prompt: 'How long can they hold a press?', options: HOLD },
-] as const
-export type ChildQuestionField = (typeof CHILD_QUESTIONS)[number]['field']
-
 /** Everything a child profile form writes. The retired columns are not in it. */
-export type ChildAnswers = Pick<ChildProfile, 'name' | 'age' | ChildQuestionField | 'everyday_needs'>
+export type ChildAnswers = Pick<ChildProfile, 'name' | 'age' | 'helps_with' | 'access' | 'one_hand' | 'press_force' | 'enjoys' | 'everyday_needs'>
 
 const labelOf = (vocab: readonly { value: string; label: string }[], v: string | null) =>
   vocab.find((o) => o.value === v)?.label
 
 /**
- * One line for a child's list row: "Age 6 · Right hand · Light press", or
- * "Not set yet". Plain words from the form, never a score.
+ * One line for a child's list row: "Age 6 · Seeing, Feeling calm · Light
+ * press", or "Not set yet". Plain words from the form, never a score.
  */
-export function childSummary(c: Pick<ChildProfile, 'age' | ChildQuestionField>): string {
-  const hand = c.working_hand && c.working_hand !== 'not_sure' ? `${labelOf(WORKING_HAND, c.working_hand)} hand` : null
+export function childSummary(c: Pick<ChildProfile, 'age' | 'helps_with' | 'press_force'>): string {
+  const helps = (c.helps_with ?? []).map((v) => labelOf(HELPS_WITH, v)).filter(Boolean).join(', ') || null
   const force = c.press_force ? `${labelOf(PRESS_FORCE, c.press_force)} press` : null
-  const parts = [c.age !== null ? `Age ${c.age}` : null, hand, force].filter(Boolean)
+  const parts = [c.age !== null ? `Age ${c.age}` : null, helps, force].filter(Boolean)
   return parts.length ? parts.join(' · ') : 'Not set yet'
 }
 
@@ -196,7 +158,7 @@ export const OFFER_SHORT_LABEL: Record<OfferType, string> = { donation: 'Gift', 
  */
 export const MAX_PHOTOS = 5
 
-export interface Toy {
+export interface Toy extends Suits {
   id: string
   /** Null when an organisation holds it. Exactly one of this and
    *  `owner_org_id` is set — 033's `toys_one_owner` constraint. */
@@ -2117,7 +2079,7 @@ export function formatAgeRange(min: number | null | undefined, max: number | nul
   return min === max ? `Age ${min}` : `Age ${min}–${max}`
 }
 
-export interface Tutorial {
+export interface Tutorial extends Suits {
   id: string
   title: string
   description: string | null
@@ -2139,11 +2101,6 @@ export interface Tutorial {
    *  formatAgeRange() draws them. */
   age_min?: number | null
   age_max?: number | null
-  /** What the guide's switch asks of a child (080), in the child profile's
-   *  own words so the two compare directly. All optional. */
-  switch_target?: 'large' | 'small' | null
-  switch_force?: PressForce | null
-  switch_hold?: Hold | null
   /** PostgREST computed fields (066). Present only when a select names them —
    *  the public list and detail routes do. */
   thanks_count?: number
@@ -2171,6 +2128,8 @@ export interface Tutorial {
   toy_brand?: string | null
   works_with?: string | null
   no_build_note?: string | null
+  /** 129. The author's closing line, shown once every step is done. */
+  done_note?: string | null
   /** 088. The guide's print settings, as the author sliced it. */
   layer_height_mm?: number | null
   infill_percent?: number | null
@@ -2263,6 +2222,8 @@ export type PrintJobFile = Pick<
  *  entirely, the way it drops backing that was never accepted. */
 export interface Recommendation {
   position: number
+  /** 129. "Required first": make the recommended guide before this one. */
+  required?: boolean
   tutorials: Pick<Tutorial, 'id' | 'title' | 'kind' | 'difficulty' | 'toy_photo_url' | 'status' | 'maturity'>
 }
 
@@ -2328,6 +2289,32 @@ export interface ImpactSummary {
    *  `YYYY-MM` in Australia/Sydney, the zone every date on the site is
    *  written in. */
   deliveriesByMonth: Array<{ month: string; n: number }>
+}
+
+/** GET /api/public/map: what the mobile Map tab pins. */
+export type MapKind = 'toy' | 'printer' | 'event' | 'dropoff' | 'org'
+export interface MapItem {
+  kind: MapKind
+  id: string
+  title: string
+  /** Owner, host or materials line; the phone writes the date for an event. */
+  meta: string | null
+  /** Printers and drop-offs: what they print or take. */
+  materials?: string[]
+  /** Events only. */
+  starts_at?: string
+}
+/** One point: an organisation's address, an event's venue, or a suburb's centre for an individual. */
+export interface MapPlace {
+  suburb: string
+  state: string
+  lat: number
+  lng: number
+  /** The street line, for an organisation's address; null at a suburb centre. Public (Byron, 2026-10-05). */
+  address: string | null
+  /** Whole km from the viewer's postcode; null when none was given. */
+  km: number | null
+  items: MapItem[]
 }
 
 /** A row of GET /api/public/impact/map (121): one suburb with three or more deliveries. */
@@ -2514,6 +2501,10 @@ export interface TutorialStep {
   title: string | null
   body: string
   photo_url: string | null
+  /** 129. A short tip or caution shown on this step. */
+  tip?: string | null
+  /** 129. Roughly how long the step takes, 1–600. */
+  minutes?: number | null
 }
 
 /** 093. A community note on a published guide, as GET /api/public/tutorials/:id/notes serves it. */
@@ -2530,34 +2521,6 @@ export interface GuideNote {
   pinned_by: string | null
   pinned_by_name: string | null
   created_at: string
-}
-
-import { SWITCH_TARGET_LABEL, SWITCH_FORCE_LABEL, SWITCH_HOLD_LABEL, suitsChild } from './switch-fit'
-export { SWITCH_TARGET_LABEL, SWITCH_FORCE_LABEL, SWITCH_HOLD_LABEL, suitsChild }
-
-/** "big button, light press, short hold" — the fit line's words, in the board's order. */
-export function switchSummary(guide: Pick<Tutorial, 'switch_target' | 'switch_force' | 'switch_hold'>): string | null {
-  const parts = [
-    guide.switch_target ? SWITCH_TARGET_LABEL[guide.switch_target] : null,
-    guide.switch_force ? SWITCH_FORCE_LABEL[guide.switch_force] : null,
-    guide.switch_hold ? SWITCH_HOLD_LABEL[guide.switch_hold] : null,
-  ].filter(Boolean)
-  return parts.length ? parts.join(', ') : null
-}
-
-/**
- * The board's fit line, "Suits Ollie — big button, light press, short hold",
- * for the first of a parent's children the guide suits. Null when none do or
- * nothing can be compared — the caller then says nothing at all.
- */
-export function fitLine(
-  guide: Pick<Tutorial, 'switch_target' | 'switch_force' | 'switch_hold'>,
-  children: Pick<ChildProfile, 'name' | 'press_force' | 'hold' | 'aim'>[]
-): string | null {
-  const child = children.find((c) => suitsChild(guide, c) === true)
-  if (!child) return null
-  const summary = switchSummary(guide)
-  return `Suits ${child.name?.trim() || 'your child'}${summary ? ` — ${summary}` : ''}`
 }
 
 /** What a member report can be about (065, widened in 118). */

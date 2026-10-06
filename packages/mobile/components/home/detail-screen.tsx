@@ -1,9 +1,12 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { View, Text, ScrollView, Pressable, Image, StyleSheet } from 'react-native'
-import { useRouter } from 'expo-router'
+import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { Tutorial, Part, Tool, StlFile, Recommendation, TutorialStep, TutorialSafetyNote } from '@splat-connect/types'
-import { DIFFICULTY_LABEL, KIND_LABEL, MATURITY_LABEL, checkedOn, fitLine, formatCents, partsTotalCents, printSettingRows } from '@splat-connect/types'
+import {
+  CHILD_QUESTIONS, DEVICE_TYPES, DIFFICULTY_LABEL, KIND_LABEL, MATURITY_LABEL, ONE_HAND_LABEL, SAFETY_CHECKLIST,
+  fitLine, formatAgeRange, printSettingRows,
+} from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { supabase } from '../../lib/supabase'
 import { useSaves } from '../../lib/saves'
@@ -14,21 +17,21 @@ import { useGuideNotes, noteSummary, pinCountLabel } from '../../lib/guide-notes
 import { theme } from '../../lib/theme'
 import { Provenance, type ProvenanceContributor, type ProvenanceOrg } from '../guides/provenance'
 import { PicksRow } from '../guides/picks-row'
-import { GuideSteps } from '../guides/guide-steps'
+import { GuideParts } from '../guides/guide-parts'
 import { GuideTools } from '../guides/guide-tools'
+import { stepProgress, ticksKey, useDeviceTicks } from '../../lib/guide-progress'
 import { CommunityNotes } from '../guides/community-notes'
 import { Badge } from '../ui/Badge'
 import { SaveButton } from '../ui/SaveButton'
 import { PhotoCarousel } from '../ui/PhotoCarousel'
 import { Button } from '../ui/Button'
 import { Section } from '../ui/Section'
+import { Segmented } from '../ui/Segmented'
 import { Skeleton } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
 import { ReportProblem } from '../reports/report-problem'
-import { useFlash, FlashLine } from '../ui/Flash'
 
-const SWITCH_TARGET_LABEL = { large: 'Big button', small: 'Small button' } as const
 const HERO_HEIGHT = 240
 
 /** The lead sentence the board shows under the title; the rest reads below. */
@@ -49,7 +52,26 @@ type TutorialDetail = Tutorial & {
   safety_notes?: TutorialSafetyNote[]
 }
 
-export function DetailScreen({ id, printWith }: { id: string; printWith?: string }) {
+type Tab = 'overview' | 'parts' | 'files' | 'notes'
+
+/** "Who it's for" as label → chosen labels, one row per answered question. */
+function whoRows(t: Tutorial): { label: string; values: string[] }[] {
+  const pick = (opts: readonly { value: string; label: string }[], vals: readonly string[] | null | undefined) =>
+    (vals ?? []).map((v) => opts.find((o) => o.value === v)?.label ?? v)
+  const rows = CHILD_QUESTIONS.map((q) => ({
+    label: q.item === 'access' ? 'How a child uses it' : q.item === 'press_force' ? 'Press force it works with' : q.label,
+    values: [...pick(q.options, t[q.item] as string[] | null), ...(q.item === 'access' && t.one_hand ? [ONE_HAND_LABEL] : [])],
+  }))
+  return rows.filter((r) => r.values.length)
+}
+
+/**
+ * One guide (spec D, mockup https://claude.ai/artifact/6AShefEyee5vRADQb9LCyT):
+ * a short header that says whether it suits your child and what it takes,
+ * then Start building (build mode, one step a screen) and four tabs —
+ * Overview, Parts & tools, Files, Notes — instead of one long scroll.
+ */
+export function DetailScreen({ id, printWith, tab: startTab }: { id: string; printWith?: string; tab?: string }) {
   const router = useRouter()
   const saves = useSaves()
   const children = useMyChildren()
@@ -62,12 +84,21 @@ export function DetailScreen({ id, printWith }: { id: string; printWith?: string
   // GET lands, and a failed GET hides the button rather than guessing.
   const [thanks, setThanks] = useState<{ thanked: boolean; own: boolean } | null>(null)
   const [thanking, setThanking] = useState(false)
-  const [built, setBuilt] = useState(false)
-  const [flash, setFlash] = useFlash()
   const { notes, reload } = useGuideNotes(id)
   const { caps } = useCapabilities()
   const scroller = useRef<ScrollView>(null)
-  const [notesY, setNotesY] = useState(0)
+  const [tab, setTab] = useState<Tab>(startTab === 'notes' || startTab === 'parts' || startTab === 'files' ? startTab : 'overview')
+  const [tabsY, setTabsY] = useState(0)
+  const stepIds = (tutorial?.steps ?? []).map((s) => s.id)
+  const { ticked, reread } = useDeviceTicks(ticksKey('steps', id), stepIds)
+  // Build mode ticks steps while this page stays mounted underneath; read them
+  // again on the way back so Start building becomes Pick up at step N.
+  useFocusEffect(
+    useCallback(() => {
+      reread()
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+  )
 
   // "Pick up where you left off": once per open, when the guide has loaded.
   useEffect(() => {
@@ -151,16 +182,23 @@ export function DetailScreen({ id, printWith }: { id: string; printWith?: string
     })
   }
 
-  // The board's fit callout: only when the guide suits one of the parent's
-  // children. Anything else — no tags, no answers, a mismatch — says nothing.
+  // The fit callout: only when the guide shares an answer with one of the
+  // parent's children. Anything else says nothing.
   const fit = fitLine(tutorial, children)
-  const total = partsTotalCents(tutorial.parts)
   const captionAt = (i: number) => tutorial.photo_captions?.[i] || tutorial.title
   const steps = tutorial.steps ?? []
+  const progress = stepProgress(steps, ticked)
   const summary = noteSummary(notes, steps.length)
   const { lead, rest } = splitLead(tutorial.description ?? '')
-
+  const ages = formatAgeRange(tutorial.age_min, tutorial.age_max)
+  const who = whoRows(tutorial)
+  const settings = printSettingRows(tutorial)
   const primary = tutorial.tutorial_contributors.find((c) => c.role === 'primary') ?? tutorial.tutorial_contributors[0]
+  const openTab = (t: Tab) => {
+    setTab(t)
+    scroller.current?.scrollTo({ y: tabsY, animated: true })
+  }
+  const startBuild = () => router.push({ pathname: '/guides/[id]/build', params: { id: tutorial.id } })
 
   return (
     <ScrollView ref={scroller} style={styles.container} contentContainerStyle={styles.content}>
@@ -200,19 +238,16 @@ export function DetailScreen({ id, printWith }: { id: string; printWith?: string
 
       {/*
         Plain, visible badges rather than library-screen's a11y-hidden wrapper:
-        that hiding exists there because the whole row is one accessible
-        button whose spoken name absorbs every descendant Text, so an unhidden
-        badge both double-announces and collides with the filter chip's own
-        name. Here the title is a plain Text, not a button — nothing
-        aggregates these badges into another element's name, so each is just
-        its own stop in the screen's natural top-to-bottom reading order.
+        here the title is a plain Text, not a button, so each badge is just its
+        own stop in the screen's natural top-to-bottom reading order.
       */}
       <View style={styles.badgeRow}>
         <Badge status={tutorial.difficulty} />
         {tutorial.build_minutes ? <Badge status="draft" label={`${tutorial.build_minutes} min`} /> : null}
-        {tutorial.switch_target ? (
-          <Badge status="accepted" label={SWITCH_TARGET_LABEL[tutorial.switch_target]} />
-        ) : null}
+        {ages ? <Badge status="draft" label={ages} /> : null}
+        {(tutorial.device_types ?? []).map((d) => (
+          <Badge key={d} status="accepted" label={DEVICE_TYPES.find((o) => o.value === d)?.label ?? d} />
+        ))}
         <Badge status={tutorial.kind} label={KIND_LABEL[tutorial.kind]} />
         {tutorial.maturity !== 'complete' ? (
           <Badge status={tutorial.maturity} label={MATURITY_LABEL[tutorial.maturity]} />
@@ -241,7 +276,15 @@ export function DetailScreen({ id, printWith }: { id: string; printWith?: string
       ) : null}
 
       <View style={styles.actions}>
-        <Button label="Download PDF" onPress={openPreview} style={styles.primaryAction} />
+        {steps.length ? (
+          <Button
+            label={progress.allDone ? 'Build it again' : progress.resume ? `Pick up at step ${progress.resume.position}` : 'Start building'}
+            onPress={startBuild}
+            style={styles.primaryAction}
+          />
+        ) : (
+          <Button label="Download PDF" onPress={openPreview} style={styles.primaryAction} />
+        )}
         {thanks && !thanks.own ? (
           <Button
             label={thanks.thanked ? 'Thanked' : 'Thanks'}
@@ -252,16 +295,19 @@ export function DetailScreen({ id, printWith }: { id: string; printWith?: string
           />
         ) : null}
       </View>
+      <Text style={styles.progressLine}>
+        {steps.length
+          ? progress.done
+            ? `${progress.done} of ${progress.total} steps done`
+            : `${steps.length} step${steps.length === 1 ? '' : 's'}${tutorial.stl_files.length ? ` · ${tutorial.stl_files.length} printed part${tutorial.stl_files.length === 1 ? '' : 's'}` : ''}`
+          : 'The steps are in the PDF.'}
+      </Text>
       <View style={styles.reportRow}>
         <ReportProblem subjectKind="guide" subjectId={tutorial.id} subjectLabel={tutorial.title} />
       </View>
 
       {summary.pinned.length ? (
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => scroller.current?.scrollTo({ y: notesY, animated: true })}
-          style={styles.banner}
-        >
+        <Pressable accessibilityRole="button" onPress={() => openTab('notes')} style={styles.banner}>
           <Ionicons name="pin" size={20} color={theme.colors.ink} />
           <Text style={styles.bannerText}>
             <Text style={styles.bannerStrong}>{pinCountLabel(summary.pinned.length)}</Text> since this was written — read before you build.
@@ -270,43 +316,163 @@ export function DetailScreen({ id, printWith }: { id: string; printWith?: string
         </Pressable>
       ) : null}
 
-      {steps.length > 0 ? (
-        <GuideSteps
-          tutorialId={tutorial.id}
-          steps={steps}
-          noteLabels={summary.labels}
-          extras={summary.extras}
-          completion={(total) => (
-            <View style={styles.doneCard}>
-              <Text style={styles.doneTitle}>{`All ${total} steps done`}</Text>
-              <Text style={styles.doneBody}>Log it and this build shows up in My SPLAT.</Text>
-              <Button
-                label={built ? 'Build logged' : 'Mark this build done'}
-                disabled={built}
-                onPress={async () => {
-                  try {
-                    await apiClient.post(`/api/tutorials/${tutorial.id}/build`, {})
-                    setBuilt(true)
-                    setFlash('Build logged — nice work')
-                  } catch {
-                    setFlash('Could not log that. Try again.')
-                  }
-                }}
-              />
-              <FlashLine message={flash} />
-              {thanks && !thanks.own && !thanks.thanked ? (
-                <Button
-                  label={`Say thanks to ${primary?.profiles.name ?? 'the author'}`}
-                  variant="secondary"
-                  loading={thanking}
-                  onPress={() => void sayThanks()}
-                />
+      <View onLayout={(e) => setTabsY(e.nativeEvent.layout.y)} style={styles.tabs}>
+        <Segmented<Tab>
+          label="Guide sections"
+          value={tab}
+          onChange={setTab}
+          options={[
+            { value: 'overview', label: 'Overview' },
+            { value: 'parts', label: 'Parts & tools' },
+            { value: 'files', label: 'Files' },
+            { value: 'notes', label: notes.length ? `Notes ${notes.length}` : 'Notes' },
+          ]}
+        />
+      </View>
+
+      {tab === 'overview' ? (
+        <>
+          {tutorial.safety_notes?.length || tutorial.safety_declared_at ? (
+            <View style={styles.safety}>
+              <Text style={styles.cardTitle}>Before you start</Text>
+              {(tutorial.safety_notes ?? []).map((n) => (
+                <View key={n.id} style={styles.safetyNote}>
+                  <Text style={styles.safetyTitle}>{n.title}</Text>
+                  {n.detail ? <Text style={styles.small}>{n.detail}</Text> : null}
+                </View>
+              ))}
+              {tutorial.safety_declared_at ? (
+                <Text style={styles.small}>{`The author checked all ${SAFETY_CHECKLIST.length} safety points: tool-only battery doors, no choking-size parts, no sharp edges, cleanable materials, no mains, no strangling cords.`}</Text>
               ) : null}
             </View>
+          ) : null}
+
+          {rest ? (
+            <Section title="About this guide">
+              <Text style={styles.description}>{rest}</Text>
+            </Section>
+          ) : null}
+
+          {tutorial.toy_name || tutorial.works_with || tutorial.no_build_note ? (
+            <Section title={tutorial.kind === 'toy_adaptation' ? 'The toy' : 'Good to know'}>
+              {tutorial.toy_name ? <Text style={styles.description}>{[tutorial.toy_name, tutorial.toy_brand].filter(Boolean).join(' · ')}</Text> : null}
+              {tutorial.works_with ? <Text style={styles.small}>{`Works with: ${tutorial.works_with}`}</Text> : null}
+              {tutorial.no_build_note ? <Text style={styles.small}>{tutorial.no_build_note}</Text> : null}
+            </Section>
+          ) : null}
+
+          {who.length ? (
+            <Section title="Who it's for">
+              {who.map((row) => (
+                <View key={row.label} style={styles.whoRow}>
+                  <Text style={styles.whoLabel}>{row.label}</Text>
+                  <Text style={styles.small}>{row.values.join(' · ')}</Text>
+                </View>
+              ))}
+            </Section>
+          ) : null}
+
+          {steps.length ? (
+            <Section title={`${steps.length} step${steps.length === 1 ? '' : 's'}`} hint="Start building shows one step a screen.">
+              {steps.map((st) => {
+                const done = ticked.has(st.id)
+                return (
+                  <View key={st.id} style={styles.stepRow}>
+                    <View style={[styles.stepNum, done && styles.stepNumDone]}>
+                      {done ? <Ionicons name="checkmark" size={14} color={theme.colors.onColor} /> : <Text style={styles.stepNumText}>{st.position}</Text>}
+                    </View>
+                    <Text style={[styles.stepTitle, done && styles.muted]} numberOfLines={2}>
+                      {st.title || st.body}
+                    </Text>
+                    {summary.labels.get(st.position) ? <Ionicons name="chatbubble-ellipses-outline" size={15} color={theme.colors.primaryDark} /> : null}
+                  </View>
+                )
+              })}
+              {summary.extras.length ? <Text style={styles.small}>{`+ ${summary.extras.length} step${summary.extras.length === 1 ? '' : 's'} added by the community — see Notes.`}</Text> : null}
+            </Section>
+          ) : null}
+
+          {tutorial.tutorial_recommendations.length > 0 ? (
+            <PicksRow
+              recommendations={tutorial.tutorial_recommendations}
+              firstName={primary?.profiles.name.split(' ')[0] ?? 'Creator'}
+              onOpen={(rid) => router.push(`/guides/${rid}`)}
+            />
+          ) : null}
+
+          <AnimatedPressable
+            onPress={() => router.push({ pathname: '/explore/makers-wanted/new', params: { guide: tutorial.id } })}
+            accessibilityRole="button"
+            accessibilityLabel="Can't build it? Ask a maker nearby"
+            pressScale={0.985}
+            style={styles.printCard}
+          >
+            <View style={styles.printHeader}>
+              <Text style={styles.printTitle}>Can&apos;t build it? Ask a maker nearby</Text>
+              <Ionicons name="chevron-forward" size={16} color={theme.colors.primary} />
+            </View>
+            <Text style={styles.printHint}>
+              A maker nearby gives the time and the skill; you cover the parts. You agree a pickup in My exchanges.
+            </Text>
+          </AnimatedPressable>
+        </>
+      ) : tab === 'parts' ? (
+        <>
+          <GuideParts tutorialId={tutorial.id} parts={tutorial.parts} pricesCheckedOn={tutorial.prices_checked_on} />
+          <GuideTools tutorialId={tutorial.id} tools={tutorial.tools} />
+        </>
+      ) : tab === 'files' ? (
+        <>
+          <Section title="Guide PDF" hint="The same guide, to print and keep by the bench.">
+            <Button label="Download PDF" variant="secondary" onPress={openPreview} />
+          </Section>
+          {settings.length ? (
+            <Section title="Print settings">
+              <View style={styles.settings}>
+                {settings.map((r) => (
+                  <View key={r.k} style={styles.setting}>
+                    <Text style={styles.settingKey}>{r.k}</Text>
+                    <Text style={styles.settingValue}>{r.v}</Text>
+                  </View>
+                ))}
+              </View>
+            </Section>
+          ) : null}
+          {/* The way into printing. Keyed on the guide having STL files rather
+              than on its kind: a print request's parts ARE those files. */}
+          {tutorial.stl_files.length > 0 ? (
+            <>
+              <Section title="Printable parts">
+                {tutorial.stl_files.map((f) => (
+                  <View key={f.id} style={styles.fileRow}>
+                    <Ionicons name="cube-outline" size={17} color={theme.colors.primary} />
+                    <Text style={styles.fileName} numberOfLines={1}>{f.filename}</Text>
+                  </View>
+                ))}
+              </Section>
+              <AnimatedPressable
+                onPress={() => router.push({ pathname: '/printing', params: printWith ? { guide: tutorial.id, printWith } : { guide: tutorial.id } })}
+                accessibilityRole="button"
+                accessibilityLabel="Ask someone to print"
+                accessibilityHint="Pick up to three printers nearby"
+                pressScale={0.985}
+                style={styles.printCard}
+              >
+                <View style={styles.printHeader}>
+                  <Text style={styles.printTitle}>Ask someone to print</Text>
+                  <Ionicons name="chevron-forward" size={16} color={theme.colors.primary} />
+                </View>
+                <Text style={styles.printHint}>
+                  {tutorial.stl_files.length} printable part{tutorial.stl_files.length === 1 ? '' : 's'} · pick up to three
+                  printers nearby
+                </Text>
+              </AnimatedPressable>
+            </>
+          ) : (
+            <Text style={styles.small}>Nothing to print for this guide.</Text>
           )}
-        />
-      ) : null}
-      <View onLayout={(e) => setNotesY(e.nativeEvent.layout.y)}>
+        </>
+      ) : (
         <CommunityNotes
           tutorialId={tutorial.id}
           guideTitle={tutorial.title}
@@ -317,108 +483,7 @@ export function DetailScreen({ id, printWith }: { id: string; printWith?: string
           canPin={!!thanks?.own || !!caps?.isAdmin}
           viewerId={caps?.profile.id ?? null}
         />
-      </View>
-
-      {rest ? (
-        <Section title="About this guide">
-          <Text style={styles.description}>{rest}</Text>
-        </Section>
-      ) : null}
-
-      <Section title="Parts" hint="What you'll need to buy or salvage.">
-        {tutorial.parts.length ? (
-          tutorial.parts.map((item) => (
-            <View key={item.id} style={styles.listRow}>
-              <Ionicons name="cube-outline" size={17} color={theme.colors.primary} />
-              <Text style={styles.listItem}>{`${item.name} ×${item.quantity}${item.is_optional ? ' (optional)' : ''}`}</Text>
-              {item.price_cents != null ? <Text style={styles.cost}>{formatCents(item.price_cents)}</Text> : null}
-            </View>
-          ))
-        ) : (
-          <Text style={styles.listItem}>No parts listed.</Text>
-        )}
-        {total != null ? (
-          <>
-            <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Total</Text>
-              <Text style={styles.cost}>{formatCents(total)}</Text>
-            </View>
-            {tutorial.prices_checked_on ? <Text style={styles.checked}>{`Prices checked ${checkedOn(tutorial.prices_checked_on)}`}</Text> : null}
-          </>
-        ) : null}
-      </Section>
-
-      <GuideTools tutorialId={tutorial.id} tools={tutorial.tools} />
-
-      {tutorial.safety_notes?.length ? (
-        <Section title="Safety notes">
-          {tutorial.safety_notes.map((n) => (
-            <View key={n.id} style={styles.safetyNote}>
-              <Text style={styles.safetyTitle}>{n.title}</Text>
-              {n.detail ? <Text style={styles.description}>{n.detail}</Text> : null}
-            </View>
-          ))}
-        </Section>
-      ) : null}
-
-      {/* The way into printing. Keyed on the guide having STL files rather than
-          on its kind: a print request's parts ARE those files, so a guide
-          without any has nothing to ask for, whatever kind it is. */}
-      {printSettingRows(tutorial).length ? (
-        <Section title="Files & print settings">
-          <View style={styles.settings}>
-            {printSettingRows(tutorial).map((r) => (
-              <View key={r.k} style={styles.setting}>
-                <Text style={styles.settingKey}>{r.k}</Text>
-                <Text style={styles.settingValue}>{r.v}</Text>
-              </View>
-            ))}
-          </View>
-        </Section>
-      ) : null}
-      {tutorial.stl_files.length > 0 ? (
-        <AnimatedPressable
-          onPress={() => router.push({ pathname: '/printing', params: printWith ? { guide: tutorial.id, printWith } : { guide: tutorial.id } })}
-          accessibilityRole="button"
-          accessibilityLabel="Ask someone to print"
-          accessibilityHint="Pick up to three printers nearby"
-          pressScale={0.985}
-          style={styles.printCard}
-        >
-          <View style={styles.printHeader}>
-            <Text style={styles.printTitle}>Ask someone to print</Text>
-            <Ionicons name="chevron-forward" size={16} color={theme.colors.primary} />
-          </View>
-          <Text style={styles.printHint}>
-            {tutorial.stl_files.length} printable part{tutorial.stl_files.length === 1 ? '' : 's'} · pick up to three
-            printers nearby
-          </Text>
-        </AnimatedPressable>
-      ) : null}
-
-      <AnimatedPressable
-        onPress={() => router.push({ pathname: '/explore/makers-wanted/new', params: { guide: tutorial.id } })}
-        accessibilityRole="button"
-        accessibilityLabel="Can't build it? Ask a maker nearby"
-        pressScale={0.985}
-        style={styles.printCard}
-      >
-        <View style={styles.printHeader}>
-          <Text style={styles.printTitle}>Can&apos;t build it? Ask a maker nearby</Text>
-          <Ionicons name="chevron-forward" size={16} color={theme.colors.primary} />
-        </View>
-        <Text style={styles.printHint}>
-          A maker nearby gives the time and the skill; you cover the parts. You agree a pickup in My exchanges.
-        </Text>
-      </AnimatedPressable>
-
-      {tutorial.tutorial_recommendations.length > 0 ? (
-        <PicksRow
-          recommendations={tutorial.tutorial_recommendations}
-          firstName={primary?.profiles.name.split(' ')[0] ?? 'Creator'}
-          onOpen={(rid) => router.push(`/guides/${rid}`)}
-        />
-      ) : null}
+      )}
     </ScrollView>
   )
 }
@@ -427,11 +492,26 @@ const styles = StyleSheet.create({
   banner: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2), padding: theme.spacing(3), borderRadius: theme.radii.field, backgroundColor: theme.colors.honeySoft, marginBottom: theme.spacing(3) },
   bannerText: { flex: 1, fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.ink },
   bannerStrong: { fontFamily: theme.fonts.black },
-  safetyNote: { paddingVertical: theme.spacing(2), gap: theme.spacing(1) },
+  safetyNote: { paddingVertical: theme.spacing(1), gap: 2 },
+  safety: { padding: theme.spacing(3), gap: theme.spacing(1), borderRadius: theme.radii.field, backgroundColor: theme.colors.honeySoft, marginTop: theme.spacing(4) },
+  cardTitle: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink },
+  small: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.text, lineHeight: 19 },
+  progressLine: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.muted, textAlign: 'center', marginTop: theme.spacing(2) },
+  tabs: { marginTop: theme.spacing(2), marginBottom: theme.spacing(1) },
+  whoRow: { paddingVertical: theme.spacing(1), gap: 2 },
+  whoLabel: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.muted },
+  stepRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3), paddingVertical: theme.spacing(1) },
+  stepNum: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.accentLight },
+  stepNumDone: { backgroundColor: theme.colors.success },
+  stepNumText: { fontFamily: theme.fonts.black, fontSize: theme.type.caption, color: theme.colors.ink },
+  stepTitle: { flex: 1, fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.ink },
+  muted: { color: theme.colors.muted },
+  fileRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3), paddingVertical: theme.spacing(1) },
+  fileName: { flex: 1, fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.text },
   safetyTitle: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.ink },
   settings: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2) },
   setting: { width: '48%', padding: theme.spacing(2), borderRadius: theme.radii.field, backgroundColor: theme.colors.surfaceSunken },
-  settingKey: { fontFamily: theme.fonts.bold, fontSize: 12, color: theme.colors.muted },
+  settingKey: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.muted },
   settingValue: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink },
   container: { flex: 1, backgroundColor: theme.colors.background },
   content: { paddingHorizontal: theme.spacing(4), paddingBottom: theme.spacing(10) },
@@ -447,7 +527,7 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing(1),
     ...theme.shadow(1),
   },
-  heroCountText: { fontFamily: theme.fonts.black, fontSize: 12, color: theme.colors.ink },
+  heroCountText: { fontFamily: theme.fonts.black, fontSize: theme.type.caption, color: theme.colors.ink },
   lead: {
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.body,
@@ -531,23 +611,8 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing(3),
   },
   fitText: { flex: 1, fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.ink },
-  doneCard: { marginTop: theme.spacing(3), padding: theme.spacing(4), gap: theme.spacing(2), borderRadius: theme.radii.panel, backgroundColor: theme.colors.mintSoft, alignItems: 'center' },
-  doneTitle: { fontFamily: theme.fonts.display, fontSize: 20, color: theme.colors.ink },
-  doneBody: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.ink, textAlign: 'center' },
   strip: { flexDirection: 'row', gap: theme.spacing(2), marginBottom: theme.spacing(2) },
   thumb: { width: 52, height: 52, borderRadius: theme.radii.field, overflow: 'hidden', borderWidth: 2, borderColor: 'transparent' },
   thumbOn: { borderColor: theme.colors.primaryDark },
   thumbImage: { width: '100%', height: '100%' },
-  cost: { fontFamily: theme.fonts.numeral, fontSize: theme.type.caption, color: theme.colors.ink },
-  totalRow: { flexDirection: 'row', justifyContent: 'space-between', padding: theme.spacing(3), borderRadius: theme.radii.field, backgroundColor: theme.colors.accentLight, marginTop: theme.spacing(2) },
-  totalLabel: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink },
-  checked: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted, marginTop: theme.spacing(1) },
-  listRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3) },
-  listItem: {
-    flex: 1,
-    fontFamily: theme.fonts.regular,
-    fontSize: theme.type.label,
-    color: theme.colors.text,
-    paddingVertical: theme.spacing(2),
-  },
 })

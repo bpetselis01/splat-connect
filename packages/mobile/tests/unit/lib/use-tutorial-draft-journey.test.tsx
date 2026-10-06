@@ -115,7 +115,7 @@ describe('retrying after a failed save', () => {
     expect(mockPut).not.toHaveBeenCalled()
     await act(async () => { await draft.flush() })
     expect(mockPost).toHaveBeenCalledTimes(2)
-    expect(mockPut).toHaveBeenCalledWith('/api/tutorials/t1/steps', { steps: [{ title: null, body: 'Open it', photo_url: null }] })
+    expect(mockPut).toHaveBeenCalledWith('/api/tutorials/t1/steps', { steps: [{ title: null, body: 'Open it', photo_url: null, tip: null, minutes: null }] })
   })
 
   it('goes error then saving then saved on a retry, and clears the message', async () => {
@@ -241,7 +241,7 @@ describe('steps, parts and safety notes as sent', () => {
     const body = `🧸 "grip" <tight> & 'twist' ${'x'.repeat(5000)}`
     act(() => draft.replaceSteps([{ title: '🧸 <1> & "2"', body, photo_url: null }]))
     await tick()
-    expect(mockPut.mock.calls[0][1].steps[0]).toEqual({ title: '🧸 <1> & "2"', body, photo_url: null })
+    expect(mockPut.mock.calls[0][1].steps[0]).toEqual({ title: '🧸 <1> & "2"', body, photo_url: null, tip: null, minutes: null })
   })
 
   it('keeps leading and trailing whitespace inside a step body', async () => {

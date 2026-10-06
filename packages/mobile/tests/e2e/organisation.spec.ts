@@ -41,7 +41,7 @@ test('a backing request walks the queue: back it, then approve the submission', 
 
   // And the guide is now public.
   await page.goto('/guides')
-  await page.getByPlaceholder('Search by toy name').fill(title)
+  await page.getByPlaceholder('Search guides').fill(title)
   await expect(page.getByRole('button', { name: title })).toBeVisible()
 })
 

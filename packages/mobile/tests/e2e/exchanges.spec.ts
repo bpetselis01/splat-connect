@@ -100,7 +100,7 @@ test('a donation runs from request to handoff, and the toy changes hands', async
     // The toy is out of the library — it belongs to someone who never asked
     // for it to be listed.
     await requesterPage.goto('/toy-library')
-    await requesterPage.getByPlaceholder('Search by toy name').fill(toyName)
+    await requesterPage.getByPlaceholder('Search toys').fill(toyName)
     // The empty state first, then the absence. A bare toHaveCount(0) is
     // satisfied the instant it is evaluated — including before the search has
     // rendered anything at all — so on its own it would pass whether or not
@@ -174,7 +174,7 @@ test('either side can withdraw while the handoff is still open', async ({ browse
 
     // And the toy is back on the shelf for everyone else.
     await requesterPage.goto('/toy-library')
-    await requesterPage.getByPlaceholder('Search by toy name').fill(toyName)
+    await requesterPage.getByPlaceholder('Search toys').fill(toyName)
     await expect(requesterPage.getByRole('button', { name: toyName, exact: true })).toBeVisible()
   } finally {
     await requesterPage.context().close()

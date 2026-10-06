@@ -45,7 +45,7 @@ it('groups features in the board order under uppercase headings', () => {
   const heads = screen.getAllByTestId('sheet-group').map((n) => n.props.children)
   expect(heads).toEqual(['Learn and build', 'Toys', 'Printing', 'Community', 'Me'])
   expect(StyleSheet.flatten(screen.getAllByTestId('sheet-group')[0].props.style)).toMatchObject({
-    fontSize: 12, textTransform: 'uppercase', color: theme.colors.muted,
+    fontSize: theme.type.caption, textTransform: 'uppercase', color: theme.colors.muted,
   })
 })
 

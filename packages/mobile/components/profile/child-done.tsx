@@ -6,7 +6,7 @@
 import { useEffect, useState } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
-import { childNeedsLine, matchesForChild, type ChildProfile, type Toy, type Tutorial } from '@splat-connect/types'
+import { matchesForChild, type ChildProfile, type ChildTags, type Toy, type Tutorial } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { Button } from '../ui/Button'
@@ -14,7 +14,7 @@ import { Mascot } from '../ui/TabHero'
 
 const plural = (n: number, one: string) => `${n} ${one}${n === 1 ? '' : 's'}`
 
-export function ChildDone({ child }: { child: Pick<ChildProfile, 'name' | 'press_force' | 'aim' | 'hold'> }) {
+export function ChildDone({ child }: { child: ChildTags & Pick<ChildProfile, 'name'> }) {
   const router = useRouter()
   const [found, setFound] = useState<{ guides: number; toys: number } | null>(null)
 
@@ -43,12 +43,12 @@ export function ChildDone({ child }: { child: Pick<ChildProfile, 'name' | 'press
       {found ? (
         <Text style={styles.line}>
           We found <Text style={styles.strong}>{plural(found.guides, 'guide')}</Text> and{' '}
-          <Text style={styles.strong}>{plural(found.toys, 'toy')}</Text> that suit {childNeedsLine(child) ?? 'your child'}.
+          <Text style={styles.strong}>{plural(found.toys, 'toy')}</Text> that suit {name || 'your child'}.
         </Text>
       ) : null}
       <Button
         label="See the matches"
-        onPress={() => router.replace(found?.guides ? '/guides?suits=1' : '/guides')}
+        onPress={() => router.replace('/guides')}
         style={styles.cta}
       />
     </View>
@@ -57,10 +57,10 @@ export function ChildDone({ child }: { child: Pick<ChildProfile, 'name' | 'press
 
 const styles = StyleSheet.create({
   done: { alignItems: 'center', paddingVertical: theme.spacing(6) },
-  heading: { fontFamily: theme.fonts.display, fontSize: 25, color: theme.colors.text, marginTop: theme.spacing(4), textAlign: 'center' },
+  heading: { fontFamily: theme.fonts.display, fontSize: theme.type.display, color: theme.colors.text, marginTop: theme.spacing(4), textAlign: 'center' },
   line: {
     fontFamily: theme.fonts.regular,
-    fontSize: 14.5,
+    fontSize: theme.type.label,
     lineHeight: 22,
     color: theme.colors.muted,
     textAlign: 'center',

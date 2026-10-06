@@ -659,7 +659,7 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
                 return (
                   <View key={s.label} style={styles.event}>
                     <View style={[styles.stepDot, STEP_TONE[state]]}>
-                      <Ionicons name={STEP_ICON[state]} size={13} color={state === 'done' ? theme.colors.surface : theme.colors.ink} />
+                      <Ionicons name={STEP_ICON[state]} size={13} color={state === 'done' ? theme.colors.onColor : theme.colors.ink} />
                     </View>
                     <View style={styles.eventText}>
                       <Text style={[styles.eventTitle, state === 'todo' && styles.stepTodo]}>{s.label}</Text>
@@ -795,17 +795,17 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     textAlign: 'center',
     fontFamily: theme.fonts.black,
-    fontSize: 11,
+    fontSize: theme.type.micro,
     lineHeight: 18,
     color: theme.colors.ink,
     backgroundColor: theme.colors.accentLight,
   },
-  tabText: { fontFamily: theme.fonts.black, fontSize: 12.5, color: theme.colors.ink },
+  tabText: { fontFamily: theme.fonts.black, fontSize: theme.type.caption, color: theme.colors.ink },
   panel: { gap: theme.spacing(3), padding: theme.spacing(4) },
   panelTitle: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink },
   tabHead: { gap: theme.spacing(1) },
-  tabTitle: { fontFamily: theme.fonts.display, fontSize: 18, color: theme.colors.text },
-  tabHint: { fontFamily: theme.fonts.regular, fontSize: 13, color: theme.colors.muted },
+  tabTitle: { fontFamily: theme.fonts.display, fontSize: theme.type.heading, color: theme.colors.text },
+  tabHint: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted },
   // The board's live-status box: 16px, the success tint.
   headline: {
     gap: theme.spacing(1),
@@ -824,7 +824,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   statN: { fontFamily: theme.fonts.display, fontSize: theme.type.heading, color: theme.colors.ink },
-  statLabel: { fontFamily: theme.fonts.bold, fontSize: 11, color: theme.colors.muted },
+  statLabel: { fontFamily: theme.fonts.bold, fontSize: theme.type.micro, color: theme.colors.muted },
   event: { flexDirection: 'row', gap: theme.spacing(3) },
   stepDot: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
   stepTodo: { color: theme.colors.muted },
@@ -836,8 +836,8 @@ const styles = StyleSheet.create({
   eventDate: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted },
   hero: { height: 160, borderRadius: 16, width: '100%' },
   note: { gap: 2, padding: theme.spacing(3), borderRadius: 14, backgroundColor: theme.colors.apricotSoft },
-  noteLead: { fontFamily: theme.fonts.black, fontSize: 13.5, lineHeight: 20, color: theme.colors.ink },
-  noteText: { fontFamily: theme.fonts.regular, fontSize: 13.5, lineHeight: 20, color: theme.colors.ink },
+  noteLead: { fontFamily: theme.fonts.black, fontSize: theme.type.caption, lineHeight: 20, color: theme.colors.ink },
+  noteText: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, lineHeight: 20, color: theme.colors.ink },
   summary: {
     fontFamily: theme.fonts.semiBold,
     fontSize: theme.type.label,

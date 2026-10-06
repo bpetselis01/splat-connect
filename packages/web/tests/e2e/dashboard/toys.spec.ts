@@ -28,7 +28,7 @@ test('a contributor adds a toy, edits it, uploads a cover photo, publishes it, a
 
     await page.getByRole('tab', { name: 'Details' }).click()
     await page.locator('#toy-condition').fill('9')
-    await page.getByRole('button', { name: 'Save' }).click()
+    await page.getByRole('button', { name: 'Save', exact: true }).click()
     // Scoped to <main>: the rail carries a "Saved" row of its own.
     await expect(page.getByRole('main').getByText('Saved')).toBeVisible()
 

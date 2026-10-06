@@ -39,21 +39,22 @@ export function EditRecommendationsSection({
   /** Approved tutorials, from /api/public/tutorials. */
   candidates: Pick<Tutorial, 'id' | 'title' | 'kind'>[]
   /** The full list, in order — the route replaces rather than appends. */
-  onSave: (recommendedIds: string[]) => Promise<void>
+  onSave: (picks: { recommended_id: string; required: boolean }[]) => Promise<void>
 }) {
   const router = useRouter()
   const showToast = useToast()
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const chosen = recommendations.map((r) => r.tutorials.id)
+  const picks = recommendations.map((r) => ({ recommended_id: r.tutorials.id, required: !!r.required }))
+  const chosen = picks.map((p) => p.recommended_id)
   const options = candidates.filter((t) => t.id !== tutorialId && !chosen.includes(t.id))
 
-  async function save(ids: string[], toastMessage: string) {
+  async function save(next: typeof picks, toastMessage: string) {
     setPending(true)
     setError(null)
     try {
-      await onSave(ids)
+      await onSave(next)
       showToast(toastMessage)
       router.refresh()
     } catch {
@@ -81,10 +82,24 @@ export function EditRecommendationsSection({
                   Not yet approved — hidden from the public page
                 </span>
               )}
+              <label className="flex items-center gap-1.5 text-sm">
+                <input
+                  type="checkbox"
+                  disabled={pending}
+                  checked={!!r.required}
+                  onChange={(e) =>
+                    save(
+                      picks.map((p) => (p.recommended_id === r.tutorials.id ? { ...p, required: e.target.checked } : p)),
+                      'Recommendation updated'
+                    )
+                  }
+                />
+                Required first
+              </label>
               <button
                 type="button"
                 disabled={pending}
-                onClick={() => save(chosen.filter((id) => id !== r.tutorials.id), 'Recommendation removed')}
+                onClick={() => save(picks.filter((p) => p.recommended_id !== r.tutorials.id), 'Recommendation removed')}
                 className="btn btn-ghost btn-sm ml-auto"
               >
                 Remove
@@ -103,7 +118,7 @@ export function EditRecommendationsSection({
             id="add-recommendation"
             value=""
             disabled={pending || options.length === 0}
-            onChange={(e) => e.target.value && save([...chosen, e.target.value], 'Recommendation added')}
+            onChange={(e) => e.target.value && save([...picks, { recommended_id: e.target.value, required: false }], 'Recommendation added')}
             className="field"
           >
             <option value="">
