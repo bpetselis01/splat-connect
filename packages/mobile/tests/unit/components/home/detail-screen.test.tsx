@@ -321,17 +321,18 @@ describe('DetailScreen', () => {
       render(<DetailScreen id="1" />)
       await screen.findByText('Build a Robot Arm')
       const CARD_Y = 900
-      // The jump measures the print card against the scroller's inner node, then scrolls to it.
-      const scroller = screen.UNSAFE_getByType(ScrollView).instance as unknown as { getInnerViewNode: () => unknown; scrollTo: jest.Mock }
-      scroller.getInnerViewNode = () => ({})
+      // The jump measures the print card against the scroller's inner host ref (iOS refuses a node handle), then scrolls to it.
+      const INNER = { __host: true }
+      const scroller = screen.UNSAFE_getByType(ScrollView).instance as unknown as { getInnerViewRef: () => unknown; scrollTo: jest.Mock }
+      scroller.getInnerViewRef = () => INNER
       const scrollTo = jest.spyOn(scroller, 'scrollTo')
       fireEvent.press(screen.getByTestId('need-print'))
       expect(screen.getByRole('tab', { name: 'Files', selected: true })).toBeTruthy()
       // The card exists once Files has rendered; measure it before the next frame fires.
       const card = screen.UNSAFE_getAllByProps({ testID: 'print-card' }).map((n) => n.instance).find(Boolean) as unknown as { measureLayout: jest.Mock }
-      card.measureLayout = jest.fn((_n, ok: (x: number, y: number) => void) => ok(0, CARD_Y))
+      card.measureLayout = jest.fn((_rel, ok: (x: number, y: number) => void) => ok(0, CARD_Y))
       act(() => { jest.advanceTimersByTime(50) })
-      expect(card.measureLayout).toHaveBeenCalled()
+      expect(card.measureLayout.mock.calls[0][0]).toBe(INNER)
       expect(scrollTo).toHaveBeenLastCalledWith({ y: CARD_Y - ROW_SCROLL_MARGIN, animated: true })
       expect(JSON.stringify(screen.toJSON())).toContain('"borderWidth":3')
       act(() => { jest.advanceTimersByTime(1700) })

@@ -202,9 +202,9 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
   )
 
   const scrollToRow = (row: ComponentRef<typeof View>) => {
-    const inner = (scroller.current as unknown as { getInnerViewNode?: () => unknown } | null)?.getInnerViewNode?.()
+    const inner = (scroller.current as unknown as { getInnerViewRef?: () => unknown } | null)?.getInnerViewRef?.()
     if (!inner) return
-    // ponytail: measureLayout against the inner node; if RN drops getInnerViewNode, sum onLayout offsets instead.
+    // ponytail: measureLayout against the inner view's host ref (getInnerViewNode is a number under Fabric and is refused); if RN drops getInnerViewRef, sum onLayout offsets instead.
     ;(row as unknown as { measureLayout: (n: unknown, ok: (x: number, y: number) => void, fail: () => void) => void }).measureLayout(
       inner,
       (_x, y) => scroller.current?.scrollTo({ y: Math.max(0, y - ROW_SCROLL_MARGIN), animated: true }),
