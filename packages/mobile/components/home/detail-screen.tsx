@@ -295,6 +295,14 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
                 </Text>
               </View>
             ) : null}
+            <View style={styles.heroActions}>
+              <ItemActions
+                save={{ slug: 'tutorials', id: tutorial.id, saves }}
+                thanks={thanks && !thanks.own ? { to: thankNames, thanked: thanks.thanked, busy: thanking, send: sayThanks } : undefined}
+                report={{ kind: 'guide', id: tutorial.id, label: tutorial.title }}
+                onToast={toaster.show}
+              />
+            </View>
             {tutorial.photo_urls.length > 0 ? (
               <View style={styles.expand} pointerEvents="none">
                 <Ionicons name="expand" size={18} color={theme.colors.ink} />
@@ -311,14 +319,6 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
           {eyebrow ? <Text style={styles.meta}>{eyebrow}</Text> : null}
           {lead ? <Text style={styles.lead}>{lead}</Text> : null}
           <Byline contributors={tutorial.tutorial_contributors} orgs={tutorial.tutorial_orgs} onPerson={toPerson} onOrg={toOrg} />
-          <View style={styles.actions}>
-            <ItemActions
-              save={{ slug: 'tutorials', id: tutorial.id, saves }}
-              thanks={thanks && !thanks.own ? { to: thankNames, thanked: thanks.thanked, busy: thanking, send: sayThanks } : undefined}
-              report={{ kind: 'guide', id: tutorial.id, label: tutorial.title }}
-              onToast={toaster.show}
-            />
-          </View>
 
           <View style={styles.facts}>
             {tutorial.build_minutes ? (
@@ -662,7 +662,7 @@ const styles = StyleSheet.create({
   expand: { position: 'absolute', right: theme.spacing(3), top: HERO_HEIGHT - 44, width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.surface, alignItems: 'center', justifyContent: 'center', ...theme.shadow(1) },
   heroCountText: { fontFamily: theme.fonts.black, fontSize: theme.type.caption, color: theme.colors.ink },
   meta: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.muted, marginTop: theme.spacing(1) },
-  actions: { marginTop: theme.spacing(4) },
+  heroActions: { position: 'absolute', top: theme.spacing(3), right: theme.spacing(3) },
   stack: { gap: theme.spacing(6), paddingTop: theme.spacing(3) },
   flush: { marginTop: 0, marginBottom: 0 },
   badgeRow: { flexDirection: 'row', marginBottom: theme.spacing(1) },

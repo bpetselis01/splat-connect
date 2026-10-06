@@ -131,12 +131,12 @@ prices), 20pt card padding, one section gap, no fixed line height in cards.
 
 ## Round 3: actions, picks, notes on the step (built 2026-10-06)
 
-Byron chose option B of three mocked placements (canvas row "Where Save,
-Thanks and Report go").
+Placement: Byron wanted them at the top right of the photo (option A of the
+mocked three; B, a labelled row, was built first and moved).
 
-- **Save · Thanks · Report** are one row of labelled buttons
-  (`components/ui/ItemActions.tsx`) under the byline on the guide page and
-  under the holder line on the toy page. Save and Thanks fill (apricot) and
+- **Save · Thanks · Report** are three round frosted icon buttons
+  (`components/ui/ItemActions.tsx`) over the top right of the photo on the
+  guide page and the toy page. Save and Thanks fill (apricot) and
   raise a toast (`components/ui/Toast.tsx`); Save's toast has Undo. Report
   opens the existing sheet (ReportProblem's new `trigger`). Thanks is left
   out on your own guide or toy. The old title-row heart, the guide's

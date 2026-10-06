@@ -286,14 +286,14 @@ describe('DetailScreen thanks', () => {
     expect(await screen.findByRole('button', { name: 'Thank Sam' })).toBeTruthy()
   })
 
-  it('says so in a toast when the thanks is sent, and the button reads Thanked', async () => {
+  it('says so in a toast when the thanks is sent, and the button becomes Thanked', async () => {
     withThanks({ thanked: false, own: false })
     ;(apiClient.post as jest.Mock).mockResolvedValue({})
     render(<DetailScreen id="1" />)
     fireEvent.press(await screen.findByRole('button', { name: 'Thank Sam' }))
     expect(await screen.findByText('Thanks sent to Sam')).toBeTruthy()
     expect(apiClient.post).toHaveBeenCalledWith('/api/tutorials/1/thanks', {})
-    expect(screen.getByText('Thanked')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Thanked Sam' })).toBeTruthy()
   })
 
   it('confirms a save with a toast that can undo it', async () => {
@@ -303,9 +303,9 @@ describe('DetailScreen thanks', () => {
     render(<DetailScreen id="1" />)
     fireEvent.press(await screen.findByRole('button', { name: 'Save' }))
     expect(screen.getByText('Saved to My saves')).toBeTruthy()
-    expect(screen.getByText('Saved')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Saved. Tap to remove from My saves' })).toBeTruthy()
     fireEvent.press(screen.getByText('Undo'))
-    expect(await screen.findByText('Save')).toBeTruthy()
+    expect(await screen.findByRole('button', { name: 'Save' })).toBeTruthy()
   })
 
   it('never offers it on your own guide', async () => {

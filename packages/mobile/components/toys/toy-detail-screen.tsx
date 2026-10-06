@@ -161,6 +161,14 @@ export function ToyDetailScreen({ id }: { id: string }) {
           switchUrl={toy.switch_adapted ? toy.switch_photo_url : null}
           onPress={setViewing}
         />
+        <View style={styles.heroActions}>
+          <ItemActions
+            save={{ slug: 'toys', id: toy.id, saves }}
+            thanks={thankTo ? { to: thankTo, thanked, busy: thanking, send: thankHolder } : undefined}
+            report={{ kind: 'toy', id: toy.id, label: toy.name }}
+            onToast={toaster.show}
+          />
+        </View>
       </View>
 
       <View style={styles.titleRow}>
@@ -187,13 +195,6 @@ export function ToyDetailScreen({ id }: { id: string }) {
       ) : personName ? (
         <Text style={styles.holder}>{`Held by ${personName}${place ? ` · ${place}` : ''}`}</Text>
       ) : null}
-
-      <ItemActions
-        save={{ slug: 'toys', id: toy.id, saves }}
-        thanks={thankTo ? { to: thankTo, thanked, busy: thanking, send: thankHolder } : undefined}
-        report={{ kind: 'toy', id: toy.id, label: toy.name }}
-        onToast={toaster.show}
-      />
 
       <View style={styles.pillRow}>
         {toy.offer_type ? <Pill variant="large" icon="gift-outline" label={OFFER_LABEL[toy.offer_type]} bg={theme.colors.tone.mint.bg} fg={theme.colors.tone.mint.fg} /> : null}
@@ -285,6 +286,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   content: { paddingHorizontal: theme.spacing(4), paddingBottom: theme.spacing(10), gap: theme.spacing(4) },
   hero: { marginHorizontal: -theme.spacing(4), marginBottom: -theme.spacing(1) },
+  heroActions: { position: 'absolute', top: theme.spacing(3), right: theme.spacing(3) },
   pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2) },
   notes: {
     borderRadius: theme.radii.panel,
