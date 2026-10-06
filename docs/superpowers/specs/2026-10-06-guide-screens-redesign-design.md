@@ -129,6 +129,28 @@ prices), 20pt card padding, one section gap, no fixed line height in cards.
   marks the article read, or `Back to Learn` on the last one. The hero slot
   stays To be completed (pending registry).
 
+## Round 3: actions, picks, notes on the step (built 2026-10-06)
+
+Byron chose option B of three mocked placements (canvas row "Where Save,
+Thanks and Report go").
+
+- **Save · Thanks · Report** are one row of labelled buttons
+  (`components/ui/ItemActions.tsx`) under the byline on the guide page and
+  under the holder line on the toy page. Save and Thanks fill (apricot) and
+  raise a toast (`components/ui/Toast.tsx`); Save's toast has Undo. Report
+  opens the existing sheet (ReportProblem's new `trigger`). Thanks is left
+  out on your own guide or toy. The old title-row heart, the guide's
+  thanks/report row and the toy's thank/report footer are gone.
+- **Also worth a look** cards: 168pt wide, photo edge to edge, two-line
+  title at a fixed height, difficulty and build time on one line, "Do this
+  first" on the photo. The public guide embed now sends each pick's
+  build_minutes.
+- **Notes on the step**: build mode lists the step's approved (pinned) notes
+  in a "Notes from builders" panel that opens and closes in place, with the
+  author, "Approved by", the note, its photo (full screen on tap) and when.
+  Unapproved notes stay on the Notes tab, linked by count.
+- The toy page's photos open in the full-screen viewer too.
+
 ## Out of scope
 
 The guide library; the guide editor's long-step prompt; pinch-zoom on Android.
