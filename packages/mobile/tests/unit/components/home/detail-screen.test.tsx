@@ -232,6 +232,45 @@ describe('DetailScreen', () => {
     expect(screen.queryByLabelText('Ask someone to print')).toBeNull()
     expect(screen.getByText('Nothing to print for this guide.')).toBeTruthy()
   })
+
+  describe('What you’ll need', () => {
+    it('has a row per destination, each naming the tab it opens', async () => {
+      mockEndpoints({ detail: Promise.resolve({ ...DETAIL, stl_files: [{ id: 'f1', tutorial_id: '1', filename: 'base.stl', file_url: '1/base.stl', print_minutes: 55, filament_grams: 14, material: 'PLA' }] }) })
+      render(<DetailScreen id="1" />)
+      await screen.findByText('Build a Robot Arm')
+      expect(screen.getByRole('button', { name: '1 part, opens Supplies' })).toBeTruthy()
+      expect(screen.getByRole('button', { name: '1 tool, opens Supplies' })).toBeTruthy()
+      expect(screen.getByRole('button', { name: '1 part to 3D print, opens Files' })).toBeTruthy()
+      expect(screen.queryByText(/gathered/)).toBeNull()
+      expect(screen.queryByText(/about \$/)).toBeNull()
+    })
+
+    it('hides the print row when the guide has no STL files', async () => {
+      render(<DetailScreen id="1" />)
+      await screen.findByText('Build a Robot Arm')
+      expect(screen.queryByTestId('need-print')).toBeNull()
+    })
+
+    it('the print row opens Files and rings the print card, then the ring goes', async () => {
+      jest.useFakeTimers()
+      mockEndpoints({ detail: Promise.resolve({ ...DETAIL, stl_files: [{ id: 'f1', tutorial_id: '1', filename: 'base.stl', file_url: '1/base.stl', print_minutes: null, filament_grams: null, material: null }] }) })
+      render(<DetailScreen id="1" />)
+      await screen.findByText('Build a Robot Arm')
+      fireEvent.press(screen.getByTestId('need-print'))
+      expect(screen.getByRole('tab', { name: 'Files', selected: true })).toBeTruthy()
+      expect(JSON.stringify(screen.toJSON())).toContain('"borderWidth":3')
+      act(() => { jest.advanceTimersByTime(1700) })
+      expect(JSON.stringify(screen.toJSON())).not.toContain('"borderWidth":3')
+      jest.useRealTimers()
+    })
+
+    it('the parts row opens Supplies', async () => {
+      render(<DetailScreen id="1" />)
+      await screen.findByText('Build a Robot Arm')
+      fireEvent.press(screen.getByTestId('need-parts'))
+      expect(screen.getByRole('tab', { name: 'Supplies', selected: true })).toBeTruthy()
+    })
+  })
 })
 
 // 080: numbered steps, and the fit callout only when the guide suits a child.
@@ -425,14 +464,13 @@ describe('DetailScreen combined layout', () => {
   it('sums up what you need and opens the Supplies tab with one gathered bar', async () => {
     mockEndpoints({ detail: Promise.resolve(guide) })
     render(<DetailScreen id="1" />)
-    expect(await screen.findByText('2 parts · about $6.50')).toBeTruthy()
-    expect(screen.getByText('1 tool')).toBeTruthy()
-    fireEvent.press(screen.getByLabelText("What you'll need"))
+    expect(await screen.findByLabelText('2 parts, opens Supplies')).toBeTruthy()
+    expect(screen.getByLabelText('1 tool, opens Supplies')).toBeTruthy()
+    fireEvent.press(screen.getByTestId('need-parts'))
     expect(screen.getByRole('tab', { name: 'Supplies' }).props.accessibilityState.selected).toBe(true)
     expect(screen.getByText('3 things left to gather')).toBeTruthy()
     fireEvent.press(screen.getByLabelText('Glue: gathered'))
     expect(screen.getByText('2 things left to gather')).toBeTruthy()
-    expect(screen.getByText('1/2')).toBeTruthy()
   })
 
   it('opens build mode on the step you tap, and marks where you are', async () => {
@@ -440,7 +478,6 @@ describe('DetailScreen combined layout', () => {
     mockEndpoints({ detail: Promise.resolve(guide) })
     render(<DetailScreen id="1" />)
     expect(await screen.findByText("You're here · 10 min")).toBeTruthy()
-    expect(screen.getByText('1/2')).toBeTruthy()
     fireEvent.press(screen.getByLabelText('Step 2: Close it'))
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/guides/[id]/build', params: { id: '1', step: '2' } })
     mockTicks = null

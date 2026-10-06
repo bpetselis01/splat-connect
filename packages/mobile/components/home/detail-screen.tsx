@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { Tutorial, Part, Tool, StlFile, Recommendation, TutorialStep, TutorialSafetyNote, ChildProfile, Difficulty } from '@splat-connect/types'
 import {
   CHILD_QUESTIONS, DEVICE_TYPES, DIFFICULTY_LABEL, KIND_LABEL, MATURITY_LABEL, ONE_HAND_LABEL, SAFETY_CHECKLIST,
-  fitLine, formatAgeRange, formatBuildTime, formatCents, partsTotalCents, printSettingRows,
+  fitLine, formatAgeRange, formatBuildTime, printSettingRows,
 } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { supabase } from '../../lib/supabase'
@@ -129,6 +129,22 @@ function whoRows(t: Tutorial, child: ChildProfile | undefined) {
  * takes, with Start building pinned to the bottom; the four tabs below stick
  * to the top as you scroll.
  */
+/** One line of What you'll need: what, and the pill naming the tab it opens. */
+function NeedRow({ testID, icon, text, tab, print, onPress }: { testID: string; icon: React.ComponentProps<typeof Ionicons>['name']; text: string; tab: string; print?: boolean; onPress: () => void }) {
+  return (
+    <Pressable testID={testID} onPress={onPress} accessibilityRole="button" accessibilityLabel={`${text}, opens ${tab}`} style={[styles.needRow, print && styles.needPrint]}>
+      <View style={[styles.needIcon, print && styles.needIconPrint]}>
+        <Ionicons name={icon} size={18} color={print ? theme.colors.ink : theme.colors.primaryDeep} />
+      </View>
+      <Text style={styles.needText}>{text}</Text>
+      <View style={styles.needGo}>
+        <Text style={styles.needGoText}>{tab}</Text>
+        <Ionicons name="chevron-down" size={14} color={theme.colors.primaryDeep} />
+      </View>
+    </Pressable>
+  )
+}
+
 export function DetailScreen({ id, printWith, tab: startTab }: { id: string; printWith?: string; tab?: string }) {
   const router = useRouter()
   const insets = useSafeAreaInsets()
@@ -150,6 +166,9 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
   const scroller = useRef<ScrollView>(null)
   const [tab, setTab] = useState<Tab>(startTab === 'notes' || startTab === 'parts' || startTab === 'files' ? startTab : 'overview')
   const [tabsY, setTabsY] = useState(0)
+  const [highlight, setHighlight] = useState<'print' | null>(null)
+  const highlightTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => () => { if (highlightTimer.current) clearTimeout(highlightTimer.current) }, [])
   const stepIds = (tutorial?.steps ?? []).map((s) => s.id)
   const { ticked, reread } = useDeviceTicks(ticksKey('steps', id), stepIds)
   const gather = useGatherTicks(id, tutorial?.parts ?? [], tutorial?.tools ?? [])
@@ -261,16 +280,20 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
   const who = whoRows(tutorial, children[0])
   const settings = printSettingRows(tutorial)
   const primary = tutorial.tutorial_contributors.find((c) => c.role === 'primary') ?? tutorial.tutorial_contributors[0]
-  const partsTotal = partsTotalCents(tutorial.parts)
   const gatherTotal = tutorial.parts.length + tutorial.tools.length
   const eyebrow = [
     ...(tutorial.device_types ?? []).map((d) => DEVICE_TYPES.find((o) => o.value === d)?.label ?? d),
     KIND_LABEL[tutorial.kind],
     ages,
   ].filter(Boolean).join(' · ')
-  const openTab = (t: Tab) => {
+  const openTab = (t: Tab, opts?: { highlight?: 'print' }) => {
     setTab(t)
     scroller.current?.scrollTo({ y: tabsY, animated: true })
+    if (opts?.highlight) {
+      setHighlight(opts.highlight)
+      if (highlightTimer.current) clearTimeout(highlightTimer.current)
+      highlightTimer.current = setTimeout(() => setHighlight(null), 1600)
+    }
   }
   const toPerson = (pid: string) => router.push(`/guides/contributor/${pid}`)
   const toOrg = (oid: string) => router.push(`/guides/organisation/${oid}`)
@@ -346,27 +369,19 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
             </View>
           ) : null}
 
-          {gatherTotal ? (
-            <Pressable onPress={() => openTab('parts')} accessibilityRole="button" accessibilityLabel="What you'll need" style={styles.need}>
+          {gatherTotal || tutorial.stl_files.length ? (
+            <View style={styles.need}>
               <Text style={styles.needTitle}>What you’ll need</Text>
               {tutorial.parts.length ? (
-                <View style={styles.needRow}>
-                  <Ionicons name="cube-outline" size={20} color={theme.colors.primaryDeep} />
-                  <Text style={styles.needText}>
-                    {`${tutorial.parts.length} part${tutorial.parts.length === 1 ? '' : 's'}`}
-                    {partsTotal != null ? <Text style={styles.needSoft}>{` · about ${formatCents(partsTotal)}`}</Text> : null}
-                  </Text>
-                  <Text style={styles.needCount}>{`${gather.partsGot}/${tutorial.parts.length}`}</Text>
-                </View>
+                <NeedRow testID="need-parts" icon="cube-outline" text={`${tutorial.parts.length} part${tutorial.parts.length === 1 ? '' : 's'}`} tab="Supplies" onPress={() => openTab('parts')} />
               ) : null}
               {tutorial.tools.length ? (
-                <View style={[styles.needRow, styles.needRule]}>
-                  <Ionicons name="construct-outline" size={20} color={theme.colors.primaryDeep} />
-                  <Text style={styles.needText}>{`${tutorial.tools.length} tool${tutorial.tools.length === 1 ? '' : 's'}`}</Text>
-                  <Text style={styles.needCount}>{`${gather.toolsGot}/${tutorial.tools.length}`}</Text>
-                </View>
+                <NeedRow testID="need-tools" icon="construct-outline" text={`${tutorial.tools.length} tool${tutorial.tools.length === 1 ? '' : 's'}`} tab="Supplies" onPress={() => openTab('parts')} />
               ) : null}
-            </Pressable>
+              {tutorial.stl_files.length ? (
+                <NeedRow testID="need-print" icon="print-outline" print text={`${tutorial.stl_files.length} part${tutorial.stl_files.length === 1 ? '' : 's'} to 3D print`} tab="Files" onPress={() => openTab('files', { highlight: 'print' })} />
+              ) : null}
+            </View>
           ) : null}
         </View>
 
@@ -585,7 +600,8 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
                     accessibilityLabel="Ask someone to print"
                     accessibilityHint="Pick up to three printers nearby"
                     pressScale={0.985}
-                    style={[styles.printCard, styles.flush]}
+                    testID="print-card"
+                    style={[styles.printCard, styles.flush, highlight === 'print' && styles.printRing]}
                   >
                     <View style={styles.printHeader}>
                       <Text style={styles.printTitle}>Ask someone to print</Text>
@@ -676,12 +692,16 @@ const styles = StyleSheet.create({
   factLabel: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted },
   fit: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2), paddingHorizontal: theme.spacing(4), paddingVertical: theme.spacing(3), borderRadius: theme.radii.field, backgroundColor: theme.colors.mintSoft, marginTop: theme.spacing(4) },
   fitText: { flex: 1, fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.ink },
-  need: { marginTop: theme.spacing(4), borderRadius: theme.radii.panel, borderWidth: theme.border.hairline, borderColor: theme.colors.border, backgroundColor: theme.colors.surface, ...theme.shadow(1) },
-  needTitle: { fontFamily: theme.fonts.black, fontSize: theme.type.body, color: theme.colors.ink, paddingHorizontal: theme.spacing(5), paddingTop: theme.spacing(4), paddingBottom: theme.spacing(1) },
-  needRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3), paddingHorizontal: theme.spacing(5), paddingVertical: theme.spacing(3) },
-  needRule: { borderTopWidth: theme.border.hairline, borderTopColor: theme.colors.border },
+  need: { marginTop: theme.spacing(4), borderRadius: theme.radii.panel, borderWidth: theme.border.hairline, borderColor: theme.colors.border, backgroundColor: theme.colors.surface, overflow: 'hidden', ...theme.shadow(1) },
+  needTitle: { fontFamily: theme.fonts.black, fontSize: theme.type.body, color: theme.colors.ink, paddingHorizontal: theme.spacing(5), paddingTop: theme.spacing(4), paddingBottom: theme.spacing(2) },
+  needRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3), paddingHorizontal: theme.spacing(4), paddingVertical: theme.spacing(3), borderTopWidth: theme.border.hairline, borderTopColor: theme.colors.border },
+  needPrint: { backgroundColor: theme.colors.accentFaint },
+  needIcon: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.accentLight },
+  needIconPrint: { backgroundColor: theme.colors.apricotSoft },
+  needGo: { flexDirection: 'row', alignItems: 'center', gap: 2, paddingHorizontal: theme.spacing(2), paddingVertical: 3, borderRadius: theme.radii.pill, backgroundColor: theme.colors.accentLight },
+  needGoText: { fontFamily: theme.fonts.black, fontSize: theme.type.micro, color: theme.colors.primaryDeep },
+  printRing: { borderWidth: 3, borderColor: theme.colors.primary },
   needText: { flex: 1, fontFamily: theme.fonts.bold, fontSize: theme.type.body, color: theme.colors.ink },
-  needSoft: { fontFamily: theme.fonts.regular, color: theme.colors.muted },
   needCount: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.muted },
   tabs: { backgroundColor: theme.colors.background, paddingHorizontal: theme.spacing(4), paddingVertical: theme.spacing(3), marginTop: theme.spacing(3) },
   fixes: { gap: theme.spacing(2), padding: theme.spacing(5), borderRadius: theme.radii.panel, backgroundColor: theme.colors.honeySoft },

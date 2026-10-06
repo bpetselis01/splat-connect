@@ -161,3 +161,18 @@ test("the creator's picks row lists a recommendation and opens it", async ({ pag
 
   await expect(page).toHaveURL(new RegExp(`/guides/${pickId}$`))
 })
+
+test('What you’ll need rows open their tab, and the print row lands on Files with the print card in view', async ({ page }) => {
+  const contributor = await signInAsNewContributor(page)
+  const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Need Rows'), status: 'approved' })
+  const { error } = await adminClient().from('stl_files').insert({ tutorial_id: id, filename: 'base.stl', file_url: `${id}/base.stl`, print_minutes: 55, filament_grams: 14, material: 'PLA' })
+  if (error) throw new Error(error.message)
+
+  await page.goto(`/guides/${id}`)
+  await page.getByRole('button', { name: /^1 part, opens Supplies$/ }).click()
+  await expect(page.getByRole('tab', { name: 'Supplies', selected: true })).toBeVisible()
+
+  await page.getByRole('button', { name: '1 part to 3D print, opens Files' }).click()
+  await expect(page.getByRole('tab', { name: 'Files', selected: true })).toBeVisible()
+  await expect(page.getByTestId('print-card')).toBeInViewport()
+})
