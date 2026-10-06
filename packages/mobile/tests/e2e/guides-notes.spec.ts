@@ -28,7 +28,7 @@ test('a reader who did not write the guide reads its notes, with no Pin and no D
   const g = await guideWithNotes()
 
   await page.goto(`/guides/${g.id}`)
-  await page.getByRole('tab', { name: /^Notes/ }).click()
+  await page.getByRole('tab', { name: /^Feedback/ }).click()
 
   await expect(page.getByText('Community notes 2')).toBeVisible()
   await expect(page.getByText('Discussion · 2')).toBeVisible()
@@ -49,7 +49,7 @@ test('the author pins a note and unpins it, and the guide page shows the fix whi
   await page.waitForURL(/\/home$/)
 
   await page.goto(`/guides/${g.id}`)
-  await page.getByRole('tab', { name: /^Notes/ }).click()
+  await page.getByRole('tab', { name: /^Feedback/ }).click()
   await expect(page.getByText(g.stepNote, { exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Pin as revision' })).toHaveCount(2)
 
@@ -70,7 +70,7 @@ test('the author pins a note and unpins it, and the guide page shows the fix whi
   await expect(page.getByText('1 fix from builders')).toBeVisible()
   await expect(page.getByText('Read the fix')).toBeVisible()
 
-  await page.getByRole('tab', { name: /^Notes/ }).click()
+  await page.getByRole('tab', { name: /^Feedback/ }).click()
   const unpinNote = page.waitForResponse((r) => r.url().endsWith(`/notes/${g.stepNoteId}/unpin`) && r.request().method() === 'POST')
   await page.getByRole('button', { name: 'Unpin', exact: true }).click()
   expect((await unpinNote).status()).toBe(200)
@@ -87,7 +87,7 @@ test('a reader reports someone else\'s note, and the report names the guide it i
   await adminClient().from('tutorial_notes').delete().eq('id', g.missingNoteId)
 
   await page.goto(`/guides/${g.id}`)
-  await page.getByRole('tab', { name: /^Notes/ }).click()
+  await page.getByRole('tab', { name: /^Feedback/ }).click()
   await expect(page.getByText(g.stepNote, { exact: true })).toBeVisible()
   // The hero has its own Report a problem (for the guide); the note's is the last.
   await expect(page.getByRole('button', { name: 'Report a problem' })).toHaveCount(2)
@@ -113,7 +113,7 @@ test('your own note offers Delete and no Report', async ({ page }) => {
   await page.waitForURL(/\/home$/)
 
   await page.goto(`/guides/${g.id}`)
-  await page.getByRole('tab', { name: /^Notes/ }).click()
+  await page.getByRole('tab', { name: /^Feedback/ }).click()
   await expect(page.getByText('Mine, written by me.')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Delete', exact: true })).toHaveCount(1)
   // The hero's, plus one for each of the two other people's notes; not for the reader's own.
@@ -126,7 +126,7 @@ test('a note posted with a photo shows the photo and its caption, and the upload
   const id = await createTutorial(author.id, { title: uniqueTitle('E2E Note Photo Guide') })
 
   await page.goto(`/guides/${id}`)
-  await page.getByRole('tab', { name: /^Notes/ }).click()
+  await page.getByRole('tab', { name: /^Feedback/ }).click()
   await page.getByRole('button', { name: 'Missing step', exact: true }).click()
   await page.getByLabel('Your note').fill('Here is how mine looks.')
 

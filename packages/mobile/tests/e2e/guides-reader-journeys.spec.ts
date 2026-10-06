@@ -50,7 +50,7 @@ test('a guide with no steps makes Download PDF primary', async ({ page }) => {
   await page.goto(`/guides/${id}`)
   await expect(page.getByRole('button', { name: 'Download PDF', exact: true }).first()).toBeVisible()
   await expect(page.getByRole('button', { name: 'Start building' })).toHaveCount(0)
-  await page.getByRole('tab', { name: 'You’ll need' }).click()
+  await page.getByRole('tab', { name: 'Supplies' }).click()
   await expect(page.getByText('E2E part ×2')).toBeVisible()
 })
 
@@ -75,12 +75,12 @@ test('ticked tools survive a reload', async ({ page }) => {
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile ToolTicks'), status: 'approved' })
 
   await page.goto(`/guides/${id}`)
-  await page.getByRole('tab', { name: 'You’ll need' }).click()
+  await page.getByRole('tab', { name: 'Supplies' }).click()
   await expect(page.getByText('0 of 1 already yours')).toBeVisible()
   await page.getByLabel('I already have E2E tool').click()
   await expect(page.getByText('1 of 1 already yours')).toBeVisible()
   await page.reload()
-  await page.getByRole('tab', { name: 'You’ll need' }).click()
+  await page.getByRole('tab', { name: 'Supplies' }).click()
   await expect(page.getByText('1 of 1 already yours')).toBeVisible()
 })
 
@@ -89,7 +89,7 @@ test('a reader posts a note as a missing step and sees it under Discussion', asy
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile Notes'), status: 'approved' })
 
   await page.goto(`/guides/${id}`)
-  await page.getByRole('tab', { name: /^Notes/ }).click()
+  await page.getByRole('tab', { name: /^Feedback/ }).click()
   const post = page.getByRole('button', { name: 'Post', exact: true })
   await expect(post).toBeDisabled()
 
@@ -114,7 +114,7 @@ test('a note that fails to post keeps its words and says so', async ({ page }) =
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile NoteFails'), status: 'approved' })
 
   await page.goto(`/guides/${id}`)
-  await page.getByRole('tab', { name: /^Notes/ }).click()
+  await page.getByRole('tab', { name: /^Feedback/ }).click()
   await page.route(`**/api/tutorials/${id}/notes`, (route) => (route.request().method() === 'POST' ? route.fulfill({ status: 500, contentType: 'application/json', body: '{"error":"boom"}' }) : route.continue()))
   await page.getByRole('button', { name: 'Missing step', exact: true }).click()
   await page.getByLabel('Your note').fill('Keep these words')
@@ -129,7 +129,7 @@ test('the author deletes their own note', async ({ page }) => {
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile NoteDelete'), status: 'approved' })
 
   await page.goto(`/guides/${id}`)
-  await page.getByRole('tab', { name: /^Notes/ }).click()
+  await page.getByRole('tab', { name: /^Feedback/ }).click()
   await page.getByRole('button', { name: 'Missing step', exact: true }).click()
   await page.getByLabel('Your note').fill('Delete me later')
   await page.getByRole('button', { name: 'Post', exact: true }).click()

@@ -95,7 +95,7 @@ describe('DetailScreen', () => {
     render(<DetailScreen id="1" />)
     expect(await screen.findByText('Build a Robot Arm')).toBeTruthy()
     expect(apiClient.get).toHaveBeenCalledWith('/api/public/tutorials/1')
-    tab('You’ll need')
+    tab('Supplies')
     expect(screen.getByText('Servo Motor ×2')).toBeTruthy()
     expect(screen.getByText('Screwdriver')).toBeTruthy()
   })
@@ -104,6 +104,17 @@ describe('DetailScreen', () => {
     mockEndpoints({ detail: Promise.resolve({ ...DETAIL, photo_urls: ['https://x.test/a.jpg', 'https://x.test/b.jpg'] }) })
     render(<DetailScreen id="1" />)
     expect(await screen.findByText('1/2 · Build a Robot Arm')).toBeTruthy()
+  })
+
+  it('shows the feedback count as a badge on the Feedback tab', async () => {
+    ;(apiClient.get as jest.Mock).mockImplementation((p: string) =>
+      p === '/api/saves/ids' ? Promise.resolve(NO_SAVES) : p === '/api/child-profiles' ? Promise.resolve([]) : p.endsWith('/notes')
+        ? Promise.resolve([{ id: 'n1', step_position: 1, author_id: 'p', author_name: 'Priya', body: 'x', photo_url: null, photo_caption: null, pinned_at: null, pinned_by: null, pinned_by_name: null, created_at: '2026-09-01T00:00:00Z' }])
+        : Promise.resolve(DETAIL)
+    )
+    render(<DetailScreen id="1" />)
+    await screen.findByText('Build a Robot Arm')
+    expect(await screen.findByRole('tab', { name: 'Feedback (1)' })).toBeTruthy()
   })
 
   it('shows an error message when apiClient.get rejects', async () => {
@@ -146,7 +157,7 @@ describe('DetailScreen', () => {
     })
     render(<DetailScreen id="1" />)
     await screen.findByText('Build a Robot Arm')
-    tab('You’ll need')
+    tab('Supplies')
     expect(await screen.findByText('Total')).toBeTruthy()
     expect(screen.getAllByText('$12.50')).toHaveLength(2)
     expect(screen.getByText('Prices checked 2 Aug 2026')).toBeTruthy()
@@ -374,7 +385,7 @@ describe('DetailScreen redesigned page', () => {
   it('opens on the tab named by the route param', async () => {
     render(<DetailScreen id="1" tab="notes" />)
     await screen.findByText('Build a Robot Arm')
-    expect(screen.getByRole('tab', { name: 'Notes' }).props.accessibilityState.selected).toBe(true)
+    expect(screen.getByRole('tab', { name: 'Feedback' }).props.accessibilityState.selected).toBe(true)
     expect(screen.queryByText('Who it\'s for')).toBeNull()
   })
 
@@ -411,13 +422,13 @@ describe('DetailScreen combined layout', () => {
     mockTicks = null
   })
 
-  it('sums up what you need and opens the You’ll need tab with one gathered bar', async () => {
+  it('sums up what you need and opens the Supplies tab with one gathered bar', async () => {
     mockEndpoints({ detail: Promise.resolve(guide) })
     render(<DetailScreen id="1" />)
     expect(await screen.findByText('2 parts · about $6.50')).toBeTruthy()
     expect(screen.getByText('1 tool')).toBeTruthy()
     fireEvent.press(screen.getByLabelText("What you'll need"))
-    expect(screen.getByRole('tab', { name: 'You’ll need' }).props.accessibilityState.selected).toBe(true)
+    expect(screen.getByRole('tab', { name: 'Supplies' }).props.accessibilityState.selected).toBe(true)
     expect(screen.getByText('3 things left to gather')).toBeTruthy()
     fireEvent.press(screen.getByLabelText('Glue: gathered'))
     expect(screen.getByText('2 things left to gather')).toBeTruthy()
@@ -460,7 +471,7 @@ describe('DetailScreen combined layout', () => {
     expect(await screen.findByText('1 fix from builders')).toBeTruthy()
     expect(screen.getByText('Step 2: Use a longer screw')).toBeTruthy()
     fireEvent.press(screen.getByText('Read the fix'))
-    expect(screen.getByRole('tab', { name: /^Notes/ }).props.accessibilityState.selected).toBe(true)
+    expect(screen.getByRole('tab', { name: /^Feedback/ }).props.accessibilityState.selected).toBe(true)
   })
 })
 

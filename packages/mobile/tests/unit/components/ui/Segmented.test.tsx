@@ -22,4 +22,17 @@ describe('Segmented', () => {
     expect(screen.getByText('Exchanges').props.maxFontSizeMultiplier).toBe(1.3)
     expect(screen.getByRole('tab', { name: 'Exchanges' })).toBeTruthy()
   })
+
+  it('draws a count badge after the label and folds it into the a11y name', () => {
+    render(<Segmented label="Guide sections" value="a" onChange={() => {}} options={[{ value: 'a', label: 'Overview' }, { value: 'b', label: 'Feedback', badge: 3 }]} />)
+    expect(screen.getByText('3')).toBeTruthy()
+    expect(screen.getByRole('tab', { name: 'Feedback (3)' })).toBeTruthy()
+    expect(screen.getByRole('tab', { name: 'Overview' })).toBeTruthy()
+  })
+
+  it('draws no badge at zero', () => {
+    render(<Segmented label="Guide sections" value="a" onChange={() => {}} options={[{ value: 'a', label: 'Feedback', badge: 0 }]} />)
+    expect(screen.queryByText('0')).toBeNull()
+    expect(screen.getByRole('tab', { name: 'Feedback' })).toBeTruthy()
+  })
 })

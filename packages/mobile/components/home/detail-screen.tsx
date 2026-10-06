@@ -377,9 +377,9 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
             onChange={setTab}
             options={[
               { value: 'overview', label: 'Overview' },
-              { value: 'parts', label: 'You’ll need' },
+              { value: 'parts', label: 'Supplies' },
               { value: 'files', label: 'Files' },
-              { value: 'notes', label: notes.length ? `Notes ${notes.length}` : 'Notes' },
+              { value: 'notes', label: 'Feedback', badge: notes.length },
             ]}
           />
         </View>

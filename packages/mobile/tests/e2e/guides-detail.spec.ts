@@ -19,7 +19,7 @@ test('tapping a tutorial navigates to its detail screen', async ({ page }) => {
   // "Easy" left on the page is the difficulty filter chip on the library
   // screen behind, which is hidden — so the old assertion could not pass.
   await expect(page.getByText('Easy', { exact: true }).last()).toBeVisible()
-  await page.getByRole('tab', { name: 'You’ll need' }).click()
+  await page.getByRole('tab', { name: 'Supplies' }).click()
   await expect(page.getByText('E2E part ×2')).toBeVisible()
   await expect(page.getByText('E2E tool')).toBeVisible()
 })
@@ -70,7 +70,7 @@ test('optional parts and tools are badged on the detail screen', async ({ page }
   await page.goto('/guides')
   await page.getByText(title).click()
 
-  await page.getByRole('tab', { name: 'You’ll need' }).click()
+  await page.getByRole('tab', { name: 'Supplies' }).click()
   // Mobile marks optional items inline in the row label — there is no separate
   // badge here, unlike the web detail page.
   await expect(page.getByText('E2E optional part ×1 (optional)')).toBeVisible()

@@ -172,20 +172,20 @@ describe('DetailScreen description links', () => {
 describe('DetailScreen tabs', () => {
   const notes = [{ id: 'n1', body: 'Use a longer screw', step_position: 2, pinned_at: null, pinned_by_name: null, author_name: 'Al' }]
 
-  it('shows the steps on Overview and swaps them for the notes on the Notes tab', async () => {
+  it('shows the steps on Overview and swaps them for the notes on the Feedback tab', async () => {
     load(DETAIL, notes)
     render(<DetailScreen id="1" />)
     expect(await screen.findByText('Open it')).toBeTruthy()
-    fireEvent.press(screen.getByRole('tab', { name: 'Notes 1' }))
-    expect(screen.getByRole('tab', { name: 'Notes 1' }).props.accessibilityState.selected).toBe(true)
+    fireEvent.press(screen.getByRole('tab', { name: 'Feedback (1)' }))
+    expect(screen.getByRole('tab', { name: 'Feedback (1)' }).props.accessibilityState.selected).toBe(true)
     expect(screen.queryByText('Open it')).toBeNull()
     fireEvent.press(screen.getByRole('tab', { name: 'Overview' }))
     expect(screen.getByText('Open it')).toBeTruthy()
   })
 
-  it('labels the tab with just Notes while there are none', async () => {
+  it('labels the tab with just Feedback while there are none', async () => {
     render(<DetailScreen id="1" />)
     await screen.findByText('Open it')
-    expect(screen.getByRole('tab', { name: 'Notes' })).toBeTruthy()
+    expect(screen.getByRole('tab', { name: 'Feedback' })).toBeTruthy()
   })
 })
