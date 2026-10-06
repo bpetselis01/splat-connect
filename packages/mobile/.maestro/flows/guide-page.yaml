@@ -90,6 +90,25 @@ appId: com.splatconnect.mobile
 - assertVisible:
     text: "Pick up at step 2"
 
+# The 3D viewer is the WebView + three.js on Hermes and a real GPU: Playwright
+# draws the shell only. The device guide is seeded with one STL.
+- tapOn:
+    text: "Files"
+- tapOn:
+    text: "3D view of Device base"
+- assertVisible:
+    text: "Drag to turn · pinch to zoom"
+- assertVisible:
+    text: "Ask someone to print"
+- assertNotVisible:
+    text: "Couldn't load this part."
+- tapOn:
+    text: "Close 3D view"
+- assertVisible:
+    text: "Guide files"
+- tapOn:
+    text: "Overview"
+
 # The header ✕ closes the whole trail: back on the library, tab bar showing.
 - tapOn:
     text: "Close"

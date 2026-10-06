@@ -118,6 +118,17 @@ const { error: stepsError } = await admin.from('tutorial_steps').insert([
 ])
 if (stepsError) throw new Error(`Failed to seed guide steps: ${stepsError.message}`)
 
+// One part, so the Files tab has a 3D pill. Signing the file's path fails for a
+// missing object, so the bytes go up too.
+const stlPath = `${guide.id}/device_base.stl`
+const { error: stlError } = await admin.from('stl_files').insert({
+  tutorial_id: guide.id, filename: 'device_base.stl', file_url: stlPath, print_minutes: 30, filament_grams: 8, material: 'PLA',
+})
+if (stlError) throw new Error(`Failed to seed guide part: ${stlError.message}`)
+const stl = 'solid t\nfacet normal 0 0 1\nouter loop\nvertex 0 0 0\nvertex 1 0 0\nvertex 0 1 0\nendloop\nendfacet\nendsolid t\n'
+const { error: upError } = await admin.storage.from('stl-files').upload(stlPath, new Blob([stl]), { contentType: 'model/stl', upsert: true })
+if (upError) throw new Error(`Failed to upload guide part: ${upError.message}`)
+
 // Two lines only, so callers can `eval $(node …)` or append to $GITHUB_ENV.
 console.log(`DEVICE_EMAIL=${email}`)
 console.log(`DEVICE_PASSWORD=${PASSWORD}`)
