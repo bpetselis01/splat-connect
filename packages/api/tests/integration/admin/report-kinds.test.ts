@@ -15,11 +15,11 @@ afterAll(async () => {
   await deleteTestUser(member.id)
 })
 
-const file = (kind: string) =>
+const file = (kind: string, category = 'no_show', extra: Record<string, unknown> = {}) =>
   app.request('/api/reports', {
     method: 'POST',
     headers: { Authorization: `Bearer ${member.token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ subject_kind: kind, subject_label: 'Drum — exchange with Sam', category: 'no_show', body: 'Nobody came.', ok_to_contact: false }),
+    body: JSON.stringify({ subject_kind: kind, subject_label: 'Drum — exchange with Sam', category, body: 'Nobody came.', ok_to_contact: false, ...extra }),
   })
 
 const asMember = () =>
@@ -29,8 +29,19 @@ const asMember = () =>
   })
 
 describe('118 member report kinds', () => {
-  it.each(['exchange', 'build', 'print_job', 'person', 'organisation'])('files a report about a %s', async (kind) => {
+  it.each(['guide', 'toy', 'exchange', 'build', 'print_job', 'person', 'organisation', 'other'])('files a report about a %s', async (kind) => {
     expect((await file(kind)).status).toBe(201)
+  })
+
+  it.each(['safety', 'wrong_info', 'other'])('files a guide report under %s, keeping the guide id and label', async (category) => {
+    const subject_id = crypto.randomUUID()
+    const res = await file('guide', category, { subject_id, subject_label: 'Switch toy guide' })
+    expect(res.status).toBe(201)
+    expect(await res.json()).toMatchObject({ subject_kind: 'guide', subject_id, subject_label: 'Switch toy guide', category, reporter_id: member.id })
+  })
+
+  it('refuses a category the sheet never offers', async () => {
+    expect((await file('guide', 'rude')).status).toBe(400)
   })
 
   it('stores the new kinds, read back through the admin client', async () => {

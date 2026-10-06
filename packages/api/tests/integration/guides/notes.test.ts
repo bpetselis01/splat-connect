@@ -89,6 +89,13 @@ describe('093 review fixes', () => {
     return app.request('/api/upload/note-photo', { method: 'POST', headers: { Authorization: `Bearer ${parent.token}` }, body: fd })
   }
 
+  it('refuses a note photo from nobody signed in', async () => {
+    const fd = new FormData()
+    fd.append('file', new File([new Uint8Array(3)], 'a.jpg', { type: 'image/jpeg' }))
+    fd.append('tutorialId', guide)
+    expect((await app.request('/api/upload/note-photo', { method: 'POST', body: fd })).status).toBe(401)
+  })
+
   const leaf = `${crypto.randomUUID()}.jpg`
   const outsiders = () => [
     `https://evil.example/storage/v1/object/public/toy-photos/${guide}/notes/${leaf}`,

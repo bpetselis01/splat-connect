@@ -4,7 +4,12 @@ import type { AuthVariables } from '../../../src/middleware/auth.js'
 
 const mockAdminList = vi.fn()
 const mockAdminRemove = vi.fn()
-const mockAdminStorageBucket = { list: mockAdminList, remove: mockAdminRemove }
+const mockAdminUpload = vi.fn()
+const mockAdminGetPublicUrl = vi.fn()
+const mockAdminStorageBucket = { list: mockAdminList, remove: mockAdminRemove, upload: mockAdminUpload, getPublicUrl: mockAdminGetPublicUrl }
+// note-photo reads the guide's status with the service role: only a published guide takes notes.
+const mockGuideMaybeSingle = vi.fn()
+const mockGuideQuery = { select: vi.fn(() => mockGuideQuery), eq: vi.fn(() => mockGuideQuery), maybeSingle: mockGuideMaybeSingle }
 const mockAdminStorage = { from: vi.fn(() => mockAdminStorageBucket) }
 
 const mockUpload = vi.fn()
@@ -49,7 +54,7 @@ const mockToysFrom = vi.fn((table: string) =>
 // NOT called: /photo used to delete every existing file before writing, and that delete
 // going away is what lets a tutorial hold five photos.
 vi.mock('../../../src/supabase/client.js', () => ({
-  createAdminClient: () => ({ storage: mockAdminStorage }),
+  createAdminClient: () => ({ storage: mockAdminStorage, from: () => mockGuideQuery }),
   createUserClient: () => ({ storage: mockUserStorage, from: mockToysFrom }),
 }))
 
@@ -433,5 +438,68 @@ describe('POST /toy-photo', () => {
     const res = await makeApp().request('/toy-photo', { method: 'POST', body: toyForm() })
     expect(res.status).toBe(404)
     expect(mockUpload).not.toHaveBeenCalled()
+  })
+})
+describe('POST /note-photo', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockGuideMaybeSingle.mockResolvedValue({ data: { status: 'approved' }, error: null })
+    mockAdminUpload.mockImplementation(async (path: string) => ({ data: { path }, error: null }))
+    mockAdminGetPublicUrl.mockImplementation((path: string) => ({ data: { publicUrl: `https://example.com/${path}` } }))
+  })
+
+  function noteForm(overrides: { type?: string; name?: string; bytes?: number; id?: string | null } = {}) {
+    const form = new FormData()
+    form.append('file', new Blob([new Uint8Array(overrides.bytes ?? 3)], { type: overrides.type ?? 'image/jpeg' }), overrides.name ?? '../../evil.png')
+    if (overrides.id !== null) form.append('tutorialId', overrides.id ?? 'tid-1')
+    return form
+  }
+  const post = (form: FormData) => makeApp().request('/note-photo', { method: 'POST', body: form })
+
+  it('files an image under the guide\'s notes folder, named by a uuid and the MIME type, never the filename', async () => {
+    const res = await post(noteForm())
+    expect(res.status).toBe(200)
+    expect(mockAdminUpload).toHaveBeenCalledWith(expect.stringMatching(/^tid-1\/notes\/[0-9a-f-]{36}\.jpg$/), expect.any(Blob), { upsert: false })
+    const body = (await res.json()) as { path: string; url: string }
+    expect(body.path).toMatch(/^tid-1\/notes\/[0-9a-f-]{36}\.jpg$/)
+    expect(body.url).toBe(`https://example.com/${body.path}`)
+  })
+
+  it.each([['image/png', 'png'], ['image/webp', 'webp'], ['image/avif', 'avif']])('takes %s', async (type, ext) => {
+    expect((await post(noteForm({ type }))).status).toBe(200)
+    expect(mockAdminUpload).toHaveBeenCalledWith(expect.stringMatching(new RegExp(`\\.${ext}$`)), expect.any(Blob), { upsert: false })
+  })
+
+  it('returns 400 when the file or tutorialId is missing', async () => {
+    expect((await post(noteForm({ id: null }))).status).toBe(400)
+    const noFile = new FormData()
+    noFile.append('tutorialId', 'tid-1')
+    expect((await post(noFile)).status).toBe(400)
+  })
+
+  it('returns 400 for a file that is not an image', async () => {
+    const res = await post(noteForm({ type: 'application/pdf', name: 'guide.pdf' }))
+    expect(res.status).toBe(400)
+    expect(((await res.json()) as { error: string }).error).toMatch(/JPEG, PNG, WebP, AVIF or HEIC/)
+    expect(mockAdminUpload).not.toHaveBeenCalled()
+  })
+
+  it('returns 400 for a photo over 10 MB, and takes exactly 10 MB', async () => {
+    const res = await post(noteForm({ bytes: 10 * 1024 * 1024 + 1 }))
+    expect(res.status).toBe(400)
+    expect(((await res.json()) as { error: string }).error).toMatch(/under 10 MB/)
+    expect(mockAdminUpload).not.toHaveBeenCalled()
+    expect((await post(noteForm({ bytes: 10 * 1024 * 1024 }))).status).toBe(200)
+  })
+
+  it.each([['unpublished', { status: 'draft' }], ['unknown', null]])('returns 404 for a %s guide', async (_n, data) => {
+    mockGuideMaybeSingle.mockResolvedValue({ data, error: null })
+    expect((await post(noteForm())).status).toBe(404)
+    expect(mockAdminUpload).not.toHaveBeenCalled()
+  })
+
+  it('returns 500 when storage fails', async () => {
+    mockAdminUpload.mockResolvedValue({ data: null, error: { message: 'Storage error' } })
+    expect((await post(noteForm())).status).toBe(500)
   })
 })
