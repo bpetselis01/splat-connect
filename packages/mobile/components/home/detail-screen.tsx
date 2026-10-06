@@ -176,6 +176,7 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
     return () => clearTimeout(t)
   }, [highlightId])
   const [highlight, setHighlight] = useState<'print' | null>(null)
+  const printCard = useRef<View>(null)
   const highlightTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   useEffect(() => () => { if (highlightTimer.current) clearTimeout(highlightTimer.current) }, [])
   const stepIds = (tutorial?.steps ?? []).map((s) => s.id)
@@ -320,6 +321,8 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
       setHighlight(opts.highlight)
       if (highlightTimer.current) clearTimeout(highlightTimer.current)
       highlightTimer.current = setTimeout(() => setHighlight(null), 1600)
+      // The Files tab has rendered by the next frame; bring the print card up under the header.
+      requestAnimationFrame(() => { if (printCard.current) scrollToRow(printCard.current) })
     }
   }
   const toPerson = (pid: string) => router.push(`/guides/contributor/${pid}`)
@@ -645,8 +648,8 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
                 <Text style={styles.small}>Nothing to download for this guide.</Text>
               )}
               {tutorial.stl_files.length > 0 ? (
+                <View ref={printCard} collapsable={false} testID="print-card">
                 <AnimatedPressable
-                  testID="print-card"
                   onPress={() => router.push({ pathname: '/printing', params: printWith ? { guide: tutorial.id, printWith } : { guide: tutorial.id } })}
                   accessibilityRole="button"
                   accessibilityLabel="Ask someone to print"
@@ -662,6 +665,7 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
                     {tutorial.stl_files.length} printable part{tutorial.stl_files.length === 1 ? '' : 's'} · pick up to three printers nearby
                   </Text>
                 </AnimatedPressable>
+                </View>
               ) : null}
               {settings.length ? (
                 <View style={styles.card}>
