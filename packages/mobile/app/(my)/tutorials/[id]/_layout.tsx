@@ -3,28 +3,16 @@
 // One provider for the whole editor stack, so a section's save is already
 // reflected on the hub when you go back — no refetch on focus, and no second
 // copy of the draft to fall out of step with the first.
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
+import { Stack, useLocalSearchParams } from 'expo-router'
 import { TutorialDraftProvider, useDraft } from '../../../../lib/use-tutorial-draft'
 import { stackScreenOptions } from '../../../../lib/nav-options'
 import { SaveChip, SAVE_CHIP_LABEL } from '../../../../components/my-tutorials/sections/save-chip'
-import { BackButton } from '../../../../components/ui/BackButton'
+import { CloseToTabsButton } from '../../../../components/ui/CloseButton'
 
-/**
- * The hub's back control, and the reason it is declared rather than inherited.
- *
- * guides/new.tsx reaches the editor with router.replace, which crosses from
- * (tabs) into (my) and discards the screen it came from — so the stack has no
- * entry behind the hub and the native chevron never renders. The editor is also
- * reachable from My tutorials and from a notification, so leaning on whatever
- * happens to be on the stack is exactly what broke: the same screen had a back
- * button or not depending on how you arrived. This names the fallback destination,
- * and is labelled Back like every other: back is wherever the editor was opened from.
- */
-function HubBackButton() {
-  const router = useRouter()
-  return (
-    <BackButton onPress={() => (router.canGoBack() ? router.back() : router.replace('/tutorials'))} />
-  )
+/** The hub's ✕ saves whatever the debounce still holds, then closes. */
+function HubCloseButton() {
+  const { flush } = useDraft()
+  return <CloseToTabsButton beforeClose={flush} />
 }
 
 export default function TutorialEditorLayout() {
@@ -46,6 +34,9 @@ function EditorStack() {
       screenOptions={{
         ...stackScreenOptions,
         headerBackTitle: 'Back',
+        // Every editor screen closes through the draft, so a tap inside the
+        // 250ms debounce is saved rather than dropped on unmount.
+        headerLeft: () => <HubCloseButton />,
         // The save chip belongs to the header, not to the top of each
         // section's scroll: it is the only feedback autosave has, and in the
         // body it shifted the content by a line every time it changed. One
@@ -56,7 +47,7 @@ function EditorStack() {
     >
       <Stack.Screen
         name="index"
-        options={{ title: 'Edit guide', headerLeft: () => <HubBackButton /> }}
+        options={{ title: 'Edit guide' }}
       />
       <Stack.Screen name="details" options={{ title: 'Details' }} />
       <Stack.Screen name="steps" options={{ title: 'Steps' }} />
