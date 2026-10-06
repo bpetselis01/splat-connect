@@ -172,12 +172,10 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
   const [tab, setTab] = useState<Tab>(startTab === 'notes' || startTab === 'parts' || startTab === 'files' ? startTab : 'overview')
   const [tabsY, setTabsY] = useState(0)
   const [highlightId, setHighlightId] = useState<string | null>(null)
-  // The row rings for 2 s; drop the id after that so a revisit doesn't repeat it.
-  useEffect(() => {
-    if (!highlightId) return
-    const t = setTimeout(() => setHighlightId(null), 2200)
-    return () => clearTimeout(t)
-  }, [highlightId])
+  // The row rings for 2 s from when it lays out; drop the id after that so a
+  // revisit doesn't repeat it.
+  const highlightIdTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => () => { if (highlightIdTimer.current) clearTimeout(highlightIdTimer.current) }, [])
   const [highlight, setHighlight] = useState<'print' | null>(null)
   const printCard = useRef<View>(null)
   const highlightTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -210,6 +208,12 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
       (_x, y) => scroller.current?.scrollTo({ y: Math.max(0, y - ROW_SCROLL_MARGIN), animated: true }),
       () => {}
     )
+  }
+
+  const scrollToHighlightedRow = (row: ComponentRef<typeof View>) => {
+    scrollToRow(row)
+    if (highlightIdTimer.current) clearTimeout(highlightIdTimer.current)
+    highlightIdTimer.current = setTimeout(() => setHighlightId(null), 2200)
   }
 
   // "Pick up where you left off": once per open, when the guide has loaded.
@@ -696,7 +700,7 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
               viewerId={caps?.profile.id ?? null}
               viewerName={caps?.profile.name ?? null}
               highlightId={highlightId}
-              onHighlightRow={scrollToRow}
+              onHighlightRow={scrollToHighlightedRow}
               onPosted={(note) => { setHighlightId(note.id); toaster.show('Your feedback is on the guide') }}
             />
           )}

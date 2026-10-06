@@ -639,6 +639,17 @@ describe('DetailScreen Feedback hand-off', () => {
     mockEndpoints()
   })
 
+  // Rows only ring once they lay out; give the scroller and the row a host to measure, then lay it out.
+  const layoutRow = () => {
+    const scroller = screen.UNSAFE_getByType(ScrollView).instance as unknown as { getInnerViewRef: () => unknown; scrollTo: jest.Mock }
+    scroller.getInnerViewRef = () => ({ __host: true })
+    const scrollTo = jest.spyOn(scroller, 'scrollTo')
+    const row = screen.UNSAFE_getAllByProps({ testID: 'note-row-new' }).map((n) => n.instance).find(Boolean) as unknown as { measureLayout: jest.Mock }
+    row.measureLayout = jest.fn((_rel, ok: (x: number, y: number) => void) => ok(0, 600))
+    act(() => { fireEvent(screen.getByTestId('note-row-new'), 'layout', { nativeEvent: { layout: { x: 0, y: 600, width: 300, height: 80 } } }) })
+    return scrollTo
+  }
+
   it('on refocus with a pending focus it opens Feedback, reloads and rings the note', async () => {
     render(<DetailScreen id="1" />)
     await screen.findByText('Build a Robot Arm')
@@ -648,6 +659,7 @@ describe('DetailScreen Feedback hand-off', () => {
     expect(takeGuideFocus).toHaveBeenCalledWith('1')
     expect(screen.getByRole('tab', { name: /^Feedback/, selected: true })).toBeTruthy()
     expect(await screen.findByText('Posted from build mode.')).toBeTruthy()
+    layoutRow()
     expect(screen.getByTestId('note-row-new').props.style).toEqual(expect.arrayContaining([expect.objectContaining({ borderWidth: 2 })]))
     expect(screen.getByText('Your feedback is on the guide')).toBeTruthy()
   })
@@ -686,6 +698,27 @@ describe('DetailScreen Feedback hand-off', () => {
     expect(screen.getByText('Your feedback is on the guide')).toBeTruthy()
   })
 
+  it('a notes reload slower than the ring still rings and scrolls the row when it lands', async () => {
+    jest.useFakeTimers()
+    try {
+      render(<DetailScreen id="1" />)
+      await screen.findByText('Build a Robot Arm')
+      let resolveNotes!: (v: unknown) => void
+      const slow = new Promise((r) => { resolveNotes = r })
+      ;(apiClient.get as jest.Mock).mockImplementation((p: string) => (p.endsWith('/notes') ? slow : p === '/api/saves/ids' ? Promise.resolve(NO_SAVES) : p === '/api/child-profiles' ? Promise.resolve([]) : Promise.resolve(DETAIL)))
+      setGuideFocus({ tutorialId: '1', noteId: 'new' })
+      act(() => { mockFocus.forEach((cb) => cb()) })
+      act(() => { jest.advanceTimersByTime(3000) })
+      await act(async () => { resolveNotes([NOTE]) })
+      await screen.findByTestId('note-row-new')
+      const scrollTo = layoutRow()
+      expect(scrollTo).toHaveBeenCalledWith({ y: 600 - ROW_SCROLL_MARGIN, animated: true })
+      expect(screen.getByTestId('note-row-new').props.style).toEqual(expect.arrayContaining([expect.objectContaining({ borderWidth: 2 })]))
+    } finally {
+      jest.useRealTimers()
+    }
+  })
+
   it('the ring and toast do not repeat when you leave Feedback and come back', async () => {
     jest.useFakeTimers()
     try {
@@ -694,7 +727,9 @@ describe('DetailScreen Feedback hand-off', () => {
       withNote()
       setGuideFocus({ tutorialId: '1', noteId: 'new' })
       act(() => { mockFocus.forEach((cb) => cb()) })
-      expect((await screen.findByTestId('note-row-new')).props.style).toEqual(expect.arrayContaining([expect.objectContaining({ borderWidth: 2 })]))
+      await screen.findByTestId('note-row-new')
+      layoutRow()
+      expect(screen.getByTestId('note-row-new').props.style).toEqual(expect.arrayContaining([expect.objectContaining({ borderWidth: 2 })]))
       act(() => { jest.advanceTimersByTime(8000) })
       tab('Overview')
       tab('Feedback (1)')

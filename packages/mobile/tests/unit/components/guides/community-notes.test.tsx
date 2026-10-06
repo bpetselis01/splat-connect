@@ -132,6 +132,8 @@ it('a photo shows as a thumbnail that opens the viewer', () => {
 it('rings the highlighted note and reports its row', () => {
   const onHighlightRow = jest.fn()
   render(<CommunityNotes {...props} notes={[note({ id: 'new', author_id: 'me' })] as never} highlightId="new" onHighlightRow={onHighlightRow} />)
+  expect(onHighlightRow).not.toHaveBeenCalled()
+  expect(JSON.stringify(screen.getByTestId('note-row-new').props.style)).not.toContain('"borderWidth":2')
   fireEvent(screen.getByTestId('note-row-new'), 'layout', { nativeEvent: { layout: { x: 0, y: 120, width: 300, height: 80 } } })
   expect(onHighlightRow).toHaveBeenCalled()
   expect(screen.getByTestId('note-row-new').props.style).toEqual(expect.arrayContaining([expect.objectContaining({ borderWidth: 2, borderColor: theme.colors.primary, borderTopColor: theme.colors.primary })]))

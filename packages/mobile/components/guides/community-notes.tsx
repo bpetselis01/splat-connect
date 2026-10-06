@@ -72,13 +72,19 @@ export function CommunityNotes({ tutorialId, guideTitle, authorName, steps, note
   const [ringed, setRinged] = useState<string | null>(null)
   const summary = noteSummary(notes, steps.length)
 
-  // The ring on a just-posted note fades after two seconds.
-  useEffect(() => {
-    if (!highlightId) return
-    setRinged(highlightId)
-    const t = setTimeout(() => setRinged(null), 2000)
-    return () => clearTimeout(t)
-  }, [highlightId])
+  // The ring starts when the highlighted row lays out (a slow reload must not
+  // spend it before the row exists) and fades after two seconds.
+  const ringTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const ringStarted = useRef<string | null>(null)
+  useEffect(() => () => { if (ringTimer.current) clearTimeout(ringTimer.current) }, [])
+  useEffect(() => { if (!highlightId) ringStarted.current = null }, [highlightId])
+  const startRing = (id: string) => {
+    if (ringStarted.current === id) return
+    ringStarted.current = id
+    setRinged(id)
+    if (ringTimer.current) clearTimeout(ringTimer.current)
+    ringTimer.current = setTimeout(() => setRinged(null), 2000)
+  }
 
   const stepsWithNotes = steps.filter((s) => notes.some((n) => n.step_position === s.position))
   const anyMissing = notes.some((n) => isMissing(n, steps.length))
@@ -109,7 +115,7 @@ export function CommunityNotes({ tutorialId, guideTitle, authorName, steps, note
         key={n.id}
         testID={`note-row-${n.id}`}
         ref={(r) => { if (r && n.id === highlightId) rowRefs.current.set(n.id, r) }}
-        onLayout={() => { const r = rowRefs.current.get(n.id); if (r && n.id === highlightId) onHighlightRow?.(r) }}
+        onLayout={() => { const r = rowRefs.current.get(n.id); if (r && n.id === highlightId) { startRing(n.id); onHighlightRow?.(r) } }}
         style={[styles.row, n.pinned_at && styles.fix, ring && styles.ring]}
       >
         {n.pinned_at ? (
