@@ -343,8 +343,11 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
               ) : null}
 
               {steps.length ? (
-                <Section title="The steps">
-                  <Text style={styles.stepsCount}>{`${progress.done}/${progress.total}`}</Text>
+                <View style={styles.stepsWrap}>
+                  <View style={styles.stepsHead}>
+                    <Text style={styles.sectionTitle} accessibilityRole="header">The steps</Text>
+                    <Text style={styles.needCount}>{`${progress.done}/${progress.total}`}</Text>
+                  </View>
                   <View style={styles.card}>
                     {steps.map((st, i) => {
                       const done = ticked.has(st.id)
@@ -374,8 +377,8 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
                       )
                     })}
                   </View>
-                  {summary.extras.length ? <Text style={styles.small}>{`+ ${summary.extras.length} step${summary.extras.length === 1 ? '' : 's'} added by builders, in Notes.`}</Text> : null}
-                </Section>
+                  {summary.extras.length ? <Text style={styles.extras}>{`+ ${summary.extras.length} step${summary.extras.length === 1 ? '' : 's'} added by builders, in Notes.`}</Text> : null}
+                </View>
               ) : null}
 
               {tutorial.safety_notes?.length || tutorial.safety_declared_at ? (
@@ -623,7 +626,10 @@ const styles = StyleSheet.create({
   strong: { fontFamily: theme.fonts.black },
   link: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.primaryDeep },
   small: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.text, lineHeight: 20 },
-  stepsCount: { position: 'absolute', right: 0, top: 0, fontFamily: theme.fonts.numeral, fontSize: theme.type.caption, color: theme.colors.muted },
+  stepsWrap: { marginTop: theme.spacing(5), marginBottom: theme.spacing(6), gap: theme.spacing(2) },
+  stepsHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
+  sectionTitle: { fontFamily: theme.fonts.display, fontSize: theme.type.heading, color: theme.colors.text },
+  extras: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted },
   card: { borderRadius: theme.radii.panel, borderWidth: theme.border.hairline, borderColor: theme.colors.border, backgroundColor: theme.colors.surface, overflow: 'hidden' },
   rule: { borderTopWidth: theme.border.hairline, borderTopColor: theme.colors.border },
   stepRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3), minHeight: 56, paddingHorizontal: theme.spacing(3), paddingVertical: theme.spacing(2) },
@@ -638,7 +644,7 @@ const styles = StyleSheet.create({
   struck: { textDecorationLine: 'line-through', color: theme.colors.muted },
   safetyRow: { flexDirection: 'row', gap: theme.spacing(3), alignItems: 'flex-start', paddingVertical: theme.spacing(1) },
   safetyTitle: { fontFamily: theme.fonts.bold, fontSize: theme.type.body, color: theme.colors.ink },
-  checks: { marginTop: theme.spacing(2), borderRadius: theme.radii.field, borderWidth: theme.border.hairline, borderColor: theme.colors.border, backgroundColor: theme.colors.surface, paddingHorizontal: theme.spacing(3), paddingBottom: theme.spacing(1) },
+  checks: { marginTop: theme.spacing(2), borderRadius: theme.radii.field, backgroundColor: theme.colors.successSoft, paddingHorizontal: theme.spacing(3), paddingBottom: theme.spacing(1) },
   checksHead: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2), minHeight: 48 },
   checksTitle: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.ink },
   checkRow: { flexDirection: 'row', gap: theme.spacing(2), alignItems: 'flex-start', paddingLeft: theme.spacing(7), paddingBottom: theme.spacing(2) },
@@ -655,7 +661,7 @@ const styles = StyleSheet.create({
   printHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   printTitle: { fontFamily: theme.fonts.black, fontSize: theme.type.body, color: theme.colors.text },
   printHint: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted, marginTop: theme.spacing(1) },
-  gathered: { gap: theme.spacing(2), marginTop: theme.spacing(3) },
+  gathered: { gap: theme.spacing(2), marginTop: theme.spacing(3), marginBottom: theme.spacing(5) },
   gatheredHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
   gatheredText: { fontFamily: theme.fonts.black, fontSize: theme.type.body, color: theme.colors.ink },
   meter: { height: 10, borderRadius: theme.radii.pill, backgroundColor: theme.colors.surfaceSunken, overflow: 'hidden' },
