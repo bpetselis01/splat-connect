@@ -89,6 +89,35 @@ const { error: toyError } = await admin.from('toys').insert({
 })
 if (toyError) throw new Error(`Failed to seed toy: ${toyError.message}`)
 
+// A published guide with two photos and two steps, for the guide-page flow:
+// swiping the hero is the platform's paging again, and build mode is a
+// fullScreenModal that only a device runs for real. The photo URLs need not
+// resolve, as above. Authored by the parent, so there is no Thank button to
+// get in the way of the hero's own buttons.
+const { data: guide, error: guideError } = await admin
+  .from('tutorials')
+  .insert({
+    title: `Device smoke guide ${Date.now()}`,
+    description: 'Seeded by provision-device-parent for the guide-page flow.',
+    difficulty: 'easy',
+    kind: 'toy_adaptation',
+    status: 'approved',
+    safety_declared_at: new Date().toISOString(),
+    photo_urls: ['https://example.invalid/device-guide-1.jpg', 'https://example.invalid/device-guide-2.jpg'],
+  })
+  .select('id')
+  .single()
+if (guideError || !guide) throw new Error(`Failed to seed guide: ${guideError?.message}`)
+const { error: linkError } = await admin
+  .from('tutorial_contributors')
+  .insert({ tutorial_id: guide.id, profile_id: data.user.id, role: 'primary' })
+if (linkError) throw new Error(`Failed to link guide author: ${linkError.message}`)
+const { error: stepsError } = await admin.from('tutorial_steps').insert([
+  { tutorial_id: guide.id, position: 1, title: 'Open the bay', body: 'Undo one screw.' },
+  { tutorial_id: guide.id, position: 2, title: 'Close it', body: 'Click.' },
+])
+if (stepsError) throw new Error(`Failed to seed guide steps: ${stepsError.message}`)
+
 // Two lines only, so callers can `eval $(node …)` or append to $GITHUB_ENV.
 console.log(`DEVICE_EMAIL=${email}`)
 console.log(`DEVICE_PASSWORD=${PASSWORD}`)

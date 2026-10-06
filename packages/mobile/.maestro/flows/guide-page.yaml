@@ -1,0 +1,103 @@
+# The guide page on Hermes and a real touch screen: the hero's paging, build
+# mode (a fullScreenModal), and the header ✕ that closes the whole trail back
+# to the last screen with the tab bar. Playwright draws the same screens but
+# cannot swipe a native pager, present a native modal, or show the tab bar's
+# real hiding rules; tests/e2e/guides-*.spec.ts cover the behaviour, this
+# covers the platform.
+#
+# The guide is seeded by scripts/provision-device-parent.mjs (two photos, two
+# steps), the same way toy-photos-carousel.yaml gets its toy: whether the first
+# guide in the library happens to have two photos is someone else's upload.
+#
+# DEVICE_EMAIL / DEVICE_PASSWORD come from `maestro test --env` — see
+# sign-out-clears-session.yaml for why they carry no env: defaults here.
+appId: com.splatconnect.mobile
+---
+- clearState
+- runFlow: ../subflows/launch.yaml
+# Same Keychain caveat as every-tab-renders.yaml: clearState wipes app data but
+# not the Keychain, so the session can survive and land straight on the tabs.
+- runFlow:
+    when:
+      visible:
+        id: "welcome-sign-in"
+    commands:
+      - tapOn:
+          id: "welcome-sign-in"
+      - tapOn:
+          id: "email-input"
+      - inputText: ${DEVICE_EMAIL}
+      - tapOn: "Welcome back"  # the keyboard covers the password field
+      - tapOn:
+          id: "password-input"
+      - inputText: ${DEVICE_PASSWORD}
+      # hideKeyboard fails on the iOS 26 simulator; a tap outside a field
+      # dismisses it on device and simulator alike (ScrollView default).
+      - tapOn: "Welcome back"
+      - tapOn:
+          id: "auth-submit"
+      - tapOn:
+          text: "Not Now"
+          optional: true
+
+# Guides is a default shortcut on Home, not a tab.
+- tapOn:
+    text: "Guides"
+- assertVisible:
+    text: "Guide library"
+- tapOn:
+    text: "Device smoke guide.*"
+
+# The hero opens on its first photo; the pill counts them.
+- assertVisible:
+    text: "1/2 · .*"
+- assertNotVisible:
+    text: "2/2 · .*"
+
+# Swiping is the assertion, as in toy-photos-carousel.yaml: if pagingEnabled or
+# the scroll handler threw on Hermes, the second photo never arrives. Explicit
+# points, because the hero is the top of a vertical scroll and a centre swipe
+# would land on the page below it.
+- swipe:
+    start: "85%,20%"
+    end: "15%,20%"
+- assertVisible:
+    text: "2/2 · .*"
+- swipe:
+    start: "15%,20%"
+    end: "85%,20%"
+- assertVisible:
+    text: "1/2 · .*"
+
+# Build mode: Get ready, then step 1, then step 2.
+- tapOn:
+    text: "Start building"
+- assertVisible:
+    text: "Get ready"
+- tapOn:
+    text: "Start step 1"
+- assertVisible:
+    text: "Step 1 of 2"
+- tapOn:
+    text: "Next"
+- assertVisible:
+    text: "Step 2 of 2"
+
+# Its own ✕ closes the modal onto the guide, which now offers to pick up where
+# the reader stopped (Next ticked step 1).
+- tapOn:
+    text: "Close build mode"
+- assertVisible:
+    text: "Pick up at step 2"
+
+# The header ✕ closes the whole trail: back on the library, tab bar showing.
+- tapOn:
+    text: "Close"
+- assertVisible:
+    text: "Guide library"
+- assertVisible:
+    text: "Home"
+- assertVisible:
+    text: "Inbox(, .*)?"
+- assertNotVisible:
+    text: "Pick up at step 2"
