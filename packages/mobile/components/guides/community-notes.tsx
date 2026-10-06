@@ -1,25 +1,24 @@
 // packages/mobile/components/guides/community-notes.tsx
 //
-// The board's Community notes: Revisions (pinned) and Discussion, and Add a
-// note against a step or as a Missing step, with an optional photo. Pin and
-// Unpin for the guide's contributors, Delete on your own note, Report a
-// problem on anyone else's.
-import { useState } from 'react'
-import { View, Text, Image, StyleSheet } from 'react-native'
+// The guide's Feedback tab (spec 2026-10-07): a composer bar that opens the
+// FeedbackSheet, filter chips, pinned notes as Fix cards, then one row per
+// note with everything a viewer can do behind ⋯. Report targets the note.
+import { useEffect, useRef, useState, type ComponentRef } from 'react'
+import { View, Text, Image, Pressable, Modal, StyleSheet } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
+import { useRouter } from 'expo-router'
 import type { GuideNote, TutorialStep } from '@splat-connect/types'
+import { initials } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
-import { pickAndUploadPhoto } from '../../lib/upload'
 import { relativeTime } from '../../lib/notifications'
-import { stepLabel } from '../../lib/guide-notes'
+import { noteSummary, stepLabel } from '../../lib/guide-notes'
 import { theme } from '../../lib/theme'
-import { Section } from '../ui/Section'
 import { Chip } from '../ui/Chip'
-import { TextField } from '../ui/TextField'
 import { Button } from '../ui/Button'
-import { ErrorRow } from '../ui/ErrorRow'
 import { FlashLine, useFlash } from '../ui/Flash'
+import { PhotoViewer } from '../ui/PhotoViewer'
 import { ReportProblem } from '../reports/report-problem'
-import { apiMessage } from '@splat-connect/types'
+import { FeedbackSheet } from './feedback-sheet'
 
 type Props = {
   tutorialId: string
@@ -30,46 +29,51 @@ type Props = {
   reload: () => Promise<unknown>
   canPin: boolean
   viewerId: string | null
+  viewerName: string | null
+  highlightId?: string | null
+  onHighlightRow?: (row: ComponentRef<typeof View>) => void
+  onPosted?: (note: GuideNote) => void
 }
 
-export function CommunityNotes({ tutorialId, guideTitle, authorName, steps, notes, reload, canPin, viewerId }: Props) {
-  const [at, setAt] = useState<number | null | undefined>(undefined)
-  const [body, setBody] = useState('')
-  const [photo, setPhoto] = useState<string | null>(null)
-  const [caption, setCaption] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+type Filter = 'all' | 'fixes' | 'missing' | number
+
+const isMissing = (n: GuideNote, count: number) => n.step_position == null || n.step_position > count
+
+/** Opens the report sheet as soon as it mounts: the ⋯ menu has already closed. */
+function AutoOpen({ open }: { open: () => void }) {
+  useEffect(() => { open() }, [open])
+  return null
+}
+
+export function CommunityNotes({ tutorialId, guideTitle, authorName, steps, notes, reload, canPin, viewerId, viewerName, highlightId, onHighlightRow, onPosted }: Props) {
+  const router = useRouter()
+  const [filter, setFilter] = useState<Filter>('all')
+  const [composer, setComposer] = useState(false)
+  const [menuFor, setMenuFor] = useState<GuideNote | null>(null)
+  const [reportFor, setReportFor] = useState<{ note: GuideNote; n: number } | null>(null)
+  const [viewing, setViewing] = useState<{ uri: string; caption: string | null } | null>(null)
   const [flash, setFlash] = useFlash()
-  const pinned = notes.filter((n) => n.pinned_at)
-  const open = notes.filter((n) => !n.pinned_at)
+  const [ringed, setRinged] = useState<string | null>(null)
+  const summary = noteSummary(notes, steps.length)
 
-  async function addPhoto() {
-    try {
-      const uploaded = await pickAndUploadPhoto('/api/upload/note-photo', tutorialId)
-      if (uploaded) setPhoto(uploaded.path ?? null)
-    } catch (err) {
-      setError((err as Error).message)
-    }
-  }
+  // The ring on a just-posted note fades after two seconds.
+  useEffect(() => {
+    if (!highlightId) return
+    setRinged(highlightId)
+    const t = setTimeout(() => setRinged(null), 2000)
+    return () => clearTimeout(t)
+  }, [highlightId])
 
-  async function post() {
-    setBusy(true)
-    setError(null)
-    try {
-      await apiClient.post(`/api/tutorials/${tutorialId}/notes`, { step_position: at ?? null, body: body.trim(), photo_path: photo, photo_caption: caption.trim() || null })
-      setBody('')
-      setPhoto(null)
-      setCaption('')
-      setAt(undefined)
-      await reload()
-    } catch (err) {
-      setError(apiMessage(err, 'Could not post that. Please try again.'))
-    } finally {
-      setBusy(false)
-    }
-  }
+  const stepsWithNotes = steps.filter((s) => notes.some((n) => n.step_position === s.position))
+  const anyMissing = notes.some((n) => isMissing(n, steps.length))
+  const shown = notes.filter((n) =>
+    filter === 'all' ? true : filter === 'fixes' ? !!n.pinned_at : filter === 'missing' ? isMissing(n, steps.length) : n.step_position === filter
+  )
+  const fixes = shown.filter((n) => n.pinned_at)
+  const rest = shown.filter((n) => !n.pinned_at)
 
   async function act(path: string, done: string, method: 'post' | 'delete' = 'post') {
+    setMenuFor(null)
     try {
       if (method === 'post') await apiClient.post(path, {})
       else await apiClient.delete(path)
@@ -80,90 +84,180 @@ export function CommunityNotes({ tutorialId, guideTitle, authorName, steps, note
     }
   }
 
-  const noteRow = (n: GuideNote) => (
-    <View key={n.id} style={[styles.note, n.pinned_at && styles.pinnedNote]}>
-      <Text style={styles.meta}>{`${stepLabel(n, steps.length)} · ${n.author_name} · ${relativeTime(n.created_at)}`}</Text>
-      <Text style={styles.body}>{n.body}</Text>
-      {n.photo_url ? <Image source={{ uri: n.photo_url }} style={styles.photo} accessibilityLabel={n.photo_caption ?? 'Photo with the note'} /> : null}
-      {n.photo_caption ? <Text style={styles.meta}>{n.photo_caption}</Text> : null}
-      <View style={styles.actions}>
-        {n.pinned_at ? <Text style={styles.pinnedBy}>{`Pinned by ${n.pinned_by_name ?? 'Deleted member'}`}</Text> : null}
-        {canPin ? (
-          <Button
-            label={n.pinned_at ? 'Unpin' : 'Pin as revision'}
-            variant="ghost"
-            onPress={() =>
-              void act(`/api/tutorials/${tutorialId}/notes/${n.id}/${n.pinned_at ? 'unpin' : 'pin'}`, n.pinned_at ? 'Unpinned' : 'Pinned as a revision — shows above Steps')
-            }
-          />
+  const rowRefs = useRef(new Map<string, ComponentRef<typeof View>>())
+
+  const row = (n: GuideNote) => {
+    const ring = ringed === n.id
+    return (
+      <View
+        key={n.id}
+        testID={`note-row-${n.id}`}
+        ref={(r) => { if (r && n.id === highlightId) rowRefs.current.set(n.id, r) }}
+        onLayout={() => { const r = rowRefs.current.get(n.id); if (r && n.id === highlightId) onHighlightRow?.(r) }}
+        style={[styles.row, n.pinned_at && styles.fix, ring && styles.ring]}
+      >
+        {n.pinned_at ? (
+          <View style={styles.fixHead}>
+            <Ionicons name="pin" size={14} color={theme.colors.ink} />
+            <Text style={styles.fixHeadText}>{`Fix · approved by ${(n.pinned_by_name ?? 'the author').split(' ')[0]}`}</Text>
+            <MenuButton note={n} />
+          </View>
         ) : null}
-        {viewerId === n.author_id ? (
-          <Button label="Delete" variant="ghost" onPress={() => void act(`/api/tutorials/${tutorialId}/notes/${n.id}`, 'Note deleted', 'delete')} />
-        ) : (
-          <ReportProblem subjectKind="guide" subjectId={tutorialId} subjectLabel={`A note on ${guideTitle}`} />
-        )}
+        <View style={styles.rowMain}>
+          {n.pinned_at ? null : (
+            <View style={styles.avatar}><Text style={styles.avatarText}>{initials(n.author_name, '?')}</Text></View>
+          )}
+          <View style={styles.rowBody}>
+            {n.pinned_at ? null : (
+              <View style={styles.top}>
+                <Text style={styles.author}>{n.author_id === viewerId ? 'You' : n.author_name}</Text>
+                <Text style={styles.when}>{relativeTime(n.created_at)}</Text>
+                <MenuButton note={n} />
+              </View>
+            )}
+            {n.pinned_at ? (
+              <Text style={styles.body}><Text style={styles.strong}>{`${stepLabel(n, steps.length)}. `}</Text><Text>{n.body}</Text></Text>
+            ) : (
+              <>
+                <View style={styles.stepTag}><Text style={styles.stepTagText}>{stepLabel(n, steps.length)}</Text></View>
+                <Text style={styles.body}>{n.body}</Text>
+              </>
+            )}
+            {n.pinned_at ? <Text style={styles.when}>{`${n.author_name} · ${relativeTime(n.created_at)}`}</Text> : null}
+          </View>
+          {n.photo_url ? (
+            <Pressable onPress={() => setViewing({ uri: n.photo_url!, caption: n.photo_caption })} accessibilityRole="imagebutton" accessibilityLabel={`Open ${n.author_name}'s photo full screen`}>
+              <Image source={{ uri: n.photo_url }} style={styles.thumb} accessibilityLabel={n.photo_caption ?? 'Photo with the note'} />
+            </Pressable>
+          ) : null}
+        </View>
       </View>
-    </View>
-  )
+    )
+  }
+
+  function MenuButton({ note }: { note: GuideNote }) {
+    return (
+      <Pressable testID={`note-menu-${note.id}`} onPress={() => setMenuFor(note)} accessibilityRole="button" accessibilityLabel={`More on ${note.author_name}'s note`} hitSlop={8} style={styles.more}>
+        <Ionicons name="ellipsis-horizontal" size={18} color={theme.colors.muted} />
+      </Pressable>
+    )
+  }
+
+  const mine = menuFor ? menuFor.author_id === viewerId : false
 
   return (
-    <Section title={`Community notes ${notes.length}`}>
-      <Text style={styles.lead}>
-        Built this and found a step missing? Add a note against the step. {authorName} can pin it as a revision so everyone sees it.
-      </Text>
-      <FlashLine message={flash} />
-      {pinned.length ? <Text style={styles.eyebrow}>{`Revisions · ${pinned.length} pinned`}</Text> : null}
-      {pinned.map(noteRow)}
-      <Text style={styles.eyebrow}>{`Discussion · ${open.length}`}</Text>
-      {open.map(noteRow)}
-
+    <View style={styles.wrap}>
       {viewerId === null ? (
-        // POST /api/tutorials/:id/notes sits behind authMiddleware.
-        <Text style={styles.meta}>Sign in to add a note.</Text>
+        <Pressable onPress={() => router.push('/sign-in')} accessibilityRole="button" style={styles.composer}>
+          <Ionicons name="chatbubble-ellipses-outline" size={20} color={theme.colors.primaryDeep} />
+          <Text style={styles.composerText}>Sign in to leave feedback</Text>
+        </Pressable>
       ) : (
-        <View style={styles.form}>
-          <Text style={styles.formTitle}>Add a note</Text>
-          <View accessibilityLabel="Which step is it about?" style={styles.chips}>
-            {steps.map((s) => (
-              <Chip key={s.id} label={`Step ${s.position}`} active={at === s.position} onPress={() => setAt(s.position)} />
-            ))}
-            <Chip label="Missing step" active={at === null} onPress={() => setAt(null)} />
-          </View>
-          {at === null ? (
-            <Text style={styles.meta}>{`Not part of any step above. If pinned, it is added to the end as step ${steps.length + 1}.`}</Text>
-          ) : null}
-          <TextField
-            accessibilityLabel="Your note"
-            placeholder="What was missing, or what you did differently…"
-            multiline
-            maxLength={1000}
-            value={body}
-            onChangeText={setBody}
-          />
-          {photo ? (
-            <TextField accessibilityLabel="Photo caption" placeholder="Caption (optional)" maxLength={60} value={caption} onChangeText={setCaption} />
-          ) : (
-            <Button label="Add a photo" variant="ghost" onPress={() => void addPhoto()} />
-          )}
-          <ErrorRow message={error} />
-          <Button label="Post" variant="primary" disabled={at === undefined || !body.trim()} loading={busy} onPress={() => void post()} />
-        </View>
+        <Pressable testID="feedback-composer" onPress={() => setComposer(true)} accessibilityRole="button" accessibilityLabel="Share a fix or a tip" style={styles.composer}>
+          <View style={styles.avatar}><Text style={styles.avatarText}>{initials(viewerName ?? '', '?')}</Text></View>
+          <Text style={[styles.composerText, styles.flex]}>Share a fix or a tip…</Text>
+          <Ionicons name="camera-outline" size={20} color={theme.colors.primaryDeep} />
+        </Pressable>
       )}
-    </Section>
+      <FlashLine message={flash} />
+
+      {notes.length ? (
+        <View style={styles.chips}>
+          <Chip label={`All ${notes.length}`} active={filter === 'all'} onPress={() => setFilter('all')} testID="feedback-filter-all" />
+          {summary.pinned.length ? <Chip label={`Fixes ${summary.pinned.length}`} active={filter === 'fixes'} onPress={() => setFilter('fixes')} testID="feedback-filter-fixes" /> : null}
+          {stepsWithNotes.map((s) => (
+            <Chip key={s.id} label={`Step ${s.position}`} active={filter === s.position} onPress={() => setFilter(s.position)} testID={`feedback-filter-step-${s.position}`} />
+          ))}
+          {anyMissing ? <Chip label="Missing" active={filter === 'missing'} onPress={() => setFilter('missing')} testID="feedback-filter-missing" /> : null}
+        </View>
+      ) : (
+        <Text style={styles.empty}>No feedback yet. Built it? Say how it went.</Text>
+      )}
+
+      {fixes.map(row)}
+      {rest.map(row)}
+
+      <FeedbackSheet
+        tutorialId={tutorialId}
+        steps={steps}
+        authorFirstName={authorName.split(' ')[0] ?? 'The author'}
+        open={composer}
+        onClose={() => setComposer(false)}
+        onPosted={(note) => { void reload(); onPosted?.(note) }}
+      />
+
+      <Modal visible={!!menuFor} transparent animationType="fade" onRequestClose={() => setMenuFor(null)}>
+        <Pressable onPress={() => setMenuFor(null)} accessibilityRole="button" accessibilityLabel="Close" style={styles.backdrop} />
+        <View testID="note-menu" style={styles.menu}>
+          <View style={styles.grabber} />
+          {menuFor ? <Text style={styles.menuTitle}>{`${menuFor.author_id === viewerId ? 'Your' : `${menuFor.author_name}'s`} note on ${stepLabel(menuFor, steps.length)}`}</Text> : null}
+          {menuFor && canPin ? (
+            <Pressable style={styles.menuRow} accessibilityRole="button" onPress={() => void act(`/api/tutorials/${tutorialId}/notes/${menuFor.id}/${menuFor.pinned_at ? 'unpin' : 'pin'}`, menuFor.pinned_at ? 'Unpinned' : 'Pinned as a fix — shows on its step in build mode')}>
+              <Ionicons name="pin-outline" size={20} color={theme.colors.ink} />
+              <Text style={styles.menuText}>{menuFor.pinned_at ? 'Unpin' : 'Pin as a fix'}</Text>
+            </Pressable>
+          ) : null}
+          {menuFor && !mine ? (
+            <Pressable style={styles.menuRow} accessibilityRole="button" onPress={() => { setReportFor({ note: menuFor, n: Date.now() }); setMenuFor(null) }}>
+              <Ionicons name="flag-outline" size={20} color={theme.colors.ink} />
+              <Text style={styles.menuText}>Report this note</Text>
+            </Pressable>
+          ) : null}
+          {menuFor && mine ? (
+            <Pressable style={styles.menuRow} accessibilityRole="button" onPress={() => void act(`/api/tutorials/${tutorialId}/notes/${menuFor.id}`, 'Note deleted', 'delete')}>
+              <Ionicons name="trash-outline" size={20} color={theme.colors.danger} />
+              <Text style={[styles.menuText, styles.danger]}>Delete</Text>
+            </Pressable>
+          ) : null}
+          <Button label="Cancel" variant="secondary" onPress={() => setMenuFor(null)} />
+        </View>
+      </Modal>
+
+      {reportFor ? (
+        <ReportProblem
+          key={reportFor.n}
+          subjectKind="note"
+          subjectId={reportFor.note.id}
+          subjectLabel={`${reportFor.note.author_name}'s note on ${guideTitle}`}
+          trigger={(open) => <AutoOpen open={open} />}
+        />
+      ) : null}
+
+      <PhotoViewer photos={viewing ? [viewing] : []} index={viewing ? 0 : null} onClose={() => setViewing(null)} />
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
-  lead: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted, lineHeight: 19, marginBottom: theme.spacing(3) },
-  eyebrow: { fontFamily: theme.fonts.black, fontSize: theme.type.caption, letterSpacing: 1, textTransform: 'uppercase', color: theme.colors.muted, marginVertical: theme.spacing(2) },
-  note: { padding: theme.spacing(3), gap: theme.spacing(1), borderRadius: theme.radii.field, borderWidth: theme.border.hairline, borderColor: theme.colors.border, backgroundColor: theme.colors.surface, marginBottom: theme.spacing(2) },
-  pinnedNote: { backgroundColor: theme.colors.honeySoft },
-  meta: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.caption, color: theme.colors.muted },
-  body: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.text, lineHeight: 20 },
-  photo: { width: '100%', aspectRatio: 7 / 6, borderRadius: theme.radii.field, backgroundColor: theme.colors.surfaceSunken },
-  actions: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: theme.spacing(2) },
-  pinnedBy: { fontFamily: theme.fonts.black, fontSize: theme.type.caption, color: theme.colors.ink },
-  form: { marginTop: theme.spacing(3), padding: theme.spacing(3), gap: theme.spacing(2), borderRadius: theme.radii.panel, borderWidth: theme.border.hairline, borderColor: theme.colors.border, backgroundColor: theme.colors.surface },
-  formTitle: { fontFamily: theme.fonts.display, fontSize: theme.type.body, color: theme.colors.ink },
+  wrap: { gap: theme.spacing(3), paddingTop: theme.spacing(3) },
+  flex: { flex: 1 },
+  composer: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3), paddingHorizontal: theme.spacing(3), paddingVertical: theme.spacing(2), borderRadius: theme.radii.pill, borderWidth: theme.border.hairline, borderColor: theme.colors.border, backgroundColor: theme.colors.surface, ...theme.shadow(1) },
+  composerText: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.label, color: theme.colors.muted },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2) },
+  empty: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted },
+  row: { paddingVertical: theme.spacing(3), borderTopWidth: theme.border.hairline, borderTopColor: theme.colors.border, gap: theme.spacing(2) },
+  fix: { borderTopWidth: 0, borderRadius: theme.radii.panel, backgroundColor: theme.colors.honeySoft, paddingHorizontal: theme.spacing(4) },
+  ring: { borderWidth: 2, borderColor: theme.colors.primary, borderRadius: theme.radii.panel, backgroundColor: theme.colors.accentFaint, paddingHorizontal: theme.spacing(3) },
+  fixHead: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2) },
+  fixHeadText: { flex: 1, fontFamily: theme.fonts.black, fontSize: theme.type.caption, color: theme.colors.ink },
+  rowMain: { flexDirection: 'row', gap: theme.spacing(3), alignItems: 'flex-start' },
+  rowBody: { flex: 1, gap: theme.spacing(1) },
+  avatar: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.mintSoft },
+  avatarText: { fontFamily: theme.fonts.black, fontSize: theme.type.micro, color: theme.colors.ink },
+  top: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2) },
+  author: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink },
+  when: { flex: 1, fontFamily: theme.fonts.semiBold, fontSize: theme.type.caption, color: theme.colors.muted },
+  more: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center' },
+  stepTag: { alignSelf: 'flex-start', paddingHorizontal: theme.spacing(2), paddingVertical: 2, borderRadius: theme.radii.pill, backgroundColor: theme.colors.accentLight },
+  stepTagText: { fontFamily: theme.fonts.black, fontSize: theme.type.micro, color: theme.colors.primaryDeep },
+  body: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.text, lineHeight: 20 },
+  strong: { fontFamily: theme.fonts.black },
+  thumb: { width: 64, height: 64, borderRadius: theme.radii.field, backgroundColor: theme.colors.surfaceSunken },
+  backdrop: { flex: 1, backgroundColor: theme.colors.scrim },
+  menu: { backgroundColor: theme.colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: theme.spacing(4), paddingBottom: theme.spacing(6), gap: theme.spacing(2) },
+  grabber: { width: 40, height: 5, borderRadius: 3, backgroundColor: theme.colors.border, alignSelf: 'center' },
+  menuTitle: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.caption, color: theme.colors.muted },
+  menuRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3), minHeight: 48, borderTopWidth: theme.border.hairline, borderTopColor: theme.colors.border },
+  menuText: { fontFamily: theme.fonts.bold, fontSize: theme.type.body, color: theme.colors.ink },
+  danger: { color: theme.colors.danger },
 })

@@ -19,6 +19,7 @@ export function Chip({
   icon,
   swatch,
   variant = 'solid',
+  testID,
 }: {
   label: string
   active: boolean
@@ -42,6 +43,7 @@ export function Chip({
   variant?: 'solid' | 'filter'
   /** A colour dot before the label: the board's print colour chips. */
   swatch?: string
+  testID?: string
 }) {
   const filter = variant === 'filter'
   const offBg = theme.colors.surface
@@ -71,6 +73,7 @@ export function Chip({
 
   return (
     <AnimatedPressable
+      testID={testID}
       onPress={onPress}
       accessibilityRole={role}
       accessibilityLabel={label}

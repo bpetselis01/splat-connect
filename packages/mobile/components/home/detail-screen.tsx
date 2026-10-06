@@ -627,6 +627,7 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
               reload={reload}
               canPin={!!thanks?.own || !!caps?.isAdmin}
               viewerId={caps?.profile.id ?? null}
+              viewerName={caps?.profile.name ?? null}
             />
           )}
         </View>
