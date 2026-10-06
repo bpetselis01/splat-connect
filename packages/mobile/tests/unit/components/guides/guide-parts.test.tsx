@@ -1,6 +1,13 @@
 import { Linking } from 'react-native'
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { GuideParts } from '../../../../components/guides/guide-parts'
+import { useGatherTicks } from '../../../../lib/guide-progress'
+
+// The screen owns the ticks (useGatherTicks); this stands in for it.
+function Parts(props: Omit<React.ComponentProps<typeof GuideParts>, 'ticks'>) {
+  const g = useGatherTicks('g', props.parts, [])
+  return <GuideParts {...props} ticks={g.parts} />
+}
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 const mockSetItem = jest.fn().mockResolvedValue(undefined)
@@ -14,7 +21,7 @@ const parts = [
 ]
 
 it('ticks a part and keeps it on the device', async () => {
-  render(<GuideParts tutorialId="g" parts={parts} pricesCheckedOn={null} />)
+  render(<Parts parts={parts} pricesCheckedOn={null} />)
   expect(await screen.findByText('0 of 2 gathered')).toBeTruthy()
   fireEvent.press(screen.getByLabelText('Glue: gathered'))
   expect(screen.getByText('1 of 2 gathered')).toBeTruthy()
@@ -22,7 +29,7 @@ it('ticks a part and keeps it on the device', async () => {
 })
 
 it('totals the prices and says when they were checked', async () => {
-  render(<GuideParts tutorialId="g" parts={parts} pricesCheckedOn="2026-08-02" />)
+  render(<Parts parts={parts} pricesCheckedOn="2026-08-02" />)
   expect(await screen.findByText('Total')).toBeTruthy()
   expect(screen.getAllByText('$12.50')).toHaveLength(2) // Servo's row + the total; optional glue is left out
   expect(screen.getByText('Prices checked 2 Aug 2026')).toBeTruthy()
@@ -31,7 +38,7 @@ it('totals the prices and says when they were checked', async () => {
 
 it('opens a buy link in the browser', async () => {
   const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(true)
-  render(<GuideParts tutorialId="g" parts={parts} pricesCheckedOn={null} />)
+  render(<Parts parts={parts} pricesCheckedOn={null} />)
   fireEvent.press(await screen.findByText('Jaycar'))
   expect(open).toHaveBeenCalledWith('https://j.test/servo')
 })

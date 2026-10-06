@@ -19,7 +19,7 @@ import { Provenance, type ProvenanceContributor, type ProvenanceOrg } from '../g
 import { PicksRow } from '../guides/picks-row'
 import { GuideParts } from '../guides/guide-parts'
 import { GuideTools } from '../guides/guide-tools'
-import { stepProgress, ticksKey, useDeviceTicks } from '../../lib/guide-progress'
+import { stepProgress, ticksKey, useDeviceTicks, useGatherTicks } from '../../lib/guide-progress'
 import { CommunityNotes } from '../guides/community-notes'
 import { Badge } from '../ui/Badge'
 import { SaveButton } from '../ui/SaveButton'
@@ -91,6 +91,7 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
   const [tabsY, setTabsY] = useState(0)
   const stepIds = (tutorial?.steps ?? []).map((s) => s.id)
   const { ticked, reread } = useDeviceTicks(ticksKey('steps', id), stepIds)
+  const gather = useGatherTicks(id, tutorial?.parts ?? [], tutorial?.tools ?? [])
   // Build mode ticks steps while this page stays mounted underneath; read them
   // again on the way back so Start building becomes Pick up at step N.
   useFocusEffect(
@@ -418,8 +419,8 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
         </>
       ) : tab === 'parts' ? (
         <>
-          <GuideParts tutorialId={tutorial.id} parts={tutorial.parts} pricesCheckedOn={tutorial.prices_checked_on} />
-          <GuideTools tutorialId={tutorial.id} tools={tutorial.tools} />
+          <GuideParts parts={tutorial.parts} pricesCheckedOn={tutorial.prices_checked_on} ticks={gather.parts} />
+          <GuideTools tools={tutorial.tools} ticks={gather.tools} />
         </>
       ) : tab === 'files' ? (
         <>

@@ -93,3 +93,23 @@ export function useDeviceTicks(key: string, validIds: readonly string[]) {
     reset: () => write(new Set()),
   }
 }
+
+export type Ticks = { ticked: ReadonlySet<string>; toggle: (id: string) => void }
+
+/**
+ * The parts gathered and tools owned for one guide, read once by the screen
+ * so its summary card, its gathered bar and both checklists agree as you tick.
+ */
+export function useGatherTicks(tutorialId: string, parts: readonly { id: string }[], tools: readonly { id: string }[]) {
+  const p = useDeviceTicks(ticksKey('parts', tutorialId), parts.map((x) => x.id))
+  const t = useDeviceTicks(ticksKey('tools', tutorialId), tools.map((x) => x.id))
+  const partsGot = parts.filter((x) => p.ticked.has(x.id)).length
+  const toolsGot = tools.filter((x) => t.ticked.has(x.id)).length
+  return {
+    parts: { ticked: p.ticked, toggle: p.toggle } as Ticks,
+    tools: { ticked: t.ticked, toggle: t.toggle } as Ticks,
+    partsGot,
+    toolsGot,
+    left: parts.length + tools.length - partsGot - toolsGot,
+  }
+}
