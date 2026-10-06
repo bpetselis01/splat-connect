@@ -2,7 +2,7 @@
 // question a screen. Same session gate as (my)/_layout.tsx —
 // /api/child-profiles needs a signed-in account.
 import { Redirect, Stack } from 'expo-router'
-import { stackScreenOptions } from '../../lib/nav-options'
+import { stackScreenOptions, noBarClearance } from '../../lib/nav-options'
 import { useAuthGate } from '../../lib/use-auth-gate'
 
 export default function OnboardingLayout() {
@@ -13,7 +13,7 @@ export default function OnboardingLayout() {
   if (gate !== 'ok') return <Redirect href={gate} />
 
   return (
-    <Stack screenOptions={{ ...stackScreenOptions, headerBackTitle: 'Back' }}>
+    <Stack screenOptions={{ ...stackScreenOptions, ...noBarClearance, headerBackTitle: 'Back' }}>
       <Stack.Screen name="child" options={{ title: 'Child profile' }} />
     </Stack>
   )

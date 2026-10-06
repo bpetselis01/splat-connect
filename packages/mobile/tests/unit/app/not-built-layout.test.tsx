@@ -11,6 +11,7 @@ jest.mock('react-native-safe-area-context', () => ({
   ...jest.requireActual('react-native-safe-area-context/jest/mock').default,
   useSafeAreaInsets: () => INSETS,
 }))
+jest.mock('../../../lib/auth-context', () => ({ useAuth: () => ({ session: null }) }))
 jest.mock('expo-router', () => ({
   useRouter: () => ({ back: jest.fn(), push: jest.fn() }),
   useLocalSearchParams: () => ({ feature: 'google-sign-in' }),

@@ -1,7 +1,7 @@
 // packages/mobile/app/(tabs)/guides/_layout.tsx
 import { Stack } from 'expo-router'
 import { useTabFocused } from '../../../lib/use-tab-focused'
-import { stackScreenOptions } from '../../../lib/nav-options'
+import { stackScreenOptions, noBarClearance } from '../../../lib/nav-options'
 import { CloseButton } from '../../../components/ui/CloseButton'
 
 // A deep link or notification straight to a pushed screen still lands with
@@ -22,7 +22,7 @@ export default function GuidesStackLayout() {
         native header here would be a second stacked title. Drill-down screens
         keep theirs — that is where the back affordance lives.
       */}
-      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="index" options={{ headerShown: false, ...noBarClearance }} />
       {/*
         formSheet rather than modal: the sheet options below — the grabber
         especially — only apply to formSheet, and the grabber is the whole point.
@@ -34,6 +34,7 @@ export default function GuidesStackLayout() {
         name="new"
         options={{
           title: 'Add a guide',
+          ...noBarClearance,
           presentation: 'formSheet',
           // An opaque header, so the form starts below it: on iOS the sheet's
           // header floated over the top of the content.
@@ -45,12 +46,13 @@ export default function GuidesStackLayout() {
           headerLeft: () => <CloseButton />,
         }}
       />
-      <Stack.Screen name="[id]/index" options={{ title: 'Guide' }} />
+      {/* Reading pages pad their own scroll content, so the page scrolls behind the bar. */}
+      <Stack.Screen name="[id]/index" options={{ title: 'Guide', ...noBarClearance }} />
       <Stack.Screen name="[id]/preview" options={{ title: 'Guide PDF' }} />
       {/* Start building: the whole screen, its own ✕ and progress bar. */}
-      <Stack.Screen name="[id]/build" options={{ presentation: 'fullScreenModal', headerShown: false }} />
-      <Stack.Screen name="contributor/[id]" options={{ title: 'Contributor' }} />
-      <Stack.Screen name="organisation/[id]" options={{ title: 'Organisation' }} />
+      <Stack.Screen name="[id]/build" options={{ presentation: 'fullScreenModal', headerShown: false, ...noBarClearance }} />
+      <Stack.Screen name="contributor/[id]" options={{ title: 'Contributor', ...noBarClearance }} />
+      <Stack.Screen name="organisation/[id]" options={{ title: 'Organisation', ...noBarClearance }} />
     </Stack>
   )
 }

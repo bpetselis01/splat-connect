@@ -1,7 +1,7 @@
 // packages/mobile/app/(tabs)/explore/_layout.tsx
 import { Stack, useRouter } from 'expo-router'
 import { useTabFocused } from '../../../lib/use-tab-focused'
-import { stackScreenOptions } from '../../../lib/nav-options'
+import { stackScreenOptions, noBarClearance } from '../../../lib/nav-options'
 import { CloseButton } from '../../../components/ui/CloseButton'
 import { BackButton } from '../../../components/ui/BackButton'
 import { HeaderAddButton } from '../../../components/ui/HeaderAddButton'
@@ -29,10 +29,10 @@ export default function ExploreStackLayout() {
       {/* The board draws Explore under the drill-down header, not a tab
           root's greeting: it is a place you visit from Me. */}
       <Stack.Screen name="index" options={{ title: 'Explore', headerLeft: () => <ExploreBack /> }} />
-      <Stack.Screen name="learn/index" options={{ title: 'Learn' }} />
+      <Stack.Screen name="learn/index" options={{ title: 'Learn', ...noBarClearance }} />
       {/* Overridden per-article by article-screen.tsx's own <Stack.Screen>
           once the slug resolves; this is the fallback for an unknown one. */}
-      <Stack.Screen name="learn/[slug]" options={{ title: 'Guide' }} />
+      <Stack.Screen name="learn/[slug]" options={{ title: 'Guide', ...noBarClearance }} />
       <Stack.Screen
         name="challenges/index"
         options={{
@@ -42,7 +42,7 @@ export default function ExploreStackLayout() {
       />
       {/* The brief carries its own title, so the header stays generic rather
           than repeating a long challenge name in a narrow bar. */}
-      <Stack.Screen name="challenges/[id]" options={{ title: 'Challenge' }} />
+      <Stack.Screen name="challenges/[id]" options={{ title: 'Challenge', ...noBarClearance }} />
       <Stack.Screen name="challenges/new" options={{ title: 'Submit an idea' }} />
       <Stack.Screen name="recycling" options={{ title: 'Recycling' }} />
       <Stack.Screen name="makers-wanted/index" options={{ title: 'Makers wanted' }} />
@@ -52,6 +52,7 @@ export default function ExploreStackLayout() {
         name="makers-wanted/new"
         options={{
           title: 'Ask for a build',
+          ...noBarClearance,
           presentation: 'formSheet',
           // An opaque header, so the form starts below it: on iOS the sheet's
           // header floated over the top of the content.
