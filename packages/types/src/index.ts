@@ -2224,7 +2224,7 @@ export interface Recommendation {
   position: number
   /** 129. "Required first": make the recommended guide before this one. */
   required?: boolean
-  tutorials: Pick<Tutorial, 'id' | 'title' | 'kind' | 'difficulty' | 'toy_photo_url' | 'status' | 'maturity'>
+  tutorials: Pick<Tutorial, 'id' | 'title' | 'kind' | 'difficulty' | 'toy_photo_url' | 'status' | 'maturity'> & { build_minutes?: number | null }
 }
 
 // A tutorial with all its related information: the parts needed, tools needed,
