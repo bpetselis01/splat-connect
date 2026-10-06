@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', backgroundColor: theme.colors.background },
   footer: {
     paddingHorizontal: theme.spacing(4),
-    paddingTop: theme.spacing(3),
+    paddingVertical: theme.spacing(3),
     backgroundColor: theme.colors.surface,
     borderTopWidth: theme.border.hairline,
     borderTopColor: theme.colors.border,
