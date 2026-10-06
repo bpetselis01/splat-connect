@@ -168,6 +168,12 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
   const [tab, setTab] = useState<Tab>(startTab === 'notes' || startTab === 'parts' || startTab === 'files' ? startTab : 'overview')
   const [tabsY, setTabsY] = useState(0)
   const [highlightId, setHighlightId] = useState<string | null>(null)
+  // The row rings for 2 s; drop the id after that so a revisit doesn't repeat it.
+  useEffect(() => {
+    if (!highlightId) return
+    const t = setTimeout(() => setHighlightId(null), 2200)
+    return () => clearTimeout(t)
+  }, [highlightId])
   const [highlight, setHighlight] = useState<'print' | null>(null)
   const highlightTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   useEffect(() => () => { if (highlightTimer.current) clearTimeout(highlightTimer.current) }, [])

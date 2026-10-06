@@ -614,4 +614,25 @@ describe('DetailScreen Feedback hand-off', () => {
     expect(await screen.findByTestId('note-row-new')).toBeTruthy()
     expect(screen.getByText('Your feedback is on the guide')).toBeTruthy()
   })
+
+  it('the ring and toast do not repeat when you leave Feedback and come back', async () => {
+    jest.useFakeTimers()
+    try {
+      render(<DetailScreen id="1" />)
+      await screen.findByText('Build a Robot Arm')
+      withNote()
+      setGuideFocus({ tutorialId: '1', noteId: 'new' })
+      act(() => { mockFocus.forEach((cb) => cb()) })
+      expect((await screen.findByTestId('note-row-new')).props.style).toEqual(expect.arrayContaining([expect.objectContaining({ borderWidth: 2 })]))
+      act(() => { jest.advanceTimersByTime(8000) })
+      tab('Overview')
+      tab('Feedback (1)')
+      const style = JSON.stringify(screen.getByTestId('note-row-new').props.style)
+      expect(style).not.toContain('"borderWidth":2')
+      // The Toast keeps its last text mounted at opacity 0 once it has left.
+      expect(JSON.stringify(screen.getByText('Your feedback is on the guide').parent!.parent!.props.style)).toContain('"opacity":0')
+    } finally {
+      jest.useRealTimers()
+    }
+  })
 })
