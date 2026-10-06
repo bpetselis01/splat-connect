@@ -745,6 +745,6 @@ const styles = StyleSheet.create({
   setting: { width: '48%', padding: theme.spacing(2), borderRadius: theme.radii.field, backgroundColor: theme.colors.surfaceSunken },
   settingKey: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.muted },
   settingValue: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink },
-  actionBar: { paddingHorizontal: theme.spacing(4), paddingTop: theme.spacing(3), borderTopWidth: theme.border.hairline, borderTopColor: theme.colors.border, backgroundColor: theme.colors.surface },
+  actionBar: { paddingHorizontal: theme.spacing(4), paddingTop: theme.spacing(3) },
   primaryAction: { minHeight: 56 },
 })

@@ -49,9 +49,6 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: theme.spacing(4),
     paddingVertical: theme.spacing(3),
-    backgroundColor: theme.colors.surface,
-    borderTopWidth: theme.border.hairline,
-    borderTopColor: theme.colors.border,
   },
   open: { minHeight: 56 },
 })

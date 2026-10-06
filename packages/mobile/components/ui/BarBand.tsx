@@ -38,5 +38,5 @@ export function BarBand({
 }
 
 const styles = StyleSheet.create({
-  band: { position: 'absolute', left: 0, right: 0, bottom: 0 },
+  band: { position: 'absolute', left: 0, right: 0, bottom: 0, pointerEvents: 'box-none' },
 })

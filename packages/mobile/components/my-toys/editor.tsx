@@ -667,7 +667,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: theme.spacing(4),
   },
-  footer: { borderTopWidth: theme.border.hairline, borderTopColor: theme.colors.border, paddingTop: theme.spacing(3) },
+  footer: { paddingTop: theme.spacing(3) },
 
   detailsForm: { paddingBottom: theme.spacing(6) },
   pairRow: { flexDirection: 'row', gap: theme.spacing(3) },

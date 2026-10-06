@@ -263,8 +263,6 @@ const styles = StyleSheet.create({
   optionOn: { borderColor: theme.colors.primaryDark, backgroundColor: theme.colors.accentLight },
   optionTitle: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.text },
   footer: {
-    borderTopWidth: theme.border.hairline,
-    borderTopColor: theme.colors.border,
     paddingVertical: theme.spacing(3),
   },
 })

@@ -70,8 +70,6 @@ const styles = StyleSheet.create({
     gap: theme.spacing(2),
     paddingTop: theme.spacing(3),
     paddingBottom: theme.spacing(2),
-    borderTopWidth: theme.border.hairline,
-    borderTopColor: theme.colors.border,
   },
   // Fixed and narrow so the destination name in "Next" gets the room — "Next:
   // 3D print files" is the longest label this footer ever carries.
