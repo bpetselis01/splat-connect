@@ -62,7 +62,7 @@ export function PicksRow({
 }
 
 const styles = StyleSheet.create({
-  wrap: { marginTop: theme.spacing(6) },
+  wrap: {},
   // The board's section heading and its muted hint.
   heading: { fontFamily: theme.fonts.display, fontSize: theme.type.heading, color: theme.colors.text },
   hint: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted, marginBottom: theme.spacing(2) },

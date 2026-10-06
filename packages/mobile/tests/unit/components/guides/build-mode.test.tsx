@@ -160,3 +160,12 @@ it('ticks parts from Get ready without leaving build mode', async () => {
   expect(mockSetItem).toHaveBeenLastCalledWith('guide-parts.g', '["p1"]')
   expect(screen.getByText('1/1 parts · 0/0 tools')).toBeTruthy()
 })
+
+it('opens a step photo full screen and comes back to the same step', async () => {
+  const withPhoto = { ...GUIDE, steps: [{ ...GUIDE.steps[0], photo_url: 'https://x.test/s1.jpg' }, GUIDE.steps[1]] }
+  ;(apiClient.get as jest.Mock).mockImplementation((p: string) => (p.endsWith('/notes') ? Promise.resolve([]) : Promise.resolve(withPhoto)))
+  render(<BuildMode id="g" step="1" />)
+  fireEvent.press(await screen.findByLabelText('Open the photo for step 1 full screen'))
+  fireEvent.press(screen.getByLabelText('Close photo'))
+  expect(screen.getByText('Step 1 of 2')).toBeTruthy()
+})

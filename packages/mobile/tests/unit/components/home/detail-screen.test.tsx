@@ -162,6 +162,16 @@ describe('DetailScreen', () => {
     expect(screen.queryByText('Print time')).toBeNull()
   })
 
+  it('opens a hero photo full screen and closes back to the guide', async () => {
+    mockEndpoints({ detail: Promise.resolve({ ...DETAIL, photo_urls: ['https://x.test/a.jpg', 'https://x.test/b.jpg'], photo_captions: ['The finished drum'] }) })
+    render(<DetailScreen id="1" />)
+    fireEvent.press(await screen.findByLabelText('Open photo 2 full screen'))
+    expect(screen.getByLabelText('Close photo')).toBeTruthy()
+    fireEvent.press(screen.getByLabelText('Close photo'))
+    expect(screen.queryByLabelText('Close photo')).toBeNull()
+    expect(screen.getByText('Build a Robot Arm')).toBeTruthy()
+  })
+
   it('captions the photo in view, with no thumbnail strip under it', async () => {
     mockEndpoints({ detail: Promise.resolve({ ...DETAIL, photo_urls: ['https://x.test/a.jpg', 'https://x.test/b.jpg'], photo_captions: ['The finished drum'] }) })
     render(<DetailScreen id="1" />)
@@ -389,7 +399,7 @@ describe('DetailScreen combined layout', () => {
     expect(screen.getByText('3 things left to gather')).toBeTruthy()
     fireEvent.press(screen.getByLabelText('Glue: gathered'))
     expect(screen.getByText('2 things left to gather')).toBeTruthy()
-    expect(screen.getByText('1 / 2')).toBeTruthy()
+    expect(screen.getByText('1/2')).toBeTruthy()
   })
 
   it('opens build mode on the step you tap, and marks where you are', async () => {

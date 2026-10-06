@@ -24,6 +24,7 @@ import { Button } from '../ui/Button'
 import { Skeleton } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { FlashLine, useFlash } from '../ui/Flash'
+import { PhotoViewer } from '../ui/PhotoViewer'
 import { GuideParts } from './guide-parts'
 import { GuideTools } from './guide-tools'
 
@@ -58,6 +59,7 @@ export function BuildMode({ id, step: startStep }: { id: string; step?: string }
   const [at, setAt] = useState<number | null>(null)
   const [sheet, setSheet] = useState<'steps' | 'gather' | null>(null)
   const [checksOpen, setChecksOpen] = useState(false)
+  const [viewing, setViewing] = useState<string | null>(null)
   const [built, setBuilt] = useState(false)
   const [flash, setFlash] = useFlash()
 
@@ -157,7 +159,7 @@ export function BuildMode({ id, step: startStep }: { id: string; step?: string }
             ) : null}
             {guide.safety_notes?.length ? (
               <View style={styles.safety}>
-                <Text style={styles.cardHead}>Stay safe</Text>
+                <Text style={styles.safetyHead} accessibilityRole="header">Stay safe</Text>
                 {guide.safety_notes.map((n) => (
                   <View key={n.id} style={styles.safetyRow}>
                     <Ionicons name="warning-outline" size={20} color={theme.colors.ink} />
@@ -194,7 +196,16 @@ export function BuildMode({ id, step: startStep }: { id: string; step?: string }
         ) : step ? (
           <>
             {step.photo_url ? (
-              <Image source={{ uri: step.photo_url }} style={styles.photo} accessibilityLabel={step.title ? `Step ${at}: ${step.title}` : `Step ${at}`} />
+              <Pressable
+                onPress={() => setViewing(step.photo_url)}
+                accessibilityRole="imagebutton"
+                accessibilityLabel={`Open the photo for step ${at} full screen`}
+              >
+                <Image source={{ uri: step.photo_url }} style={styles.photo} accessibilityLabel={step.title ? `Step ${at}: ${step.title}` : `Step ${at}`} />
+                <View style={styles.expand} pointerEvents="none">
+                  <Ionicons name="expand" size={18} color={theme.colors.ink} />
+                </View>
+              </Pressable>
             ) : null}
             <View style={styles.stepTop}>
               <View style={styles.num}><Text style={styles.numText}>{at}</Text></View>
@@ -295,6 +306,12 @@ export function BuildMode({ id, step: startStep }: { id: string; step?: string }
         </View>
       ) : null}
 
+      <PhotoViewer
+        photos={viewing ? [{ uri: viewing, caption: step?.title ?? null }] : []}
+        index={viewing ? 0 : null}
+        onClose={() => setViewing(null)}
+      />
+
       <Modal visible={sheet === 'steps'} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setSheet(null)} onDismiss={() => setSheet(null)}>
         <View style={styles.sheet}>
           <View style={styles.sheetHead}>
@@ -372,27 +389,29 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2) },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: theme.spacing(3), paddingVertical: 6, borderRadius: theme.radii.pill, backgroundColor: theme.colors.surfaceSunken },
   chipText: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.ink },
-  rowCard: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3), padding: theme.spacing(3), borderRadius: theme.radii.panel, borderWidth: theme.border.hairline, borderColor: theme.colors.border, backgroundColor: theme.colors.surface },
+  rowCard: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3), padding: theme.spacing(5), borderRadius: theme.radii.panel, borderWidth: theme.border.hairline, borderColor: theme.colors.border, backgroundColor: theme.colors.surface },
   rowIcon: { width: 44, height: 44, borderRadius: theme.radii.field, backgroundColor: theme.colors.accentLight, alignItems: 'center', justifyContent: 'center' },
   rowTitle: { fontFamily: theme.fonts.black, fontSize: theme.type.body, color: theme.colors.ink },
   rowSub: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted },
+  safetyHead: { fontFamily: theme.fonts.display, fontSize: theme.type.heading, color: theme.colors.ink },
+  expand: { position: 'absolute', right: theme.spacing(3), bottom: theme.spacing(3), width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.surface, alignItems: 'center', justifyContent: 'center', ...theme.shadow(1) },
   cardHead: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink },
-  safety: { padding: theme.spacing(3), gap: theme.spacing(3), borderRadius: theme.radii.panel, backgroundColor: theme.colors.honeySoft },
+  safety: { padding: theme.spacing(5), gap: theme.spacing(3), borderRadius: theme.radii.panel, backgroundColor: theme.colors.honeySoft },
   safetyRow: { flexDirection: 'row', gap: theme.spacing(2), alignItems: 'flex-start' },
   safetyTitle: { fontFamily: theme.fonts.bold, fontSize: theme.type.body, color: theme.colors.ink },
-  checks: { borderRadius: theme.radii.panel, borderWidth: theme.border.hairline, borderColor: theme.colors.border, backgroundColor: theme.colors.surface, paddingHorizontal: theme.spacing(3), paddingBottom: theme.spacing(1) },
+  checks: { borderRadius: theme.radii.panel, borderWidth: theme.border.hairline, borderColor: theme.colors.border, backgroundColor: theme.colors.surface, paddingHorizontal: theme.spacing(5), paddingBottom: theme.spacing(1) },
   checksHead: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2), minHeight: 52 },
   checkRow: { flexDirection: 'row', gap: theme.spacing(2), alignItems: 'flex-start', paddingLeft: theme.spacing(7), paddingBottom: theme.spacing(2) },
   awake: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2) },
   photo: { width: '100%', aspectRatio: 4 / 3, borderRadius: theme.radii.panel, backgroundColor: theme.colors.surfaceSunken },
   stepTop: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2) },
   num: { width: 44, height: 44, borderRadius: theme.radii.field, backgroundColor: theme.colors.primary, alignItems: 'center', justifyContent: 'center' },
-  numText: { fontFamily: theme.fonts.numeral, fontSize: theme.type.heading, color: theme.colors.onColor },
+  numText: { fontFamily: theme.fonts.black, fontSize: theme.type.heading, color: theme.colors.onColor },
   line: { flexDirection: 'row', gap: theme.spacing(3), alignItems: 'flex-start' },
-  letter: { width: 28, height: 28, marginTop: 1, borderRadius: theme.radii.pill, backgroundColor: theme.colors.surfaceSunken, alignItems: 'center', justifyContent: 'center' },
-  letterText: { fontFamily: theme.fonts.numeral, fontSize: theme.type.label, color: theme.colors.ink },
-  tip: { flexDirection: 'row', gap: theme.spacing(3), padding: theme.spacing(3), borderRadius: theme.radii.panel, backgroundColor: theme.colors.honeySoft },
-  fix: { flexDirection: 'row', gap: theme.spacing(3), padding: theme.spacing(3), borderRadius: theme.radii.panel, backgroundColor: theme.colors.violetSoft },
+  letter: { width: 28, height: 28, marginTop: 0, borderRadius: theme.radii.pill, backgroundColor: theme.colors.surfaceSunken, alignItems: 'center', justifyContent: 'center' },
+  letterText: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink },
+  tip: { flexDirection: 'row', gap: theme.spacing(3), padding: theme.spacing(5), borderRadius: theme.radii.panel, backgroundColor: theme.colors.honeySoft },
+  fix: { flexDirection: 'row', gap: theme.spacing(3), padding: theme.spacing(5), borderRadius: theme.radii.panel, backgroundColor: theme.colors.violetSoft },
   noteText: { fontFamily: theme.fonts.regular, fontSize: theme.type.body, color: theme.colors.ink, lineHeight: 23 },
   notesLink: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2), minHeight: 44 },
   done: { gap: theme.spacing(3), alignItems: 'stretch' },
@@ -415,7 +434,7 @@ const styles = StyleSheet.create({
   dot: { width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.surfaceSunken, alignItems: 'center', justifyContent: 'center' },
   dotDone: { backgroundColor: theme.colors.success },
   dotNow: { backgroundColor: theme.colors.primary },
-  dotText: { fontFamily: theme.fonts.numeral, fontSize: theme.type.label, color: theme.colors.ink },
+  dotText: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink },
   onColor: { color: theme.colors.onColor },
   struck: { textDecorationLine: 'line-through', color: theme.colors.muted },
   here: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.primaryDeep },

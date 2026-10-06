@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
+import { View, Text, ScrollView, Pressable, Linking, StyleSheet, type StyleProp, type TextStyle } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -25,6 +25,7 @@ import { CommunityNotes } from '../guides/community-notes'
 import { Badge } from '../ui/Badge'
 import { SaveButton } from '../ui/SaveButton'
 import { PhotoCarousel } from '../ui/PhotoCarousel'
+import { PhotoViewer } from '../ui/PhotoViewer'
 import { Button } from '../ui/Button'
 import { Section } from '../ui/Section'
 import { Segmented } from '../ui/Segmented'
@@ -34,6 +35,8 @@ import { AnimatedPressable } from '../ui/AnimatedPressable'
 import { ReportProblem } from '../reports/report-problem'
 
 const HERO_HEIGHT = 220
+// Same face as the prose around it: a bolder nested face is measured wrong on iOS and clips.
+const linkStyle: TextStyle = { color: theme.colors.primaryDeep, textDecorationLine: 'underline' }
 
 /** The lead sentence the board shows under the title; the rest reads below. */
 export function splitLead(text: string): { lead: string; rest: string } {
@@ -59,6 +62,29 @@ const DIFF_TINT: Record<Difficulty, string> = {
   easy: theme.colors.successSoft,
   medium: theme.colors.honeySoft,
   hard: theme.colors.apricotSoft,
+}
+
+/**
+ * Prose with its web addresses as links named by their site ("github.com"):
+ * a bare URL is one unbreakable word that iOS clips at the card's edge.
+ */
+function Linkified({ text, style }: { text: string; style: StyleProp<TextStyle> }) {
+  const parts = text.split(/(https?:\/\/[^\s]+)/)
+  return (
+    <Text style={style}>
+      {parts.map((part, i) => {
+        if (i % 2 === 0) return part
+        const url = part.replace(/[.,;:)]+$/, '')
+        const site = url.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]
+        return (
+          <Text key={i}>
+            <Text accessibilityRole="link" onPress={() => void Linking.openURL(url)} style={linkStyle}>{site}</Text>
+            {part.slice(url.length)}
+          </Text>
+        )
+      })}
+    </Text>
+  )
 }
 
 /**
@@ -104,6 +130,7 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
   const [thanks, setThanks] = useState<{ thanked: boolean; own: boolean } | null>(null)
   const [thanking, setThanking] = useState(false)
   const [checksOpen, setChecksOpen] = useState(false)
+  const [viewing, setViewing] = useState<number | null>(null)
   const { notes, reload } = useGuideNotes(id)
   const { caps } = useCapabilities()
   const scroller = useRef<ScrollView>(null)
@@ -238,7 +265,7 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
         <View style={styles.pad}>
           {/* Bleeds to the screen's edges and up under the header, as the board's hero does. */}
           <View style={styles.hero}>
-            <PhotoCarousel urls={tutorial.photo_urls} height={HERO_HEIGHT} emptyIcon="color-wand-outline" onIndexChange={setPhoto} />
+            <PhotoCarousel urls={tutorial.photo_urls} height={HERO_HEIGHT} emptyIcon="color-wand-outline" onIndexChange={setPhoto} onPress={setViewing} />
             {tutorial.photo_urls.length > 0 ? (
               <View style={styles.heroCount} pointerEvents="none">
                 <Text style={styles.heroCountText} numberOfLines={1}>
@@ -246,16 +273,21 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
                 </Text>
               </View>
             ) : null}
+            {tutorial.photo_urls.length > 0 ? (
+              <View style={styles.expand} pointerEvents="none">
+                <Ionicons name="expand" size={18} color={theme.colors.ink} />
+              </View>
+            ) : null}
           </View>
 
-          {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
           {tutorial.maturity !== 'complete' ? (
             <View style={styles.badgeRow}><Badge status={tutorial.maturity} label={MATURITY_LABEL[tutorial.maturity]} /></View>
           ) : null}
           <View style={styles.titleRow}>
             <Text style={styles.title}>{tutorial.title}</Text>
-            <SaveButton slug="tutorials" id={tutorial.id} saves={saves} />
+            <View style={styles.save}><SaveButton slug="tutorials" id={tutorial.id} saves={saves} /></View>
           </View>
+          {eyebrow ? <Text style={styles.meta}>{eyebrow}</Text> : null}
           {lead ? <Text style={styles.lead}>{lead}</Text> : null}
           <Byline contributors={tutorial.tutorial_contributors} orgs={tutorial.tutorial_orgs} onPerson={toPerson} onOrg={toOrg} />
 
@@ -295,14 +327,14 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
                     {`${tutorial.parts.length} part${tutorial.parts.length === 1 ? '' : 's'}`}
                     {partsTotal != null ? <Text style={styles.needSoft}>{` · about ${formatCents(partsTotal)}`}</Text> : null}
                   </Text>
-                  <Text style={styles.needCount}>{`${gather.partsGot} / ${tutorial.parts.length}`}</Text>
+                  <Text style={styles.needCount}>{`${gather.partsGot}/${tutorial.parts.length}`}</Text>
                 </View>
               ) : null}
               {tutorial.tools.length ? (
                 <View style={[styles.needRow, styles.needRule]}>
                   <Ionicons name="construct-outline" size={20} color={theme.colors.primaryDeep} />
                   <Text style={styles.needText}>{`${tutorial.tools.length} tool${tutorial.tools.length === 1 ? '' : 's'}`}</Text>
-                  <Text style={styles.needCount}>{`${gather.toolsGot} / ${tutorial.tools.length}`}</Text>
+                  <Text style={styles.needCount}>{`${gather.toolsGot}/${tutorial.tools.length}`}</Text>
                 </View>
               ) : null}
             </Pressable>
@@ -325,7 +357,7 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
 
         <View style={styles.pad}>
           {tab === 'overview' ? (
-            <>
+            <View style={styles.stack}>
               {firstFix ? (
                 <View style={styles.fixes}>
                   <View style={styles.fixHead}>
@@ -382,7 +414,7 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
               ) : null}
 
               {tutorial.safety_notes?.length || tutorial.safety_declared_at ? (
-                <Section title="Stay safe">
+                <Section title="Stay safe" style={styles.flush}>
                   {(tutorial.safety_notes ?? []).map((n) => (
                     <View key={n.id} style={styles.safetyRow}>
                       <Ionicons name="warning-outline" size={20} color={theme.colors.ink} />
@@ -413,7 +445,7 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
               ) : null}
 
               {who.length ? (
-                <Section title="Who it's for">
+                <Section title="Who it's for" style={styles.flush}>
                   {who.map((row) => (
                     <View key={row.label} style={styles.whoRow}>
                       <Text style={styles.whoLabel}>{row.label}</Text>
@@ -431,13 +463,19 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
               ) : null}
 
               {rest ? (
-                <Section title="About this guide">
-                  <Text style={styles.description}>{rest}</Text>
+                <Section title="About this guide" style={styles.flush}>
+                  {/* One Text per paragraph: a blank line inside one Text is
+                      measured taller than it draws on iOS. */}
+                  <View style={styles.paras}>
+                    {rest.split(/\n\s*\n/).map((para, i) => (
+                      <Linkified key={i} text={para.trim()} style={styles.description} />
+                    ))}
+                  </View>
                 </Section>
               ) : null}
 
               {tutorial.toy_name || tutorial.works_with || tutorial.no_build_note ? (
-                <Section title={tutorial.kind === 'toy_adaptation' ? 'The toy' : 'Good to know'}>
+                <Section title={tutorial.kind === 'toy_adaptation' ? 'The toy' : 'Good to know'} style={styles.flush}>
                   {tutorial.toy_name ? <Text style={styles.description}>{[tutorial.toy_name, tutorial.toy_brand].filter(Boolean).join(' · ')}</Text> : null}
                   {tutorial.works_with ? <Text style={styles.small}>{`Works with: ${tutorial.works_with}`}</Text> : null}
                   {tutorial.no_build_note ? <Text style={styles.small}>{tutorial.no_build_note}</Text> : null}
@@ -474,21 +512,21 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
                 accessibilityRole="button"
                 accessibilityLabel="Can't build it? Ask a maker nearby"
                 pressScale={0.985}
-                style={styles.printCard}
+                style={[styles.printCard, styles.flush]}
               >
                 <View style={styles.printHeader}>
                   <Text style={styles.printTitle}>Can&apos;t build it? Ask a maker nearby</Text>
                   <Ionicons name="chevron-forward" size={18} color={theme.colors.primary} />
                 </View>
               </AnimatedPressable>
-            </>
+            </View>
           ) : tab === 'parts' ? (
             <>
               {gatherTotal ? (
                 <View style={styles.gathered}>
                   <View style={styles.gatheredHead}>
                     <Text style={styles.gatheredText}>{gather.left ? `${gather.left} thing${gather.left === 1 ? '' : 's'} left to gather` : 'Everything’s here.'}</Text>
-                    <Text style={styles.needCount}>{`${gatherTotal - gather.left} / ${gatherTotal}`}</Text>
+                    <Text style={styles.needCount}>{`${gatherTotal - gather.left}/${gatherTotal}`}</Text>
                   </View>
                   <View style={styles.meter} accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: gatherTotal, now: gatherTotal - gather.left }}>
                     <View style={[styles.meterFill, { width: `${((gatherTotal - gather.left) / gatherTotal) * 100}%` }]} />
@@ -564,6 +602,12 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
         </View>
       </ScrollView>
 
+      <PhotoViewer
+        photos={tutorial.photo_urls.map((uri, i) => ({ uri, caption: tutorial.photo_captions?.[i] || null }))}
+        index={viewing}
+        onClose={() => setViewing(null)}
+      />
+
       <View style={[styles.actionBar, { paddingBottom: Math.max(insets.bottom, theme.spacing(3)) }]}>
         {steps.length ? (
           <Button
@@ -599,45 +643,49 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing(1),
     ...theme.shadow(1),
   },
+  expand: { position: 'absolute', right: theme.spacing(3), top: HERO_HEIGHT - 44, width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.surface, alignItems: 'center', justifyContent: 'center', ...theme.shadow(1) },
   heroCountText: { fontFamily: theme.fonts.black, fontSize: theme.type.caption, color: theme.colors.ink },
-  eyebrow: { fontFamily: theme.fonts.black, fontSize: theme.type.caption, color: theme.colors.primaryDeep, marginBottom: theme.spacing(1) },
+  meta: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.muted, marginTop: theme.spacing(1) },
+  save: { marginTop: -8, marginRight: -12 },
+  stack: { gap: theme.spacing(6), paddingTop: theme.spacing(3) },
+  flush: { marginTop: 0, marginBottom: 0 },
   badgeRow: { flexDirection: 'row', marginBottom: theme.spacing(1) },
   titleRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: theme.spacing(3) },
   title: { flex: 1, fontFamily: theme.fonts.display, fontSize: theme.type.display, color: theme.colors.text, lineHeight: 34 },
-  lead: { fontFamily: theme.fonts.regular, fontSize: theme.type.body, color: theme.colors.muted, lineHeight: 23, marginTop: theme.spacing(1), marginBottom: theme.spacing(2) },
-  facts: { flexDirection: 'row', gap: theme.spacing(2), marginTop: theme.spacing(3) },
-  fact: { flex: 1, paddingHorizontal: theme.spacing(3), paddingVertical: theme.spacing(2), borderRadius: theme.radii.field, borderWidth: theme.border.hairline, borderColor: theme.colors.border, backgroundColor: theme.colors.surface },
-  factValue: { fontFamily: theme.fonts.numeral, fontSize: theme.type.heading, color: theme.colors.ink },
+  lead: { fontFamily: theme.fonts.regular, fontSize: theme.type.body, color: theme.colors.text, lineHeight: 24, marginTop: theme.spacing(3), marginBottom: theme.spacing(2) },
+  facts: { flexDirection: 'row', gap: theme.spacing(2), marginTop: theme.spacing(4) },
+  fact: { flex: 1, gap: 2, paddingHorizontal: theme.spacing(3), paddingVertical: theme.spacing(3), borderRadius: theme.radii.field, borderWidth: theme.border.hairline, borderColor: theme.colors.border, backgroundColor: theme.colors.surface },
+  factValue: { fontFamily: theme.fonts.black, fontSize: theme.type.heading, color: theme.colors.ink },
   factWord: { fontFamily: theme.fonts.black, fontSize: theme.type.heading, color: theme.colors.ink },
   factLabel: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted },
-  fit: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2), padding: theme.spacing(3), borderRadius: theme.radii.field, backgroundColor: theme.colors.mintSoft, marginTop: theme.spacing(3) },
+  fit: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2), paddingHorizontal: theme.spacing(4), paddingVertical: theme.spacing(3), borderRadius: theme.radii.field, backgroundColor: theme.colors.mintSoft, marginTop: theme.spacing(4) },
   fitText: { flex: 1, fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.ink },
-  need: { marginTop: theme.spacing(3), borderRadius: theme.radii.panel, borderWidth: theme.border.hairline, borderColor: theme.colors.border, backgroundColor: theme.colors.surface, ...theme.shadow(1) },
-  needTitle: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink, paddingHorizontal: theme.spacing(4), paddingTop: theme.spacing(3) },
-  needRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3), paddingHorizontal: theme.spacing(4), paddingVertical: theme.spacing(3) },
+  need: { marginTop: theme.spacing(4), borderRadius: theme.radii.panel, borderWidth: theme.border.hairline, borderColor: theme.colors.border, backgroundColor: theme.colors.surface, ...theme.shadow(1) },
+  needTitle: { fontFamily: theme.fonts.black, fontSize: theme.type.body, color: theme.colors.ink, paddingHorizontal: theme.spacing(5), paddingTop: theme.spacing(4), paddingBottom: theme.spacing(1) },
+  needRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3), paddingHorizontal: theme.spacing(5), paddingVertical: theme.spacing(3) },
   needRule: { borderTopWidth: theme.border.hairline, borderTopColor: theme.colors.border },
   needText: { flex: 1, fontFamily: theme.fonts.bold, fontSize: theme.type.body, color: theme.colors.ink },
   needSoft: { fontFamily: theme.fonts.regular, color: theme.colors.muted },
-  needCount: { fontFamily: theme.fonts.numeral, fontSize: theme.type.caption, color: theme.colors.muted },
-  tabs: { backgroundColor: theme.colors.background, paddingHorizontal: theme.spacing(4), paddingVertical: theme.spacing(2), marginTop: theme.spacing(2) },
-  fixes: { gap: theme.spacing(2), padding: theme.spacing(3), borderRadius: theme.radii.panel, backgroundColor: theme.colors.honeySoft, marginTop: theme.spacing(3) },
+  needCount: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.muted },
+  tabs: { backgroundColor: theme.colors.background, paddingHorizontal: theme.spacing(4), paddingVertical: theme.spacing(3), marginTop: theme.spacing(3) },
+  fixes: { gap: theme.spacing(2), padding: theme.spacing(5), borderRadius: theme.radii.panel, backgroundColor: theme.colors.honeySoft },
   fixHead: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2) },
   cardTitle: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink },
   strong: { fontFamily: theme.fonts.black },
   link: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.primaryDeep },
   small: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.text, lineHeight: 20 },
-  stepsWrap: { marginTop: theme.spacing(5), marginBottom: theme.spacing(6), gap: theme.spacing(2) },
+  stepsWrap: { gap: theme.spacing(2) },
   stepsHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
   sectionTitle: { fontFamily: theme.fonts.display, fontSize: theme.type.heading, color: theme.colors.text },
   extras: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted },
   card: { borderRadius: theme.radii.panel, borderWidth: theme.border.hairline, borderColor: theme.colors.border, backgroundColor: theme.colors.surface, overflow: 'hidden' },
   rule: { borderTopWidth: theme.border.hairline, borderTopColor: theme.colors.border },
-  stepRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3), minHeight: 56, paddingHorizontal: theme.spacing(3), paddingVertical: theme.spacing(2) },
+  stepRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3), minHeight: 56, paddingHorizontal: theme.spacing(5), paddingVertical: theme.spacing(2) },
   stepHere: { backgroundColor: theme.colors.accentLight },
   stepNum: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.surfaceSunken },
   stepNumDone: { backgroundColor: theme.colors.success },
   stepNumHere: { backgroundColor: theme.colors.primary },
-  stepNumText: { fontFamily: theme.fonts.numeral, fontSize: theme.type.label, color: theme.colors.ink },
+  stepNumText: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink },
   stepTitle: { fontFamily: theme.fonts.bold, fontSize: theme.type.body, color: theme.colors.ink },
   stepMeta: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted },
   here: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.primaryDeep },
@@ -654,10 +702,11 @@ const styles = StyleSheet.create({
   chip: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: theme.spacing(3), paddingVertical: 6, borderRadius: theme.radii.pill, backgroundColor: theme.colors.surfaceSunken },
   chipShared: { backgroundColor: theme.colors.mintSoft },
   chipText: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.ink },
-  description: { fontFamily: theme.fonts.regular, fontSize: theme.type.body, color: theme.colors.text, lineHeight: 24 },
-  madeBy: { marginTop: theme.spacing(5), gap: theme.spacing(2) },
+  paras: { gap: theme.spacing(3) },
+  description: { fontFamily: theme.fonts.regular, fontSize: theme.type.body, color: theme.colors.text },
+  madeBy: { gap: theme.spacing(2) },
   madeByActions: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3) },
-  printCard: { marginTop: theme.spacing(5), borderRadius: theme.radii.panel, borderWidth: theme.border.hairline, borderColor: theme.colors.border, backgroundColor: theme.colors.surface, padding: theme.spacing(4), ...theme.shadow(1) },
+  printCard: { marginTop: theme.spacing(5), borderRadius: theme.radii.panel, borderWidth: theme.border.hairline, borderColor: theme.colors.border, backgroundColor: theme.colors.surface, padding: theme.spacing(5), ...theme.shadow(1) },
   printHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   printTitle: { fontFamily: theme.fonts.black, fontSize: theme.type.body, color: theme.colors.text },
   printHint: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted, marginTop: theme.spacing(1) },
