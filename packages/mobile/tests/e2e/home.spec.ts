@@ -25,7 +25,7 @@ test('Pick up where you left off is absent until a guide is opened, then reopens
 
   await page.goto('/guides')
   await page.getByText(title).click()
-  await expect(page.getByText('The steps are in the PDF.')).toBeVisible()
+  await expect(page.getByRole('tab', { name: 'Overview' })).toBeVisible()
 
   // A guide opened in the Guides stack is a drill-down: Back to the root, which shows the bar.
   await page.getByRole('button', { name: 'Back', exact: true }).click()
@@ -34,7 +34,7 @@ test('Pick up where you left off is absent until a guide is opened, then reopens
   await page.getByRole('button', { name: new RegExp(`^${title}`) }).click()
 
   // A guide opened from a recents row is a drill-down: no tab bar over it.
-  await expect(page.getByText('The steps are in the PDF.')).toBeVisible()
+  await expect(page.getByRole('tab', { name: 'Overview' })).toBeVisible()
   await expect(page.getByRole('tab', { name: 'Home' })).toHaveCount(0)
 
   // Back returns to the opener (Home), not to the Guides list.

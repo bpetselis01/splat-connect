@@ -15,12 +15,12 @@ test('ticked steps survive a reload, and build mode resumes where they stopped',
   await page.goto(`/guides/${id}`)
   await page.getByRole('button', { name: 'Start building', exact: true }).click()
   await page.getByRole('button', { name: 'Start step 1', exact: true }).click()
-  await page.getByRole('button', { name: 'Done, next step', exact: true }).click()
-  await page.getByRole('button', { name: 'Done, next step', exact: true }).click()
+  await page.getByRole('button', { name: 'Next', exact: true }).click()
+  await page.getByRole('button', { name: 'Next', exact: true }).click()
   await expect(page.getByText('Step 3 of 3')).toBeVisible()
 
   await page.goto(`/guides/${id}`)
-  await expect(page.getByText('2 of 3 steps done')).toBeVisible()
+  await expect(page.getByText('2/3', { exact: true })).toBeVisible()
   await page.reload()
   await page.getByRole('button', { name: 'Pick up at step 3', exact: true }).click()
   await expect(page.getByText('Step 3 of 3')).toBeVisible()
@@ -35,7 +35,7 @@ test('finishing every step shows the completion, and the guide then offers Build
   await page.goto(`/guides/${id}`)
   await page.getByRole('button', { name: 'Start building', exact: true }).click()
   await page.getByRole('button', { name: 'Start step 1', exact: true }).click()
-  await page.getByRole('button', { name: 'Done, next step', exact: true }).click()
+  await page.getByRole('button', { name: 'Next', exact: true }).click()
   await page.getByRole('button', { name: 'Done', exact: true }).click()
   await expect(page.getByText('All 2 steps done')).toBeVisible()
   await page.getByRole('button', { name: 'Back to the guide', exact: true }).click()
@@ -43,15 +43,14 @@ test('finishing every step shows the completion, and the guide then offers Build
   await expect(page.getByRole('button', { name: 'Build it again', exact: true })).toBeVisible()
 })
 
-test('a guide with no steps says the steps are in the PDF and makes Download PDF primary', async ({ page }) => {
+test('a guide with no steps makes Download PDF primary', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile NoSteps'), status: 'approved' })
 
   await page.goto(`/guides/${id}`)
-  await expect(page.getByText('The steps are in the PDF.')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Download PDF', exact: true }).first()).toBeVisible()
   await expect(page.getByRole('button', { name: 'Start building' })).toHaveCount(0)
-  await page.getByRole('tab', { name: 'Parts & tools' }).click()
+  await page.getByRole('tab', { name: 'You’ll need' }).click()
   await expect(page.getByText('E2E part ×2')).toBeVisible()
 })
 
@@ -62,11 +61,11 @@ test('a sixty-step guide opens in build mode at step 1 of 60 and moves on', asyn
   await addSteps(id, Array.from({ length: 60 }, (_, i) => ({ body: `Step body ${i + 1}` })))
 
   await page.goto(`/guides/${id}`)
-  await expect(page.getByText('60 steps').first()).toBeVisible()
+  await expect(page.getByLabel('Step 60: Step body 60')).toBeAttached()
   await page.getByRole('button', { name: 'Start building', exact: true }).click()
   await page.getByRole('button', { name: 'Start step 1', exact: true }).click()
   await expect(page.getByText('Step 1 of 60')).toBeVisible()
-  await page.getByRole('button', { name: 'Done, next step', exact: true }).click()
+  await page.getByRole('button', { name: 'Next', exact: true }).click()
   await expect(page.getByText('Step 2 of 60')).toBeVisible()
   await expect(page.getByText('Step body 2', { exact: true }).last()).toBeVisible()
 })
@@ -76,12 +75,12 @@ test('ticked tools survive a reload', async ({ page }) => {
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile ToolTicks'), status: 'approved' })
 
   await page.goto(`/guides/${id}`)
-  await page.getByRole('tab', { name: 'Parts & tools' }).click()
+  await page.getByRole('tab', { name: 'You’ll need' }).click()
   await expect(page.getByText('0 of 1 already yours')).toBeVisible()
   await page.getByLabel('I already have E2E tool').click()
   await expect(page.getByText('1 of 1 already yours')).toBeVisible()
   await page.reload()
-  await page.getByRole('tab', { name: 'Parts & tools' }).click()
+  await page.getByRole('tab', { name: 'You’ll need' }).click()
   await expect(page.getByText('1 of 1 already yours')).toBeVisible()
 })
 

@@ -19,7 +19,7 @@ test('tapping a tutorial navigates to its detail screen', async ({ page }) => {
   // "Easy" left on the page is the difficulty filter chip on the library
   // screen behind, which is hidden — so the old assertion could not pass.
   await expect(page.getByText('Easy', { exact: true }).last()).toBeVisible()
-  await page.getByRole('tab', { name: 'Parts & tools' }).click()
+  await page.getByRole('tab', { name: 'You’ll need' }).click()
   await expect(page.getByText('E2E part ×2')).toBeVisible()
   await expect(page.getByText('E2E tool')).toBeVisible()
 })
@@ -70,7 +70,7 @@ test('optional parts and tools are badged on the detail screen', async ({ page }
   await page.goto('/guides')
   await page.getByText(title).click()
 
-  await page.getByRole('tab', { name: 'Parts & tools' }).click()
+  await page.getByRole('tab', { name: 'You’ll need' }).click()
   // Mobile marks optional items inline in the row label — there is no separate
   // badge here, unlike the web detail page.
   await expect(page.getByText('E2E optional part ×1 (optional)')).toBeVisible()
@@ -115,7 +115,7 @@ test("a backed guide's chip opens the organisation's showcase", async ({ page })
   const id = await createTutorial(contributor.id, { title, status: 'approved', backedByOrg: org })
 
   await page.goto(`/guides/${id}`)
-  await page.getByText(`Backed by ${org}`).click()
+  await page.getByText(`Backed by ${org}`).first().click()
 
   await expect(page).toHaveURL(/\/guides\/organisation\/[0-9a-f-]{36}$/)
 })
@@ -129,7 +129,7 @@ test('an unbacked guide shows the fixed Reviewed by SPLAT chip instead', async (
 
   await page.goto(`/guides/${id}`)
 
-  await expect(page.getByText('Reviewed by SPLAT')).toBeVisible()
+  await expect(page.getByText('Reviewed by SPLAT').first()).toBeVisible()
 })
 
 // The 3D-print placeholder these two tests covered was replaced by the real

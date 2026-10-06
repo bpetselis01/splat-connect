@@ -12,7 +12,7 @@ const SECTION = 'Pick up where you left off'
 /** Opens a guide and waits for it to load, which is when it is recorded. */
 async function openGuide(page: Page, id: string) {
   await page.goto(`/guides/${id}`)
-  await expect(page.getByText('The steps are in the PDF.')).toBeVisible()
+  await expect(page.getByRole('tab', { name: 'Overview' })).toBeVisible()
 }
 
 /** The recents rows on Home whose titles start with `prefix`, top to bottom. */
