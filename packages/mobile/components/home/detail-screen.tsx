@@ -23,7 +23,8 @@ import { GuideTools } from '../guides/guide-tools'
 import { stepProgress, ticksKey, useDeviceTicks, useGatherTicks } from '../../lib/guide-progress'
 import { CommunityNotes } from '../guides/community-notes'
 import { Badge } from '../ui/Badge'
-import { SaveButton } from '../ui/SaveButton'
+import { ItemActions } from '../ui/ItemActions'
+import { Toast, useToast } from '../ui/Toast'
 import { PhotoCarousel } from '../ui/PhotoCarousel'
 import { PhotoViewer } from '../ui/PhotoViewer'
 import { Button } from '../ui/Button'
@@ -32,7 +33,6 @@ import { Segmented } from '../ui/Segmented'
 import { Skeleton } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
-import { ReportProblem } from '../reports/report-problem'
 
 const HERO_HEIGHT = 220
 // Same face as the prose around it: a bolder nested face is measured wrong on iOS and clips.
@@ -144,6 +144,7 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
   const [thanking, setThanking] = useState(false)
   const [checksOpen, setChecksOpen] = useState(false)
   const [viewing, setViewing] = useState<number | null>(null)
+  const toaster = useToast()
   const { notes, reload } = useGuideNotes(id)
   const { caps } = useCapabilities()
   const scroller = useRef<ScrollView>(null)
@@ -187,14 +188,19 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
       .catch(() => {})
   }, [id])
 
-  async function sayThanks() {
+  /** True once thanked (a 409 is "already thanked", the same end state). */
+  async function sayThanks(): Promise<boolean> {
     setThanking(true)
     try {
       await apiClient.post(`/api/tutorials/${id}/thanks`, {})
       setThanks({ thanked: true, own: false })
+      return true
     } catch (err) {
-      // 409 is "already thanked" — the button's end state either way.
-      if (err instanceof Error && /status 409/.test(err.message)) setThanks({ thanked: true, own: false })
+      if (err instanceof Error && /status 409/.test(err.message)) {
+        setThanks({ thanked: true, own: false })
+        return true
+      }
+      return false
     } finally {
       setThanking(false)
     }
@@ -271,6 +277,9 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
   const startBuild = () => router.push({ pathname: '/guides/[id]/build', params: { id: tutorial.id } })
   const openStep = (position: number) => router.push({ pathname: '/guides/[id]/build', params: { id: tutorial.id, step: String(position) } })
   const firstFix = summary.pinned[0]
+  // "Mei and Dan": who a thanks reaches, by first name.
+  const firsts = tutorial.tutorial_contributors.map((c) => c.profiles.name.split(' ')[0])
+  const thankNames = firsts.length > 1 ? `${firsts.slice(0, -1).join(', ')} and ${firsts[firsts.length - 1]}` : (firsts[0] ?? 'the author')
 
   return (
     <View style={styles.container}>
@@ -298,11 +307,18 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
           ) : null}
           <View style={styles.titleRow}>
             <Text style={styles.title}>{tutorial.title}</Text>
-            <View style={styles.save}><SaveButton slug="tutorials" id={tutorial.id} saves={saves} /></View>
           </View>
           {eyebrow ? <Text style={styles.meta}>{eyebrow}</Text> : null}
           {lead ? <Text style={styles.lead}>{lead}</Text> : null}
           <Byline contributors={tutorial.tutorial_contributors} orgs={tutorial.tutorial_orgs} onPerson={toPerson} onOrg={toOrg} />
+          <View style={styles.actions}>
+            <ItemActions
+              save={{ slug: 'tutorials', id: tutorial.id, saves }}
+              thanks={thanks && !thanks.own ? { to: thankNames, thanked: thanks.thanked, busy: thanking, send: sayThanks } : undefined}
+              report={{ kind: 'guide', id: tutorial.id, label: tutorial.title }}
+              onToast={toaster.show}
+            />
+          </View>
 
           <View style={styles.facts}>
             {tutorial.build_minutes ? (
@@ -495,22 +511,7 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
                 </Section>
               ) : null}
 
-              <View style={styles.madeBy}>
-                <Provenance contributors={tutorial.tutorial_contributors} orgs={tutorial.tutorial_orgs} onPerson={toPerson} onOrg={toOrg} />
-                <View style={styles.madeByActions}>
-                  {thanks && !thanks.own ? (
-                    <Button
-                      label={thanks.thanked ? 'Thanked' : 'Say thanks'}
-                      variant="secondary"
-                      disabled={thanks.thanked}
-                      loading={thanking}
-                      onPress={() => void sayThanks()}
-                      style={styles.flex}
-                    />
-                  ) : null}
-                  <ReportProblem subjectKind="guide" subjectId={tutorial.id} subjectLabel={tutorial.title} />
-                </View>
-              </View>
+              <Provenance contributors={tutorial.tutorial_contributors} orgs={tutorial.tutorial_orgs} onPerson={toPerson} onOrg={toOrg} />
 
               {tutorial.tutorial_recommendations.length > 0 ? (
                 <PicksRow
@@ -621,6 +622,8 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
         onClose={() => setViewing(null)}
       />
 
+      <Toast toast={toaster.toast} onHide={toaster.hide} style={{ bottom: Math.max(insets.bottom, theme.spacing(3)) + 84 }} />
+
       <View style={[styles.actionBar, { paddingBottom: Math.max(insets.bottom, theme.spacing(3)) }]}>
         {steps.length ? (
           <Button
@@ -659,7 +662,7 @@ const styles = StyleSheet.create({
   expand: { position: 'absolute', right: theme.spacing(3), top: HERO_HEIGHT - 44, width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.surface, alignItems: 'center', justifyContent: 'center', ...theme.shadow(1) },
   heroCountText: { fontFamily: theme.fonts.black, fontSize: theme.type.caption, color: theme.colors.ink },
   meta: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.muted, marginTop: theme.spacing(1) },
-  save: { marginTop: -8, marginRight: -12 },
+  actions: { marginTop: theme.spacing(4) },
   stack: { gap: theme.spacing(6), paddingTop: theme.spacing(3) },
   flush: { marginTop: 0, marginBottom: 0 },
   badgeRow: { flexDirection: 'row', marginBottom: theme.spacing(1) },
@@ -717,8 +720,6 @@ const styles = StyleSheet.create({
   chipText: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.ink },
   paras: { gap: theme.spacing(3) },
   description: { fontFamily: theme.fonts.regular, fontSize: theme.type.body, color: theme.colors.text },
-  madeBy: { gap: theme.spacing(2) },
-  madeByActions: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3) },
   printCard: { marginTop: theme.spacing(5), borderRadius: theme.radii.panel, borderWidth: theme.border.hairline, borderColor: theme.colors.border, backgroundColor: theme.colors.surface, padding: theme.spacing(5), ...theme.shadow(1) },
   printHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   printTitle: { fontFamily: theme.fonts.black, fontSize: theme.type.body, color: theme.colors.text },
