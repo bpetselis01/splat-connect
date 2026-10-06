@@ -46,7 +46,7 @@ export default function GuidesStackLayout() {
         }}
       />
       <Stack.Screen name="[id]/index" options={{ title: 'Guide' }} />
-      <Stack.Screen name="[id]/preview" options={{ title: 'Preview' }} />
+      <Stack.Screen name="[id]/preview" options={{ title: 'Guide PDF' }} />
       {/* Start building: the whole screen, its own ✕ and progress bar. */}
       <Stack.Screen name="[id]/build" options={{ presentation: 'fullScreenModal', headerShown: false }} />
       <Stack.Screen name="contributor/[id]" options={{ title: 'Contributor' }} />

@@ -33,7 +33,7 @@ test('tapping Download PDF navigates to the preview screen', async ({ page }) =>
   await page.getByText(title).click()
   await page.getByText('Download PDF').click()
 
-  await expect(page.getByText('Open in Browser')).toBeVisible()
+  await expect(page.getByText('Open in browser')).toBeVisible()
 })
 
 test('an aborted detail request shows the retry message', async ({ page }) => {
@@ -88,7 +88,7 @@ test('the preview screen explains when a tutorial has no PDF', async ({ page }) 
   await page.getByText('Download PDF').click()
 
   await expect(page.getByText('No PDF is available for this tutorial yet.')).toBeVisible()
-  await expect(page.getByText('Open in Browser')).toHaveCount(0)
+  await expect(page.getByText('Open in browser')).toHaveCount(0)
 })
 
 test('the byline names the primary contributor and opens their showcase', async ({ page }) => {

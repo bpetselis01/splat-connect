@@ -1,10 +1,17 @@
-import { View, StyleSheet, Linking } from 'react-native'
+import { View, ActivityIndicator, StyleSheet, Linking } from 'react-native'
 import { WebView } from 'react-native-webview'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { theme } from '../../lib/theme'
 import { Button } from '../ui/Button'
 import { EmptyState } from '../ui/EmptyState'
 
+/**
+ * A guide's PDF (spec 2026-10-06 round 2): the pages on a sunken ground, and
+ * Open in browser pinned below — the system viewer is where it prints, shares
+ * and zooms, which the in-app viewer cannot.
+ */
 export function PreviewScreen({ pdfUrl }: { pdfUrl: string | null }) {
+  const insets = useSafeAreaInsets()
   if (!pdfUrl) {
     return (
       <View style={styles.center}>
@@ -19,27 +26,34 @@ export function PreviewScreen({ pdfUrl }: { pdfUrl: string | null }) {
 
   return (
     <View style={styles.container}>
-      <WebView source={{ uri: pdfUrl }} style={styles.webview} />
-      {/*
-        The in-app viewer cannot print, share or zoom the way the system
-        viewer can, so the handoff stays visible rather than hiding behind a
-        failure state.
-      */}
-      <View style={styles.footer}>
-        <Button label="Open in Browser" onPress={() => Linking.openURL(pdfUrl)} variant="secondary" />
+      <WebView
+        source={{ uri: pdfUrl }}
+        style={styles.webview}
+        startInLoadingState
+        renderLoading={() => (
+          <View style={styles.loading}>
+            <ActivityIndicator color={theme.colors.primary} />
+          </View>
+        )}
+      />
+      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, theme.spacing(3)) }]}>
+        <Button label="Open in browser" onPress={() => Linking.openURL(pdfUrl)} style={styles.open} />
       </View>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background },
-  webview: { flex: 1 },
+  container: { flex: 1, backgroundColor: theme.colors.surfaceSunken },
+  webview: { flex: 1, backgroundColor: theme.colors.surfaceSunken },
+  loading: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.surfaceSunken },
   center: { flex: 1, justifyContent: 'center', backgroundColor: theme.colors.background },
   footer: {
-    padding: theme.spacing(4),
+    paddingHorizontal: theme.spacing(4),
+    paddingTop: theme.spacing(3),
     backgroundColor: theme.colors.surface,
-    borderTopWidth: 1,
+    borderTopWidth: theme.border.hairline,
     borderTopColor: theme.colors.border,
   },
+  open: { minHeight: 56 },
 })
