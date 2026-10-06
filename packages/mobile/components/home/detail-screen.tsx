@@ -68,6 +68,15 @@ const DIFF_TINT: Record<Difficulty, string> = {
  * Prose with its web addresses as links named by their site ("github.com"):
  * a bare URL is one unbreakable word that iOS clips at the card's edge.
  */
+/**
+ * The host a link really opens, for its label: never the userinfo before an
+ * "@" ("github.com@evil.example" opens evil.example), nor a port.
+ */
+export function linkSite(url: string): string {
+  const authority = url.replace(/^https?:\/\//i, '').split(/[/?#]/)[0]
+  return (authority.split('@').pop() ?? '').replace(/:\d+$/, '').replace(/^www\./i, '')
+}
+
 function Linkified({ text, style }: { text: string; style: StyleProp<TextStyle> }) {
   const parts = text.split(/(https?:\/\/[^\s]+)/)
   return (
@@ -75,7 +84,7 @@ function Linkified({ text, style }: { text: string; style: StyleProp<TextStyle> 
       {parts.map((part, i) => {
         if (i % 2 === 0) return part
         const url = part.replace(/[.,;:)]+$/, '')
-        const site = url.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]
+        const site = linkSite(url)
         return (
           <Text key={i}>
             <Text accessibilityRole="link" onPress={() => void Linking.openURL(url)} style={linkStyle}>{site}</Text>

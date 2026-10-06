@@ -1,5 +1,5 @@
 import { act, render, screen, fireEvent, waitFor } from '@testing-library/react-native'
-import { DetailScreen, splitLead } from '../../../../components/home/detail-screen'
+import { DetailScreen, linkSite, splitLead } from '../../../../components/home/detail-screen'
 import { apiClient } from '../../../../lib/api-client'
 
 // Ionicons loads its font asynchronously and setStates after the test ends;
@@ -464,5 +464,14 @@ describe('DetailScreen recents', () => {
     render(<DetailScreen id="1" />)
     await screen.findByText(/couldn.t load/i)
     expect(mockRecord).not.toHaveBeenCalled()
+  })
+})
+
+describe('linkSite', () => {
+  it('names the host a link opens, not the userinfo in front of it', () => {
+    expect(linkSite('https://github.com/makersmakingchange/Light-Touch-Switch')).toBe('github.com')
+    expect(linkSite('https://github.com@evil.example/x')).toBe('evil.example')
+    expect(linkSite('https://user:pw@www.example.org:8080/a?b#c')).toBe('example.org')
+    expect(linkSite('http://github.com.evil.example/')).toBe('github.com.evil.example')
   })
 })
