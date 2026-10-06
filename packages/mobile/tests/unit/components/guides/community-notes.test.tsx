@@ -1,4 +1,6 @@
+import { Platform } from 'react-native'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
+import { theme } from '../../../../lib/theme'
 import { CommunityNotes } from '../../../../components/guides/community-notes'
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
@@ -23,6 +25,7 @@ const reload = jest.fn().mockResolvedValue(undefined)
 const props = { tutorialId: 'g', guideTitle: 'Light Touch Switch', authorName: 'Mei Tan', steps: steps as never, reload, canPin: false, viewerId: 'me', viewerName: 'Byron P' }
 
 beforeEach(() => jest.clearAllMocks())
+afterEach(() => jest.restoreAllMocks())
 
 it('lists fixes first, then the rest, with filter chips that count', () => {
   const notes = [note({ id: 'a', step_position: 3, pinned_at: 'x', pinned_by_name: 'Mei Tan', body: 'Tin both leads first.' }), note({ id: 'b', step_position: 4, author_name: 'Sam R', body: 'Cap was tight.' }), note({ id: 'c', step_position: null, body: 'Test before gluing.' })]
@@ -112,6 +115,7 @@ it('Delete removes your own note', async () => {
 })
 
 it('Report this note reports the note, not the guide', () => {
+  jest.replaceProperty(Platform, 'OS', 'android') // iOS defers the report to the menu's onDismiss, which a closed jest Modal never fires
   render(<CommunityNotes {...props} notes={[note({ id: 'theirs', author_id: 'p', author_name: 'Sam R' })] as never} />)
   fireEvent.press(screen.getByTestId('note-menu-theirs'))
   fireEvent.press(screen.getByText('Report this note'))
@@ -130,5 +134,5 @@ it('rings the highlighted note and reports its row', () => {
   render(<CommunityNotes {...props} notes={[note({ id: 'new', author_id: 'me' })] as never} highlightId="new" onHighlightRow={onHighlightRow} />)
   fireEvent(screen.getByTestId('note-row-new'), 'layout', { nativeEvent: { layout: { x: 0, y: 120, width: 300, height: 80 } } })
   expect(onHighlightRow).toHaveBeenCalled()
-  expect(screen.getByTestId('note-row-new').props.style).toEqual(expect.arrayContaining([expect.objectContaining({ borderWidth: 2 })]))
+  expect(screen.getByTestId('note-row-new').props.style).toEqual(expect.arrayContaining([expect.objectContaining({ borderWidth: 2, borderColor: theme.colors.primary, borderTopColor: theme.colors.primary })]))
 })

@@ -51,6 +51,6 @@ describe('data edges', () => {
 
   it('reads approved by the author when whoever pinned the note is gone', () => {
     render(<CommunityNotes {...props} notes={[note({ pinned_at: 'x', pinned_by_name: null })] as never} />)
-    expect(screen.getByText('Fix · approved by the')).toBeTruthy()
+    expect(screen.getByText('Fix · approved by the author')).toBeTruthy()
   })
 })

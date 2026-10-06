@@ -4,7 +4,7 @@
 // FeedbackSheet, filter chips, pinned notes as Fix cards, then one row per
 // note with everything a viewer can do behind ⋯. Report targets the note.
 import { useEffect, useRef, useState, type ComponentRef } from 'react'
-import { View, Text, Image, Pressable, Modal, StyleSheet } from 'react-native'
+import { View, Text, Image, Pressable, Modal, Platform, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
 import type { GuideNote, TutorialStep } from '@splat-connect/types'
@@ -40,9 +40,24 @@ type Filter = 'all' | 'fixes' | 'missing' | number
 const isMissing = (n: GuideNote, count: number) => n.step_position == null || n.step_position > count
 
 /** Opens the report sheet as soon as it mounts: the ⋯ menu has already closed. */
+// ReportProblem hands a fresh `open` every render and open() resets the sheet,
+// so fire exactly once per mount (the key remounts it for each menu choice).
 function AutoOpen({ open }: { open: () => void }) {
-  useEffect(() => { open() }, [open])
+  const done = useRef(false)
+  useEffect(() => {
+    if (done.current) return
+    done.current = true
+    open()
+  }, [open])
   return null
+}
+
+function MenuButton({ note, onPress }: { note: GuideNote; onPress: () => void }) {
+  return (
+    <Pressable testID={`note-menu-${note.id}`} onPress={onPress} accessibilityRole="button" accessibilityLabel={`More on ${note.author_name}'s note`} hitSlop={8} style={styles.more}>
+      <Ionicons name="ellipsis-horizontal" size={18} color={theme.colors.muted} />
+    </Pressable>
+  )
 }
 
 export function CommunityNotes({ tutorialId, guideTitle, authorName, steps, notes, reload, canPin, viewerId, viewerName, highlightId, onHighlightRow, onPosted }: Props) {
@@ -50,6 +65,7 @@ export function CommunityNotes({ tutorialId, guideTitle, authorName, steps, note
   const [filter, setFilter] = useState<Filter>('all')
   const [composer, setComposer] = useState(false)
   const [menuFor, setMenuFor] = useState<GuideNote | null>(null)
+  const pendingReport = useRef<GuideNote | null>(null)
   const [reportFor, setReportFor] = useState<{ note: GuideNote; n: number } | null>(null)
   const [viewing, setViewing] = useState<{ uri: string; caption: string | null } | null>(null)
   const [flash, setFlash] = useFlash()
@@ -99,8 +115,8 @@ export function CommunityNotes({ tutorialId, guideTitle, authorName, steps, note
         {n.pinned_at ? (
           <View style={styles.fixHead}>
             <Ionicons name="pin" size={14} color={theme.colors.ink} />
-            <Text style={styles.fixHeadText}>{`Fix · approved by ${(n.pinned_by_name ?? 'the author').split(' ')[0]}`}</Text>
-            <MenuButton note={n} />
+            <Text style={styles.fixHeadText}>{`Fix · approved by ${n.pinned_by_name ? n.pinned_by_name.split(' ')[0] : 'the author'}`}</Text>
+            <MenuButton note={n} onPress={() => setMenuFor(n)} />
           </View>
         ) : null}
         <View style={styles.rowMain}>
@@ -112,7 +128,7 @@ export function CommunityNotes({ tutorialId, guideTitle, authorName, steps, note
               <View style={styles.top}>
                 <Text style={styles.author}>{n.author_id === viewerId ? 'You' : n.author_name}</Text>
                 <Text style={styles.when}>{relativeTime(n.created_at)}</Text>
-                <MenuButton note={n} />
+                <MenuButton note={n} onPress={() => setMenuFor(n)} />
               </View>
             )}
             {n.pinned_at ? (
@@ -132,14 +148,6 @@ export function CommunityNotes({ tutorialId, guideTitle, authorName, steps, note
           ) : null}
         </View>
       </View>
-    )
-  }
-
-  function MenuButton({ note }: { note: GuideNote }) {
-    return (
-      <Pressable testID={`note-menu-${note.id}`} onPress={() => setMenuFor(note)} accessibilityRole="button" accessibilityLabel={`More on ${note.author_name}'s note`} hitSlop={8} style={styles.more}>
-        <Ionicons name="ellipsis-horizontal" size={18} color={theme.colors.muted} />
-      </Pressable>
     )
   }
 
@@ -186,7 +194,19 @@ export function CommunityNotes({ tutorialId, guideTitle, authorName, steps, note
         onPosted={(note) => { void reload(); onPosted?.(note) }}
       />
 
-      <Modal visible={!!menuFor} transparent animationType="fade" onRequestClose={() => setMenuFor(null)}>
+      <Modal
+        testID="note-menu-modal"
+        visible={!!menuFor}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setMenuFor(null)}
+        onDismiss={() => {
+          // iOS drops a Modal presented while another is still dismissing.
+          if (Platform.OS !== 'ios' || !pendingReport.current) return
+          setReportFor({ note: pendingReport.current, n: Date.now() })
+          pendingReport.current = null
+        }}
+      >
         <Pressable onPress={() => setMenuFor(null)} accessibilityRole="button" accessibilityLabel="Close" style={styles.backdrop} />
         <View testID="note-menu" style={styles.menu}>
           <View style={styles.grabber} />
@@ -198,7 +218,11 @@ export function CommunityNotes({ tutorialId, guideTitle, authorName, steps, note
             </Pressable>
           ) : null}
           {menuFor && !mine ? (
-            <Pressable style={styles.menuRow} accessibilityRole="button" onPress={() => { setReportFor({ note: menuFor, n: Date.now() }); setMenuFor(null) }}>
+            <Pressable style={styles.menuRow} accessibilityRole="button" onPress={() => {
+              if (Platform.OS === 'ios') pendingReport.current = menuFor
+              else setReportFor({ note: menuFor, n: Date.now() })
+              setMenuFor(null)
+            }}>
               <Ionicons name="flag-outline" size={20} color={theme.colors.ink} />
               <Text style={styles.menuText}>Report this note</Text>
             </Pressable>
@@ -237,7 +261,7 @@ const styles = StyleSheet.create({
   empty: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted },
   row: { paddingVertical: theme.spacing(3), borderTopWidth: theme.border.hairline, borderTopColor: theme.colors.border, gap: theme.spacing(2) },
   fix: { borderTopWidth: 0, borderRadius: theme.radii.panel, backgroundColor: theme.colors.honeySoft, paddingHorizontal: theme.spacing(4) },
-  ring: { borderWidth: 2, borderColor: theme.colors.primary, borderRadius: theme.radii.panel, backgroundColor: theme.colors.accentFaint, paddingHorizontal: theme.spacing(3) },
+  ring: { borderWidth: 2, borderColor: theme.colors.primary, borderTopWidth: 2, borderTopColor: theme.colors.primary, borderRadius: theme.radii.panel, backgroundColor: theme.colors.accentFaint, paddingHorizontal: theme.spacing(3) },
   fixHead: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2) },
   fixHeadText: { flex: 1, fontFamily: theme.fonts.black, fontSize: theme.type.caption, color: theme.colors.ink },
   rowMain: { flexDirection: 'row', gap: theme.spacing(3), alignItems: 'flex-start' },
