@@ -6,6 +6,7 @@ import { useFonts, Nunito_400Regular, Nunito_500Medium, Nunito_600SemiBold, Nuni
 import { Baloo2_800ExtraBold } from '@expo-google-fonts/baloo-2'
 import { JetBrainsMono_400Regular } from '@expo-google-fonts/jetbrains-mono'
 import { StatusBar } from 'expo-status-bar'
+import { TabBar } from '../components/tab-bar'
 import { AuthProvider } from '../lib/auth-context'
 import { useReloadOnAppearanceChange } from '../lib/appearance'
 import { theme } from '../lib/theme'
@@ -46,6 +47,7 @@ export default function RootLayout() {
           {/* What a pending control opens (packages/types/src/pending.ts). */}
           <Stack.Screen name="not-built" />
         </Stack>
+        <TabBar />
       </AuthProvider>
     </SafeAreaProvider>
   )
