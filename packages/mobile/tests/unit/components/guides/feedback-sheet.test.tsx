@@ -100,3 +100,16 @@ it('resets to a blank form each time it opens', async () => {
   expect(screen.getByText('How did it go?')).toBeTruthy()
   expect(screen.getByLabelText('Your note').props.value).toBe('')
 })
+
+it('a host callback that throws does not turn a saved note into "Could not post that"', async () => {
+  base.onPosted.mockImplementationOnce(() => { throw new Error('host broke') })
+  const logged = jest.spyOn(console, 'error').mockImplementation(() => {})
+  render(<FeedbackSheet {...base} steps={steps as never} />)
+  fireEvent.press(screen.getByText('Step 2'))
+  fireEvent.changeText(screen.getByLabelText('Your note'), 'Tin first.')
+  fireEvent.press(screen.getByRole('button', { name: 'Post' }))
+  expect(await screen.findByText('Feedback posted')).toBeTruthy()
+  expect(screen.queryByText('Could not post that. Please try again.')).toBeNull()
+  expect(logged).toHaveBeenCalled()
+  logged.mockRestore()
+})

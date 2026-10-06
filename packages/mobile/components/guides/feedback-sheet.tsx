@@ -64,19 +64,26 @@ export function FeedbackSheet({ tutorialId, steps, authorFirstName, initialStep,
   async function post() {
     setBusy(true)
     setError(null)
+    let note: GuideNote
     try {
-      const note = await apiClient.post<GuideNote>(`/api/tutorials/${tutorialId}/notes`, {
+      note = await apiClient.post<GuideNote>(`/api/tutorials/${tutorialId}/notes`, {
         step_position: at ?? null,
         body: body.trim(),
         photo_path: photo,
         photo_caption: caption.trim() || null,
       })
-      setPosted(note)
-      onPosted(note)
     } catch (err) {
       setError(apiMessage(err, 'Could not post that. Please try again.'))
+      return
     } finally {
       setBusy(false)
+    }
+    // Outside the try: a throwing host callback must not read as a failed post.
+    setPosted(note)
+    try {
+      onPosted(note)
+    } catch (err) {
+      console.error('[FeedbackSheet] onPosted threw after the note saved:', err)
     }
   }
 
