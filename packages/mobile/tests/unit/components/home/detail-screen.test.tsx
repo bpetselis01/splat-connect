@@ -468,10 +468,16 @@ describe('DetailScreen recents', () => {
 })
 
 describe('linkSite', () => {
-  it('names the host a link opens, not the userinfo in front of it', () => {
+  it('names a plain host', () => {
     expect(linkSite('https://github.com/makersmakingchange/Light-Touch-Switch')).toBe('github.com')
-    expect(linkSite('https://github.com@evil.example/x')).toBe('evil.example')
-    expect(linkSite('https://user:pw@www.example.org:8080/a?b#c')).toBe('example.org')
+    expect(linkSite('https://www.example.org:8080/a?b#c')).toBe('example.org')
     expect(linkSite('http://github.com.evil.example/')).toBe('github.com.evil.example')
+  })
+  it('refuses anything a browser could read as another host', () => {
+    expect(linkSite('https://github.com@evil.example/x')).toBeNull()
+    expect(linkSite('https://user:pw@example.org/')).toBeNull()
+    expect(linkSite('https://evil.example\\@github.com')).toBeNull()
+    expect(linkSite('https://evil.example\\github.com')).toBeNull()
+    expect(linkSite('https://evil.example/a@github.com')).toBeNull()
   })
 })

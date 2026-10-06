@@ -69,12 +69,15 @@ const DIFF_TINT: Record<Difficulty, string> = {
  * a bare URL is one unbreakable word that iOS clips at the card's edge.
  */
 /**
- * The host a link really opens, for its label: never the userinfo before an
- * "@" ("github.com@evil.example" opens evil.example), nor a port.
+ * The site a link opens, for its label — or null when the address is not
+ * plainly one host. Only a bare host (letters, digits, dots, hyphens; an
+ * optional port) followed by a path with no backslash or "@" qualifies, so
+ * this reading and the browser's cannot disagree: "github.com@evil.example"
+ * and "evil.example\\@github.com" stay plain text, never a link.
  */
-export function linkSite(url: string): string {
-  const authority = url.replace(/^https?:\/\//i, '').split(/[/?#]/)[0]
-  return (authority.split('@').pop() ?? '').replace(/:\d+$/, '').replace(/^www\./i, '')
+export function linkSite(url: string): string | null {
+  const m = /^https?:\/\/([a-z0-9.-]+)(:\d+)?(?:[/?#][^\s\\@]*)?$/i.exec(url)
+  return m ? m[1].replace(/^www\./i, '') : null
 }
 
 function Linkified({ text, style }: { text: string; style: StyleProp<TextStyle> }) {
@@ -85,6 +88,7 @@ function Linkified({ text, style }: { text: string; style: StyleProp<TextStyle> 
         if (i % 2 === 0) return part
         const url = part.replace(/[.,;:)]+$/, '')
         const site = linkSite(url)
+        if (!site) return part
         return (
           <Text key={i}>
             <Text accessibilityRole="link" onPress={() => void Linking.openURL(url)} style={linkStyle}>{site}</Text>
