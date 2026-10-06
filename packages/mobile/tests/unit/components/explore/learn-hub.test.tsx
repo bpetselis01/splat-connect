@@ -44,7 +44,8 @@ describe('LearnHub', () => {
     })
     render(<LearnHub />)
     expect(screen.getByText('2 · Switch types explained')).toBeTruthy()
-    expect(screen.getByText('1 of 6 read · 3 min left on this one ›')).toBeTruthy()
+    expect(screen.getByText('1 of 6 read')).toBeTruthy()
+    expect(screen.getByText('Up next · 3 min')).toBeTruthy()
   })
 
   it('shows a tick on every read node and a numeral on the rest', () => {
