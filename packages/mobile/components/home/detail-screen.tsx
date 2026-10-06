@@ -29,6 +29,7 @@ import { Toast, useToast } from '../ui/Toast'
 import { PhotoCarousel } from '../ui/PhotoCarousel'
 import { PhotoViewer } from '../ui/PhotoViewer'
 import { Button } from '../ui/Button'
+import { stlName, webGuideUrl } from '../../lib/guide-files'
 import { Section } from '../ui/Section'
 import { Segmented } from '../ui/Segmented'
 import { Skeleton } from '../ui/Skeleton'
@@ -593,12 +594,79 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
             </>
           ) : tab === 'files' ? (
             <View style={styles.stack}>
-              <Section title="Guide PDF" hint="The same guide, to print and keep by the bench." style={styles.flush}>
-                <Button label="Download PDF" variant="secondary" onPress={openPreview} />
-              </Section>
+              {tutorial.tutorial_pdf_url || tutorial.stl_files.length ? (
+                <View style={styles.card}>
+                  <Text style={styles.cardHead}>Guide files</Text>
+                  {tutorial.tutorial_pdf_url ? (
+                    <View testID="file-row-pdf" style={styles.fileRow}>
+                      <View style={styles.needIcon}><Ionicons name="document-text-outline" size={18} color={theme.colors.primaryDeep} /></View>
+                      <View style={styles.flex}>
+                        <Text style={styles.fileName}>Full guide</Text>
+                        <Text style={styles.fileSub}>PDF · read on screen</Text>
+                      </View>
+                      <Pressable onPress={openPreview} accessibilityRole="button" accessibilityLabel="View" style={styles.filePill}>
+                        <Ionicons name="eye-outline" size={14} color={theme.colors.primaryDeep} />
+                        <Text style={styles.filePillText}>View</Text>
+                      </Pressable>
+                    </View>
+                  ) : null}
+                  {tutorial.stl_files.map((f) => {
+                    const sub = [f.print_minutes ? `${f.print_minutes} min` : '', f.filament_grams ? `${f.filament_grams} g` : ''].filter(Boolean).join(' · ')
+                    return (
+                      <View key={f.id} testID={`file-row-${f.id}`} style={styles.fileRow}>
+                        <View style={styles.needIcon}><Ionicons name="cube-outline" size={18} color={theme.colors.primaryDeep} /></View>
+                        <View style={styles.flex}>
+                          <Text style={styles.fileName} numberOfLines={1}>{stlName(f.filename)}</Text>
+                          <Text style={styles.fileSub} numberOfLines={1}>{sub || f.filename}</Text>
+                        </View>
+                        <Pressable
+                          onPress={() => router.push({ pathname: '/guides/[id]/model', params: { id: tutorial.id, file: f.id } })}
+                          accessibilityRole="button"
+                          accessibilityLabel={`3D view of ${stlName(f.filename)}`}
+                          style={styles.filePill}
+                        >
+                          <Ionicons name="sync-outline" size={14} color={theme.colors.primaryDeep} />
+                          <Text style={styles.filePillText}>3D</Text>
+                        </Pressable>
+                      </View>
+                    )
+                  })}
+                  {webGuideUrl(tutorial.id) ? (
+                    <Pressable testID="files-web-link" onPress={() => void Linking.openURL(webGuideUrl(tutorial.id)!)} accessibilityRole="link" style={styles.webLink}>
+                      <Ionicons name="globe-outline" size={16} color={theme.colors.primaryDeep} />
+                      <Text style={[styles.webLinkText, styles.flex]}>
+                        Printing it yourself? <Text style={styles.webLinkStrong}>Download the files on the web</Text>
+                      </Text>
+                      <Ionicons name="open-outline" size={16} color={theme.colors.primaryDeep} />
+                    </Pressable>
+                  ) : null}
+                </View>
+              ) : (
+                <Text style={styles.small}>Nothing to download for this guide.</Text>
+              )}
+              {tutorial.stl_files.length > 0 ? (
+                <AnimatedPressable
+                  testID="print-card"
+                  onPress={() => router.push({ pathname: '/printing', params: printWith ? { guide: tutorial.id, printWith } : { guide: tutorial.id } })}
+                  accessibilityRole="button"
+                  accessibilityLabel="Ask someone to print"
+                  accessibilityHint="Pick up to three printers nearby"
+                  pressScale={0.985}
+                  style={[styles.printCardFilled, styles.flush, highlight === 'print' && styles.printRing]}
+                >
+                  <View style={styles.printHeader}>
+                    <Text style={styles.printTitleOn}>Ask someone to print</Text>
+                    <Ionicons name="chevron-forward" size={16} color={theme.colors.onColor} />
+                  </View>
+                  <Text style={styles.printHintOn}>
+                    {tutorial.stl_files.length} printable part{tutorial.stl_files.length === 1 ? '' : 's'} · pick up to three printers nearby
+                  </Text>
+                </AnimatedPressable>
+              ) : null}
               {settings.length ? (
-                <Section title="Print settings" style={styles.flush}>
-                  <View style={styles.settings}>
+                <View style={styles.card}>
+                  <Text style={styles.cardHead}>Print settings</Text>
+                  <View style={[styles.settings, styles.settingsPad]}>
                     {settings.map((r) => (
                       <View key={r.k} style={styles.setting}>
                         <Text style={styles.settingKey}>{r.k}</Text>
@@ -606,42 +674,8 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
                       </View>
                     ))}
                   </View>
-                </Section>
+                </View>
               ) : null}
-              {/* The way into printing. Keyed on the guide having STL files rather
-                  than on its kind: a print request's parts ARE those files. */}
-              {tutorial.stl_files.length > 0 ? (
-                <>
-                  <Section title="Printable parts" style={styles.flush}>
-                    {tutorial.stl_files.map((f) => (
-                      <View key={f.id} style={styles.fileRow}>
-                        <Ionicons name="cube-outline" size={17} color={theme.colors.primary} />
-                        <Text style={styles.fileName} numberOfLines={1}>{f.filename}</Text>
-                      </View>
-                    ))}
-                  </Section>
-                  <AnimatedPressable
-                    onPress={() => router.push({ pathname: '/printing', params: printWith ? { guide: tutorial.id, printWith } : { guide: tutorial.id } })}
-                    accessibilityRole="button"
-                    accessibilityLabel="Ask someone to print"
-                    accessibilityHint="Pick up to three printers nearby"
-                    pressScale={0.985}
-                    testID="print-card"
-                    style={[styles.printCard, styles.flush, highlight === 'print' && styles.printRing]}
-                  >
-                    <View style={styles.printHeader}>
-                      <Text style={styles.printTitle}>Ask someone to print</Text>
-                      <Ionicons name="chevron-forward" size={16} color={theme.colors.primary} />
-                    </View>
-                    <Text style={styles.printHint}>
-                      {tutorial.stl_files.length} printable part{tutorial.stl_files.length === 1 ? '' : 's'} · pick up to three
-                      printers nearby
-                    </Text>
-                  </AnimatedPressable>
-                </>
-              ) : (
-                <Text style={styles.small}>Nothing to print for this guide.</Text>
-              )}
             </View>
           ) : (
             <CommunityNotes
@@ -678,7 +712,7 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
             style={styles.primaryAction}
           />
         ) : (
-          <Button label="Download PDF" onPress={openPreview} style={styles.primaryAction} />
+          <Button label="View full guide" onPress={openPreview} style={styles.primaryAction} />
         )}
       </View>
     </View>
@@ -779,8 +813,19 @@ const styles = StyleSheet.create({
   gatheredText: { fontFamily: theme.fonts.black, fontSize: theme.type.body, color: theme.colors.ink },
   meter: { height: 10, borderRadius: theme.radii.pill, backgroundColor: theme.colors.surfaceSunken, overflow: 'hidden' },
   meterFill: { height: '100%', borderRadius: theme.radii.pill, backgroundColor: theme.colors.success },
-  fileRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3), paddingVertical: theme.spacing(1) },
-  fileName: { flex: 1, fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.text },
+  cardHead: { fontFamily: theme.fonts.black, fontSize: theme.type.body, color: theme.colors.ink, paddingHorizontal: theme.spacing(4), paddingTop: theme.spacing(4), paddingBottom: theme.spacing(2) },
+  fileRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3), paddingHorizontal: theme.spacing(4), paddingVertical: theme.spacing(3), borderTopWidth: theme.border.hairline, borderTopColor: theme.colors.border },
+  fileName: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.ink },
+  fileSub: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted },
+  filePill: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: theme.spacing(3), paddingVertical: 6, borderRadius: theme.radii.pill, backgroundColor: theme.colors.accentLight },
+  filePillText: { fontFamily: theme.fonts.black, fontSize: theme.type.caption, color: theme.colors.primaryDeep },
+  webLink: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2), paddingHorizontal: theme.spacing(4), paddingVertical: theme.spacing(3), borderTopWidth: theme.border.hairline, borderTopColor: theme.colors.border, backgroundColor: theme.colors.surfaceSunken },
+  webLinkText: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.caption, color: theme.colors.muted, lineHeight: 18 },
+  webLinkStrong: { fontFamily: theme.fonts.black, color: theme.colors.primaryDeep },
+  printCardFilled: { borderRadius: theme.radii.panel, backgroundColor: theme.colors.primary, padding: theme.spacing(5), ...theme.shadow(2) },
+  printTitleOn: { fontFamily: theme.fonts.black, fontSize: theme.type.body, color: theme.colors.onColor },
+  printHintOn: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.onColor, marginTop: theme.spacing(1) },
+  settingsPad: { paddingHorizontal: theme.spacing(4), paddingBottom: theme.spacing(4) },
   settings: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2) },
   setting: { width: '48%', padding: theme.spacing(2), borderRadius: theme.radii.field, backgroundColor: theme.colors.surfaceSunken },
   settingKey: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.muted },

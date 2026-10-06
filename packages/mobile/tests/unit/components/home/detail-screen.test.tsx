@@ -1,3 +1,4 @@
+import { Linking } from 'react-native'
 import { act, render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { DetailScreen, linkSite, splitLead } from '../../../../components/home/detail-screen'
 import { apiClient } from '../../../../lib/api-client'
@@ -132,7 +133,8 @@ describe('DetailScreen', () => {
     render(<DetailScreen id="1" />)
     await screen.findByText('Build a Robot Arm')
 
-    fireEvent.press(screen.getByText('Download PDF'))
+    tab('Files')
+    fireEvent.press(screen.getByRole('button', { name: 'View' }))
 
     await waitFor(() => expect(mockPush).toHaveBeenCalled())
     expect(mockCreateSignedUrl).toHaveBeenCalledWith('1/tutorial.pdf', 60)
@@ -147,7 +149,8 @@ describe('DetailScreen', () => {
     render(<DetailScreen id="1" />)
     await screen.findByText('Build a Robot Arm')
 
-    fireEvent.press(screen.getByText('Download PDF'))
+    tab('Files')
+    fireEvent.press(screen.getByRole('button', { name: 'View' }))
 
     await waitFor(() => expect(mockPush).toHaveBeenCalled())
     expect(mockPush).toHaveBeenCalledWith({
@@ -235,7 +238,63 @@ describe('DetailScreen', () => {
     tab('Files')
 
     expect(screen.queryByLabelText('Ask someone to print')).toBeNull()
-    expect(screen.getByText('Nothing to print for this guide.')).toBeTruthy()
+  })
+
+  describe('Files tab', () => {
+    const STL = [{ id: 'f1', tutorial_id: '1', filename: 'lts_base.stl', file_url: '1/lts_base.stl', print_minutes: 55, filament_grams: 14, material: 'PLA' }, { id: 'f2', tutorial_id: '1', filename: 'lts_cap.stl', file_url: '1/lts_cap.stl', print_minutes: null, filament_grams: null, material: null }]
+
+    it('lists the PDF and each STL with a single View or 3D pill, and links to the web for downloads', async () => {
+      process.env.EXPO_PUBLIC_WEB_URL = 'https://splat.example'
+      mockEndpoints({ detail: Promise.resolve({ ...DETAIL, stl_files: STL }) })
+      render(<DetailScreen id="1" />)
+      await screen.findByText('Build a Robot Arm')
+      tab('Files')
+      expect(screen.getByText('Full guide')).toBeTruthy()
+      expect(screen.getByRole('button', { name: 'View' })).toBeTruthy()
+      expect(screen.getByText('Lts base')).toBeTruthy()
+      expect(screen.getByText('55 min · 14 g')).toBeTruthy()
+      expect(screen.getByText('Lts cap')).toBeTruthy()
+      expect(screen.getAllByRole('button', { name: /^3D/ })).toHaveLength(2)
+      expect(screen.queryByText(/Download PDF|Open in browser/)).toBeNull()
+      const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(true)
+      fireEvent.press(screen.getByTestId('files-web-link'))
+      expect(open).toHaveBeenCalledWith('https://splat.example/tutorials/1')
+    })
+
+    it('a 3D pill opens the model route for that file', async () => {
+      mockEndpoints({ detail: Promise.resolve({ ...DETAIL, stl_files: STL }) })
+      render(<DetailScreen id="1" />)
+      await screen.findByText('Build a Robot Arm')
+      tab('Files')
+      fireEvent.press(screen.getAllByRole('button', { name: /^3D/ })[0]!)
+      expect(mockPush).toHaveBeenCalledWith({ pathname: '/guides/[id]/model', params: { id: '1', file: 'f1' } })
+    })
+
+    it('hides the web link when no web address is configured', async () => {
+      delete process.env.EXPO_PUBLIC_WEB_URL
+      mockEndpoints({ detail: Promise.resolve({ ...DETAIL, stl_files: STL }) })
+      render(<DetailScreen id="1" />)
+      await screen.findByText('Build a Robot Arm')
+      tab('Files')
+      expect(screen.queryByTestId('files-web-link')).toBeNull()
+    })
+
+    it('orders Ask someone to print above Print settings', async () => {
+      mockEndpoints({ detail: Promise.resolve({ ...DETAIL, stl_files: STL, layer_height_mm: 0.2 }) })
+      render(<DetailScreen id="1" />)
+      await screen.findByText('Build a Robot Arm')
+      tab('Files')
+      const json = JSON.stringify(screen.toJSON())
+      expect(json.indexOf('Ask someone to print')).toBeLessThan(json.indexOf('Print settings'))
+    })
+
+    it('a guide with no steps makes View full guide the bottom action', async () => {
+      mockEndpoints({ detail: Promise.resolve({ ...DETAIL, steps: [] }) })
+      render(<DetailScreen id="1" />)
+      await screen.findByText('Build a Robot Arm')
+      expect(screen.getByRole('button', { name: 'View full guide' })).toBeTruthy()
+      expect(screen.queryByText('Download PDF')).toBeNull()
+    })
   })
 
   describe('What you’ll need', () => {
@@ -423,7 +482,7 @@ describe('DetailScreen redesigned page', () => {
     render(<DetailScreen id="1" />)
     await screen.findByText('Build a Robot Arm')
     expect(screen.queryByText('Start building')).toBeNull()
-    expect(screen.getByText('Download PDF')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'View full guide' })).toBeTruthy()
   })
 
   it('opens on the tab named by the route param', async () => {

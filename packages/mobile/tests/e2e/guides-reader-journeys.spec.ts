@@ -43,12 +43,12 @@ test('finishing every step shows the completion, and the guide then offers Build
   await expect(page.getByRole('button', { name: 'Build it again', exact: true })).toBeVisible()
 })
 
-test('a guide with no steps makes Download PDF primary', async ({ page }) => {
+test('a guide with no steps makes View full guide primary', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile NoSteps'), status: 'approved' })
 
   await page.goto(`/guides/${id}`)
-  await expect(page.getByRole('button', { name: 'Download PDF', exact: true }).first()).toBeVisible()
+  await expect(page.getByRole('button', { name: 'View full guide', exact: true }).first()).toBeVisible()
   await expect(page.getByRole('button', { name: 'Start building' })).toHaveCount(0)
   await page.getByRole('tab', { name: 'Supplies' }).click()
   await expect(page.getByText('E2E part ×2')).toBeVisible()

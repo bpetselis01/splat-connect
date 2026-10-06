@@ -24,16 +24,17 @@ test('tapping a tutorial navigates to its detail screen', async ({ page }) => {
   await expect(page.getByText('E2E tool')).toBeVisible()
 })
 
-test('tapping Download PDF navigates to the preview screen', async ({ page }) => {
+test('tapping View on the Files tab navigates to the preview screen', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const title = uniqueTitle('E2E Mobile Preview')
   await createTutorial(contributor.id, { title, status: 'approved' })
 
   await page.goto('/guides')
   await page.getByText(title).click()
-  await page.getByText('Download PDF').click()
+  await page.getByRole('tab', { name: 'Files' }).click()
+  await page.getByRole('button', { name: 'View', exact: true }).click()
 
-  await expect(page.getByText('Open in browser')).toBeVisible()
+  await expect(page.getByText('Download on the web')).toBeVisible()
 })
 
 test('an aborted detail request shows the retry message', async ({ page }) => {
@@ -78,17 +79,17 @@ test('optional parts and tools are badged on the detail screen', async ({ page }
   await expect(page.getByText('E2E part ×2', { exact: true })).toBeVisible()
 })
 
-test('the preview screen explains when a tutorial has no PDF', async ({ page }) => {
+test('the Files tab explains when a tutorial has no PDF', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const title = uniqueTitle('E2E Mobile No PDF')
   await createTutorial(contributor.id, { title, status: 'approved', withPdf: false })
 
   await page.goto('/guides')
   await page.getByText(title).click()
-  await page.getByText('Download PDF').click()
+  await page.getByRole('tab', { name: 'Files' }).click()
 
-  await expect(page.getByText('No PDF is available for this tutorial yet.')).toBeVisible()
-  await expect(page.getByText('Open in browser')).toHaveCount(0)
+  await expect(page.getByText('Nothing to download for this guide.')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'View', exact: true })).toHaveCount(0)
 })
 
 test('the byline names the primary contributor and opens their showcase', async ({ page }) => {
