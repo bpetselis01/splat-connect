@@ -95,7 +95,7 @@ describe('DetailScreen', () => {
     render(<DetailScreen id="1" />)
     expect(await screen.findByText('Build a Robot Arm')).toBeTruthy()
     expect(apiClient.get).toHaveBeenCalledWith('/api/public/tutorials/1')
-    tab('Parts & tools')
+    tab('You’ll need')
     expect(screen.getByText('Servo Motor ×2')).toBeTruthy()
     expect(screen.getByText('Screwdriver')).toBeTruthy()
   })
@@ -146,7 +146,7 @@ describe('DetailScreen', () => {
     })
     render(<DetailScreen id="1" />)
     await screen.findByText('Build a Robot Arm')
-    tab('Parts & tools')
+    tab('You’ll need')
     expect(await screen.findByText('Total')).toBeTruthy()
     expect(screen.getAllByText('$12.50')).toHaveLength(2)
     expect(screen.getByText('Prices checked 2 Aug 2026')).toBeTruthy()
@@ -162,12 +162,11 @@ describe('DetailScreen', () => {
     expect(screen.queryByText('Print time')).toBeNull()
   })
 
-  it('captions the photo in view and offers a thumbnail strip', async () => {
+  it('captions the photo in view, with no thumbnail strip under it', async () => {
     mockEndpoints({ detail: Promise.resolve({ ...DETAIL, photo_urls: ['https://x.test/a.jpg', 'https://x.test/b.jpg'], photo_captions: ['The finished drum'] }) })
     render(<DetailScreen id="1" />)
     expect(await screen.findByText('1/2 · The finished drum')).toBeTruthy()
-    expect(screen.getByLabelText('Show photo 1: The finished drum')).toBeTruthy()
-    expect(screen.getByLabelText('Show photo 2: Build a Robot Arm')).toBeTruthy()
+    expect(screen.queryByLabelText('Show photo 1: The finished drum')).toBeNull()
   })
 
   it('opens Find a printer for this guide when it has printable parts', async () => {
@@ -202,7 +201,6 @@ describe('DetailScreen', () => {
     render(<DetailScreen id="1" />)
     fireEvent.press(await screen.findByRole('button', { name: "Can't build it? Ask a maker nearby" }))
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/explore/makers-wanted/new', params: { guide: '1' } })
-    expect(screen.getByText('A maker nearby gives the time and the skill; you cover the parts. You agree a pickup in My exchanges.')).toBeTruthy()
   })
 
   it('offers no print for a guide with nothing to print', async () => {
@@ -235,8 +233,7 @@ describe('DetailScreen steps and fit', () => {
     expect(await screen.findByText('Open it')).toBeTruthy()
     expect(screen.getByText('Fit the interrupter.')).toBeTruthy()
     expect(await screen.findByText('Suits Ollie')).toBeTruthy()
-    expect(screen.getByText('Switch')).toBeTruthy()
-    expect(screen.getByText('Mounting and positioning')).toBeTruthy()
+    expect(screen.getByText('Switch · Mounting and positioning · Toy adaptation')).toBeTruthy()
   })
 
   it('says nothing when the guide does not suit the child', async () => {
@@ -276,7 +273,7 @@ describe('DetailScreen thanks', () => {
   it('offers Thanks to someone who has not thanked yet', async () => {
     withThanks({ thanked: false, own: false })
     render(<DetailScreen id="1" />)
-    expect(await screen.findByRole('button', { name: 'Thanks' })).toBeTruthy()
+    expect(await screen.findByRole('button', { name: 'Say thanks' })).toBeTruthy()
   })
 
   it('never offers it on your own guide', async () => {
@@ -284,13 +281,13 @@ describe('DetailScreen thanks', () => {
     render(<DetailScreen id="1" />)
     await screen.findByText('Build a Robot Arm')
     await waitFor(() => expect(apiClient.get).toHaveBeenCalledWith('/api/tutorials/1/thanks'))
-    expect(screen.queryByRole('button', { name: 'Thanks' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Say thanks' })).toBeNull()
   })
 
   it('lists the author’s safety notes', async () => {
     mockEndpoints({ detail: Promise.resolve({ ...DETAIL, safety_notes: [{ id: 'n', tutorial_id: '1', position: 1, title: 'Battery door must be screwed shut', detail: 'Add the screw.' }] }) })
     render(<DetailScreen id="1" />)
-    expect(await screen.findByText('Before you start')).toBeTruthy()
+    expect(await screen.findByText('Stay safe')).toBeTruthy()
     expect(screen.getByText('Battery door must be screwed shut')).toBeTruthy()
   })
 })
@@ -339,7 +336,7 @@ describe('DetailScreen redesigned page', () => {
     render(<DetailScreen id="1" />)
     await screen.findByText('Build a Robot Arm')
     expect(screen.queryByText('Start building')).toBeNull()
-    expect(screen.getByText('The steps are in the PDF.')).toBeTruthy()
+    expect(screen.getByText('Download PDF')).toBeTruthy()
   })
 
   it('opens on the tab named by the route param', async () => {
@@ -351,13 +348,87 @@ describe('DetailScreen redesigned page', () => {
 
   it('shows the age range badge, who it is for and the toy on Overview', async () => {
     render(<DetailScreen id="1" />)
-    expect(await screen.findByText('Age 3–8')).toBeTruthy()
+    expect(await screen.findByText(/· Age 3–8$/)).toBeTruthy()
     expect(screen.getByText("Who it's for")).toBeTruthy()
     expect(screen.getByText('How a child uses it')).toBeTruthy()
     expect(screen.getByText('The toy')).toBeTruthy()
     expect(screen.getByText('Light-up drum · Fisher-Price')).toBeTruthy()
     expect(screen.getByText('Works with: Any 3.5mm switch')).toBeTruthy()
     expect(screen.getByText('No soldering needed.')).toBeTruthy()
+  })
+})
+
+describe('DetailScreen combined layout', () => {
+  const guide = {
+    ...DETAIL,
+    access: ['press', 'head'],
+    one_hand: true,
+    safety_declared_at: '2026-08-01',
+    parts: [
+      { id: 'p1', tutorial_id: '1', name: 'Servo Motor', quantity: 2, is_optional: false, price_cents: 450, buy_links: [] },
+      { id: 'p2', tutorial_id: '1', name: 'Glue', quantity: 1, is_optional: false, price_cents: 200, buy_links: [] },
+    ],
+    steps: [
+      { id: 's1', tutorial_id: '1', position: 1, title: 'Open it', body: 'One screw.', photo_url: null, minutes: 5 },
+      { id: 's2', tutorial_id: '1', position: 2, title: 'Close it', body: 'Two screws.', photo_url: null, minutes: 10 },
+    ],
+  }
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    mockTicks = null
+  })
+
+  it('sums up what you need and opens the You’ll need tab with one gathered bar', async () => {
+    mockEndpoints({ detail: Promise.resolve(guide) })
+    render(<DetailScreen id="1" />)
+    expect(await screen.findByText('2 parts · about $6.50')).toBeTruthy()
+    expect(screen.getByText('1 tool')).toBeTruthy()
+    fireEvent.press(screen.getByLabelText("What you'll need"))
+    expect(screen.getByRole('tab', { name: 'You’ll need' }).props.accessibilityState.selected).toBe(true)
+    expect(screen.getByText('3 things left to gather')).toBeTruthy()
+    fireEvent.press(screen.getByLabelText('Glue: gathered'))
+    expect(screen.getByText('2 things left to gather')).toBeTruthy()
+    expect(screen.getByText('1 / 2')).toBeTruthy()
+  })
+
+  it('opens build mode on the step you tap, and marks where you are', async () => {
+    mockTicks = '["s1"]'
+    mockEndpoints({ detail: Promise.resolve(guide) })
+    render(<DetailScreen id="1" />)
+    expect(await screen.findByText("You're here · 10 min")).toBeTruthy()
+    expect(screen.getByText('1/2')).toBeTruthy()
+    fireEvent.press(screen.getByLabelText('Step 2: Close it'))
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/guides/[id]/build', params: { id: '1', step: '2' } })
+    mockTicks = null
+  })
+
+  it('folds the author’s safety checks behind one row', async () => {
+    mockEndpoints({ detail: Promise.resolve(guide) })
+    render(<DetailScreen id="1" />)
+    fireEvent.press(await screen.findByText('6 safety checks passed'))
+    expect(screen.getByText('No mains voltage anywhere in the design')).toBeTruthy()
+  })
+
+  it('ticks the answers the child shares in Who it’s for', async () => {
+    const ollie = { name: 'Ollie', helps_with: null, access: ['head'], one_hand: false, press_force: null, enjoys: null }
+    mockEndpoints({ detail: Promise.resolve(guide), children: Promise.resolve([ollie]) })
+    render(<DetailScreen id="1" />)
+    await screen.findByText('Suits Ollie')
+    expect(screen.getByText('Head or chin')).toBeTruthy()
+    expect(screen.UNSAFE_getAllByProps({ name: 'checkmark', size: 14 })).toHaveLength(1)
+  })
+
+  it('shows a pinned fix on Overview with a way to the rest', async () => {
+    const pinned = { id: 'k', body: 'Use a longer screw', step_position: 2, pinned_at: '2026-09-01', pinned_by_name: 'Sam', author_name: 'Al' }
+    ;(apiClient.get as jest.Mock).mockImplementation((p: string) =>
+      p === '/api/saves/ids' ? Promise.resolve(NO_SAVES) : p === '/api/child-profiles' ? Promise.resolve([]) : p.endsWith('/notes') ? Promise.resolve([pinned]) : Promise.resolve(guide)
+    )
+    render(<DetailScreen id="1" />)
+    expect(await screen.findByText('1 fix from builders')).toBeTruthy()
+    expect(screen.getByText('Step 2: Use a longer screw')).toBeTruthy()
+    fireEvent.press(screen.getByText('Read the fix'))
+    expect(screen.getByRole('tab', { name: /^Notes/ }).props.accessibilityState.selected).toBe(true)
   })
 })
 
