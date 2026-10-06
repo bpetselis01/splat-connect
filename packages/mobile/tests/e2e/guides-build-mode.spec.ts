@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { adminClient, createContributor, createTutorial, renameProfile, signInAsNewContributor, uniqueTitle } from './helpers'
-import { addSteps } from './guides-fixtures'
+import { addNote, addSteps } from './guides-fixtures'
 
 // Build mode from Get ready to the logged build: the All steps sheet, Start
 // over, a builder's pinned note on its step, and the tutorial_builds row.
@@ -11,19 +11,6 @@ const STEPS = [
   { title: 'Slide it in', body: 'Copper side down.' },
   { title: 'Close it', body: 'Click.' },
 ]
-
-async function addNote(tutorialId: string, authorId: string, fields: { step_position: number; body: string; pinnedBy?: string }) {
-  const { error } = await adminClient()
-    .from('tutorial_notes')
-    .insert({
-      tutorial_id: tutorialId,
-      author_id: authorId,
-      step_position: fields.step_position,
-      body: fields.body,
-      ...(fields.pinnedBy ? { pinned_at: new Date().toISOString(), pinned_by: fields.pinnedBy } : {}),
-    })
-  if (error) throw new Error(`addNote failed: ${error.message}`)
-}
 
 test('Start building opens on Get ready with the parts, tools and safety checks, and Start step 1 begins', async ({ page }) => {
   await signInAsNewContributor(page)
