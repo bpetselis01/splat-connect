@@ -94,6 +94,15 @@ export function CommunityNotes({ tutorialId, guideTitle, authorName, steps, note
   const fixes = shown.filter((n) => n.pinned_at)
   const rest = shown.filter((n) => !n.pinned_at)
 
+  // A reload can empty the chosen filter (the fix was unpinned) and a hand-off
+  // can target a note the filter hides; either way fall back to All.
+  useEffect(() => {
+    const matches = (n: GuideNote) =>
+      filter === 'all' ? true : filter === 'fixes' ? !!n.pinned_at : filter === 'missing' ? isMissing(n, steps.length) : n.step_position === filter
+    const target = highlightId ? notes.find((n) => n.id === highlightId) : undefined
+    if (filter !== 'all' && (!notes.some(matches) || (target && !matches(target)))) setFilter('all')
+  }, [notes, highlightId, filter, steps.length])
+
   async function act(path: string, done: string, method: 'post' | 'delete' = 'post') {
     setMenuFor(null)
     try {

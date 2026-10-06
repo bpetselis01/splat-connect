@@ -138,3 +138,22 @@ it('rings the highlighted note and reports its row', () => {
   expect(onHighlightRow).toHaveBeenCalled()
   expect(screen.getByTestId('note-row-new').props.style).toEqual(expect.arrayContaining([expect.objectContaining({ borderWidth: 2, borderColor: theme.colors.primary, borderTopColor: theme.colors.primary })]))
 })
+
+it('falls back to All when the fix is unpinned under the Fixes filter', () => {
+  const pinned = note({ id: 'a', pinned_at: 'x', pinned_by_name: 'Mei', body: 'Tin both leads first.' })
+  const view = render(<CommunityNotes {...props} notes={[pinned] as never} />)
+  fireEvent.press(screen.getByTestId('feedback-filter-fixes'))
+  view.rerender(<CommunityNotes {...props} notes={[{ ...pinned, pinned_at: null }] as never} />)
+  expect(screen.queryByTestId('feedback-filter-fixes')).toBeNull()
+  expect(screen.getByText('Tin both leads first.')).toBeTruthy()
+})
+
+it('falls back to All when the highlighted note is outside the chosen step', () => {
+  const notes = [note({ id: 'a', step_position: 4, body: 'Cap was tight.' }), note({ id: 'b', step_position: 2, body: 'Second step tip.' })]
+  const view = render(<CommunityNotes {...props} notes={notes as never} />)
+  fireEvent.press(screen.getByTestId('feedback-filter-step-4'))
+  expect(screen.queryByText('Second step tip.')).toBeNull()
+  view.rerender(<CommunityNotes {...props} notes={notes as never} highlightId="b" />)
+  expect(screen.getByTestId('note-row-b')).toBeTruthy()
+  expect(screen.getByText('Cap was tight.')).toBeTruthy()
+})
