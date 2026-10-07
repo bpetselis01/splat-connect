@@ -1,4 +1,4 @@
-// journeys: L25 L27
+// journeys: L25 L26 L27
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { OrgLeadersSection } from '../../../../components/organisation/org-leaders-section'
 
@@ -50,5 +50,16 @@ describe('OrgLeadersSection', () => {
     fireEvent.press(await screen.findByText('Step down as leader'))
     await waitFor(() => expect(onSteppedDown).toHaveBeenCalled())
     expect(mockDelete).toHaveBeenCalledWith('/api/organizations/o1/leaders/me')
+  })
+
+  it('cancels an invitation and reloads without it', async () => {
+    mockGet.mockResolvedValueOnce({ leaders: [me], invites: [{ id: 'i1', name: 'Priya', email: 'priya@example.com' }] })
+    mockDelete.mockResolvedValue(undefined)
+    render(<OrgLeadersSection orgId="o1" />)
+    expect(await screen.findByText('Priya · invited')).toBeTruthy()
+    mockGet.mockResolvedValue({ leaders: [me], invites: [] })
+    fireEvent.press(screen.getByText('Cancel invitation'))
+    await waitFor(() => expect(screen.queryByText('Priya · invited')).toBeNull())
+    expect(mockDelete).toHaveBeenCalledWith('/api/organizations/o1/leaders/invites/i1')
   })
 })

@@ -1,4 +1,4 @@
-// journeys: Z01 Z02 Z04
+// journeys: Z01 Z02 Z04 Z10
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { Linking } from 'react-native'
 import { ProfileScreen } from '../../../components/profile-screen'
@@ -161,5 +161,17 @@ describe('ProfileScreen', () => {
         await screen.findByText('Contributor terms · accepted v0-todo · 12 Aug 2026')
       ).toBeTruthy()
     })
+  })
+
+  it('opens the web dashboard and the privacy policy in the browser', () => {
+    mockUseAuth.mockReturnValue(auth({}))
+    const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(true)
+    render(<ProfileScreen />)
+
+    fireEvent.press(screen.getByText('Open Web Dashboard'))
+    expect(open).toHaveBeenLastCalledWith(expect.stringMatching(/\/dashboard$/))
+    fireEvent.press(screen.getByText('privacy policy'))
+    expect(open).toHaveBeenLastCalledWith(expect.stringMatching(/\/privacy$/))
+    open.mockRestore()
   })
 })

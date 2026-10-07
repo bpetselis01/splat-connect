@@ -18,11 +18,12 @@ jest.mock('../../../../lib/capabilities', () => ({
 
 const mockGet = jest.fn()
 const mockPost = jest.fn()
+const mockDelete = jest.fn()
 jest.mock('../../../../lib/api-client', () => ({
   apiClient: {
     get: (...a: unknown[]) => mockGet(...a),
     post: (...a: unknown[]) => mockPost(...a),
-    delete: jest.fn(),
+    delete: (...a: unknown[]) => mockDelete(...a),
   },
 }))
 const mockPush = jest.fn()
@@ -113,6 +114,15 @@ describe('OrgProfileScreen', () => {
       })
     )
     expect(await screen.findByText('Thanked 3 times')).toBeTruthy()
+  })
+
+  it('unfollows from Following with a DELETE and goes back to Follow', async () => {
+    load(relationship({ following: true }))
+    mockDelete.mockResolvedValue({})
+    render(<OrgProfileScreen id="o1" />)
+    fireEvent.press(await screen.findByText('Following'))
+    await waitFor(() => expect(screen.getByText('Follow')).toBeTruthy())
+    expect(mockDelete).toHaveBeenCalledWith('/api/organizations/o1/follow')
   })
 
   it('asks a printing organisation to print with it already chosen', async () => {
