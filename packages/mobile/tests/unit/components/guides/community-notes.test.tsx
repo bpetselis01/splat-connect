@@ -135,8 +135,11 @@ it('rings the highlighted note and reports its row', () => {
   expect(onHighlightRow).not.toHaveBeenCalled()
   expect(JSON.stringify(screen.getByTestId('note-row-new').props.style)).not.toContain('"borderWidth":2')
   fireEvent(screen.getByTestId('note-row-new'), 'layout', { nativeEvent: { layout: { x: 0, y: 120, width: 300, height: 80 } } })
-  expect(onHighlightRow).toHaveBeenCalled()
+  expect(onHighlightRow).toHaveBeenCalledTimes(1)
   expect(screen.getByTestId('note-row-new').props.style).toEqual(expect.arrayContaining([expect.objectContaining({ borderWidth: 2, borderColor: theme.colors.primary, borderTopColor: theme.colors.primary })]))
+  // The ring's border relays the row out; that second layout must not scroll or re-time the hand-off.
+  fireEvent(screen.getByTestId('note-row-new'), 'layout', { nativeEvent: { layout: { x: 0, y: 120, width: 300, height: 84 } } })
+  expect(onHighlightRow).toHaveBeenCalledTimes(1)
 })
 
 it('falls back to All when the fix is unpinned under the Fixes filter', () => {

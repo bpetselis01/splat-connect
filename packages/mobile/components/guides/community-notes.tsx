@@ -78,12 +78,15 @@ export function CommunityNotes({ tutorialId, guideTitle, authorName, steps, note
   const ringStarted = useRef<string | null>(null)
   useEffect(() => () => { if (ringTimer.current) clearTimeout(ringTimer.current) }, [])
   useEffect(() => { if (!highlightId) ringStarted.current = null }, [highlightId])
+  // False on the relayouts the ring itself causes (border on, border off), so
+  // the parent scrolls and times the hand-off once, not on each.
   const startRing = (id: string) => {
-    if (ringStarted.current === id) return
+    if (ringStarted.current === id) return false
     ringStarted.current = id
     setRinged(id)
     if (ringTimer.current) clearTimeout(ringTimer.current)
     ringTimer.current = setTimeout(() => setRinged(null), 2000)
+    return true
   }
 
   const stepsWithNotes = steps.filter((s) => notes.some((n) => n.step_position === s.position))
@@ -124,7 +127,7 @@ export function CommunityNotes({ tutorialId, guideTitle, authorName, steps, note
         key={n.id}
         testID={`note-row-${n.id}`}
         ref={(r) => { if (r && n.id === highlightId) rowRefs.current.set(n.id, r) }}
-        onLayout={() => { const r = rowRefs.current.get(n.id); if (r && n.id === highlightId) { startRing(n.id); onHighlightRow?.(r) } }}
+        onLayout={() => { const r = rowRefs.current.get(n.id); if (r && n.id === highlightId && startRing(n.id)) onHighlightRow?.(r) }}
         style={[styles.row, n.pinned_at && styles.fix, ring && styles.ring]}
       >
         {n.pinned_at ? (
