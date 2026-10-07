@@ -87,4 +87,10 @@ test('the Inbox badge and the Today card drop by the rows read', async ({ page }
   await page.getByRole('tab', { name: /^Home/ }).click()
   await expect(page.getByRole('tab', { name: 'Inbox, 2 unread' })).toBeVisible()
   await expect(page.getByRole('button', { name: /^2 new messages/ })).toBeVisible()
+
+  // A notification that arrives while Home is mounted shows on the card once Home regains focus.
+  await createNotification(viewer.id, { type: 'challenge_joined', idea_id: ideaId, actor_name: 'Sam' })
+  await page.getByRole('tab', { name: /^Inbox/ }).click()
+  await page.getByRole('tab', { name: /^Home/ }).click()
+  await expect(page.getByRole('button', { name: /^3 new messages/ })).toBeVisible()
 })

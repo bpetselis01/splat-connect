@@ -1,12 +1,17 @@
 // journeys: H01
-import { render, screen, fireEvent } from '@testing-library/react-native'
+import { render, screen, fireEvent, act } from '@testing-library/react-native'
 import { HomeScreen } from '../../../../components/home/home-screen'
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 const mockPush = jest.fn()
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }))
+let mockFocus: () => void
+jest.mock('expo-router', () => {
+  const { useEffect } = jest.requireActual('react')
+  return { useRouter: () => ({ push: mockPush }), useFocusEffect: (e: () => void) => { mockFocus = e; useEffect(e, []) } }
+})
 let mockCaps: { unread?: { total: number; exchanges: number } } | null = null
-jest.mock('../../../../lib/capabilities', () => ({ useCapabilities: () => ({ caps: mockCaps }) }))
+const mockRefresh = jest.fn()
+jest.mock('../../../../lib/capabilities', () => ({ useCapabilities: () => ({ caps: mockCaps, refresh: mockRefresh }) }))
 jest.mock('../../../../lib/home-shortcuts', () => ({
   useHomeShortcuts: () => ({ features: [], ids: [], ready: true, add: jest.fn(), remove: jest.fn(), move: jest.fn(), moveToTop: jest.fn(), reset: jest.fn() }),
 }))
@@ -58,5 +63,12 @@ describe('Home Today card count math', () => {
     setup({ total: 0, exchanges: 0 })
     expect(screen.getByLabelText('Edit')).toBeTruthy()
     expect(screen.getByLabelText('Add a shortcut')).toBeTruthy()
+  })
+
+  it('refetches the unread count each time Home regains focus, not on the first focus', () => {
+    setup({ total: 1, exchanges: 0 })
+    expect(mockRefresh).not.toHaveBeenCalled()
+    act(() => { mockFocus() })
+    expect(mockRefresh).toHaveBeenCalledTimes(1)
   })
 })
