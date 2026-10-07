@@ -1,4 +1,5 @@
 // journeys: K05
+import { CLEARANCE, scrollPaddings } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { AskForBuildScreen } from '../../../../components/builds/ask-for-build-screen'
 import { apiClient } from '../../../../lib/api-client'
@@ -47,4 +48,11 @@ it('offers the board’s How soon? choices and posts without a note', async () =
       expect.objectContaining({ tutorial_id: 'g0', build_brief: null, urgency: 'This month', requester_suburb: 'Glebe' })
     )
   )
+})
+
+jest.mock('react-native-safe-area-context', () => require('../../bottom-spacing').insetMock())
+
+it('ends one gutter above the home indicator (the full-height sheet runs under it)', async () => {
+  render(<AskForBuildScreen />)
+  expect(scrollPaddings(screen)).toEqual([CLEARANCE])
 })
