@@ -32,7 +32,14 @@ test('the family withdraws a claimed build and the maker is told', async ({ brow
 
   try {
     await familyPage.goto(`/exchanges/build/${build.id}`)
+    // Two browser dialogs: "Withdraw this request?" (Proceed), then "Request withdrawn" (OK).
+    const dialogs: string[] = []
+    familyPage.on('dialog', (d) => {
+      dialogs.push(d.message().split('\n')[0])
+      void d.accept()
+    })
     await familyPage.getByRole('button', { name: 'Withdraw the request' }).click()
+    await expect.poll(() => dialogs).toEqual(['Withdraw this request?', 'Request withdrawn'])
     await expect(familyPage.getByText('This request was withdrawn')).toBeVisible()
     expect(await txRow(build.id)).toMatchObject({ status: 'withdrawn' })
     expect(await notificationsFor(build.maker.id, 'toy_withdrawn', build.id)).toHaveLength(1)
