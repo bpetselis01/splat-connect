@@ -111,7 +111,7 @@ describe('buildCard', () => {
 
   it('says whose move it is at every stage, from both sides', () => {
     expect(kicker(open, FAMILY)).toBe('Waiting')
-    expect(kicker(open, STRANGER)).toBe('Needs a maker')
+    expect(kicker(open, STRANGER)).toBe('Open for a maker')
     expect(kicker(building, MAKER)).toBe('Your build')
     expect(kicker(building, FAMILY)).toBe('Live')
     expect(kicker(shot, MAKER)).toBe('Waiting')

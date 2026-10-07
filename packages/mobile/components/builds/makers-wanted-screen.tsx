@@ -337,7 +337,7 @@ function BuildCard({
         ? { tint: theme.colors.mintSoft, icon: 'checkmark-circle' as const, label: 'Handed over', foot: `Built by ${b.maker_name}` }
         : b.mine
           ? { tint: theme.colors.apricotSoft, icon: 'hourglass' as const, label: 'Waiting for a maker', foot: `Visible to makers within ${b.travel_km} km` }
-          : { tint: theme.colors.mintSoft, icon: 'hand-left' as const, label: 'Needs a maker', foot: 'Unclaimed' }
+          : { tint: theme.colors.mintSoft, icon: 'hand-left' as const, label: 'Open', foot: 'Unclaimed' }
   return (
     <Card style={styles.card}>
       <View style={styles.cardTop}>

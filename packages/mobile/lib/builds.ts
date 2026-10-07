@@ -139,7 +139,7 @@ export function buildCard(
 
   if (tx.status === 'requested') {
     if (c.canClaim) {
-      return { tone: TONE.open, icon: 'hand-left', kicker: 'Needs a maker', title: 'Not claimed yet', body: 'Read the brief below. Claiming is one tap when you are ready.' }
+      return { tone: TONE.open, icon: 'hand-left', kicker: 'Open for a maker', title: 'Not claimed yet', body: 'Read the brief below. Claiming is one tap when you are ready.' }
     }
     if (c.canAnswer) {
       return { tone: TONE.live, icon: 'hammer', kicker: 'Needs you', title: 'Take it on, or decline', body: 'Read the brief below. Taking it on gives you both a handover code.' }

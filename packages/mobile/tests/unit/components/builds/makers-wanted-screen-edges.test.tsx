@@ -73,6 +73,9 @@ describe('the tabs', () => {
     render(<MakersWantedScreen />)
     await screen.findByText('Guide b1')
     expect(screen.getAllByRole('tab').map((t) => t.props.accessibilityLabel.replace(/ \(\d+\)$/, ''))).toEqual(['Open', 'Live', 'Done', 'Yours'])
+    // The card's status pill says Open too (the tab's own label is a second "Open").
+    expect(screen.queryByText('Needs a maker')).toBeNull()
+    expect(screen.getAllByText('Open').length).toBeGreaterThan(1)
   })
 
   it('starts on Open (not the longer "Needs a maker"), and on Yours when the route asks for it', async () => {
