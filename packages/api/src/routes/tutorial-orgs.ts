@@ -120,6 +120,7 @@ async function answer(c: Context<{ Variables: AuthVariables }>, status: 'accepte
   return c.json(data[0])
 }
 
+// PENDING(backing-notifications): accept and decline tell the family nothing; needs a new notification type plus web and mobile copy.
 tutorialOrgs.post('/:id/orgs/:orgId/accept', (c) => answer(c, 'accepted'))
 tutorialOrgs.post('/:id/orgs/:orgId/decline', (c) => answer(c, 'declined'))
 

@@ -500,6 +500,7 @@ admin.get('/spot-check', async (c) => {
  * this table's RLS ever lets read it (041's comment), so this is the only
  * response in the codebase where that column may appear.
  */
+// PENDING(unused-api-routes): nothing calls GET/PATCH /admin/reports or the participant reinstate route; wire a screen or delete.
 admin.get('/reports', async (c) => {
   const { data, error } = await createAdminClient()
     .from('toy_idea_reports')

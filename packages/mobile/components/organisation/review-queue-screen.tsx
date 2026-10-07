@@ -78,6 +78,7 @@ export function ReviewQueueScreen() {
   const isLeader = ledOrgs.length > 0
 
   useEffect(() => {
+    // PENDING(admin-guide-review-screen): a non-leader admin lands on this empty state; the review decision is web-only.
     if (!isLeader) {
       setLoading(false)
       return
@@ -157,6 +158,7 @@ export function ReviewQueueScreen() {
     <Screen>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <ListIntro
+          // PENDING(multi-org-leader-switch): ledOrgs[0], the first organisation, is used silently.
           lead={`Guides waiting for ${ledOrgs.length === 1 ? ledOrgs[0].name : 'your organisations'}. Oldest first.`}
         />
         {loading ? (

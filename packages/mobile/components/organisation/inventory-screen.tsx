@@ -159,6 +159,7 @@ export function InventoryScreen() {
               : `${toys.length} listing${toys.length === 1 ? '' : 's'}, ${units} unit${units === 1 ? '' : 's'} on the shelf.`
           }
           cta="+ Add to inventory"
+          // PENDING(multi-org-leader-switch): ledOrgs[0], the first organisation, is used silently.
           onCta={() => router.push(`/toys/new?org=${ledOrgs[0]?.id ?? ''}`)}
         />
         <FlashLine message={flash} />

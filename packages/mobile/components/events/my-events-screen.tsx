@@ -48,6 +48,7 @@ function partsLine(r: MyEvent['part_request'], org: string) {
   }
 }
 
+// PENDING(event-registration-mobile): registering and the leader registrations list exist only on the website.
 export function MyEventsScreen() {
   const router = useRouter()
   const [rows, setRows] = useState<MyEvent[] | null>(null)

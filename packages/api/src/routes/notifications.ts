@@ -29,6 +29,7 @@ notifications.get('/me', async (c) => {
   return c.json(data)
 })
 
+// PENDING(unused-api-routes): the old singular count; nothing calls it, /me/unread-counts replaced it.
 notifications.get('/me/unread-count', async (c) => {
   const supabase = createUserClient(c.get('token'))
   const { count, error } = await supabase
