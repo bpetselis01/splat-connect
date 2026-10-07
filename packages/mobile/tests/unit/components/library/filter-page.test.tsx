@@ -12,7 +12,15 @@ jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 const mockGet = jest.fn()
 jest.mock('../../../../lib/api-client', () => ({ apiClient: { get: (...a: unknown[]) => mockGet(...a) } }))
 const mockPush = jest.fn()
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }), useLocalSearchParams: () => ({}) }))
+jest.mock('expo-router', () => {
+  const { useEffect } = require('react')
+  return {
+    useRouter: () => ({ push: mockPush }),
+    useLocalSearchParams: () => ({}),
+    // The library refetches on focus; the first focus is the mount, as on a device.
+    useFocusEffect: (effect: () => void) => useEffect(effect, []),
+  }
+})
 jest.mock('../../../../lib/saves', () => ({
   useSaves: () => ({ savedIds: { tutorials: [], toys: [], challenges: [] }, isSaved: () => false, toggle: jest.fn() }),
 }))

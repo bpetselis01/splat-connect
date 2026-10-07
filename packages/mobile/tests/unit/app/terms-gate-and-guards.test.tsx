@@ -15,6 +15,7 @@ jest.mock('expo-router', () => {
   const Tabs = Object.assign(() => 'tabs', { Screen: () => null })
   return {
     Tabs,
+    usePathname: () => '/home',
     useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn() }),
     Redirect: ({ href }: { href: string }) => {
       mockRedirect(href)
