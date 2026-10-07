@@ -25,6 +25,7 @@ import { PRINT_MATERIALS, RECYCLING_FORMS, RECYCLING_MACHINES, apiMessage, initi
 import { apiClient } from '../../lib/api-client'
 import { useCapabilities } from '../../lib/capabilities'
 import { theme } from '../../lib/theme'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import { DROPOFF_PILL, canDecide, kg } from '../../lib/recycling'
 import { Screen } from '../ui/Screen'
 import { Card } from '../ui/Card'
@@ -41,6 +42,7 @@ const TINTS = [theme.colors.honeySoft, theme.colors.violetSoft, theme.colors.min
 const date = (iso: string) => new Date(iso).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })
 
 export function IntakeScreen() {
+  const bottom = useBottomClearance()
   const { caps, loading: capsLoading } = useCapabilities()
   const orgId = caps?.ledOrgs[0]?.id
   const [org, setOrg] = useState<Organization | null>(null)
@@ -107,7 +109,7 @@ export function IntakeScreen() {
     <Screen>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: bottom }]}
         keyboardShouldPersistTaps="handled"
       >
         <Text style={styles.lead}>

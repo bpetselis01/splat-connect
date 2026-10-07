@@ -36,6 +36,7 @@ import { apiClient } from '../../lib/api-client'
 import { uploadFile } from '../../lib/upload'
 import { useCapabilities } from '../../lib/capabilities'
 import { theme } from '../../lib/theme'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import {
   DROPOFF_PILL,
   badges,
@@ -314,6 +315,7 @@ function BookDropoff({
   onBack: () => void
   onBooked: (line: string) => void
 }) {
+  const bottom = useBottomClearance()
   const materials = org.recycling_materials ?? []
   const [amount, setAmount] = useState('')
   const [material, setMaterial] = useState(materials[0] ?? '')
@@ -382,7 +384,7 @@ function BookDropoff({
     <Screen>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: bottom }]}
         keyboardShouldPersistTaps="handled"
       >
         <Pressable onPress={onBack} accessibilityRole="button" style={styles.backPill}>
