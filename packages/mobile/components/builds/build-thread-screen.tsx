@@ -16,6 +16,7 @@
  */
 import { confirmDestructive, notify } from '../../lib/confirm'
 import { logFailure } from '../../lib/log'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   View,
@@ -71,6 +72,7 @@ const DOT: Record<RailState, { bg: string; fg: string; icon: React.ComponentProp
 export function BuildThreadScreen({ id }: { id: string }) {
   const router = useRouter()
   const { caps } = useCapabilities()
+  const bottom = useBottomClearance()
   const [tx, setTx] = useState<ToyTransactionDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -486,7 +488,7 @@ export function BuildThreadScreen({ id }: { id: string }) {
           ) : null}
         </ScrollView>
 
-        <View style={styles.footer}>
+        <View testID="thread-footer" style={[styles.footer, { paddingBottom: bottom }]}>
           <ErrorRow message={error} />
           {c.canMessage && (tx.owner_id || tx.owner_org_id) ? (
             <View style={styles.composer}>

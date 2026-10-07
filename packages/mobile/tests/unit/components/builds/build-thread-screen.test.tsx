@@ -1,3 +1,4 @@
+import { CLEARANCE, paddingBottomOf } from '../../bottom-spacing'
 import { render, screen } from '@testing-library/react-native'
 import { BuildThreadScreen } from '../../../../components/builds/build-thread-screen'
 
@@ -53,4 +54,13 @@ it('shows the family what the build costs them, in the maker’s name', async ()
   expect(await screen.findByText('What this build costs you')).toBeTruthy()
   expect(screen.getByText('Tom Beattie gives the time and the tools free — these are the parts they bought.')).toBeTruthy()
   expect(screen.getByText('Nothing to pay')).toBeTruthy()
+})
+
+jest.mock('react-native-safe-area-context', () => require('../../bottom-spacing').insetMock())
+
+it('lifts the composer one gutter above the home indicator', async () => {
+  mockUseCapabilities.mockReturnValue(as('maker'))
+  render(<BuildThreadScreen id="b1" />)
+  await screen.findByText('Parts you bought for this build')
+  expect(paddingBottomOf(screen.getByTestId('thread-footer'))).toBe(CLEARANCE)
 })
