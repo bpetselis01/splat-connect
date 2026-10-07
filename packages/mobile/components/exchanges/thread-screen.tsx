@@ -584,7 +584,7 @@ export function ExchangeThreadScreen({ id, startAccept = false }: { id: string; 
           <ReportProblem subjectKind="exchange" subjectId={tx.id} subjectLabel={`${tx.toy_name} — exchange with ${otherPartyName}`} item="this exchange" who={otherPartyName} />
         </ScrollView>
 
-        <View style={[styles.footer, { paddingBottom: bottom }]}>
+        <View testID="thread-footer" style={[styles.footer, { paddingBottom: bottom }]}>
           <ErrorRow message={error} />
 
           {isOpen ? (
