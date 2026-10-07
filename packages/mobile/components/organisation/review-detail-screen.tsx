@@ -216,7 +216,15 @@ export function ReviewDetailScreen({ tutorialId }: { tutorialId: string }) {
                 variant="secondary"
                 disabled={busy}
                 style={styles.rowButton}
-                onPress={() => void run(() => apiClient.post(`/api/tutorials/${tutorialId}/orgs/${backing!.org_id}/decline`, {}))}
+                onPress={() =>
+                  void run(async () => {
+                    await apiClient.post(`/api/tutorials/${tutorialId}/orgs/${backing!.org_id}/decline`, {})
+                    // A declined project is no longer this leader's to read (the tutorial
+                    // fetch 404s), so reloading would leave the old Back/Decline pair on screen.
+                    if (router.canGoBack()) router.back()
+                    else router.replace('/organisation')
+                  })
+                }
               />
             </View>
           </View>
