@@ -241,6 +241,7 @@ describe('Me stays live (S6) and recovers (S19)', () => {
   it('offers Try again when the profile call failed, and retries through capabilities', () => {
     mockCaps = null
     render(<MeTab />)
+    expect(screen.getByText("Couldn't load your SPLAT.")).toBeTruthy()
     fireEvent.press(screen.getByText('Try again'))
     expect(mockRefresh).toHaveBeenCalledTimes(1)
   })

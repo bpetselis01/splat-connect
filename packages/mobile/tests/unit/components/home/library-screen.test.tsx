@@ -226,6 +226,16 @@ describe('LibraryScreen', () => {
     expect(await screen.findByText("Couldn't load tutorials.")).toBeTruthy()
   })
 
+  it('offline shows the message and Try again without a console error', async () => {
+    const err = jest.spyOn(console, 'error').mockImplementation(() => {})
+    mockGet.mockRejectedValue(new TypeError('Network request failed'))
+    render(<LibraryScreen />)
+    expect(await screen.findByText('Check your connection and try again.')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeTruthy()
+    expect(err).not.toHaveBeenCalled()
+    err.mockRestore()
+  })
+
   it('retries the fetch when the error state button is pressed', async () => {
     mockEndpoints({ tutorials: Promise.reject(new Error('API GET failed with status 500')) })
     render(<LibraryScreen />)
