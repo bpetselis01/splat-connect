@@ -1,0 +1,56 @@
+# journeys: G27
+# Reporting another member's note from the guide's Feedback tab. On iOS the note
+# menu is a Modal that must finish dismissing before the report sheet (a second
+# Modal) can present, or iOS silently drops it: the menu hands the note over in
+# onDismiss. react-native-web has no such sequencing, so only a device proves the
+# report sheet actually appears and the report is filed.
+#
+# The note is seeded by scripts/provision-device-parent.mjs under another member
+# ("Device Reviewer"), since the menu offers Report only on someone else's note.
+# DEVICE_EMAIL, DEVICE_PASSWORD and DEVICE_GUIDE_TITLE come from `maestro test
+# --env` — see sign-out-clears-session.yaml for why they carry no defaults here.
+appId: com.splatconnect.mobile
+---
+- clearState
+- runFlow: ../subflows/launch.yaml
+- runFlow: ../subflows/sign-in.yaml
+- runFlow: ../subflows/open-device-guide.yaml
+- runFlow: ../subflows/dismiss-dev-toast.yaml
+
+# The section tabs sit below the hero and the intro.
+- scrollUntilVisible:
+    element:
+      text: "Feedback.*"
+- tapOn:
+    text: "Feedback.*"
+- assertVisible:
+    text: "The screw was stiff, a drop of oil helped."
+
+# Note menu, then Report: the second modal is the assertion.
+- tapOn:
+    text: "More on Device Reviewer's note"
+- tapOn:
+    text: ".*Report this note"
+- extendedWaitUntil:
+    visible:
+      text: "Tell SPLAT what happened"
+    timeout: 10000
+- tapOn:
+    text: "Safety concern"
+- tapOn:
+    text: "What happened\\?.*"
+    index: 1
+- inputText: "Maestro device report"
+- tapOn:
+    text: "Tell SPLAT what happened"
+- tapOn:
+    text: "Send report"
+- assertVisible:
+    text: "Sent.*"
+
+# The row is the real result: the confirmation alone would show on a 500.
+- runScript:
+    file: ../scripts/assert-row.js
+    env:
+      TABLE: member_reports
+      QUERY: category=eq.safety&body=eq.Maestro%20device%20report
