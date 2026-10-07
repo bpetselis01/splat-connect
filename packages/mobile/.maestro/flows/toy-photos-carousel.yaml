@@ -14,55 +14,45 @@ appId: com.splatconnect.mobile
 ---
 - clearState
 - runFlow: ../subflows/launch.yaml
-# Same Keychain caveat as every-tab-renders.yaml: clearState wipes app data but
-# not the Keychain, so the session can survive and land straight on the tabs.
-- runFlow:
-    when:
-      visible:
-        id: "welcome-sign-in"
-    commands:
-      - tapOn:
-          id: "welcome-sign-in"
-      - tapOn:
-          id: "email-input"
-      - inputText: ${DEVICE_EMAIL}
-      - tapOn: "Welcome back"  # the keyboard covers the password field
-      - tapOn:
-          id: "password-input"
-      - inputText: ${DEVICE_PASSWORD}
-      # hideKeyboard fails on the iOS 26 simulator; a tap outside a field
-      # dismisses it on device and simulator alike (ScrollView default).
-      - tapOn: "Welcome back"
-      - tapOn:
-          id: "auth-submit"
-      - tapOn:
-          text: "Not Now"
-          optional: true
+# Signs in unless the Keychain still holds a session (see sign-in.yaml).
+- runFlow: ../subflows/sign-in.yaml
+- runFlow: ../subflows/dismiss-dev-toast.yaml
 
 - tapOn:
     text: "Toys"
 - assertVisible:
-    text: "Toys"
+    text: "Toy library"
 
 - tapOn:
     text: "Device smoke toy.*"
 
-# The carousel opens on the cover, and the flag belongs to the second photo —
-# so its absence here is what proves only one page is showing.
+# The carousel opens on the cover. Each photo is a button labelled with its
+# number (the "Shows the switch" flag sits inside the second one, so it is not
+# a separate element), so which one is showing says which page the pager is on.
 - assertVisible:
     text: "Device smoke toy.*"
+- assertVisible:
+    text: "Open photo 1 full screen"
 - assertNotVisible:
-    text: "Shows the switch"
+    text: "Open photo 2 full screen"
 
 # Swiping is the assertion: if pagingEnabled or the scroll handler threw on
-# Hermes, the second photo never arrives and the flag never appears.
+# Hermes, the second photo never arrives.
+# Explicit points: the hero is the top of a vertical scroll, and a centre swipe
+# lands below it.
 - swipe:
-    direction: LEFT
+    start: "85%,30%"
+    end: "15%,30%"
 - assertVisible:
-    text: "Shows the switch"
+    text: "Open photo 2 full screen"
+- assertNotVisible:
+    text: "Open photo 1 full screen"
 
 # And back, so a one-way scroll that cannot return still fails here.
 - swipe:
-    direction: RIGHT
+    start: "15%,30%"
+    end: "85%,30%"
+- assertVisible:
+    text: "Open photo 1 full screen"
 - assertNotVisible:
-    text: "Shows the switch"
+    text: "Open photo 2 full screen"
