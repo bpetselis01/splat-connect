@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons'
 import type { ReportSubjectKind } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import { Button } from '../ui/Button'
 import { Chip } from '../ui/Chip'
 import { TextField } from '../ui/TextField'
@@ -54,6 +55,7 @@ export function ReportProblem({
   /** Draws the opener in place of the Report a problem link (an action row's button). */
   trigger?: (open: () => void) => ReactNode
 }) {
+  const bottom = useBottomClearance()
   const [open, setOpen] = useState(false)
   const [reason, setReason] = useState<string | null>(null)
   const [text, setText] = useState('')
@@ -123,7 +125,7 @@ export function ReportProblem({
                 <Ionicons name="close" size={20} color={theme.colors.ink} />
               </Pressable>
             </View>
-            <ScrollView contentContainerStyle={styles.sheetContent} keyboardShouldPersistTaps="handled">
+            <ScrollView contentContainerStyle={[styles.sheetContent, { paddingBottom: bottom }]} keyboardShouldPersistTaps="handled">
               <Text style={styles.sub}>{`About ${item ?? subjectLabel}${who ? ` · with ${who}` : ''}. Goes to the SPLAT team only.`}</Text>
               {sent ? (
                 <Text accessibilityRole="alert" style={styles.sent}>
@@ -205,7 +207,7 @@ const styles = StyleSheet.create({
   grabber: { alignSelf: 'center', width: 40, height: 5, borderRadius: 3, marginTop: theme.spacing(2), backgroundColor: theme.colors.border },
   head: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3), paddingHorizontal: theme.spacing(5), paddingTop: theme.spacing(3) },
   close: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.surfaceSunken },
-  sheetContent: { paddingHorizontal: theme.spacing(5), paddingTop: theme.spacing(2), paddingBottom: theme.spacing(8), gap: theme.spacing(4) },
+  sheetContent: { paddingHorizontal: theme.spacing(5), paddingTop: theme.spacing(2), gap: theme.spacing(4) },
   title: { flex: 1, fontFamily: theme.fonts.display, fontSize: theme.type.title, color: theme.colors.ink },
   sub: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted },
   label: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink, marginBottom: -theme.spacing(2) },

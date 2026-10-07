@@ -1,4 +1,5 @@
 // journeys: B04 G23 G24
+import { CLEARANCE, paddingBottomOf } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { FeedbackSheet } from '../../../../components/guides/feedback-sheet'
 
@@ -113,4 +114,11 @@ it('a host callback that throws does not turn a saved note into "Could not post 
   expect(screen.queryByText('Could not post that. Please try again.')).toBeNull()
   expect(logged).toHaveBeenCalled()
   logged.mockRestore()
+})
+
+jest.mock('react-native-safe-area-context', () => require('../../bottom-spacing').insetMock())
+
+it('sits Post one gutter above the home indicator, not 24px from the edge', () => {
+  render(<FeedbackSheet {...base} steps={steps as never} />)
+  expect(paddingBottomOf(screen.getByTestId('feedback-sheet'))).toBe(CLEARANCE)
 })

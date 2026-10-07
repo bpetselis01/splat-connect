@@ -12,6 +12,7 @@ import { apiClient } from '../../lib/api-client'
 import { pickAndUploadPhoto } from '../../lib/upload'
 import { stepLabel } from '../../lib/guide-notes'
 import { theme } from '../../lib/theme'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import { Chip } from '../ui/Chip'
 import { TextField } from '../ui/TextField'
 import { Button } from '../ui/Button'
@@ -32,6 +33,7 @@ export type FeedbackSheetProps = {
 }
 
 export function FeedbackSheet({ tutorialId, steps, authorFirstName, initialStep, open, onClose, onPosted, onSeeOnGuide }: FeedbackSheetProps) {
+  const bottom = useBottomClearance()
   const [at, setAt] = useState<number | null | undefined>(initialStep)
   const [body, setBody] = useState('')
   const [photo, setPhoto] = useState<string | null>(null)
@@ -91,7 +93,7 @@ export function FeedbackSheet({ tutorialId, steps, authorFirstName, initialStep,
     <Modal visible={open} animationType="slide" transparent onRequestClose={onClose}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.backdrop}>
         <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Close" style={StyleSheet.absoluteFill} />
-        <View style={styles.sheet} testID="feedback-sheet">
+        <View style={[styles.sheet, { paddingBottom: bottom }]} testID="feedback-sheet">
           <View style={styles.grabber} />
           {posted ? (
             <View style={styles.done}>
@@ -138,7 +140,7 @@ export function FeedbackSheet({ tutorialId, steps, authorFirstName, initialStep,
 
 const styles = StyleSheet.create({
   backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: theme.colors.scrim },
-  sheet: { backgroundColor: theme.colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: theme.spacing(4), paddingBottom: theme.spacing(6), maxHeight: '88%', ...theme.shadow(3) },
+  sheet: { backgroundColor: theme.colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: theme.spacing(4), maxHeight: '88%', ...theme.shadow(3) },
   grabber: { width: 40, height: 5, borderRadius: 3, backgroundColor: theme.colors.border, alignSelf: 'center', marginVertical: theme.spacing(2) },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   title: { fontFamily: theme.fonts.display, fontSize: theme.type.title, color: theme.colors.ink },

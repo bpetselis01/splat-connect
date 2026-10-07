@@ -1,4 +1,5 @@
 // journeys: G10 P09 S03 X14
+import { CLEARANCE, scrollPaddings } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { ReportProblem } from '../../../../components/reports/report-problem'
 
@@ -42,4 +43,12 @@ describe('ReportProblem', () => {
     fireEvent.press(screen.getByRole('button', { name: 'Send report' }))
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/reports', expect.objectContaining({ ok_to_contact: true })))
   })
+})
+
+jest.mock('react-native-safe-area-context', () => require('../../bottom-spacing').insetMock())
+
+it('ends the report sheet one gutter above the home indicator, under Send report', () => {
+  render(<ReportProblem subjectKind="exchange" subjectId="tx1" subjectLabel="Drum" />)
+  fireEvent.press(screen.getByRole('button', { name: 'Report a problem' }))
+  expect(scrollPaddings(screen)).toEqual([CLEARANCE])
 })
