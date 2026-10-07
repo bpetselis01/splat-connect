@@ -30,6 +30,7 @@ import { ErrorRow } from '../ui/ErrorRow'
 import { apiMessage } from '@splat-connect/types'
 
 export function OrgConversationScreen(props: { orgId: string; orgName?: string } | { cid: string }) {
+  const bottom = useBottomClearance()
   const { caps } = useCapabilities()
   const [thread, setThread] = useState<OrgThread | null>(null)
   const [loading, setLoading] = useState(true)
@@ -129,7 +130,7 @@ export function OrgConversationScreen(props: { orgId: string; orgName?: string }
             ))}
           </View>
         </ScrollView>
-        <View style={[styles.footer, { paddingBottom: bottom }]}>
+        <View testID="conversation-footer" style={[styles.footer, { paddingBottom: bottom }]}>
           <ErrorRow message={error} />
           <View style={styles.composer}>
             <View style={styles.flex}>
