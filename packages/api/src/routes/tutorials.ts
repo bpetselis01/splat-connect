@@ -277,7 +277,7 @@ tutorials.patch('/:id', async (c) => {
 
   const supabase = createUserClient(c.get('token'))
 
-  // Read the status BEFORE the write, and only on the submit path. draft ->
+  // Read the status BEFORE the write, and only on the submit path. Entering
   // pending is one event; a later save that happens to resend status 'pending'
   // (the editor sends the whole form) is not, and notifying on it would have
   // meant a leader's badge climbing every time an author fixed a typo.
@@ -324,7 +324,10 @@ tutorials.patch('/:id', async (c) => {
           .maybeSingle()
       ).data
     : null
-  const wasDraft = current?.status === 'draft'
+  // Any status but pending is a real hand-over: a draft, and a rejected or
+  // approved guide the author edited and sent back (T22). Only pending ->
+  // pending is the editor resending its whole form.
+  const enteringPending = current != null && current.status !== 'pending'
 
   // The safety gate: a draft is not offered for review until its author has
   // affirmed the checklist (SAFETY_CHECKLIST in @splat-connect/types). Checked
@@ -362,7 +365,7 @@ tutorials.patch('/:id', async (c) => {
   if (photosBefore) await removeDroppedPhotos('toy-photos', photosBefore, data[0].photo_urls)
 
   // After the update commits, so a failed notify cannot lose a submission.
-  if (wasDraft) {
+  if (enteringPending) {
     await notifyTutorialSubmitted({
       tutorialId: c.req.param('id'),
       tutorialTitle: data[0].title,
