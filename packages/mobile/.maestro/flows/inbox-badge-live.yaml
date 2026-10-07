@@ -1,0 +1,40 @@
+# journeys: H07
+# The Inbox tab's badge follows a notification that arrives
+# while the app is open. every-tab-renders.yaml and home-shell.yaml prove the
+# count on first paint and after reading; this proves it moves the other way
+# without a relaunch. The second notification is inserted mid-flow by
+# scripts/seed-notification.js (the way a leader's approval would land one).
+#
+# DEVICE_EMAIL, DEVICE_PASSWORD and DEVICE_USER_ID come from `maestro test --env`
+# (see sign-out-clears-session.yaml for why they carry no defaults here).
+appId: com.splatconnect.mobile
+---
+# clearKeychain too: the badge belongs to DEVICE_USER_ID, so a session left by
+# an earlier fixture's account would count the wrong inbox.
+- launchApp:
+    clearState: true
+    clearKeychain: true
+- runFlow: ../subflows/sign-in.yaml
+- runFlow: ../subflows/dismiss-dev-toast.yaml
+
+# The fixture's one unread row.
+- assertVisible:
+    text: "Inbox, 1 unread"
+
+- runScript:
+    file: ../scripts/seed-notification.js
+    env:
+      DEVICE_USER_ID: ${DEVICE_USER_ID}
+
+# A tab round trip refocuses Home, which refetches its counts.
+- tapOn:
+    text: "Map"
+- tapOn:
+    text: "Home"
+- extendedWaitUntil:
+    visible:
+      text: "Inbox, 2 unread"
+    timeout: 15000
+# Not asserted here: Home's Today card still reads "1 new message" at this
+# point (its own copy of the counts is fetched once on mount). Reported to the
+# live-counts work (SP3) rather than pinned by a flow.
