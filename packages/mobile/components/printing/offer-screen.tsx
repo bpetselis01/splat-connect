@@ -23,6 +23,7 @@ import type { PickupAddress, PrinterWithOwner, ToyTransaction, ToyTransactionSum
 import { apiClient } from '../../lib/api-client'
 import { invalidateCapabilities, useCapabilities } from '../../lib/capabilities'
 import { theme } from '../../lib/theme'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import {
   bestMachine,
   jobState,
@@ -61,6 +62,7 @@ const PICKUP_FIELDS = [
  * machine the caller can answer for.
  */
 export function PrintForOthersScreen({ orgId }: { orgId?: string } = {}) {
+  const bottom = useBottomClearance()
   const router = useRouter()
   const { caps } = useCapabilities()
   const [tab, setTab] = useState<Tab>('requests')
@@ -162,7 +164,7 @@ export function PrintForOthersScreen({ orgId }: { orgId?: string } = {}) {
       </View>
       <ErrorRow message={error} />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.content, { paddingBottom: bottom }]}>
         {tab === 'requests' ? (
           waiting.length === 0 ? (
             <EmptyState
