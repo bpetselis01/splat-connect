@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { gradeOf, PICK_KIND_LABEL, toyFacts, toyHolderName, type OfferType, type Toy, type ToyDetail } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
+import { Button } from '../ui/Button'
 import { useSaves } from '../../lib/saves'
 import { recordRecent } from '../../lib/recents'
 import { useCapabilities } from '../../lib/capabilities'
@@ -33,6 +34,7 @@ export function ToyDetailScreen({ id }: { id: string }) {
   const [toy, setToy] = useState<ToyDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
+  const [attempt, setAttempt] = useState(0)
   const [myToys, setMyToys] = useState<Toy[]>([])
   const [myToysLoaded, setMyToysLoaded] = useState(false)
   const [myToysError, setMyToysError] = useState<string | null>(null)
@@ -44,6 +46,7 @@ export function ToyDetailScreen({ id }: { id: string }) {
 
   useEffect(() => {
     let ignore = false
+    setError(false)
     apiClient
       .get<ToyDetail>(`/api/public/toys/${id}`)
       .then((data) => {
@@ -58,7 +61,7 @@ export function ToyDetailScreen({ id }: { id: string }) {
     return () => {
       ignore = true
     }
-  }, [id])
+  }, [id, attempt])
 
   const isOwner =
     !!caps &&
@@ -119,7 +122,9 @@ export function ToyDetailScreen({ id }: { id: string }) {
   if (error || !toy) {
     return (
       <View style={styles.container}>
-        <EmptyState icon="cloud-offline-outline" title="Couldn't load this toy." />
+        <EmptyState icon="cloud-offline-outline" title="Couldn't load this toy." hint="Check your connection and try again.">
+          <Button label="Try again" variant="secondary" onPress={() => { setLoading(true); setAttempt((n) => n + 1) }} style={{ marginTop: theme.spacing(5), alignSelf: 'center', paddingHorizontal: theme.spacing(8) }} />
+        </EmptyState>
       </View>
     )
   }

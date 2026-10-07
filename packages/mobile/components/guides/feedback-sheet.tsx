@@ -57,7 +57,7 @@ export function FeedbackSheet({ tutorialId, steps, authorFirstName, initialStep,
       const uploaded = await pickAndUploadPhoto('/api/upload/note-photo', tutorialId)
       if (uploaded) setPhoto(uploaded.path ?? null)
     } catch (err) {
-      setError((err as Error).message)
+      setError(apiMessage(err, (err as Error).message))
     }
   }
 

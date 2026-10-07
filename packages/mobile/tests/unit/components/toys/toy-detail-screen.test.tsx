@@ -142,6 +142,15 @@ describe('ToyDetailScreen', () => {
     expect(await screen.findByText("Couldn't load this toy.")).toBeTruthy()
   })
 
+  it('Try again reloads the toy after a failed fetch', async () => {
+    mockEndpoints({ detail: Promise.reject(new TypeError('Network request failed')) })
+    render(<ToyDetailScreen id="toy1" />)
+    await screen.findByText("Couldn't load this toy.")
+    mockEndpoints()
+    fireEvent.press(screen.getByText('Try again'))
+    expect(await screen.findByText('Bubble machine')).toBeTruthy()
+  })
+
   it('shows the person holder line as plain text', async () => {
     mockEndpoints({ detail: Promise.resolve(toy({ profiles: { name: 'Jamie' }, organizations: null })) })
     render(<ToyDetailScreen id="toy1" />)

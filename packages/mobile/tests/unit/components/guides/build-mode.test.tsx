@@ -231,6 +231,16 @@ it('See it on the guide hands the note to the guide and closes build mode', asyn
   expect(mockBack).toHaveBeenCalled()
 })
 
+it('a failed load offers Try again, which reloads the guide', async () => {
+  jest.spyOn(console, 'debug').mockImplementation(() => {})
+  ;(apiClient.get as jest.Mock).mockImplementation((p: string) => (p.endsWith('/notes') ? Promise.resolve([]) : Promise.reject(new TypeError('Network request failed'))))
+  render(<BuildMode id="g" />)
+  expect(await screen.findByText("Couldn't load this guide. Please try again.")).toBeTruthy()
+  setup()
+  fireEvent.press(screen.getByText('Try again'))
+  expect(await screen.findByText('Screw the battery door shut')).toBeTruthy()
+})
+
 it('a failed post keeps build mode where it is', async () => {
   ;(apiClient.post as jest.Mock).mockRejectedValue(new Error('API POST failed with status 401'))
   await reachDone()

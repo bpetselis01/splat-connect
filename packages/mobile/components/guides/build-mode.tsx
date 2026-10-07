@@ -54,6 +54,7 @@ export function BuildMode({ id, step: startStep }: { id: string; step?: string }
   const insets = useSafeAreaInsets()
   const [guide, setGuide] = useState<BuildGuide | null>(null)
   const [failed, setFailed] = useState(false)
+  const [attempt, setAttempt] = useState(0)
   const { notes } = useGuideNotes(id)
   const steps = guide?.steps ?? []
   const { ticked, toggle, reset, loaded } = useDeviceTicks(ticksKey('steps', id), steps.map((s) => s.id))
@@ -75,7 +76,7 @@ export function BuildMode({ id, step: startStep }: { id: string; step?: string }
       .get<BuildGuide>(`/api/public/tutorials/${id}`)
       .then(setGuide)
       .catch(() => setFailed(true))
-  }, [id])
+  }, [id, attempt])
 
   useEffect(() => {
     // Wait for the stored ticks of this guide's steps, or every reopen would
@@ -112,7 +113,9 @@ export function BuildMode({ id, step: startStep }: { id: string; step?: string }
     </View>
   )
 
-  if (failed) return <View style={styles.page}>{head('Build')}<EmptyState icon="cloud-offline-outline" title="Couldn't load this guide. Please try again." /></View>
+  if (failed) return <View style={styles.page}>{head('Build')}<EmptyState icon="cloud-offline-outline" title="Couldn't load this guide. Please try again.">
+    <Button label="Try again" variant="secondary" onPress={() => { setFailed(false); setAttempt((n) => n + 1) }} style={{ marginTop: theme.spacing(5), alignSelf: 'center', paddingHorizontal: theme.spacing(8) }} />
+  </EmptyState></View>
   if (!guide || at === null) {
     return (
       <View style={styles.page}>
