@@ -1,4 +1,5 @@
 import { ScrollView, StyleSheet } from 'react-native'
+import type { screen } from '@testing-library/react-native'
 import { theme } from '../../lib/theme'
 
 /** The inset the bottom-spacing tests mock: an iPhone with a home indicator. */
@@ -13,7 +14,7 @@ export const paddingBottomOf = (node: Styled, key: 'style' | 'contentContainerSt
   (StyleSheet.flatten(node.props[key] as object) as { paddingBottom?: number } | undefined)?.paddingBottom
 
 /** The bottom padding of every ScrollView's content in the rendered tree. */
-export const scrollPaddings = (root: { UNSAFE_getAllByType: (t: unknown) => Styled[] }) =>
+export const scrollPaddings = (root: typeof screen) =>
   root.UNSAFE_getAllByType(ScrollView).map((n) => paddingBottomOf(n, 'contentContainerStyle'))
 
 /** Mock for react-native-safe-area-context with a 34 bottom inset (use inside jest.mock). */
