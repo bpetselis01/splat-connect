@@ -243,6 +243,13 @@ describe('ExchangesListScreen', () => {
     expect(mockPush).toHaveBeenCalledWith('/exchanges/tx1')
   })
 
+  it('opens a print job on its own screen from My exchanges (S2)', async () => {
+    mockGet.mockResolvedValue([tx({ id: 'tx9', type: 'print', toy_name: 'Gear housing' })])
+    render(<ExchangesListScreen />)
+    fireEvent.press(await screen.findByLabelText('A print job with A requester'))
+    expect(mockPush).toHaveBeenCalledWith('/printing/jobs/tx9')
+  })
+
   it('shows a skeleton while loading', () => {
     mockGet.mockReturnValue(new Promise(() => {}))
     render(<ExchangesListScreen />)

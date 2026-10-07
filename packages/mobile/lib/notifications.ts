@@ -18,6 +18,12 @@ export function linkFor(n: Notification): string {
   if (n.toy_transaction_id && (n.type === 'build_shot_posted' || n.type === 'build_approved')) {
     return `/exchanges/build/${n.toy_transaction_id}`
   }
+  // The two print types name a print job, which has its own screen. Any other
+  // notice about one (toy_request, toy_message) opens the exchange thread,
+  // which hands a print job straight on.
+  if (n.toy_transaction_id && (n.type === 'print_started' || n.type === 'print_ready')) {
+    return `/printing/jobs/${n.toy_transaction_id}`
+  }
   if (n.toy_transaction_id) return `/exchanges/${n.toy_transaction_id}`
   // 077. A conversation opens by its own id, for either side. A thanks goes
   // to the organisation hub — mobile has no profile editor to hide notes in.

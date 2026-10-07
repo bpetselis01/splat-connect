@@ -61,6 +61,11 @@ describe('linkFor', () => {
     expect(linkFor(notification({ type: 'toy_message', toy_transaction_id: 'tx1' }))).toBe('/exchanges/tx1')
   })
 
+  it('sends the two print-stage types straight to the print job (S2)', () => {
+    expect(linkFor(notification({ type: 'print_started', toy_transaction_id: 'tx1' }))).toBe('/printing/jobs/tx1')
+    expect(linkFor(notification({ type: 'print_ready', toy_transaction_id: 'tx1' }))).toBe('/printing/jobs/tx1')
+  })
+
   it('sends the two build-stage types straight to the build thread', () => {
     expect(linkFor(notification({ type: 'build_shot_posted', toy_transaction_id: 'tx1' }))).toBe('/exchanges/build/tx1')
     expect(linkFor(notification({ type: 'build_approved', toy_transaction_id: 'tx1' }))).toBe('/exchanges/build/tx1')

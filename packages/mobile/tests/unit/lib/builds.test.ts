@@ -35,6 +35,9 @@ describe('threadHref', () => {
     expect(threadHref({ id: 'tx1', type: 'exchange' })).toBe('/exchanges/tx1')
     expect(threadHref({ id: 'tx1', type: 'donation' })).toBe('/exchanges/tx1')
   })
+  it('opens a print job on its own screen, not the toy thread (S2)', () => {
+    expect(threadHref({ id: 'tx1', type: 'print' })).toBe('/printing/jobs/tx1')
+  })
 })
 
 describe('buildRail', () => {

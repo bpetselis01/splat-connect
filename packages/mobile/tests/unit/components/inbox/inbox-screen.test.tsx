@@ -190,6 +190,17 @@ describe('InboxScreen', () => {
     expect(mockPush).toHaveBeenCalledWith('/exchanges/build/tx2')
   })
 
+  it('opens a print job from its inbox row on the job screen, not the toy thread (S2)', async () => {
+    respond(
+      [notification({ id: 'n9', type: 'print_ready', toy_transaction_id: 'tx9' })],
+      [],
+      [tx({ id: 'tx9', type: 'print', toy_name: 'Gear housing' })]
+    )
+    render(<InboxScreen />)
+    fireEvent.press(await screen.findByLabelText('A print job with Northside Therapy'))
+    expect(mockPush).toHaveBeenCalledWith('/printing/jobs/tx9')
+  })
+
   it('opens on Notifications when there are no exchanges, and where it is told to', async () => {
     const note = notification({ id: 'n4', type: 'tutorial_approved', tutorial_id: 't1', tutorial_title: 'Bubble machine', toy_transaction_id: null })
     respond([note])

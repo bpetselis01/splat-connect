@@ -18,7 +18,10 @@ type IconName = ComponentProps<typeof Ionicons>['name']
 
 /** The one place a transaction decides which thread it opens in. */
 export function threadHref(tx: Pick<ToyTransaction, 'id' | 'type'>): string {
-  return tx.type === 'build' ? `/exchanges/build/${tx.id}` : `/exchanges/${tx.id}`
+  if (tx.type === 'build') return `/exchanges/build/${tx.id}`
+  // A print job has its own screen (parts, machine, pickup); /exchanges/:id is the toy thread.
+  if (tx.type === 'print') return `/printing/jobs/${tx.id}`
+  return `/exchanges/${tx.id}`
 }
 
 export type RailState = 'done' | 'now' | 'todo' | 'stop'
