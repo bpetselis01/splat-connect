@@ -9,6 +9,8 @@ import type { AdminCounts } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable'
+import { SectionStub } from '../../components/ui/SectionStub'
+import { useCapabilities } from '../../lib/capabilities'
 
 type Icon = React.ComponentProps<typeof Ionicons>['name']
 
@@ -23,6 +25,15 @@ const CARDS: { key: keyof AdminCounts; label: string; path: string; icon: Icon; 
 ]
 
 export default function MyAdmin() {
+  const { caps, loading } = useCapabilities()
+  if (loading) return null
+  if (!caps?.isAdmin) {
+    return <SectionStub title="Admin" blurb="This screen belongs to admins. The review queues show up here when your account is one." />
+  }
+  return <AdminCards />
+}
+
+function AdminCards() {
   const [counts, setCounts] = useState<AdminCounts | null>(null)
   useEffect(() => {
     let ignore = false

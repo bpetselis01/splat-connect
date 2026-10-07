@@ -6,7 +6,9 @@ jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 const mockGet = jest.fn()
 jest.mock('../../../lib/api-client', () => ({ apiClient: { get: (...a: unknown[]) => mockGet(...a) } }))
 
-const six = { tutorials: 7, reports: 2, ideas: 3, spotCheck: 5, accounts: 57, organisations: 14 }
+jest.mock('../../../lib/capabilities', () => ({ useCapabilities: () => ({ caps: { isAdmin: true }, loading: false }) }))
+
+const six ={ tutorials: 7, reports: 2, ideas: 3, spotCheck: 5, accounts: 57, organisations: 14 }
 beforeEach(() => {
   jest.clearAllMocks()
   jest.spyOn(console, 'error').mockImplementation(() => {})
