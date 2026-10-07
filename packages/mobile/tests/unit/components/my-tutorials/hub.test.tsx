@@ -1,3 +1,4 @@
+// journeys: T04 T07
 import { Alert } from 'react-native'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { TutorialHub } from '../../../../components/my-tutorials/hub'

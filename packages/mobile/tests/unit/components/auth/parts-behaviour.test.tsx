@@ -1,6 +1,7 @@
 // The shared auth controls' behaviour: which social buttons show and where
 // each goes, how the code boxes read what is typed, the password field's
 // "at least 6" hint, and the terms checkbox.
+// journeys: A03
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { useState } from 'react'
 import { Platform } from 'react-native'

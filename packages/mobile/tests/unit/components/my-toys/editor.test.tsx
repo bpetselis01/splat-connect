@@ -1,4 +1,5 @@
 // packages/mobile/tests/unit/components/my-toys/editor.test.tsx
+// journeys: W06 W07 W08 W09 W10 W12
 import { Alert } from 'react-native'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { Editor } from '../../../../components/my-toys/editor'

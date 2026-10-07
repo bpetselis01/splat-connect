@@ -1,4 +1,5 @@
 // packages/mobile/tests/unit/components/profile/child-profile-home.test.tsx
+// journeys: Z06
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { ChildProfileHome } from '../../../../components/profile/child-profile-home'
 

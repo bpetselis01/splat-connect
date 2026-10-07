@@ -1,4 +1,5 @@
 // packages/mobile/tests/unit/components/home/library-screen.test.tsx
+// journeys: G01 G02 G04 G05 G07
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { theme } from '../../../../lib/theme'
 import { ScrollView, FlatList, StyleSheet } from 'react-native'

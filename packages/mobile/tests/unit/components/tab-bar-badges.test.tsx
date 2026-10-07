@@ -1,3 +1,4 @@
+// journeys: H07
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { TabBar } from '../../../components/tab-bar'
 

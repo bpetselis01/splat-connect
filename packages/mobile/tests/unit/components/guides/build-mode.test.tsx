@@ -1,3 +1,4 @@
+// journeys: B01 B02 B03 B04 B06 B07
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { BuildMode } from '../../../../components/guides/build-mode'
 import { apiClient } from '../../../../lib/api-client'

@@ -1,5 +1,6 @@
 // The Map tab with MapCanvas stubbed: pins are buttons named by suburb, so the
 // screen's own state (chips, filters, sheet, list) is what is under test.
+// journeys: Q11 Q12
 import { render, screen, fireEvent, waitFor, within, act } from '@testing-library/react-native'
 import type { MapPlace } from '@splat-connect/types'
 import MapTab from '../../../app/(tabs)/map'

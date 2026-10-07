@@ -1,6 +1,7 @@
 // The contributor-terms gate's transaction (name, tick, accept, failures,
 // repeat taps) and the signed-in layouts' redirects: signed out, still
 // loading, terms not accepted, session expiring while a screen is open.
+// journeys: A11 A12 N05
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import TermsGate from '../../../app/terms'
 import OnboardingLayout from '../../../app/(onboarding)/_layout'

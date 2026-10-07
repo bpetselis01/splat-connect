@@ -1,5 +1,6 @@
 // What the cost panel does with odd amounts, odd descriptions, a second tap and
 // a failed save. The ordinary journeys live in cost-panel.test.tsx.
+// journeys: X12
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { CostPanel } from '../../../../components/exchanges/cost-panel'
 import { NAMES } from '../../../special-strings'

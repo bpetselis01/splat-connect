@@ -1,3 +1,4 @@
+// journeys: Z05
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { DeleteAccountScreen, openSummary } from '../../../../components/account/delete-account-screen'
 

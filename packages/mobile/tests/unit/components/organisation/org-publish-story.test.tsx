@@ -1,3 +1,4 @@
+// journeys: L18 L20 L21 L22 L30
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { TextInput } from 'react-native'
 import { OrgPublishScreen } from '../../../../components/organisation/org-publish-screen'

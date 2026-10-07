@@ -1,4 +1,5 @@
 // packages/mobile/tests/unit/components/profile/child-editor-home.test.tsx
+// journeys: Z07 Z08
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { Alert } from 'react-native'
 import { ChildEditorHome } from '../../../../components/profile/child-editor-home'

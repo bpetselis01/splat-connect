@@ -1,4 +1,5 @@
 // packages/mobile/tests/unit/components/exchanges/list-screen.test.tsx
+// journeys: X01
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { ExchangesListScreen } from '../../../../components/exchanges/list-screen'
 

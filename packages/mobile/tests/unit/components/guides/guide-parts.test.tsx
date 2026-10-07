@@ -1,3 +1,4 @@
+// journeys: G21
 import { Linking } from 'react-native'
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { GuideParts } from '../../../../components/guides/guide-parts'

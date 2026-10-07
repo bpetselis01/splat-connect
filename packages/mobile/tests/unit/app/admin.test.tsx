@@ -1,4 +1,5 @@
 // packages/mobile/tests/unit/app/admin.test.tsx
+// journeys: Q17
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { Linking } from 'react-native'
 import MyAdmin from '../../../app/(my)/admin'

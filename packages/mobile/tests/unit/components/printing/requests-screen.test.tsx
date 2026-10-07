@@ -1,4 +1,5 @@
 // My print requests: one row per request, live first, only the viewer's own.
+// journeys: R18
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { PrintRequestsScreen } from '../../../../components/printing/requests-screen'
 import { NAMES } from '../../../special-strings'

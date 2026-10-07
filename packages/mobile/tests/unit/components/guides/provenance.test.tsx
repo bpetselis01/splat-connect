@@ -1,3 +1,4 @@
+// journeys: G12
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { Provenance } from '../../../../components/guides/provenance'
 

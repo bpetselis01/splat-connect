@@ -1,3 +1,4 @@
+// journeys: G13 G14 G15 G18 G19 G29
 import { Linking, ScrollView } from 'react-native'
 import { act, render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { DetailScreen, ROW_SCROLL_MARGIN, linkSite, splitLead } from '../../../../components/home/detail-screen'

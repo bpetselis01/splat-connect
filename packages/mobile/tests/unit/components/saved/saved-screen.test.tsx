@@ -1,4 +1,5 @@
 // packages/mobile/tests/unit/components/saved/saved-screen.test.tsx
+// journeys: V07
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { SavedScreen } from '../../../../components/saved/saved-screen'
 

@@ -1,4 +1,5 @@
 // packages/mobile/tests/unit/components/explore/article-screen.test.tsx
+// journeys: Q15
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { ArticleScreen } from '../../../../components/explore/article-screen'
 import { LEARN_ARTICLES } from '../../../../lib/learn-content'

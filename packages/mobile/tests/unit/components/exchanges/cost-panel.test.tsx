@@ -1,3 +1,4 @@
+// journeys: X10 X11
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { CostPanel } from '../../../../components/exchanges/cost-panel'
 

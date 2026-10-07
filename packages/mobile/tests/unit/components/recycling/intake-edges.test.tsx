@@ -1,6 +1,7 @@
 // The leader's weigh-in, where credit is minted. Every case here is a way the
 // number typed could be wrong, or a button pressed twice, before a credit
 // reaches a member's balance.
+// journeys: L13 L14
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { IntakeScreen } from '../../../../components/recycling/intake-screen'
 import { NAMES } from '../../../special-strings'

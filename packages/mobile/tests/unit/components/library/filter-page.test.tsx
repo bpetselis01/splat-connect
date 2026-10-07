@@ -1,6 +1,7 @@
 // The libraries' filter page, driven through both screens (spec
 // 2026-10-05-library-redesign): choices apply only on Show, Close discards,
 // Reset restores defaults, and the child questions keep only tagged items.
+// journeys: G03
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { LibraryScreen } from '../../../../components/home/library-screen'
 import { ToyLibraryScreen } from '../../../../components/toys/toy-library-screen'

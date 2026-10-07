@@ -1,4 +1,5 @@
 // packages/mobile/tests/unit/components/explore/learn-hub.test.tsx
+// journeys: Q15
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { LearnHub, learnSections } from '../../../../components/explore/learn-hub'
 import { LEARN_ARTICLES } from '../../../../lib/learn-content'

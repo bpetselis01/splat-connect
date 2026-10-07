@@ -1,4 +1,5 @@
 // packages/mobile/tests/unit/components/organisation/review-queue-screen.test.tsx
+// journeys: L01 L02
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { ReviewQueueScreen } from '../../../../components/organisation/review-queue-screen'
 

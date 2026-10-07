@@ -1,3 +1,4 @@
+// journeys: L12 L15
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { IntakeScreen } from '../../../../components/recycling/intake-screen'
 

@@ -1,5 +1,6 @@
 // Marking a toy unavailable, retiring it and answering requests, with a second
 // tap, a refusal, a stale list and odd data. Ordinary journeys: summary-screen.test.tsx.
+// journeys: W04
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { ToySummaryScreen } from '../../../../components/my-toys/summary-screen'
 import { toySummaryLead } from '../../../../lib/my-toy'

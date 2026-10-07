@@ -1,4 +1,5 @@
 // packages/mobile/tests/unit/components/toys/toy-detail-screen.test.tsx
+// journeys: Y04 Y07 Y08
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { ToyDetailScreen } from '../../../../components/toys/toy-detail-screen'
 

@@ -1,4 +1,5 @@
 // packages/mobile/tests/unit/components/my-tutorials/list-screen.test.tsx
+// journeys: T01 T02 T03
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { MyTutorialsListScreen } from '../../../../components/my-tutorials/list-screen'
 

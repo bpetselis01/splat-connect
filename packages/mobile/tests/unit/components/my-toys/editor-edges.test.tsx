@@ -1,6 +1,7 @@
 // Editing a toy with awkward input and failures: ages, text, photos that fail
 // or are too big, a second tap on Save or Publish. The ordinary journeys live
 // in editor.test.tsx.
+// journeys: W06
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { Editor } from '../../../../components/my-toys/editor'
 import { NAMES } from '../../../special-strings'

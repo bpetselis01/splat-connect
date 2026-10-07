@@ -1,3 +1,4 @@
+// journeys: G27
 import { Platform } from 'react-native'
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { CommunityNotes } from '../../../../components/guides/community-notes'

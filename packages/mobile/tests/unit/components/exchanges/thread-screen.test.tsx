@@ -4,6 +4,7 @@
 // three axes the API itself branches on — status, which side the viewer is on,
 // and donation vs exchange — because the wrong answer on any one of them puts
 // two people in a room reciting a code that cannot match.
+// journeys: X02 X04 X05 X06 X07 X08 X09
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import {
   ExchangeThreadScreen,

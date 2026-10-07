@@ -1,4 +1,5 @@
 // packages/mobile/tests/unit/components/organisation/inventory-screen.test.tsx
+// journeys: L08 L09 L10
 import { Alert } from 'react-native'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { InventoryScreen } from '../../../../components/organisation/inventory-screen'

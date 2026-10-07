@@ -1,6 +1,7 @@
 // Account deletion at its edges: what the review screen says for empty and
 // singular counts, what unlocks the code button, every way the code step can
 // fail, and the Apple path.
+// journeys: Z05
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { DeleteAccountScreen, openSummary } from '../../../../components/account/delete-account-screen'
 import { problem } from '../../../../lib/auth-errors'

@@ -1,3 +1,4 @@
+// journeys: G25 G26 G28
 import { Platform } from 'react-native'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { theme } from '../../../../lib/theme'

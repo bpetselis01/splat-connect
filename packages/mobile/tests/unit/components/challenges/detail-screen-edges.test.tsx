@@ -1,6 +1,7 @@
 // A challenge's detail across who is looking (signed out, stranger, maker,
 // author) and what state it is in (open, answered, written up, pending,
 // rejected), plus every write's failure path.
+// journeys: C04
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { ChallengeDetailScreen } from '../../../../components/challenges/detail-screen'
 import { NAMES } from '../../../special-strings'

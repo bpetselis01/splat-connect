@@ -1,4 +1,5 @@
 // packages/mobile/tests/unit/components/challenges/detail-screen.test.tsx
+// journeys: C02 C03 C05 C06 C07 C08 C10 C11
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { Alert } from 'react-native'
 import { shortDate } from '../../../../components/challenges/challenge-status'

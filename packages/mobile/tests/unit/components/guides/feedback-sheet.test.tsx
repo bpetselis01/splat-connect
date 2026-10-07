@@ -1,3 +1,4 @@
+// journeys: B04 G23 G24
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { FeedbackSheet } from '../../../../components/guides/feedback-sheet'
 

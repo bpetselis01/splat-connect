@@ -1,5 +1,6 @@
 // Makers wanted: the four tabs, distance, claiming, paging and the ways the
 // board can be empty, failing or answering out of order.
+// journeys: K02
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { MakersWantedScreen } from '../../../../components/builds/makers-wanted-screen'
 import { NAMES } from '../../../special-strings'

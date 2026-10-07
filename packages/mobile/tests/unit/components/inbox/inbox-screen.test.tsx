@@ -1,4 +1,5 @@
 // packages/mobile/tests/unit/components/inbox/inbox-screen.test.tsx
+// journeys: Q05 Q06 Q07 Q08 Q09 Q10
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { theme } from '../../../../lib/theme'
 import { ScrollView, FlatList, StyleSheet } from 'react-native'

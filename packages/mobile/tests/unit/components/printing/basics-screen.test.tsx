@@ -1,3 +1,4 @@
+// journeys: R19
 import { render, screen } from '@testing-library/react-native'
 import { PrintingBasicsScreen } from '../../../../components/printing/basics-screen'
 

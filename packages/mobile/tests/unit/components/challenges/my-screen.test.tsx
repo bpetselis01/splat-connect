@@ -1,4 +1,5 @@
 // packages/mobile/tests/unit/components/challenges/my-screen.test.tsx
+// journeys: C15
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { MyChallengesScreen } from '../../../../components/challenges/my-screen'
 

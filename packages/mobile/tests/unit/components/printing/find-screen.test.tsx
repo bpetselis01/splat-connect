@@ -1,4 +1,5 @@
 // packages/mobile/tests/unit/components/printing/find-screen.test.tsx
+// journeys: R01 R02
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { FindPrinterScreen } from '../../../../components/printing/find-screen'
 

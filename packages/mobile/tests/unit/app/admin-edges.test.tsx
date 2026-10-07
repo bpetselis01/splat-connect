@@ -1,3 +1,4 @@
+// journeys: Q17
 import { render, screen } from '@testing-library/react-native'
 import MyAdmin from '../../../app/(my)/admin'
 

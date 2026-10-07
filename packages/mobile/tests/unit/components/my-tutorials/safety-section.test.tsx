@@ -1,3 +1,4 @@
+// journeys: T12
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { SAFETY_CHECKLIST } from '@splat-connect/types'
 import { SafetySection } from '../../../../components/my-tutorials/sections/safety-section'

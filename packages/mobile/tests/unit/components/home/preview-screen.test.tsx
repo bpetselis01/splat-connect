@@ -1,3 +1,4 @@
+// journeys: G16 G17
 import { Linking } from 'react-native'
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { PreviewScreen } from '../../../../components/home/preview-screen'

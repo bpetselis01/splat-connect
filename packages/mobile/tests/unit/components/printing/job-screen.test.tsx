@@ -2,6 +2,7 @@
 //
 // The job page shows only the card for where the job is, and which side is
 // looking decides what that card asks of them.
+// journeys: R04 R09 R10 R11
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { PrintJobScreen } from '../../../../components/printing/job-screen'
 

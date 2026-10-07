@@ -1,3 +1,4 @@
+// journeys: Z01 Z02 Z04
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { Linking } from 'react-native'
 import { ProfileScreen } from '../../../components/profile-screen'

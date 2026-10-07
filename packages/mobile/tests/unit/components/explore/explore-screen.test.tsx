@@ -1,4 +1,5 @@
 // packages/mobile/tests/unit/components/explore/explore-screen.test.tsx
+// journeys: Q13 Q14
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { ExploreScreen } from '../../../../components/explore/explore-screen'
 import { LEARN_ARTICLES } from '../../../../lib/learn-content'

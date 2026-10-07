@@ -1,4 +1,5 @@
 // packages/mobile/tests/unit/components/challenges/submit-idea-screen.test.tsx
+// journeys: C09 C12 C13 C14
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { SubmitIdeaScreen } from '../../../../components/challenges/submit-idea-screen'
 

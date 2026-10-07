@@ -1,4 +1,5 @@
 // packages/mobile/tests/unit/components/home/home-screen.test.tsx
+// journeys: H01 H02
 import { ScrollView, StyleSheet, Text } from 'react-native'
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { HomeScreen } from '../../../../components/home/home-screen'

@@ -3,6 +3,7 @@
 // the doors, "From families", and the three buttons — a leader sees none of
 // them, a signed-out visitor goes to sign-in, and a thanks is signed with a
 // first name unless they type something else.
+// journeys: P01
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { OrgProfileScreen } from '../../../../components/organisation/org-profile-screen'
 import { doorRoute, sinceYear } from '../../../../lib/org-profile'

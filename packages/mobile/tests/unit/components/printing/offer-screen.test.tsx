@@ -3,6 +3,7 @@
 // Print for others: an organisation's request gets the machine picker, which
 // preselects the best fit and stamps the choice on accept; declining sends a
 // reason.
+// journeys: L11 R07 R12 R13
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { PrintForOthersScreen } from '../../../../components/printing/offer-screen'
 

@@ -1,3 +1,4 @@
+// journeys: G08 G09
 import { Linking } from 'react-native'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { DetailScreen } from '../../../../components/home/detail-screen'

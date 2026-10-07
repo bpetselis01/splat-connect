@@ -1,4 +1,5 @@
 // packages/mobile/tests/unit/components/home/shortcut-grid.test.tsx
+// journeys: H03 H04
 import { useState } from 'react'
 import { PixelRatio, StyleSheet } from 'react-native'
 import { render, screen, fireEvent } from '@testing-library/react-native'

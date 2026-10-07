@@ -1,6 +1,7 @@
 // Outlier input and failure paths on the exchange thread: what is typed into
 // the composer and the code box, what a second tap does, and what a flaky
 // network leaves on screen. The happy paths live in thread-screen.test.tsx.
+// journeys: X03
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { ExchangeThreadScreen } from '../../../../components/exchanges/thread-screen'
 import { NAMES } from '../../../special-strings'

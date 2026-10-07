@@ -1,6 +1,7 @@
 // The build thread, from both sides and at every stage: who gets which button,
 // what each button sends, the working shot, the handover code, and what each
 // failure looks like.
+// journeys: K06 K07 K08 K09 K10 K11 K12 K13
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { BuildThreadScreen } from '../../../../components/builds/build-thread-screen'
 import { NAMES } from '../../../special-strings'

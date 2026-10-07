@@ -1,3 +1,4 @@
+// journeys: V04 V05 V06
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { DECLARATION_VERSION, RECYCLING_DECLARATION } from '@splat-connect/types'
 import { RecyclingScreen } from '../../../../components/recycling/recycling-screen'

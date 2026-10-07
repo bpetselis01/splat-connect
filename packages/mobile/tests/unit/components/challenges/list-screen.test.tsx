@@ -1,4 +1,5 @@
 // packages/mobile/tests/unit/components/challenges/list-screen.test.tsx
+// journeys: C01
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { ChallengesListScreen } from '../../../../components/challenges/list-screen'
 

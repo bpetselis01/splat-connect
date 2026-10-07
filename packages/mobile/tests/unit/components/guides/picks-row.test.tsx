@@ -1,3 +1,4 @@
+// journeys: G20
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { PicksRow } from '../../../../components/guides/picks-row'
 
