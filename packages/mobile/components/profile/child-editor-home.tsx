@@ -18,6 +18,7 @@ import { NotMedicalNote } from '../ui/NotMedicalNote'
 import { apiClient } from '../../lib/api-client'
 import { confirmDestructive, notify } from '../../lib/confirm'
 import { theme } from '../../lib/theme'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import { readAge } from '../../lib/child-age'
 import { useChildProfile } from '../../lib/use-child-profile'
 import { Button } from '../ui/Button'
@@ -28,6 +29,7 @@ import { EmptyState } from '../ui/EmptyState'
 import { ChoiceChips, ManyChips, MeasureField, NeedsChips } from './fields'
 
 export function ChildEditorHome({ childId }: { childId: string }) {
+  const bottom = useBottomClearance()
   const router = useRouter()
   const { profile, loading, save, saveState } = useChildProfile(childId)
 
@@ -64,7 +66,7 @@ export function ChildEditorHome({ childId }: { childId: string }) {
   }
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.screen} contentContainerStyle={[styles.content, { paddingBottom: bottom }]}>
       {/* The header names the child, as on the board. */}
       <Stack.Screen options={{ title: profile.name || 'Child profile' }} />
       <Text style={styles.eyebrow}>PRIVATE TO YOU</Text>

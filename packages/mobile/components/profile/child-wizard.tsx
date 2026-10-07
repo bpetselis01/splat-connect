@@ -12,6 +12,7 @@ import { useEffect, useState } from 'react'
 import { ScrollView, View, Text, StyleSheet } from 'react-native'
 import { CHILD_QUESTIONS, ONE_HAND_LABEL, type ChildAnswers } from '@splat-connect/types'
 import { theme } from '../../lib/theme'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import { readAge } from '../../lib/child-age'
 import { useChildProfile } from '../../lib/use-child-profile'
 import { Button } from '../ui/Button'
@@ -47,6 +48,7 @@ const STEPS: { kind: Kind; q?: (typeof CHILD_QUESTIONS)[number]; heading: string
 const EMPTY: Answers = { name: null, age: null, helps_with: [], access: [], one_hand: false, press_force: null, enjoys: [], everyday_needs: [] }
 
 export function ChildWizard() {
+  const bottom = useBottomClearance()
   const { profile, loading, save } = useChildProfile()
   const [step, setStep] = useState(0)
   const [done, setDone] = useState(false)
@@ -85,14 +87,14 @@ export function ChildWizard() {
 
   if (done) {
     return (
-      <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+      <ScrollView style={styles.screen} contentContainerStyle={[styles.content, { paddingBottom: bottom }]}>
         <ChildDone child={draft} />
       </ScrollView>
     )
   }
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.screen} contentContainerStyle={[styles.content, { paddingBottom: bottom }]}>
       <View style={styles.bars} accessibilityLabel={`Step ${step + 1} of ${STEPS.length}`}>
         {STEPS.map((_, i) => (
           <View

@@ -1,4 +1,5 @@
 // journeys: Z09
+import { CLEARANCE, scrollPaddings } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { ChildWizard } from '../../../../components/profile/child-wizard'
 
@@ -146,4 +147,12 @@ describe('ChildWizard', () => {
       jest.useRealTimers()
     }
   })
+})
+
+jest.mock('react-native-safe-area-context', () => require('../../bottom-spacing').insetMock())
+
+it('ends its scroll one gutter above the home indicator, under Back / Skip / Continue', async () => {
+  render(<ChildWizard />)
+  await screen.findByText(HEADINGS[0])
+  expect(scrollPaddings(screen)).toEqual([CLEARANCE])
 })

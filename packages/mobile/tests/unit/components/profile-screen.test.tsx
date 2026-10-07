@@ -1,4 +1,5 @@
 // journeys: Z01 Z02 Z04 Z10
+import { CLEARANCE, scrollPaddings } from '../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { Linking } from 'react-native'
 import { ProfileScreen } from '../../../components/profile-screen'
@@ -186,4 +187,17 @@ describe('ProfileScreen', () => {
     expect(open).toHaveBeenLastCalledWith(expect.stringMatching(/\/privacy$/))
     open.mockRestore()
   })
+})
+
+jest.mock('react-native-safe-area-context', () => require('../bottom-spacing').insetMock())
+
+it('ends its scroll one gutter above the home indicator, under Delete account', () => {
+  ;(useAuth as jest.Mock).mockReturnValue({
+    session: { user: { email: 'parent@example.com' } },
+    signIn: jest.fn(),
+    signOut: jest.fn(),
+    hasContributorTerms: true,
+  })
+  render(<ProfileScreen />)
+  expect(scrollPaddings(screen)).toEqual([CLEARANCE])
 })

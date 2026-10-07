@@ -8,6 +8,7 @@ import { apiMessage, initials } from '@splat-connect/types'
 import { useAuth } from '../lib/auth-context'
 import { apiClient } from '../lib/api-client'
 import { theme } from '../lib/theme'
+import { useBottomClearance } from '../lib/bottom-clearance'
 import { Button } from './ui/Button'
 import { Screen } from './ui/Screen'
 import { Card } from './ui/Card'
@@ -39,6 +40,7 @@ export function signedInWith(providers: unknown): string {
 }
 
 export function ProfileScreen() {
+  const bottom = useBottomClearance()
   const router = useRouter()
   const { session, profile, signOut } = useAuth()
   // The display name is the one profile field editable here. Committed on end
@@ -120,7 +122,7 @@ export function ProfileScreen() {
 
   return (
     <Screen>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scroll, { paddingBottom: bottom }]}>
         {/* The board's account page is one scroll: who you are, your
             children, then the profile detail. It used to be two segments. */}
         <View style={styles.idCard}>
