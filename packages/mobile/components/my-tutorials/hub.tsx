@@ -333,7 +333,7 @@ export function TutorialHub({ id, justCreated, fromPdf }: { id: string; justCrea
         </View>
       </ScrollView>
 
-      <View style={[styles.footer, { paddingBottom: bottom }]}>
+      <View testID="hub-footer" style={[styles.footer, { paddingBottom: bottom }]}>
         <ErrorRow message={saveError} />
         <View style={styles.footerButtons}>
           {/* The reader's view of your own guide, before you ask anyone to

@@ -47,7 +47,7 @@ export function SectionFooter({ section }: { section: SectionId }) {
   }
 
   return (
-    <View style={[styles.footer, { paddingBottom: bottom }]}>
+    <View testID="section-footer" style={[styles.footer, { paddingBottom: bottom }]}>
       <Button
         testID="section-back"
         label="Checklist"
