@@ -2,9 +2,9 @@
 // waiting, and Explore at the bottom — the board's "Me" (#my_splat): a
 // greeting card with the mascot, the money panel when anything is owed, then
 // the grouped rows with an icon each.
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { ScrollView, View, Text, Pressable, StyleSheet } from 'react-native'
-import { useRouter } from 'expo-router'
+import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { BADGE_RULES, buildNav, formatCents, type IconName as NavIcon, type MeCounts, type MoneyMine, type MoneyThread, type ToyTransactionType } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
@@ -18,6 +18,8 @@ import { scrollFrame, scrollContent } from '../../lib/layout'
 import { Screen } from '../../components/ui/Screen'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { Mascot } from '../../components/ui/TabHero'
+import { EmptyState } from '../../components/ui/EmptyState'
+import { Button } from '../../components/ui/Button'
 
 type Glyph = React.ComponentProps<typeof Ionicons>['name']
 
@@ -165,7 +167,7 @@ function MoneyPanel({ money, onOpen }: { money: MoneyMine; onOpen: (t: MoneyThre
 
 export default function MeTab() {
   const insets = useSafeAreaInsets()
-  const { caps } = useCapabilities()
+  const { caps, loading, refresh } = useCapabilities()
   const router = useRouter()
   const [money, setMoney] = useState<MoneyMine | null>(null)
   const [builds, setBuilds] = useState(0)
@@ -180,33 +182,41 @@ export default function MeTab() {
   }, [badgesOpen])
   const go = (href: string) => () => router.push(href as never)
 
-  useEffect(() => {
-    let ignore = false
-    // Degrades to absent, as on web: a failed money fetch must not cost
-    // somebody the rest of this tab.
-    apiClient
-      .get<MoneyMine>('/api/exchange-costs/mine')
-      .then((m) => {
-        if (!ignore) setMoney(m)
-      })
-      .catch(() => {})
-    apiClient
-      .get<{ builds: number }>('/api/me/builds')
-      .then((b) => {
-        if (!ignore) setBuilds(b.builds)
-      })
-      .catch(() => {})
-    // Badges only: a failed counts call leaves every row uncounted, not gone.
-    apiClient
-      .get<MeCounts>('/api/me/counts')
-      .then((n) => {
-        if (!ignore) setCounts(n)
-      })
-      .catch(() => {})
-    return () => {
-      ignore = true
-    }
-  }, [])
+  // Me is a tab: it stays mounted, so a mount-time fetch goes stale the moment
+  // an exchange is settled or a request answered on a pushed screen. Refetch
+  // every time it takes focus (the first focus is covered by the mount fetch).
+  const focused = useRef(false)
+  useFocusEffect(
+    useCallback(() => {
+      let ignore = false
+      if (focused.current) refresh()
+      focused.current = true
+      // Degrades to absent, as on web: a failed money fetch must not cost
+      // somebody the rest of this tab.
+      apiClient
+        .get<MoneyMine>('/api/exchange-costs/mine')
+        .then((m) => {
+          if (!ignore) setMoney(m)
+        })
+        .catch(() => {})
+      apiClient
+        .get<{ builds: number }>('/api/me/builds')
+        .then((b) => {
+          if (!ignore) setBuilds(b.builds)
+        })
+        .catch(() => {})
+      // Badges only: a failed counts call leaves every row uncounted, not gone.
+      apiClient
+        .get<MeCounts>('/api/me/counts')
+        .then((n) => {
+          if (!ignore) setCounts(n)
+        })
+        .catch(() => {})
+      return () => {
+        ignore = true
+      }
+    }, [refresh])
+  )
 
   const waiting = caps?.exchangeActions ?? 0
   const leads = caps?.ledOrgs.map((o) => o.name).join(', ')
@@ -275,6 +285,10 @@ export default function MeTab() {
             ))}
           </View>
         </ScrollView>
+      ) : !loading ? (
+        <EmptyState icon="cloud-offline-outline" title="Couldn't load your SPLAT." hint="Check your connection and try again.">
+          <Button label="Try again" variant="secondary" onPress={refresh} />
+        </EmptyState>
       ) : null}
     </Screen>
   )
