@@ -64,13 +64,21 @@ beforeEach(() => {
 })
 afterEach(() => jest.restoreAllMocks())
 
-const tab = (name: string) => screen.getByRole('tab', { name })
+// A tab with requests on it reads "Open (2)" to a screen reader.
+const named = (name: string) => new RegExp(`^${name}( \\(\\d+\\))?$`)
+const tab = (name: string) => screen.getByRole('tab', { name: named(name) })
 
 describe('the tabs', () => {
-  it('starts on Needs a maker, and on Yours when the route asks for it', async () => {
+  it('names the four tabs Open, Live, Done and Yours, and no tab says "Needs a maker"', async () => {
+    render(<MakersWantedScreen />)
+    await screen.findByText('Guide b1')
+    expect(screen.getAllByRole('tab').map((t) => t.props.accessibilityLabel.replace(/ \(\d+\)$/, ''))).toEqual(['Open', 'Live', 'Done', 'Yours'])
+  })
+
+  it('starts on Open (not the longer "Needs a maker"), and on Yours when the route asks for it', async () => {
     const { unmount } = render(<MakersWantedScreen />)
     await screen.findByText('Guide b1')
-    expect(tab('Needs a maker').props.accessibilityState.selected).toBe(true)
+    expect(tab('Open').props.accessibilityState.selected).toBe(true)
     unmount()
     mockParams = { tab: 'mine' }
     serve({ open: [row('m1', { mine: true })] })
@@ -79,19 +87,19 @@ describe('the tabs', () => {
     expect(tab('Yours').props.accessibilityState.selected).toBe(true)
   })
 
-  it('starts on Needs a maker for a tab param it does not know', async () => {
+  it('starts on Open for a tab param it does not know', async () => {
     mockParams = { tab: 'nonsense' }
     render(<MakersWantedScreen />)
     await screen.findByText('Guide b1')
-    expect(tab('Needs a maker').props.accessibilityState.selected).toBe(true)
+    expect(tab('Open').props.accessibilityState.selected).toBe(true)
   })
 
   it('splits open requests into other families’ and your own, with a count on each tab that has any', async () => {
     serve({ open: [row('a'), row('b'), row('c', { mine: true })] })
     render(<MakersWantedScreen />)
     await screen.findByText('Guide a')
-    expect(tab('Needs a maker').props.accessibilityValue.text).toBe('2')
-    expect(tab('Yours').props.accessibilityValue.text).toBe('1')
+    expect(tab('Open').props.accessibilityLabel).toBe('Open (2)')
+    expect(tab('Yours').props.accessibilityLabel).toBe('Yours (1)')
     expect(screen.queryByText('Guide c')).toBeNull()
     fireEvent.press(tab('Yours'))
     expect(screen.getByText('Guide c')).toBeTruthy()
@@ -168,12 +176,12 @@ describe('a failed Live feed', () => {
     expect(await screen.findByText('Guide l1')).toBeTruthy()
   })
 
-  it('does not carry the Live failure over to an empty Needs a maker tab', async () => {
+  it('does not carry the Live failure over to an empty Open tab', async () => {
     liveDown()
     render(<MakersWantedScreen />)
     fireEvent.press(await screen.findByRole('tab', { name: 'Live' }))
     await screen.findByText("Couldn't load the board.")
-    fireEvent.press(screen.getByRole('tab', { name: 'Needs a maker' }))
+    fireEvent.press(screen.getByRole('tab', { name: named('Open') }))
     expect(screen.queryByText("Couldn't load the board.")).toBeNull()
     expect(screen.getByText('Open requests show up here as families post them.')).toBeTruthy()
   })
@@ -314,7 +322,7 @@ describe('claiming', () => {
   it('offers Track on a request of your own and no claim', async () => {
     serve({ open: [row('m1', { mine: true })] })
     render(<MakersWantedScreen />)
-    fireEvent.press(await screen.findByRole('tab', { name: 'Yours' }))
+    fireEvent.press(await screen.findByRole('tab', { name: named('Yours') }))
     fireEvent.press(screen.getByText('Track'))
     expect(mockPush).toHaveBeenCalledWith('/exchanges/build/m1')
     expect(screen.queryByRole('button', { name: "I'll build this" })).toBeNull()
@@ -323,7 +331,7 @@ describe('claiming', () => {
   it('says how far makers can see a request of your own', async () => {
     serve({ open: [row('m1', { mine: true, travel_km: 25 })] })
     render(<MakersWantedScreen />)
-    fireEvent.press(await screen.findByRole('tab', { name: 'Yours' }))
+    fireEvent.press(await screen.findByRole('tab', { name: named('Yours') }))
     expect(screen.getByText('Visible to makers within 25 km')).toBeTruthy()
   })
 })
@@ -357,7 +365,7 @@ describe('Live and Done paging', () => {
     expect(screen.queryByText('Show more builds')).toBeNull()
   })
 
-  it('offers no Show more on Needs a maker or Yours', async () => {
+  it('offers no Show more on Open or Yours', async () => {
     serve({ open: Array.from({ length: 20 }, (_, i) => row(`o${i}`)) })
     render(<MakersWantedScreen />)
     await screen.findByText('Guide o0')

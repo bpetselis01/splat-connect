@@ -26,6 +26,7 @@ import { relativeTime } from '../../lib/notifications'
 import { Screen } from '../ui/Screen'
 import { Card } from '../ui/Card'
 import { Chip } from '../ui/Chip'
+import { Segmented } from '../ui/Segmented'
 import { Button } from '../ui/Button'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
@@ -62,12 +63,13 @@ type BoardBuild = OpenBuild & { maker_name: string; party: boolean; updated_at: 
 
 type Tab = 'open' | 'live' | 'done' | 'mine'
 const BOARD_PAGE = 20
-// The board's four tabs; counts on the first and last only (MB mwTabs).
-const TABS: [Tab, string, string | null][] = [
-  ['open', 'Needs a maker', theme.colors.mintSoft],
-  ['live', 'Live', null],
-  ['done', 'Done', null],
-  ['mine', 'Yours', theme.colors.apricotSoft],
+// The board's four tabs; counts on the first and last only (MB mwTabs). "Open"
+// rather than web's "Needs a maker": four tabs plus counts do not fit 390pt.
+const TABS: [Tab, string, boolean][] = [
+  ['open', 'Open', true],
+  ['live', 'Live', false],
+  ['done', 'Done', false],
+  ['mine', 'Yours', true],
 ]
 
 // 0 is "Anywhere", last as on the board. Web's ranges, so a family and a
@@ -204,28 +206,12 @@ export function MakersWantedScreen() {
           the family covers, and hand it over like any toy.
         </Text>
 
-        <View accessibilityRole="tablist" accessibilityLabel="Filter build requests" style={styles.tabs}>
-          {TABS.map(([k, label, tint]) => {
-            const on = tab === k
-            const n = count(k)
-            return (
-              <Pressable
-                key={k}
-                onPress={() => pick(k)}
-                accessibilityRole="tab"
-                accessibilityLabel={label}
-                accessibilityValue={tint && n > 0 ? { text: String(n) } : undefined}
-                accessibilityState={{ selected: on }}
-                style={[styles.tab, on && styles.tabOn]}
-              >
-                <Text style={styles.tabText}>{label}</Text>
-                {tint && n > 0 ? (
-                  <Text style={[styles.tabCount, { backgroundColor: tint }]}>{n}</Text>
-                ) : null}
-              </Pressable>
-            )
-          })}
-        </View>
+        <Segmented<Tab>
+          label="Filter build requests"
+          value={tab}
+          onChange={pick}
+          options={TABS.map(([value, label, counted]) => ({ value, label, badge: counted ? count(value) : undefined }))}
+        />
 
         {capsLoading ? null : postcode ? (
           <View style={styles.ranges}>
@@ -451,35 +437,6 @@ const styles = StyleSheet.create({
     ...theme.shadow(2),
   },
   intro: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted, lineHeight: 21 },
-  tabs: {
-    flexDirection: 'row',
-    gap: theme.spacing(1),
-    padding: theme.spacing(1),
-    borderRadius: theme.radii.pill,
-    backgroundColor: theme.colors.surfaceSunken,
-  },
-  tab: {
-    flex: 1,
-    minHeight: 40,
-    borderRadius: theme.radii.pill,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: theme.spacing(1),
-  },
-  tabOn: { backgroundColor: theme.colors.surface, ...theme.shadow(1) },
-  tabText: { fontFamily: theme.fonts.black, fontSize: theme.type.caption, color: theme.colors.ink },
-  tabCount: {
-    minWidth: 18,
-    paddingHorizontal: 5,
-    borderRadius: theme.radii.pill,
-    overflow: 'hidden',
-    textAlign: 'center',
-    fontFamily: theme.fonts.black,
-    fontSize: theme.type.micro,
-    lineHeight: 18,
-    color: theme.colors.ink,
-  },
   ranges: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: theme.spacing(1.5) },
   rangeLabel: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.muted },
   retry: { marginTop: theme.spacing(5), alignSelf: 'center', paddingHorizontal: theme.spacing(8) },
