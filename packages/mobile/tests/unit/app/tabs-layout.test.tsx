@@ -8,10 +8,10 @@ jest.mock('expo-router', () => {
     screens.push(p)
     return null
   }
-  return { Tabs, Redirect: () => null }
+  return { Tabs, Redirect: () => null, usePathname: () => '/home' }
 })
 jest.mock('../../../lib/use-auth-gate', () => ({ useAuthGate: () => 'ok' }))
-jest.mock('../../../lib/capabilities', () => ({ useCapabilities: () => ({ caps: null }) }))
+jest.mock('../../../lib/capabilities', () => ({ useCapabilities: () => ({ caps: null, refresh: jest.fn() }) }))
 
 it('lists Home, Map, Inbox, Me first and hides Guides, Toys and Explore', () => {
   render(<TabsLayout />)

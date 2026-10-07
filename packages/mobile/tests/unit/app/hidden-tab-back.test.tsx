@@ -10,7 +10,7 @@ import { renderRouter, screen, testRouter, fireEvent, act } from 'expo-router/te
 // expo-router's own router, with stub screens.
 
 jest.mock('../../../lib/use-auth-gate', () => ({ useAuthGate: () => 'ok' }))
-jest.mock('../../../lib/capabilities', () => ({ useCapabilities: () => ({ caps: null }) }))
+jest.mock('../../../lib/capabilities', () => ({ useCapabilities: () => ({ caps: null, refresh: () => {} }) }))
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 
 const Stub = (name: string) =>
