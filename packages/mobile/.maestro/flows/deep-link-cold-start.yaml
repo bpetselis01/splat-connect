@@ -1,0 +1,40 @@
+# journeys: A14
+# A cold start straight into a pushed screen. The session gate runs on load, and
+# a deep link arrives before any tab has been visited: the guide must open
+# signed in, not bounce to Welcome and not land on Home. Expo Router resolves the
+# URL against the root navigator, which Playwright (no native URL handler, no
+# process to kill) cannot exercise.
+#
+# DEVICE_EMAIL, DEVICE_PASSWORD, DEVICE_GUIDE_ID and DEVICE_GUIDE_TITLE come from
+# `maestro test --env` (see sign-out-clears-session.yaml for why they carry no
+# defaults here).
+appId: com.splatconnect.mobile
+---
+- launchApp:
+    clearState: true
+    clearKeychain: true
+- runFlow: ../subflows/sign-in.yaml
+
+# Kill the process, then open the link into a dead app.
+- stopApp
+- openLink: splatconnect:///guides/${DEVICE_GUIDE_ID}
+- extendedWaitUntil:
+    visible:
+      text: ${DEVICE_GUIDE_TITLE}
+    timeout: 30000
+# The guide page itself, signed in: its header and the build entry point, and
+# no sign-in form behind or in front of it.
+- assertVisible:
+    text: "Guide"
+- assertNotVisible:
+    id: "welcome-sign-in"
+
+# It is a pushed screen with a way out. Nothing was opened before it, so its ✕
+# closes to the last tab-bar screen, which is Home.
+- runFlow: ../subflows/dismiss-dev-toast.yaml
+- tapOn:
+    text: "Close"
+- assertVisible:
+    text: "Edit"
+- assertVisible:
+    text: "Pick up where you left off"
