@@ -115,6 +115,18 @@ describe('ProfileScreen', () => {
       expect(await screen.findByText('Saved')).toBeTruthy()
     })
 
+    // react-native-web never fires endEditing, so on web only Return saves.
+    it('saves a name and a postcode on Return too', async () => {
+      mockUseAuth.mockReturnValue(auth({}))
+      mockGet.mockResolvedValue([])
+      mockPatch.mockResolvedValue({})
+      render(<ProfileScreen />)
+      fireEvent(await screen.findByLabelText('Display name'), 'submitEditing', { nativeEvent: { text: 'Ret Urn' } })
+      await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/api/contributors/me', { name: 'Ret Urn' }))
+      fireEvent(screen.getByLabelText('Postcode'), 'submitEditing', { nativeEvent: { text: '3141' } })
+      await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/api/contributors/me', { pickup_postcode: '3141' }))
+    })
+
     it('saves a postcode, for everything that measures distance', async () => {
       mockUseAuth.mockReturnValue(auth({}))
       mockGet.mockResolvedValue([])

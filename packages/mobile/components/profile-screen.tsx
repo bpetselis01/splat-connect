@@ -148,6 +148,7 @@ export function ProfileScreen() {
                 accessibilityLabel="Display name"
                 defaultValue={profile?.name ?? ''}
                 onEndEditing={(e) => void saveName(e.nativeEvent.text)}
+                onSubmitEditing={(e) => void saveName(e.nativeEvent.text)}
               />
               <Text accessibilityLiveRegion="polite" style={styles.nameStatus}>
                 {nameState === 'saving'
@@ -174,6 +175,7 @@ export function ProfileScreen() {
                 maxLength={4}
                 defaultValue={profile?.pickup_postcode ?? ''}
                 onEndEditing={(e) => void savePostcode(e.nativeEvent.text)}
+                onSubmitEditing={(e) => void savePostcode(e.nativeEvent.text)}
               />
               {postcodeError ? <Text accessibilityLiveRegion="polite" style={styles.nameStatus}>{postcodeError}</Text> : null}
               <Text style={styles.frozenHint}>Your email can&apos;t be changed here.</Text>
