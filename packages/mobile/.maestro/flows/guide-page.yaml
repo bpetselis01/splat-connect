@@ -1,4 +1,4 @@
-# journeys: B01 B05 G05 G11 G15
+# journeys: B01 B05 G05 G11 G15 G30 G31
 # The guide page on Hermes and a real touch screen: the hero's paging, build
 # mode (a fullScreenModal), and the header ✕ that closes the whole trail back
 # to the last screen with the tab bar. Playwright draws the same screens but

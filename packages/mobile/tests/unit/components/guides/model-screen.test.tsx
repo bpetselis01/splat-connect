@@ -1,3 +1,4 @@
+// journeys: G31
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { ModelScreen } from '../../../../components/guides/model-screen'
 
