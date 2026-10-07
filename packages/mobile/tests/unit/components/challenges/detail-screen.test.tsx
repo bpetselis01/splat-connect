@@ -261,6 +261,14 @@ describe('ChallengeDetailScreen', () => {
     expect(mockToggle).toHaveBeenCalledWith('challenges', 'c1')
   })
 
+  it('refetches the brief after the heart so the saves tile is the server count', async () => {
+    mockGet.mockResolvedValueOnce(detail({ save_count: 0 })).mockResolvedValue(detail({ save_count: 1 }))
+    render(<ChallengeDetailScreen id="c1" />)
+    expect(await screen.findByText('saves')).toBeTruthy()
+    fireEvent.press(await screen.findByRole('button', { name: 'Save' }))
+    expect(await screen.findByText('save')).toBeTruthy()
+  })
+
   it("says it couldn't load rather than showing an empty brief", async () => {
     mockGet.mockRejectedValue(new Error('404'))
     render(<ChallengeDetailScreen id="c1" />)

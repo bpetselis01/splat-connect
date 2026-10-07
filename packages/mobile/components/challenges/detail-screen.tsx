@@ -461,7 +461,13 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
               </Text>
             )}
           </View>
-          {listed ? <SaveButton slug="challenges" id={challenge.id} saves={saves} circled /> : null}
+          {listed ? <SaveButton
+              slug="challenges"
+              id={challenge.id}
+              // The "N saves" tile is the server's count: refetch the brief once the heart has landed.
+              saves={{ ...saves, toggle: async (slug, sid) => { await saves.toggle(slug, sid); setReloadKey((k) => k + 1) } }}
+              circled
+            /> : null}
         </View>
         <FlashLine message={flash} />
         {viewerId !== null && !joined && !isAuthor && open ? (
