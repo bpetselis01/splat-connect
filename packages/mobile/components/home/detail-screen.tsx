@@ -3,6 +3,8 @@ import { View, Text, ScrollView, Pressable, Linking, StyleSheet, type StyleProp,
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { isNetworkError } from '@splat-connect/types'
+import { logFailure } from '../../lib/log'
 import type { Tutorial, Part, Tool, StlFile, Recommendation, TutorialStep, TutorialSafetyNote, ChildProfile, Difficulty } from '@splat-connect/types'
 import {
   CHILD_QUESTIONS, DEVICE_TYPES, DIFFICULTY_LABEL, KIND_LABEL, MATURITY_LABEL, ONE_HAND_LABEL, SAFETY_CHECKLIST,
@@ -157,7 +159,8 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
   const children = useMyChildren()
   const [tutorial, setTutorial] = useState<TutorialDetail | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(false)
+  const [error, setError] = useState<'offline' | 'other' | null>(null)
+  const [attempt, setAttempt] = useState(0)
   const [photo, setPhoto] = useState(0)
   // Thanks (066): once per person, never on your own guide. Unknown until the
   // GET lands, and a failed GET hides the button rather than guessing.
@@ -231,16 +234,20 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
   }, [tutorial?.id])
 
   useEffect(() => {
+    setError(null)
     apiClient
       .get<TutorialDetail>(`/api/public/tutorials/${id}`)
       .then(setTutorial)
-      .catch(() => setError(true))
+      .catch((err) => {
+        logFailure('[DetailScreen] guide fetch failed:', err)
+        setError(isNetworkError(err) ? 'offline' : 'other')
+      })
       .finally(() => setLoading(false))
     apiClient
       .get<{ thanked: boolean; own: boolean }>(`/api/tutorials/${id}/thanks`)
       .then((t) => setThanks({ thanked: !!t?.thanked, own: !!t?.own }))
       .catch(() => {})
-  }, [id])
+  }, [id, attempt])
 
   /** True once thanked (a 409 is "already thanked", the same end state). */
   async function sayThanks(): Promise<boolean> {
@@ -273,7 +280,18 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
   if (error) {
     return (
       <View style={styles.container}>
-        <EmptyState icon="cloud-offline-outline" title="Couldn't load tutorial. Please try again." />
+        <EmptyState
+          icon="cloud-offline-outline"
+          title={error === 'offline' ? "You seem to be offline." : "Couldn't load tutorial. Please try again."}
+          hint={error === 'offline' ? 'Check your connection and try again.' : undefined}
+        >
+          <Button
+            label="Try again"
+            variant="secondary"
+            onPress={() => { setLoading(true); setAttempt((n) => n + 1) }}
+            style={styles.retry}
+          />
+        </EmptyState>
       </View>
     )
   }
@@ -731,6 +749,7 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
 }
 
 const styles = StyleSheet.create({
+  retry: { marginTop: theme.spacing(5), alignSelf: 'center', paddingHorizontal: theme.spacing(8) },
   container: { flex: 1, backgroundColor: theme.colors.background },
   scroll: { paddingBottom: theme.spacing(8) },
   pad: { paddingHorizontal: theme.spacing(4) },

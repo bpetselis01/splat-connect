@@ -133,6 +133,30 @@ describe('DetailScreen', () => {
     expect(await screen.findByText("Couldn't load tutorial. Please try again.")).toBeTruthy()
   })
 
+  it('non-network failure keeps the old message and Try again reloads the guide', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {})
+    mockEndpoints({ detail: Promise.reject(new Error('API GET failed with status 500')) })
+    render(<DetailScreen id="1" />)
+    expect(await screen.findByText("Couldn't load tutorial. Please try again.")).toBeTruthy()
+    mockEndpoints()
+    fireEvent.press(screen.getByText('Try again'))
+    expect(await screen.findByText('Build a Robot Arm')).toBeTruthy()
+  })
+
+  it('offline: says so without a console error, and Try again reloads the guide', async () => {
+    const error = jest.spyOn(console, 'error').mockImplementation(() => {})
+    jest.spyOn(console, 'debug').mockImplementation(() => {})
+    mockEndpoints({ detail: Promise.reject(new TypeError('Network request failed')) })
+    render(<DetailScreen id="1" />)
+    expect(await screen.findByText('You seem to be offline.')).toBeTruthy()
+    expect(screen.getByText('Check your connection and try again.')).toBeTruthy()
+    expect(error).not.toHaveBeenCalled()
+    mockEndpoints()
+    fireEvent.press(screen.getByText('Try again'))
+    expect(await screen.findByText('Build a Robot Arm')).toBeTruthy()
+    expect(screen.queryByText('You seem to be offline.')).toBeNull()
+  })
+
   it('signs the pdf path and pushes the preview route with the signed URL', async () => {
     render(<DetailScreen id="1" />)
     await screen.findByText('Build a Robot Arm')
