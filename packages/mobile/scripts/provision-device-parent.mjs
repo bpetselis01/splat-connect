@@ -89,6 +89,7 @@ const { error: toyError } = await admin.from('toys').insert({
 })
 if (toyError) throw new Error(`Failed to seed toy: ${toyError.message}`)
 
+const guideTitle = `Device smoke guide ${Date.now()}`
 // A published guide with two photos and two steps, for the guide-page flow:
 // swiping the hero is the platform's paging again, and build mode is a
 // fullScreenModal that only a device runs for real. The photo URLs need not
@@ -97,7 +98,7 @@ if (toyError) throw new Error(`Failed to seed toy: ${toyError.message}`)
 const { data: guide, error: guideError } = await admin
   .from('tutorials')
   .insert({
-    title: `Device smoke guide ${Date.now()}`,
+    title: guideTitle,
     description: 'Seeded by provision-device-parent for the guide-page flow.',
     difficulty: 'easy',
     kind: 'toy_adaptation',
@@ -129,6 +130,29 @@ const stl = 'solid t\nfacet normal 0 0 1\nouter loop\nvertex 0 0 0\nvertex 1 0 0
 const { error: upError } = await admin.storage.from('stl-files').upload(stlPath, new Blob([stl]), { contentType: 'model/stl', upsert: true })
 if (upError) throw new Error(`Failed to upload guide part: ${upError.message}`)
 
-// Two lines only, so callers can `eval $(node …)` or append to $GITHUB_ENV.
+// Another member's note on step 1, so the note menu offers "Report this note"
+// (a member cannot report their own). Inserted directly: the API route would
+// notify the author, and this fixture is not testing that.
+const { data: reviewer, error: reviewerError } = await admin.auth.admin.createUser({
+  email: `device-reviewer-${Date.now()}-${Math.floor(Math.random() * 1e6)}@mobile-e2e.local`,
+  password: PASSWORD,
+  email_confirm: true,
+  user_metadata: { name: 'Device Reviewer' },
+})
+if (reviewerError || !reviewer.user) throw new Error(`Failed to create reviewer: ${reviewerError?.message}`)
+const { error: noteSeedError } = await admin.from('tutorial_notes').insert({
+  tutorial_id: guide.id,
+  author_id: reviewer.user.id,
+  step_position: 1,
+  body: 'The screw was stiff, a drop of oil helped.',
+})
+if (noteSeedError) throw new Error(`Failed to seed guide note: ${noteSeedError.message}`)
+
+// Plain KEY=value lines, so callers can `eval $(node …)` or append to
+// $GITHUB_ENV. The first two are what every flow needs; the ids are for the
+// flows that deep link or assert a row, passed on with `maestro test -e`.
 console.log(`DEVICE_EMAIL=${email}`)
 console.log(`DEVICE_PASSWORD=${PASSWORD}`)
+console.log(`DEVICE_USER_ID=${data.user.id}`)
+console.log(`DEVICE_GUIDE_ID=${guide.id}`)
+console.log(`DEVICE_GUIDE_TITLE=${guideTitle}`)
