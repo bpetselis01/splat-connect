@@ -13,6 +13,7 @@ import { apiClient } from '../../lib/api-client'
 import { relativeTime } from '../../lib/notifications'
 import { noteSummary, stepLabel } from '../../lib/guide-notes'
 import { theme } from '../../lib/theme'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import { Chip } from '../ui/Chip'
 import { Button } from '../ui/Button'
 import { FlashLine, useFlash } from '../ui/Flash'
@@ -62,6 +63,7 @@ function MenuButton({ note, onPress }: { note: GuideNote; onPress: () => void })
 
 export function CommunityNotes({ tutorialId, guideTitle, authorName, steps, notes, reload, canPin, viewerId, viewerName, highlightId, onHighlightRow, onPosted }: Props) {
   const router = useRouter()
+  const bottom = useBottomClearance()
   const [filter, setFilter] = useState<Filter>('all')
   const [composer, setComposer] = useState(false)
   const [menuFor, setMenuFor] = useState<GuideNote | null>(null)
@@ -231,7 +233,7 @@ export function CommunityNotes({ tutorialId, guideTitle, authorName, steps, note
         }}
       >
         <Pressable onPress={() => setMenuFor(null)} accessibilityRole="button" accessibilityLabel="Close" style={styles.backdrop} />
-        <View testID="note-menu" style={styles.menu}>
+        <View testID="note-menu" style={[styles.menu, { paddingBottom: bottom }]}>
           <View style={styles.grabber} />
           {menuFor ? <Text style={styles.menuTitle}>{`${menuFor.author_id === viewerId ? 'Your' : `${menuFor.author_name}'s`} note on ${stepLabel(menuFor, steps.length)}`}</Text> : null}
           {menuFor && canPin ? (
@@ -301,7 +303,7 @@ const styles = StyleSheet.create({
   strong: { fontFamily: theme.fonts.black },
   thumb: { width: 64, height: 64, borderRadius: theme.radii.field, backgroundColor: theme.colors.surfaceSunken },
   backdrop: { flex: 1, backgroundColor: theme.colors.scrim },
-  menu: { backgroundColor: theme.colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: theme.spacing(4), paddingBottom: theme.spacing(6), gap: theme.spacing(2) },
+  menu: { backgroundColor: theme.colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: theme.spacing(4), gap: theme.spacing(2) },
   grabber: { width: 40, height: 5, borderRadius: 3, backgroundColor: theme.colors.border, alignSelf: 'center' },
   menuTitle: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.caption, color: theme.colors.muted },
   menuRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3), minHeight: 48, borderTopWidth: theme.border.hairline, borderTopColor: theme.colors.border },

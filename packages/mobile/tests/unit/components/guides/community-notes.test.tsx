@@ -1,6 +1,7 @@
 // journeys: G25 G26 G28
 import { Platform } from 'react-native'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
+import { CLEARANCE, paddingBottomOf } from '../../bottom-spacing'
 import { theme } from '../../../../lib/theme'
 import { CommunityNotes } from '../../../../components/guides/community-notes'
 
@@ -168,4 +169,12 @@ it('keeps the Fixes chip the person tapped while a hand-off highlight is still s
   fireEvent.press(screen.getByTestId('feedback-filter-fixes'))
   expect(screen.getByText('Tin both leads first.')).toBeTruthy()
   expect(screen.queryByText('Second step tip.')).toBeNull()
+})
+
+jest.mock('react-native-safe-area-context', () => require('../../bottom-spacing').insetMock())
+
+it('ends the ⋯ menu one gutter above the home indicator', () => {
+  render(<CommunityNotes {...props} notes={[note({ id: 'theirs' })] as never} />)
+  fireEvent.press(screen.getByTestId('note-menu-theirs'))
+  expect(paddingBottomOf(screen.getByTestId('note-menu'))).toBe(CLEARANCE)
 })
