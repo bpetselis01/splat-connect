@@ -40,6 +40,7 @@ const OFFER_LABEL: Record<OfferType, string> = { donation: 'Donation', exchange:
 
 export function Editor({ id }: { id: string }) {
   const router = useRouter()
+  const bottom = useBottomClearance()
   const { caps } = useCapabilities()
   const [toy, setToy] = useState<Toy | null>(null)
   const [shelf, setShelf] = useState<Toy[]>([])
@@ -661,7 +662,7 @@ export function Editor({ id }: { id: string }) {
         )}
       </ScrollView>
 
-      <View style={[styles.footer, { paddingBottom: bottom }]}>
+      <View testID="editor-footer" style={[styles.footer, { paddingBottom: bottom }]}>
         <Button label="Delete toy" variant="danger" onPress={handleDelete} />
       </View>
     </Screen>

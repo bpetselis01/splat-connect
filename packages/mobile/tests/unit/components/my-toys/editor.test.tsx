@@ -1,5 +1,6 @@
 // packages/mobile/tests/unit/components/my-toys/editor.test.tsx
 // journeys: W06 W07 W08 W09 W10 W12
+import { CLEARANCE, paddingBottomOf } from '../../bottom-spacing'
 import { Alert } from 'react-native'
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { Editor } from '../../../../components/my-toys/editor'
@@ -584,5 +585,16 @@ describe('Editor', () => {
       expect(mockDelete).not.toHaveBeenCalled()
       expect(mockDismissTo).not.toHaveBeenCalled()
     })
+  })
+})
+
+jest.mock('react-native-safe-area-context', () => require('../../bottom-spacing').insetMock())
+
+describe('Editor — bottom spacing', () => {
+  it('lifts Delete toy one gutter above the home indicator', async () => {
+    mockGetRouting([toy({})])
+    render(<Editor id="toy1" />)
+    await screen.findByRole('tab', { name: 'Details' })
+    expect(paddingBottomOf(screen.getByTestId('editor-footer'))).toBe(CLEARANCE)
   })
 })
