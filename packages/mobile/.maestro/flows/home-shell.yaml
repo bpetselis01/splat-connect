@@ -52,8 +52,10 @@ appId: com.splatconnect.mobile
     text: "Request a print"
 - assertVisible:
     text: "Find a printer"
+# A pushed screen's header control is the ✕ (getting-home change), which closes
+# to the last tab-bar screen, here Home.
 - tapOn:
-    text: "Back"
+    text: "Close"
 - assertVisible:
     text: "Edit"
 
@@ -103,8 +105,9 @@ appId: com.splatconnect.mobile
     text: "Notifications"
 - tapOn:
     text: "Your idea was published as a design challenge"
+# The notification opens a drill-down with no tab bar; its ✕ returns to the last bar screen.
 - tapOn:
-    text: "Back"
+    text: "Close"
     optional: true
 - tapOn:
     text: "Home"
