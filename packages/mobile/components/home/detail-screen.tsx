@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState, type ComponentRef } from 'rea
 import { View, Text, ScrollView, Pressable, Linking, StyleSheet, type StyleProp, type TextStyle } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { isNetworkError } from '@splat-connect/types'
 import { logFailure } from '../../lib/log'
 import type { Tutorial, Part, Tool, StlFile, Recommendation, TutorialStep, TutorialSafetyNote, ChildProfile, Difficulty } from '@splat-connect/types'
@@ -18,6 +17,7 @@ import { useMyChildren } from '../../lib/my-children'
 import { useCapabilities } from '../../lib/capabilities'
 import { useGuideNotes, noteSummary, stepLabel } from '../../lib/guide-notes'
 import { theme } from '../../lib/theme'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import { takeGuideFocus } from '../../lib/guide-focus'
 import { Byline, Provenance, type ProvenanceContributor, type ProvenanceOrg } from '../guides/provenance'
 import { PicksRow } from '../guides/picks-row'
@@ -154,7 +154,7 @@ function whoRows(t: Tutorial, child: ChildProfile | undefined) {
  */
 export function DetailScreen({ id, printWith, tab: startTab }: { id: string; printWith?: string; tab?: string }) {
   const router = useRouter()
-  const insets = useSafeAreaInsets()
+  const bottom = useBottomClearance()
   const saves = useSaves()
   const children = useMyChildren()
   const [tutorial, setTutorial] = useState<TutorialDetail | null>(null)
@@ -731,9 +731,9 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
         onClose={() => setViewing(null)}
       />
 
-      <Toast toast={toaster.toast} onHide={toaster.hide} style={{ bottom: Math.max(insets.bottom, theme.spacing(3)) + 84 }} />
+      <Toast toast={toaster.toast} onHide={toaster.hide} style={{ bottom: bottom + 84 }} />
 
-      <View style={[styles.actionBar, { paddingBottom: Math.max(insets.bottom, theme.spacing(3)) }]}>
+      <View testID="guide-action-bar" style={[styles.actionBar, { paddingBottom: bottom }]}>
         {steps.length ? (
           <Button
             label={progress.allDone ? 'Build it again' : progress.resume ? `Pick up at step ${progress.resume.position}` : 'Start building'}

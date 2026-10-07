@@ -1,4 +1,5 @@
 // journeys: G13 G14 G15 G18 G19 G29 G30
+import { CLEARANCE, paddingBottomOf } from '../../bottom-spacing'
 import { Linking, ScrollView } from 'react-native'
 import { act, render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { DetailScreen, ROW_SCROLL_MARGIN, linkSite, splitLead } from '../../../../components/home/detail-screen'
@@ -768,5 +769,17 @@ describe('DetailScreen Feedback hand-off', () => {
     } finally {
       jest.useRealTimers()
     }
+  })
+})
+
+jest.mock('react-native-safe-area-context', () => require('../../bottom-spacing').insetMock())
+
+describe('DetailScreen — bottom spacing', () => {
+  it('sits the Start building band one gutter above the home indicator, no tighter', async () => {
+    const steps = [{ id: 's1', tutorial_id: '1', position: 1, title: 'Open it', body: 'One screw.', photo_url: null }]
+    mockEndpoints({ detail: Promise.resolve({ ...DETAIL, steps }) })
+    render(<DetailScreen id="1" />)
+    await screen.findByText('Start building')
+    expect(paddingBottomOf(screen.getByTestId('guide-action-bar'))).toBe(CLEARANCE)
   })
 })

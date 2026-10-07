@@ -1,8 +1,8 @@
 import { View, ActivityIndicator, StyleSheet, Linking } from 'react-native'
 import { WebView } from 'react-native-webview'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { webGuideUrl } from '../../lib/guide-files'
 import { theme } from '../../lib/theme'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import { Button } from '../ui/Button'
 import { EmptyState } from '../ui/EmptyState'
 
@@ -11,7 +11,7 @@ import { EmptyState } from '../ui/EmptyState'
  * Downloads live on the website; the footer links to the guide's page there.
  */
 export function PreviewScreen({ pdfUrl, tutorialId }: { pdfUrl: string | null; tutorialId: string }) {
-  const insets = useSafeAreaInsets()
+  const bottom = useBottomClearance()
   if (!pdfUrl) {
     return (
       <View style={styles.center}>
@@ -37,7 +37,7 @@ export function PreviewScreen({ pdfUrl, tutorialId }: { pdfUrl: string | null; t
         )}
       />
       {webGuideUrl(tutorialId) ? (
-        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, theme.spacing(3)) }]}>
+        <View testID="preview-footer" style={[styles.footer, { paddingBottom: bottom }]}>
           <Button label="Download on the web" variant="secondary" onPress={() => void Linking.openURL(webGuideUrl(tutorialId)!)} style={styles.open} />
         </View>
       ) : null}

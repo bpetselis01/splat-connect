@@ -6,8 +6,8 @@ import { useRef, useState } from 'react'
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
 import { Stack, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { theme } from '../../lib/theme'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import { useLearnProgress } from '../../lib/learn'
 import { LEARN_ARTICLES } from '../../lib/learn-content'
 import { Screen } from '../ui/Screen'
@@ -17,7 +17,7 @@ import { AnimatedPressable } from '../ui/AnimatedPressable'
 
 export function ArticleScreen({ slug }: { slug: string }) {
   const router = useRouter()
-  const insets = useSafeAreaInsets()
+  const bottom = useBottomClearance()
   const { markRead } = useLearnProgress()
   const scroller = useRef<ScrollView>(null)
   const [sectionY, setSectionY] = useState<Record<string, number>>({})
@@ -117,7 +117,7 @@ export function ArticleScreen({ slug }: { slug: string }) {
         ))}
       </ScrollView>
 
-      <View style={[styles.foot, { paddingBottom: Math.max(insets.bottom, theme.spacing(3)) }]}>
+      <View testID="article-foot" style={[styles.foot, { paddingBottom: bottom }]}>
         <AnimatedPressable
           onPress={finish}
           accessibilityRole="button"

@@ -1,5 +1,6 @@
 // packages/mobile/tests/unit/components/explore/article-screen.test.tsx
 // journeys: Q15
+import { CLEARANCE, paddingBottomOf } from '../../bottom-spacing'
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { ArticleScreen } from '../../../../components/explore/article-screen'
 import { LEARN_ARTICLES } from '../../../../lib/learn-content'
@@ -72,4 +73,11 @@ describe('ArticleScreen', () => {
     for (const section of LEARN_ARTICLES[0].sections) expect(screen.getByLabelText(`Go to ${section.heading}`)).toBeTruthy()
     expect(screen.getByLabelText('Reading progress').props.accessibilityValue.now).toBe(0)
   })
+})
+
+jest.mock('react-native-safe-area-context', () => require('../../bottom-spacing').insetMock())
+
+it('sits the Next band one gutter above the home indicator', () => {
+  render(<ArticleScreen slug="toy-adaptation-101" />)
+  expect(paddingBottomOf(screen.getByTestId('article-foot'))).toBe(CLEARANCE)
 })

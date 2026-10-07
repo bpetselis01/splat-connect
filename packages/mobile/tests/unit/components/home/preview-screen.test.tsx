@@ -1,4 +1,5 @@
 // journeys: G16 G17
+import { CLEARANCE, paddingBottomOf } from '../../bottom-spacing'
 import { Linking } from 'react-native'
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { PreviewScreen } from '../../../../components/home/preview-screen'
@@ -47,4 +48,12 @@ describe('PreviewScreen', () => {
     expect(screen.getByTestId('webview').props.startInLoadingState).toBe(true)
     expect(screen.UNSAFE_getByType(require('react-native').ActivityIndicator)).toBeTruthy()
   })
+})
+
+jest.mock('react-native-safe-area-context', () => require('../../bottom-spacing').insetMock())
+
+it('sits the Download band one gutter above the home indicator', () => {
+  process.env.EXPO_PUBLIC_WEB_URL = 'https://splat.example'
+  render(<PreviewScreen pdfUrl="https://example.com/robot-arm.pdf" tutorialId="abc" />)
+  expect(paddingBottomOf(screen.getByTestId('preview-footer'))).toBe(CLEARANCE)
 })
