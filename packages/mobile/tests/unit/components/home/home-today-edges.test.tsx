@@ -37,6 +37,17 @@ describe('Home Today card count math', () => {
     expect(screen.queryByText(/new message/)).toBeNull()
   })
 
+  it('shows no Today card, and no error, when the load failed, and retries on the next focus', () => {
+    const err = jest.spyOn(console, 'error').mockImplementation(() => {})
+    setup(undefined)
+    expect(screen.queryByText(/new message/)).toBeNull()
+    expect(screen.queryByText(/offline|wrong|couldn/i)).toBeNull()
+    act(() => mockFocus())
+    expect(mockRefresh).toHaveBeenCalled()
+    expect(err).not.toHaveBeenCalled()
+    err.mockRestore()
+  })
+
   it('one unread that is all about an exchange names the exchange, singular', () => {
     setup({ total: 1, exchanges: 1 })
     expect(screen.getByLabelText('1 new message about your toy exchange. Open Inbox')).toBeTruthy()

@@ -60,3 +60,27 @@ it('refetches in every mounted hook when the counts are invalidated', async () =
   await waitFor(() => expect(bar.result.current.caps?.unread.total).toBe(0))
   await waitFor(() => expect(today.result.current.caps?.unread.total).toBe(0))
 })
+
+// Offline on a later focus: Home's Today count must not drop to zero or vanish.
+it('keeps the last good counts when a later refetch fails', async () => {
+  const { result } = renderHook(() => useCapabilities())
+  await waitFor(() => expect(result.current.caps?.unread.total).toBe(3))
+  mockGet.mockRejectedValue(new TypeError('Network request failed'))
+  await act(async () => { await result.current.refresh() })
+  expect(result.current.caps?.unread.total).toBe(3)
+  expect(result.current.caps?.exchangeActions).toBe(4)
+  expect(result.current.caps?.profile).toEqual(profile)
+})
+
+it('recovers on the next refresh once the network is back', async () => {
+  const { result } = renderHook(() => useCapabilities())
+  await waitFor(() => expect(result.current.caps?.unread.total).toBe(3))
+  mockGet.mockRejectedValue(new TypeError('Network request failed'))
+  await act(async () => { await result.current.refresh() })
+  mockGet.mockImplementation((path: string) =>
+    path === '/api/contributors/me' ? Promise.resolve(profile)
+      : path === '/api/notifications/me/unread-counts' ? Promise.resolve({ tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 7 })
+      : Promise.resolve(path === '/api/organizations/mine' ? [] : { count: 0 }))
+  await act(async () => { await result.current.refresh() })
+  expect(result.current.caps?.unread.total).toBe(7)
+})
