@@ -4,6 +4,7 @@
  * stepping down never leaves the organisation leaderless — not even when two
  * leaders try at once.
  */
+// journeys: L25 L27 L31
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'

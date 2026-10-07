@@ -1,3 +1,4 @@
+// journeys: B01 B02 B03 B06 G15
 import { test, expect } from '@playwright/test'
 import { adminClient, createContributor, createTutorial, renameProfile, signInAsNewContributor, uniqueTitle } from './helpers'
 import { addNote, addSteps } from './guides-fixtures'

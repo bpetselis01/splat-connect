@@ -1,4 +1,5 @@
 /** me-count-badges: one call, every count scoped to the caller. */
+// journeys: Q01
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'

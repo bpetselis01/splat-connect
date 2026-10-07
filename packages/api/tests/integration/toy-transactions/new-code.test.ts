@@ -4,6 +4,7 @@
  * the OTHER to type (confirm handler), so the counterparty's code must never
  * change here and never come back in the response.
  */
+// journeys: X01 X08
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'

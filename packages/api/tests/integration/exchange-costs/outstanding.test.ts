@@ -7,6 +7,7 @@
  * route filtered by payer_id and RLS were off, so it asserts on an outsider's
  * own view, where only RLS can be doing the work.
  */
+// journeys: X12
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'

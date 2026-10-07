@@ -2,6 +2,7 @@
  * 109: everyone who saved a challenge hears when the guide it became is
  * published — once, whichever route approved it, and never a contributor.
  */
+// journeys: C10 C11
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'

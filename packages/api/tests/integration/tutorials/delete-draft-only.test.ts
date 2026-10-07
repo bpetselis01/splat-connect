@@ -1,3 +1,4 @@
+// journeys: T06
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
 import { acceptTerms, createProject } from '../../helpers/orgs.js'

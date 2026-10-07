@@ -4,6 +4,7 @@
  * only an admin passes or fails it. The photo is a storage path pinned to the
  * printer's own folder, never a URL.
  */
+// journeys: R15
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createClient } from '@supabase/supabase-js'
 import { VERIFIED_MIN_JOBS } from '@splat-connect/types'

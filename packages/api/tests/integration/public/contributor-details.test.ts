@@ -2,6 +2,7 @@
  * contributor-profile-details: the showcase's guide rows carry their view
  * count (092's definer function, made readable on the public read here).
  */
+// journeys: Q13
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'

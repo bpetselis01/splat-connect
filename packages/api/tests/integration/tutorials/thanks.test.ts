@@ -1,4 +1,5 @@
 /** 066 thanks: one per person per guide, never your own, only on a published guide. */
+// journeys: G09
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'

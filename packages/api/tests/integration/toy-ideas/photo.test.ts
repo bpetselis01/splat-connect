@@ -4,6 +4,7 @@
  * read builds photo_url. Only a path in the author's own ideas/ folder is
  * taken — by the API (400) and by toy_ideas_photo_path_check (23514).
  */
+// journeys: C13
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createClient } from '@supabase/supabase-js'
 import app from '../../../src/app.js'

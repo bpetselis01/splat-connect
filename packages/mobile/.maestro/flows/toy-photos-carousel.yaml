@@ -1,3 +1,4 @@
+# journeys: Y03 Y04
 # The photo carousel on Hermes. Jest renders it with react-test-renderer, which
 # runs neither `pagingEnabled` (the platform's own paging — the whole reason
 # mobile needed no gesture library) nor the Reanimated worklet that drives the

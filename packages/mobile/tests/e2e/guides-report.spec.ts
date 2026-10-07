@@ -1,3 +1,4 @@
+// journeys: G10
 import { test, expect } from '@playwright/test'
 import { adminClient, createContributor, createTutorial, signInAsNewContributor, uniqueTitle } from './helpers'
 

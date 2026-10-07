@@ -1,3 +1,4 @@
+// journeys: C06
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
 import app from '../../../src/app.js'

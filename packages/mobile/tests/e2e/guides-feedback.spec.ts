@@ -1,3 +1,4 @@
+// journeys: G24 G26 G27 G28
 import { test, expect } from '@playwright/test'
 import { adminClient, createContributor, createTutorial, renameProfile, signIn, signInAsNewContributor, uniqueTitle } from './helpers'
 import { addNote, addSteps } from './guides-fixtures'

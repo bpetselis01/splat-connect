@@ -3,6 +3,7 @@
 # block here: a flow-level `env:` default WINS over --env (measured 2026-07-26 —
 # both flows typed the literal placeholder and failed with "Invalid login
 # credentials"). With no default, an unset variable fails loudly instead.
+# journeys: A05 A14
 appId: com.splatconnect.mobile
 ---
 # Establishes a signed-out precondition at flow start: both flows run in one

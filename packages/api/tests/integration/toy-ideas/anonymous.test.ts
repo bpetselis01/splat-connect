@@ -5,6 +5,7 @@
  * loses author_id as well, and every policy that tested it reads
  * is_idea_author() instead. The thread must keep working through that.
  */
+// journeys: C03 C04 C05 C14
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createClient } from '@supabase/supabase-js'
 import app from '../../../src/app.js'

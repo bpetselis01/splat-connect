@@ -1,3 +1,4 @@
+// journeys: G01 G02 G06
 import { test, expect } from '@playwright/test'
 import { signInAsNewContributor, createTutorial, uniqueTitle, pickFilter, adminClient } from './helpers'
 

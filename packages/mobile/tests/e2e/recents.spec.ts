@@ -1,3 +1,4 @@
+// journeys: H06
 import { test, expect, type Page } from '@playwright/test'
 import { createTutorial, signInAsNewContributor, signIn, uniqueTitle } from './helpers'
 
