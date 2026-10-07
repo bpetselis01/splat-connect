@@ -24,7 +24,9 @@ jest.mock('expo-router', () => {
   return { useFocusEffect: (effect: () => void) => useEffect(effect, []), useRouter: () => ({ push: jest.fn() }) }
 })
 
+const mockInvalidate = jest.fn()
 jest.mock('../../../../lib/capabilities', () => ({
+  invalidateCapabilities: (...a: unknown[]) => mockInvalidate(...a),
   useCapabilities: () => ({ caps: { profile: { id: 'family' }, ledOrgs: [] } }),
 }))
 
@@ -64,6 +66,7 @@ function serve(detail: object) {
 beforeEach(() => {
   mockGet.mockReset()
   mockPost.mockReset()
+  mockInvalidate.mockClear()
 })
 
 it('tells the family how many printers they asked while it waits', async () => {
@@ -112,6 +115,7 @@ it('asks the family whether it fitted once collected', async () => {
   ).toBeTruthy()
   fireEvent.press(screen.getByText('Fitted'))
   await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions/j1/print-fit', { fit: 'fitted' }))
+  await waitFor(() => expect(mockInvalidate).toHaveBeenCalledTimes(1))
 })
 
 it('shows the family the printer’s record on the printer card', async () => {

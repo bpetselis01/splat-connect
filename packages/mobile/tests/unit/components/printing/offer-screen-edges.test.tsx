@@ -36,7 +36,8 @@ jest.mock('expo-router', () => {
 })
 let mockProfile: Record<string, unknown> = { id: 'me' }
 let mockCaps: unknown = null
-jest.mock('../../../../lib/capabilities', () => ({ useCapabilities: () => ({ caps: mockCaps }) }))
+const mockInvalidate = jest.fn()
+jest.mock('../../../../lib/capabilities', () => ({ invalidateCapabilities: (...a: unknown[]) => mockInvalidate(...a), useCapabilities: () => ({ caps: mockCaps }) }))
 
 const DAY = 864e5
 const machine = (id: string, over: object = {}) => ({

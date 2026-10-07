@@ -28,7 +28,9 @@ jest.mock('expo-router', () => {
   return { useFocusEffect: (effect: () => void) => useEffect(effect, []), useRouter: () => ({ push: jest.fn() }) }
 })
 
+const mockInvalidate = jest.fn()
 jest.mock('../../../../lib/capabilities', () => ({
+  invalidateCapabilities: (...a: unknown[]) => mockInvalidate(...a),
   useCapabilities: () => ({ caps: { profile: { id: 'leader' }, ledOrgs: [{ id: 'org', name: 'Library' }] } }),
 }))
 
@@ -90,6 +92,7 @@ it('preselects the machine that fits and accepts on it', async () => {
   await waitFor(() =>
     expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions/j1/accept', { printer_id: 'Bambu P1S' })
   )
+  expect(mockInvalidate).toHaveBeenCalled()
 })
 
 it('lets a leader override with a machine that needs a change', async () => {

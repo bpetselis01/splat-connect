@@ -1,5 +1,5 @@
 // journeys: W03 W05
-import { render, screen, fireEvent } from '@testing-library/react-native'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { ToySummaryScreen } from '../../../../components/my-toys/summary-screen'
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
@@ -25,7 +25,8 @@ jest.mock('expo-router', () => {
 })
 
 const mockUseCapabilities = jest.fn()
-jest.mock('../../../../lib/capabilities', () => ({ useCapabilities: () => mockUseCapabilities() }))
+const mockInvalidate = jest.fn()
+jest.mock('../../../../lib/capabilities', () => ({ invalidateCapabilities: (...a: unknown[]) => mockInvalidate(...a), useCapabilities: () => mockUseCapabilities() }))
 
 const caps = (ledOrgs: { id: string; name: string }[] = []) => ({
   caps: {
@@ -126,6 +127,7 @@ describe('ToySummaryScreen', () => {
     render(<ToySummaryScreen id="t1" />)
     fireEvent.press(await screen.findByText('Accept'))
     expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions/tx1/accept', {})
+    await waitFor(() => expect(mockInvalidate).toHaveBeenCalledTimes(1))
     await screen.findByText('Light-up drum — listed 4 June, good condition, switch-adapted.')
     expect(screen.queryByText('Eastwood Special School')).toBeNull()
   })

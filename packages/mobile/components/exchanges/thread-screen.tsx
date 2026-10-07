@@ -30,7 +30,7 @@ import type {
 import { isOwnerSide, needsAction, actionLabel, apiMessage, printRequestExpired } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
-import { useCapabilities } from '../../lib/capabilities'
+import { invalidateCapabilities, useCapabilities } from '../../lib/capabilities'
 import { threadHref } from '../../lib/builds'
 import { Screen } from '../ui/Screen'
 import { Card } from '../ui/Card'
@@ -192,6 +192,7 @@ export function ExchangeThreadScreen({ id, startAccept = false }: { id: string; 
     try {
       const fresh = await action()
       setTx((cur) => (cur ? { ...cur, ...fresh } : cur))
+      invalidateCapabilities()
       return true
     } catch (err) {
       setError(apiMessage(err, 'Something went wrong. Please try again.'))
@@ -214,6 +215,7 @@ export function ExchangeThreadScreen({ id, startAccept = false }: { id: string; 
       // message, and the next poll replaces the whole array from the server
       // anyway, so a second round trip would buy nothing.
       setTx((cur) => (cur ? { ...cur, messages: [...cur.messages, created] } : cur))
+      invalidateCapabilities()
     } catch (err) {
       setError(apiMessage(err, 'Could not send that message. Please try again.'))
     } finally {

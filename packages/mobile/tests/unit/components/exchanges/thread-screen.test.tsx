@@ -48,7 +48,9 @@ const mockCopy = jest.fn()
 jest.mock('expo-clipboard', () => ({ setStringAsync: (...a: unknown[]) => mockCopy(...a) }))
 
 const mockUseCapabilities = jest.fn()
+const mockInvalidate = jest.fn()
 jest.mock('../../../../lib/capabilities', () => ({
+  invalidateCapabilities: (...a: unknown[]) => mockInvalidate(...a),
   useCapabilities: () => mockUseCapabilities(),
 }))
 
@@ -334,6 +336,8 @@ describe('ExchangeThreadScreen — requested, requester side', () => {
     fireEvent.press(screen.getByRole('button', { name: 'Withdraw' }))
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions/tx1/withdraw', {}))
     expect(await screen.findByText('Withdrawn')).toBeTruthy()
+    // The Me badge counts what is waiting on you, so it must be refetched in place.
+    expect(mockInvalidate).toHaveBeenCalledTimes(1)
   })
 })
 
@@ -540,6 +544,7 @@ describe('ExchangeThreadScreen — messages', () => {
       expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions/tx1/messages', { body: 'On my way.' })
     )
     expect(await screen.findByText('On my way.')).toBeTruthy()
+    expect(mockInvalidate).toHaveBeenCalledTimes(1)
   })
 
   it('holds Send until something is typed', async () => {

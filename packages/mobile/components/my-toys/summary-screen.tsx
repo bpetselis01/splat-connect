@@ -13,7 +13,7 @@ import { useFocusEffect, useRouter } from 'expo-router'
 import type { Toy, ToyTransactionSummary } from '@splat-connect/types'
 import { apiMessage, isOwnerSide } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
-import { useCapabilities } from '../../lib/capabilities'
+import { invalidateCapabilities, useCapabilities } from '../../lib/capabilities'
 import { loadOwnedToy, toySummaryLead } from '../../lib/my-toy'
 import { theme } from '../../lib/theme'
 import { Screen } from '../ui/Screen'
@@ -111,6 +111,7 @@ export function ToySummaryScreen({ id }: { id: string }) {
     try {
       await apiClient.post(`/api/toy-transactions/${t.id}/accept`, {})
       setRequests((rs) => rs.map((r) => (r.id === t.id ? { ...r, status: 'accepted' } : r)))
+      invalidateCapabilities()
     } catch (err) {
       setError(apiMessage(err, 'Could not accept that request. Please try again.'))
     } finally {

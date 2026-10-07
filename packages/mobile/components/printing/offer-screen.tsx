@@ -20,7 +20,7 @@ import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { PickupAddress, PrinterWithOwner, ToyTransaction, ToyTransactionSummary } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
-import { useCapabilities } from '../../lib/capabilities'
+import { invalidateCapabilities, useCapabilities } from '../../lib/capabilities'
 import { theme } from '../../lib/theme'
 import {
   bestMachine,
@@ -101,6 +101,7 @@ export function PrintForOthersScreen({ orgId }: { orgId?: string } = {}) {
     setError(null)
     try {
       await action()
+      invalidateCapabilities()
       after?.()
     } catch (err) {
       setError(apiMessage(err, 'That did not go through. Check your connection and try again.'))

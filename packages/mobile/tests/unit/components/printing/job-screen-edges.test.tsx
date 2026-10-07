@@ -30,7 +30,9 @@ jest.mock('expo-router', () => {
   return { useFocusEffect: (effect: () => void) => useEffect(effect, []), useRouter: () => ({ push: mockPush }) }
 })
 let mockViewer = 'family'
+const mockInvalidate = jest.fn()
 jest.mock('../../../../lib/capabilities', () => ({
+  invalidateCapabilities: (...a: unknown[]) => mockInvalidate(...a),
   useCapabilities: () => ({ caps: { profile: { id: mockViewer }, ledOrgs: [] } }),
 }))
 

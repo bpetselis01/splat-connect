@@ -19,7 +19,9 @@ jest.mock('expo-router', () => {
   const { useEffect } = jest.requireActual('react')
   return { useFocusEffect: (effect: () => void) => useEffect(effect, []), useRouter: () => ({ push: jest.fn() }) }
 })
+const mockInvalidate = jest.fn()
 jest.mock('../../../../lib/capabilities', () => ({
+  invalidateCapabilities: (...a: unknown[]) => mockInvalidate(...a),
   useCapabilities: () => ({ caps: { profile: { id: 'family' }, ledOrgs: [] } }),
 }))
 

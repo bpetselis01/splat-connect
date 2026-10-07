@@ -23,7 +23,9 @@ jest.mock('expo-router', () => {
 })
 jest.mock('expo-clipboard', () => ({ setStringAsync: jest.fn() }))
 let mockLed: { id: string }[] = []
+const mockInvalidate = jest.fn()
 jest.mock('../../../../lib/capabilities', () => ({
+  invalidateCapabilities: (...a: unknown[]) => mockInvalidate(...a),
   useCapabilities: () => ({
     caps: { profile: { id: 'viewer1', name: 'Viewer', role: 'contributor' }, isAdmin: false, ledOrgs: mockLed, unread: { total: 0 }, exchangeActions: 0 },
     loading: false,

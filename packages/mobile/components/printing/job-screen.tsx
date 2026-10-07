@@ -21,7 +21,7 @@ import type { PrinterStats, PrinterWithOwner, ToyTransaction, ToyTransactionDeta
 import { apiMessage, fitNotesLines, formatCents, isOwnerSide, plural, statsLine } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { supabase } from '../../lib/supabase'
-import { useCapabilities } from '../../lib/capabilities'
+import { invalidateCapabilities, useCapabilities } from '../../lib/capabilities'
 import { theme } from '../../lib/theme'
 import { answerByLabel, askedLabel, jobState, JOB_LABEL, JOB_TONE, RAIL, railIndex, type JobState } from '../../lib/printing'
 import { markReady, startPrint, withdrawRequest } from './actions'
@@ -119,6 +119,7 @@ export function PrintJobScreen({ id }: { id: string }) {
     try {
       const fresh = await action()
       if (fresh) setTx((cur) => (cur ? { ...cur, ...fresh } : cur))
+      invalidateCapabilities()
       return true
     } catch (err) {
       setError(apiMessage(err, 'Something went wrong. Please try again.'))
