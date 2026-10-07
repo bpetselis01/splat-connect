@@ -410,7 +410,7 @@ describe('OrgProfileScreen buttons', () => {
   })
 
   it('a thanks with no note at all is allowed', async () => {
-    serve(); mockPost.mockResolvedValue({})
+    serve(); mockPost.mockResolvedValue({ thanks_count: 3 })
     render(<OrgProfileScreen id="o1" />)
     await screen.findByText('Follow'); thank()
     fireEvent.press(screen.getByText('Send thanks'))

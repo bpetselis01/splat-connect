@@ -96,7 +96,8 @@ describe('OrgProfileScreen', () => {
 
   it('follows, and signs a thanks with a first name', async () => {
     load(relationship())
-    mockPost.mockResolvedValue({})
+    // Two families thanked since this page loaded (2 then): the count is the server's, not 2 + 1.
+    mockPost.mockResolvedValue({ thanks_count: 4 })
     render(<OrgProfileScreen id="o1" />)
     fireEvent.press(await screen.findByText('Follow'))
     await waitFor(() => expect(screen.getByText('Following')).toBeTruthy())
@@ -113,7 +114,7 @@ describe('OrgProfileScreen', () => {
         show_note: true,
       })
     )
-    expect(await screen.findByText('Thanked 3 times')).toBeTruthy()
+    expect(await screen.findByText('Thanked 4 times')).toBeTruthy()
   })
 
   it('unfollows from Following with a DELETE and goes back to Follow', async () => {
