@@ -50,7 +50,8 @@ test('an aborted detail request shows the retry message', async ({ page }) => {
   await page.route(`**/api/public/tutorials/${id}`, (route) => route.abort())
   await page.goto(`/guides/${id}`)
 
-  await expect(page.getByText("Couldn't load tutorial. Please try again.")).toBeVisible()
+  // An aborted fetch never reached the API, so it reads as offline.
+  await expect(page.getByText('You seem to be offline.')).toBeVisible()
 })
 
 test('an unknown tutorial id shows the load-failure state', async ({ page }) => {
