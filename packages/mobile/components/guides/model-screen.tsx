@@ -126,7 +126,12 @@ export function ModelScreen({ id, file }: { id: string; file: string }) {
 
       {files?.length ? (
         <View style={[styles.foot, { paddingBottom: insets.bottom + theme.spacing(3) }]}>
-          <Button label="Ask someone to print" onPress={() => router.push({ pathname: '/printing', params: { guide: id } })} />
+          <Button label="Ask someone to print" onPress={() => {
+            // This screen is a fullScreenModal: a screen pushed from it opens
+            // underneath on iOS and never shows. Close it, then push.
+            router.back()
+            router.push({ pathname: '/printing', params: { guide: id } })
+          }} />
         </View>
       ) : null}
     </View>

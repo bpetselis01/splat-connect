@@ -89,7 +89,11 @@ it('✕ goes back; Ask someone to print opens the printer finder for this guide'
   await screen.findByText('Lts base · lts_base.stl')
   fireEvent.press(screen.getByRole('button', { name: 'Close 3D view' }))
   expect(mockBack).toHaveBeenCalled()
+  mockBack.mockClear()
   fireEvent.press(screen.getByRole('button', { name: 'Ask someone to print' }))
+  // The viewer is a fullScreenModal: a screen pushed from inside it opens
+  // underneath on iOS, so it must close first (seen on a device, guide-page.yaml).
+  expect(mockBack).toHaveBeenCalledTimes(1)
   expect(mockPush).toHaveBeenCalledWith({ pathname: '/printing', params: { guide: 'g' } })
 })
 
