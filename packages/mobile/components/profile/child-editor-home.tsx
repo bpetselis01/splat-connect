@@ -10,6 +10,7 @@
 // wrist and forearm…) are gone: those columns stay in the database but nothing
 // asks for them now (APP 3 minimisation). These are plain-language preferences for
 // ranking guides, never a clinical assessment — see docs/REGULATORY-CHANGES.md.
+import { logFailure } from '../../lib/log'
 import { ScrollView, View, Text, Linking, StyleSheet } from 'react-native'
 import { Stack, useRouter } from 'expo-router'
 import { CHILD_MEASURES, CHILD_QUESTIONS, ONE_HAND_LABEL } from '@splat-connect/types'
@@ -56,7 +57,7 @@ export function ChildEditorHome({ childId }: { childId: string }) {
         .delete(`/api/child-profiles/${childId}`)
         .then(() => router.back())
         .catch((err) => {
-          console.error('[ChildEditorHome] delete failed:', err)
+          logFailure('[ChildEditorHome] delete failed:', err)
           notify('Could not delete this profile', 'Please try again.')
         })
     })

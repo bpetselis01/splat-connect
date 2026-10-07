@@ -10,6 +10,7 @@
  * One POST makes one job per printer, sharing a group (074). The first to
  * accept takes it and the API withdraws the rest.
  */
+import { logFailure } from '../../lib/log'
 import { useEffect, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native'
 import { useRouter } from 'expo-router'
@@ -77,7 +78,7 @@ export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; p
         setCredit(c)
       })
       .catch((err) => {
-        console.error('[RequestPrintScreen] load failed:', err)
+        logFailure('[RequestPrintScreen] load failed:', err)
         setLoadFailed(true)
       })
     // printerIds is a fresh array per render of the route; its string is stable.

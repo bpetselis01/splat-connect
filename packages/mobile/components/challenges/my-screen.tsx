@@ -5,6 +5,7 @@
 // same independent failure states.
 //
 // Title comes from the native header (app/(my)/_layout.tsx).
+import { logFailure } from '../../lib/log'
 import { useCallback, useEffect, useState } from 'react'
 import { View, ScrollView, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
@@ -150,7 +151,7 @@ export function MyChallengesScreen() {
           if (!ignore) set({ items, failed: false })
         })
         .catch((err) => {
-          console.error(`[MyChallengesScreen] ${path} failed:`, err)
+          logFailure(`[MyChallengesScreen] ${path} failed:`, err)
           if (!ignore) set({ items: [], failed: true })
         })
 

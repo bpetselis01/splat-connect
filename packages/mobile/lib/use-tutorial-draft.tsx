@@ -12,6 +12,7 @@
 // The debounce/serialise shape is lib/use-child-profile.ts's, including its
 // 250ms: writes queue on one promise chain so a second save always sees the
 // updated_at the first established, rather than racing it into a 400.
+import { logFailure } from './log'
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { apiMessage } from '@splat-connect/types'
 import type { BuyLink, Part, Tool, ToolGetBy, TutorialSafetyNote, TutorialStep, TutorialWithDetails } from '@splat-connect/types'
@@ -114,7 +115,7 @@ function useTutorialDraft(id: string): TutorialDraft {
         }
       })
       .catch((err) => {
-        console.error('[useTutorialDraft] fetch failed:', err)
+        logFailure('[useTutorialDraft] fetch failed:', err)
         if (!ignore) setLoadError(true)
       })
       .finally(() => {
@@ -217,7 +218,7 @@ function useTutorialDraft(id: string): TutorialDraft {
         )
       })
       .catch((err) => {
-        console.error('[useTutorialDraft] save failed:', err)
+        logFailure('[useTutorialDraft] save failed:', err)
         // The optimistic value stays on screen. Reverting it would throw away
         // typing the contributor can still see and would have to redo.
         // Nor does the server forget it: what failed goes back in the queue

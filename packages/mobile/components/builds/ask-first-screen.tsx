@@ -6,6 +6,7 @@
  * Claiming is the same one tap as on the board, and the thread moves into the
  * build thread (POST /:id/claim copies it).
  */
+import { logFailure } from '../../lib/log'
 import { useCallback, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
@@ -39,7 +40,7 @@ export function AskFirstScreen({ id }: { id: string }) {
       setData(await apiClient.get<BuildQuestions>(`/api/toy-transactions/${id}/questions`))
       setFailed(false)
     } catch (err) {
-      console.error('[AskFirstScreen] questions fetch failed:', err)
+      logFailure('[AskFirstScreen] questions fetch failed:', err)
       setFailed(true)
     }
   }, [id])

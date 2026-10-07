@@ -1,4 +1,5 @@
 // packages/mobile/components/guides/showcase-screen.tsx
+import { logFailure } from '../../lib/log'
 import { useEffect, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet, Image } from 'react-native'
 import { useRouter } from 'expo-router'
@@ -103,7 +104,7 @@ export function ShowcaseScreen({ kind, id }: { kind: ShowcaseKind; id: string })
         if (!ignore) setProfile(data)
       })
       .catch((err) => {
-        console.error('[ShowcaseScreen] profile fetch failed:', err)
+        logFailure('[ShowcaseScreen] profile fetch failed:', err)
         if (!ignore) setError(true)
       })
       .finally(() => {

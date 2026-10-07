@@ -13,6 +13,7 @@
  * Distance is measured from the maker's profile postcode to the family's (099);
  * without one, the chips ask for it.
  */
+import { logFailure } from '../../lib/log'
 import { useCallback, useRef, useState } from 'react'
 import { View, Text, ScrollView, Pressable, RefreshControl, StyleSheet } from 'react-native'
 import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
@@ -108,7 +109,7 @@ export function MakersWantedScreen() {
       setBoardMore(rows.length === BOARD_PAGE)
       setLoadFailed(false)
     } catch (err) {
-      console.error('[MakersWantedScreen] builds-board fetch failed:', err)
+      logFailure('[MakersWantedScreen] builds-board fetch failed:', err)
       if (ticket === boardTicket.current) setLoadFailed(true)
     }
   }, [])
@@ -132,7 +133,7 @@ export function MakersWantedScreen() {
       )
       setLoadFailed(false)
     } catch (err) {
-      console.error('[MakersWantedScreen] open-builds fetch failed:', err)
+      logFailure('[MakersWantedScreen] open-builds fetch failed:', err)
       setLoadFailed(true)
     } finally {
       setLoading(false)

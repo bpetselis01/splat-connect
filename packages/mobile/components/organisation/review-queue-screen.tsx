@@ -9,6 +9,7 @@
 // stands behind. Same fetch, second filter.
 //
 // Title comes from the native header (app/(my)/_layout.tsx: "Review queue").
+import { logFailure } from '../../lib/log'
 import { useCallback, useEffect, useState } from 'react'
 import { View, ScrollView, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
@@ -92,7 +93,7 @@ export function ReviewQueueScreen() {
         if (!ignore) setTutorials(data)
       })
       .catch((err) => {
-        console.error('[ReviewQueueScreen] tutorials fetch failed:', err)
+        logFailure('[ReviewQueueScreen] tutorials fetch failed:', err)
         if (!ignore) setError(true)
       })
       .finally(() => {

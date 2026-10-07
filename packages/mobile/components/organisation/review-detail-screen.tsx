@@ -10,6 +10,7 @@
 // — the same single-answer posture as web, where the URL had already chosen.
 //
 // Title comes from the native header (app/(my)/_layout.tsx).
+import { logFailure } from '../../lib/log'
 import { useCallback, useRef, useState } from 'react'
 import { View, Text, Image, ScrollView, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
@@ -85,7 +86,7 @@ export function ReviewDetailScreen({ tutorialId }: { tutorialId: string }) {
         setBackings(orgs)
       }
     } catch (err) {
-      console.error('[ReviewDetailScreen] tutorial fetch failed:', err)
+      logFailure('[ReviewDetailScreen] tutorial fetch failed:', err)
     } finally {
       setLoading(false)
     }

@@ -1,6 +1,7 @@
 // packages/mobile/components/explore/learn-hub.tsx
 // Title comes from the native header (app/(tabs)/explore/_layout.tsx), so
 // this doesn't repeat it — same convention as about-screen.tsx.
+import { logFailure } from '../../lib/log'
 import { useEffect, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import type { LearnCourse } from '@splat-connect/types'
@@ -49,7 +50,7 @@ export function LearnHub() {
       .then((c) => {
         if (!ignore) setCourse(c)
       })
-      .catch((err) => console.error('[LearnHub] course fetch failed:', err))
+      .catch((err) => logFailure('[LearnHub] course fetch failed:', err))
     return () => {
       ignore = true
     }

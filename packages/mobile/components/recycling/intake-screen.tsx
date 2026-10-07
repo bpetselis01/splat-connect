@@ -16,6 +16,7 @@
  *
  * The first led organisation, as web has it. Title from app/(my)/_layout.tsx.
  */
+import { logFailure } from '../../lib/log'
 import { useCallback, useState } from 'react'
 import { View, Text, ScrollView, TextInput, Image, StyleSheet } from 'react-native'
 import { useFocusEffect } from 'expo-router'
@@ -65,7 +66,7 @@ export function IntakeScreen() {
       setNames(found)
       setLoadError(false)
     } catch (err) {
-      console.error('[IntakeScreen] load failed:', err)
+      logFailure('[IntakeScreen] load failed:', err)
       setLoadError(true)
     } finally {
       setLoading(false)

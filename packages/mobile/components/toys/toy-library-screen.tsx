@@ -4,6 +4,7 @@
 // the two read as one app: a hero (title, one line, mascot), search with one
 // filter button that opens the full filter page, the chosen filters as tags,
 // then cards carrying availability, a plain-language condition grade and the holder.
+import { logFailure } from '../../lib/log'
 import { useEffect, useState } from 'react'
 import { View, Text, FlatList, RefreshControl, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
@@ -107,7 +108,7 @@ export function ToyLibraryScreen() {
         if (!ignore) setToys(data)
       })
       .catch((err) => {
-        console.error('[ToyLibraryScreen] toy fetch failed:', err)
+        logFailure('[ToyLibraryScreen] toy fetch failed:', err)
         if (!ignore) setError("Couldn't load toys.")
       })
       .finally(() => {

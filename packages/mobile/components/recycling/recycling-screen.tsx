@@ -15,6 +15,7 @@
  * Every field the board draws on a recycler's card has a column (059, 113);
  * `recycling_note` stays as free text below them.
  */
+import { logFailure } from '../../lib/log'
 import { useCallback, useState } from 'react'
 import { View, Text, ScrollView, Pressable, TextInput, Image, StyleSheet } from 'react-native'
 import { useFocusEffect } from 'expo-router'
@@ -112,7 +113,7 @@ export function RecyclingScreen() {
       setCredit(c)
       setLoadError(false)
     } catch (err) {
-      console.error('[RecyclingScreen] load failed:', err)
+      logFailure('[RecyclingScreen] load failed:', err)
       setLoadError(true)
     } finally {
       setLoading(false)
@@ -127,7 +128,7 @@ export function RecyclingScreen() {
       )
       setDrops((cur) => cur.map((x) => (x.id === d.id ? { ...x, ...fresh } : x)))
     } catch (err) {
-      console.error('[RecyclingScreen] cancel failed:', err)
+      logFailure('[RecyclingScreen] cancel failed:', err)
       load()
     }
   }

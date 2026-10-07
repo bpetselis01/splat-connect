@@ -1,4 +1,5 @@
 // packages/mobile/components/profile-screen.tsx
+import { logFailure } from '../lib/log'
 import { useState, useEffect, useRef, type ComponentProps } from 'react'
 import { View, Text, ScrollView, StyleSheet, Linking } from 'react-native'
 import { useRouter } from 'expo-router'
@@ -74,7 +75,7 @@ export function ProfileScreen() {
       saved.current.name = name
       setNameState('saved')
     } catch (err) {
-      console.error('[ProfileScreen] rename failed:', err)
+      logFailure('[ProfileScreen] rename failed:', err)
       setNameState('failed')
     }
   }
@@ -88,7 +89,7 @@ export function ProfileScreen() {
       await apiClient.patch('/api/contributors/me', { occupation: occupation || null })
       saved.current.occupation = occupation
     } catch (err) {
-      console.error('[ProfileScreen] occupation save failed:', err)
+      logFailure('[ProfileScreen] occupation save failed:', err)
       setOccupationError(apiMessage(err, 'Could not save what you do. Please try again.'))
     }
   }
@@ -108,7 +109,7 @@ export function ProfileScreen() {
       await apiClient.patch('/api/contributors/me', { pickup_postcode: postcode || null })
       saved.current.pickup_postcode = postcode
     } catch (err) {
-      console.error('[ProfileScreen] postcode save failed:', err)
+      logFailure('[ProfileScreen] postcode save failed:', err)
       setPostcodeError(apiMessage(err, 'Could not save your postcode. Please try again.'))
     }
   }

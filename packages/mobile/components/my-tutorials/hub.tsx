@@ -7,6 +7,7 @@
 // prose — so the one screen that knew what was wrong could not take you to
 // where it was fixed. Here every gap getMissingFields reports is a row you can
 // tap, and Submit sits under the count that gates it.
+import { logFailure } from '../../lib/log'
 import { useCallback, useState, type ComponentProps } from 'react'
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
@@ -25,6 +26,7 @@ import {
 } from '../../lib/tutorial-sections'
 import { relativeTime } from '../../lib/notifications'
 import { theme } from '../../lib/theme'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import { Screen } from '../ui/Screen'
 import { Button } from '../ui/Button'
 import { ListSection, Pill, StagePill } from '../list/list-kit'
@@ -72,6 +74,7 @@ export interface FromPdf {
 
 export function TutorialHub({ id, justCreated, fromPdf }: { id: string; justCreated?: boolean; fromPdf?: FromPdf }) {
   const router = useRouter()
+  const bottom = useBottomClearance()
   const { tutorial, loading, loadError, saveNow, saveState, saveError, reload } = useDraft()
   const [menuOpen, setMenuOpen] = useState(false)
   const [noteDismissed, setNoteDismissed] = useState(false)
@@ -147,7 +150,7 @@ export function TutorialHub({ id, justCreated, fromPdf }: { id: string; justCrea
         await apiClient.delete(`/api/tutorials/${id}`)
         router.replace('/tutorials')
       } catch (err) {
-        console.error('[TutorialHub] delete failed:', err)
+        logFailure('[TutorialHub] delete failed:', err)
         notify('Could not delete', 'The draft is still here. Please try again.')
       }
     })
@@ -330,7 +333,7 @@ export function TutorialHub({ id, justCreated, fromPdf }: { id: string; justCrea
         </View>
       </ScrollView>
 
-      <View style={styles.footer}>
+      <View style={[styles.footer, { paddingBottom: bottom }]}>
         <ErrorRow message={saveError} />
         <View style={styles.footerButtons}>
           {/* The reader's view of your own guide, before you ask anyone to
@@ -433,7 +436,7 @@ const styles = StyleSheet.create({
   },
   rowTitle: { fontFamily: theme.fonts.black, fontSize: theme.type.body, color: theme.colors.ink },
   moreHeading: { marginTop: theme.spacing(5) },
-  footer: { paddingTop: theme.spacing(3), paddingBottom: theme.spacing(2) },
+  footer: { paddingTop: theme.spacing(3) },
   footerButtons: { flexDirection: 'row', gap: theme.spacing(3) },
   footerButton: { flex: 1, borderRadius: theme.radii.pill, minHeight: 50 },
 

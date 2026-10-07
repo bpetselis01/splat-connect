@@ -7,6 +7,7 @@
  * Reloaded on focus: the editor one push away changes the name and condition
  * the lead reads.
  */
+import { logFailure } from '../../lib/log'
 import { useCallback, useState } from 'react'
 import { ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
@@ -49,7 +50,7 @@ export function ToySummaryScreen({ id }: { id: string }) {
           setState('ready')
         })
         .catch((err) => {
-          console.error('[ToySummaryScreen] load failed:', err)
+          logFailure('[ToySummaryScreen] load failed:', err)
           if (!ignore) setState('error')
         })
       return () => {

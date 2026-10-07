@@ -9,6 +9,7 @@
  * The dashed "New request" row explains where requests start instead of
  * offering a button — a request needs a guide's parts, so it cannot start here.
  */
+import { logFailure } from '../../lib/log'
 import { useCallback, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
@@ -49,7 +50,7 @@ export function PrintRequestsScreen() {
           setError(false)
         })
         .catch((err) => {
-          console.error('[PrintRequestsScreen] fetch failed:', err)
+          logFailure('[PrintRequestsScreen] fetch failed:', err)
           setError(true)
         })
     }, [])

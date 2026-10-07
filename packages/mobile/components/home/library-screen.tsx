@@ -3,6 +3,7 @@
 // The Guides tab (spec 2026-10-05-library-redesign): a hero (title, one line,
 // mascot), search with one filter button that opens the full filter page, the
 // chosen filters as removable tags, then the heading and row cards.
+import { logFailure } from '../../lib/log'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { View, Text, FlatList, RefreshControl, StyleSheet } from 'react-native'
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
@@ -116,7 +117,7 @@ export function LibraryScreen() {
         if (!ignore) setTutorials(data)
       })
       .catch((err) => {
-        console.error('[LibraryScreen] tutorial fetch failed:', err)
+        logFailure('[LibraryScreen] tutorial fetch failed:', err)
         if (!ignore) setError("Couldn't load tutorials.")
       })
       .finally(() => {

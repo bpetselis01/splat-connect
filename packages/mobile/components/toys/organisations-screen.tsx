@@ -1,4 +1,5 @@
 // packages/mobile/components/toys/organisations-screen.tsx
+import { logFailure } from '../../lib/log'
 import { useEffect, useState } from 'react'
 import { View, Text, Image, FlatList, RefreshControl, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
@@ -87,7 +88,7 @@ export function OrganisationsScreen() {
         if (!ignore) setOrgs(data)
       })
       .catch((err) => {
-        console.error('[OrganisationsScreen] org fetch failed:', err)
+        logFailure('[OrganisationsScreen] org fetch failed:', err)
         if (!ignore) setError("Couldn't load organisations.")
       })
       .finally(() => {

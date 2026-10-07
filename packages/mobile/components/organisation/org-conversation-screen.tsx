@@ -10,6 +10,7 @@
  * family wrote to the organisation and should see that it answered. On a
  * leader's side colleagues keep their own names.
  */
+import { logFailure } from '../../lib/log'
 import { useCallback, useRef, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native'
 import { useFocusEffect } from 'expo-router'
@@ -17,6 +18,7 @@ import type { OrgThread } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { useCapabilities } from '../../lib/capabilities'
 import { theme } from '../../lib/theme'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import { Screen } from '../ui/Screen'
 import { Card } from '../ui/Card'
 import { Button } from '../ui/Button'
@@ -49,7 +51,7 @@ export function OrgConversationScreen(props: { orgId: string; orgName?: string }
       setThread(await apiClient.get<OrgThread | null>(readPath))
       setFailed(false)
     } catch (err) {
-      console.error('[OrgConversationScreen] load failed:', err)
+      logFailure('[OrgConversationScreen] load failed:', err)
       setFailed(true)
     } finally {
       setLoading(false)
@@ -127,7 +129,7 @@ export function OrgConversationScreen(props: { orgId: string; orgName?: string }
             ))}
           </View>
         </ScrollView>
-        <View style={styles.footer}>
+        <View style={[styles.footer, { paddingBottom: bottom }]}>
           <ErrorRow message={error} />
           <View style={styles.composer}>
             <View style={styles.flex}>

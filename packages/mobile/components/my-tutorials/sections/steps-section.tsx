@@ -7,6 +7,7 @@
 //
 // Optional: not in getMissingFields, because guides written before steps
 // existed have none and the PDF still carries the guide.
+import { logFailure } from '../../../lib/log'
 import { useRef, useState } from 'react'
 import { View, Text, Image, ScrollView, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
@@ -84,7 +85,7 @@ function StepsEditor() {
       const at = rowsRef.current.findIndex((r) => r.k === k)
       if (at >= 0) update(at, { photo_url: url })
     } catch (err) {
-      console.error('[StepsSection] photo upload failed:', err)
+      logFailure('[StepsSection] photo upload failed:', err)
       setLocalError('Could not upload the photo. Please try again.')
     } finally {
       setUploading(null)

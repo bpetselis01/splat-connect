@@ -13,6 +13,7 @@
  * sign-in. A leader of the org sees none of them — they would be following and
  * thanking themselves — and their organisation's messages are on Me.
  */
+import { logFailure } from '../../lib/log'
 import { useCallback, useEffect, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet, Image, Pressable } from 'react-native'
 import { useRouter } from 'expo-router'
@@ -94,7 +95,7 @@ export function OrgProfileScreen({ id }: { id: string }) {
         setMe(rel)
       })
       .catch((err) => {
-        console.error('[OrgProfileScreen] fetch failed:', err)
+        logFailure('[OrgProfileScreen] fetch failed:', err)
         if (!ignore) setError(true)
       })
       .finally(() => {

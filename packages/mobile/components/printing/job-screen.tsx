@@ -13,6 +13,7 @@
  * have no API behind them, so they are not drawn. The dashed "switch to the
  * printer's side" row is a prototype shortcut, not a feature.
  */
+import { logFailure } from '../../lib/log'
 import { useCallback, useRef, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Image, Pressable, type TextInput } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
@@ -97,7 +98,7 @@ export function PrintJobScreen({ id }: { id: string }) {
           .then(({ data }) => setPhotoUrl(data?.signedUrl ?? null), () => {})
       }
     } catch (err) {
-      console.error('[PrintJobScreen] fetch failed:', err)
+      logFailure('[PrintJobScreen] fetch failed:', err)
       if (generation.current === at) setError(LOAD_ERROR)
     } finally {
       setLoading(false)

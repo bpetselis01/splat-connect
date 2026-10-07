@@ -13,6 +13,7 @@
 // - packages/api/src/routes/public.ts: GET /api/public/challenges/:id
 // - packages/api/src/routes/toy-ideas.ts: join / leave / messages
 // - packages/web/components/challenge-thread.tsx: the copy below is its copy
+import { logFailure } from '../../lib/log'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   View,
@@ -218,7 +219,7 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
     } catch (err) {
       // Silent: the brief is still on screen and the next tick retries. A
       // banner on every dropped poll would cry wolf on a flaky train.
-      console.error('[ChallengeDetailScreen] message fetch failed:', err)
+      logFailure('[ChallengeDetailScreen] message fetch failed:', err)
     }
   }, [id])
 

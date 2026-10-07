@@ -10,6 +10,7 @@
  *   API refuses one without them. Seeded from the profile's pickup suburb.
  * - No parts price. Guides do not store one, so "roughly $30" would be made up.
  */
+import { logFailure } from '../../lib/log'
 import { useEffect, useState } from 'react'
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
@@ -50,7 +51,7 @@ export function AskForBuildScreen() {
       .get<Tutorial[]>('/api/public/tutorials')
       .then(setTutorials)
       .catch((err) => {
-        console.error('[AskForBuildScreen] tutorials fetch failed:', err)
+        logFailure('[AskForBuildScreen] tutorials fetch failed:', err)
         setError("Couldn't load the guides. Close this and try again.")
       })
   }, [])

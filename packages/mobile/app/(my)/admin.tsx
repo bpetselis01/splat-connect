@@ -2,6 +2,7 @@
 // The board's Admin (MB is_admin): six count cards from one call. Review
 // tables don't fit a phone, so each card opens its queue on the web, where
 // the admin is signed in as themselves.
+import { logFailure } from '../../lib/log'
 import { useEffect, useState } from 'react'
 import { View, Text, Linking, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
@@ -42,7 +43,7 @@ function AdminCards() {
       .then((c) => {
         if (!ignore) setCounts(c)
       })
-      .catch((err) => console.error('[MyAdmin] counts failed:', err))
+      .catch((err) => logFailure('[MyAdmin] counts failed:', err))
     return () => {
       ignore = true
     }

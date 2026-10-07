@@ -11,6 +11,7 @@
 //
 // Mobile's half of web's app/notifications/page.tsx + notifications-list.tsx.
 // The copy and the routing live in lib/notifications.ts.
+import { logFailure } from '../../lib/log'
 import { useCallback, useEffect, useState } from 'react'
 import { View, Text, ScrollView, RefreshControl, StyleSheet } from 'react-native'
 import Animated, { FadeInDown } from 'react-native-reanimated'
@@ -170,18 +171,18 @@ export function InboxScreen({
     if (!refreshing) setLoading(true)
     Promise.all([
       apiClient.get<Notification[]>('/api/notifications/me').catch((err) => {
-        console.error('[InboxScreen] notifications fetch failed:', err)
+        logFailure('[InboxScreen] notifications fetch failed:', err)
         return [] as Notification[]
       }),
       // Each of the other two degrades to empty on its own: losing the
       // exchanges list still leaves their notifications (drawn as plain rows
       // below), and losing invites costs two buttons on one row.
       apiClient.get<ToyTransactionSummary[]>('/api/toy-transactions').catch((err) => {
-        console.error('[InboxScreen] exchanges fetch failed:', err)
+        logFailure('[InboxScreen] exchanges fetch failed:', err)
         return [] as ToyTransactionSummary[]
       }),
       apiClient.get<TutorialCollaboratorInvite[]>('/api/collaborators/me/invites').catch((err) => {
-        console.error('[InboxScreen] invites fetch failed:', err)
+        logFailure('[InboxScreen] invites fetch failed:', err)
         return [] as TutorialCollaboratorInvite[]
       }),
     ]).then(([rows, txs, pending]) => {
@@ -236,7 +237,7 @@ export function InboxScreen({
       ids.map((id) =>
         apiClient
           .patch(`/api/notifications/${id}`, { read: true })
-          .catch((err) => console.error('[InboxScreen] mark read failed:', err))
+          .catch((err) => logFailure('[InboxScreen] mark read failed:', err))
       )
     ).then(invalidateCapabilities)
   }
@@ -264,7 +265,7 @@ export function InboxScreen({
     try {
       await apiClient.post('/api/notifications/me/read', { bucket })
     } catch (err) {
-      console.error('[InboxScreen] bucket mark-read failed:', err)
+      logFailure('[InboxScreen] bucket mark-read failed:', err)
     }
     invalidateCapabilities()
   }
@@ -275,7 +276,7 @@ export function InboxScreen({
       await apiClient.post(`/api/collaborators/invites/${inviteId}/${answer}`, {})
       refetch()
     } catch (err) {
-      console.error(`[InboxScreen] invite ${answer} failed:`, err)
+      logFailure(`[InboxScreen] invite ${answer} failed:`, err)
     } finally {
       setBusyInvite(null)
     }

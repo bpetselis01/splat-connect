@@ -1,4 +1,5 @@
 // packages/mobile/components/my-toys/editor.tsx
+import { logFailure } from '../../lib/log'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { View, Text, ScrollView, Image, Pressable, Switch, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
@@ -11,6 +12,7 @@ import { loadOwnedToy } from '../../lib/my-toy'
 import { confirmDestructive, notify } from '../../lib/confirm'
 import { uploadFile } from '../../lib/upload'
 import { theme } from '../../lib/theme'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import { useCapabilities } from '../../lib/capabilities'
 import { Screen } from '../ui/Screen'
 import { ScreenHeader } from '../ui/ScreenHeader'
@@ -106,7 +108,7 @@ export function Editor({ id }: { id: string }) {
         setTransactions(tx)
       })
       .catch((err) => {
-        console.error('[Editor] toy fetch failed:', err)
+        logFailure('[Editor] toy fetch failed:', err)
         if (!ignore) setLoadError(true)
       })
       .finally(() => {
@@ -217,7 +219,7 @@ export function Editor({ id }: { id: string }) {
       })
       setToy((prev) => (prev ? { ...prev, ...updated } : updated))
     } catch (err) {
-      console.error('[Editor] save details failed:', err)
+      logFailure('[Editor] save details failed:', err)
       setSaveError(apiMessage(err, 'Could not save details. Please try again.'))
     } finally {
       setSaving(false)
@@ -304,7 +306,7 @@ export function Editor({ id }: { id: string }) {
       // local state, the way the switch gallery already was.
       await savePhotos({ photo_urls: [...currentPhotoUrls, ...urls] })
     } catch (err) {
-      console.error('[Editor] photo upload failed:', err)
+      logFailure('[Editor] photo upload failed:', err)
       setPhotosError('Could not upload the photo. Please try again.')
     } finally {
       setPhotosBusy(false)
@@ -325,7 +327,7 @@ export function Editor({ id }: { id: string }) {
         ...(currentSwitchPhotoUrl === url ? { switch_photo_url: null } : {}),
       })
     } catch (err) {
-      console.error('[Editor] photo remove failed:', err)
+      logFailure('[Editor] photo remove failed:', err)
       setPhotosError('Could not remove that photo. Please try again.')
     } finally {
       setPhotosBusy(false)
@@ -339,7 +341,7 @@ export function Editor({ id }: { id: string }) {
     try {
       await savePhotos({ photo_urls: [url, ...currentPhotoUrls.filter((u) => u !== url)] })
     } catch (err) {
-      console.error('[Editor] cover change failed:', err)
+      logFailure('[Editor] cover change failed:', err)
       setPhotosError('Could not change the cover. Please try again.')
     } finally {
       setPhotosBusy(false)
@@ -353,7 +355,7 @@ export function Editor({ id }: { id: string }) {
     try {
       await savePhotos({ switch_photo_url: url })
     } catch (err) {
-      console.error('[Editor] switch tag failed:', err)
+      logFailure('[Editor] switch tag failed:', err)
       setPhotosError('Could not save that. Please try again.')
     } finally {
       setPhotosBusy(false)
@@ -366,7 +368,7 @@ export function Editor({ id }: { id: string }) {
       const updated = await apiClient.patch<Toy>(`/api/toys/${id}`, { offer_type: offerType })
       setToy((prev) => (prev ? { ...prev, ...updated } : updated))
     } catch (err) {
-      console.error('[Editor] save offer type failed:', err)
+      logFailure('[Editor] save offer type failed:', err)
       // Shares publishError/its ErrorRow below rather than a state of its
       // own — both are Review-step failures on the same toy, and a chip that
       // silently declined to switch otherwise reads as "nothing happened".
@@ -381,7 +383,7 @@ export function Editor({ id }: { id: string }) {
       const updated = await apiClient.patch<Toy>(`/api/toys/${id}/publish`, {})
       setToy((prev) => (prev ? { ...prev, ...updated } : updated))
     } catch (err) {
-      console.error('[Editor] publish failed:', err)
+      logFailure('[Editor] publish failed:', err)
       setPublishError(apiMessage(err, 'Could not publish this toy. Please try again.'))
     } finally {
       setPublishing(false)
@@ -394,7 +396,7 @@ export function Editor({ id }: { id: string }) {
         await apiClient.delete(`/api/toys/${id}`)
         router.dismissTo(shelfHref)
       } catch (err) {
-        console.error('[Editor] delete failed:', err)
+        logFailure('[Editor] delete failed:', err)
         notify('Could not delete this toy', apiMessage(err, 'Please try again.'))
       }
     })
@@ -659,7 +661,7 @@ export function Editor({ id }: { id: string }) {
         )}
       </ScrollView>
 
-      <View style={styles.footer}>
+      <View style={[styles.footer, { paddingBottom: bottom }]}>
         <Button label="Delete toy" variant="danger" onPress={handleDelete} />
       </View>
     </Screen>

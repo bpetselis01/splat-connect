@@ -14,6 +14,7 @@
  * address to accept (the API copies it onto the job); it comes from the
  * profile when that is complete, and is asked for inline when it is not.
  */
+import { logFailure } from '../../lib/log'
 import { useCallback, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
@@ -84,7 +85,7 @@ export function PrintForOthersScreen({ orgId }: { orgId?: string } = {}) {
       setJobs(onMine)
       setLoadFailed(false)
     } catch (err) {
-      console.error('[PrintForOthersScreen] load failed:', err)
+      logFailure('[PrintForOthersScreen] load failed:', err)
       setLoadFailed(true)
     }
   }, [orgId])

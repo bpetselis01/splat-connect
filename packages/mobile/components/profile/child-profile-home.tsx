@@ -6,6 +6,7 @@
 // per child, "+ Add a child", each row into that child's own editor. The row's
 // second line is childSummary from @splat-connect/types ("Age 6 · Right hand ·
 // Light press"), the same line web's account page shows, or "Not set yet".
+import { logFailure } from '../../lib/log'
 import { useCallback, useEffect, useState } from 'react'
 import { View, Text, StyleSheet, ActivityIndicator, Linking } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
@@ -52,7 +53,7 @@ export function ChildProfileHome() {
         }
       })
       .catch((err) => {
-        console.error('[ChildProfileHome] children fetch failed:', err)
+        logFailure('[ChildProfileHome] children fetch failed:', err)
         // Never fold into the empty state: telling a parent their children are
         // gone when the endpoint fell over is a lie about their own family.
         if (!ignore) setError("Couldn't load your child profiles — try again.")
@@ -82,7 +83,7 @@ export function ChildProfileHome() {
       const created = await apiClient.post<ChildProfile>('/api/child-profiles', {})
       router.push({ pathname: '/account/child/[id]', params: { id: created.id } })
     } catch (err) {
-      console.error('[ChildProfileHome] create failed:', err)
+      logFailure('[ChildProfileHome] create failed:', err)
       setError('Could not add a child profile. Please try again.')
     } finally {
       setBusy(false)

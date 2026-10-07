@@ -1,4 +1,5 @@
 // packages/mobile/app/(tabs)/guides/new.tsx
+import { logFailure } from '../../../lib/log'
 import { useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
@@ -103,7 +104,7 @@ export default function NewGuideRoute() {
       const photo = cover ? (await uploadFile('/api/upload/photo', id, cover)).url : null
       await apiClient.patch(`/api/tutorials/${id}`, { updated_at, ...(photo ? { photo_urls: [photo] } : {}), ...fields })
     } catch (err) {
-      console.error('[NewGuideRoute] extras not saved:', err)
+      logFailure('[NewGuideRoute] extras not saved:', err)
     }
   }
 

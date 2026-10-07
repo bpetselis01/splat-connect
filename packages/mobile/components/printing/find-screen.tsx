@@ -9,6 +9,7 @@
  * nothing to send yet, and the screen says where to start instead of offering
  * a Pick that leads nowhere.
  */
+import { logFailure } from '../../lib/log'
 import { useEffect, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
@@ -72,7 +73,7 @@ export function FindPrinterScreen({ guideId, printWith }: { guideId?: string; pr
         }
       })
       .catch((err) => {
-        console.error('[FindPrinterScreen] load failed:', err)
+        logFailure('[FindPrinterScreen] load failed:', err)
         setError(true)
       })
   }, [guideId, postcode, printWith])
