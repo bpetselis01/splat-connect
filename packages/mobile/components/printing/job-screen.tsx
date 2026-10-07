@@ -24,6 +24,7 @@ import { apiClient } from '../../lib/api-client'
 import { supabase } from '../../lib/supabase'
 import { invalidateCapabilities, useCapabilities } from '../../lib/capabilities'
 import { theme } from '../../lib/theme'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import { answerByLabel, askedLabel, jobState, JOB_LABEL, JOB_TONE, RAIL, railIndex, type JobState } from '../../lib/printing'
 import { markReady, startPrint, withdrawRequest } from './actions'
 import { Screen } from '../ui/Screen'
@@ -52,6 +53,7 @@ function askedWhen(iso: string): string {
 }
 
 export function PrintJobScreen({ id }: { id: string }) {
+  const bottom = useBottomClearance()
   const router = useRouter()
   const { caps } = useCapabilities()
   const [tx, setTx] = useState<ToyTransactionDetail | null>(null)
@@ -269,7 +271,7 @@ export function PrintJobScreen({ id }: { id: string }) {
           </View>
         </ScrollView>
 
-        <View style={styles.footer}>
+        <View testID="job-footer" style={[styles.footer, { paddingBottom: bottom }]}>
           <ErrorRow message={error} />
           {live ? (
             <View style={styles.composer}>

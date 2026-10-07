@@ -19,6 +19,7 @@ import type { PrintDelivery, PrintFitNotes, PrinterWithOwner, RecyclingCredit, S
 import { apiMessage, costRange, formatCents, PRINT_COLOURS, PRINT_FIT_QUESTIONS, printCostCents, printSettingsLine } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import { formatMinutes, partsMeta } from '../../lib/printing'
 import { Screen } from '../ui/Screen'
 import { Button } from '../ui/Button'
@@ -47,6 +48,7 @@ const SWATCH: Record<string, string | undefined> = {
 }
 
 export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; printerIds: string[] }) {
+  const bottom = useBottomClearance()
   const router = useRouter()
   const [guide, setGuide] = useState<Guide | null>(null)
   const [printers, setPrinters] = useState<PrinterWithOwner[]>([])
@@ -342,7 +344,7 @@ export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; p
         </Pressable>
       </ScrollView>
 
-      <View style={styles.footer}>
+      <View testID="request-footer" style={[styles.footer, { paddingBottom: bottom }]}>
         <ErrorRow message={error} />
         <Button label="Send request" disabled={!valid} loading={busy} onPress={send} />
       </View>
@@ -415,6 +417,6 @@ const styles = StyleSheet.create({
   footer: {
     borderTopWidth: theme.border.hairline,
     borderTopColor: theme.colors.border,
-    paddingVertical: theme.spacing(3),
+    paddingTop: theme.spacing(3),
   },
 })

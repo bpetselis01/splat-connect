@@ -3,6 +3,7 @@
 // The job page shows only the card for where the job is, and which side is
 // looking decides what that card asks of them.
 // journeys: R04 R09 R10 R11
+import { CLEARANCE, paddingBottomOf } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { PrintJobScreen } from '../../../../components/printing/job-screen'
 
@@ -134,4 +135,13 @@ it('puts the spent recycling credit on the family’s cost card', async () => {
   serve(job({ status: 'accepted', owner_org_id: 'north', owner_id: null, print_credit_grams: 120 }))
   render(<PrintJobScreen id="j1" />)
   expect(await screen.findByText('Your recycling credit (120 g)')).toBeTruthy()
+})
+
+jest.mock('react-native-safe-area-context', () => require('../../bottom-spacing').insetMock())
+
+it('lifts the message composer one gutter above the home indicator', async () => {
+  serve(job({}))
+  render(<PrintJobScreen id="j1" />)
+  await screen.findByText('Asked 2 printers.')
+  expect(paddingBottomOf(screen.getByTestId('job-footer'))).toBe(CLEARANCE)
 })

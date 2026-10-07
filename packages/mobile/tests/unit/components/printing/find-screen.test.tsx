@@ -1,5 +1,6 @@
 // packages/mobile/tests/unit/components/printing/find-screen.test.tsx
 // journeys: R01 R02
+import { CLEARANCE, paddingBottomOf } from '../../bottom-spacing'
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { FindPrinterScreen } from '../../../../components/printing/find-screen'
 
@@ -174,4 +175,12 @@ it('carries the organisation through Find a guide when no guide is given', async
   render(<FindPrinterScreen printWith="org1" />)
   fireEvent.press(await screen.findByText('Find a guide'))
   expect(mockPush).toHaveBeenCalledWith({ pathname: '/guides', params: { printWith: 'org1' } })
+})
+
+jest.mock('react-native-safe-area-context', () => require('../../bottom-spacing').insetMock())
+
+it('lifts the Ask button one gutter above the home indicator', async () => {
+  render(<FindPrinterScreen guideId="g1" />)
+  await screen.findByText('Switch mount')
+  expect(paddingBottomOf(screen.getByTestId('find-footer'))).toBe(CLEARANCE)
 })

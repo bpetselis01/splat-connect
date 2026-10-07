@@ -20,6 +20,7 @@ import { apiClient } from '../../lib/api-client'
 import { useCapabilities } from '../../lib/capabilities'
 import { nearParam } from '../../lib/near'
 import { theme } from '../../lib/theme'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import {
   availability,
   isOpen,
@@ -42,6 +43,7 @@ type Guide = Tutorial & { stl_files: StlFile[] }
 const TINTS = [theme.colors.mintSoft, theme.colors.accentLight, theme.colors.honeySoft, theme.colors.violetSoft]
 
 export function FindPrinterScreen({ guideId, printWith }: { guideId?: string; printWith?: string }) {
+  const bottom = useBottomClearance()
   const router = useRouter()
   const { caps, loading: capsLoading } = useCapabilities()
   const [printers, setPrinters] = useState<PrinterWithOwner[] | null>(null)
@@ -260,7 +262,7 @@ export function FindPrinterScreen({ guideId, printWith }: { guideId?: string; pr
       </ScrollView>
 
       {canPick ? (
-        <View style={styles.footer}>
+        <View testID="find-footer" style={[styles.footer, { paddingBottom: bottom }]}>
           <Button
             label={pickButtonLabel(picks.length)}
             disabled={picks.length === 0}
@@ -336,6 +338,6 @@ const styles = StyleSheet.create({
   footer: {
     borderTopWidth: theme.border.hairline,
     borderTopColor: theme.colors.border,
-    paddingVertical: theme.spacing(3),
+    paddingTop: theme.spacing(3),
   },
 })

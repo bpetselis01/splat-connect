@@ -1,4 +1,5 @@
 // journeys: R17
+import { CLEARANCE, paddingBottomOf } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { AddPrinterScreen } from '../../../../components/printing/add-printer-screen'
 
@@ -45,4 +46,11 @@ it('refuses a rate that is not dollars, and sends nothing', () => {
   fireEvent.press(screen.getByText('Add printer'))
   expect(screen.getByText('Filament cost is dollars per gram, like 0.12.')).toBeTruthy()
   expect(mockPost).not.toHaveBeenCalled()
+})
+
+jest.mock('react-native-safe-area-context', () => require('../../bottom-spacing').insetMock())
+
+it('lifts Add printer one gutter above the home indicator', () => {
+  render(<AddPrinterScreen />)
+  expect(paddingBottomOf(screen.getByTestId('add-printer-footer'))).toBe(CLEARANCE)
 })
