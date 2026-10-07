@@ -10,6 +10,7 @@
     "db:check": "bash scripts/check-migration-drift.sh",
     "db:guards": "bash scripts/check-schema-guards.sh",
     "test:journeys": "node scripts/journeys/check.mjs",
+    "test:journeys:strict": "node scripts/journeys/check.mjs --strict",
     "test:journeys:write": "node scripts/journeys/render.mjs",
     "test:journeys:unit": "node --test 'scripts/journeys/*.test.mjs'"
   },

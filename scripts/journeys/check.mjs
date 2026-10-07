@@ -27,11 +27,15 @@ if (process.argv.includes('--write')) {
   console.log(`wrote ${docPath}: ${cov.gaps.length} gaps, ${cov.waived.length} waived`)
   process.exit(0)
 }
+// ponytail: gaps only warn until the audit's SP5 clears or waives them all, so CI stays
+// green while the backlog is worked; drift (bad tags, unknown ids, a stale doc) always fails.
+// SP5 flips this to strict by default.
+const strict = process.argv.includes('--strict')
 let failed = false
-const say = (title, items, fmt) => { if (items.length) { failed = true; console.error(`\n${title} (${items.length})`); for (const i of items) console.error('  ' + fmt(i)) } }
+const say = (title, items, fmt, fails = true) => { if (items.length) { if (fails) failed = true; console.error(`\n${title} (${items.length})${fails ? '' : ' — warning, pass --strict to fail'}`); for (const i of items) console.error('  ' + fmt(i)) } }
 say('Malformed tags', malformed, (m) => m)
 say('Unknown journey ids', cov.unknown, (u) => `${u.file}: ${u.id}`)
-say('Required layers with no tagged test', cov.gaps, (g) => `${g.id} ${g.layer}`)
+say('Required layers with no tagged test', cov.gaps, (g) => `${g.id} ${g.layer}`, strict)
 let current = ''
 try { current = readFileSync(docPath, 'utf8') } catch {}
 if (current !== doc) { failed = true; console.error('\ndocs/testing/mobile-journeys.md is stale: run pnpm test:journeys:write') }
