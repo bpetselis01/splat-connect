@@ -1,4 +1,5 @@
 // journeys: W03 W05
+import { CLEARANCE, scrollPaddings } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { ToySummaryScreen } from '../../../../components/my-toys/summary-screen'
 
@@ -173,3 +174,11 @@ describe('ToySummaryScreen', () => {
   })
 })
 
+jest.mock('react-native-safe-area-context', () => require('../../bottom-spacing').insetMock())
+
+it('ends its scroll one gutter above the home indicator', async () => {
+  serve({ txs: [request()] })
+  render(<ToySummaryScreen id="t1" />)
+  await screen.findByText('Edit listing')
+  expect(scrollPaddings(screen)).toEqual([CLEARANCE])
+})

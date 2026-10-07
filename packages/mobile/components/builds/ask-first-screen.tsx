@@ -14,6 +14,7 @@ import { apiMessage, type BuildQuestions } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { useCapabilities } from '../../lib/capabilities'
 import { theme } from '../../lib/theme'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import { Screen } from '../ui/Screen'
 import { Card } from '../ui/Card'
 import { Chip } from '../ui/Chip'
@@ -25,6 +26,7 @@ import { EmptyState } from '../ui/EmptyState'
 import { ErrorRow } from '../ui/ErrorRow'
 
 export function AskFirstScreen({ id }: { id: string }) {
+  const bottom = useBottomClearance()
   const router = useRouter()
   const { caps } = useCapabilities()
   const viewerId = caps?.profile.id ?? null
@@ -100,7 +102,7 @@ export function AskFirstScreen({ id }: { id: string }) {
 
   return (
     <Screen>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottom }]} keyboardShouldPersistTaps="handled">
         <Card style={styles.stage}>
           <Text style={styles.kicker}>Asking first</Text>
           <Text style={styles.title}>Not claimed yet</Text>

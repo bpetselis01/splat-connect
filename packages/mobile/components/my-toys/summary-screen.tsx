@@ -17,6 +17,7 @@ import { apiClient } from '../../lib/api-client'
 import { invalidateCapabilities, useCapabilities } from '../../lib/capabilities'
 import { loadOwnedToy, toySummaryLead } from '../../lib/my-toy'
 import { theme } from '../../lib/theme'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import { Screen } from '../ui/Screen'
 import { Button } from '../ui/Button'
 import { SkeletonRow } from '../ui/Skeleton'
@@ -26,6 +27,7 @@ import { TextField } from '../ui/TextField'
 import { ListIntro, ListRow, Pill } from '../list/list-kit'
 
 export function ToySummaryScreen({ id }: { id: string }) {
+  const bottom = useBottomClearance()
   const router = useRouter()
   const { caps } = useCapabilities()
   const [toy, setToy] = useState<Toy | null>(null)
@@ -138,7 +140,7 @@ export function ToySummaryScreen({ id }: { id: string }) {
 
   return (
     <Screen>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.content, { paddingBottom: bottom }]}>
         <ListIntro lead={toySummaryLead(toy, open.length)} />
         <View style={styles.rows}>
           {open.map((t) => (

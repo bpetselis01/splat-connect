@@ -12,6 +12,7 @@ import { apiMessage, CONTACT_PREFS, type ContactPref, type ToyIdea, type ToyIdea
 import { apiClient } from '../../lib/api-client'
 import { pickAndUploadPhoto, type UploadResult } from '../../lib/upload'
 import { theme } from '../../lib/theme'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import { useCapabilities } from '../../lib/capabilities'
 import { Screen } from '../ui/Screen'
 import { Card } from '../ui/Card'
@@ -61,6 +62,7 @@ type Draft = Record<FieldKey, string>
 const EMPTY: Draft = { title: '', summary: '', description: '' }
 
 export function SubmitIdeaScreen({ from }: { from?: string } = {}) {
+  const bottom = useBottomClearance()
   const router = useRouter()
   const { caps } = useCapabilities()
   const [draft, setDraft] = useState<Draft>(EMPTY)
@@ -162,7 +164,7 @@ export function SubmitIdeaScreen({ from }: { from?: string } = {}) {
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Screen>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.content, { paddingBottom: bottom }]}>
           {/* The board's words, and web's (submit-an-idea/page.tsx). */}
           <Text style={styles.intro}>
             Suggest a toy worth adapting, even if you cannot build it. An admin reads every idea.

@@ -1,4 +1,5 @@
 // journeys: K03
+import { CLEARANCE, scrollPaddings } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { AskFirstScreen } from '../../../../components/builds/ask-first-screen'
 
@@ -69,4 +70,12 @@ describe('AskFirstScreen', () => {
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions/b1/questions', { body: 'Yes', maker_id: 'm2' }))
     expect(screen.queryByRole('button', { name: "I'll build this" })).toBeNull()
   })
+})
+
+jest.mock('react-native-safe-area-context', () => require('../../bottom-spacing').insetMock())
+
+it('ends its scroll one gutter above the home indicator, not a fixed 24', async () => {
+  render(<AskFirstScreen id="b1" />)
+  await screen.findByText('Not claimed yet')
+  expect(scrollPaddings(screen)).toEqual([CLEARANCE])
 })
