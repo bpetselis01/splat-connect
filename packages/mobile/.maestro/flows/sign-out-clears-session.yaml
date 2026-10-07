@@ -13,40 +13,12 @@ appId: com.splatconnect.mobile
 - clearState
 - runFlow: ../subflows/launch.yaml
 # On iOS clearState wipes app data but NOT the Keychain, where the session
-# lives, so a prior run can leave this launch already signed in. Sign in only
-# when Welcome is actually showing.
-- runFlow:
-    when:
-      visible:
-        id: "welcome-sign-in"
-    commands:
-      - tapOn:
-          id: "welcome-sign-in"
-      # Addressed by testID rather than text: TextField renders its label as a
-      # sibling <Text> carrying the same string as the input's accessibilityLabel.
-      - tapOn:
-          id: "email-input"
-      - inputText: ${DEVICE_EMAIL}
-      - tapOn: "Welcome back"  # the keyboard covers the password field
-      - tapOn:
-          id: "password-input"
-      - inputText: ${DEVICE_PASSWORD}
-      # hideKeyboard fails on the iOS 26 simulator; a tap outside a field
-      # dismisses it on device and simulator alike (ScrollView default).
-      - tapOn: "Welcome back"
-      - tapOn:
-          id: "auth-submit"
-      - tapOn:
-          text: "Not Now"
-          optional: true
+# lives, so a prior run can leave this launch already signed in; sign-in.yaml
+# signs in only when Welcome is actually showing.
+- runFlow: ../subflows/sign-in.yaml
 
 # Sign Out lives on Account, a row in the Me tab's Account group. The tab's
 # label carries a count while anything is waiting, so match it with a suffix.
-# Signed in lands on Home; let it settle before reaching for the tab bar.
-- extendedWaitUntil:
-    visible:
-      text: "Guides"
-    timeout: 15000
 - runFlow: ../subflows/dismiss-dev-toast.yaml
 - tapOn:
     text: "Me(, .*)?"
