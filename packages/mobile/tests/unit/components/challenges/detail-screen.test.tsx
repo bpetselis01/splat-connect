@@ -1,5 +1,6 @@
 // packages/mobile/tests/unit/components/challenges/detail-screen.test.tsx
 // journeys: C02 C03 C05 C06 C07 C08 C10 C11
+import { CLEARANCE, paddingBottomOf } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { Alert } from 'react-native'
 import { shortDate } from '../../../../components/challenges/challenge-status'
@@ -646,5 +647,17 @@ describe('ChallengeDetailScreen recents', () => {
       id: 'c1', kind: 'challenge', title: 'A switch a toddler can hit', subtitle: 'Challenge · 2 joined', badge: 'Live',
       href: '/explore/challenges/c1',
     })
+  })
+})
+
+jest.mock('react-native-safe-area-context', () => require('../../bottom-spacing').insetMock())
+
+describe('ChallengeDetailScreen — bottom spacing', () => {
+  it('lifts the message composer one gutter above the home indicator', async () => {
+    respond(joinedDetail(), [])
+    render(<ChallengeDetailScreen id="c1" />)
+    await openThread()
+    await screen.findByLabelText('Message this challenge')
+    expect(paddingBottomOf(screen.getByTestId('challenge-footer'))).toBe(CLEARANCE)
   })
 })

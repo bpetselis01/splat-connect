@@ -33,6 +33,7 @@ import type { ToyIdea, ToyIdeaDetail, ToyIdeaMessage, ContactPref } from '@splat
 import { apiClient } from '../../lib/api-client'
 import { confirmDestructive } from '../../lib/confirm'
 import { theme } from '../../lib/theme'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import { useSaves } from '../../lib/saves'
 import { recordRecent } from '../../lib/recents'
 import { useCapabilities } from '../../lib/capabilities'
@@ -102,6 +103,7 @@ function TabHead({ id }: { id: Tab }) {
 }
 
 export function ChallengeDetailScreen({ id }: { id: string }) {
+  const bottom = useBottomClearance()
   const router = useRouter()
   const saves = useSaves()
   const { caps, loading: capsLoading } = useCapabilities()
@@ -735,7 +737,7 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
       </ScrollView>
 
       {canRead && tab === 'thread' ? (
-        <View style={styles.footer}>
+        <View testID="challenge-footer" style={[styles.footer, { paddingBottom: bottom }]}>
           <View style={styles.composer}>
             {/* TextField owns its own outer wrapper, so the flex that makes the
                 input take the row's spare width goes on a view around it. */}
