@@ -94,6 +94,7 @@ it('✕ goes back; Ask someone to print opens the printer finder for this guide'
   // The viewer is a fullScreenModal: a screen pushed from inside it opens
   // underneath on iOS, so it must close first (seen on a device, guide-page.yaml).
   expect(mockBack).toHaveBeenCalledTimes(1)
+  expect(mockBack.mock.invocationCallOrder[0]).toBeLessThan(mockPush.mock.invocationCallOrder[0])
   expect(mockPush).toHaveBeenCalledWith({ pathname: '/printing', params: { guide: 'g' } })
 })
 

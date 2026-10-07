@@ -6,6 +6,16 @@ import { stackScreenOptions } from '../../lib/nav-options'
 import { useAuthGate } from '../../lib/use-auth-gate'
 import { CloseButton } from '../../components/ui/CloseButton'
 
+// Opened from a guide (its 3D viewer or the Files tab): ✕ pops back to that
+// guide, still mounted underneath. The tab-reset ✕ rebuilds the whole stack
+// from blank and flashed a white screen on the phone before the guide returned.
+export function finderIndexOptions(params?: { guide?: string }) {
+  return {
+    title: 'Find a printer',
+    ...(params?.guide ? { headerLeft: () => <CloseButton /> } : {}),
+  }
+}
+
 export default function PrintingLayout() {
   // (my), (tabs), (onboarding) and printing are root siblings and each screen is
   // its own deep link, so every one of them runs the gate.
@@ -15,7 +25,7 @@ export default function PrintingLayout() {
 
   return (
     <Stack screenOptions={{ ...stackScreenOptions, headerBackTitle: 'Back' }}>
-      <Stack.Screen name="index" options={{ title: 'Find a printer' }} />
+      <Stack.Screen name="index" options={({ route }) => finderIndexOptions(route.params)} />
       {/* A modal, not a push: a one-shot form over the printers you picked,
           dismissed with an ✕ rather than gone back from. */}
       <Stack.Screen
