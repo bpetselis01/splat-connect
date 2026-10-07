@@ -1,0 +1,78 @@
+# journeys: B04
+# Posting feedback from build mode's done screen. The FeedbackSheet is a
+# transparent Modal presented over build mode, itself a fullScreenModal: a modal
+# over a modal, which react-native-web draws as one layer and which iOS drops if
+# presented while the other is still animating. Only a device runs that.
+# tests/e2e/ covers the same post on the web build; this proves the native
+# presentation and that the row really lands.
+#
+# The guide is seeded by scripts/provision-device-parent.mjs. DEVICE_EMAIL,
+# DEVICE_PASSWORD and DEVICE_GUIDE_ID come from `maestro test --env` — see
+# sign-out-clears-session.yaml for why they carry no env: defaults here.
+appId: com.splatconnect.mobile
+---
+- clearState
+- runFlow: ../subflows/launch.yaml
+- runFlow: ../subflows/sign-in.yaml
+- runFlow: ../subflows/open-device-guide.yaml
+
+# Walk build mode to its done screen.
+# A dev-client toast can sit over the buttons at the foot of the page.
+- runFlow: ../subflows/dismiss-dev-toast.yaml
+- extendedWaitUntil:
+    visible:
+      text: "Start building|Build it again"
+    timeout: 15000
+- tapOn:
+    text: "Start building|Build it again"
+# The dev toast can land on the button just as it is tapped; if build mode did
+# not open, clear the toast and tap again.
+- runFlow:
+    when:
+      notVisible: "Start step 1"
+    commands:
+      - runFlow: ../subflows/dismiss-dev-toast.yaml
+      - tapOn:
+          text: "Start building|Build it again"
+- tapOn:
+    text: "Start step 1"
+- tapOn:
+    text: "Next"
+- tapOn:
+    text: "Done"
+- assertVisible:
+    text: "You built it!"
+
+# The sheet over build mode: pick a step, write, post.
+- tapOn:
+    text: "Leave feedback"
+- assertVisible:
+    text: "How did it go?"
+- assertVisible:
+    text: "Post"
+- tapOn:
+    text: "Step 2"
+- tapOn:
+    text: "Your note.*"
+- inputText: "Maestro device note on step two"
+# A tap on the sheet's own title puts the keyboard away without closing it.
+- tapOn:
+    text: "How did it go?"
+- tapOn:
+    text: "Post"
+- assertVisible:
+    text: "Feedback posted"
+
+# The row is the real result: the confirmation alone would show on a 500.
+- runScript:
+    file: ../scripts/assert-row.js
+    env:
+      TABLE: tutorial_notes
+      QUERY: tutorial_id=eq.${DEVICE_GUIDE_ID}&step_position=eq.2&body=eq.Maestro%20device%20note%20on%20step%20two
+
+# "See it on the guide" closes build mode onto the Feedback tab, the new note
+# in view.
+- tapOn:
+    text: "See it on the guide"
+- assertVisible:
+    text: "Maestro device note on step two"

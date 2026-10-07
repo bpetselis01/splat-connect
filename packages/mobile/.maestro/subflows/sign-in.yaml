@@ -1,0 +1,42 @@
+appId: com.splatconnect.mobile
+---
+# Signs in as the provisioned account, or does nothing when the Keychain
+# already holds a session (clearState does not wipe it on iOS). Waits for
+# either landing first: `when: visible` does not retry, and checking before the
+# app has drawn skips the sign-in. Needs DEVICE_EMAIL and DEVICE_PASSWORD.
+- extendedWaitUntil:
+    visible:
+      text: "Guides|I already have an account"
+    timeout: 20000
+- runFlow:
+    when:
+      visible:
+        id: "welcome-sign-in"
+    commands:
+      - tapOn:
+          id: "welcome-sign-in"
+      - tapOn:
+          id: "email-input"
+      - inputText: ${DEVICE_EMAIL}
+      - tapOn: "Welcome back"  # the keyboard covers the password field
+      - tapOn:
+          id: "password-input"
+      - inputText: ${DEVICE_PASSWORD}
+      # hideKeyboard fails on the iOS 26 simulator; a tap outside a field
+      # dismisses it on device and simulator alike (ScrollView default).
+      - tapOn: "Welcome back"
+      - tapOn:
+          id: "auth-submit"
+      # iOS offers to save the password a beat after sign-in and the alert owns
+      # the hierarchy until dismissed: wait for it (or for Home) before tapping.
+      - extendedWaitUntil:
+          visible:
+            text: "Not Now|Guides"
+          timeout: 20000
+      - tapOn:
+          text: "Not Now"
+          optional: true
+- extendedWaitUntil:
+    visible:
+      text: "Guides"
+    timeout: 20000

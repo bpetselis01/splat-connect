@@ -1,11 +1,15 @@
 appId: com.splatconnect.mobile
 ---
-# A dev-client build floats a LogBox "Open debugger to view warnings." toast
-# over the tab bar, and a tap on "Me" lands on it instead. A release build never
-# shows it, so this is a no-op there. The X sits at the toast's right end.
+# A dev-client build floats a LogBox ".*Open debugger to view warnings.*" toast
+# over the tab bar and the foot of every page, and it arrives a beat after the
+# screen draws. A release build never shows it, so this is a no-op there (after
+# the optional wait below runs out). The X sits at the toast's right end.
+- assertVisible:
+    text: ".*Open debugger to view warnings.*"
+    optional: true
 - runFlow:
     when:
-      visible: "Open debugger to view warnings."
+      visible: ".*Open debugger to view warnings.*"
     commands:
       - tapOn:
           point: "92%,93%"
