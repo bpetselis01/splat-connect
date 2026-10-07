@@ -7,7 +7,11 @@ import { Editor } from '../../../../components/my-toys/editor'
 import { NAMES } from '../../../special-strings'
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
-jest.mock('expo-router', () => ({ useRouter: () => ({ back: jest.fn(), push: jest.fn(), dismissTo: jest.fn() }) }))
+let mockFocus: () => (() => void) | void
+jest.mock('expo-router', () => {
+  const { useEffect } = jest.requireActual('react')
+  return { useRouter: () => ({ back: jest.fn(), push: jest.fn(), dismissTo: jest.fn() }), useFocusEffect: (e: () => (() => void) | void) => { mockFocus = e; useEffect(e, []) } }
+})
 jest.mock('../../../../lib/auth-context', () => ({ useAuth: jest.fn() }))
 const mockGet = jest.fn()
 const mockPatch = jest.fn()

@@ -1,7 +1,7 @@
 // packages/mobile/components/my-toys/editor.tsx
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { View, Text, ScrollView, Image, Pressable, Switch, StyleSheet } from 'react-native'
-import { useRouter } from 'expo-router'
+import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import * as ImagePicker from 'expo-image-picker'
 import type { OfferType, Toy, ToyTransactionSummary } from '@splat-connect/types'
@@ -124,6 +124,28 @@ export function Editor({ id }: { id: string }) {
       ignore = true
     }
   }, [id])
+
+  // The offers row is a mount-time list, and the requests it counts get
+  // answered on other screens: coming back refetches just the transactions.
+  const focusedOnce = useRef(false)
+  useFocusEffect(
+    useCallback(() => {
+      if (!focusedOnce.current) {
+        focusedOnce.current = true
+        return
+      }
+      let ignore = false
+      apiClient
+        .get<ToyTransactionSummary[]>('/api/toy-transactions')
+        .then((tx) => {
+          if (!ignore) setTransactions(tx)
+        })
+        .catch(() => {})
+      return () => {
+        ignore = true
+      }
+    }, [])
+  )
 
   if (loading) {
     return (

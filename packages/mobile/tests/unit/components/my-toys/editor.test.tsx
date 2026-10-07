@@ -1,7 +1,7 @@
 // packages/mobile/tests/unit/components/my-toys/editor.test.tsx
 // journeys: W06 W07 W08 W09 W10 W12
 import { Alert } from 'react-native'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { Editor } from '../../../../components/my-toys/editor'
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
@@ -9,7 +9,11 @@ jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 const mockBack = jest.fn()
 const mockDismissTo = jest.fn()
 const mockPush = jest.fn()
-jest.mock('expo-router', () => ({ useRouter: () => ({ back: mockBack, push: mockPush, dismissTo: mockDismissTo }) }))
+let mockFocus: () => (() => void) | void
+jest.mock('expo-router', () => {
+  const { useEffect } = jest.requireActual('react')
+  return { useRouter: () => ({ back: mockBack, push: mockPush, dismissTo: mockDismissTo }), useFocusEffect: (e: () => (() => void) | void) => { mockFocus = e; useEffect(e, []) } }
+})
 
 // The editor pulls ErrorRow in from components/auth-screen, which imports
 // useAuth from lib/auth-context — and that module's real implementation
@@ -477,6 +481,18 @@ describe('Editor', () => {
       await screen.findByRole('tab', { name: 'Details' })
       fireEvent.press(screen.getByRole('tab', { name: 'Review' }))
 
+      expect(await screen.findByText('1 offer on this toy · Waiting on you')).toBeTruthy()
+    })
+
+    it('refetches the offers when the screen takes focus again, so an answered request leaves the count', async () => {
+      mockGetRouting([toy({})], [tx({ id: 'tx1' }), tx({ id: 'tx4' })])
+      render(<Editor id="toy1" />)
+      await screen.findByRole('tab', { name: 'Details' })
+      fireEvent.press(screen.getByRole('tab', { name: 'Review' }))
+      expect(await screen.findByText('2 offers on this toy · Waiting on you')).toBeTruthy()
+
+      mockGetRouting([toy({})], [tx({ id: 'tx1' })])
+      await act(async () => { mockFocus() })
       expect(await screen.findByText('1 offer on this toy · Waiting on you')).toBeTruthy()
     })
 
