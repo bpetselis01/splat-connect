@@ -2,7 +2,11 @@ appId: com.splatconnect.mobile
 ---
 # Opens the seeded guide (DEVICE_GUIDE_TITLE) from the library by searching for
 # it: a long-lived database holds hundreds of guides, so the seeded one is
-# rarely on the first screen. Starts from Home.
+# rarely on the first screen. The app may restore whichever tab was last open,
+# so go Home first (its Guides shortcut is the way in).
+- runFlow: dismiss-dev-toast.yaml
+- tapOn:
+    text: "Home"
 - tapOn:
     text: "Guides"
 - assertVisible:
