@@ -113,6 +113,12 @@ describe('linkFor', () => {
     expect(linkFor(notification({ type: 'idea_approved', idea_id: 'i1' }))).toBe('/explore/challenges/i1')
   })
 
+  it('keeps an invite in the inbox rather than opening an editor the invitee is not on (S18)', () => {
+    expect(linkFor(notification({ type: 'collaborator_invited', tutorial_id: 't1' }))).toBe('/inbox')
+    // The other collaborator events still open the guide for someone already on it.
+    expect(linkFor(notification({ type: 'collaborator_accepted', tutorial_id: 't1' }))).toBe('/tutorials/t1')
+  })
+
   it('stays put when a row names nothing to open', () => {
     expect(linkFor(notification({ type: 'idea_approved' }))).toBe('/inbox')
   })
@@ -133,6 +139,8 @@ describe('linkFor', () => {
         org_story_id: type === 'org_story_published' ? 's1' : null,
         org_id: type === 'org_thanked' ? 'o1' : null,
       })
+      // An invite's destination is the inbox itself, where Accept / Decline live.
+      if (type === 'collaborator_invited') continue
       expect(linkFor(n)).not.toBe('/inbox')
     }
   })

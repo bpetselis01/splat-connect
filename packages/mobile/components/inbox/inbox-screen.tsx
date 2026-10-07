@@ -243,7 +243,9 @@ export function InboxScreen({
 
   function open(n: Notification) {
     if (n.read_at === null) markRead([n.id])
-    router.push(linkFor(n))
+    // '/inbox' is "nowhere better": already here, so there is nothing to push.
+    const href = linkFor(n)
+    if (href !== '/inbox') router.push(href)
   }
 
   function openThread(tx: ToyTransactionSummary) {

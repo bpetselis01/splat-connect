@@ -288,6 +288,17 @@ describe('InboxScreen', () => {
     )
   })
 
+  it('tapping an invite row marks it read but does not open the editor (S18)', async () => {
+    respond(
+      [notification({ id: 'n1', type: 'collaborator_invited', tutorial_id: 't1', tutorial_title: 'Bubble machine', toy_transaction_id: null })],
+      [{ id: 'inv1', tutorial_id: 't1', status: 'pending' }]
+    )
+    render(<InboxScreen />)
+    fireEvent.press(await screen.findByText('Sam invited you to collaborate on "Bubble machine"'))
+    await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/api/notifications/n1', { read: true }))
+    expect(mockPush).not.toHaveBeenCalled()
+  })
+
   it('declines an invite through the same route', async () => {
     respond(
       [
