@@ -1,4 +1,5 @@
 // journeys: L18 L20 L21 L22 L30
+import { CLEARANCE, scrollPaddings } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { TextInput } from 'react-native'
 import { OrgPublishScreen } from '../../../../components/organisation/org-publish-screen'
@@ -297,5 +298,14 @@ describe('OrgNewsScreen', () => {
     render(<OrgNewsScreen kind="event" id="x1" />)
     expect(await screen.findByText('That is no longer published.')).toBeTruthy()
     expect(mockReplace).not.toHaveBeenCalled()
+  })
+})
+
+jest.mock('react-native-safe-area-context', () => require('../../bottom-spacing').insetMock())
+
+describe('StoryFormScreen — bottom spacing', () => {
+  it('ends its scroll one gutter above the home indicator', () => {
+    render(<StoryFormScreen />)
+    expect(scrollPaddings(screen)).toEqual([CLEARANCE])
   })
 })

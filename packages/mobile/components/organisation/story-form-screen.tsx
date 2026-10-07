@@ -17,6 +17,7 @@ import { apiMessage, STORY_KINDS, STORY_KIND_LABEL, readMinutes, type StoryKind 
 import { apiClient } from '../../lib/api-client'
 import { useCapabilities } from '../../lib/capabilities'
 import { theme } from '../../lib/theme'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import { Screen } from '../ui/Screen'
 import { Chip } from '../ui/Chip'
 import { Button } from '../ui/Button'
@@ -28,6 +29,7 @@ import { ListSection } from '../list/list-kit'
 const KINDS = (Object.keys(STORY_KINDS) as StoryKind[]).filter((k) => k !== 'announcement')
 
 export function StoryFormScreen() {
+  const bottom = useBottomClearance()
   const router = useRouter()
   const { caps } = useCapabilities()
   const org = caps?.ledOrgs[0]
@@ -81,7 +83,7 @@ export function StoryFormScreen() {
 
   return (
     <Screen>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottom }]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <Text style={styles.lede}>
           One thing that happened, told plainly. The best ones are short, name the toy, and let the family speak in their
           own words.

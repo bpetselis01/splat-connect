@@ -32,6 +32,7 @@ import {
 import { apiClient } from '../../lib/api-client'
 import { useCapabilities } from '../../lib/capabilities'
 import { theme } from '../../lib/theme'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import { Screen } from '../ui/Screen'
 import { Chip } from '../ui/Chip'
 import { Button } from '../ui/Button'
@@ -67,6 +68,7 @@ export function localDate(date: string, time: string): Date | null {
 const hourToday = (hour: number) => new Date(new Date().setHours(hour, 0, 0, 0))
 
 export function EventFormScreen() {
+  const bottom = useBottomClearance()
   const router = useRouter()
   const { caps } = useCapabilities()
   const org = caps?.ledOrgs[0]
@@ -175,7 +177,7 @@ export function EventFormScreen() {
 
   return (
     <Screen>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottom }]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <Text style={styles.lede}>
           Families decide from four things: what it is, when, where, and whether it is for them. Fill those and it is
           enough to publish.
