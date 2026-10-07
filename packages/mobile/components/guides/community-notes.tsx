@@ -99,12 +99,17 @@ export function CommunityNotes({ tutorialId, guideTitle, authorName, steps, note
 
   // A reload can empty the chosen filter (the fix was unpinned) and a hand-off
   // can target a note the filter hides; either way fall back to All.
+  // `filter` is read through a ref so the person's own chip tap never re-runs
+  // this: only new notes or a new highlight do.
+  const filterRef = useRef(filter)
+  filterRef.current = filter
   useEffect(() => {
+    const filter = filterRef.current
     const matches = (n: GuideNote) =>
       filter === 'all' ? true : filter === 'fixes' ? !!n.pinned_at : filter === 'missing' ? isMissing(n, steps.length) : n.step_position === filter
     const target = highlightId ? notes.find((n) => n.id === highlightId) : undefined
     if (filter !== 'all' && (!notes.some(matches) || (target && !matches(target)))) setFilter('all')
-  }, [notes, highlightId, filter, steps.length])
+  }, [notes, highlightId, steps.length])
 
   async function act(path: string, done: string, method: 'post' | 'delete' = 'post') {
     setMenuFor(null)

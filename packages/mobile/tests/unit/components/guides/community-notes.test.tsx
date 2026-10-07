@@ -161,3 +161,11 @@ it('falls back to All when the highlighted note is outside the chosen step', () 
   expect(screen.getByTestId('note-row-b')).toBeTruthy()
   expect(screen.getByText('Cap was tight.')).toBeTruthy()
 })
+
+it('keeps the Fixes chip the person tapped while a hand-off highlight is still set', () => {
+  const notes = [note({ id: 'a', pinned_at: 'x', pinned_by_name: 'Mei', body: 'Tin both leads first.' }), note({ id: 'b', body: 'Second step tip.' })]
+  render(<CommunityNotes {...props} notes={notes as never} highlightId="b" />)
+  fireEvent.press(screen.getByTestId('feedback-filter-fixes'))
+  expect(screen.getByText('Tin both leads first.')).toBeTruthy()
+  expect(screen.queryByText('Second step tip.')).toBeNull()
+})
