@@ -166,6 +166,7 @@ export function ProfileScreen() {
                 maxLength={60}
                 defaultValue={profile?.occupation ?? ''}
                 onEndEditing={(e) => void saveOccupation(e.nativeEvent.text)}
+                onSubmitEditing={(e) => void saveOccupation(e.nativeEvent.text)}
               />
               {occupationError ? <Text accessibilityLiveRegion="polite" style={styles.nameStatus}>{occupationError}</Text> : null}
               <TextField

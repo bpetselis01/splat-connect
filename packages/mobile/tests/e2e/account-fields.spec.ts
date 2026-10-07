@@ -1,12 +1,33 @@
-// journeys: A12 Z08 Z10
+// journeys: A12 Z02 Z08 Z10
 import { test, expect, type Page } from '@playwright/test'
 import { adminClient, signIn, signInAsNewContributor, openChildProfile } from './helpers'
 import { createUserWithoutTerms, idAfter } from './family-fixtures'
 
-// The Account screen: the terms gate's Sign out, the web links, and deleting a
-// child profile. "What you do" (Z02) saves on onEndEditing, which react-native-web
-// never fires, so it cannot be driven here (see the skipped postcode test in
-// auth-edges.spec.ts); it needs a device flow.
+// The Account screen: the terms gate's Sign out, "What you do", the web links,
+// and deleting a child profile. react-native-web never fires onEndEditing, so
+// the field is driven with Return (onSubmitEditing), as the name and postcode are.
+
+test('"What you do" saves on Return, shows after a reload, and clears to null when emptied', async ({ page }) => {
+  const me = await signInAsNewContributor(page)
+  await page.goto('/account')
+  const field = page.getByLabel('What you do', { exact: true })
+  const patched = () => page.waitForResponse((r) => r.url().includes('/api/contributors/me') && r.request().method() === 'PATCH')
+  const occupation = async () => (await adminClient().from('profiles').select('occupation').eq('id', me.id).single()).data?.occupation
+
+  let saved = patched()
+  await field.fill('Occupational therapist')
+  await field.press('Enter')
+  expect((await saved).status()).toBe(200)
+  expect(await occupation()).toBe('Occupational therapist')
+  await page.reload()
+  await expect(field).toHaveValue('Occupational therapist')
+
+  saved = patched()
+  await field.fill('')
+  await field.press('Enter')
+  expect((await saved).status()).toBe(200)
+  expect(await occupation()).toBeNull()
+})
 
 /** Stub window.open so a link's target can be read instead of followed. */
 async function captureOpens(page: Page) {
