@@ -23,7 +23,11 @@ jest.mock('../../../../lib/api-client', () => ({
 }))
 let mockParams: Record<string, string> = {}
 const mockPush = jest.fn()
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }), useLocalSearchParams: () => mockParams }))
+let mockFocus: () => void
+jest.mock('expo-router', () => {
+  const { useEffect } = jest.requireActual('react')
+  return { useRouter: () => ({ push: mockPush }), useLocalSearchParams: () => mockParams, useFocusEffect: (e: () => void) => { mockFocus = e; useEffect(e, []) } }
+})
 
 const row = (over: object) => ({
   id: 't1', title: 'Bubble machine', description: null, difficulty: 'easy', kind: 'toy_adaptation',
@@ -106,6 +110,18 @@ describe('LibraryScreen', () => {
     expect(await screen.findByText('Build a Robot Arm')).toBeTruthy()
     expect(screen.getByText('Advanced Gearbox')).toBeTruthy()
     expect(mockGet).toHaveBeenCalledWith('/api/public/tutorials')
+  })
+
+  it('refetches when the screen regains focus, so a thanks sent on the guide shows on its pill', async () => {
+    mockEndpoints({ tutorials: Promise.resolve([row({ id: '1', title: 'Build a Robot Arm', thanks_count: 1 })]) })
+    render(<LibraryScreen />)
+    await screen.findByText('Build a Robot Arm')
+    expect(screen.getByText('1')).toBeTruthy()
+    mockEndpoints({ tutorials: Promise.resolve([row({ id: '1', title: 'Build a Robot Arm', thanks_count: 2 })]) })
+    await act(async () => { mockFocus() })
+    expect(await screen.findByText('2')).toBeTruthy()
+    // Quietly: the list never went back to skeletons.
+    expect(screen.getByText('Build a Robot Arm')).toBeTruthy()
   })
 
   it('filters the list by search text', async () => {

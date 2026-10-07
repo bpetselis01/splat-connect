@@ -3,9 +3,9 @@
 // The Guides tab (spec 2026-10-05-library-redesign): a hero (title, one line,
 // mascot), search with one filter button that opens the full filter page, the
 // chosen filters as removable tags, then the heading and row cards.
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { View, Text, FlatList, RefreshControl, StyleSheet } from 'react-native'
-import { useLocalSearchParams, useRouter } from 'expo-router'
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import type { Tutorial, TutorialOrg, Difficulty } from '@splat-connect/types'
@@ -83,6 +83,21 @@ export function LibraryScreen() {
     setReloadKey((k) => k + 1)
   }
 
+  // The thanks pill counts what people said on the guide's own page, so coming
+  // back to the list refetches it — quietly, the rows stay up. The first focus
+  // is the mount fetch's.
+  const focusedOnce = useRef(false)
+  const quiet = useRef(false)
+  useFocusEffect(
+    useCallback(() => {
+      if (focusedOnce.current) {
+        quiet.current = true
+        setReloadKey((k) => k + 1)
+      }
+      focusedOnce.current = true
+    }, [])
+  )
+
   const clearFilters = () => {
     setSearch('')
     setFilters(GUIDE_DEFAULTS)
@@ -92,7 +107,8 @@ export function LibraryScreen() {
     let ignore = false
     // A pull-driven reload keeps the current rows on screen; skeletons are
     // for arriving with nothing.
-    if (!refreshing) setLoading(true)
+    if (!refreshing && !quiet.current) setLoading(true)
+    quiet.current = false
     setError(null)
     apiClient
       .get<ListedTutorial[]>('/api/public/tutorials')
