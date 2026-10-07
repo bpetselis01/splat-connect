@@ -184,3 +184,39 @@ describe('GET /api/tutorials/:id after review', () => {
     await adminClient().from('tutorials').delete().eq('id', project)
   })
 })
+
+describe('POST /api/tutorials/:id/review notifies the contributors (S1)', () => {
+  // Chain: leader taps Approve / Request changes on mobile -> every contributor
+  //        gets a tutorial_approved / tutorial_rejected row pointing at the guide.
+  async function reviewed(status: 'approved' | 'rejected', note?: string) {
+    const project = await createProject({ authorId: author.id })
+    await requestBacking({ tutorialId: project, orgId: orgA, status: 'accepted' })
+    const res = await app.request(`/api/tutorials/${project}/review`, authed(leader.token, {
+      method: 'POST',
+      body: JSON.stringify({ status, rejection_note: note }),
+    }))
+    expect(res.status).toBe(200)
+    const { data } = await adminClient()
+      .from('notifications')
+      .select('recipient_id, type, tutorial_id, tutorial_title, actor_name, body')
+      .eq('tutorial_id', project)
+    await adminClient().from('tutorials').delete().eq('id', project)
+    return { project, rows: data ?? [] }
+  }
+
+  it('approving tells the author, naming the guide and the organisation', async () => {
+    const { project, rows } = await reviewed('approved')
+    expect(rows).toEqual([
+      { recipient_id: author.id, type: 'tutorial_approved', tutorial_id: project,
+        tutorial_title: 'Backing Fixture', actor_name: 'Riverside Therapy', body: null },
+    ])
+  })
+
+  it("rejecting tells the author, with the leader's reason as the body", async () => {
+    const { rows } = await reviewed('rejected', 'Step 4 is unsafe as written')
+    expect(rows).toHaveLength(1)
+    expect(rows[0]).toMatchObject({
+      recipient_id: author.id, type: 'tutorial_rejected', body: 'Step 4 is unsafe as written',
+    })
+  })
+})

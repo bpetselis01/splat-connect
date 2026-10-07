@@ -35,8 +35,8 @@
  * - routes/admin.ts: who may lead an organisation at all
  */
 import { Hono, type Context } from 'hono'
-import { createUserClient } from '../supabase/client.js'
-import { notifyBackingRequested } from '../review-notifications.js'
+import { createAdminClient, createUserClient } from '../supabase/client.js'
+import { notifyBackingRequested, notifyTutorialReviewed } from '../review-notifications.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
 const tutorialOrgs = new Hono<{ Variables: AuthVariables }>()
@@ -198,6 +198,14 @@ tutorialOrgs.post('/:id/review', async (c) => {
     return c.json({ error: 'you cannot review this project' }, 403)
   }
   if (error) return c.json({ error: error.message }, 500)
+  const { data: org } = await createAdminClient().from('organizations').select('name').eq('id', orgId).maybeSingle()
+  await notifyTutorialReviewed({
+    tutorialId,
+    tutorialTitle: data[0].title as string,
+    status: body.status,
+    rejectionNote: body.rejection_note,
+    actorName: (org?.name as string | undefined) ?? 'SPLAT',
+  })
   return c.json(data[0])
 })
 
