@@ -90,10 +90,39 @@ const tutorial = (over: Partial<Notification> = {}) =>
 describe('InboxScreen failure and scale edges', () => {
   beforeEach(() => { jest.spyOn(console, 'error').mockImplementation(() => {}) })
 
-  it('when every call fails the member sees the empty state, not a crash or a spinner', async () => {
-    mockGet.mockRejectedValue(new Error('offline'))
+  it('when every call fails offline it says so with Try again, not an empty inbox', async () => {
+    mockGet.mockRejectedValue(new TypeError('Network request failed'))
     render(<InboxScreen />)
-    expect(await screen.findByText('Nothing yet.')).toBeTruthy()
+    expect(await screen.findByText('You seem to be offline.')).toBeTruthy()
+    expect(screen.getByText('Check your connection and try again.')).toBeTruthy()
+    expect(screen.queryByText('Nothing yet.')).toBeNull()
+    expect(console.error).not.toHaveBeenCalled()
+  })
+
+  it('when every call fails for another reason it says it could not load', async () => {
+    mockGet.mockRejectedValue(new Error('boom'))
+    render(<InboxScreen />)
+    expect(await screen.findByText("Couldn't load your inbox.")).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeTruthy()
+  })
+
+  it('Try again refetches all three and shows the inbox once it works', async () => {
+    mockGet.mockRejectedValue(new TypeError('Network request failed'))
+    render(<InboxScreen />)
+    const retry = await screen.findByRole('button', { name: 'Try again' })
+    respond([notification({})])
+    fireEvent.press(retry)
+    expect(await screen.findByText('Sam requested Switch car')).toBeTruthy()
+    expect(screen.queryByText('You seem to be offline.')).toBeNull()
+  })
+
+  it('keeps real exchanges when only the notifications and invites fail', async () => {
+    mockGet.mockImplementation((path: string) =>
+      path === '/api/toy-transactions' ? Promise.resolve([tx({})]) : Promise.reject(new TypeError('Network request failed'))
+    )
+    render(<InboxScreen />)
+    expect(await screen.findByText('Northside Therapy')).toBeTruthy()
+    expect(screen.queryByText('You seem to be offline.')).toBeNull()
   })
 
   it('shows skeletons while loading, then replaces them', async () => {

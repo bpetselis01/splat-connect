@@ -24,7 +24,7 @@ import type {
   ToyTransactionSummary,
   TutorialCollaboratorInvite,
 } from '@splat-connect/types'
-import { copyFor, notificationBucket, notificationSecondLine, subjectName } from '@splat-connect/types'
+import { copyFor, isNetworkError, notificationBucket, notificationSecondLine, subjectName } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { invalidateCapabilities } from '../../lib/capabilities'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -158,6 +158,8 @@ export function InboxScreen({
   const [busyInvite, setBusyInvite] = useState<string | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
   const [refreshing, setRefreshing] = useState(false)
+  // Set only when all three fetches failed: one failing still leaves real rows.
+  const [error, setError] = useState<'offline' | 'other' | null>(null)
 
   const onRefresh = () => {
     setRefreshing(true)
@@ -169,9 +171,11 @@ export function InboxScreen({
     // A pull-driven reload keeps the current rows on screen; skeletons are
     // for arriving with nothing.
     if (!refreshing) setLoading(true)
+    const failures: unknown[] = []
     Promise.all([
       apiClient.get<Notification[]>('/api/notifications/me').catch((err) => {
         logFailure('[InboxScreen] notifications fetch failed:', err)
+        failures.push(err)
         return [] as Notification[]
       }),
       // Each of the other two degrades to empty on its own: losing the
@@ -179,17 +183,26 @@ export function InboxScreen({
       // below), and losing invites costs two buttons on one row.
       apiClient.get<ToyTransactionSummary[]>('/api/toy-transactions').catch((err) => {
         logFailure('[InboxScreen] exchanges fetch failed:', err)
+        failures.push(err)
         return [] as ToyTransactionSummary[]
       }),
       apiClient.get<TutorialCollaboratorInvite[]>('/api/collaborators/me/invites').catch((err) => {
         logFailure('[InboxScreen] invites fetch failed:', err)
+        failures.push(err)
         return [] as TutorialCollaboratorInvite[]
       }),
     ]).then(([rows, txs, pending]) => {
       if (ignore) return
-      setNotifications(rows)
-      setTransactions(txs)
-      setInvites(pending)
+      if (failures.length === 3) {
+        // Nothing arrived: say so rather than drawing an empty inbox, and keep
+        // whatever a pull-to-refresh was already showing.
+        setError(isNetworkError(failures[0]) ? 'offline' : 'other')
+      } else {
+        setError(null)
+        setNotifications(rows)
+        setTransactions(txs)
+        setInvites(pending)
+      }
       setLoading(false)
       setRefreshing(false)
     })
@@ -365,6 +378,22 @@ export function InboxScreen({
         {segments}
         <SkeletonRow />
         <SkeletonRow />
+      </Screen>
+    )
+  }
+
+  if (error && notifications.length === 0 && transactions.length === 0) {
+    return (
+      <Screen ownHeader={showHeader}>
+        {header}
+        {segments}
+        <EmptyState
+          icon="cloud-offline-outline"
+          title={error === 'offline' ? 'You seem to be offline.' : "Couldn't load your inbox."}
+          hint={error === 'offline' ? 'Check your connection and try again.' : 'Please try again.'}
+        >
+          <Button label="Try again" variant="secondary" onPress={refetch} />
+        </EmptyState>
       </Screen>
     )
   }
