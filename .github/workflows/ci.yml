@@ -74,6 +74,9 @@ jobs:
       - name: Type check all packages
         run: pnpm -r typecheck
 
+      - name: Journey map
+        run: pnpm test:journeys:unit && pnpm test:journeys
+
   test:
     name: Unit Tests
     runs-on: ubuntu-latest
