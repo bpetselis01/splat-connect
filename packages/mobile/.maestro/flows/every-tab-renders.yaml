@@ -1,4 +1,4 @@
-# journeys: A02 A05 G01 H07 Q01 Q05 Q11
+# journeys: A02 A05 G01 H07 Q01 Q05
 # The Hermes-runtime smoke: sign in and land on every tab, asserting each
 # screen's own content rendered. Jest runs on Node and Playwright on Chromium;
 # this suite is the only layer that executes the app's JS on Hermes, where the

@@ -1,4 +1,4 @@
-// journeys: G18 G19 K05 R01 R03
+// journeys: G18 G19 K05 R03
 import { test, expect } from '@playwright/test'
 import { adminClient, createContributor, createTutorial, renameProfile, signInAsNewContributor, uniqueTitle } from './helpers'
 
