@@ -92,7 +92,7 @@ describe('linkFor', () => {
       .toBe('Northbank replied to your message')
     expect(linkFor(notification({ type: 'org_message', org_conversation_id: 'c1' }))).toBe('/messages/c1')
     expect(notificationBucket('org_message')).toBe('exchanges')
-    expect(linkFor(notification({ type: 'org_thanked', org_id: 'o1' }))).toBe('/organisation')
+    expect(linkFor(notification({ type: 'org_thanked', org_id: 'o1' }))).toBe('/organisation/profile')
     expect(notificationBucket('org_thanked')).toBe('organisations')
     // 117: a showcase thanks opens the showcase; one for an exchange opens it.
     expect(linkFor(notification({ type: 'profile_thanked', profile_id: 'p1' }))).toBe('/guides/contributor/p1')
