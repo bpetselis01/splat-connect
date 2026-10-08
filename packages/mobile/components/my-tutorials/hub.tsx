@@ -365,6 +365,10 @@ export function TutorialHub({ id, justCreated, fromPdf }: { id: string; justCrea
                 ? `${missing.length} thing${missing.length === 1 ? '' : 's'} still needed`
                 : 'Everything is ready'}
         </Text>
+        {isDraft && missing.length > 0 ? (
+          // The count alone left a family-less contributor guessing which two.
+          <Text style={styles.footnote}>{missing.map((g) => g.label).join(' · ')}</Text>
+        ) : null}
       </View>
     </Screen>
   )
