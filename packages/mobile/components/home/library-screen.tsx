@@ -295,8 +295,8 @@ export function LibraryScreen() {
         label="Guide actions"
         items={[
           { label: 'Add a guide', icon: 'add', href: '/guides/new', primary: true },
-          { label: 'My guides', icon: 'book-outline', href: '/tutorials' },
-          { label: 'Saved guides', icon: 'heart-outline', href: '/saved/tutorials' },
+          { label: 'My guides', icon: 'book-outline', href: '/tutorials', tint: theme.colors.apricotSoft },
+          { label: 'Saved guides', icon: 'heart-outline', href: '/saved/tutorials', tint: theme.colors.mintSoft },
         ]}
       />
     </Screen>

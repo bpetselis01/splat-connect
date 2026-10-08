@@ -51,3 +51,11 @@ it('sits above the floating tab bar, not behind it', () => {
   const zone = StyleSheet.flatten(screen.getByTestId('corner-menu-zone').props.style) as { bottom?: number }
   expect(zone.bottom).toBe(tabBarClearance(0))
 })
+
+it('labels the trigger Actions, and Close while open', () => {
+  render(<CornerMenu label="Guide actions" items={items} />)
+  expect(screen.getByText('Actions')).toBeTruthy()
+  fireEvent.press(screen.getByLabelText('Guide actions'))
+  expect(screen.getByText('Close', { includeHiddenElements: true })).toBeTruthy()
+  expect(screen.queryByText('Actions', { includeHiddenElements: true })).toBeNull()
+})

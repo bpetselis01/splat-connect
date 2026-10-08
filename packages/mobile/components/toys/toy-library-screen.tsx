@@ -263,9 +263,9 @@ export function ToyLibraryScreen() {
         label="Toy actions"
         items={[
           { label: 'Give a toy', icon: 'add', href: '/toys/new', primary: true },
-          { label: 'My toys', icon: 'cube-outline', href: '/toys' },
-          { label: 'My exchanges', icon: 'swap-horizontal-outline', href: '/exchanges', count: caps?.exchangeActions },
-          { label: 'Saved toys', icon: 'heart-outline', href: '/saved/toys' },
+          { label: 'My toys', icon: 'cube-outline', href: '/toys', tint: theme.colors.apricotSoft },
+          { label: 'My exchanges', icon: 'swap-horizontal-outline', href: '/exchanges', count: caps?.exchangeActions, tint: theme.colors.accentLight },
+          { label: 'Saved toys', icon: 'heart-outline', href: '/saved/toys', tint: theme.colors.mintSoft },
         ]}
       />
     </Screen>

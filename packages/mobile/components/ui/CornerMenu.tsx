@@ -1,5 +1,6 @@
-// Pinned corner action menu: the board's ink grid disc in the bottom-right,
-// fanning its items upward. (A hamburger top-right until 2026-09-23, when the
+// Pinned corner action menu: an apricot "Actions" pill in the bottom-right,
+// fanning its items upward as pill buttons (the same pill, hairline and
+// elevation as Button and the filter control). (A hamburger top-right until 2026-09-23, when the
 // tab headings took the mascot and that corner.) Replaces the header CTA buttons on Guides and Toy Library, which
 // scrolled away with the header — this stays reachable from anywhere in the
 // list.
@@ -30,8 +31,10 @@ export type CornerMenuItem = {
   label: string
   icon: keyof typeof Ionicons.glyphMap
   href: string
-  /** Small Jersey-10 count pill, e.g. exchange actions waiting. */
+  /** Count badge, e.g. exchange actions waiting. */
   count?: number
+  /** Fill of the icon circle; accentLight when left out. */
+  tint?: string
   /** The create action: apricot, first slot. */
   primary?: boolean
 }
@@ -98,7 +101,13 @@ export function CornerMenu({ label, items }: { label: string; items: CornerMenuI
                   accessibilityLabel={item.label}
                   style={[styles.item, item.primary && styles.itemPrimary]}
                 >
-                  <Ionicons name={item.icon} size={16} color={theme.colors.ink} />
+                  {item.primary ? (
+                    <Ionicons name={item.icon} size={18} color={theme.colors.ink} />
+                  ) : (
+                    <View style={[styles.itemIcon, { backgroundColor: item.tint ?? theme.colors.accentLight }]}>
+                      <Ionicons name={item.icon} size={16} color={theme.colors.ink} />
+                    </View>
+                  )}
                   <Text style={styles.itemLabel}>{item.label}</Text>
                   {item.count ? (
                     <View style={styles.countPill}>
@@ -117,14 +126,17 @@ export function CornerMenu({ label, items }: { label: string; items: CornerMenuI
           accessibilityState={{ expanded: open }}
           style={styles.trigger}
         >
-          <Animated.View style={menuIcon}>
-            <Ionicons name="grid-outline" size={20} color={theme.colors.onInverse} />
-          </Animated.View>
-          {/* Absolute so the two glyphs share one box and neither shifts the
-              other while they cross. */}
-          <Animated.View style={[styles.triggerIcon, closeIcon]}>
-            <Ionicons name="close" size={22} color={theme.colors.onInverse} />
-          </Animated.View>
+          <View style={styles.triggerGlyph}>
+            <Animated.View style={menuIcon}>
+              <Ionicons name="grid-outline" size={18} color={theme.colors.ink} />
+            </Animated.View>
+            {/* Absolute so the two glyphs share one box and neither shifts the
+                other while they cross. */}
+            <Animated.View style={[styles.triggerIcon, closeIcon]}>
+              <Ionicons name="close" size={20} color={theme.colors.ink} />
+            </Animated.View>
+          </View>
+          <Text style={styles.triggerLabel}>{open ? 'Close' : 'Actions'}</Text>
         </AnimatedPressable>
       </View>
     </View>
@@ -146,45 +158,51 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     gap: theme.spacing(2),
   },
+  triggerGlyph: { width: 20, height: 20, alignItems: 'center', justifyContent: 'center' },
   triggerIcon: { position: 'absolute' },
+  // Button's accent variant: apricot, hairline, elevation 2, 48px pill.
   trigger: {
-    width: 48,
-    height: 48,
-    borderRadius: theme.radii.pill,
-    backgroundColor: theme.colors.inverse,
+    minHeight: 48,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    ...theme.shadow(3),
+    gap: theme.spacing(2),
+    paddingHorizontal: theme.spacing(5),
+    borderRadius: theme.radii.pill,
+    borderWidth: theme.border.hairline,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.apricot,
+    ...theme.shadow(2),
   },
+  triggerLabel: { fontFamily: theme.fonts.black, fontSize: theme.type.body, color: theme.colors.ink },
   menu: { alignItems: 'flex-end', gap: theme.spacing(2) },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing(2),
     minHeight: 44,
-    paddingHorizontal: theme.spacing(3),
-    borderRadius: theme.radii.field,
+    paddingVertical: theme.spacing(1),
+    paddingLeft: theme.spacing(1),
+    paddingRight: theme.spacing(4),
+    borderRadius: theme.radii.pill,
     borderWidth: theme.border.hairline,
     borderColor: theme.colors.border,
     backgroundColor: theme.colors.surface,
     ...theme.shadow(2),
   },
-  itemPrimary: { backgroundColor: theme.colors.apricot },
-  itemLabel: {
-    fontFamily: theme.fonts.bold,
-    fontSize: theme.type.label,
-    color: theme.colors.ink,
-  },
+  itemPrimary: { backgroundColor: theme.colors.apricot, paddingLeft: theme.spacing(4) },
+  itemIcon: { width: 32, height: 32, borderRadius: theme.radii.pill, alignItems: 'center', justifyContent: 'center' },
+  itemLabel: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink },
+  // FilterControls' badge: apricot, ringed in the surface colour.
   countPill: {
-    borderWidth: theme.border.hairline,
-    borderColor: theme.colors.border,
-    borderRadius: theme.radii.field,
-    backgroundColor: theme.colors.mintSoft,
-    paddingHorizontal: theme.spacing(1),
+    minWidth: 20,
+    height: 20,
+    paddingHorizontal: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: theme.radii.pill,
+    borderWidth: 2,
+    borderColor: theme.colors.surface,
+    backgroundColor: theme.colors.apricot,
   },
-  countText: {
-    fontFamily: theme.fonts.numeral,
-    fontSize: theme.type.body,
-    color: theme.colors.ink,
-  },
+  countText: { fontFamily: theme.fonts.black, fontSize: theme.type.micro, color: theme.colors.ink },
 })
