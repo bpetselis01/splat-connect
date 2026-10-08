@@ -19,6 +19,7 @@ import { Button } from '../../ui/Button'
 import { TextField } from '../../ui/TextField'
 import { ErrorRow } from '../../ui/ErrorRow'
 import { SectionFooter } from '../section-footer'
+import { CustomizationFields } from './customization-fields'
 import { PickerNote } from './picker-note'
 import { DraftGate } from './draft-gate'
 
@@ -28,7 +29,7 @@ export function StlSection() {
 }
 
 function StlEditor() {
-  const { tutorial, save, saveError } = useDraft()
+  const { tutorial, save, saveNow, saveError } = useDraft()
   const [uploading, setUploading] = useState(false)
   const [localError, setLocalError] = useState<string | null>(null)
   const [files, setFiles] = useState<StlFile[]>(() => tutorial?.stl_files ?? [])
@@ -117,7 +118,7 @@ function StlEditor() {
 
   return (
     <Screen>
-      <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
         {files.length ? (
           files.map((f) => (
             <View key={f.id} style={styles.fileBlock}>
@@ -190,6 +191,10 @@ function StlEditor() {
           maxLength={40}
           defaultValue={tutorial.material ?? ''}
           onChangeText={(text) => save({ material: text.trim() ? text : null })}
+        />
+        <CustomizationFields
+          initial={tutorial.customization_fields ?? []}
+          onSave={(customization_fields) => saveNow({ customization_fields })}
         />
         <ErrorRow message={localError ?? saveError} />
       </ScrollView>

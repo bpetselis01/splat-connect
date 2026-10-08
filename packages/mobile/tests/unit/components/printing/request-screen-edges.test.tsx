@@ -21,7 +21,12 @@ const part = (id: string, over: object = {}) => ({
   material: 'PETG',
   ...over,
 })
-const GUIDE = { id: 'g1', title: 'Switch mount', stl_files: [part('s1'), part('s2', { filament_grams: 4, print_minutes: 20 })] }
+const GUIDE = { id: 'g1', title: 'Switch mount',
+  customization_fields: [
+    { key: 'mount', label: 'Mount needed', kind: 'choice', options: ['Tray clamp', 'Floor stand'] },
+    { key: 'reach', label: 'Reach', kind: 'number', unit: 'mm', min: 100, max: 600 },
+  ],
+  stl_files: [part('s1'), part('s2', { filament_grams: 4, print_minutes: 20 })] }
 const PRINTER = { id: 'p1', owner_id: 'o1', owner_org_id: null, owner_name: 'Tom B.', org_name: null, filament_cents_per_g: null }
 
 type Serve = { guide?: unknown; printers?: unknown; credit?: unknown }
@@ -257,6 +262,17 @@ describe('what is sent', () => {
     send()
     await waitFor(() => expect(mockPost).toHaveBeenCalled())
     expect(sent()).toMatchObject({ colour: 'Black', delivery: 'post' })
+  })
+
+  it('drops a number that was typed and then cleared', async () => {
+    render(<RequestPrintScreen guideId="g1" printerIds={['p1']} />)
+    const reach = await screen.findByLabelText('Reach')
+    fireEvent.changeText(reach, '300')
+    fireEvent.changeText(reach, ' ')
+    agree()
+    send()
+    await waitFor(() => expect(mockPost).toHaveBeenCalled())
+    expect(sent()).not.toHaveProperty('fit_notes')
   })
 
   it('sends no fit_notes when none were answered, and drops one tapped twice', async () => {
