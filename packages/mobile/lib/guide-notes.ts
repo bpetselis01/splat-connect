@@ -2,6 +2,7 @@
 //
 // Community notes on a guide (093): the fetch, and the board's derived
 // labels — revisions vs discussion, per-step counts, pinned missing steps.
+import { logFailure } from './log'
 import { useCallback, useEffect, useState } from 'react'
 import type { GuideNote } from '@splat-connect/types'
 import { apiClient } from './api-client'
@@ -13,7 +14,7 @@ export function useGuideNotes(tutorialId: string) {
       apiClient
         .get<GuideNote[]>(`/api/public/tutorials/${tutorialId}/notes`)
         .then(setNotes)
-        .catch((err) => console.error('[useGuideNotes] fetch failed:', err)),
+        .catch((err) => logFailure('[useGuideNotes] fetch failed:', err)),
     [tutorialId]
   )
   useEffect(() => {

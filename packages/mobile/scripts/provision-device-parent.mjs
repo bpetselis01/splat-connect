@@ -89,6 +89,100 @@ const { error: toyError } = await admin.from('toys').insert({
 })
 if (toyError) throw new Error(`Failed to seed toy: ${toyError.message}`)
 
-// Two lines only, so callers can `eval $(node …)` or append to $GITHUB_ENV.
+const guideTitle = `Device smoke guide ${Date.now()}`
+// A published guide with two photos and two steps, for the guide-page flow:
+// swiping the hero is the platform's paging again, and build mode is a
+// fullScreenModal that only a device runs for real. The photo URLs need not
+// resolve, as above. Authored by the parent, so there is no Thank button to
+// get in the way of the hero's own buttons.
+const { data: guide, error: guideError } = await admin
+  .from('tutorials')
+  .insert({
+    title: guideTitle,
+    description: 'Seeded by provision-device-parent for the guide-page flow.',
+    difficulty: 'easy',
+    kind: 'toy_adaptation',
+    status: 'approved',
+    safety_declared_at: new Date().toISOString(),
+    photo_urls: ['https://example.invalid/device-guide-1.jpg', 'https://example.invalid/device-guide-2.jpg'],
+  })
+  .select('id')
+  .single()
+if (guideError || !guide) throw new Error(`Failed to seed guide: ${guideError?.message}`)
+const { error: linkError } = await admin
+  .from('tutorial_contributors')
+  .insert({ tutorial_id: guide.id, profile_id: data.user.id, role: 'primary' })
+if (linkError) throw new Error(`Failed to link guide author: ${linkError.message}`)
+const { error: stepsError } = await admin.from('tutorial_steps').insert([
+  { tutorial_id: guide.id, position: 1, title: 'Open the bay', body: 'Undo one screw.' },
+  { tutorial_id: guide.id, position: 2, title: 'Close it', body: 'Click.' },
+])
+if (stepsError) throw new Error(`Failed to seed guide steps: ${stepsError.message}`)
+
+// A second guide with eight steps, past the five where the feedback sheet's
+// step chips become the "Which step?" field and list sheet. Its own guide so
+// the two-step guide above keeps the build-mode flow short.
+const longGuideTitle = `Device long guide ${Date.now()}`
+const { data: longGuide, error: longGuideError } = await admin
+  .from('tutorials')
+  .insert({
+    title: longGuideTitle,
+    description: 'Seeded by provision-device-parent for the step picker flow.',
+    difficulty: 'easy',
+    kind: 'toy_adaptation',
+    status: 'approved',
+    safety_declared_at: new Date().toISOString(),
+    photo_urls: ['https://example.invalid/device-guide-1.jpg'],
+  })
+  .select('id')
+  .single()
+if (longGuideError || !longGuide) throw new Error(`Failed to seed long guide: ${longGuideError?.message}`)
+const { error: longLinkError } = await admin
+  .from('tutorial_contributors')
+  .insert({ tutorial_id: longGuide.id, profile_id: data.user.id, role: 'primary' })
+if (longLinkError) throw new Error(`Failed to link long guide author: ${longLinkError.message}`)
+const longTitles = ['Gather your parts', 'Sand the edges', 'Glue the frame', 'Clamp it', 'Let it dry', 'Drill the holes', 'Fit the wheels', 'Seal with varnish']
+const { error: longStepsError } = await admin.from('tutorial_steps').insert(
+  longTitles.map((title, i) => ({ tutorial_id: longGuide.id, position: i + 1, title, body: 'Do it.' }))
+)
+if (longStepsError) throw new Error(`Failed to seed long guide steps: ${longStepsError.message}`)
+
+// One part, so the Files tab has a 3D pill. Signing the file's path fails for a
+// missing object, so the bytes go up too.
+const stlPath = `${guide.id}/device_base.stl`
+const { error: stlError } = await admin.from('stl_files').insert({
+  tutorial_id: guide.id, filename: 'device_base.stl', file_url: stlPath, print_minutes: 30, filament_grams: 8, material: 'PLA',
+})
+if (stlError) throw new Error(`Failed to seed guide part: ${stlError.message}`)
+const stl = 'solid t\nfacet normal 0 0 1\nouter loop\nvertex 0 0 0\nvertex 1 0 0\nvertex 0 1 0\nendloop\nendfacet\nendsolid t\n'
+const { error: upError } = await admin.storage.from('stl-files').upload(stlPath, new Blob([stl]), { contentType: 'model/stl', upsert: true })
+if (upError) throw new Error(`Failed to upload guide part: ${upError.message}`)
+
+// Another member's note on step 1, so the note menu offers "Report this note"
+// (a member cannot report their own). Inserted directly: the API route would
+// notify the author, and this fixture is not testing that.
+const { data: reviewer, error: reviewerError } = await admin.auth.admin.createUser({
+  email: `device-reviewer-${Date.now()}-${Math.floor(Math.random() * 1e6)}@mobile-e2e.local`,
+  password: PASSWORD,
+  email_confirm: true,
+  user_metadata: { name: 'Device Reviewer' },
+})
+if (reviewerError || !reviewer.user) throw new Error(`Failed to create reviewer: ${reviewerError?.message}`)
+const { error: noteSeedError } = await admin.from('tutorial_notes').insert({
+  tutorial_id: guide.id,
+  author_id: reviewer.user.id,
+  step_position: 1,
+  body: 'The screw was stiff, a drop of oil helped.',
+})
+if (noteSeedError) throw new Error(`Failed to seed guide note: ${noteSeedError.message}`)
+
+// Plain KEY=value lines, so callers can `eval $(node …)` or append to
+// $GITHUB_ENV. The first two are what every flow needs; the ids are for the
+// flows that deep link or assert a row, passed on with `maestro test -e`.
 console.log(`DEVICE_EMAIL=${email}`)
 console.log(`DEVICE_PASSWORD=${PASSWORD}`)
+console.log(`DEVICE_USER_ID=${data.user.id}`)
+console.log(`DEVICE_GUIDE_ID=${guide.id}`)
+console.log(`DEVICE_GUIDE_TITLE=${guideTitle}`)
+console.log(`DEVICE_LONG_GUIDE_ID=${longGuide.id}`)
+console.log(`DEVICE_LONG_GUIDE_TITLE=${longGuideTitle}`)

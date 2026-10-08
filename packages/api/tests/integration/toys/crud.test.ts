@@ -1,3 +1,4 @@
+// journeys: W01 W02 W06 W08 W09 W10
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'

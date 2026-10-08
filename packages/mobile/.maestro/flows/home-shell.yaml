@@ -7,6 +7,7 @@
 #
 # Same fixture and env as every-tab-renders.yaml: the provisioned contributor
 # has exactly one unread notification.
+# journeys: H01 H02 H03 H05
 appId: com.splatconnect.mobile
 ---
 - clearState
@@ -51,8 +52,10 @@ appId: com.splatconnect.mobile
     text: "Request a print"
 - assertVisible:
     text: "Find a printer"
+# A pushed screen's header control is the ✕ (getting-home change), which closes
+# to the last tab-bar screen, here Home.
 - tapOn:
-    text: "Back"
+    text: "Close"
 - assertVisible:
     text: "Edit"
 
@@ -102,8 +105,9 @@ appId: com.splatconnect.mobile
     text: "Notifications"
 - tapOn:
     text: "Your idea was published as a design challenge"
+# The notification opens a drill-down with no tab bar; its ✕ returns to the last bar screen.
 - tapOn:
-    text: "Back"
+    text: "Close"
     optional: true
 - tapOn:
     text: "Home"

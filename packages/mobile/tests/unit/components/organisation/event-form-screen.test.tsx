@@ -1,3 +1,5 @@
+// journeys: L19
+import { CLEARANCE, scrollPaddings } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { EventFormScreen } from '../../../../components/organisation/event-form-screen'
 import { NAMES } from '../../../special-strings'
@@ -221,4 +223,11 @@ describe('EventFormScreen registration questions', () => {
     fireEvent.changeText(screen.getByDisplayValue('Yes'), ' a , b,, c ,')
     expect(screen.getByDisplayValue('a, b, c')).toBeTruthy()
   })
+})
+
+jest.mock('react-native-safe-area-context', () => require('../../bottom-spacing').insetMock())
+
+it('ends its scroll one gutter above the home indicator', () => {
+  render(<EventFormScreen />)
+  expect(scrollPaddings(screen)).toEqual([CLEARANCE])
 })

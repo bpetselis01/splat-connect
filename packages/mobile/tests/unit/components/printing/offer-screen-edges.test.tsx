@@ -1,5 +1,6 @@
 // Print for others: the three tabs at their edges — empty, failing, racing
 // printers, a printer with no saved address, and every write's failure path.
+// journeys: R14 R16
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { PrintForOthersScreen } from '../../../../components/printing/offer-screen'
 import { NAMES } from '../../../special-strings'
@@ -35,7 +36,8 @@ jest.mock('expo-router', () => {
 })
 let mockProfile: Record<string, unknown> = { id: 'me' }
 let mockCaps: unknown = null
-jest.mock('../../../../lib/capabilities', () => ({ useCapabilities: () => ({ caps: mockCaps }) }))
+const mockInvalidate = jest.fn()
+jest.mock('../../../../lib/capabilities', () => ({ invalidateCapabilities: (...a: unknown[]) => mockInvalidate(...a), useCapabilities: () => ({ caps: mockCaps }) }))
 
 const DAY = 864e5
 const machine = (id: string, over: object = {}) => ({

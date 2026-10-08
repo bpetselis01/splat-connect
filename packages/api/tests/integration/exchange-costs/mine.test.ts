@@ -2,6 +2,7 @@
  * The Me tab's money panel: every thread with money on it, whichever way it
  * runs, settled or not, named by the other person and the kind of thread.
  */
+// journeys: Q01
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'

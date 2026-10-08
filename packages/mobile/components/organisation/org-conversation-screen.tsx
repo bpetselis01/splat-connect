@@ -10,6 +10,7 @@
  * family wrote to the organisation and should see that it answered. On a
  * leader's side colleagues keep their own names.
  */
+import { logFailure } from '../../lib/log'
 import { useCallback, useRef, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native'
 import { useFocusEffect } from 'expo-router'
@@ -17,6 +18,7 @@ import type { OrgThread } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { useCapabilities } from '../../lib/capabilities'
 import { theme } from '../../lib/theme'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import { Screen } from '../ui/Screen'
 import { Card } from '../ui/Card'
 import { Button } from '../ui/Button'
@@ -25,13 +27,14 @@ import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { MessageBubble } from '../ui/MessageBubble'
 import { ErrorRow } from '../ui/ErrorRow'
-import { apiMessage } from '@splat-connect/types'
+import { apiMessage, isNetworkError } from '@splat-connect/types'
 
 export function OrgConversationScreen(props: { orgId: string; orgName?: string } | { cid: string }) {
+  const bottom = useBottomClearance()
   const { caps } = useCapabilities()
   const [thread, setThread] = useState<OrgThread | null>(null)
   const [loading, setLoading] = useState(true)
-  const [failed, setFailed] = useState(false)
+  const [failed, setFailed] = useState<'offline' | 'other' | null>(null)
   const [draft, setDraft] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -47,10 +50,10 @@ export function OrgConversationScreen(props: { orgId: string; orgName?: string }
   const load = useCallback(async () => {
     try {
       setThread(await apiClient.get<OrgThread | null>(readPath))
-      setFailed(false)
+      setFailed(null)
     } catch (err) {
-      console.error('[OrgConversationScreen] load failed:', err)
-      setFailed(true)
+      logFailure('[OrgConversationScreen] load failed:', err)
+      setFailed(isNetworkError(err) ? 'offline' : 'other')
     } finally {
       setLoading(false)
     }
@@ -89,7 +92,20 @@ export function OrgConversationScreen(props: { orgId: string; orgName?: string }
   if (failed) {
     return (
       <Screen>
-        <EmptyState icon="chatbubbles-outline" title="Couldn't load this conversation." hint="It may not be yours to read, or you are offline." />
+        <EmptyState
+          icon="chatbubbles-outline"
+          title={failed === 'offline' ? 'You seem to be offline.' : "Couldn't load this conversation."}
+          hint={failed === 'offline' ? 'Check your connection and try again.' : 'It may not be yours to read, or you are offline.'}
+        >
+          <Button
+            label="Try again"
+            variant="secondary"
+            onPress={() => {
+              setLoading(true)
+              void load()
+            }}
+          />
+        </EmptyState>
       </Screen>
     )
   }
@@ -127,7 +143,7 @@ export function OrgConversationScreen(props: { orgId: string; orgName?: string }
             ))}
           </View>
         </ScrollView>
-        <View style={styles.footer}>
+        <View testID="conversation-footer" style={[styles.footer, { paddingBottom: bottom }]}>
           <ErrorRow message={error} />
           <View style={styles.composer}>
             <View style={styles.flex}>

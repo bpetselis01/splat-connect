@@ -1,4 +1,6 @@
 // packages/mobile/tests/unit/components/challenges/detail-screen.test.tsx
+// journeys: C02 C03 C05 C06 C07 C08 C10 C11
+import { CLEARANCE, paddingBottomOf } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { Alert } from 'react-native'
 import { shortDate } from '../../../../components/challenges/challenge-status'
@@ -258,6 +260,14 @@ describe('ChallengeDetailScreen', () => {
     render(<ChallengeDetailScreen id="c1" />)
     fireEvent.press(await screen.findByRole('button', { name: 'Save' }))
     expect(mockToggle).toHaveBeenCalledWith('challenges', 'c1')
+  })
+
+  it('refetches the brief after the heart so the saves tile is the server count', async () => {
+    mockGet.mockResolvedValueOnce(detail({ save_count: 0 })).mockResolvedValue(detail({ save_count: 1 }))
+    render(<ChallengeDetailScreen id="c1" />)
+    expect(await screen.findByText('saves')).toBeTruthy()
+    fireEvent.press(await screen.findByRole('button', { name: 'Save' }))
+    expect(await screen.findByText('save')).toBeTruthy()
   })
 
   it("says it couldn't load rather than showing an empty brief", async () => {
@@ -637,5 +647,17 @@ describe('ChallengeDetailScreen recents', () => {
       id: 'c1', kind: 'challenge', title: 'A switch a toddler can hit', subtitle: 'Challenge · 2 joined', badge: 'Live',
       href: '/explore/challenges/c1',
     })
+  })
+})
+
+jest.mock('react-native-safe-area-context', () => require('../../bottom-spacing').insetMock())
+
+describe('ChallengeDetailScreen — bottom spacing', () => {
+  it('lifts the message composer one gutter above the home indicator', async () => {
+    respond(joinedDetail(), [])
+    render(<ChallengeDetailScreen id="c1" />)
+    await openThread()
+    await screen.findByLabelText('Message this challenge')
+    expect(paddingBottomOf(screen.getByTestId('challenge-footer'))).toBe(CLEARANCE)
   })
 })

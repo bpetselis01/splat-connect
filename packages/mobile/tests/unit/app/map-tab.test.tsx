@@ -1,5 +1,6 @@
 // The Map tab with MapCanvas stubbed: pins are buttons named by suburb, so the
 // screen's own state (chips, filters, sheet, list) is what is under test.
+// journeys: Q11 Q12
 import { render, screen, fireEvent, waitFor, within, act } from '@testing-library/react-native'
 import type { MapPlace } from '@splat-connect/types'
 import MapTab from '../../../app/(tabs)/map'
@@ -9,10 +10,12 @@ const mockGet = jest.fn()
 jest.mock('../../../lib/api-client', () => ({ apiClient: { get: (...a: unknown[]) => mockGet(...a) } }))
 const mockPush = jest.fn()
 let mockBlur: (() => void) | undefined
+let mockParams: { kind?: string } = {}
 jest.mock('expo-router', () => {
   const { useEffect } = jest.requireActual('react')
   return {
     useRouter: () => ({ push: mockPush }),
+    useLocalSearchParams: () => mockParams,
     // Focus runs the effect; mockBlur stands in for leaving the tab.
     useFocusEffect: (effect: () => (() => void) | undefined) => useEffect(() => { mockBlur = effect() ?? undefined }, [effect]),
   }
@@ -53,7 +56,21 @@ const PLACES: MapPlace[] = [
 beforeEach(() => {
   jest.clearAllMocks()
   mockPostcode = '2040'
+  mockParams = {}
   mockGet.mockResolvedValue(PLACES)
+})
+
+it('?kind=printer opens with only the Printers layer picked', async () => {
+  mockParams = { kind: 'printer' }
+  render(<MapTab />)
+  expect(await screen.findByRole('button', { name: 'pin Leichhardt' })).toBeTruthy()
+  expect(screen.queryByRole('button', { name: 'pin Chatswood' })).toBeNull()
+})
+
+it('an unknown ?kind is ignored and every layer shows', async () => {
+  mockParams = { kind: 'nonsense' }
+  render(<MapTab />)
+  expect(await screen.findByRole('button', { name: 'pin Chatswood' })).toBeTruthy()
 })
 
 it('loads places near the viewer and draws a pin per suburb', async () => {

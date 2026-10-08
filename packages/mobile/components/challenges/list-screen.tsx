@@ -1,6 +1,7 @@
 // packages/mobile/components/challenges/list-screen.tsx
 // Title comes from the native header (app/(tabs)/explore/_layout.tsx), so
 // this doesn't repeat it — same convention as learn-hub.tsx.
+import { logFailure } from '../../lib/log'
 import { useCallback, useEffect, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
@@ -97,7 +98,7 @@ export function ChallengesListScreen() {
       // rejecting the pair.
       signedIn
         ? apiClient.get<ToyIdea[]>('/api/ideas/joined').catch((err) => {
-            console.error('[ChallengesListScreen] joined fetch failed:', err)
+            logFailure('[ChallengesListScreen] joined fetch failed:', err)
             return [] as ToyIdea[]
           })
         : Promise.resolve([] as ToyIdea[]),
@@ -108,7 +109,7 @@ export function ChallengesListScreen() {
         setJoinedIds(new Set(joined.map((i) => i.id)))
       })
       .catch((err) => {
-        console.error('[ChallengesListScreen] challenges fetch failed:', err)
+        logFailure('[ChallengesListScreen] challenges fetch failed:', err)
         if (!ignore) setError(true)
       })
       .finally(() => {

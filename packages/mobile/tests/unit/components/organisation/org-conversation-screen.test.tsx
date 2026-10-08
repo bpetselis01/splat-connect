@@ -3,6 +3,8 @@
 // message exists it posts to the 'mine' route, which creates it; once it
 // exists every message goes to the conversation. The family sees a leader's
 // reply signed with the organisation.
+// journeys: L29 P10
+import { CLEARANCE, paddingBottomOf } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { OrgConversationScreen } from '../../../../components/organisation/org-conversation-screen'
 
@@ -60,4 +62,13 @@ it('signs a leader’s reply with the organisation, on the family’s side', asy
   await waitFor(() =>
     expect(mockPost).toHaveBeenCalledWith('/api/organizations/conversations/c1/messages', { body: 'Great' })
   )
+})
+
+jest.mock('react-native-safe-area-context', () => require('../../bottom-spacing').insetMock())
+
+it('lifts the composer one gutter above the home indicator', async () => {
+  mockGet.mockResolvedValue(THREAD)
+  render(<OrgConversationScreen cid="c1" />)
+  await screen.findByText('Northbank')
+  expect(paddingBottomOf(screen.getByTestId('conversation-footer'))).toBe(CLEARANCE)
 })

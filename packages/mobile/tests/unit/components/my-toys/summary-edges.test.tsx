@@ -1,5 +1,6 @@
 // Marking a toy unavailable, retiring it and answering requests, with a second
 // tap, a refusal, a stale list and odd data. Ordinary journeys: summary-screen.test.tsx.
+// journeys: W04
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { ToySummaryScreen } from '../../../../components/my-toys/summary-screen'
 import { toySummaryLead } from '../../../../lib/my-toy'
@@ -19,7 +20,9 @@ jest.mock('expo-router', () => {
   return { useFocusEffect: (effect: () => void) => useEffect(effect, []), useRouter: () => ({ push: mockPush }) }
 })
 let mockLed: { id: string; name: string }[] = []
+const mockInvalidate = jest.fn()
 jest.mock('../../../../lib/capabilities', () => ({
+  invalidateCapabilities: (...a: unknown[]) => mockInvalidate(...a),
   useCapabilities: () => ({ caps: { profile: { id: 'me', name: 'Sam' }, isAdmin: false, ledOrgs: mockLed, unread: {}, exchangeActions: 0 }, loading: false, refresh: jest.fn() }),
 }))
 

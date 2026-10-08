@@ -3,6 +3,7 @@
 // Only ever reached by an assistive-tech guide — sectionsFor omits the row
 // entirely for a toy adaptation, because a printed part is what an
 // assistive-tech tutorial IS and a toy adaptation has no use for one.
+import { logFailure } from '../../../lib/log'
 import { useState } from 'react'
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
@@ -107,7 +108,7 @@ function StlEditor() {
       })
       setFiles(inserted)
     } catch (err) {
-      console.error('[StlSection] stl upload failed:', err)
+      logFailure('[StlSection] stl upload failed:', err)
       setLocalError('Could not upload the STL file. Please try again.')
     } finally {
       setUploading(false)

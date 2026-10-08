@@ -1,4 +1,5 @@
 // packages/mobile/components/exchanges/list-screen.tsx
+import { logFailure } from '../../lib/log'
 import { useCallback, useEffect, useState } from 'react'
 import { View, Text, FlatList, RefreshControl, StyleSheet } from 'react-native'
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
@@ -93,7 +94,7 @@ export function ExchangesListScreen() {
         if (!ignore) setTransactions(data)
       })
       .catch((err) => {
-        console.error('[ExchangesListScreen] transaction fetch failed:', err)
+        logFailure('[ExchangesListScreen] transaction fetch failed:', err)
         if (!ignore) setError("Couldn't load your exchanges.")
       })
       .finally(() => {

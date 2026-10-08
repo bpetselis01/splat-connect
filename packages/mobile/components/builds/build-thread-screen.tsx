@@ -14,6 +14,9 @@
  *   read off the row.
  * - "Report a problem". Mobile has no report flow to send it to.
  */
+import { confirmDestructive, notify } from '../../lib/confirm'
+import { logFailure } from '../../lib/log'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   View,
@@ -69,6 +72,7 @@ const DOT: Record<RailState, { bg: string; fg: string; icon: React.ComponentProp
 export function BuildThreadScreen({ id }: { id: string }) {
   const router = useRouter()
   const { caps } = useCapabilities()
+  const bottom = useBottomClearance()
   const [tx, setTx] = useState<ToyTransactionDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -95,7 +99,7 @@ export function BuildThreadScreen({ id }: { id: string }) {
       setTx(fresh)
       setError((cur) => (cur === LOAD_ERROR ? null : cur))
     } catch (err) {
-      console.error('[BuildThreadScreen] transaction fetch failed:', err)
+      logFailure('[BuildThreadScreen] transaction fetch failed:', err)
       if (generation.current !== at) return
       setError(LOAD_ERROR)
     } finally {
@@ -154,6 +158,18 @@ export function BuildThreadScreen({ id }: { id: string }) {
 
   const post = (path: string, body: unknown = {}) =>
     run(() => apiClient.post<ToyTransaction>(`/api/toy-transactions/${id}/${path}`, body))
+
+  // Asked first, then told: a tap on Withdraw is not yet a withdrawal.
+  function withdraw(maker: boolean) {
+    confirmDestructive(
+      maker ? 'Withdraw from this build?' : 'Withdraw this request?',
+      maker ? 'The family will be told you are no longer building it.' : 'The maker will be told, and the build ends.',
+      'Proceed',
+      async () => {
+        if (await post('withdraw')) notify(maker ? 'Withdrawn from build' : 'Request withdrawn', maker ? 'The family has been told.' : 'The maker has been told.')
+      }
+    )
+  }
 
   async function postShot() {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
@@ -462,9 +478,17 @@ export function BuildThreadScreen({ id }: { id: string }) {
             />
           ) : null}
           <ReportProblem subjectKind="build" subjectId={tx.id} subjectLabel={`${tx.toy_name ?? 'A build'} — build with ${otherName}`} item="this build" who={otherName} />
+          {c.canWithdraw && !pickup ? (
+            <Button
+              label={c.isMaker ? 'Withdraw from this build' : 'Withdraw the request'}
+              variant="ghost"
+              disabled={busy}
+              onPress={() => withdraw(c.isMaker)}
+            />
+          ) : null}
         </ScrollView>
 
-        <View style={styles.footer}>
+        <View testID="thread-footer" style={[styles.footer, { paddingBottom: bottom }]}>
           <ErrorRow message={error} />
           {c.canMessage && (tx.owner_id || tx.owner_org_id) ? (
             <View style={styles.composer}>
@@ -494,14 +518,6 @@ export function BuildThreadScreen({ id }: { id: string }) {
               <Button label="Send" disabled={busy || !draft.trim()} onPress={send} style={styles.sendButton} />
             </View>
           ) : null}
-          {c.canWithdraw && !pickup ? (
-            <Button
-              label={c.isMaker ? 'Withdraw from this build' : 'Withdraw the request'}
-              variant="ghost"
-              disabled={busy}
-              onPress={() => post('withdraw')}
-            />
-          ) : null}
         </View>
       </Screen>
     </KeyboardAvoidingView>
@@ -511,7 +527,7 @@ export function BuildThreadScreen({ id }: { id: string }) {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   retry: { marginTop: theme.spacing(5), alignSelf: 'center', paddingHorizontal: theme.spacing(8) },
-  scrollContent: { paddingBottom: theme.spacing(4), gap: theme.spacing(3) },
+  scrollContent: { paddingBottom: theme.spacing(6), gap: theme.spacing(3) },
   head: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3), padding: theme.spacing(3) },
   headTile: {
     width: 46,
@@ -589,7 +605,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
     backgroundColor: theme.colors.surface,
   },
-  shotImage: { width: '100%', aspectRatio: 4 / 3, backgroundColor: theme.colors.surfaceSunken },
+  shotImage: { width: '100%', aspectRatio: 7 / 6, backgroundColor: theme.colors.surfaceSunken },
   shotCaption: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: theme.spacing(3), paddingVertical: theme.spacing(2) },
   shotText: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.text },
   brief: { padding: theme.spacing(3), borderRadius: theme.radii.field, backgroundColor: theme.colors.surfaceSunken, gap: theme.spacing(1) },

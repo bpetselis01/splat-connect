@@ -1,3 +1,4 @@
+// journeys: H06
 import { StyleSheet } from 'react-native'
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { RecentRows } from '../../../../components/home/recent-rows'

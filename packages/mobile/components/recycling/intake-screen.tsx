@@ -16,6 +16,7 @@
  *
  * The first led organisation, as web has it. Title from app/(my)/_layout.tsx.
  */
+import { logFailure } from '../../lib/log'
 import { useCallback, useState } from 'react'
 import { View, Text, ScrollView, TextInput, Image, StyleSheet } from 'react-native'
 import { useFocusEffect } from 'expo-router'
@@ -24,6 +25,7 @@ import { PRINT_MATERIALS, RECYCLING_FORMS, RECYCLING_MACHINES, apiMessage, initi
 import { apiClient } from '../../lib/api-client'
 import { useCapabilities } from '../../lib/capabilities'
 import { theme } from '../../lib/theme'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import { DROPOFF_PILL, canDecide, kg } from '../../lib/recycling'
 import { Screen } from '../ui/Screen'
 import { Card } from '../ui/Card'
@@ -40,6 +42,7 @@ const TINTS = [theme.colors.honeySoft, theme.colors.violetSoft, theme.colors.min
 const date = (iso: string) => new Date(iso).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })
 
 export function IntakeScreen() {
+  const bottom = useBottomClearance()
   const { caps, loading: capsLoading } = useCapabilities()
   const orgId = caps?.ledOrgs[0]?.id
   const [org, setOrg] = useState<Organization | null>(null)
@@ -65,7 +68,7 @@ export function IntakeScreen() {
       setNames(found)
       setLoadError(false)
     } catch (err) {
-      console.error('[IntakeScreen] load failed:', err)
+      logFailure('[IntakeScreen] load failed:', err)
       setLoadError(true)
     } finally {
       setLoading(false)
@@ -106,7 +109,7 @@ export function IntakeScreen() {
     <Screen>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: bottom }]}
         keyboardShouldPersistTaps="handled"
       >
         <Text style={styles.lead}>
@@ -463,7 +466,7 @@ const styles = StyleSheet.create({
   who: { fontFamily: theme.fonts.black, fontSize: theme.type.body, color: theme.colors.ink },
   meta: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.caption, lineHeight: 18, color: theme.colors.muted },
   note: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, lineHeight: 19, color: theme.colors.ink },
-  photo: { width: '100%', height: 150, borderRadius: 18 },
+  photo: { width: '100%', height: 180, borderRadius: 18 },
   kgRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   kgBox: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   kgLabel: { fontFamily: theme.fonts.black, fontSize: theme.type.caption, color: theme.colors.ink },

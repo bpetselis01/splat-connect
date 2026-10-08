@@ -14,14 +14,16 @@
  * address to accept (the API copies it onto the job); it comes from the
  * profile when that is complete, and is asked for inline when it is not.
  */
+import { logFailure } from '../../lib/log'
 import { useCallback, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { PickupAddress, PrinterWithOwner, ToyTransaction, ToyTransactionSummary } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
-import { useCapabilities } from '../../lib/capabilities'
+import { invalidateCapabilities, useCapabilities } from '../../lib/capabilities'
 import { theme } from '../../lib/theme'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import {
   bestMachine,
   jobState,
@@ -60,6 +62,7 @@ const PICKUP_FIELDS = [
  * machine the caller can answer for.
  */
 export function PrintForOthersScreen({ orgId }: { orgId?: string } = {}) {
+  const bottom = useBottomClearance()
   const router = useRouter()
   const { caps } = useCapabilities()
   const [tab, setTab] = useState<Tab>('requests')
@@ -84,7 +87,7 @@ export function PrintForOthersScreen({ orgId }: { orgId?: string } = {}) {
       setJobs(onMine)
       setLoadFailed(false)
     } catch (err) {
-      console.error('[PrintForOthersScreen] load failed:', err)
+      logFailure('[PrintForOthersScreen] load failed:', err)
       setLoadFailed(true)
     }
   }, [orgId])
@@ -101,6 +104,7 @@ export function PrintForOthersScreen({ orgId }: { orgId?: string } = {}) {
     setError(null)
     try {
       await action()
+      invalidateCapabilities()
       after?.()
     } catch (err) {
       setError(apiMessage(err, 'That did not go through. Check your connection and try again.'))
@@ -115,7 +119,9 @@ export function PrintForOthersScreen({ orgId }: { orgId?: string } = {}) {
   if (loadFailed && !printers) {
     return (
       <Screen>
-        <EmptyState icon="cloud-offline-outline" title="Couldn't load your printers." hint="Check your connection and try again." />
+        <EmptyState icon="cloud-offline-outline" title="Couldn't load your printers." hint="Check your connection and try again.">
+          <Button label="Try again" variant="secondary" onPress={() => void load()} style={styles.retry} />
+        </EmptyState>
       </Screen>
     )
   }
@@ -160,7 +166,7 @@ export function PrintForOthersScreen({ orgId }: { orgId?: string } = {}) {
       </View>
       <ErrorRow message={error} />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.content, { paddingBottom: bottom }]}>
         {tab === 'requests' ? (
           waiting.length === 0 ? (
             <EmptyState
@@ -486,6 +492,7 @@ function IncomingCard({
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  retry: { marginTop: theme.spacing(5), alignSelf: 'center', paddingHorizontal: theme.spacing(8) },
   tabs: {
     flexDirection: 'row',
     padding: 4,

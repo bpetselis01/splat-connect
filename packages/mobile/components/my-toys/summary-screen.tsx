@@ -7,15 +7,17 @@
  * Reloaded on focus: the editor one push away changes the name and condition
  * the lead reads.
  */
+import { logFailure } from '../../lib/log'
 import { useCallback, useState } from 'react'
 import { ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import type { Toy, ToyTransactionSummary } from '@splat-connect/types'
-import { apiMessage, isOwnerSide } from '@splat-connect/types'
+import { apiMessage, isNetworkError, isOwnerSide } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
-import { useCapabilities } from '../../lib/capabilities'
+import { invalidateCapabilities, useCapabilities } from '../../lib/capabilities'
 import { loadOwnedToy, toySummaryLead } from '../../lib/my-toy'
 import { theme } from '../../lib/theme'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import { Screen } from '../ui/Screen'
 import { Button } from '../ui/Button'
 import { SkeletonRow } from '../ui/Skeleton'
@@ -25,6 +27,7 @@ import { TextField } from '../ui/TextField'
 import { ListIntro, ListRow, Pill } from '../list/list-kit'
 
 export function ToySummaryScreen({ id }: { id: string }) {
+  const bottom = useBottomClearance()
   const router = useRouter()
   const { caps } = useCapabilities()
   const [toy, setToy] = useState<Toy | null>(null)
@@ -33,6 +36,8 @@ export function ToySummaryScreen({ id }: { id: string }) {
   const [busy, setBusy] = useState(false)
   const [retireNote, setRetireNote] = useState('')
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading')
+  const [offline, setOffline] = useState(false)
+  const [reloadKey, setReloadKey] = useState(0)
 
   useFocusEffect(
     useCallback(() => {
@@ -49,13 +54,15 @@ export function ToySummaryScreen({ id }: { id: string }) {
           setState('ready')
         })
         .catch((err) => {
-          console.error('[ToySummaryScreen] load failed:', err)
-          if (!ignore) setState('error')
+          logFailure('[ToySummaryScreen] load failed:', err)
+          if (ignore) return
+          setOffline(isNetworkError(err))
+          setState('error')
         })
       return () => {
         ignore = true
       }
-    }, [id])
+    }, [id, reloadKey])
   )
 
   if (state === 'loading') {
@@ -69,7 +76,21 @@ export function ToySummaryScreen({ id }: { id: string }) {
   if (state === 'error' || !toy) {
     return (
       <Screen>
-        <EmptyState icon="cloud-offline-outline" title="Couldn't load this toy." hint="Check your connection and try again." />
+        <EmptyState
+          icon="cloud-offline-outline"
+          title={offline ? 'You seem to be offline.' : "Couldn't load this toy."}
+          hint="Check your connection and try again."
+        >
+          <Button
+            label="Try again"
+            variant="secondary"
+            onPress={() => {
+              setOffline(false)
+              setState('loading')
+              setReloadKey((k) => k + 1)
+            }}
+          />
+        </EmptyState>
       </Screen>
     )
   }
@@ -111,6 +132,7 @@ export function ToySummaryScreen({ id }: { id: string }) {
     try {
       await apiClient.post(`/api/toy-transactions/${t.id}/accept`, {})
       setRequests((rs) => rs.map((r) => (r.id === t.id ? { ...r, status: 'accepted' } : r)))
+      invalidateCapabilities()
     } catch (err) {
       setError(apiMessage(err, 'Could not accept that request. Please try again.'))
     } finally {
@@ -136,7 +158,7 @@ export function ToySummaryScreen({ id }: { id: string }) {
 
   return (
     <Screen>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.content, { paddingBottom: bottom }]}>
         <ListIntro lead={toySummaryLead(toy, open.length)} />
         <View style={styles.rows}>
           {open.map((t) => (

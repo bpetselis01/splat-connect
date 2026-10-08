@@ -5,6 +5,7 @@
  * the interesting cases are the revocations: an ex-leader and a leader of some
  * other organisation must both be told the same thing a stranger is.
  */
+// journeys: L08 L10 W02
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'

@@ -1,4 +1,5 @@
 // packages/mobile/tests/unit/components/home/library-screen.test.tsx
+// journeys: G01 G02 G04 G05 G07
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { theme } from '../../../../lib/theme'
 import { ScrollView, FlatList, StyleSheet } from 'react-native'
@@ -22,7 +23,11 @@ jest.mock('../../../../lib/api-client', () => ({
 }))
 let mockParams: Record<string, string> = {}
 const mockPush = jest.fn()
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }), useLocalSearchParams: () => mockParams }))
+let mockFocus: () => void
+jest.mock('expo-router', () => {
+  const { useEffect } = jest.requireActual('react')
+  return { useRouter: () => ({ push: mockPush }), useLocalSearchParams: () => mockParams, useFocusEffect: (e: () => void) => { mockFocus = e; useEffect(e, []) } }
+})
 
 const row = (over: object) => ({
   id: 't1', title: 'Bubble machine', description: null, difficulty: 'easy', kind: 'toy_adaptation',
@@ -93,6 +98,14 @@ describe('LibraryScreen', () => {
     expect(clears(screen.UNSAFE_getAllByType(FlatList))).toBe(true)
   })
 
+  it('offers Request a print in the Guide actions menu', async () => {
+    render(<LibraryScreen />)
+    await screen.findByText('Build a Robot Arm')
+    fireEvent.press(screen.getByLabelText('Guide actions'))
+    fireEvent.press(screen.getByLabelText('Request a print'))
+    expect(mockPush).toHaveBeenCalledWith('/printing')
+  })
+
   it('carries an organisation to print with into the guide it opens', async () => {
     mockParams = { printWith: 'o1' }
     render(<LibraryScreen />)
@@ -105,6 +118,18 @@ describe('LibraryScreen', () => {
     expect(await screen.findByText('Build a Robot Arm')).toBeTruthy()
     expect(screen.getByText('Advanced Gearbox')).toBeTruthy()
     expect(mockGet).toHaveBeenCalledWith('/api/public/tutorials')
+  })
+
+  it('refetches when the screen regains focus, so a thanks sent on the guide shows on its pill', async () => {
+    mockEndpoints({ tutorials: Promise.resolve([row({ id: '1', title: 'Build a Robot Arm', thanks_count: 1 })]) })
+    render(<LibraryScreen />)
+    await screen.findByText('Build a Robot Arm')
+    expect(screen.getByText('1')).toBeTruthy()
+    mockEndpoints({ tutorials: Promise.resolve([row({ id: '1', title: 'Build a Robot Arm', thanks_count: 2 })]) })
+    await act(async () => { mockFocus() })
+    expect(await screen.findByText('2')).toBeTruthy()
+    // Quietly: the list never went back to skeletons.
+    expect(screen.getByText('Build a Robot Arm')).toBeTruthy()
   })
 
   it('filters the list by search text', async () => {
@@ -207,6 +232,16 @@ describe('LibraryScreen', () => {
     mockGet.mockRejectedValue(new Error('API GET failed with status 500'))
     render(<LibraryScreen />)
     expect(await screen.findByText("Couldn't load tutorials.")).toBeTruthy()
+  })
+
+  it('offline shows the message and Try again without a console error', async () => {
+    const err = jest.spyOn(console, 'error').mockImplementation(() => {})
+    mockGet.mockRejectedValue(new TypeError('Network request failed'))
+    render(<LibraryScreen />)
+    expect(await screen.findByText('Check your connection and try again.')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeTruthy()
+    expect(err).not.toHaveBeenCalled()
+    err.mockRestore()
   })
 
   it('retries the fetch when the error state button is pressed', async () => {

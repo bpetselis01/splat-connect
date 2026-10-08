@@ -1,4 +1,5 @@
 // packages/mobile/tests/unit/components/my-toys/list-screen.test.tsx
+// journeys: W01
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { MyToysListScreen } from '../../../../components/my-toys/list-screen'
 

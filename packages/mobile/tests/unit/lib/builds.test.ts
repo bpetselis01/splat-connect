@@ -35,6 +35,9 @@ describe('threadHref', () => {
     expect(threadHref({ id: 'tx1', type: 'exchange' })).toBe('/exchanges/tx1')
     expect(threadHref({ id: 'tx1', type: 'donation' })).toBe('/exchanges/tx1')
   })
+  it('opens a print job on its own screen, not the toy thread (S2)', () => {
+    expect(threadHref({ id: 'tx1', type: 'print' })).toBe('/printing/jobs/tx1')
+  })
 })
 
 describe('buildRail', () => {
@@ -108,7 +111,7 @@ describe('buildCard', () => {
 
   it('says whose move it is at every stage, from both sides', () => {
     expect(kicker(open, FAMILY)).toBe('Waiting')
-    expect(kicker(open, STRANGER)).toBe('Needs a maker')
+    expect(kicker(open, STRANGER)).toBe('Open for a maker')
     expect(kicker(building, MAKER)).toBe('Your build')
     expect(kicker(building, FAMILY)).toBe('Live')
     expect(kicker(shot, MAKER)).toBe('Waiting')

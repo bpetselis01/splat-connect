@@ -24,8 +24,8 @@ describe('linkFor precedence and edges', () => {
   it('an empty-string transaction id is treated as none, not as /exchanges/', () => {
     expect(linkFor(n({ type: 'toy_message', toy_transaction_id: '' }))).not.toBe('/exchanges/')
   })
-  it('an org thanks goes to the hub even when it also names a conversation-less org id', () => {
-    expect(linkFor(n({ type: 'org_thanked', org_id: 'o1' }))).toBe('/organisation')
+  it('an org thanks opens the profile editor (where notes are hidden), not the review queue (S4)', () => {
+    expect(linkFor(n({ type: 'org_thanked', org_id: 'o1' }))).toBe('/organisation/profile')
   })
   it('a conversation id wins over an org event', () => {
     expect(linkFor(n({ org_conversation_id: 'c1', org_event_id: 'e1' }))).toBe('/messages/c1')

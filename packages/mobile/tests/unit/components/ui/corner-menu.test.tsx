@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native'
+import { theme } from '../../../../lib/theme'
 import { tabBarClearance } from '../../../../lib/tab-bar-layout'
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { CornerMenu } from '../../../../components/ui/CornerMenu'
@@ -49,5 +50,14 @@ it('tells a screen reader whether it is open, since the glyph only cross-fades',
 it('sits above the floating tab bar, not behind it', () => {
   render(<CornerMenu label="Guide actions" items={items} />)
   const zone = StyleSheet.flatten(screen.getByTestId('corner-menu-zone').props.style) as { bottom?: number }
-  expect(zone.bottom).toBe(tabBarClearance(0))
+  // Level with the Map tab's List button, which sits spacing(1) under the clearance.
+  expect(zone.bottom).toBe(tabBarClearance(0) - theme.spacing(1))
+})
+
+it('labels the trigger Actions, and Close while open', () => {
+  render(<CornerMenu label="Guide actions" items={items} />)
+  expect(screen.getByText('Actions')).toBeTruthy()
+  fireEvent.press(screen.getByLabelText('Guide actions'))
+  expect(screen.getByText('Close', { includeHiddenElements: true })).toBeTruthy()
+  expect(screen.queryByText('Actions', { includeHiddenElements: true })).toBeNull()
 })

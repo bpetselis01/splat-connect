@@ -2,6 +2,7 @@
  * Makers wanted rows carry the guide's build time and rough parts cost — the
  * cost only when every required part is priced (batch 1's partsTotalCents).
  */
+// journeys: X01
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'

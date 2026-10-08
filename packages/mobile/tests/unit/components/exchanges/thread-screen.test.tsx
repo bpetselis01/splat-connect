@@ -4,6 +4,8 @@
 // three axes the API itself branches on — status, which side the viewer is on,
 // and donation vs exchange — because the wrong answer on any one of them puts
 // two people in a room reciting a code that cannot match.
+// journeys: X02 X04 X05 X06 X07 X08 X09
+import { CLEARANCE, paddingBottomOf } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import {
   ExchangeThreadScreen,
@@ -47,7 +49,9 @@ const mockCopy = jest.fn()
 jest.mock('expo-clipboard', () => ({ setStringAsync: (...a: unknown[]) => mockCopy(...a) }))
 
 const mockUseCapabilities = jest.fn()
+const mockInvalidate = jest.fn()
 jest.mock('../../../../lib/capabilities', () => ({
+  invalidateCapabilities: (...a: unknown[]) => mockInvalidate(...a),
   useCapabilities: () => mockUseCapabilities(),
 }))
 
@@ -333,6 +337,8 @@ describe('ExchangeThreadScreen — requested, requester side', () => {
     fireEvent.press(screen.getByRole('button', { name: 'Withdraw' }))
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions/tx1/withdraw', {}))
     expect(await screen.findByText('Withdrawn')).toBeTruthy()
+    // The Me badge counts what is waiting on you, so it must be refetched in place.
+    expect(mockInvalidate).toHaveBeenCalledTimes(1)
   })
 })
 
@@ -539,6 +545,7 @@ describe('ExchangeThreadScreen — messages', () => {
       expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions/tx1/messages', { body: 'On my way.' })
     )
     expect(await screen.findByText('On my way.')).toBeTruthy()
+    expect(mockInvalidate).toHaveBeenCalledTimes(1)
   })
 
   it('holds Send until something is typed', async () => {
@@ -754,5 +761,14 @@ describe('opened to accept', () => {
     render(<ExchangeThreadScreen id="tx1" startAccept />)
     expect(await screen.findByText('Where should they collect it?')).toBeTruthy()
     expect(screen.getByLabelText('Suburb').props.value).toBe('Newtown')
+  })
+})
+
+jest.mock('react-native-safe-area-context', () => require('../../bottom-spacing').insetMock())
+
+describe('ExchangeThreadScreen — bottom spacing', () => {
+  it('lifts the composer and Withdraw one gutter above the home indicator', async () => {
+    await open()
+    expect(paddingBottomOf(screen.getByTestId('thread-footer'))).toBe(CLEARANCE)
   })
 })

@@ -1,3 +1,4 @@
+// journeys: P04 S02 X13
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { ThankButton } from '../../../../components/people/thank-button'
 

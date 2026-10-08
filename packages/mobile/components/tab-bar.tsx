@@ -17,6 +17,7 @@ import * as Haptics from 'expo-haptics'
 import { BlurView } from 'expo-blur'
 import { theme } from '../lib/theme'
 import { TAB_BAR_HEIGHT, TAB_BAR_OFFSET } from '../lib/tab-bar-layout'
+import { rememberBarPath } from '../lib/last-bar-path'
 
 // Roots that show the bar. Guides and Toys are hidden tabs reached from Home:
 // they show the bar with Home lit. Explore is a pushed place, never a root.
@@ -65,6 +66,7 @@ export function TabBar({ state, descriptors, navigation, insets, badges }: Props
   // the params the tab was navigated with.
   const child = nested?.routes?.[depth]?.name ?? (current?.params as { screen?: string } | undefined)?.screen
   if (!current || !BAR_ROOTS.has(current.name) || depth > 0 || (child && child !== 'index')) return null
+  rememberBarPath(current.name)
 
   const lit = BUTTONS.includes(current.name) ? current.name : 'home'
   const items = BUTTONS.flatMap((name) => state.routes.filter((r) => r.name === name))

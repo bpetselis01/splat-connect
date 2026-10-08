@@ -1,6 +1,7 @@
 // Edge inputs and repeat taps on the sign-in flow's screens, against a mocked
 // auth context: the keyboard's return key, a second tap while a request is in
 // flight, a short or lettered code, resend throttling and network failures.
+// journeys: A04 A07 A08
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import CreateAccount from '../../../app/(auth)/create-account'
 import SignIn from '../../../app/(auth)/sign-in'

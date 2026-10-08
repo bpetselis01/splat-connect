@@ -13,6 +13,7 @@
  * have no API behind them, so they are not drawn. The dashed "switch to the
  * printer's side" row is a prototype shortcut, not a feature.
  */
+import { logFailure } from '../../lib/log'
 import { useCallback, useRef, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Image, Pressable, type TextInput } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
@@ -21,8 +22,9 @@ import type { PrinterStats, PrinterWithOwner, ToyTransaction, ToyTransactionDeta
 import { apiMessage, fitNotesLines, formatCents, isOwnerSide, plural, statsLine } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { supabase } from '../../lib/supabase'
-import { useCapabilities } from '../../lib/capabilities'
+import { invalidateCapabilities, useCapabilities } from '../../lib/capabilities'
 import { theme } from '../../lib/theme'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import { answerByLabel, askedLabel, jobState, JOB_LABEL, JOB_TONE, RAIL, railIndex, type JobState } from '../../lib/printing'
 import { markReady, startPrint, withdrawRequest } from './actions'
 import { Screen } from '../ui/Screen'
@@ -51,6 +53,7 @@ function askedWhen(iso: string): string {
 }
 
 export function PrintJobScreen({ id }: { id: string }) {
+  const bottom = useBottomClearance()
   const router = useRouter()
   const { caps } = useCapabilities()
   const [tx, setTx] = useState<ToyTransactionDetail | null>(null)
@@ -97,7 +100,7 @@ export function PrintJobScreen({ id }: { id: string }) {
           .then(({ data }) => setPhotoUrl(data?.signedUrl ?? null), () => {})
       }
     } catch (err) {
-      console.error('[PrintJobScreen] fetch failed:', err)
+      logFailure('[PrintJobScreen] fetch failed:', err)
       if (generation.current === at) setError(LOAD_ERROR)
     } finally {
       setLoading(false)
@@ -119,6 +122,7 @@ export function PrintJobScreen({ id }: { id: string }) {
     try {
       const fresh = await action()
       if (fresh) setTx((cur) => (cur ? { ...cur, ...fresh } : cur))
+      invalidateCapabilities()
       return true
     } catch (err) {
       setError(apiMessage(err, 'Something went wrong. Please try again.'))
@@ -149,7 +153,17 @@ export function PrintJobScreen({ id }: { id: string }) {
   if (!tx) {
     return (
       <Screen>
-        <EmptyState icon="cloud-offline-outline" title={LOAD_ERROR} hint="Check your connection and try again." />
+        <EmptyState icon="cloud-offline-outline" title={LOAD_ERROR} hint="Check your connection and try again.">
+          <Button
+            label="Try again"
+            variant="secondary"
+            onPress={() => {
+              setLoading(true)
+              void load()
+            }}
+            style={styles.retry}
+          />
+        </EmptyState>
       </Screen>
     )
   }
@@ -267,7 +281,7 @@ export function PrintJobScreen({ id }: { id: string }) {
           </View>
         </ScrollView>
 
-        <View style={styles.footer}>
+        <View testID="job-footer" style={[styles.footer, { paddingBottom: bottom }]}>
           <ErrorRow message={error} />
           {live ? (
             <View style={styles.composer}>
@@ -518,6 +532,7 @@ function StateCard({
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  retry: { marginTop: theme.spacing(5), alignSelf: 'center', paddingHorizontal: theme.spacing(8) },
   fit: { gap: theme.spacing(2) },
   fitRow: { flexDirection: 'row', gap: theme.spacing(2) },
   content: { paddingBottom: theme.spacing(4), gap: theme.spacing(4) },
@@ -569,7 +584,7 @@ const styles = StyleSheet.create({
   },
   money: { fontFamily: theme.fonts.numeral, fontSize: theme.type.title, color: theme.colors.ink },
   code: { fontFamily: theme.fonts.numeral, fontSize: theme.type.heading, color: theme.colors.primaryDeep },
-  photo: { height: 140, borderRadius: theme.radii.field, backgroundColor: theme.colors.surface },
+  photo: { height: 168, borderRadius: theme.radii.field, backgroundColor: theme.colors.surface },
   log: { gap: theme.spacing(2) },
   footer: {
     borderTopWidth: theme.border.hairline,

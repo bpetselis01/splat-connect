@@ -5,6 +5,7 @@
 // a saved list is a shortcut shelf, not a second browse surface.
 //
 // The native header carries the type's name (app/(my)/_layout.tsx).
+import { logFailure } from '../../lib/log'
 import { useCallback, useEffect, useState } from 'react'
 import { View, ScrollView, RefreshControl, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
@@ -142,7 +143,7 @@ export function SavedListScreen({ slug }: { slug: SaveSlug }) {
         if (!ignore) setItems(data)
       })
       .catch((err) => {
-        console.error('[SavedListScreen] fetch failed:', err)
+        logFailure('[SavedListScreen] fetch failed:', err)
         if (!ignore) setError(true)
       })
       .finally(() => {

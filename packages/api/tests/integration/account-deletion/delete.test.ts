@@ -3,6 +3,7 @@
  * is one line of the spec's table: what goes, what is repointed to the
  * "Deleted member" placeholder, and what other people keep.
  */
+// journeys: Z05
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'

@@ -2,6 +2,7 @@
 // The board's Admin (MB is_admin): six count cards from one call. Review
 // tables don't fit a phone, so each card opens its queue on the web, where
 // the admin is signed in as themselves.
+import { logFailure } from '../../lib/log'
 import { useEffect, useState } from 'react'
 import { View, Text, Linking, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
@@ -9,6 +10,8 @@ import type { AdminCounts } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { AnimatedPressable } from '../../components/ui/AnimatedPressable'
+import { SectionStub } from '../../components/ui/SectionStub'
+import { useCapabilities } from '../../lib/capabilities'
 
 type Icon = React.ComponentProps<typeof Ionicons>['name']
 
@@ -23,6 +26,15 @@ const CARDS: { key: keyof AdminCounts; label: string; path: string; icon: Icon; 
 ]
 
 export default function MyAdmin() {
+  const { caps, loading } = useCapabilities()
+  if (loading) return null
+  if (!caps?.isAdmin) {
+    return <SectionStub title="Admin" blurb="This screen belongs to admins. The review queues show up here when your account is one." />
+  }
+  return <AdminCards />
+}
+
+function AdminCards() {
   const [counts, setCounts] = useState<AdminCounts | null>(null)
   useEffect(() => {
     let ignore = false
@@ -31,7 +43,7 @@ export default function MyAdmin() {
       .then((c) => {
         if (!ignore) setCounts(c)
       })
-      .catch((err) => console.error('[MyAdmin] counts failed:', err))
+      .catch((err) => logFailure('[MyAdmin] counts failed:', err))
     return () => {
       ignore = true
     }

@@ -1,3 +1,5 @@
+// journeys: R03
+import { CLEARANCE, paddingBottomOf } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { RequestPrintScreen } from '../../../../components/printing/request-screen'
 
@@ -175,4 +177,12 @@ it('offers nothing for a guide whose part has no grams, or a printer that is a p
   render(<RequestPrintScreen guideId="g1" printerIds={['p2', 'p1']} />)
   await screen.findByText('Send request')
   expect(screen.queryByText(/of your credit at/)).toBeNull()
+})
+
+jest.mock('react-native-safe-area-context', () => require('../../bottom-spacing').insetMock())
+
+it('lifts Send request one gutter above the home indicator', async () => {
+  render(<RequestPrintScreen guideId="g1" printerIds={['p1']} />)
+  await screen.findByLabelText('More mount.stl')
+  expect(paddingBottomOf(screen.getByTestId('request-footer'))).toBe(CLEARANCE)
 })

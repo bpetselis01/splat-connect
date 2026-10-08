@@ -97,12 +97,57 @@ export function Provenance({
   )
 }
 
+/**
+ * The same provenance as one line under a guide's title: "By Mei Chen and
+ * Dan Kowalski · Backed by Northbank". Each name and the org open their page.
+ */
+export function Byline({
+  contributors,
+  orgs,
+  onPerson,
+  onOrg,
+}: {
+  contributors: ProvenanceContributor[]
+  orgs: ProvenanceOrg[]
+  onPerson: (profileId: string) => void
+  onOrg: (orgId: string) => void
+}) {
+  const primary = contributors.find((c) => c.role === 'primary') ?? contributors[0]
+  if (!primary) return null
+  const people = [primary, ...contributors.filter((c) => c !== primary)]
+  const backer = orgs.find((o) => o.status === 'accepted')
+  return (
+    <Text style={styles.byline}>
+      {'By '}
+      {people.map((c, i) => (
+        <Text key={c.profile_id}>
+          {i === 0 ? '' : i === people.length - 1 ? ' and ' : ', '}
+          <Text onPress={() => onPerson(c.profile_id)} accessibilityRole="link" style={styles.bylineLink}>
+            {c.profiles.name}
+          </Text>
+        </Text>
+      ))}
+      {' · '}
+      {backer ? (
+        <Text onPress={() => onOrg(backer.organizations.id)} accessibilityRole="link" style={styles.bylineLink}>
+          Backed by {backer.organizations.name}
+        </Text>
+      ) : (
+        'Reviewed by SPLAT'
+      )}
+    </Text>
+  )
+}
+
 const styles = StyleSheet.create({
+  byline: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted, lineHeight: 19 },
+  bylineLink: { fontFamily: theme.fonts.bold, color: theme.colors.primaryDeep },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing(3),
-    padding: theme.spacing(3),
+    paddingHorizontal: theme.spacing(5),
+    paddingVertical: theme.spacing(3),
     borderRadius: theme.radii.panel,
     borderWidth: theme.border.hairline,
     borderColor: theme.colors.border,

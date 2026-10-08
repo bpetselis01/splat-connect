@@ -42,7 +42,7 @@ export type {
   PdfDraftApi,
   PdfDraftResult,
 } from './pdf-import'
-export { isApiError, apiErrorDetail, apiMessage, makeApiClient } from './api-core'
+export { isApiError, isNetworkError, apiErrorDetail, apiMessage, makeApiClient } from './api-core'
 export type { ApiError } from './api-core'
 export { dateBadge, shortDate, monthHeading, monthKey, longDate, formatTimeRange, isPast } from './dates'
 import { printRequestExpired } from './printing'
@@ -2224,7 +2224,7 @@ export interface Recommendation {
   position: number
   /** 129. "Required first": make the recommended guide before this one. */
   required?: boolean
-  tutorials: Pick<Tutorial, 'id' | 'title' | 'kind' | 'difficulty' | 'toy_photo_url' | 'status' | 'maturity'>
+  tutorials: Pick<Tutorial, 'id' | 'title' | 'kind' | 'difficulty' | 'toy_photo_url' | 'status' | 'maturity'> & { build_minutes?: number | null }
 }
 
 // A tutorial with all its related information: the parts needed, tools needed,
@@ -2524,7 +2524,7 @@ export interface GuideNote {
 }
 
 /** What a member report can be about (065, widened in 118). */
-export const REPORT_SUBJECT_KINDS = ['guide', 'toy', 'person', 'organisation', 'print_job', 'exchange', 'build', 'other'] as const
+export const REPORT_SUBJECT_KINDS = ['guide', 'toy', 'person', 'organisation', 'print_job', 'exchange', 'build', 'note', 'other'] as const
 export type ReportSubjectKind = (typeof REPORT_SUBJECT_KINDS)[number]
 
 export * from './pending'

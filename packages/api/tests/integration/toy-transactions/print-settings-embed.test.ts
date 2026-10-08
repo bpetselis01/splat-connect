@@ -3,6 +3,7 @@
  * print job. When the database lacked those columns the whole exchanges list
  * was a 500, so this pins the embed on both routes against the real schema.
  */
+// journeys: R04 X01
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'

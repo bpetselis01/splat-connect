@@ -1,6 +1,14 @@
+// journeys: G22
 import { Linking } from 'react-native'
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { GuideTools } from '../../../../components/guides/guide-tools'
+import { useGatherTicks } from '../../../../lib/guide-progress'
+
+// The screen owns the ticks (useGatherTicks); this stands in for it.
+function Tools({ tools }: { tools: React.ComponentProps<typeof GuideTools>['tools'] }) {
+  const g = useGatherTicks('g', [], tools)
+  return <GuideTools tools={tools} ticks={g.tools} />
+}
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 const mockPush = jest.fn()
@@ -16,25 +24,25 @@ const tools = [
 ]
 
 it('ticks the tools you already have and links to Learn', async () => {
-  render(<GuideTools tutorialId="g" tools={tools} />)
+  render(<Tools tools={tools} />)
   expect(await screen.findByText('0 of 2 already yours')).toBeTruthy()
-  expect(screen.getByText('Not counted in the parts total — tools are a one-off.')).toBeTruthy()
+  expect(screen.getByText(/Not in the parts total/)).toBeTruthy()
   fireEvent.press(screen.getByLabelText('I already have Hot glue gun'))
   expect(screen.getByText('1 of 2 already yours')).toBeTruthy()
-  expect(mockSetItem).toHaveBeenLastCalledWith('guide-tools.g', '["t2"]')
-  fireEvent.press(screen.getByRole('button', { name: /Tools and materials on Learn/ }))
+  expect(mockSetItem).toHaveBeenLastCalledWith('guide-tools.g.signed-out', '["t2"]')
+  fireEvent.press(screen.getByLabelText('Tools and materials on Learn'))
   expect(mockPush).toHaveBeenCalledWith('/explore/learn/tools-and-materials')
 })
 
 it('says why each tool and how to get it', async () => {
-  render(<GuideTools tutorialId="g" tools={[{ ...tools[1], note: 'Anchoring the jack', get_by: 'borrow' }]} />)
+  render(<Tools tools={[{ ...tools[1], note: 'Anchoring the jack', get_by: 'borrow' }]} />)
   expect(await screen.findByText('Anchoring the jack')).toBeTruthy()
   expect(screen.getByText('Borrow')).toBeTruthy()
 })
 
 it('links each tool to where it is sold', async () => {
   const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(true)
-  render(<GuideTools tutorialId="g" tools={[{ ...tools[0], buy_links: [{ label: 'Bunnings', url: 'https://b.test/x' }] }]} />)
+  render(<Tools tools={[{ ...tools[0], buy_links: [{ label: 'Bunnings', url: 'https://b.test/x' }] }]} />)
   fireEvent.press(await screen.findByText('Bunnings'))
   expect(open).toHaveBeenCalledWith('https://b.test/x')
 })

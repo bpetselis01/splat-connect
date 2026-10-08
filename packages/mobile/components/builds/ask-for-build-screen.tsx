@@ -10,6 +10,7 @@
  *   API refuses one without them. Seeded from the profile's pickup suburb.
  * - No parts price. Guides do not store one, so "roughly $30" would be made up.
  */
+import { logFailure } from '../../lib/log'
 import { useEffect, useState } from 'react'
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
@@ -18,6 +19,7 @@ import type { Tutorial } from '@splat-connect/types'
 import { apiMessage, formatBuildTime, BUILD_URGENCIES } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import { useCapabilities } from '../../lib/capabilities'
 import { Chip } from '../ui/Chip'
 import { Button } from '../ui/Button'
@@ -31,6 +33,7 @@ const DIFF_LABEL = { easy: 'Easy', medium: 'Medium', hard: 'Hard' } as const
 
 export function AskForBuildScreen() {
   const router = useRouter()
+  const bottom = useBottomClearance()
   const { guide } = useLocalSearchParams<{ guide?: string }>()
   const { caps } = useCapabilities()
   const [tutorials, setTutorials] = useState<Tutorial[]>([])
@@ -50,7 +53,7 @@ export function AskForBuildScreen() {
       .get<Tutorial[]>('/api/public/tutorials')
       .then(setTutorials)
       .catch((err) => {
-        console.error('[AskForBuildScreen] tutorials fetch failed:', err)
+        logFailure('[AskForBuildScreen] tutorials fetch failed:', err)
         setError("Couldn't load the guides. Close this and try again.")
       })
   }, [])
@@ -102,7 +105,8 @@ export function AskForBuildScreen() {
     <ScrollView
       style={styles.sheet}
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={styles.content}
+      // The sheet's one detent is 1.0 (full height), so it runs under the home indicator: inset + a gutter.
+      contentContainerStyle={[styles.content, { paddingBottom: bottom }]}
       keyboardShouldPersistTaps="handled"
       automaticallyAdjustKeyboardInsets
     >
@@ -235,7 +239,7 @@ function GuideRow({ t, on, onPress, action }: { t: Tutorial; on: boolean; onPres
 
 const styles = StyleSheet.create({
   sheet: { flex: 1, backgroundColor: theme.colors.background },
-  content: { padding: theme.spacing(4), paddingBottom: theme.spacing(8), gap: theme.spacing(4) },
+  content: { padding: theme.spacing(4), gap: theme.spacing(4) },
   intro: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted, lineHeight: 21 },
   label: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.text, marginBottom: theme.spacing(2) },
   hint: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted, lineHeight: 18 },

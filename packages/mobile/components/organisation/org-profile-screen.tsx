@@ -13,6 +13,7 @@
  * sign-in. A leader of the org sees none of them — they would be following and
  * thanking themselves — and their organisation's messages are on Me.
  */
+import { logFailure } from '../../lib/log'
 import { useCallback, useEffect, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet, Image, Pressable } from 'react-native'
 import { useRouter } from 'expo-router'
@@ -94,7 +95,7 @@ export function OrgProfileScreen({ id }: { id: string }) {
         setMe(rel)
       })
       .catch((err) => {
-        console.error('[OrgProfileScreen] fetch failed:', err)
+        logFailure('[OrgProfileScreen] fetch failed:', err)
         if (!ignore) setError(true)
       })
       .finally(() => {
@@ -210,7 +211,7 @@ export function OrgProfileScreen({ id }: { id: string }) {
         me={me}
         signedIn={!!session}
         byline={firstName(caps?.profile.name)}
-        onThanked={() => setOrg({ ...org, thanks_count: (org.thanks_count ?? 0) + 1 })}
+        onThanked={(count) => setOrg({ ...org, thanks_count: count })}
       />
 
       {org.about ? <Text style={styles.body}>{org.about}</Text> : null}
@@ -445,7 +446,7 @@ function OrgButtons({
   me: OrgRelationship | null
   signedIn: boolean
   byline: string
-  onThanked: () => void
+  onThanked: (count: number) => void
 }) {
   const router = useRouter()
   const [following, setFollowing] = useState(me?.following ?? false)
@@ -490,10 +491,11 @@ function OrgButtons({
     setBusy(true)
     setError(null)
     try {
-      await apiClient.post(`/api/organizations/${orgId}/thanks`, { note, byline, show_note: show })
+      // The server's own count, not ours plus one: someone else may have thanked meanwhile.
+      const sent = await apiClient.post<{ thanks_count: number }>(`/api/organizations/${orgId}/thanks`, { note, byline, show_note: show })
       setThanked(true)
       setAsking(false)
-      onThanked()
+      if (typeof sent?.thanks_count === 'number') onThanked(sent.thanks_count)
     } catch (err) {
       // Thanked already, from another device: the same end state.
       if (err instanceof Error && /status 409/.test(err.message)) {

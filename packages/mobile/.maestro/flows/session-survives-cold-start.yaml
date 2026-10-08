@@ -3,39 +3,27 @@
 # block here: a flow-level `env:` default WINS over --env (measured 2026-07-26 —
 # both flows typed the literal placeholder and failed with "Invalid login
 # credentials"). With no default, an unset variable fails loudly instead.
+# journeys: A05 A14
 appId: com.splatconnect.mobile
 ---
 # Establishes a signed-out precondition at flow start: both flows run in one
 # `maestro test` session against one device, so without this a prior flow's
 # signed-in state leaks in. Never add this to the relaunch path below — that
 # would wipe the SecureStore entry this suite exists to test.
-- clearState
-- runFlow: ../subflows/launch.yaml
+# clearKeychain as well: on iOS clearState leaves the Keychain, where the session
+# lives, so a session from an earlier flow would skip the sign-in this one starts
+# with. (Only here, at the start: the relaunch below must keep what was stored.)
+- launchApp:
+    clearState: true
+    clearKeychain: true
 
-# The app lives behind sign-in — a signed-out launch lands on Welcome, whose
-# second door is Sign in. Addressed by testID rather than text: TextField
-# renders its label as a sibling <Text> carrying the same string as the input's
-# own accessibilityLabel, and a text-matched tap lands on whichever comes first.
+# The app lives behind sign-in: with the Keychain cleared, a launch lands on
+# Welcome. sign-in.yaml taps its Sign in door (by testID, since TextField renders
+# its label as a sibling <Text>), signs in, dismisses iOS's save-password alert,
+# and ends on Home, whose grid carries a Guides shortcut.
 - assertVisible:
     id: "welcome-sign-in"
-- tapOn:
-    id: "welcome-sign-in"
-- tapOn:
-    id: "email-input"
-- inputText: ${DEVICE_EMAIL}
-- tapOn: "Welcome back"  # the keyboard covers the password field
-- tapOn:
-    id: "password-input"
-- inputText: ${DEVICE_PASSWORD}
-# hideKeyboard fails on the iOS 26 simulator; a tap outside a field
-# dismisses it on device and simulator alike (ScrollView default).
-- tapOn: "Welcome back"
-- tapOn:
-    id: "auth-submit"
-
-# A signed-in visitor lands on Home, whose grid carries a Guides shortcut.
-- assertVisible:
-    text: "Guides"
+- runFlow: ../subflows/sign-in.yaml
 
 # The actual test: kill the process, then cold-start again. Anything held only in
 # React state or memory is gone; only what secureStoreAdapter wrote survives.

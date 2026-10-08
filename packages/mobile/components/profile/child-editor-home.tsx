@@ -10,6 +10,7 @@
 // wrist and forearm…) are gone: those columns stay in the database but nothing
 // asks for them now (APP 3 minimisation). These are plain-language preferences for
 // ranking guides, never a clinical assessment — see docs/REGULATORY-CHANGES.md.
+import { logFailure } from '../../lib/log'
 import { ScrollView, View, Text, Linking, StyleSheet } from 'react-native'
 import { Stack, useRouter } from 'expo-router'
 import { CHILD_MEASURES, CHILD_QUESTIONS, ONE_HAND_LABEL } from '@splat-connect/types'
@@ -17,6 +18,7 @@ import { NotMedicalNote } from '../ui/NotMedicalNote'
 import { apiClient } from '../../lib/api-client'
 import { confirmDestructive, notify } from '../../lib/confirm'
 import { theme } from '../../lib/theme'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import { readAge } from '../../lib/child-age'
 import { useChildProfile } from '../../lib/use-child-profile'
 import { Button } from '../ui/Button'
@@ -27,6 +29,7 @@ import { EmptyState } from '../ui/EmptyState'
 import { ChoiceChips, ManyChips, MeasureField, NeedsChips } from './fields'
 
 export function ChildEditorHome({ childId }: { childId: string }) {
+  const bottom = useBottomClearance()
   const router = useRouter()
   const { profile, loading, save, saveState } = useChildProfile(childId)
 
@@ -56,14 +59,14 @@ export function ChildEditorHome({ childId }: { childId: string }) {
         .delete(`/api/child-profiles/${childId}`)
         .then(() => router.back())
         .catch((err) => {
-          console.error('[ChildEditorHome] delete failed:', err)
+          logFailure('[ChildEditorHome] delete failed:', err)
           notify('Could not delete this profile', 'Please try again.')
         })
     })
   }
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.screen} contentContainerStyle={[styles.content, { paddingBottom: bottom }]}>
       {/* The header names the child, as on the board. */}
       <Stack.Screen options={{ title: profile.name || 'Child profile' }} />
       <Text style={styles.eyebrow}>PRIVATE TO YOU</Text>

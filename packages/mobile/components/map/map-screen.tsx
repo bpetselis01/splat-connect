@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native'
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated'
-import { useFocusEffect, useRouter } from 'expo-router'
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { MapItem, MapKind, MapPlace } from '@splat-connect/types'
@@ -49,6 +49,12 @@ export function MapScreen() {
   // The kinds picked with the chips. None picked shows every kind; picking one
   // shows only it, and more can be added (Byron, 2026-10-05).
   const [picked, setPicked] = useState(() => new Set<MapKind>())
+  // ?kind=printer (the Find a printer shortcut) opens with that layer picked.
+  // The tab stays mounted, so a later link changes the param, not the screen.
+  const { kind } = useLocalSearchParams<{ kind?: string }>()
+  useEffect(() => {
+    if (kind && kind in KINDS) setPicked(new Set([kind as MapKind]))
+  }, [kind])
   const [filters, setFilters] = useState<MapFilters>(NO_FILTERS)
   const [draft, setDraft] = useState<MapFilters>(NO_FILTERS)
   const [filtersOpen, setFiltersOpen] = useState(false)

@@ -1,0 +1,66 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<style>
+  html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; touch-action: none; }
+  canvas { display: block; }
+</style>
+<body>
+<script>/*THREE*/</script>
+<script>/*STLLOADER*/</script>
+<script>/*ORBIT*/</script>
+<script>
+(function () {
+  var RN = window.ReactNativeWebView
+  var send = function (m) { if (RN) RN.postMessage(JSON.stringify(m)) }
+  var renderer, scene, camera, controls, mesh
+  function setup() {
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
+    renderer.setSize(window.innerWidth, window.innerHeight)
+    document.body.appendChild(renderer.domElement)
+    scene = new THREE.Scene()
+    camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 10000)
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x8899aa, 0.9))
+    var key = new THREE.DirectionalLight(0xffffff, 0.8); key.position.set(1, 2, 1.5); scene.add(key)
+    controls = new THREE.OrbitControls(camera, renderer.domElement)
+    controls.enableDamping = true; controls.enablePan = false
+    controls.autoRotate = true; controls.autoRotateSpeed = 1.6
+    renderer.domElement.addEventListener('pointerdown', function () { controls.autoRotate = false })
+    window.addEventListener('resize', function () {
+      camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix()
+      renderer.setSize(window.innerWidth, window.innerHeight)
+    })
+    ;(function loop() { controls.update(); renderer.render(scene, camera); requestAnimationFrame(loop) })()
+  }
+  function show(geometry) {
+    geometry.computeBoundingBox()
+    var box = geometry.boundingBox, size = new THREE.Vector3(); box.getSize(size)
+    var centre = new THREE.Vector3(); box.getCenter(centre)
+    geometry.translate(-centre.x, -centre.y, -centre.z)
+    if (mesh) scene.remove(mesh)
+    mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: 0x1998d5, roughness: 0.55, metalness: 0.05 }))
+    mesh.rotation.x = -Math.PI / 2   // STLs are Z-up; the camera looks at Y-up.
+    scene.add(mesh)
+    var radius = Math.max(size.x, size.y, size.z)
+    camera.position.set(radius * 1.6, radius * 1.3, radius * 1.9)
+    controls.minDistance = radius * 0.8; controls.maxDistance = radius * 6
+    controls.target.set(0, 0, 0); controls.update()
+  }
+  window.__load = function (url, maxBytes) {
+    fetch(url).then(function (res) {
+      if (!res.ok) throw new Error('HTTP ' + res.status)
+      var len = Number(res.headers.get('content-length') || 0)
+      if (maxBytes && len > maxBytes) { send({ type: 'toobig' }); return null }
+      return res.arrayBuffer()
+    }).then(function (buf) {
+      if (!buf) return
+      if (maxBytes && buf.byteLength > maxBytes) { send({ type: 'toobig' }); return }
+      show(new THREE.STLLoader().parse(buf))
+      send({ type: 'loaded' })
+    }).catch(function (e) { send({ type: 'error', message: String(e && e.message || e) }) })
+  }
+  try { setup(); send({ type: 'ready' }) } catch (e) { send({ type: 'error', message: String(e && e.message || e) }) }
+})()
+</script>
+</body>

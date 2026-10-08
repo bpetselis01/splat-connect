@@ -1,4 +1,5 @@
 // packages/mobile/tests/unit/components/guides/showcase-screen.test.tsx
+// journeys: S01 S04
 import { fireEvent, render, screen } from '@testing-library/react-native'
 import { ShowcaseScreen } from '../../../../components/guides/showcase-screen'
 

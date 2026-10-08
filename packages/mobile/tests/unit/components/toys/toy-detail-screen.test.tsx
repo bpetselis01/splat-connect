@@ -1,4 +1,5 @@
 // packages/mobile/tests/unit/components/toys/toy-detail-screen.test.tsx
+// journeys: Y04 Y07 Y08
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { ToyDetailScreen } from '../../../../components/toys/toy-detail-screen'
 
@@ -139,6 +140,15 @@ describe('ToyDetailScreen', () => {
     mockEndpoints({ detail: Promise.reject(new Error('API GET failed with status 404')) })
     render(<ToyDetailScreen id="toy1" />)
     expect(await screen.findByText("Couldn't load this toy.")).toBeTruthy()
+  })
+
+  it('Try again reloads the toy after a failed fetch', async () => {
+    mockEndpoints({ detail: Promise.reject(new TypeError('Network request failed')) })
+    render(<ToyDetailScreen id="toy1" />)
+    await screen.findByText("Couldn't load this toy.")
+    mockEndpoints()
+    fireEvent.press(screen.getByText('Try again'))
+    expect(await screen.findByText('Bubble machine')).toBeTruthy()
   })
 
   it('shows the person holder line as plain text', async () => {

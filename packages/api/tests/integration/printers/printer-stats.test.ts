@@ -2,6 +2,7 @@
  * 095. Jobs, median days, first-time fit and colours per printer, computed on
  * read over completed print jobs — never stored.
  */
+// journeys: R17
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'

@@ -17,6 +17,7 @@
  * a client that guesses differently puts two people in a room reciting a
  * number that cannot match.
  */
+import { logFailure } from '../../lib/log'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { View, Text, Image, ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
@@ -30,7 +31,8 @@ import type {
 import { isOwnerSide, needsAction, actionLabel, apiMessage, printRequestExpired } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
-import { useCapabilities } from '../../lib/capabilities'
+import { useBottomClearance } from '../../lib/bottom-clearance'
+import { invalidateCapabilities, useCapabilities } from '../../lib/capabilities'
 import { threadHref } from '../../lib/builds'
 import { Screen } from '../ui/Screen'
 import { Card } from '../ui/Card'
@@ -116,6 +118,7 @@ export function waitingOn(
 
 export function ExchangeThreadScreen({ id, startAccept = false }: { id: string; startAccept?: boolean }) {
   const router = useRouter()
+  const bottom = useBottomClearance()
   const { caps } = useCapabilities()
   const [tx, setTx] = useState<ToyTransactionDetail | null>(null)
   const [loading, setLoading] = useState(true)
@@ -147,7 +150,7 @@ export function ExchangeThreadScreen({ id, startAccept = false }: { id: string; 
       // under them — that is the one line telling them what went wrong.
       setError((cur) => (cur === LOAD_ERROR ? null : cur))
     } catch (err) {
-      console.error('[ExchangeThreadScreen] transaction fetch failed:', err)
+      logFailure('[ExchangeThreadScreen] transaction fetch failed:', err)
       if (generation.current !== at) return
       setError(LOAD_ERROR)
     } finally {
@@ -192,6 +195,7 @@ export function ExchangeThreadScreen({ id, startAccept = false }: { id: string; 
     try {
       const fresh = await action()
       setTx((cur) => (cur ? { ...cur, ...fresh } : cur))
+      invalidateCapabilities()
       return true
     } catch (err) {
       setError(apiMessage(err, 'Something went wrong. Please try again.'))
@@ -214,6 +218,7 @@ export function ExchangeThreadScreen({ id, startAccept = false }: { id: string; 
       // message, and the next poll replaces the whole array from the server
       // anyway, so a second round trip would buy nothing.
       setTx((cur) => (cur ? { ...cur, messages: [...cur.messages, created] } : cur))
+      invalidateCapabilities()
     } catch (err) {
       setError(apiMessage(err, 'Could not send that message. Please try again.'))
     } finally {
@@ -579,7 +584,7 @@ export function ExchangeThreadScreen({ id, startAccept = false }: { id: string; 
           <ReportProblem subjectKind="exchange" subjectId={tx.id} subjectLabel={`${tx.toy_name} — exchange with ${otherPartyName}`} item="this exchange" who={otherPartyName} />
         </ScrollView>
 
-        <View style={styles.footer}>
+        <View testID="thread-footer" style={[styles.footer, { paddingBottom: bottom }]}>
           <ErrorRow message={error} />
 
           {isOpen ? (

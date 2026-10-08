@@ -1,4 +1,6 @@
 // packages/mobile/tests/unit/components/challenges/submit-idea-screen.test.tsx
+// journeys: C09 C12 C13 C14
+import { CLEARANCE, scrollPaddings } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { SubmitIdeaScreen } from '../../../../components/challenges/submit-idea-screen'
 
@@ -229,4 +231,11 @@ describe('SubmitIdeaScreen', () => {
     fireEvent.press(screen.getByRole('button', { name: 'Submit idea' }))
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/ideas', expect.objectContaining({ anonymous: true })))
   })
+})
+
+jest.mock('react-native-safe-area-context', () => require('../../bottom-spacing').insetMock())
+
+it('ends its scroll one gutter above the home indicator, so Submit idea is not tucked under it', () => {
+  render(<SubmitIdeaScreen />)
+  expect(scrollPaddings(screen)).toEqual([CLEARANCE])
 })

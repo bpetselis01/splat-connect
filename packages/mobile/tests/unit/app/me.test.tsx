@@ -1,3 +1,4 @@
+// journeys: Q01 Q02 Q03 Q04
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { theme } from '../../../lib/theme'
 import { ScrollView, FlatList, StyleSheet } from 'react-native'
@@ -6,7 +7,11 @@ import MeTab from '../../../app/(tabs)/me'
 
 // `mock`-prefixed: jest hoists the factory above this const, and only that prefix is allowed through.
 const mockPush = jest.fn()
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }))
+let mockFocus: () => (() => void) | void
+jest.mock('expo-router', () => {
+  const { useEffect } = jest.requireActual('react')
+  return { useRouter: () => ({ push: mockPush }), useFocusEffect: (e: () => (() => void) | void) => { mockFocus = e; useEffect(e, []) } }
+})
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 const mockGet = jest.fn()
 jest.mock('../../../lib/api-client', () => ({ apiClient: { get: (...a: unknown[]) => mockGet(...a) } }))

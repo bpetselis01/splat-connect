@@ -2,6 +2,7 @@
  * The intake rule's server half: nothing under the two-kilo floor is credited,
  * whatever the client sends. The credit is the leader's number, not a yield.
  */
+// journeys: L12 L13 L14
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createUserClient } from '../../../src/supabase/client.js'

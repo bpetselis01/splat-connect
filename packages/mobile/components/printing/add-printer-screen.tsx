@@ -19,6 +19,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { apiClient } from '../../lib/api-client'
 import { useCapabilities } from '../../lib/capabilities'
 import { theme } from '../../lib/theme'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import { Screen } from '../ui/Screen'
 import { Button } from '../ui/Button'
 import { Chip } from '../ui/Chip'
@@ -76,6 +77,7 @@ function Option({
 }
 
 export function AddPrinterScreen() {
+  const bottom = useBottomClearance()
   const router = useRouter()
   const { caps } = useCapabilities()
   const [name, setName] = useState('')
@@ -219,7 +221,7 @@ export function AddPrinterScreen() {
         </Text>
       </ScrollView>
 
-      <View style={styles.footer}>
+      <View testID="add-printer-footer" style={[styles.footer, { paddingBottom: bottom }]}>
         <ErrorRow message={error} />
         <Button label="Add printer" disabled={!valid} loading={busy} onPress={save} />
       </View>
@@ -265,6 +267,6 @@ const styles = StyleSheet.create({
   footer: {
     borderTopWidth: theme.border.hairline,
     borderTopColor: theme.colors.border,
-    paddingVertical: theme.spacing(3),
+    paddingTop: theme.spacing(3),
   },
 })

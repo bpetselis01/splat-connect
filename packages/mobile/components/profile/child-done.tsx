@@ -3,6 +3,7 @@
 // profile is ready", what the answers found, and See the matches. Counts come
 // from the two public lists through matchesForChild, so the number promised is
 // the list Guides shows. A failed read drops the sentence, never the screen.
+import { logFailure } from '../../lib/log'
 import { useEffect, useState } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
@@ -25,7 +26,7 @@ export function ChildDone({ child }: { child: ChildTags & Pick<ChildProfile, 'na
         const m = matchesForChild(child, guides, toys)
         if (!ignore) setFound({ guides: m.guideIds.length, toys: m.toyIds.length })
       })
-      .catch((err) => console.error('[ChildDone] match fetch failed:', err))
+      .catch((err) => logFailure('[ChildDone] match fetch failed:', err))
     return () => {
       ignore = true
     }

@@ -1,5 +1,6 @@
 // One print job, from both sides: every state's card, the handover code, the
 // fit answer, the thread, the cost panel, and the ways each of those fails.
+// journeys: R06
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { PrintJobScreen } from '../../../../components/printing/job-screen'
 import { NAMES } from '../../../special-strings'
@@ -29,7 +30,9 @@ jest.mock('expo-router', () => {
   return { useFocusEffect: (effect: () => void) => useEffect(effect, []), useRouter: () => ({ push: mockPush }) }
 })
 let mockViewer = 'family'
+const mockInvalidate = jest.fn()
 jest.mock('../../../../lib/capabilities', () => ({
+  invalidateCapabilities: (...a: unknown[]) => mockInvalidate(...a),
   useCapabilities: () => ({ caps: { profile: { id: mockViewer }, ledOrgs: [] } }),
 }))
 

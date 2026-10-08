@@ -10,6 +10,7 @@
  * One POST makes one job per printer, sharing a group (074). The first to
  * accept takes it and the API withdraws the rest.
  */
+import { logFailure } from '../../lib/log'
 import { useEffect, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native'
 import { useRouter } from 'expo-router'
@@ -18,6 +19,7 @@ import type { PrintDelivery, PrintFitNotes, PrinterWithOwner, RecyclingCredit, S
 import { apiMessage, costRange, formatCents, PRINT_COLOURS, PRINT_FIT_QUESTIONS, printCostCents, printSettingsLine } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import { formatMinutes, partsMeta } from '../../lib/printing'
 import { Screen } from '../ui/Screen'
 import { Button } from '../ui/Button'
@@ -46,6 +48,7 @@ const SWATCH: Record<string, string | undefined> = {
 }
 
 export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; printerIds: string[] }) {
+  const bottom = useBottomClearance()
   const router = useRouter()
   const [guide, setGuide] = useState<Guide | null>(null)
   const [printers, setPrinters] = useState<PrinterWithOwner[]>([])
@@ -62,8 +65,10 @@ export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; p
   const [agree, setAgree] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
 
   useEffect(() => {
+    setLoadFailed(false)
     Promise.all([
       apiClient.get<Guide>(`/api/public/tutorials/${guideId}`),
       apiClient.get<PrinterWithOwner[]>('/api/printers'),
@@ -77,17 +82,19 @@ export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; p
         setCredit(c)
       })
       .catch((err) => {
-        console.error('[RequestPrintScreen] load failed:', err)
+        logFailure('[RequestPrintScreen] load failed:', err)
         setLoadFailed(true)
       })
     // printerIds is a fresh array per render of the route; its string is stable.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [guideId, printerIds.join(',')])
+  }, [guideId, printerIds.join(','), reloadKey])
 
   if (loadFailed) {
     return (
       <Screen>
-        <EmptyState icon="cloud-offline-outline" title="Couldn't load this guide." hint="Check your connection and try again." />
+        <EmptyState icon="cloud-offline-outline" title="Couldn't load this guide." hint="Check your connection and try again.">
+          <Button label="Try again" variant="secondary" onPress={() => setReloadKey((k) => k + 1)} style={styles.retry} />
+        </EmptyState>
       </Screen>
     )
   }
@@ -341,7 +348,7 @@ export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; p
         </Pressable>
       </ScrollView>
 
-      <View style={styles.footer}>
+      <View testID="request-footer" style={[styles.footer, { paddingBottom: bottom }]}>
         <ErrorRow message={error} />
         <Button label="Send request" disabled={!valid} loading={busy} onPress={send} />
       </View>
@@ -351,6 +358,7 @@ export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; p
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  retry: { marginTop: theme.spacing(5), alignSelf: 'center', paddingHorizontal: theme.spacing(8) },
   content: { paddingBottom: theme.spacing(6), gap: theme.spacing(5) },
   eyebrow: {
     fontFamily: theme.fonts.black,
@@ -414,6 +422,6 @@ const styles = StyleSheet.create({
   footer: {
     borderTopWidth: theme.border.hairline,
     borderTopColor: theme.colors.border,
-    paddingVertical: theme.spacing(3),
+    paddingTop: theme.spacing(3),
   },
 })

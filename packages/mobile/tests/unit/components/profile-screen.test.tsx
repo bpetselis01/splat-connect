@@ -1,3 +1,5 @@
+// journeys: Z01 Z02 Z04 Z10
+import { CLEARANCE, scrollPaddings } from '../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { Linking } from 'react-native'
 import { ProfileScreen } from '../../../components/profile-screen'
@@ -114,6 +116,18 @@ describe('ProfileScreen', () => {
       expect(await screen.findByText('Saved')).toBeTruthy()
     })
 
+    // react-native-web never fires endEditing, so on web only Return saves.
+    it('saves a name and a postcode on Return too', async () => {
+      mockUseAuth.mockReturnValue(auth({}))
+      mockGet.mockResolvedValue([])
+      mockPatch.mockResolvedValue({})
+      render(<ProfileScreen />)
+      fireEvent(await screen.findByLabelText('Display name'), 'submitEditing', { nativeEvent: { text: 'Ret Urn' } })
+      await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/api/contributors/me', { name: 'Ret Urn' }))
+      fireEvent(screen.getByLabelText('Postcode'), 'submitEditing', { nativeEvent: { text: '3141' } })
+      await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/api/contributors/me', { pickup_postcode: '3141' }))
+    })
+
     it('saves a postcode, for everything that measures distance', async () => {
       mockUseAuth.mockReturnValue(auth({}))
       mockGet.mockResolvedValue([])
@@ -161,4 +175,29 @@ describe('ProfileScreen', () => {
       ).toBeTruthy()
     })
   })
+
+  it('opens the web dashboard and the privacy policy in the browser', () => {
+    mockUseAuth.mockReturnValue(auth({}))
+    const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(true)
+    render(<ProfileScreen />)
+
+    fireEvent.press(screen.getByText('Open Web Dashboard'))
+    expect(open).toHaveBeenLastCalledWith(expect.stringMatching(/\/dashboard$/))
+    fireEvent.press(screen.getByText('privacy policy'))
+    expect(open).toHaveBeenLastCalledWith(expect.stringMatching(/\/privacy$/))
+    open.mockRestore()
+  })
+})
+
+jest.mock('react-native-safe-area-context', () => require('../bottom-spacing').insetMock())
+
+it('ends its scroll one gutter above the home indicator, under Delete account', () => {
+  ;(useAuth as jest.Mock).mockReturnValue({
+    session: { user: { email: 'parent@example.com' } },
+    signIn: jest.fn(),
+    signOut: jest.fn(),
+    hasContributorTerms: true,
+  })
+  render(<ProfileScreen />)
+  expect(scrollPaddings(screen)).toEqual([CLEARANCE])
 })

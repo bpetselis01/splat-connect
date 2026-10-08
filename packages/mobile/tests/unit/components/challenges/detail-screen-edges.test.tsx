@@ -1,6 +1,7 @@
 // A challenge's detail across who is looking (signed out, stranger, maker,
 // author) and what state it is in (open, answered, written up, pending,
 // rejected), plus every write's failure path.
+// journeys: C04
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { ChallengeDetailScreen } from '../../../../components/challenges/detail-screen'
 import { NAMES } from '../../../special-strings'
@@ -256,7 +257,7 @@ describe('the author’s idea before it is public', () => {
   it('says it could not load, without trying the author’s copy, when the public read fails for a reason other than 404', async () => {
     mockGet.mockRejectedValue(new Error('Network request failed'))
     render(<ChallengeDetailScreen id="c1" />)
-    expect(await screen.findByText("Couldn't load this challenge.")).toBeTruthy()
+    expect(await screen.findByText('You seem to be offline.')).toBeTruthy()
     expect(mockGet).not.toHaveBeenCalledWith('/api/ideas/mine/c1')
   })
 

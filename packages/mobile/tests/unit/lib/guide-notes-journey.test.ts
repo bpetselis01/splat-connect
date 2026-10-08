@@ -31,6 +31,15 @@ describe('useGuideNotes', () => {
     expect(result.current.notes).toEqual([])
   })
 
+  it('does not console.error when the phone is offline', async () => {
+    mockGet.mockRejectedValue(new TypeError('Network request failed'))
+    const { result } = renderHook(() => useGuideNotes('g-1'))
+    await waitFor(() => expect(mockGet).toHaveBeenCalled())
+    await act(async () => {})
+    expect(console.error).not.toHaveBeenCalled()
+    expect(result.current.notes).toEqual([])
+  })
+
   it('keeps the notes already on screen when a reload fails', async () => {
     mockGet.mockResolvedValueOnce([note({ id: 'n1' })])
     const { result } = renderHook(() => useGuideNotes('g-1'))

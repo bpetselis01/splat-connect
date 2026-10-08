@@ -1,5 +1,6 @@
 // The writes the print screens share: the photo picker's three outcomes (no
 // permission, backed out, picked) for the ready photo and the test print.
+// journeys: R06 R07 R08 R15
 import { apiMessage } from '@splat-connect/types'
 import { markReady, startPrint, submitTestPrint, withdrawRequest } from '../../../../components/printing/actions'
 

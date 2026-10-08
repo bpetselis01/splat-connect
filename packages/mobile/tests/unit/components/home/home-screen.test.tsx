@@ -1,4 +1,5 @@
 // packages/mobile/tests/unit/components/home/home-screen.test.tsx
+// journeys: H01 H02
 import { ScrollView, StyleSheet, Text } from 'react-native'
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { HomeScreen } from '../../../../components/home/home-screen'
@@ -8,7 +9,11 @@ import { tabBarClearance } from '../../../../lib/tab-bar-layout'
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 
 const mockPush = jest.fn()
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }))
+let mockFocus: () => void
+jest.mock('expo-router', () => {
+  const { useEffect } = jest.requireActual('react')
+  return { useRouter: () => ({ push: mockPush }), useFocusEffect: (e: () => void) => { mockFocus = e; useEffect(e, []) } }
+})
 
 let mockUnread = { total: 2, exchanges: 2 }
 jest.mock('../../../../lib/capabilities', () => ({

@@ -1,3 +1,4 @@
+// journeys: G11
 import { render, screen } from '@testing-library/react-native'
 import { PhotoCarousel } from '../../../../components/ui/PhotoCarousel'
 

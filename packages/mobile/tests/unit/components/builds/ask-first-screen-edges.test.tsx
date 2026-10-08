@@ -1,5 +1,6 @@
 // Ask first: the maker's and the family's sides at their edges — no questions
 // yet, a closed board, a failed send, a failed claim, odd message text.
+// journeys: K04
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { AskFirstScreen } from '../../../../components/builds/ask-first-screen'
 import { NAMES } from '../../../special-strings'
@@ -49,7 +50,7 @@ const send = () => fireEvent.press(screen.getByRole('button', { name: 'Send' }))
 
 describe('loading', () => {
   it('says the board could not load when the read fails', async () => {
-    mockGet.mockRejectedValue(new Error('Network request failed'))
+    mockGet.mockRejectedValue(new Error('boom'))
     render(<AskFirstScreen id="b1" />)
     expect(await screen.findByText("Couldn't load the board.")).toBeTruthy()
   })

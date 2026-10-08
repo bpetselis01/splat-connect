@@ -1,3 +1,5 @@
+// journeys: T21
+import { CLEARANCE, paddingBottomOf } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { SectionFooter } from '../../../../components/my-tutorials/section-footer'
 
@@ -98,4 +100,12 @@ it('reaches the hub by an explicit route when nothing is behind on the stack', a
   fireEvent.press(screen.getByTestId('section-back'))
   await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/tutorials/t1'))
   expect(mockBack).not.toHaveBeenCalled()
+})
+
+jest.mock('react-native-safe-area-context', () => require('../../bottom-spacing').insetMock())
+
+it('clears the home indicator by one gutter, and no more', () => {
+  mockDraft.tutorial = tutorial()
+  render(<SectionFooter section="details" />)
+  expect(paddingBottomOf(screen.getByTestId('section-footer'))).toBe(CLEARANCE)
 })

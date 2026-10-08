@@ -450,6 +450,7 @@ toyIdeas.post('/:id/answer', async (c) => {
  * SPLAT rather than a direct block is that the reporter never has to be
  * named to the person they reported.
  */
+// PENDING(unused-api-routes): no screen starts a participant report; wire one or delete the route.
 toyIdeas.post('/:id/reports', async (c) => {
   const id = c.req.param('id')
   const userId = c.get('userId')

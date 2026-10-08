@@ -8,6 +8,7 @@
 // and web's own page has no such group either. Ledgered, not invented.
 //
 // Title comes from the native header (app/(my)/_layout.tsx: "Toy inventory").
+import { logFailure } from '../../lib/log'
 import { useCallback, useEffect, useState } from 'react'
 import { View, ScrollView, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
@@ -86,7 +87,7 @@ export function InventoryScreen() {
         if (!ignore) setToys(data)
       })
       .catch((err) => {
-        console.error('[InventoryScreen] inventory fetch failed:', err)
+        logFailure('[InventoryScreen] inventory fetch failed:', err)
         if (!ignore) setError(true)
       })
       .finally(() => {
@@ -159,6 +160,7 @@ export function InventoryScreen() {
               : `${toys.length} listing${toys.length === 1 ? '' : 's'}, ${units} unit${units === 1 ? '' : 's'} on the shelf.`
           }
           cta="+ Add to inventory"
+          // PENDING(multi-org-leader-switch): ledOrgs[0], the first organisation, is used silently.
           onCta={() => router.push(`/toys/new?org=${ledOrgs[0]?.id ?? ''}`)}
         />
         <FlashLine message={flash} />

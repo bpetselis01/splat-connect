@@ -3,6 +3,7 @@
 // The guide PDF and its photos. Uploads are not debounced — there is a result
 // to show and nothing to coalesce — so they go through saveNow, which still
 // owns the concurrency token and the approved-to-pending requeue.
+import { logFailure } from '../../../lib/log'
 import { useState } from 'react'
 import { View, Text, Image, Pressable, ScrollView, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
@@ -92,7 +93,7 @@ export function FilesSection() {
       }
       if (failed) throw failed
     } catch (err) {
-      console.error('[FilesSection] photo upload failed:', err)
+      logFailure('[FilesSection] photo upload failed:', err)
       setLocalError('Could not upload the photo. Please try again.')
     } finally {
       setPhotoUploading(false)
@@ -109,7 +110,7 @@ export function FilesSection() {
       const next = currentPhotoUrls.filter((u) => u !== url)
       await saveNow({ photo_urls: next, photo_captions: realignCaptions(currentPhotoUrls, captions, next) })
     } catch (err) {
-      console.error('[FilesSection] photo remove failed:', err)
+      logFailure('[FilesSection] photo remove failed:', err)
       setLocalError('Could not remove that photo. Please try again.')
     } finally {
       setPhotoUploading(false)
@@ -124,7 +125,7 @@ export function FilesSection() {
       const next = [url, ...currentPhotoUrls.filter((u) => u !== url)]
       await saveNow({ photo_urls: next, photo_captions: realignCaptions(currentPhotoUrls, captions, next) })
     } catch (err) {
-      console.error('[FilesSection] cover change failed:', err)
+      logFailure('[FilesSection] cover change failed:', err)
       setLocalError('Could not change the cover. Please try again.')
     } finally {
       setPhotoUploading(false)
@@ -145,7 +146,7 @@ export function FilesSection() {
       })
       await saveNow({ tutorial_pdf_url: url })
     } catch (err) {
-      console.error('[FilesSection] pdf upload failed:', err)
+      logFailure('[FilesSection] pdf upload failed:', err)
       setLocalError('Could not upload the PDF. Please try again.')
     } finally {
       setPdfUploading(false)

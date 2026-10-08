@@ -27,6 +27,18 @@ export function apiErrorDetail(err: unknown): string | null {
 }
 
 /**
+ * True when the request never got an answer: fetch rejects with a TypeError
+ * ("Network request failed" on React Native, "Failed to fetch" / "Load failed"
+ * on the web) when offline, and an AbortError / TimeoutError when cancelled.
+ * Going offline is expected, so callers should not log these as errors.
+ */
+export function isNetworkError(err: unknown): boolean {
+  if (!(err instanceof Error) || isApiError(err)) return false // the API answered
+  if (err.name === 'AbortError' || err.name === 'TimeoutError') return true
+  return /network request failed|failed to fetch|network error|load failed|timed out|timeout/i.test(err.message)
+}
+
+/**
  * The API writes its 4xx bodies for humans — "Incorrect code", "Your
  * organisation needs a pickup address before you can accept requests" — so
  * show that sentence rather than a generic apology. 5xx keeps the fallback: a
@@ -37,7 +49,7 @@ export function apiMessage(err: unknown, fallback: string): string {
   const match = /failed with status 4\d\d: (.+)$/.exec(text)
   if (match) return match[1]
   // fetch rejects with these when the request never reached the API.
-  if (/network request failed|failed to fetch|network error|load failed/i.test(text)) {
+  if (isNetworkError(err)) {
     return "You're offline. Check your connection and try again."
   }
   if (/failed with status 429/.test(text)) return 'Too many tries. Wait a minute and try again.'

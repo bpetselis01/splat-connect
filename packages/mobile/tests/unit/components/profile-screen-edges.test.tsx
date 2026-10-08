@@ -1,6 +1,7 @@
 // The account page's editable fields at their edges: whitespace, markup and
 // emoji, clearing a field, a failed save, editing back to the old value, and
 // the identity card when the profile or email is missing.
+// journeys: Z01 Z02 Z03
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { ProfileScreen, signedInWith } from '../../../components/profile-screen'
 import { useAuth } from '../../../lib/auth-context'

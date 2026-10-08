@@ -1,3 +1,4 @@
+// journeys: G05 G12 G13 G16 G20 G29
 import { test, expect } from '@playwright/test'
 import { signInAsNewContributor, createTutorial, uniqueTitle, adminClient } from './helpers'
 
@@ -19,21 +20,22 @@ test('tapping a tutorial navigates to its detail screen', async ({ page }) => {
   // "Easy" left on the page is the difficulty filter chip on the library
   // screen behind, which is hidden — so the old assertion could not pass.
   await expect(page.getByText('Easy', { exact: true }).last()).toBeVisible()
-  await page.getByRole('tab', { name: 'Parts & tools' }).click()
+  await page.getByRole('tab', { name: 'Supplies' }).click()
   await expect(page.getByText('E2E part ×2')).toBeVisible()
   await expect(page.getByText('E2E tool')).toBeVisible()
 })
 
-test('tapping Download PDF navigates to the preview screen', async ({ page }) => {
+test('tapping View on the Files tab navigates to the preview screen', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const title = uniqueTitle('E2E Mobile Preview')
   await createTutorial(contributor.id, { title, status: 'approved' })
 
   await page.goto('/guides')
   await page.getByText(title).click()
-  await page.getByText('Download PDF').click()
+  await page.getByRole('tab', { name: 'Files' }).click()
+  await page.getByRole('button', { name: 'View', exact: true }).click()
 
-  await expect(page.getByText('Open in Browser')).toBeVisible()
+  await expect(page.getByText('Download on the web')).toBeVisible()
 })
 
 test('an aborted detail request shows the retry message', async ({ page }) => {
@@ -48,7 +50,8 @@ test('an aborted detail request shows the retry message', async ({ page }) => {
   await page.route(`**/api/public/tutorials/${id}`, (route) => route.abort())
   await page.goto(`/guides/${id}`)
 
-  await expect(page.getByText("Couldn't load tutorial. Please try again.")).toBeVisible()
+  // An aborted fetch never reached the API, so it reads as offline.
+  await expect(page.getByText('You seem to be offline.')).toBeVisible()
 })
 
 test('an unknown tutorial id shows the load-failure state', async ({ page }) => {
@@ -70,7 +73,7 @@ test('optional parts and tools are badged on the detail screen', async ({ page }
   await page.goto('/guides')
   await page.getByText(title).click()
 
-  await page.getByRole('tab', { name: 'Parts & tools' }).click()
+  await page.getByRole('tab', { name: 'Supplies' }).click()
   // Mobile marks optional items inline in the row label — there is no separate
   // badge here, unlike the web detail page.
   await expect(page.getByText('E2E optional part ×1 (optional)')).toBeVisible()
@@ -78,17 +81,17 @@ test('optional parts and tools are badged on the detail screen', async ({ page }
   await expect(page.getByText('E2E part ×2', { exact: true })).toBeVisible()
 })
 
-test('the preview screen explains when a tutorial has no PDF', async ({ page }) => {
+test('the Files tab explains when a tutorial has no PDF', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const title = uniqueTitle('E2E Mobile No PDF')
   await createTutorial(contributor.id, { title, status: 'approved', withPdf: false })
 
   await page.goto('/guides')
   await page.getByText(title).click()
-  await page.getByText('Download PDF').click()
+  await page.getByRole('tab', { name: 'Files' }).click()
 
-  await expect(page.getByText('No PDF is available for this tutorial yet.')).toBeVisible()
-  await expect(page.getByText('Open in Browser')).toHaveCount(0)
+  await expect(page.getByText('Nothing to download for this guide.')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'View', exact: true })).toHaveCount(0)
 })
 
 test('the byline names the primary contributor and opens their showcase', async ({ page }) => {
@@ -115,7 +118,7 @@ test("a backed guide's chip opens the organisation's showcase", async ({ page })
   const id = await createTutorial(contributor.id, { title, status: 'approved', backedByOrg: org })
 
   await page.goto(`/guides/${id}`)
-  await page.getByText(`Backed by ${org}`).click()
+  await page.getByText(`Backed by ${org}`).first().click()
 
   await expect(page).toHaveURL(/\/guides\/organisation\/[0-9a-f-]{36}$/)
 })
@@ -129,7 +132,7 @@ test('an unbacked guide shows the fixed Reviewed by SPLAT chip instead', async (
 
   await page.goto(`/guides/${id}`)
 
-  await expect(page.getByText('Reviewed by SPLAT')).toBeVisible()
+  await expect(page.getByText('Reviewed by SPLAT').first()).toBeVisible()
 })
 
 // The 3D-print placeholder these two tests covered was replaced by the real
@@ -160,4 +163,19 @@ test("the creator's picks row lists a recommendation and opens it", async ({ pag
   await page.getByText(pickTitle).filter({ visible: true }).click()
 
   await expect(page).toHaveURL(new RegExp(`/guides/${pickId}$`))
+})
+
+test('What you’ll need rows open their tab, and the print row lands on Files with the print card in view', async ({ page }) => {
+  const contributor = await signInAsNewContributor(page)
+  const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Need Rows'), status: 'approved' })
+  const { error } = await adminClient().from('stl_files').insert({ tutorial_id: id, filename: 'base.stl', file_url: `${id}/base.stl`, print_minutes: 55, filament_grams: 14, material: 'PLA' })
+  if (error) throw new Error(error.message)
+
+  await page.goto(`/guides/${id}`)
+  await page.getByRole('button', { name: /^1 part, opens Supplies$/ }).click()
+  await expect(page.getByRole('tab', { name: 'Supplies', selected: true })).toBeVisible()
+
+  await page.getByRole('button', { name: '1 part to 3D print, opens Files' }).click()
+  await expect(page.getByRole('tab', { name: 'Files', selected: true })).toBeVisible()
+  await expect(page.getByTestId('print-card')).toBeInViewport()
 })

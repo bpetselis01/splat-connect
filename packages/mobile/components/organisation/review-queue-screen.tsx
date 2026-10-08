@@ -9,6 +9,7 @@
 // stands behind. Same fetch, second filter.
 //
 // Title comes from the native header (app/(my)/_layout.tsx: "Review queue").
+import { logFailure } from '../../lib/log'
 import { useCallback, useEffect, useState } from 'react'
 import { View, ScrollView, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
@@ -78,6 +79,7 @@ export function ReviewQueueScreen() {
   const isLeader = ledOrgs.length > 0
 
   useEffect(() => {
+    // PENDING(admin-guide-review-screen): a non-leader admin lands on this empty state; the review decision is web-only.
     if (!isLeader) {
       setLoading(false)
       return
@@ -91,7 +93,7 @@ export function ReviewQueueScreen() {
         if (!ignore) setTutorials(data)
       })
       .catch((err) => {
-        console.error('[ReviewQueueScreen] tutorials fetch failed:', err)
+        logFailure('[ReviewQueueScreen] tutorials fetch failed:', err)
         if (!ignore) setError(true)
       })
       .finally(() => {
@@ -157,6 +159,7 @@ export function ReviewQueueScreen() {
     <Screen>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <ListIntro
+          // PENDING(multi-org-leader-switch): ledOrgs[0], the first organisation, is used silently.
           lead={`Guides waiting for ${ledOrgs.length === 1 ? ledOrgs[0].name : 'your organisations'}. Oldest first.`}
         />
         {loading ? (

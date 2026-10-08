@@ -1,5 +1,5 @@
 // packages/mobile/app/(tabs)/explore/_layout.tsx
-import { Stack, useRouter } from 'expo-router'
+import { Stack } from 'expo-router'
 import { useTabFocused } from '../../../lib/use-tab-focused'
 import { stackScreenOptions } from '../../../lib/nav-options'
 import { CloseButton } from '../../../components/ui/CloseButton'
@@ -13,11 +13,6 @@ export const unstable_settings = { initialRouteName: 'index' }
 
 /** Explore has no tab of its own — it is reached from Me — so its root still
  *  gets the board's back button, and one with nothing behind it goes to Me. */
-function ExploreBack() {
-  const router = useRouter()
-  return <BackButton onPress={() => (router.canGoBack() ? router.back() : router.navigate('/me'))} />
-}
-
 export default function ExploreStackLayout() {
   // A hidden tab keeps its stack while another tab is in front, so the next
   // visit pushed onto the last one. Unmounted while another tab shows, the
@@ -28,7 +23,7 @@ export default function ExploreStackLayout() {
     <Stack screenOptions={stackScreenOptions}>
       {/* The board draws Explore under the drill-down header, not a tab
           root's greeting: it is a place you visit from Me. */}
-      <Stack.Screen name="index" options={{ title: 'Explore', headerLeft: () => <ExploreBack /> }} />
+      <Stack.Screen name="index" options={{ title: 'Explore' }} />
       <Stack.Screen name="learn/index" options={{ title: 'Learn' }} />
       {/* Overridden per-article by article-screen.tsx's own <Stack.Screen>
           once the slug resolves; this is the fallback for an unknown one. */}

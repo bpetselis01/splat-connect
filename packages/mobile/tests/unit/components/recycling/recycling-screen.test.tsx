@@ -1,3 +1,5 @@
+// journeys: V04 V05 V06
+import { CLEARANCE, scrollPaddings } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { DECLARATION_VERSION, RECYCLING_DECLARATION } from '@splat-connect/types'
 import { RecyclingScreen } from '../../../../components/recycling/recycling-screen'
@@ -187,4 +189,12 @@ it('holds a booking over the maximum', async () => {
   expect(screen.getAllByText('Northside Therapy takes at most 8 kg at once.').length).toBeGreaterThan(0)
   for (const line of RECYCLING_DECLARATION) fireEvent.press(screen.getByLabelText(line))
   expect(screen.getByLabelText('Book the drop-off').props.accessibilityState.disabled).toBe(true)
+})
+
+jest.mock('react-native-safe-area-context', () => require('../../bottom-spacing').insetMock())
+
+it('ends the drop-off form one gutter above the home indicator, under Book the drop-off', async () => {
+  render(<RecyclingScreen />)
+  fireEvent.press(await screen.findByLabelText('Book a drop-off at Northside Therapy'))
+  expect(scrollPaddings(screen)).toEqual([CLEARANCE])
 })

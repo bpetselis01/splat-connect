@@ -10,11 +10,12 @@
 // — the same single-answer posture as web, where the URL had already chosen.
 //
 // Title comes from the native header (app/(my)/_layout.tsx).
+import { logFailure } from '../../lib/log'
 import { useCallback, useRef, useState } from 'react'
 import { View, Text, Image, ScrollView, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import type { TutorialWithDetails, TutorialOrg } from '@splat-connect/types'
-import { apiMessage, leaderActions } from '@splat-connect/types'
+import { apiMessage, isNetworkError, leaderActions } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { supabase } from '../../lib/supabase'
 import { theme } from '../../lib/theme'
@@ -61,6 +62,7 @@ export function ReviewDetailScreen({ tutorialId }: { tutorialId: string }) {
   const [tutorial, setTutorial] = useState<Detail | null>(null)
   const [backings, setBackings] = useState<TutorialOrg[]>([])
   const [loading, setLoading] = useState(true)
+  const [offline, setOffline] = useState(false)
   const [busy, setBusy] = useState(false)
   const [note, setNote] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -81,11 +83,13 @@ export function ReviewDetailScreen({ tutorialId }: { tutorialId: string }) {
         apiClient.get<TutorialOrg[]>(`/api/tutorials/${tutorialId}/orgs`),
       ])
       if (generation.current === at) {
+        setOffline(false)
         setTutorial(fresh)
         setBackings(orgs)
       }
     } catch (err) {
-      console.error('[ReviewDetailScreen] tutorial fetch failed:', err)
+      logFailure('[ReviewDetailScreen] tutorial fetch failed:', err)
+      setOffline(isNetworkError(err))
     } finally {
       setLoading(false)
     }
@@ -161,7 +165,20 @@ export function ReviewDetailScreen({ tutorialId }: { tutorialId: string }) {
   if (!tutorial) {
     return (
       <Screen>
-        <EmptyState icon="cloud-offline-outline" title="Couldn't load this project." hint="Check your connection and try again." />
+        <EmptyState
+          icon="cloud-offline-outline"
+          title={offline ? 'You seem to be offline.' : "Couldn't load this project."}
+          hint="Check your connection and try again."
+        >
+          <Button
+            label="Try again"
+            variant="secondary"
+            onPress={() => {
+              setLoading(true)
+              void load()
+            }}
+          />
+        </EmptyState>
       </Screen>
     )
   }
@@ -216,7 +233,15 @@ export function ReviewDetailScreen({ tutorialId }: { tutorialId: string }) {
                 variant="secondary"
                 disabled={busy}
                 style={styles.rowButton}
-                onPress={() => void run(() => apiClient.post(`/api/tutorials/${tutorialId}/orgs/${backing!.org_id}/decline`, {}))}
+                onPress={() =>
+                  void run(async () => {
+                    await apiClient.post(`/api/tutorials/${tutorialId}/orgs/${backing!.org_id}/decline`, {})
+                    // A declined project is no longer this leader's to read (the tutorial
+                    // fetch 404s), so reloading would leave the old Back/Decline pair on screen.
+                    if (router.canGoBack()) router.back()
+                    else router.replace('/organisation')
+                  })
+                }
               />
             </View>
           </View>

@@ -7,6 +7,7 @@ import { Hono } from 'hono'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { deleteAccount } from '../account-deletion.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
+import { notifyTutorialReviewed } from '../review-notifications.js'
 import { ORG_COLUMNS } from './organizations.js'
 import { systemMessage, withPhotoUrl } from './toy-ideas.js'
 import type { AuthVariables } from '../middleware/auth.js'
@@ -56,28 +57,13 @@ admin.patch('/tutorials/:id/status', async (c) => {
     .single()
   if (error) return c.json({ error: error.message }, 500)
 
-  // Every contributor on the tutorial, not just the primary — a collaborator
-  // did the same work and needs the same approve/reject signal.
-  const { data: contributorRows } = await supabase
-    .from('tutorial_contributors')
-    .select('profile_id')
-    .eq('tutorial_id', c.req.param('id'))
-  if (contributorRows?.length) {
-    const { error: notifyError } = await supabase
-      .from('notifications')
-      .insert(
-        contributorRows.map((row) => ({
-          recipient_id: row.profile_id,
-          type: body.status === 'approved' ? 'tutorial_approved' : 'tutorial_rejected',
-          tutorial_id: c.req.param('id'),
-          tutorial_title: data.title,
-          actor_name: 'SPLAT',
-          // 119: the reason a guide came back, to its contributors only.
-          body: body.status === 'approved' ? null : notificationBody(body.rejection_note),
-        }))
-      )
-    if (notifyError) console.error('[admin.status] notification insert failed:', notifyError.message)
-  }
+  await notifyTutorialReviewed({
+    tutorialId: c.req.param('id'),
+    tutorialTitle: data.title,
+    status: body.status === 'approved' ? 'approved' : 'rejected',
+    rejectionNote: body.rejection_note,
+    actorName: 'SPLAT',
+  })
 
   return c.json(data)
 })
@@ -514,6 +500,7 @@ admin.get('/spot-check', async (c) => {
  * this table's RLS ever lets read it (041's comment), so this is the only
  * response in the codebase where that column may appear.
  */
+// PENDING(unused-api-routes): nothing calls GET/PATCH /admin/reports or the participant reinstate route; wire a screen or delete.
 admin.get('/reports', async (c) => {
   const { data, error } = await createAdminClient()
     .from('toy_idea_reports')

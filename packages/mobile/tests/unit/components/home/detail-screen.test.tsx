@@ -1,5 +1,8 @@
+// journeys: G13 G14 G15 G18 G19 G29 G30
+import { CLEARANCE, paddingBottomOf } from '../../bottom-spacing'
+import { Linking, ScrollView } from 'react-native'
 import { act, render, screen, fireEvent, waitFor } from '@testing-library/react-native'
-import { DetailScreen, splitLead } from '../../../../components/home/detail-screen'
+import { DetailScreen, ROW_SCROLL_MARGIN, linkSite, splitLead } from '../../../../components/home/detail-screen'
 import { apiClient } from '../../../../lib/api-client'
 
 // Ionicons loads its font asynchronously and setStates after the test ends;
@@ -15,9 +18,14 @@ jest.mock('../../../../lib/supabase-storage', () => ({
 
 jest.mock('../../../../lib/api-client', () => ({ apiClient: { get: jest.fn(), post: jest.fn() } }))
 
-jest.mock('../../../../lib/capabilities', () => ({ useCapabilities: () => ({ caps: { profile: { id: 'me' } } }) }))
+jest.mock('../../../../lib/capabilities', () => ({ useCapabilities: () => ({ caps: { profile: { id: 'me', name: 'Me' } } }) }))
 
 const mockPush = jest.fn()
+jest.mock('../../../../lib/guide-focus', () => {
+  const actual = jest.requireActual('../../../../lib/guide-focus')
+  return { ...actual, takeGuideFocus: jest.fn(actual.takeGuideFocus) }
+})
+import { setGuideFocus, takeGuideFocus } from '../../../../lib/guide-focus'
 const mockFocus: (() => void)[] = []
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush }),
@@ -85,6 +93,9 @@ function mockEndpoints({
 }
 
 describe('DetailScreen', () => {
+  let webUrl: string | undefined
+  beforeEach(() => { webUrl = process.env.EXPO_PUBLIC_WEB_URL })
+  afterEach(() => { if (webUrl === undefined) delete process.env.EXPO_PUBLIC_WEB_URL; else process.env.EXPO_PUBLIC_WEB_URL = webUrl })
   beforeEach(() => {
     jest.clearAllMocks()
     mockEndpoints()
@@ -95,7 +106,7 @@ describe('DetailScreen', () => {
     render(<DetailScreen id="1" />)
     expect(await screen.findByText('Build a Robot Arm')).toBeTruthy()
     expect(apiClient.get).toHaveBeenCalledWith('/api/public/tutorials/1')
-    tab('Parts & tools')
+    tab('Supplies')
     expect(screen.getByText('Servo Motor ×2')).toBeTruthy()
     expect(screen.getByText('Screwdriver')).toBeTruthy()
   })
@@ -106,17 +117,53 @@ describe('DetailScreen', () => {
     expect(await screen.findByText('1/2 · Build a Robot Arm')).toBeTruthy()
   })
 
+  it('shows the feedback count as a badge on the Feedback tab', async () => {
+    ;(apiClient.get as jest.Mock).mockImplementation((p: string) =>
+      p === '/api/saves/ids' ? Promise.resolve(NO_SAVES) : p === '/api/child-profiles' ? Promise.resolve([]) : p.endsWith('/notes')
+        ? Promise.resolve([{ id: 'n1', step_position: 1, author_id: 'p', author_name: 'Priya', body: 'x', photo_url: null, photo_caption: null, pinned_at: null, pinned_by: null, pinned_by_name: null, created_at: '2026-09-01T00:00:00Z' }])
+        : Promise.resolve(DETAIL)
+    )
+    render(<DetailScreen id="1" />)
+    await screen.findByText('Build a Robot Arm')
+    expect(await screen.findByRole('tab', { name: 'Feedback (1)' })).toBeTruthy()
+  })
+
   it('shows an error message when apiClient.get rejects', async () => {
     mockEndpoints({ detail: Promise.reject(new Error('API GET failed with status 500')) })
     render(<DetailScreen id="1" />)
     expect(await screen.findByText("Couldn't load tutorial. Please try again.")).toBeTruthy()
   })
 
+  it('non-network failure keeps the old message and Try again reloads the guide', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {})
+    mockEndpoints({ detail: Promise.reject(new Error('API GET failed with status 500')) })
+    render(<DetailScreen id="1" />)
+    expect(await screen.findByText("Couldn't load tutorial. Please try again.")).toBeTruthy()
+    mockEndpoints()
+    fireEvent.press(screen.getByText('Try again'))
+    expect(await screen.findByText('Build a Robot Arm')).toBeTruthy()
+  })
+
+  it('offline: says so without a console error, and Try again reloads the guide', async () => {
+    const error = jest.spyOn(console, 'error').mockImplementation(() => {})
+    jest.spyOn(console, 'debug').mockImplementation(() => {})
+    mockEndpoints({ detail: Promise.reject(new TypeError('Network request failed')) })
+    render(<DetailScreen id="1" />)
+    expect(await screen.findByText('You seem to be offline.')).toBeTruthy()
+    expect(screen.getByText('Check your connection and try again.')).toBeTruthy()
+    expect(error).not.toHaveBeenCalled()
+    mockEndpoints()
+    fireEvent.press(screen.getByText('Try again'))
+    expect(await screen.findByText('Build a Robot Arm')).toBeTruthy()
+    expect(screen.queryByText('You seem to be offline.')).toBeNull()
+  })
+
   it('signs the pdf path and pushes the preview route with the signed URL', async () => {
     render(<DetailScreen id="1" />)
     await screen.findByText('Build a Robot Arm')
 
-    fireEvent.press(screen.getByText('Download PDF'))
+    tab('Files')
+    fireEvent.press(screen.getByRole('button', { name: 'View' }))
 
     await waitFor(() => expect(mockPush).toHaveBeenCalled())
     expect(mockCreateSignedUrl).toHaveBeenCalledWith('1/tutorial.pdf', 60)
@@ -131,7 +178,8 @@ describe('DetailScreen', () => {
     render(<DetailScreen id="1" />)
     await screen.findByText('Build a Robot Arm')
 
-    fireEvent.press(screen.getByText('Download PDF'))
+    tab('Files')
+    fireEvent.press(screen.getByRole('button', { name: 'View' }))
 
     await waitFor(() => expect(mockPush).toHaveBeenCalled())
     expect(mockPush).toHaveBeenCalledWith({
@@ -146,7 +194,7 @@ describe('DetailScreen', () => {
     })
     render(<DetailScreen id="1" />)
     await screen.findByText('Build a Robot Arm')
-    tab('Parts & tools')
+    tab('Supplies')
     expect(await screen.findByText('Total')).toBeTruthy()
     expect(screen.getAllByText('$12.50')).toHaveLength(2)
     expect(screen.getByText('Prices checked 2 Aug 2026')).toBeTruthy()
@@ -162,12 +210,21 @@ describe('DetailScreen', () => {
     expect(screen.queryByText('Print time')).toBeNull()
   })
 
-  it('captions the photo in view and offers a thumbnail strip', async () => {
+  it('opens a hero photo full screen and closes back to the guide', async () => {
+    mockEndpoints({ detail: Promise.resolve({ ...DETAIL, photo_urls: ['https://x.test/a.jpg', 'https://x.test/b.jpg'], photo_captions: ['The finished drum'] }) })
+    render(<DetailScreen id="1" />)
+    fireEvent.press(await screen.findByLabelText('Open photo 2 full screen'))
+    expect(screen.getByLabelText('Close photo')).toBeTruthy()
+    fireEvent.press(screen.getByLabelText('Close photo'))
+    expect(screen.queryByLabelText('Close photo')).toBeNull()
+    expect(screen.getByText('Build a Robot Arm')).toBeTruthy()
+  })
+
+  it('captions the photo in view, with no thumbnail strip under it', async () => {
     mockEndpoints({ detail: Promise.resolve({ ...DETAIL, photo_urls: ['https://x.test/a.jpg', 'https://x.test/b.jpg'], photo_captions: ['The finished drum'] }) })
     render(<DetailScreen id="1" />)
     expect(await screen.findByText('1/2 · The finished drum')).toBeTruthy()
-    expect(screen.getByLabelText('Show photo 1: The finished drum')).toBeTruthy()
-    expect(screen.getByLabelText('Show photo 2: Build a Robot Arm')).toBeTruthy()
+    expect(screen.queryByLabelText('Show photo 1: The finished drum')).toBeNull()
   })
 
   it('opens Find a printer for this guide when it has printable parts', async () => {
@@ -202,7 +259,6 @@ describe('DetailScreen', () => {
     render(<DetailScreen id="1" />)
     fireEvent.press(await screen.findByRole('button', { name: "Can't build it? Ask a maker nearby" }))
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/explore/makers-wanted/new', params: { guide: '1' } })
-    expect(screen.getByText('A maker nearby gives the time and the skill; you cover the parts. You agree a pickup in My exchanges.')).toBeTruthy()
   })
 
   it('offers no print for a guide with nothing to print', async () => {
@@ -211,7 +267,114 @@ describe('DetailScreen', () => {
     tab('Files')
 
     expect(screen.queryByLabelText('Ask someone to print')).toBeNull()
-    expect(screen.getByText('Nothing to print for this guide.')).toBeTruthy()
+  })
+
+  describe('Files tab', () => {
+    const STL = [{ id: 'f1', tutorial_id: '1', filename: 'lts_base.stl', file_url: '1/lts_base.stl', print_minutes: 55, filament_grams: 14, material: 'PLA' }, { id: 'f2', tutorial_id: '1', filename: 'lts_cap.stl', file_url: '1/lts_cap.stl', print_minutes: null, filament_grams: null, material: null }]
+
+    it('lists the PDF and each STL with a single View or 3D pill, and links to the web for downloads', async () => {
+      process.env.EXPO_PUBLIC_WEB_URL = 'https://splat.example'
+      mockEndpoints({ detail: Promise.resolve({ ...DETAIL, stl_files: STL }) })
+      render(<DetailScreen id="1" />)
+      await screen.findByText('Build a Robot Arm')
+      tab('Files')
+      expect(screen.getByText('Full guide')).toBeTruthy()
+      expect(screen.getByRole('button', { name: 'View' })).toBeTruthy()
+      expect(screen.getByText('Lts base')).toBeTruthy()
+      expect(screen.getByText('55 min · 14 g')).toBeTruthy()
+      expect(screen.getByText('Lts cap')).toBeTruthy()
+      expect(screen.getAllByRole('button', { name: /^3D/ })).toHaveLength(2)
+      expect(screen.queryByText(/Download PDF|Open in browser/)).toBeNull()
+      const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(true)
+      fireEvent.press(screen.getByTestId('files-web-link'))
+      expect(open).toHaveBeenCalledWith('https://splat.example/tutorials/1')
+    })
+
+    it('a 3D pill opens the model route for that file', async () => {
+      mockEndpoints({ detail: Promise.resolve({ ...DETAIL, stl_files: STL }) })
+      render(<DetailScreen id="1" />)
+      await screen.findByText('Build a Robot Arm')
+      tab('Files')
+      fireEvent.press(screen.getAllByRole('button', { name: /^3D/ })[0]!)
+      expect(mockPush).toHaveBeenCalledWith({ pathname: '/guides/[id]/model', params: { id: '1', file: 'f1' } })
+    })
+
+    it('hides the web link when no web address is configured', async () => {
+      delete process.env.EXPO_PUBLIC_WEB_URL
+      mockEndpoints({ detail: Promise.resolve({ ...DETAIL, stl_files: STL }) })
+      render(<DetailScreen id="1" />)
+      await screen.findByText('Build a Robot Arm')
+      tab('Files')
+      expect(screen.queryByTestId('files-web-link')).toBeNull()
+    })
+
+    it('orders Ask someone to print above Print settings', async () => {
+      mockEndpoints({ detail: Promise.resolve({ ...DETAIL, stl_files: STL, layer_height_mm: 0.2 }) })
+      render(<DetailScreen id="1" />)
+      await screen.findByText('Build a Robot Arm')
+      tab('Files')
+      const json = JSON.stringify(screen.toJSON())
+      expect(json.indexOf('Ask someone to print')).toBeLessThan(json.indexOf('Print settings'))
+    })
+
+    it('a guide with no steps makes View full guide the bottom action', async () => {
+      mockEndpoints({ detail: Promise.resolve({ ...DETAIL, steps: [] }) })
+      render(<DetailScreen id="1" />)
+      await screen.findByText('Build a Robot Arm')
+      expect(screen.getByRole('button', { name: 'View full guide' })).toBeTruthy()
+      expect(screen.queryByText('Download PDF')).toBeNull()
+    })
+  })
+
+  describe('What you’ll need', () => {
+    it('has a row per destination, each naming the tab it opens', async () => {
+      mockEndpoints({ detail: Promise.resolve({ ...DETAIL, stl_files: [{ id: 'f1', tutorial_id: '1', filename: 'base.stl', file_url: '1/base.stl', print_minutes: 55, filament_grams: 14, material: 'PLA' }] }) })
+      render(<DetailScreen id="1" />)
+      await screen.findByText('Build a Robot Arm')
+      expect(screen.getByRole('button', { name: '1 part, opens Supplies' })).toBeTruthy()
+      expect(screen.getByRole('button', { name: '1 tool, opens Supplies' })).toBeTruthy()
+      expect(screen.getByRole('button', { name: '1 part to 3D print, opens Files' })).toBeTruthy()
+      expect(screen.queryByText(/gathered/)).toBeNull()
+      expect(screen.queryByText(/about \$/)).toBeNull()
+    })
+
+    it('hides the print row when the guide has no STL files', async () => {
+      render(<DetailScreen id="1" />)
+      await screen.findByText('Build a Robot Arm')
+      expect(screen.queryByTestId('need-print')).toBeNull()
+    })
+
+    it('the print row opens Files and rings the print card, then the ring goes', async () => {
+      jest.useFakeTimers()
+      mockEndpoints({ detail: Promise.resolve({ ...DETAIL, stl_files: [{ id: 'f1', tutorial_id: '1', filename: 'base.stl', file_url: '1/base.stl', print_minutes: null, filament_grams: null, material: null }] }) })
+      render(<DetailScreen id="1" />)
+      await screen.findByText('Build a Robot Arm')
+      const CARD_Y = 900
+      // The jump measures the print card against the scroller's inner host ref (iOS refuses a node handle), then scrolls to it.
+      const INNER = { __host: true }
+      const scroller = screen.UNSAFE_getByType(ScrollView).instance as unknown as { getInnerViewRef: () => unknown; scrollTo: jest.Mock }
+      scroller.getInnerViewRef = () => INNER
+      const scrollTo = jest.spyOn(scroller, 'scrollTo')
+      fireEvent.press(screen.getByTestId('need-print'))
+      expect(screen.getByRole('tab', { name: 'Files', selected: true })).toBeTruthy()
+      // The card exists once Files has rendered; measure it before the next frame fires.
+      const card = screen.UNSAFE_getAllByProps({ testID: 'print-card' }).map((n) => n.instance).find(Boolean) as unknown as { measureLayout: jest.Mock }
+      card.measureLayout = jest.fn((_rel, ok: (x: number, y: number) => void) => ok(0, CARD_Y))
+      act(() => { jest.advanceTimersByTime(50) })
+      expect(card.measureLayout.mock.calls[0][0]).toBe(INNER)
+      expect(scrollTo).toHaveBeenLastCalledWith({ y: CARD_Y - ROW_SCROLL_MARGIN, animated: true })
+      expect(JSON.stringify(screen.toJSON())).toContain('"borderWidth":3')
+      act(() => { jest.advanceTimersByTime(1700) })
+      expect(JSON.stringify(screen.toJSON())).not.toContain('"borderWidth":3')
+      jest.useRealTimers()
+    })
+
+    it('the parts row opens Supplies', async () => {
+      render(<DetailScreen id="1" />)
+      await screen.findByText('Build a Robot Arm')
+      fireEvent.press(screen.getByTestId('need-parts'))
+      expect(screen.getByRole('tab', { name: 'Supplies', selected: true })).toBeTruthy()
+    })
   })
 })
 
@@ -235,8 +398,7 @@ describe('DetailScreen steps and fit', () => {
     expect(await screen.findByText('Open it')).toBeTruthy()
     expect(screen.getByText('Fit the interrupter.')).toBeTruthy()
     expect(await screen.findByText('Suits Ollie')).toBeTruthy()
-    expect(screen.getByText('Switch')).toBeTruthy()
-    expect(screen.getByText('Mounting and positioning')).toBeTruthy()
+    expect(screen.getByText('Switch · Mounting and positioning · Toy adaptation')).toBeTruthy()
   })
 
   it('says nothing when the guide does not suit the child', async () => {
@@ -276,7 +438,29 @@ describe('DetailScreen thanks', () => {
   it('offers Thanks to someone who has not thanked yet', async () => {
     withThanks({ thanked: false, own: false })
     render(<DetailScreen id="1" />)
-    expect(await screen.findByRole('button', { name: 'Thanks' })).toBeTruthy()
+    expect(await screen.findByRole('button', { name: 'Thank Sam' })).toBeTruthy()
+  })
+
+  it('says so in a toast when the thanks is sent, and the button becomes Thanked', async () => {
+    withThanks({ thanked: false, own: false })
+    ;(apiClient.post as jest.Mock).mockResolvedValue({})
+    render(<DetailScreen id="1" />)
+    fireEvent.press(await screen.findByRole('button', { name: 'Thank Sam' }))
+    expect(await screen.findByText('Thanks sent to Sam')).toBeTruthy()
+    expect(apiClient.post).toHaveBeenCalledWith('/api/tutorials/1/thanks', {})
+    expect(screen.getByRole('button', { name: 'Thanked Sam' })).toBeTruthy()
+  })
+
+  it('confirms a save with a toast that can undo it', async () => {
+    withThanks({ thanked: false, own: false })
+    ;(apiClient.post as jest.Mock).mockResolvedValue({})
+    ;(apiClient as unknown as { delete: jest.Mock }).delete = jest.fn().mockResolvedValue({})
+    render(<DetailScreen id="1" />)
+    fireEvent.press(await screen.findByRole('button', { name: 'Save' }))
+    expect(screen.getByText('Saved to My saves')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Saved. Tap to remove from My saves' })).toBeTruthy()
+    fireEvent.press(screen.getByText('Undo'))
+    expect(await screen.findByRole('button', { name: 'Save' })).toBeTruthy()
   })
 
   it('never offers it on your own guide', async () => {
@@ -284,13 +468,13 @@ describe('DetailScreen thanks', () => {
     render(<DetailScreen id="1" />)
     await screen.findByText('Build a Robot Arm')
     await waitFor(() => expect(apiClient.get).toHaveBeenCalledWith('/api/tutorials/1/thanks'))
-    expect(screen.queryByRole('button', { name: 'Thanks' })).toBeNull()
+    expect(screen.queryByRole('button', { name: /^Thank / })).toBeNull()
   })
 
   it('lists the author’s safety notes', async () => {
     mockEndpoints({ detail: Promise.resolve({ ...DETAIL, safety_notes: [{ id: 'n', tutorial_id: '1', position: 1, title: 'Battery door must be screwed shut', detail: 'Add the screw.' }] }) })
     render(<DetailScreen id="1" />)
-    expect(await screen.findByText('Before you start')).toBeTruthy()
+    expect(await screen.findByText('Stay safe')).toBeTruthy()
     expect(screen.getByText('Battery door must be screwed shut')).toBeTruthy()
   })
 })
@@ -339,25 +523,97 @@ describe('DetailScreen redesigned page', () => {
     render(<DetailScreen id="1" />)
     await screen.findByText('Build a Robot Arm')
     expect(screen.queryByText('Start building')).toBeNull()
-    expect(screen.getByText('The steps are in the PDF.')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'View full guide' })).toBeTruthy()
   })
 
   it('opens on the tab named by the route param', async () => {
     render(<DetailScreen id="1" tab="notes" />)
     await screen.findByText('Build a Robot Arm')
-    expect(screen.getByRole('tab', { name: 'Notes' }).props.accessibilityState.selected).toBe(true)
+    expect(screen.getByRole('tab', { name: 'Feedback' }).props.accessibilityState.selected).toBe(true)
     expect(screen.queryByText('Who it\'s for')).toBeNull()
   })
 
   it('shows the age range badge, who it is for and the toy on Overview', async () => {
     render(<DetailScreen id="1" />)
-    expect(await screen.findByText('Age 3–8')).toBeTruthy()
+    expect(await screen.findByText(/· Age 3–8$/)).toBeTruthy()
     expect(screen.getByText("Who it's for")).toBeTruthy()
     expect(screen.getByText('How a child uses it')).toBeTruthy()
     expect(screen.getByText('The toy')).toBeTruthy()
     expect(screen.getByText('Light-up drum · Fisher-Price')).toBeTruthy()
     expect(screen.getByText('Works with: Any 3.5mm switch')).toBeTruthy()
     expect(screen.getByText('No soldering needed.')).toBeTruthy()
+  })
+})
+
+describe('DetailScreen combined layout', () => {
+  const guide = {
+    ...DETAIL,
+    access: ['press', 'head'],
+    one_hand: true,
+    safety_declared_at: '2026-08-01',
+    parts: [
+      { id: 'p1', tutorial_id: '1', name: 'Servo Motor', quantity: 2, is_optional: false, price_cents: 450, buy_links: [] },
+      { id: 'p2', tutorial_id: '1', name: 'Glue', quantity: 1, is_optional: false, price_cents: 200, buy_links: [] },
+    ],
+    steps: [
+      { id: 's1', tutorial_id: '1', position: 1, title: 'Open it', body: 'One screw.', photo_url: null, minutes: 5 },
+      { id: 's2', tutorial_id: '1', position: 2, title: 'Close it', body: 'Two screws.', photo_url: null, minutes: 10 },
+    ],
+  }
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    mockTicks = null
+  })
+
+  it('sums up what you need and opens the Supplies tab with one gathered bar', async () => {
+    mockEndpoints({ detail: Promise.resolve(guide) })
+    render(<DetailScreen id="1" />)
+    expect(await screen.findByLabelText('2 parts, opens Supplies')).toBeTruthy()
+    expect(screen.getByLabelText('1 tool, opens Supplies')).toBeTruthy()
+    fireEvent.press(screen.getByTestId('need-parts'))
+    expect(screen.getByRole('tab', { name: 'Supplies' }).props.accessibilityState.selected).toBe(true)
+    expect(screen.getByText('3 things left to gather')).toBeTruthy()
+    fireEvent.press(screen.getByLabelText('Glue: gathered'))
+    expect(screen.getByText('2 things left to gather')).toBeTruthy()
+  })
+
+  it('opens build mode on the step you tap, and marks where you are', async () => {
+    mockTicks = '["s1"]'
+    mockEndpoints({ detail: Promise.resolve(guide) })
+    render(<DetailScreen id="1" />)
+    expect(await screen.findByText("You're here · 10 min")).toBeTruthy()
+    fireEvent.press(screen.getByLabelText('Step 2: Close it'))
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/guides/[id]/build', params: { id: '1', step: '2' } })
+    mockTicks = null
+  })
+
+  it('folds the author’s safety checks behind one row', async () => {
+    mockEndpoints({ detail: Promise.resolve(guide) })
+    render(<DetailScreen id="1" />)
+    fireEvent.press(await screen.findByText('6 safety checks passed'))
+    expect(screen.getByText('No mains voltage anywhere in the design')).toBeTruthy()
+  })
+
+  it('ticks the answers the child shares in Who it’s for', async () => {
+    const ollie = { name: 'Ollie', helps_with: null, access: ['head'], one_hand: false, press_force: null, enjoys: null }
+    mockEndpoints({ detail: Promise.resolve(guide), children: Promise.resolve([ollie]) })
+    render(<DetailScreen id="1" />)
+    await screen.findByText('Suits Ollie')
+    expect(screen.getByText('Head or chin')).toBeTruthy()
+    expect(screen.UNSAFE_getAllByProps({ name: 'checkmark', size: 14 })).toHaveLength(1)
+  })
+
+  it('shows a pinned fix on Overview with a way to the rest', async () => {
+    const pinned = { id: 'k', body: 'Use a longer screw', step_position: 2, pinned_at: '2026-09-01', pinned_by_name: 'Sam', author_name: 'Al' }
+    ;(apiClient.get as jest.Mock).mockImplementation((p: string) =>
+      p === '/api/saves/ids' ? Promise.resolve(NO_SAVES) : p === '/api/child-profiles' ? Promise.resolve([]) : p.endsWith('/notes') ? Promise.resolve([pinned]) : Promise.resolve(guide)
+    )
+    render(<DetailScreen id="1" />)
+    expect(await screen.findByText('1 fix from builders')).toBeTruthy()
+    expect(screen.getByText('Step 2: Use a longer screw')).toBeTruthy()
+    fireEvent.press(screen.getByText('Read the fix'))
+    expect(screen.getByRole('tab', { name: /^Feedback/ }).props.accessibilityState.selected).toBe(true)
   })
 })
 
@@ -383,5 +639,147 @@ describe('DetailScreen recents', () => {
     render(<DetailScreen id="1" />)
     await screen.findByText(/couldn.t load/i)
     expect(mockRecord).not.toHaveBeenCalled()
+  })
+})
+
+describe('linkSite', () => {
+  it('names a plain host', () => {
+    expect(linkSite('https://github.com/makersmakingchange/Light-Touch-Switch')).toBe('github.com')
+    expect(linkSite('https://www.example.org:8080/a?b#c')).toBe('example.org')
+    expect(linkSite('http://github.com.evil.example/')).toBe('github.com.evil.example')
+  })
+  it('refuses anything a browser could read as another host', () => {
+    expect(linkSite('https://github.com@evil.example/x')).toBeNull()
+    expect(linkSite('https://user:pw@example.org/')).toBeNull()
+    expect(linkSite('https://evil.example\\@github.com')).toBeNull()
+    expect(linkSite('https://evil.example\\github.com')).toBeNull()
+    expect(linkSite('https://evil.example/a@github.com')).toBeNull()
+  })
+})
+
+describe('DetailScreen Feedback hand-off', () => {
+  const NOTE = { id: 'new', step_position: 1, author_id: 'me', author_name: 'You', body: 'Posted from build mode.', photo_url: null, photo_caption: null, pinned_at: null, pinned_by: null, pinned_by_name: null, created_at: '2026-10-07T00:00:00Z' }
+  const withNote = () =>
+    (apiClient.get as jest.Mock).mockImplementation((p: string) => (p.endsWith('/notes') ? Promise.resolve([NOTE]) : p === '/api/saves/ids' ? Promise.resolve(NO_SAVES) : p === '/api/child-profiles' ? Promise.resolve([]) : Promise.resolve(DETAIL)))
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    mockFocus.length = 0
+    mockEndpoints()
+  })
+
+  // Rows only ring once they lay out; give the scroller and the row a host to measure, then lay it out.
+  const layoutRow = () => {
+    const scroller = screen.UNSAFE_getByType(ScrollView).instance as unknown as { getInnerViewRef: () => unknown; scrollTo: jest.Mock }
+    scroller.getInnerViewRef = () => ({ __host: true })
+    const scrollTo = jest.spyOn(scroller, 'scrollTo')
+    const row = screen.UNSAFE_getAllByProps({ testID: 'note-row-new' }).map((n) => n.instance).find(Boolean) as unknown as { measureLayout: jest.Mock }
+    row.measureLayout = jest.fn((_rel, ok: (x: number, y: number) => void) => ok(0, 600))
+    act(() => { fireEvent(screen.getByTestId('note-row-new'), 'layout', { nativeEvent: { layout: { x: 0, y: 600, width: 300, height: 80 } } }) })
+    return scrollTo
+  }
+
+  it('on refocus with a pending focus it opens Feedback, reloads and rings the note', async () => {
+    render(<DetailScreen id="1" />)
+    await screen.findByText('Build a Robot Arm')
+    withNote()
+    setGuideFocus({ tutorialId: '1', noteId: 'new' })
+    act(() => { mockFocus.forEach((cb) => cb()) })
+    expect(takeGuideFocus).toHaveBeenCalledWith('1')
+    expect(screen.getByRole('tab', { name: /^Feedback/, selected: true })).toBeTruthy()
+    expect(await screen.findByText('Posted from build mode.')).toBeTruthy()
+    layoutRow()
+    expect(screen.getByTestId('note-row-new').props.style).toEqual(expect.arrayContaining([expect.objectContaining({ borderWidth: 2 })]))
+    expect(screen.getByText('Your feedback is on the guide')).toBeTruthy()
+  })
+
+  it('a focus with no note opens Feedback without a toast', async () => {
+    render(<DetailScreen id="1" />)
+    await screen.findByText('Build a Robot Arm')
+    setGuideFocus({ tutorialId: '1', noteId: null })
+    act(() => { mockFocus.forEach((cb) => cb()) })
+    expect(screen.getByRole('tab', { name: /^Feedback/, selected: true })).toBeTruthy()
+    expect(screen.queryByText('Your feedback is on the guide')).toBeNull()
+  })
+
+  it('a focus for another guide is left alone', async () => {
+    render(<DetailScreen id="1" />)
+    await screen.findByText('Build a Robot Arm')
+    setGuideFocus({ tutorialId: 'other', noteId: 'x' })
+    act(() => { mockFocus.forEach((cb) => cb()) })
+    expect(screen.getByRole('tab', { name: 'Overview', selected: true })).toBeTruthy()
+    expect(takeGuideFocus('other')).toEqual({ tutorialId: 'other', noteId: 'x' })
+  })
+
+  it('a post from the Feedback tab rings the new note too', async () => {
+    ;(apiClient.post as jest.Mock).mockResolvedValue(NOTE)
+    render(<DetailScreen id="1" />)
+    await screen.findByText('Build a Robot Arm')
+    tab('Feedback')
+    withNote()
+    fireEvent.press(screen.getByTestId('feedback-composer'))
+    fireEvent.press(screen.getByText('Missing step'))
+    fireEvent.changeText(screen.getByLabelText('Your note'), 'Posted from build mode.')
+    fireEvent.press(screen.getByRole('button', { name: 'Post' }))
+    await screen.findByText('Feedback posted')
+    fireEvent.press(screen.getByRole('button', { name: 'See it on the guide' }))
+    expect(await screen.findByTestId('note-row-new')).toBeTruthy()
+    expect(screen.getByText('Your feedback is on the guide')).toBeTruthy()
+  })
+
+  it('a notes reload slower than the ring still rings and scrolls the row when it lands', async () => {
+    jest.useFakeTimers()
+    try {
+      render(<DetailScreen id="1" />)
+      await screen.findByText('Build a Robot Arm')
+      let resolveNotes!: (v: unknown) => void
+      const slow = new Promise((r) => { resolveNotes = r })
+      ;(apiClient.get as jest.Mock).mockImplementation((p: string) => (p.endsWith('/notes') ? slow : p === '/api/saves/ids' ? Promise.resolve(NO_SAVES) : p === '/api/child-profiles' ? Promise.resolve([]) : Promise.resolve(DETAIL)))
+      setGuideFocus({ tutorialId: '1', noteId: 'new' })
+      act(() => { mockFocus.forEach((cb) => cb()) })
+      act(() => { jest.advanceTimersByTime(3000) })
+      await act(async () => { resolveNotes([NOTE]) })
+      await screen.findByTestId('note-row-new')
+      const scrollTo = layoutRow()
+      expect(scrollTo).toHaveBeenCalledWith({ y: 600 - ROW_SCROLL_MARGIN, animated: true })
+      expect(screen.getByTestId('note-row-new').props.style).toEqual(expect.arrayContaining([expect.objectContaining({ borderWidth: 2 })]))
+    } finally {
+      jest.useRealTimers()
+    }
+  })
+
+  it('the ring and toast do not repeat when you leave Feedback and come back', async () => {
+    jest.useFakeTimers()
+    try {
+      render(<DetailScreen id="1" />)
+      await screen.findByText('Build a Robot Arm')
+      withNote()
+      setGuideFocus({ tutorialId: '1', noteId: 'new' })
+      act(() => { mockFocus.forEach((cb) => cb()) })
+      await screen.findByTestId('note-row-new')
+      layoutRow()
+      expect(screen.getByTestId('note-row-new').props.style).toEqual(expect.arrayContaining([expect.objectContaining({ borderWidth: 2 })]))
+      act(() => { jest.advanceTimersByTime(8000) })
+      tab('Overview')
+      tab('Feedback (1)')
+      const style = JSON.stringify(screen.getByTestId('note-row-new').props.style)
+      expect(style).not.toContain('"borderWidth":2')
+      // The Toast keeps its last text mounted at opacity 0 once it has left.
+      expect(JSON.stringify(screen.getByText('Your feedback is on the guide').parent!.parent!.props.style)).toContain('"opacity":0')
+    } finally {
+      jest.useRealTimers()
+    }
+  })
+})
+
+jest.mock('react-native-safe-area-context', () => require('../../bottom-spacing').insetMock())
+
+describe('DetailScreen — bottom spacing', () => {
+  it('sits the Start building band one gutter above the home indicator, no tighter', async () => {
+    const steps = [{ id: 's1', tutorial_id: '1', position: 1, title: 'Open it', body: 'One screw.', photo_url: null }]
+    mockEndpoints({ detail: Promise.resolve({ ...DETAIL, steps }) })
+    render(<DetailScreen id="1" />)
+    await screen.findByText('Start building')
+    expect(paddingBottomOf(screen.getByTestId('guide-action-bar'))).toBe(CLEARANCE)
   })
 })

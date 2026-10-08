@@ -1,4 +1,5 @@
 // packages/mobile/tests/unit/components/organisation/review-detail-screen.test.tsx
+// journeys: L03 L04 L05 L06 L07
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { ReviewDetailScreen } from '../../../../components/organisation/review-detail-screen'
 

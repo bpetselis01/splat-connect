@@ -1,0 +1,26 @@
+appId: com.splatconnect.mobile
+---
+# Opens the seeded guide (DEVICE_GUIDE_TITLE) from the library by searching for
+# it: a long-lived database holds hundreds of guides, so the seeded one is
+# rarely on the first screen. The app may restore whichever tab was last open,
+# so go Home first (its Guides shortcut is the way in).
+- runFlow: dismiss-dev-toast.yaml
+- tapOn:
+    text: "Home"
+- tapOn:
+    text: "Guides"
+- assertVisible:
+    text: "Guide library"
+- tapOn:
+    text: "Search guides"
+- inputText: ${DEVICE_GUIDE_TITLE}
+- pressKey: Enter
+- assertVisible:
+    text: "1 guide.*"
+# The search box still holds the title, so a text tap would land on it. A tap on
+# the results heading puts the keyboard away (a ScrollView's default), then the
+# one result is the first card.
+- tapOn:
+    text: "Matching guides"
+- tapOn:
+    point: "50%,42%"

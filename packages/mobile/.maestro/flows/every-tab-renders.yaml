@@ -1,3 +1,4 @@
+# journeys: A02 A05 G01 H07 Q01 Q05
 # The Hermes-runtime smoke: sign in and land on every tab, asserting each
 # screen's own content rendered. Jest runs on Node and Playwright on Chromium;
 # this suite is the only layer that executes the app's JS on Hermes, where the
@@ -53,24 +54,33 @@ appId: com.splatconnect.mobile
 - assertVisible:
     text: "Guide library"
 
-# Filters are collapsed behind one button; opening it reveals the chips.
+# Filters are a sheet behind one button; its Show button applies and closes it.
 - tapOn:
     text: "Filters"
 - assertVisible:
-    text: "Under 30 min"
+    text: "Sort by"
+- runFlow: ../subflows/dismiss-dev-toast.yaml
+- tapOn:
+    point: "50%,92%"
+- assertNotVisible:
+    text: "Sort by"
+# A dev-client toast can sit over the tab bar (see dismiss-dev-toast.yaml).
+- runFlow: ../subflows/dismiss-dev-toast.yaml
 
 - tapOn:
     text: "Home"
 - tapOn:
     text: "Toys"
 - assertVisible:
-    text: "Toys"
+    text: "Toy library"
+- runFlow: ../subflows/dismiss-dev-toast.yaml
 
-# Map is a To be completed screen until a maps provider is set up.
+# Map: the search box is the crash detector for its screen (the tiles are a
+# WebView that may or may not load on a CI network).
 - tapOn:
     text: "Map"
 - assertVisible:
-    text: "To be completed"
+    text: "Search suburbs and places"
 
 # Inbox must render an actual row, not just its header: rows are where
 # relativeTime runs, and the fixture seeds exactly one notification so this

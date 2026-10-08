@@ -1,16 +1,18 @@
 // packages/mobile/components/my-toys/editor.tsx
-import { useEffect, useState } from 'react'
+import { logFailure } from '../../lib/log'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { View, Text, ScrollView, Image, Pressable, Switch, StyleSheet } from 'react-native'
-import { useRouter } from 'expo-router'
+import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import * as ImagePicker from 'expo-image-picker'
 import type { OfferType, Toy, ToyTransactionSummary } from '@splat-connect/types'
-import { apiMessage, computeToyStepStatuses, getMissingToyFields, isOwnerSide, MAX_PHOTOS, type ToyStepId } from '@splat-connect/types'
+import { apiMessage, isNetworkError, computeToyStepStatuses, getMissingToyFields, isOwnerSide, MAX_PHOTOS, type ToyStepId } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { loadOwnedToy } from '../../lib/my-toy'
 import { confirmDestructive, notify } from '../../lib/confirm'
 import { uploadFile } from '../../lib/upload'
 import { theme } from '../../lib/theme'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import { useCapabilities } from '../../lib/capabilities'
 import { Screen } from '../ui/Screen'
 import { ScreenHeader } from '../ui/ScreenHeader'
@@ -38,12 +40,15 @@ const OFFER_LABEL: Record<OfferType, string> = { donation: 'Donation', exchange:
 
 export function Editor({ id }: { id: string }) {
   const router = useRouter()
+  const bottom = useBottomClearance()
   const { caps } = useCapabilities()
   const [toy, setToy] = useState<Toy | null>(null)
   const [shelf, setShelf] = useState<Toy[]>([])
   const [transactions, setTransactions] = useState<ToyTransactionSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
+  const [offline, setOffline] = useState(false)
+  const [reloadKey, setReloadKey] = useState(0)
   const [activeStep, setActiveStep] = useState<ToyStepId>('details')
 
   const [name, setName] = useState('')
@@ -79,6 +84,7 @@ export function Editor({ id }: { id: string }) {
     let ignore = false
     setLoading(true)
     setLoadError(false)
+    setOffline(false)
     Promise.all([
       loadOwnedToy(id),
       apiClient.get<ToyTransactionSummary[]>('/api/toy-transactions'),
@@ -106,8 +112,10 @@ export function Editor({ id }: { id: string }) {
         setTransactions(tx)
       })
       .catch((err) => {
-        console.error('[Editor] toy fetch failed:', err)
-        if (!ignore) setLoadError(true)
+        logFailure('[Editor] toy fetch failed:', err)
+        if (ignore) return
+        setOffline(isNetworkError(err))
+        setLoadError(true)
       })
       .finally(() => {
         if (!ignore) setLoading(false)
@@ -123,7 +131,29 @@ export function Editor({ id }: { id: string }) {
     return () => {
       ignore = true
     }
-  }, [id])
+  }, [id, reloadKey])
+
+  // The offers row is a mount-time list, and the requests it counts get
+  // answered on other screens: coming back refetches just the transactions.
+  const focusedOnce = useRef(false)
+  useFocusEffect(
+    useCallback(() => {
+      if (!focusedOnce.current) {
+        focusedOnce.current = true
+        return
+      }
+      let ignore = false
+      apiClient
+        .get<ToyTransactionSummary[]>('/api/toy-transactions')
+        .then((tx) => {
+          if (!ignore) setTransactions(tx)
+        })
+        .catch(() => {})
+      return () => {
+        ignore = true
+      }
+    }, [])
+  )
 
   if (loading) {
     return (
@@ -139,9 +169,11 @@ export function Editor({ id }: { id: string }) {
       <Screen>
         <EmptyState
           icon="cloud-offline-outline"
-          title="Couldn't load this toy."
+          title={offline ? 'You seem to be offline.' : "Couldn't load this toy."}
           hint="Check your connection and try again."
-        />
+        >
+          <Button label="Try again" variant="secondary" onPress={() => setReloadKey((k) => k + 1)} />
+        </EmptyState>
       </Screen>
     )
   }
@@ -195,7 +227,7 @@ export function Editor({ id }: { id: string }) {
       })
       setToy((prev) => (prev ? { ...prev, ...updated } : updated))
     } catch (err) {
-      console.error('[Editor] save details failed:', err)
+      logFailure('[Editor] save details failed:', err)
       setSaveError(apiMessage(err, 'Could not save details. Please try again.'))
     } finally {
       setSaving(false)
@@ -282,7 +314,7 @@ export function Editor({ id }: { id: string }) {
       // local state, the way the switch gallery already was.
       await savePhotos({ photo_urls: [...currentPhotoUrls, ...urls] })
     } catch (err) {
-      console.error('[Editor] photo upload failed:', err)
+      logFailure('[Editor] photo upload failed:', err)
       setPhotosError('Could not upload the photo. Please try again.')
     } finally {
       setPhotosBusy(false)
@@ -303,7 +335,7 @@ export function Editor({ id }: { id: string }) {
         ...(currentSwitchPhotoUrl === url ? { switch_photo_url: null } : {}),
       })
     } catch (err) {
-      console.error('[Editor] photo remove failed:', err)
+      logFailure('[Editor] photo remove failed:', err)
       setPhotosError('Could not remove that photo. Please try again.')
     } finally {
       setPhotosBusy(false)
@@ -317,7 +349,7 @@ export function Editor({ id }: { id: string }) {
     try {
       await savePhotos({ photo_urls: [url, ...currentPhotoUrls.filter((u) => u !== url)] })
     } catch (err) {
-      console.error('[Editor] cover change failed:', err)
+      logFailure('[Editor] cover change failed:', err)
       setPhotosError('Could not change the cover. Please try again.')
     } finally {
       setPhotosBusy(false)
@@ -331,7 +363,7 @@ export function Editor({ id }: { id: string }) {
     try {
       await savePhotos({ switch_photo_url: url })
     } catch (err) {
-      console.error('[Editor] switch tag failed:', err)
+      logFailure('[Editor] switch tag failed:', err)
       setPhotosError('Could not save that. Please try again.')
     } finally {
       setPhotosBusy(false)
@@ -344,7 +376,7 @@ export function Editor({ id }: { id: string }) {
       const updated = await apiClient.patch<Toy>(`/api/toys/${id}`, { offer_type: offerType })
       setToy((prev) => (prev ? { ...prev, ...updated } : updated))
     } catch (err) {
-      console.error('[Editor] save offer type failed:', err)
+      logFailure('[Editor] save offer type failed:', err)
       // Shares publishError/its ErrorRow below rather than a state of its
       // own — both are Review-step failures on the same toy, and a chip that
       // silently declined to switch otherwise reads as "nothing happened".
@@ -359,7 +391,7 @@ export function Editor({ id }: { id: string }) {
       const updated = await apiClient.patch<Toy>(`/api/toys/${id}/publish`, {})
       setToy((prev) => (prev ? { ...prev, ...updated } : updated))
     } catch (err) {
-      console.error('[Editor] publish failed:', err)
+      logFailure('[Editor] publish failed:', err)
       setPublishError(apiMessage(err, 'Could not publish this toy. Please try again.'))
     } finally {
       setPublishing(false)
@@ -372,7 +404,7 @@ export function Editor({ id }: { id: string }) {
         await apiClient.delete(`/api/toys/${id}`)
         router.dismissTo(shelfHref)
       } catch (err) {
-        console.error('[Editor] delete failed:', err)
+        logFailure('[Editor] delete failed:', err)
         notify('Could not delete this toy', apiMessage(err, 'Please try again.'))
       }
     })
@@ -637,7 +669,7 @@ export function Editor({ id }: { id: string }) {
         )}
       </ScrollView>
 
-      <View style={styles.footer}>
+      <View testID="editor-footer" style={[styles.footer, { paddingBottom: bottom }]}>
         <Button label="Delete toy" variant="danger" onPress={handleDelete} />
       </View>
     </Screen>

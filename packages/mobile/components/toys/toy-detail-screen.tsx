@@ -2,23 +2,23 @@
 import { useEffect, useState } from 'react'
 import { View, Text, Image, ScrollView, Pressable, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { gradeOf, PICK_KIND_LABEL, toyFacts, toyHolderName, type OfferType, type Toy, type ToyDetail } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
+import { Button } from '../ui/Button'
 import { useSaves } from '../../lib/saves'
 import { recordRecent } from '../../lib/recents'
 import { useCapabilities } from '../../lib/capabilities'
-import { Button } from '../ui/Button'
-import { FlashLine, useFlash } from '../ui/Flash'
-import { SaveButton } from '../ui/SaveButton'
+import { ItemActions } from '../ui/ItemActions'
+import { Toast, useToast } from '../ui/Toast'
+import { PhotoViewer } from '../ui/PhotoViewer'
 import { Skeleton } from '../ui/Skeleton'
 import { PhotoCarousel } from '../ui/PhotoCarousel'
 import { EmptyState } from '../ui/EmptyState'
-import { ReportProblem } from '../reports/report-problem'
 import { RequestBlock } from './request-block'
 import { Pill } from '../list/list-kit'
-import { ThankButton } from '../people/thank-button'
 
 const OFFER_LABEL: Record<OfferType, string> = {
   donation: 'Gift — nothing comes back',
@@ -34,15 +34,19 @@ export function ToyDetailScreen({ id }: { id: string }) {
   const [toy, setToy] = useState<ToyDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
+  const [attempt, setAttempt] = useState(0)
   const [myToys, setMyToys] = useState<Toy[]>([])
   const [myToysLoaded, setMyToysLoaded] = useState(false)
   const [myToysError, setMyToysError] = useState<string | null>(null)
   const [thanked, setThanked] = useState(false)
   const [thanking, setThanking] = useState(false)
-  const [thankLine, flashThank] = useFlash()
+  const [viewing, setViewing] = useState<number | null>(null)
+  const toaster = useToast()
+  const insets = useSafeAreaInsets()
 
   useEffect(() => {
     let ignore = false
+    setError(false)
     apiClient
       .get<ToyDetail>(`/api/public/toys/${id}`)
       .then((data) => {
@@ -57,7 +61,7 @@ export function ToyDetailScreen({ id }: { id: string }) {
     return () => {
       ignore = true
     }
-  }, [id])
+  }, [id, attempt])
 
   const isOwner =
     !!caps &&
@@ -108,7 +112,7 @@ export function ToyDetailScreen({ id }: { id: string }) {
   if (loading) {
     return (
       <View style={styles.loading}>
-        <Skeleton width="100%" height={180} style={styles.loadingPhoto} />
+        <Skeleton width="100%" height={288} style={styles.loadingPhoto} />
         <Skeleton width="70%" height={22} />
         <Skeleton width="90%" height={14} />
         <Skeleton width="50%" height={14} />
@@ -118,7 +122,9 @@ export function ToyDetailScreen({ id }: { id: string }) {
   if (error || !toy) {
     return (
       <View style={styles.container}>
-        <EmptyState icon="cloud-offline-outline" title="Couldn't load this toy." />
+        <EmptyState icon="cloud-offline-outline" title="Couldn't load this toy." hint="Check your connection and try again.">
+          <Button label="Try again" variant="secondary" onPress={() => { setLoading(true); setAttempt((n) => n + 1) }} style={{ marginTop: theme.spacing(5), alignSelf: 'center', paddingHorizontal: theme.spacing(8) }} />
+        </EmptyState>
       </View>
     )
   }
@@ -128,40 +134,52 @@ export function ToyDetailScreen({ id }: { id: string }) {
   // "Newcastle, NSW" — the board's subtitle. Nothing at all without a suburb.
   const place = toy.holder_suburb ? [toy.holder_suburb, toy.holder_state].filter(Boolean).join(', ') : null
   const canAsk = !!caps && !isOwner
-  // The save sits beside "Ask to collect it" when there is one, as on the
-  // board; otherwise it stays by the title.
-  const saveBesideAsk = canAsk && (toy.offer_type === 'donation' || toy.offer_type === 'both')
-  const save = <SaveButton slug="toys" id={toy.id} saves={saves} circled />
+  // The holder to thank: a person through 117, an organisation through 077.
+  // Nobody to thank on your own toy.
+  const thankTo = !canAsk ? null : toy.owner_org_id && orgName ? orgName : toy.owner_id && personName ? personName : null
 
-  async function thankOrg() {
+  /** True once thanked (a 409 is "already thanked", the same end state). */
+  async function thankHolder(): Promise<boolean> {
     setThanking(true)
     try {
-      await apiClient.post(`/api/organizations/${toy!.owner_org_id}/thanks`, {})
+      await apiClient.post(toy!.owner_org_id ? `/api/organizations/${toy!.owner_org_id}/thanks` : `/api/contributors/${toy!.owner_id}/thanks`, {})
       setThanked(true)
+      return true
     } catch (err) {
-      // 409: they already have — the same end state.
-      if (err instanceof Error && /status 409/.test(err.message)) setThanked(true)
-      else flashThank('Could not send that. Try again.')
+      if (err instanceof Error && /status 409/.test(err.message)) {
+        setThanked(true)
+        return true
+      }
+      return false
     } finally {
       setThanking(false)
     }
   }
 
   return (
+    <View style={styles.container}>
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.hero}>
         <PhotoCarousel
           urls={toy.photo_urls}
-          height={240}
+          height={288}
           switchUrl={toy.switch_adapted ? toy.switch_photo_url : null}
+          onPress={setViewing}
         />
+        <View style={styles.heroActions}>
+          <ItemActions
+            save={{ slug: 'toys', id: toy.id, saves }}
+            thanks={thankTo ? { to: thankTo, thanked, busy: thanking, send: thankHolder } : undefined}
+            report={{ kind: 'toy', id: toy.id, label: toy.name }}
+            onToast={toaster.show}
+          />
+        </View>
       </View>
 
       <View style={styles.titleRow}>
         <Text style={styles.title} accessibilityRole="header">
           {toy.name}
         </Text>
-        {saveBesideAsk ? null : save}
       </View>
 
       {orgName ? (
@@ -233,31 +251,9 @@ export function ToyDetailScreen({ id }: { id: string }) {
           myToysLoaded={myToysLoaded}
           myToysError={myToysError}
           onStarted={(txId) => router.push(`/exchanges/${txId}`)}
-          aside={saveBesideAsk ? save : undefined}
         />
       ) : null}
 
-      <View style={styles.footerRow}>
-        {/* A person holder is thanked through 117, an organisation through 077. */}
-        {canAsk && !toy.owner_org_id && personName && toy.owner_id ? (
-          <ThankButton label={`Thank ${personName}`} to={{ profileId: toy.owner_id }} style={styles.thank} />
-        ) : canAsk && toy.owner_org_id && orgName ? (
-          <View>
-            <Button
-              label={thanked ? `Thanked ${orgName}` : `Thank ${orgName}`}
-              variant="secondary"
-              disabled={thanked}
-              loading={thanking}
-              onPress={() => void thankOrg()}
-              style={styles.thank}
-            />
-            <FlashLine message={thankLine} />
-          </View>
-        ) : (
-          <View />
-        )}
-        <ReportProblem subjectKind="toy" subjectId={toy.id} subjectLabel={toy.name} />
-      </View>
       {(toy.picks ?? []).length > 0 ? (
         <View style={styles.picks}>
           <Text style={styles.picksTitle} accessibilityRole="header">
@@ -285,6 +281,9 @@ export function ToyDetailScreen({ id }: { id: string }) {
         </View>
       ) : null}
     </ScrollView>
+    <PhotoViewer photos={toy.photo_urls.map((uri) => ({ uri }))} index={viewing} onClose={() => setViewing(null)} />
+    <Toast toast={toaster.toast} onHide={toaster.hide} style={{ bottom: insets.bottom + theme.spacing(4) }} />
+    </View>
   )
 }
 
@@ -292,6 +291,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   content: { paddingHorizontal: theme.spacing(4), paddingBottom: theme.spacing(10), gap: theme.spacing(4) },
   hero: { marginHorizontal: -theme.spacing(4), marginBottom: -theme.spacing(1) },
+  heroActions: { position: 'absolute', top: theme.spacing(3), right: theme.spacing(3) },
   pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2) },
   notes: {
     borderRadius: theme.radii.panel,
@@ -304,8 +304,6 @@ const styles = StyleSheet.create({
   },
   notesTitle: { fontFamily: theme.fonts.display, fontSize: theme.type.body, color: theme.colors.ink },
   // Wraps: "Thank <a long organisation name>" leaves no room for Report on one line.
-  footerRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: theme.spacing(2) },
-  thank: { paddingVertical: theme.spacing(2), paddingHorizontal: theme.spacing(4), minHeight: 40 },
   loading: {
     flex: 1,
     backgroundColor: theme.colors.background,

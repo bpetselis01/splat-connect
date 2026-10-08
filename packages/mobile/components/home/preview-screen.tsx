@@ -1,10 +1,17 @@
-import { View, StyleSheet, Linking } from 'react-native'
+import { View, ActivityIndicator, StyleSheet, Linking } from 'react-native'
 import { WebView } from 'react-native-webview'
+import { webGuideUrl } from '../../lib/guide-files'
 import { theme } from '../../lib/theme'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import { Button } from '../ui/Button'
 import { EmptyState } from '../ui/EmptyState'
 
-export function PreviewScreen({ pdfUrl }: { pdfUrl: string | null }) {
+/**
+ * A guide's PDF (spec 2026-10-06 round 2): the pages on a sunken ground.
+ * Downloads live on the website; the footer links to the guide's page there.
+ */
+export function PreviewScreen({ pdfUrl, tutorialId }: { pdfUrl: string | null; tutorialId: string }) {
+  const bottom = useBottomClearance()
   if (!pdfUrl) {
     return (
       <View style={styles.center}>
@@ -19,27 +26,36 @@ export function PreviewScreen({ pdfUrl }: { pdfUrl: string | null }) {
 
   return (
     <View style={styles.container}>
-      <WebView source={{ uri: pdfUrl }} style={styles.webview} />
-      {/*
-        The in-app viewer cannot print, share or zoom the way the system
-        viewer can, so the handoff stays visible rather than hiding behind a
-        failure state.
-      */}
-      <View style={styles.footer}>
-        <Button label="Open in Browser" onPress={() => Linking.openURL(pdfUrl)} variant="secondary" />
-      </View>
+      <WebView
+        source={{ uri: pdfUrl }}
+        style={styles.webview}
+        startInLoadingState
+        renderLoading={() => (
+          <View style={styles.loading}>
+            <ActivityIndicator color={theme.colors.primary} />
+          </View>
+        )}
+      />
+      {webGuideUrl(tutorialId) ? (
+        <View testID="preview-footer" style={[styles.footer, { paddingBottom: bottom }]}>
+          <Button label="Download on the web" variant="secondary" onPress={() => void Linking.openURL(webGuideUrl(tutorialId)!)} style={styles.open} />
+        </View>
+      ) : null}
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background },
-  webview: { flex: 1 },
+  container: { flex: 1, backgroundColor: theme.colors.surfaceSunken },
+  webview: { flex: 1, backgroundColor: theme.colors.surfaceSunken },
+  loading: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.surfaceSunken },
   center: { flex: 1, justifyContent: 'center', backgroundColor: theme.colors.background },
   footer: {
-    padding: theme.spacing(4),
+    paddingHorizontal: theme.spacing(4),
+    paddingTop: theme.spacing(3),
     backgroundColor: theme.colors.surface,
-    borderTopWidth: 1,
+    borderTopWidth: theme.border.hairline,
     borderTopColor: theme.colors.border,
   },
+  open: { minHeight: 56 },
 })

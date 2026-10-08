@@ -1,6 +1,7 @@
 // packages/mobile/tests/unit/app/auth-screens.test.tsx
 // The sign-in flow's screens against a mocked auth context
 // (docs/superpowers/specs/2026-09-30-mobile-sign-in-design.md).
+// journeys: A01 A02 A06 A09 A10
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import Welcome from '../../../app/(auth)/welcome'
 import CreateAccount from '../../../app/(auth)/create-account'

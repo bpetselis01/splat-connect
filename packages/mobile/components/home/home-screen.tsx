@@ -4,9 +4,9 @@
 // Today card when something is waiting, the shortcut grid, then recents. It
 // draws its own header (the tab has no native one) and clears the floating
 // tab bar. The searchable Explore page is its own hidden route.
-import { useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
-import { useRouter } from 'expo-router'
+import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { theme } from '../../lib/theme'
@@ -51,7 +51,16 @@ function TodayCard({ total, exchanges }: { total: number; exchanges: number }) {
 export function HomeScreen() {
   const insets = useSafeAreaInsets()
   const router = useRouter()
-  const { caps } = useCapabilities()
+  const { caps, refresh } = useCapabilities()
+  // Home is a tab and stays mounted: refetch the Today count on every focus
+  // after the first (the mount fetch covers that one).
+  const focused = useRef(false)
+  useFocusEffect(
+    useCallback(() => {
+      if (focused.current) refresh()
+      focused.current = true
+    }, [refresh])
+  )
   const shortcuts = useHomeShortcuts()
   const { recents } = useRecents()
   const [editing, setEditing] = useState(false)

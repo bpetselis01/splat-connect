@@ -26,10 +26,22 @@ export function useSaves(): Saves {
   // send its DELETE before the first tap's POST had landed, which the server
   // answered as a no-op, leaving the row saved after the screen said otherwise.
   const queue = useRef(new Map<string, Promise<unknown>>())
+  // Ids tapped before the saved list arrived. A slow list must not undo them:
+  // the tap is newer than whatever the list says.
+  const touched = useRef(new Map<SaveSlug, Set<string>>())
 
   useEffect(() => {
     let ignore = false
-    apiClient.get<SavedIds>('/api/saves/ids').then((ids) => { if (!ignore) { confirmed.current = { ...NONE, ...ids }; commit(confirmed.current) } }).catch(() => {})
+    apiClient.get<SavedIds>('/api/saves/ids').then((ids) => {
+      if (ignore) return
+      const next: SavedIds = { ...NONE, ...ids }
+      for (const [slug, tapped] of touched.current) {
+        const kept = next[slug].filter((x) => !tapped.has(x))
+        next[slug] = [...kept, ...savedRef.current[slug].filter((x) => tapped.has(x))]
+      }
+      confirmed.current = next
+      commit(next)
+    }).catch(() => {})
     return () => { ignore = true }
   }, [commit])
 
@@ -37,6 +49,7 @@ export function useSaves(): Saves {
 
   const toggle = useCallback(async (slug: SaveSlug, id: string) => {
     const was = savedRef.current[slug].includes(id)
+    touched.current.set(slug, (touched.current.get(slug) ?? new Set()).add(id))
     const withoutId = (ids: string[]) => ids.filter((x) => x !== id)
     commit({ ...savedRef.current, [slug]: was ? withoutId(savedRef.current[slug]) : [...savedRef.current[slug], id] })
     const key = `${slug}:${id}`

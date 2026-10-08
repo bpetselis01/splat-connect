@@ -61,6 +61,11 @@ describe('linkFor', () => {
     expect(linkFor(notification({ type: 'toy_message', toy_transaction_id: 'tx1' }))).toBe('/exchanges/tx1')
   })
 
+  it('sends the two print-stage types straight to the print job (S2)', () => {
+    expect(linkFor(notification({ type: 'print_started', toy_transaction_id: 'tx1' }))).toBe('/printing/jobs/tx1')
+    expect(linkFor(notification({ type: 'print_ready', toy_transaction_id: 'tx1' }))).toBe('/printing/jobs/tx1')
+  })
+
   it('sends the two build-stage types straight to the build thread', () => {
     expect(linkFor(notification({ type: 'build_shot_posted', toy_transaction_id: 'tx1' }))).toBe('/exchanges/build/tx1')
     expect(linkFor(notification({ type: 'build_approved', toy_transaction_id: 'tx1' }))).toBe('/exchanges/build/tx1')
@@ -87,7 +92,7 @@ describe('linkFor', () => {
       .toBe('Northbank replied to your message')
     expect(linkFor(notification({ type: 'org_message', org_conversation_id: 'c1' }))).toBe('/messages/c1')
     expect(notificationBucket('org_message')).toBe('exchanges')
-    expect(linkFor(notification({ type: 'org_thanked', org_id: 'o1' }))).toBe('/organisation')
+    expect(linkFor(notification({ type: 'org_thanked', org_id: 'o1' }))).toBe('/organisation/profile')
     expect(notificationBucket('org_thanked')).toBe('organisations')
     // 117: a showcase thanks opens the showcase; one for an exchange opens it.
     expect(linkFor(notification({ type: 'profile_thanked', profile_id: 'p1' }))).toBe('/guides/contributor/p1')
@@ -106,6 +111,12 @@ describe('linkFor', () => {
   it('sends every other idea event to the public brief', () => {
     expect(linkFor(notification({ type: 'challenge_joined', idea_id: 'i1' }))).toBe('/explore/challenges/i1')
     expect(linkFor(notification({ type: 'idea_approved', idea_id: 'i1' }))).toBe('/explore/challenges/i1')
+  })
+
+  it('keeps an invite in the inbox rather than opening an editor the invitee is not on (S18)', () => {
+    expect(linkFor(notification({ type: 'collaborator_invited', tutorial_id: 't1' }))).toBe('/inbox')
+    // The other collaborator events still open the guide for someone already on it.
+    expect(linkFor(notification({ type: 'collaborator_accepted', tutorial_id: 't1' }))).toBe('/tutorials/t1')
   })
 
   it('stays put when a row names nothing to open', () => {
@@ -128,6 +139,8 @@ describe('linkFor', () => {
         org_story_id: type === 'org_story_published' ? 's1' : null,
         org_id: type === 'org_thanked' ? 'o1' : null,
       })
+      // An invite's destination is the inbox itself, where Accept / Decline live.
+      if (type === 'collaborator_invited') continue
       expect(linkFor(n)).not.toBe('/inbox')
     }
   })

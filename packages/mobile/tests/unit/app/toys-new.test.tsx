@@ -1,4 +1,5 @@
 // packages/mobile/tests/unit/app/toys-new.test.tsx
+// journeys: W02
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import NewToyRoute from '../../../app/(my)/toys/new'
 

@@ -1,6 +1,7 @@
 // packages/mobile/components/explore/learn-hub.tsx
 // Title comes from the native header (app/(tabs)/explore/_layout.tsx), so
 // this doesn't repeat it — same convention as about-screen.tsx.
+import { logFailure } from '../../lib/log'
 import { useEffect, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import type { LearnCourse } from '@splat-connect/types'
@@ -11,8 +12,6 @@ import { apiClient } from '../../lib/api-client'
 import { useLearnProgress } from '../../lib/learn'
 import { LEARN_ARTICLES, type LearnArticle } from '../../lib/learn-content'
 import { Screen } from '../ui/Screen'
-import { Card } from '../ui/Card'
-import { Meter } from '../ui/Meter'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
 
 const START_HERE = 3
@@ -51,7 +50,7 @@ export function LearnHub() {
       .then((c) => {
         if (!ignore) setCourse(c)
       })
-      .catch((err) => console.error('[LearnHub] course fetch failed:', err))
+      .catch((err) => logFailure('[LearnHub] course fetch failed:', err))
     return () => {
       ignore = true
     }
@@ -65,6 +64,8 @@ export function LearnHub() {
     )
   }
 
+  const avgMinutes = Math.round(LEARN_ARTICLES.reduce((n, a) => n + a.minutes, 0) / total)
+
   return (
     <Screen>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
@@ -75,7 +76,7 @@ export function LearnHub() {
         ) : null}
         <Text style={styles.intro}>
           {course?.outcome ??
-            'How switch adaptation works, from first switch to safe finish. For instructions on one toy, use Guides.'}
+            `How switch adaptation works, from first switch to safe finish. ${total} short reads, about ${avgMinutes} minutes each.`}
         </Text>
 
         {next ? (
@@ -83,178 +84,158 @@ export function LearnHub() {
             onPress={() => router.push(`/explore/learn/${next.slug}`)}
             accessibilityRole="button"
             accessibilityLabel={`Continue: ${nextPosition}. ${next.title}`}
-            accessibilityHint={`${next.minutes} minutes left`}
+            accessibilityHint={`${next.minutes} minutes`}
             pressScale={0.985}
-            style={styles.continuePress}
+            style={styles.upNext}
           >
-            <Card variant="feature" style={styles.continueCard}>
-              <Text style={styles.eyebrow}>CONTINUE</Text>
-              <Text style={styles.continueTitle}>{`${nextPosition} · ${next.title}`}</Text>
-              <Meter value={count} max={total} width={120} />
-              <Text style={styles.continueCaption}>
-                {`${count} of ${total} read · ${next.minutes} min left on this one ›`}
-              </Text>
-            </Card>
+            <Text style={styles.upNextLabel}>{`Up next · ${next.minutes} min`}</Text>
+            <Text style={styles.upNextTitle}>{`${nextPosition} · ${next.title}`}</Text>
+            <View style={styles.segments} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+              {LEARN_ARTICLES.map((a) => (
+                <View key={a.slug} style={[styles.segment, read.has(a.slug) && styles.segmentRead]} />
+              ))}
+            </View>
+            <View style={styles.upNextFoot}>
+              <Text style={styles.upNextCount}>{`${count} of ${total} read`}</Text>
+              <View style={styles.keepReading}>
+                <Text style={styles.keepReadingText}>Keep reading</Text>
+                <Ionicons name="arrow-forward" size={16} color={theme.colors.onInverse} />
+              </View>
+            </View>
           </AnimatedPressable>
         ) : (
           <Text style={styles.allRead}>All six read.</Text>
         )}
 
-        <Text style={styles.sectionLabel}>Start here</Text>
-        <View style={styles.list}>
-          {start.map((article, i) => (
-            <LearnRow
-              key={article.slug}
-              article={article}
-              label={`${i + 1}. ${article.title}`}
-              read={read.has(article.slug)}
-              tile={String(i + 1)}
-              onPress={() => router.push(`/explore/learn/${article.slug}`)}
-            />
-          ))}
+        <Text accessibilityRole="header" style={styles.sectionTitle}>Start here</Text>
+        <View style={styles.path}>
+          {start.map((article, i) => {
+            const done = read.has(article.slug)
+            const isNext = next?.slug === article.slug
+            const last = i === start.length - 1
+            return (
+              <AnimatedPressable
+                key={article.slug}
+                onPress={() => router.push(`/explore/learn/${article.slug}`)}
+                accessibilityRole="button"
+                accessibilityLabel={`${i + 1}. ${article.title}`}
+                accessibilityHint={done ? 'Read' : `${article.minutes} min`}
+                pressScale={0.985}
+                style={styles.pathRow}
+              >
+                <View style={styles.rail}>
+                  <View style={[styles.node, done ? styles.nodeRead : isNext ? styles.nodeNext : null]}>
+                    {/* Decorative: the row's label already says the position. */}
+                    <View
+                      accessibilityElementsHidden
+                      importantForAccessibility="no-hide-descendants"
+                      aria-hidden
+                      testID={`learn-node-${done ? 'check' : 'numeral'}-${article.slug}`}
+                    >
+                      {done ? (
+                        <Ionicons name="checkmark" size={18} color={theme.colors.onColor} />
+                      ) : (
+                        <Text style={[styles.nodeText, isNext && styles.onColor]}>{i + 1}</Text>
+                      )}
+                    </View>
+                  </View>
+                  {last ? null : <View style={[styles.line, done && styles.lineRead]} />}
+                </View>
+                <View style={[styles.pathText, last && styles.pathTextLast]}>
+                  <Text style={[styles.rowTitle, done && styles.muted]}>{article.title}</Text>
+                  <Text style={styles.rowSub} numberOfLines={2}>
+                    {done ? 'Read' : isNext ? `${article.minutes} min · up next` : `${article.minutes} min`}
+                  </Text>
+                </View>
+              </AnimatedPressable>
+            )
+          })}
         </View>
 
-        <Text style={styles.sectionLabel}>Going deeper</Text>
-        <View style={styles.list}>
-          {deeper.map((article) => (
-            <LearnRow
-              key={article.slug}
-              article={article}
-              label={article.title}
-              read={read.has(article.slug)}
-              icon={DEEPER_ICON[article.slug] ?? 'book-outline'}
-              onPress={() => router.push(`/explore/learn/${article.slug}`)}
-            />
-          ))}
+        <Text accessibilityRole="header" style={styles.sectionTitle}>Going deeper</Text>
+        <View style={styles.tiles}>
+          {deeper.map((article) => {
+            const done = read.has(article.slug)
+            return (
+              <AnimatedPressable
+                key={article.slug}
+                onPress={() => router.push(`/explore/learn/${article.slug}`)}
+                accessibilityRole="button"
+                accessibilityLabel={article.title}
+                accessibilityHint={done ? 'Read' : `${article.minutes} min`}
+                pressScale={0.97}
+                style={styles.tile}
+              >
+                <View
+                  style={[styles.tileIcon, done && styles.tileIconRead]}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
+                  aria-hidden
+                  testID={`learn-node-${done ? 'check' : 'icon'}-${article.slug}`}
+                >
+                  <Ionicons name={done ? 'checkmark' : (DEEPER_ICON[article.slug] ?? 'book-outline')} size={20} color={theme.colors.ink} />
+                </View>
+                <Text style={styles.tileTitle}>{article.title}</Text>
+                <Text style={styles.rowSub}>{done ? 'Read' : `${article.minutes} min`}</Text>
+              </AnimatedPressable>
+            )
+          })}
         </View>
+
+        <AnimatedPressable
+          onPress={() => router.push('/guides')}
+          accessibilityRole="button"
+          accessibilityLabel="Ready to build something? Open Guides"
+          pressScale={0.985}
+          style={styles.toGuides}
+        >
+          <View style={styles.flex}>
+            <Text style={styles.rowTitle}>Ready to build something?</Text>
+            <Text style={styles.rowSub}>Guides have the step-by-step for one toy or switch.</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={theme.colors.primaryDeep} />
+        </AnimatedPressable>
       </ScrollView>
     </Screen>
   )
 }
 
-/** One Learn row: a numbered tile in Start here, an icon tile below it, a tick once read. */
-function LearnRow({
-  article,
-  label,
-  read,
-  tile,
-  icon,
-  onPress,
-}: {
-  article: LearnArticle
-  label: string
-  read: boolean
-  tile?: string
-  icon?: keyof typeof Ionicons.glyphMap
-  onPress: () => void
-}) {
-  return (
-    <AnimatedPressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityHint={read ? 'Read' : `${article.minutes} min`}
-      pressScale={0.985}
-      style={styles.row}
-    >
-      <View style={[styles.tile, read ? styles.tileRead : tile ? styles.tileNumber : styles.tileIcon]}>
-        {/*
-          The numeral/tick is decorative — the row's own accessibilityLabel
-          already carries the position and title, so a screen reader repeating
-          "1" or "check mark" ahead of it would say less than the label says on
-          its own. Same hidden-glyph convention as StepPills.
-        */}
-        <View
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          aria-hidden
-          testID={`learn-node-${read ? 'check' : tile ? 'numeral' : 'icon'}-${article.slug}`}
-        >
-          {read ? (
-            <Text style={styles.tileText}>✓</Text>
-          ) : tile ? (
-            <Text style={styles.tileText}>{tile}</Text>
-          ) : (
-            <Ionicons name={icon ?? 'book-outline'} size={20} color={theme.colors.ink} />
-          )}
-        </View>
-      </View>
-      <View style={styles.rowText}>
-        <Text style={styles.rowTitle}>{article.title}</Text>
-        <Text style={styles.rowIntro} numberOfLines={2}>
-          {article.intro}
-        </Text>
-      </View>
-      <Ionicons name="chevron-forward" size={18} color={theme.colors.muted} />
-    </AnimatedPressable>
-  )
-}
-
 const styles = StyleSheet.create({
-  content: { paddingBottom: theme.spacing(6) },
-  courseTitle: {
-    fontFamily: theme.fonts.display,
-    fontSize: theme.type.title,
-    lineHeight: 29,
-    color: theme.colors.text,
-    marginBottom: theme.spacing(2),
-  },
-  intro: {
-    fontFamily: theme.fonts.regular,
-    fontSize: theme.type.label,
-    color: theme.colors.muted,
-    lineHeight: 21,
-    marginBottom: theme.spacing(4),
-  },
-  continuePress: { marginBottom: theme.spacing(5) },
-  continueCard: { gap: theme.spacing(2) },
-  eyebrow: {
-    fontFamily: theme.fonts.bold,
-    fontSize: theme.type.caption,
-    color: theme.colors.primaryDeep,
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
-  },
-  continueTitle: { fontFamily: theme.fonts.display, fontSize: theme.type.heading, color: theme.colors.text },
-  continueCaption: {
-    fontFamily: theme.fonts.regular,
-    fontSize: theme.type.caption,
-    color: theme.colors.muted,
-    marginTop: theme.spacing(1),
-  },
-  allRead: {
-    fontFamily: theme.fonts.regular,
-    fontSize: theme.type.label,
-    color: theme.colors.muted,
-    textAlign: 'center',
-    marginBottom: theme.spacing(5),
-  },
-  sectionLabel: {
-    fontFamily: theme.fonts.black,
-    fontSize: theme.type.caption,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    color: theme.colors.muted,
-    marginBottom: theme.spacing(2),
-  },
-  list: { gap: theme.spacing(3), marginBottom: theme.spacing(5) },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing(3),
-    padding: theme.spacing(4),
-    borderRadius: theme.radii.panel,
-    borderWidth: theme.border.hairline,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.surface,
-    ...theme.shadow(1),
-  },
-  tile: { width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  tileNumber: { backgroundColor: theme.colors.honeySoft },
-  tileIcon: { backgroundColor: theme.colors.surfaceSunken },
-  tileRead: { backgroundColor: theme.colors.mintSoft },
-  tileText: { fontFamily: theme.fonts.display, fontSize: theme.type.body, color: theme.colors.ink },
-  rowText: { flex: 1, gap: 2 },
+  content: { paddingBottom: theme.spacing(8) },
+  flex: { flex: 1 },
+  onColor: { color: theme.colors.onColor },
+  muted: { color: theme.colors.muted },
+  courseTitle: { fontFamily: theme.fonts.display, fontSize: theme.type.display, color: theme.colors.text, marginBottom: theme.spacing(2) },
+  intro: { fontFamily: theme.fonts.regular, fontSize: theme.type.body, color: theme.colors.muted, marginBottom: theme.spacing(5) },
+  upNext: { gap: theme.spacing(3), padding: theme.spacing(5), borderRadius: theme.radii.card, backgroundColor: theme.colors.accentLight, marginBottom: theme.spacing(6), ...theme.shadow(2) },
+  upNextLabel: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.primaryDeep },
+  upNextTitle: { fontFamily: theme.fonts.display, fontSize: theme.type.title, color: theme.colors.text },
+  segments: { flexDirection: 'row', gap: 4 },
+  segment: { flex: 1, height: 6, borderRadius: theme.radii.pill, backgroundColor: theme.colors.surface },
+  segmentRead: { backgroundColor: theme.colors.primary },
+  upNextFoot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  upNextCount: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.text },
+  keepReading: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 40, paddingHorizontal: theme.spacing(4), borderRadius: theme.radii.pill, backgroundColor: theme.colors.inverse },
+  keepReadingText: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.onInverse },
+  allRead: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted, textAlign: 'center', marginBottom: theme.spacing(6) },
+  sectionTitle: { fontFamily: theme.fonts.display, fontSize: theme.type.heading, color: theme.colors.text, marginBottom: theme.spacing(3) },
+  path: { marginBottom: theme.spacing(6) },
+  pathRow: { flexDirection: 'row', gap: theme.spacing(4) },
+  rail: { width: 36, alignItems: 'center' },
+  node: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.surfaceSunken },
+  nodeRead: { backgroundColor: theme.colors.success },
+  nodeNext: { backgroundColor: theme.colors.primary },
+  nodeText: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink },
+  line: { flex: 1, width: 3, minHeight: 20, backgroundColor: theme.colors.surfaceSunken },
+  lineRead: { backgroundColor: theme.colors.success },
+  pathText: { flex: 1, gap: 2, paddingTop: 6, paddingBottom: theme.spacing(5) },
+  pathTextLast: { paddingBottom: 0 },
   rowTitle: { fontFamily: theme.fonts.black, fontSize: theme.type.body, color: theme.colors.text },
-  rowIntro: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted, lineHeight: 18 },
+  rowSub: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted },
+  tiles: { flexDirection: 'row', gap: theme.spacing(2), marginBottom: theme.spacing(6) },
+  tile: { flex: 1, gap: theme.spacing(2), padding: theme.spacing(3), borderRadius: theme.radii.panel, borderWidth: theme.border.hairline, borderColor: theme.colors.border, backgroundColor: theme.colors.surface },
+  tileIcon: { width: 40, height: 40, borderRadius: theme.radii.field, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.honeySoft },
+  tileIconRead: { backgroundColor: theme.colors.mintSoft },
+  tileTitle: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.text },
+  toGuides: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3), padding: theme.spacing(5), borderRadius: theme.radii.panel, borderWidth: theme.border.hairline, borderColor: theme.colors.border, backgroundColor: theme.colors.surface },
 })

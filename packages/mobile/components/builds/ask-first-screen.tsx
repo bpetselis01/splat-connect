@@ -6,13 +6,15 @@
  * Claiming is the same one tap as on the board, and the thread moves into the
  * build thread (POST /:id/claim copies it).
  */
+import { logFailure } from '../../lib/log'
 import { useCallback, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
-import { apiMessage, type BuildQuestions } from '@splat-connect/types'
+import { apiMessage, isNetworkError, type BuildQuestions } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { useCapabilities } from '../../lib/capabilities'
 import { theme } from '../../lib/theme'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import { Screen } from '../ui/Screen'
 import { Card } from '../ui/Card'
 import { Chip } from '../ui/Chip'
@@ -24,11 +26,12 @@ import { EmptyState } from '../ui/EmptyState'
 import { ErrorRow } from '../ui/ErrorRow'
 
 export function AskFirstScreen({ id }: { id: string }) {
+  const bottom = useBottomClearance()
   const router = useRouter()
   const { caps } = useCapabilities()
   const viewerId = caps?.profile.id ?? null
   const [data, setData] = useState<BuildQuestions | null>(null)
-  const [failed, setFailed] = useState(false)
+  const [failed, setFailed] = useState<'offline' | 'other' | null>(null)
   const [makerId, setMakerId] = useState<string | null>(null)
   const [draft, setDraft] = useState('')
   const [busy, setBusy] = useState(false)
@@ -37,10 +40,10 @@ export function AskFirstScreen({ id }: { id: string }) {
   const load = useCallback(async () => {
     try {
       setData(await apiClient.get<BuildQuestions>(`/api/toy-transactions/${id}/questions`))
-      setFailed(false)
+      setFailed(null)
     } catch (err) {
-      console.error('[AskFirstScreen] questions fetch failed:', err)
-      setFailed(true)
+      logFailure('[AskFirstScreen] questions fetch failed:', err)
+      setFailed(isNetworkError(err) ? 'offline' : 'other')
     }
   }, [id])
 
@@ -53,7 +56,13 @@ export function AskFirstScreen({ id }: { id: string }) {
   if (!data) {
     return failed ? (
       <Screen>
-        <EmptyState icon="cloud-offline-outline" title="Couldn't load the board." hint="Check your connection and try again." />
+        <EmptyState
+          icon="cloud-offline-outline"
+          title={failed === 'offline' ? 'You seem to be offline.' : "Couldn't load the board."}
+          hint="Check your connection and try again."
+        >
+          <Button label="Try again" variant="secondary" onPress={() => void load()} />
+        </EmptyState>
       </Screen>
     ) : (
       <Screen>
@@ -99,7 +108,7 @@ export function AskFirstScreen({ id }: { id: string }) {
 
   return (
     <Screen>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottom }]} keyboardShouldPersistTaps="handled">
         <Card style={styles.stage}>
           <Text style={styles.kicker}>Asking first</Text>
           <Text style={styles.title}>Not claimed yet</Text>

@@ -287,7 +287,8 @@ toyTransactions.get('/builds-board', async (c) => {
 /**
  * What this record is about, for a notification's `toy_name`.
  *
- * A build has no toy (057) — the maker makes one — so the subject is the guide.
+ * A build has no toy (057) — the maker makes one — and neither does a print job,
+ * so for both the subject is the guide.
  * Written as one lookup rather than a ternary at each of the five notification
  * sites, all of which did `.eq('id', tx.toy_id).single()` and would now throw
  * on a null id.
@@ -296,10 +297,14 @@ export async function subjectName(
   admin: ReturnType<typeof createAdminClient>,
   tx: { type: string; toy_id: string | null; tutorial_id: string | null }
 ): Promise<string> {
-  if (tx.type === 'build') {
-    if (!tx.tutorial_id) return 'a build'
+  // A print job names a guide too (its toy_id is null), so it reads "Gear
+  // housing guide", not "a toy": print_started, print_ready and the answers all
+  // said "a toy" until this covered it.
+  if (tx.type === 'build' || tx.type === 'print') {
+    const fallback = tx.type === 'build' ? 'a build' : 'a print job'
+    if (!tx.tutorial_id) return fallback
     const { data } = await admin.from('tutorials').select('title').eq('id', tx.tutorial_id).maybeSingle()
-    return (data as { title: string } | null)?.title ?? 'a build'
+    return (data as { title: string } | null)?.title ?? fallback
   }
   if (!tx.toy_id) return 'a toy'
   const { data } = await admin.from('toys').select('name').eq('id', tx.toy_id).maybeSingle()
@@ -2074,6 +2079,7 @@ toyTransactions.post('/print', async (c) => {
  * `owner_org_id` is the event's organisation, so isOwnerSide() already answers
  * "may this leader accept it" correctly with no new branch.
  */
+// PENDING(unused-api-routes): no screen calls print-at-event; wire one or delete.
 toyTransactions.post('/print-at-event', async (c) => {
   const body = await c.req.json().catch(() => null)
   if (body === null || typeof body !== 'object' || Array.isArray(body)) {
@@ -2355,13 +2361,10 @@ toyTransactions.post('/:id/print-fit', async (c) => {
       kind: 'system',
       body: 'Needs a reprint.',
     })
-    // The guide's title by hand: subjectName() reads a print job's null toy_id
-    // as "a toy".
-    const { data: guide } = await admin.from('tutorials').select('title').eq('id', tx.tutorial_id).maybeSingle()
     await notifyOwnerSide(admin, tx as any, {
       type: 'toy_message',
       toy_transaction_id: tx.id,
-      toy_name: (guide as { title: string } | null)?.title ?? 'a print job',
+      toy_name: await subjectName(admin, tx as any),
       actor_name: await profileName(admin, userId, 'The family'),
     })
   }

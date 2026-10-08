@@ -1,3 +1,4 @@
+# journeys: Z04
 # DEVICE_EMAIL / DEVICE_PASSWORD come from `maestro test --env`, fed by
 # scripts/provision-device-parent.mjs. Deliberately NOT declared in an `env:`
 # block here: a flow-level `env:` default WINS over --env (measured 2026-07-26 —
@@ -11,32 +12,31 @@ appId: com.splatconnect.mobile
 # would wipe the SecureStore entry this suite exists to test.
 - clearState
 - runFlow: ../subflows/launch.yaml
-# A signed-out launch opens on Welcome; its second door is Sign in.
-- assertVisible:
-    id: "welcome-sign-in"
-- tapOn:
-    id: "welcome-sign-in"
-# Addressed by testID rather than text: TextField renders its label as a
-# sibling <Text> carrying the same string as the input's accessibilityLabel.
-- tapOn:
-    id: "email-input"
-- inputText: ${DEVICE_EMAIL}
-- tapOn: "Welcome back"  # the keyboard covers the password field
-- tapOn:
-    id: "password-input"
-- inputText: ${DEVICE_PASSWORD}
-# hideKeyboard fails on the iOS 26 simulator; a tap outside a field
-# dismisses it on device and simulator alike (ScrollView default).
-- tapOn: "Welcome back"
-- tapOn:
-    id: "auth-submit"
+# On iOS clearState wipes app data but NOT the Keychain, where the session
+# lives, so a prior run can leave this launch already signed in; sign-in.yaml
+# signs in only when Welcome is actually showing.
+- runFlow: ../subflows/sign-in.yaml
 
-# Sign Out lives on Account, which is behind the MY SPLAT popover now — the
-# centre button, then the tile that opens it.
+# Sign Out lives on Account, a row in the Me tab's Account group. The tab's
+# label carries a count while anything is waiting, so match it with a suffix.
+- runFlow: ../subflows/dismiss-dev-toast.yaml
 - tapOn:
-    text: "MY SPLAT"
+    text: "Me(, .*)?"
+# Me draws nothing until its capabilities load; its first row is the marker.
+- extendedWaitUntil:
+    visible:
+      text: "Add a tutorial"
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      text: "Account"
+# "Account" is also the group's eyebrow, which comes first; the row is second.
 - tapOn:
-    text: "Account & child profiles"
+    text: "Account"
+    index: 1
+- scrollUntilVisible:
+    element:
+      text: "Sign Out"
 - tapOn:
     text: "Sign Out"
 - assertVisible:

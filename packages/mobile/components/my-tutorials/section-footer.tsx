@@ -17,10 +17,12 @@ import { useRouter } from 'expo-router'
 import { useDraft } from '../../lib/use-tutorial-draft'
 import { nextIncompleteSection, SECTION_LABEL, type SectionId } from '../../lib/tutorial-sections'
 import { theme } from '../../lib/theme'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import { Button } from '../ui/Button'
 
 export function SectionFooter({ section }: { section: SectionId }) {
   const router = useRouter()
+  const bottom = useBottomClearance()
   const { tutorial, flush } = useDraft()
   if (!tutorial) return null
 
@@ -45,7 +47,7 @@ export function SectionFooter({ section }: { section: SectionId }) {
   }
 
   return (
-    <View style={styles.footer}>
+    <View testID="section-footer" style={[styles.footer, { paddingBottom: bottom }]}>
       <Button
         testID="section-back"
         label="Checklist"
@@ -69,7 +71,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: theme.spacing(2),
     paddingTop: theme.spacing(3),
-    paddingBottom: theme.spacing(2),
     borderTopWidth: theme.border.hairline,
     borderTopColor: theme.colors.border,
   },

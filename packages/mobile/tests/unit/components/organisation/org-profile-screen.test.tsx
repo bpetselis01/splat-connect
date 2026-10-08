@@ -3,6 +3,7 @@
 // the doors, "From families", and the three buttons — a leader sees none of
 // them, a signed-out visitor goes to sign-in, and a thanks is signed with a
 // first name unless they type something else.
+// journeys: P01 P02 P03 P04 P05 P06 P07 P08
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { OrgProfileScreen } from '../../../../components/organisation/org-profile-screen'
 import { doorRoute, sinceYear } from '../../../../lib/org-profile'
@@ -17,11 +18,12 @@ jest.mock('../../../../lib/capabilities', () => ({
 
 const mockGet = jest.fn()
 const mockPost = jest.fn()
+const mockDelete = jest.fn()
 jest.mock('../../../../lib/api-client', () => ({
   apiClient: {
     get: (...a: unknown[]) => mockGet(...a),
     post: (...a: unknown[]) => mockPost(...a),
-    delete: jest.fn(),
+    delete: (...a: unknown[]) => mockDelete(...a),
   },
 }))
 const mockPush = jest.fn()
@@ -94,7 +96,8 @@ describe('OrgProfileScreen', () => {
 
   it('follows, and signs a thanks with a first name', async () => {
     load(relationship())
-    mockPost.mockResolvedValue({})
+    // Two families thanked since this page loaded (2 then): the count is the server's, not 2 + 1.
+    mockPost.mockResolvedValue({ thanks_count: 4 })
     render(<OrgProfileScreen id="o1" />)
     fireEvent.press(await screen.findByText('Follow'))
     await waitFor(() => expect(screen.getByText('Following')).toBeTruthy())
@@ -111,7 +114,16 @@ describe('OrgProfileScreen', () => {
         show_note: true,
       })
     )
-    expect(await screen.findByText('Thanked 3 times')).toBeTruthy()
+    expect(await screen.findByText('Thanked 4 times')).toBeTruthy()
+  })
+
+  it('unfollows from Following with a DELETE and goes back to Follow', async () => {
+    load(relationship({ following: true }))
+    mockDelete.mockResolvedValue({})
+    render(<OrgProfileScreen id="o1" />)
+    fireEvent.press(await screen.findByText('Following'))
+    await waitFor(() => expect(screen.getByText('Follow')).toBeTruthy())
+    expect(mockDelete).toHaveBeenCalledWith('/api/organizations/o1/follow')
   })
 
   it('asks a printing organisation to print with it already chosen', async () => {

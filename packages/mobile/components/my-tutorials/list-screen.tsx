@@ -1,4 +1,5 @@
 // packages/mobile/components/my-tutorials/list-screen.tsx
+import { logFailure } from '../../lib/log'
 import { useCallback, useEffect, useState } from 'react'
 import { View, Text, FlatList, RefreshControl, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
@@ -94,7 +95,7 @@ export function MyTutorialsListScreen() {
         if (!ignore) setTutorials(data)
       })
       .catch((err) => {
-        console.error('[MyTutorialsListScreen] tutorial fetch failed:', err)
+        logFailure('[MyTutorialsListScreen] tutorial fetch failed:', err)
         if (!ignore) setError("Couldn't load your tutorials.")
       })
       .finally(() => {

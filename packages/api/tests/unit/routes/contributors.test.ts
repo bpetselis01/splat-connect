@@ -52,7 +52,7 @@ describe('GET /me', () => {
   it('returns 404 when profile not found', async () => {
     mockAdminFrom.mockReturnValue({
       select: () => ({
-        eq: () => ({ single: () => ({ data: null, error: { message: 'not found' } }) }),
+        eq: () => ({ single: () => ({ data: null, error: { code: 'PGRST116', message: 'not found' } }) }),
       }),
     })
     const res = await makeApp().request('/me')

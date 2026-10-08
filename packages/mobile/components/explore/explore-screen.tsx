@@ -1,4 +1,5 @@
 // packages/mobile/components/explore/explore-screen.tsx
+import { logFailure } from '../../lib/log'
 import { useEffect, useState, type ReactNode } from 'react'
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
@@ -108,7 +109,7 @@ export function ExploreScreen() {
       .then((s) => {
         if (!ignore) setTotals(s.totals)
       })
-      .catch((err) => console.error('[ExploreScreen] impact fetch failed:', err))
+      .catch((err) => logFailure('[ExploreScreen] impact fetch failed:', err))
     return () => {
       ignore = true
     }
@@ -131,11 +132,11 @@ export function ExploreScreen() {
     ]).then(([t, ty, o]) => {
       if (ignore) return
       if (t.status === 'fulfilled') setTutorials(t.value)
-      else console.error('[ExploreScreen] tutorials fetch failed:', t.reason)
+      else logFailure('[ExploreScreen] tutorials fetch failed:', t.reason)
       if (ty.status === 'fulfilled') setToys(ty.value)
-      else console.error('[ExploreScreen] toys fetch failed:', ty.reason)
+      else logFailure('[ExploreScreen] toys fetch failed:', ty.reason)
       if (o.status === 'fulfilled') setOrgs(o.value)
-      else console.error('[ExploreScreen] organizations fetch failed:', o.reason)
+      else logFailure('[ExploreScreen] organizations fetch failed:', o.reason)
       setSearchError([t, ty, o].some((r) => r.status === 'rejected'))
       setLoading(false)
     })

@@ -8,7 +8,11 @@ jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 const mockBack = jest.fn()
 const mockDismissTo = jest.fn()
 const mockPush = jest.fn()
-jest.mock('expo-router', () => ({ useRouter: () => ({ back: mockBack, push: mockPush, dismissTo: mockDismissTo }) }))
+let mockFocus: () => (() => void) | void
+jest.mock('expo-router', () => {
+  const { useEffect } = jest.requireActual('react')
+  return { useRouter: () => ({ back: mockBack, push: mockPush, dismissTo: mockDismissTo }), useFocusEffect: (e: () => (() => void) | void) => { mockFocus = e; useEffect(e, []) } }
+})
 
 // The editor pulls ErrorRow in from components/auth-screen, which imports
 // useAuth from lib/auth-context — and that module's real implementation

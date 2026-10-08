@@ -1,4 +1,5 @@
 // packages/mobile/components/my-toys/list-screen.tsx
+import { logFailure } from '../../lib/log'
 import { useCallback, useEffect, useState } from 'react'
 import { View, Text, FlatList, RefreshControl, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
@@ -143,7 +144,7 @@ export function MyToysListScreen() {
         }
       })
       .catch((err) => {
-        console.error('[MyToysListScreen] toy fetch failed:', err)
+        logFailure('[MyToysListScreen] toy fetch failed:', err)
         if (!ignore) setError("Couldn't load your toys.")
       })
       .finally(() => {

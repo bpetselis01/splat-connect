@@ -13,6 +13,7 @@
 // - packages/api/src/routes/public.ts: GET /api/public/challenges/:id
 // - packages/api/src/routes/toy-ideas.ts: join / leave / messages
 // - packages/web/components/challenge-thread.tsx: the copy below is its copy
+import { logFailure } from '../../lib/log'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   View,
@@ -27,11 +28,12 @@ import {
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { challengeHistory, challengePill, challengeStats, shortDate } from './challenge-status'
-import { isApiError, OUTCOME_STEPS, outcomeStates, PARTICIPANT_ROLE_LABEL } from '@splat-connect/types'
+import { isApiError, isNetworkError, OUTCOME_STEPS, outcomeStates, PARTICIPANT_ROLE_LABEL } from '@splat-connect/types'
 import type { ToyIdea, ToyIdeaDetail, ToyIdeaMessage, ContactPref } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { confirmDestructive } from '../../lib/confirm'
 import { theme } from '../../lib/theme'
+import { useBottomClearance } from '../../lib/bottom-clearance'
 import { useSaves } from '../../lib/saves'
 import { recordRecent } from '../../lib/recents'
 import { useCapabilities } from '../../lib/capabilities'
@@ -101,11 +103,13 @@ function TabHead({ id }: { id: Tab }) {
 }
 
 export function ChallengeDetailScreen({ id }: { id: string }) {
+  const bottom = useBottomClearance()
   const router = useRouter()
   const saves = useSaves()
   const { caps, loading: capsLoading } = useCapabilities()
   const [challenge, setChallenge] = useState<ToyIdeaDetail | null>(null)
   const [loading, setLoading] = useState(true)
+  const [offline, setOffline] = useState(false)
   // Read from the author's own list, not the public one (challenge-author-states).
   const [mine, setMine] = useState(false)
   const [withdrawn, setWithdrawn] = useState(false)
@@ -153,7 +157,9 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
       // rather than replacing a loaded challenge with "couldn't load". While
       // capabilities are still loading we do not yet know whether this is
       // the author, so the skeleton stays and the rerun decides.
-      .catch(() => {
+      .catch((err) => {
+        logFailure('[ChallengeDetailScreen] brief fetch failed:', err)
+        if (!ignore) setOffline(isNetworkError(err))
         if (!ignore && !capsLoading) setLoading(false)
       })
     return () => {
@@ -218,7 +224,7 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
     } catch (err) {
       // Silent: the brief is still on screen and the next tick retries. A
       // banner on every dropped poll would cry wolf on a flaky train.
-      console.error('[ChallengeDetailScreen] message fetch failed:', err)
+      logFailure('[ChallengeDetailScreen] message fetch failed:', err)
     }
   }, [id])
 
@@ -359,9 +365,18 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
       <View style={styles.screen}>
         <EmptyState
           icon="cloud-offline-outline"
-          title="Couldn't load this challenge."
-          hint="It may have been withdrawn, or your connection dropped."
-        />
+          title={offline ? 'You seem to be offline.' : "Couldn't load this challenge."}
+          hint={offline ? 'Check your connection and try again.' : 'It may have been withdrawn, or your connection dropped.'}
+        >
+          <Button
+            label="Try again"
+            variant="secondary"
+            onPress={() => {
+              setLoading(true)
+              setReloadKey((k) => k + 1)
+            }}
+          />
+        </EmptyState>
       </View>
     )
   }
@@ -461,7 +476,13 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
               </Text>
             )}
           </View>
-          {listed ? <SaveButton slug="challenges" id={challenge.id} saves={saves} circled /> : null}
+          {listed ? <SaveButton
+              slug="challenges"
+              id={challenge.id}
+              // The "N saves" tile is the server's count: refetch the brief once the heart has landed.
+              saves={{ ...saves, toggle: async (slug, sid) => { await saves.toggle(slug, sid); setReloadKey((k) => k + 1) } }}
+              circled
+            /> : null}
         </View>
         <FlashLine message={flash} />
         {viewerId !== null && !joined && !isAuthor && open ? (
@@ -728,7 +749,7 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
       </ScrollView>
 
       {canRead && tab === 'thread' ? (
-        <View style={styles.footer}>
+        <View testID="challenge-footer" style={[styles.footer, { paddingBottom: bottom }]}>
           <View style={styles.composer}>
             {/* TextField owns its own outer wrapper, so the flex that makes the
                 input take the row's spare width goes on a view around it. */}
@@ -834,7 +855,7 @@ const styles = StyleSheet.create({
   eventText: { flex: 1, paddingBottom: theme.spacing(3) },
   eventTitle: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.ink },
   eventDate: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted },
-  hero: { height: 160, borderRadius: 16, width: '100%' },
+  hero: { height: 192, borderRadius: 16, width: '100%' },
   note: { gap: 2, padding: theme.spacing(3), borderRadius: 14, backgroundColor: theme.colors.apricotSoft },
   noteLead: { fontFamily: theme.fonts.black, fontSize: theme.type.caption, lineHeight: 20, color: theme.colors.ink },
   noteText: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, lineHeight: 20, color: theme.colors.ink },

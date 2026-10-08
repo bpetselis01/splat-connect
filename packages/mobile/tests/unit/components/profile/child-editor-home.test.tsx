@@ -1,4 +1,6 @@
 // packages/mobile/tests/unit/components/profile/child-editor-home.test.tsx
+// journeys: Z07 Z08
+import { CLEARANCE, scrollPaddings } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { Alert } from 'react-native'
 import { ChildEditorHome } from '../../../../components/profile/child-editor-home'
@@ -219,4 +221,12 @@ describe('ChildEditorHome', () => {
     render(<ChildEditorHome childId="gone" />)
     expect(await screen.findByText("Couldn't find this profile.")).toBeTruthy()
   })
+})
+
+jest.mock('react-native-safe-area-context', () => require('../../bottom-spacing').insetMock())
+
+it('ends its scroll one gutter above the home indicator, under Delete profile', async () => {
+  render(<ChildEditorHome childId="cp1" />)
+  await screen.findByText('Helps with')
+  expect(scrollPaddings(screen)).toEqual([CLEARANCE])
 })

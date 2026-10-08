@@ -8,6 +8,7 @@
  * succeed. /mine drives the dashboard link into /org/[orgId] — leadership is
  * per-organisation data, not a profile role.
  */
+import { singleRowStatus } from '../single-row.js'
 import { randomUUID } from 'node:crypto'
 import { Hono, type Context } from 'hono'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
@@ -1829,7 +1830,7 @@ organizations.get('/:id', async (c) => {
     .order('position', { referencedTable: 'org_doors' })
     .order('position', { referencedTable: 'org_rate_lines' })
     .single()
-  if (error) return c.json({ error: error.message }, 404)
+  if (error) return c.json({ error: error.message }, singleRowStatus(error))
   return c.json((await withExtras([data]))[0])
 })
 

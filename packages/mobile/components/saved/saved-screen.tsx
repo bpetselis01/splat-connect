@@ -5,6 +5,7 @@
 // first, so the lists themselves are the recency view.
 //
 // Title comes from the native header (app/(my)/_layout.tsx).
+import { logFailure } from '../../lib/log'
 import { useCallback, useEffect, useState } from 'react'
 import { View, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
@@ -45,7 +46,7 @@ export function SavedScreen() {
         if (!ignore) setIds({ ...NONE, ...data })
       })
       .catch((err) => {
-        console.error('[SavedScreen] saves fetch failed:', err)
+        logFailure('[SavedScreen] saves fetch failed:', err)
         if (!ignore) setError(true)
       })
       .finally(() => {

@@ -58,9 +58,9 @@ describe('useDeviceTicks', () => {
     const { result } = renderHook(() => useDeviceTicks(key, ['a', 'b']))
     await waitFor(() => expect(result.current.ticked.has('a')).toBe(true))
     act(() => result.current.toggle('b'))
-    expect(mockSetItem).toHaveBeenLastCalledWith('guide-steps.g1', '["a","b"]')
+    expect(mockSetItem).toHaveBeenLastCalledWith('guide-steps.g1.signed-out', '["a","b"]')
     act(() => result.current.reset())
-    expect(mockSetItem).toHaveBeenLastCalledWith('guide-steps.g1', '[]')
+    expect(mockSetItem).toHaveBeenLastCalledWith('guide-steps.g1.signed-out', '[]')
   })
 
   it('keeps ticks in memory when the device store fails', async () => {

@@ -1,3 +1,4 @@
+// journeys: G20
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { PicksRow } from '../../../../components/guides/picks-row'
 
@@ -30,7 +31,7 @@ it('renders up to three titles and fires onOpen on press', () => {
   expect(screen.getByText('Rolling Ramp')).toBeTruthy()
   expect(screen.queryByText('Fourth Pick')).toBeNull()
   expect(screen.getByText('Also worth a look')).toBeTruthy()
-  expect(screen.getByText('Up to three guides Sam points you at next.')).toBeTruthy()
+  expect(screen.getByText('Guides Sam points you at next.')).toBeTruthy()
 
   fireEvent.press(screen.getByText('Switch Car'))
   expect(onOpen).toHaveBeenCalledWith('1')

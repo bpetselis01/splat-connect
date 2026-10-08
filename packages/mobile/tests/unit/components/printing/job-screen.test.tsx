@@ -2,6 +2,8 @@
 //
 // The job page shows only the card for where the job is, and which side is
 // looking decides what that card asks of them.
+// journeys: R04 R09 R10 R11
+import { CLEARANCE, paddingBottomOf } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { PrintJobScreen } from '../../../../components/printing/job-screen'
 
@@ -23,7 +25,9 @@ jest.mock('expo-router', () => {
   return { useFocusEffect: (effect: () => void) => useEffect(effect, []), useRouter: () => ({ push: jest.fn() }) }
 })
 
+const mockInvalidate = jest.fn()
 jest.mock('../../../../lib/capabilities', () => ({
+  invalidateCapabilities: (...a: unknown[]) => mockInvalidate(...a),
   useCapabilities: () => ({ caps: { profile: { id: 'family' }, ledOrgs: [] } }),
 }))
 
@@ -63,6 +67,7 @@ function serve(detail: object) {
 beforeEach(() => {
   mockGet.mockReset()
   mockPost.mockReset()
+  mockInvalidate.mockClear()
 })
 
 it('tells the family how many printers they asked while it waits', async () => {
@@ -111,6 +116,7 @@ it('asks the family whether it fitted once collected', async () => {
   ).toBeTruthy()
   fireEvent.press(screen.getByText('Fitted'))
   await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions/j1/print-fit', { fit: 'fitted' }))
+  await waitFor(() => expect(mockInvalidate).toHaveBeenCalledTimes(1))
 })
 
 it('shows the family the printer’s record on the printer card', async () => {
@@ -129,4 +135,13 @@ it('puts the spent recycling credit on the family’s cost card', async () => {
   serve(job({ status: 'accepted', owner_org_id: 'north', owner_id: null, print_credit_grams: 120 }))
   render(<PrintJobScreen id="j1" />)
   expect(await screen.findByText('Your recycling credit (120 g)')).toBeTruthy()
+})
+
+jest.mock('react-native-safe-area-context', () => require('../../bottom-spacing').insetMock())
+
+it('lifts the message composer one gutter above the home indicator', async () => {
+  serve(job({}))
+  render(<PrintJobScreen id="j1" />)
+  await screen.findByText('Asked 2 printers.')
+  expect(paddingBottomOf(screen.getByTestId('job-footer'))).toBe(CLEARANCE)
 })

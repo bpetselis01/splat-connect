@@ -1,3 +1,4 @@
+// journeys: T08
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { DetailsSection } from '../../../../components/my-tutorials/sections/details-section'
 

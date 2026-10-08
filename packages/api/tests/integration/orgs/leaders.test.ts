@@ -4,6 +4,7 @@
  * stepping down never leaves the organisation leaderless — not even when two
  * leaders try at once.
  */
+// journeys: L25 L26 L27 L31
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -44,6 +45,24 @@ describe('organisation leaders', () => {
   it('treats the email literally: a wildcard matches nobody', async () => {
     const res = await app.request(`/api/organizations/${orgId}/leaders`, req(leader.token, 'POST', { email: '%@splat-test.local' }))
     expect(res.status).toBe(404)
+  })
+
+  it('lets a leader cancel an invitation, and nobody else', async () => {
+    const invite = async () =>
+      (await adminClient().from('org_leader_invites').select('id').eq('org_id', orgId)).data ?? []
+    expect((await app.request(`/api/organizations/${orgId}/leaders`, req(leader.token, 'POST', { email: outsider.email }))).status).toBe(201)
+    const [row] = await invite()
+
+    // Someone who does not lead the organisation is told it does not exist and nothing is deleted.
+    const refused = await app.request(`/api/organizations/${orgId}/leaders/invites/${row!.id}`, req(outsider.token, 'DELETE'))
+    expect(refused.status).toBe(404)
+    expect(await invite()).toHaveLength(1)
+
+    const cancelled = await app.request(`/api/organizations/${orgId}/leaders/invites/${row!.id}`, req(leader.token, 'DELETE'))
+    expect(cancelled.status).toBe(204)
+    expect(await invite()).toHaveLength(0)
+    const mine = (await (await app.request('/api/organizations/invites/mine', req(outsider.token, 'GET'))).json()) as unknown[]
+    expect(mine).toHaveLength(0)
   })
 
   it('invites rather than adds: the invitee is not a leader until they accept', async () => {

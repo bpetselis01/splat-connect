@@ -4,6 +4,7 @@
  * Asking stops at the claim, and the claimer's questions move into the build
  * thread.
  */
+// journeys: K03 K04 X01
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createClient } from '@supabase/supabase-js'
 import app from '../../../src/app.js'

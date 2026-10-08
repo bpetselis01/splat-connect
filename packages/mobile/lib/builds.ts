@@ -18,7 +18,10 @@ type IconName = ComponentProps<typeof Ionicons>['name']
 
 /** The one place a transaction decides which thread it opens in. */
 export function threadHref(tx: Pick<ToyTransaction, 'id' | 'type'>): string {
-  return tx.type === 'build' ? `/exchanges/build/${tx.id}` : `/exchanges/${tx.id}`
+  if (tx.type === 'build') return `/exchanges/build/${tx.id}`
+  // A print job has its own screen (parts, machine, pickup); /exchanges/:id is the toy thread.
+  if (tx.type === 'print') return `/printing/jobs/${tx.id}`
+  return `/exchanges/${tx.id}`
 }
 
 export type RailState = 'done' | 'now' | 'todo' | 'stop'
@@ -136,7 +139,7 @@ export function buildCard(
 
   if (tx.status === 'requested') {
     if (c.canClaim) {
-      return { tone: TONE.open, icon: 'hand-left', kicker: 'Needs a maker', title: 'Not claimed yet', body: 'Read the brief below. Claiming is one tap when you are ready.' }
+      return { tone: TONE.open, icon: 'hand-left', kicker: 'Open for a maker', title: 'Not claimed yet', body: 'Read the brief below. Claiming is one tap when you are ready.' }
     }
     if (c.canAnswer) {
       return { tone: TONE.live, icon: 'hammer', kicker: 'Needs you', title: 'Take it on, or decline', body: 'Read the brief below. Taking it on gives you both a handover code.' }

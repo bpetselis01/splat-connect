@@ -33,6 +33,7 @@ const SUBJECT_KINDS = new Set<string>(REPORT_SUBJECT_KINDS)
 const CATEGORIES = new Set(['safety', 'no_show', 'arrived_broken', 'wrong_info', 'conduct', 'other'])
 
 /** What the reporter has filed, with any note that came back. */
+// PENDING(unused-api-routes): nothing calls this; a reporter never hears the outcome.
 reports.get('/', async (c) => {
   const { data, error } = await createUserClient(c.get('token'))
     .from('member_reports')

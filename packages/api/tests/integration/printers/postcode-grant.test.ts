@@ -3,6 +3,7 @@
  * the API. The table is column-granted (028's profiles pattern), so the anon
  * and user keys cannot select it — and every reader of printers must still work.
  */
+// journeys: R01 Z03
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createClient } from '@supabase/supabase-js'
 import app from '../../../src/app.js'

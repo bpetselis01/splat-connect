@@ -1,6 +1,7 @@
 // The build thread, from both sides and at every stage: who gets which button,
 // what each button sends, the working shot, the handover code, and what each
 // failure looks like.
+// journeys: K06 K07 K08 K09 K10 K11 K12 K13
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { BuildThreadScreen } from '../../../../components/builds/build-thread-screen'
 import { NAMES } from '../../../special-strings'
@@ -23,6 +24,12 @@ const mockGet = jest.fn()
 const mockPost = jest.fn()
 jest.mock('../../../../lib/api-client', () => ({
   apiClient: { get: (...a: unknown[]) => mockGet(...a), post: (...a: unknown[]) => mockPost(...a) },
+}))
+const mockConfirm = jest.fn()
+const mockNotify = jest.fn()
+jest.mock('../../../../lib/confirm', () => ({
+  confirmDestructive: (...a: unknown[]) => mockConfirm(...a),
+  notify: (...a: unknown[]) => mockNotify(...a),
 }))
 const mockPush = jest.fn()
 const mockReplace = jest.fn()
@@ -88,6 +95,9 @@ const live = (over: object = {}) => claimed({ status: 'accepted', ...over })
 const shot = (over: object = {}) => live({ working_photo_url: 'b1/shot.jpg', ...over })
 const approved = (over: object = {}) => shot({ work_approved_at: 'now', ...over })
 
+// Runs the callback the confirm helper was handed, as a tap on Proceed would.
+const proceed = () => act(async () => { await mockConfirm.mock.calls.at(-1)[3]() })
+
 function serve(detail: object) {
   mockGet.mockImplementation((p: string) => (p === '/api/toy-transactions/b1' ? Promise.resolve(detail) : Promise.reject(new Error('n/a'))))
 }
@@ -98,7 +108,7 @@ const as = (id: string, profile: Record<string, unknown> = {}, led: Array<{ id: 
 }
 
 beforeEach(() => {
-  for (const m of [mockGet, mockPost, mockPush, mockReplace, mockPermission, mockLaunch, mockUpload, mockSign]) m.mockReset()
+  for (const m of [mockGet, mockPost, mockPush, mockReplace, mockPermission, mockLaunch, mockUpload, mockSign, mockConfirm, mockNotify]) m.mockReset()
   mockPost.mockResolvedValue({})
   mockSign.mockResolvedValue({ data: null })
   mockPermission.mockResolvedValue({ granted: true })
@@ -229,7 +239,42 @@ describe('an unclaimed request', () => {
     serve(build())
     render(<BuildThreadScreen id="b1" />)
     fireEvent.press(await screen.findByText('Withdraw the request'))
+    expect(mockConfirm).toHaveBeenCalledWith('Withdraw this request?', expect.any(String), 'Proceed', expect.any(Function))
+    expect(mockPost).not.toHaveBeenCalled()
+    await proceed()
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions/b1/withdraw', {}))
+  })
+
+  it('does nothing when the family cancels the confirmation', async () => {
+    serve(build())
+    render(<BuildThreadScreen id="b1" />)
+    fireEvent.press(await screen.findByText('Withdraw the request'))
+    // Cancel is the helper's default; Proceed's callback is simply never run.
+    expect(mockConfirm.mock.calls[0]).toHaveLength(4)
+    expect(mockPost).not.toHaveBeenCalled()
+    expect(mockNotify).not.toHaveBeenCalled()
+  })
+
+  it('withdraws once on Proceed, then says the request was withdrawn', async () => {
+    serve(build())
+    mockPost.mockResolvedValue(build({ status: 'withdrawn' }))
+    render(<BuildThreadScreen id="b1" />)
+    fireEvent.press(await screen.findByText('Withdraw the request'))
+    expect(mockNotify).not.toHaveBeenCalled()
+    await proceed()
+    await waitFor(() => expect(mockNotify).toHaveBeenCalledWith('Request withdrawn', expect.any(String)))
+    expect(mockPost.mock.calls.filter(([url]) => url === '/api/toy-transactions/b1/withdraw')).toHaveLength(1)
+    expect(mockNotify).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows the error and no success popup when the withdrawal fails', async () => {
+    serve(build())
+    mockPost.mockRejectedValue(new Error('boom'))
+    render(<BuildThreadScreen id="b1" />)
+    fireEvent.press(await screen.findByText('Withdraw the request'))
+    await proceed()
+    await screen.findByText('Something went wrong. Please try again.')
+    expect(mockNotify).not.toHaveBeenCalled()
   })
 
   it('shows no cost panel before a maker has the build', async () => {
@@ -602,6 +647,7 @@ describe('the thread and the cost panel', () => {
     serve(live())
     render(<BuildThreadScreen id="b1" />)
     fireEvent.press(await screen.findByText('Withdraw from this build'))
+    await proceed()
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions/b1/withdraw', {}))
   })
 

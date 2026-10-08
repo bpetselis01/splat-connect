@@ -18,13 +18,19 @@ export function linkFor(n: Notification): string {
   if (n.toy_transaction_id && (n.type === 'build_shot_posted' || n.type === 'build_approved')) {
     return `/exchanges/build/${n.toy_transaction_id}`
   }
+  // The two print types name a print job, which has its own screen. Any other
+  // notice about one (toy_request, toy_message) opens the exchange thread,
+  // which hands a print job straight on.
+  if (n.toy_transaction_id && (n.type === 'print_started' || n.type === 'print_ready')) {
+    return `/printing/jobs/${n.toy_transaction_id}`
+  }
   if (n.toy_transaction_id) return `/exchanges/${n.toy_transaction_id}`
   // 077. A conversation opens by its own id, for either side. A thanks goes
-  // to the organisation hub — mobile has no profile editor to hide notes in.
+  // to the organisation profile editor, where each note has Hide / Show again.
   // A followed org's new event or story: mobile has no screen for either, so
   // /news reads which organisation it belongs to and opens that profile.
   if (n.org_conversation_id) return `/messages/${n.org_conversation_id}`
-  if (n.type === 'org_thanked') return '/organisation'
+  if (n.type === 'org_thanked') return '/organisation/profile'
   if (n.org_event_id) return `/news/event/${n.org_event_id}`
   if (n.org_story_id) return `/news/story/${n.org_story_id}`
   // Answered BEFORE the tutorial_id branch, exactly as on web: the recipient
@@ -39,6 +45,9 @@ export function linkFor(n: Notification): string {
   if (n.type === 'tutorial_thanked' && n.tutorial_id) return `/guides/${n.tutorial_id}`
   if (n.type === 'tutorial_noted' && n.tutorial_id) return `/guides/${n.tutorial_id}`
   if (n.type === 'challenge_guide_published' && n.tutorial_id) return `/guides/${n.tutorial_id}`
+  // The invitee is not on the guide yet, so its editor would 403 for them. The
+  // inbox is where the invite's Accept / Decline live; the row opens nothing.
+  if (n.type === 'collaborator_invited') return '/inbox'
   if (n.tutorial_id) return `/tutorials/${n.tutorial_id}`
   // A rejected idea has no public page — GET /api/public/challenges/:id filters
   // to challenge|graduated and 404s otherwise, whatever RLS would allow — so

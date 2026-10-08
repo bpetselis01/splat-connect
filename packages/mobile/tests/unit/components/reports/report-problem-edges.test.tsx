@@ -51,7 +51,7 @@ describe('ReportProblem sends the right thing', () => {
     ['Arrived broken', 'arrived_broken'], ['Didn’t show up', 'no_show'], ['Safety concern', 'safety'],
     ['Wrong or missing info', 'wrong_info'], ['Behaviour', 'conduct'], ['Something else', 'other'],
   ])('the %s chip files category %s', async (label, category) => {
-    open()
+    open({ subjectKind: 'exchange' })
     pick(label); write('Details')
     fireEvent.press(send())
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/reports', expect.objectContaining({ category })))
@@ -149,7 +149,7 @@ describe('ReportProblem outcome', () => {
     pick('Behaviour'); write('x')
     fireEvent.press(send())
     await screen.findByText('Could not send that. Please try again.')
-    fireEvent.press(screen.getByRole('button', { name: 'Cancel' }))
+    fireEvent.press(screen.getAllByRole('button', { name: 'Close' })[0])
     fireEvent.press(screen.getByRole('button', { name: 'Report a problem' }))
     expect(screen.queryByText('Could not send that. Please try again.')).toBeNull()
   })
@@ -157,5 +157,43 @@ describe('ReportProblem outcome', () => {
   it('names who it is about only when told', () => {
     open({ item: 'this toy', who: 'Sam "Sparky" <Lee>' })
     expect(screen.getByText('About this toy · with Sam "Sparky" <Lee>. Goes to the SPLAT team only.')).toBeTruthy()
+  })
+})
+
+describe('ReportProblem sheet', () => {
+  it('closes when the dimmed page behind it is tapped, and from its ✕', () => {
+    open()
+    expect(screen.getByText('Tell SPLAT what happened')).toBeTruthy()
+    fireEvent.press(screen.getAllByRole('button', { name: 'Close' })[0]) // the backdrop
+    expect(screen.queryByText('Tell SPLAT what happened')).toBeNull()
+    fireEvent.press(screen.getByRole('button', { name: 'Report a problem' }))
+    fireEvent.press(screen.getAllByRole('button', { name: 'Close' })[1]) // the ✕
+    expect(screen.queryByText('Tell SPLAT what happened')).toBeNull()
+  })
+
+  it('offers a guide only the reasons that can happen to a guide', () => {
+    open({ subjectKind: 'guide' })
+    expect(screen.getAllByRole('radio')).toHaveLength(3)
+    expect(screen.queryByRole('radio', { name: 'Arrived broken' })).toBeNull()
+    expect(screen.queryByRole('radio', { name: 'Didn’t show up' })).toBeNull()
+    expect(screen.getByRole('radio', { name: 'Safety concern' })).toBeTruthy()
+  })
+
+  it('is a checkbox for OK to contact, ticked by default, and unticking sends false', async () => {
+    open()
+    const box = screen.getByRole('checkbox', { name: /OK to contact me about this/ })
+    expect(box.props.accessibilityState.checked).toBe(true)
+    fireEvent.press(box)
+    expect(screen.getByRole('checkbox', { name: /OK to contact me about this/ }).props.accessibilityState.checked).toBe(false)
+    pick('Safety concern'); write('Sharp edge')
+    fireEvent.press(send())
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/reports', expect.objectContaining({ ok_to_contact: false })))
+  })
+
+  it('says what is missing while Send is not ready', () => {
+    open()
+    expect(screen.getByText('Pick what it is about, then say what happened.')).toBeTruthy()
+    pick('Safety concern')
+    expect(screen.getByText('Say what happened to send it.')).toBeTruthy()
   })
 })

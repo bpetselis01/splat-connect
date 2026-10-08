@@ -2,6 +2,7 @@
  * Answer by: a print request waits seven days. After that accept refuses it
  * and the badge stops counting it — computed on read, no scheduled job.
  */
+// journeys: R03 R13
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'

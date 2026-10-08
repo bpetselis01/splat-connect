@@ -1,4 +1,5 @@
 // packages/mobile/components/profile-screen.tsx
+import { logFailure } from '../lib/log'
 import { useState, useEffect, useRef, type ComponentProps } from 'react'
 import { View, Text, ScrollView, StyleSheet, Linking } from 'react-native'
 import { useRouter } from 'expo-router'
@@ -7,6 +8,7 @@ import { apiMessage, initials } from '@splat-connect/types'
 import { useAuth } from '../lib/auth-context'
 import { apiClient } from '../lib/api-client'
 import { theme } from '../lib/theme'
+import { useBottomClearance } from '../lib/bottom-clearance'
 import { Button } from './ui/Button'
 import { Screen } from './ui/Screen'
 import { Card } from './ui/Card'
@@ -38,6 +40,7 @@ export function signedInWith(providers: unknown): string {
 }
 
 export function ProfileScreen() {
+  const bottom = useBottomClearance()
   const router = useRouter()
   const { session, profile, signOut } = useAuth()
   // The display name is the one profile field editable here. Committed on end
@@ -74,7 +77,7 @@ export function ProfileScreen() {
       saved.current.name = name
       setNameState('saved')
     } catch (err) {
-      console.error('[ProfileScreen] rename failed:', err)
+      logFailure('[ProfileScreen] rename failed:', err)
       setNameState('failed')
     }
   }
@@ -88,7 +91,7 @@ export function ProfileScreen() {
       await apiClient.patch('/api/contributors/me', { occupation: occupation || null })
       saved.current.occupation = occupation
     } catch (err) {
-      console.error('[ProfileScreen] occupation save failed:', err)
+      logFailure('[ProfileScreen] occupation save failed:', err)
       setOccupationError(apiMessage(err, 'Could not save what you do. Please try again.'))
     }
   }
@@ -108,7 +111,7 @@ export function ProfileScreen() {
       await apiClient.patch('/api/contributors/me', { pickup_postcode: postcode || null })
       saved.current.pickup_postcode = postcode
     } catch (err) {
-      console.error('[ProfileScreen] postcode save failed:', err)
+      logFailure('[ProfileScreen] postcode save failed:', err)
       setPostcodeError(apiMessage(err, 'Could not save your postcode. Please try again.'))
     }
   }
@@ -119,7 +122,7 @@ export function ProfileScreen() {
 
   return (
     <Screen>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scroll, { paddingBottom: bottom }]}>
         {/* The board's account page is one scroll: who you are, your
             children, then the profile detail. It used to be two segments. */}
         <View style={styles.idCard}>
@@ -148,6 +151,7 @@ export function ProfileScreen() {
                 accessibilityLabel="Display name"
                 defaultValue={profile?.name ?? ''}
                 onEndEditing={(e) => void saveName(e.nativeEvent.text)}
+                onSubmitEditing={(e) => void saveName(e.nativeEvent.text)}
               />
               <Text accessibilityLiveRegion="polite" style={styles.nameStatus}>
                 {nameState === 'saving'
@@ -165,6 +169,7 @@ export function ProfileScreen() {
                 maxLength={60}
                 defaultValue={profile?.occupation ?? ''}
                 onEndEditing={(e) => void saveOccupation(e.nativeEvent.text)}
+                onSubmitEditing={(e) => void saveOccupation(e.nativeEvent.text)}
               />
               {occupationError ? <Text accessibilityLiveRegion="polite" style={styles.nameStatus}>{occupationError}</Text> : null}
               <TextField
@@ -174,6 +179,7 @@ export function ProfileScreen() {
                 maxLength={4}
                 defaultValue={profile?.pickup_postcode ?? ''}
                 onEndEditing={(e) => void savePostcode(e.nativeEvent.text)}
+                onSubmitEditing={(e) => void savePostcode(e.nativeEvent.text)}
               />
               {postcodeError ? <Text accessibilityLiveRegion="polite" style={styles.nameStatus}>{postcodeError}</Text> : null}
               <Text style={styles.frozenHint}>Your email can&apos;t be changed here.</Text>

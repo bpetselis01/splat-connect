@@ -20,7 +20,7 @@ export function Segmented<T extends string>({
   variant = 'track',
   label,
 }: {
-  options: { value: T; label: string; icon?: IconName; testID?: string }[]
+  options: { value: T; label: string; icon?: IconName; testID?: string; badge?: number }[]
   value: T
   onChange: (value: T) => void
   /** 'tint' is 'pills' with the chosen one tinted rather than filled — the
@@ -63,7 +63,7 @@ export function Segmented<T extends string>({
             testID={o.testID}
             onPress={() => onChange(o.value)}
             accessibilityRole="tab"
-            accessibilityLabel={o.label}
+            accessibilityLabel={o.badge ? `${o.label} (${o.badge})` : o.label}
             accessibilityState={{ selected: on }}
             aria-selected={on}
             style={({ pressed }) => [
@@ -91,6 +91,11 @@ export function Segmented<T extends string>({
             >
               {o.label}
             </Text>
+            {o.badge ? (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{o.badge}</Text>
+              </View>
+            ) : null}
           </Pressable>
         )
       })}
@@ -140,6 +145,8 @@ const styles = StyleSheet.create({
     color: theme.colors.ink,
     textAlign: 'center',
   },
+  badge: { minWidth: 18, height: 18, paddingHorizontal: 5, borderRadius: theme.radii.pill, backgroundColor: theme.colors.apricot, alignItems: 'center', justifyContent: 'center' },
+  badgeText: { fontFamily: theme.fonts.black, fontSize: theme.type.micro, color: theme.colors.tone.apricot.fg, lineHeight: 14 },
   pillTextOn: { color: theme.colors.onColor },
   boxTextOn: { color: theme.colors.onInverse },
   pillTint: { backgroundColor: theme.colors.accentLight, borderColor: theme.colors.primary },

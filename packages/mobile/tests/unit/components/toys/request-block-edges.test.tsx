@@ -1,5 +1,6 @@
 // Asking for a toy: double taps, refused requests, and a toy list that changes
 // shape. The ordinary copy and offer_type gating live in request-block.test.tsx.
+// journeys: Y06
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import type { Toy, ToyWithOwner } from '@splat-connect/types'
 import { RequestBlock } from '../../../../components/toys/request-block'

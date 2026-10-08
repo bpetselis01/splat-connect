@@ -3,6 +3,8 @@
 // Print for others: an organisation's request gets the machine picker, which
 // preselects the best fit and stamps the choice on accept; declining sends a
 // reason.
+// journeys: L11 R07 R12 R13
+import { CLEARANCE, scrollPaddings } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { PrintForOthersScreen } from '../../../../components/printing/offer-screen'
 
@@ -27,7 +29,9 @@ jest.mock('expo-router', () => {
   return { useFocusEffect: (effect: () => void) => useEffect(effect, []), useRouter: () => ({ push: jest.fn() }) }
 })
 
+const mockInvalidate = jest.fn()
 jest.mock('../../../../lib/capabilities', () => ({
+  invalidateCapabilities: (...a: unknown[]) => mockInvalidate(...a),
   useCapabilities: () => ({ caps: { profile: { id: 'leader' }, ledOrgs: [{ id: 'org', name: 'Library' }] } }),
 }))
 
@@ -89,6 +93,7 @@ it('preselects the machine that fits and accepts on it', async () => {
   await waitFor(() =>
     expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions/j1/accept', { printer_id: 'Bambu P1S' })
   )
+  expect(mockInvalidate).toHaveBeenCalled()
 })
 
 it('lets a leader override with a machine that needs a change', async () => {
@@ -172,4 +177,12 @@ it('offers Get verified on a printer, and shows a failed test print’s note', a
   expect(screen.getByText('Waiting')).toBeTruthy()
   fireEvent.press(screen.getByText('Get verified'))
   await waitFor(() => expect(mockSubmit).toHaveBeenCalledWith('Bambu P1S'))
+})
+
+jest.mock('react-native-safe-area-context', () => require('../../bottom-spacing').insetMock())
+
+it('ends its scroll one gutter above the home indicator', async () => {
+  render(<PrintForOthersScreen />)
+  await screen.findByText('Accept on Bambu P1S')
+  expect(scrollPaddings(screen)).toEqual([CLEARANCE])
 })

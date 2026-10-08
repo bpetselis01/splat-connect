@@ -1,4 +1,5 @@
 // packages/mobile/tests/unit/components/toys/toy-library-screen.test.tsx
+// journeys: Y01 Y03
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { theme } from '../../../../lib/theme'
 import { ScrollView, FlatList, StyleSheet } from 'react-native'
@@ -208,6 +209,15 @@ describe('ToyLibraryScreen', () => {
     const card = await screen.findByLabelText('Bubble machine')
     fireEvent.press(card)
     expect(mockPush).toHaveBeenCalledWith('/toy-library/t1')
+  })
+
+  it('offers Toys near me in the Toy actions menu, opening the map on toys', async () => {
+    mockGet.mockResolvedValue([toy({ id: 't1', name: 'Bubble machine' })])
+    render(<ToyLibraryScreen />)
+    await screen.findByText('Bubble machine')
+    fireEvent.press(screen.getByLabelText('Toy actions'))
+    fireEvent.press(screen.getByLabelText('Toys near me'))
+    expect(mockPush).toHaveBeenCalledWith('/map?kind=toy')
   })
 
   it('navigates to give-a-toy and organisations from their respective rows', async () => {

@@ -1,3 +1,5 @@
+// journeys: T04 T07
+import { CLEARANCE, paddingBottomOf } from '../../bottom-spacing'
 import { Alert } from 'react-native'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { TutorialHub } from '../../../../components/my-tutorials/hub'
@@ -244,4 +246,11 @@ it('summarises who is backing from /orgs, not from the guide row', async () => {
   render(<TutorialHub id="t1" />)
   expect(await screen.findByText('Backed by Northside Therapy · 1 still deciding')).toBeTruthy()
   expect(mockGet).toHaveBeenCalledWith('/api/tutorials/t1/orgs')
+})
+
+jest.mock('react-native-safe-area-context', () => require('../../bottom-spacing').insetMock())
+
+it('lifts its Preview and Submit band one gutter above the home indicator', () => {
+  render(<TutorialHub id="t1" />)
+  expect(paddingBottomOf(screen.getByTestId('hub-footer'))).toBe(CLEARANCE)
 })

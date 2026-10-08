@@ -1,4 +1,5 @@
 // packages/mobile/tests/unit/components/inbox/inbox-screen.test.tsx
+// journeys: Q05 Q06 Q07 Q08 Q09 Q10
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { theme } from '../../../../lib/theme'
 import { ScrollView, FlatList, StyleSheet } from 'react-native'
@@ -189,6 +190,17 @@ describe('InboxScreen', () => {
     expect(mockPush).toHaveBeenCalledWith('/exchanges/build/tx2')
   })
 
+  it('opens a print job from its inbox row on the job screen, not the toy thread (S2)', async () => {
+    respond(
+      [notification({ id: 'n9', type: 'print_ready', toy_transaction_id: 'tx9' })],
+      [],
+      [tx({ id: 'tx9', type: 'print', toy_name: 'Gear housing' })]
+    )
+    render(<InboxScreen />)
+    fireEvent.press(await screen.findByLabelText('A print job with Northside Therapy'))
+    expect(mockPush).toHaveBeenCalledWith('/printing/jobs/tx9')
+  })
+
   it('opens on Notifications when there are no exchanges, and where it is told to', async () => {
     const note = notification({ id: 'n4', type: 'tutorial_approved', tutorial_id: 't1', tutorial_title: 'Bubble machine', toy_transaction_id: null })
     respond([note])
@@ -274,6 +286,17 @@ describe('InboxScreen', () => {
     await waitFor(() =>
       expect(mockPost).toHaveBeenCalledWith('/api/collaborators/invites/inv1/accept', {})
     )
+  })
+
+  it('tapping an invite row marks it read but does not open the editor (S18)', async () => {
+    respond(
+      [notification({ id: 'n1', type: 'collaborator_invited', tutorial_id: 't1', tutorial_title: 'Bubble machine', toy_transaction_id: null })],
+      [{ id: 'inv1', tutorial_id: 't1', status: 'pending' }]
+    )
+    render(<InboxScreen />)
+    fireEvent.press(await screen.findByText('Sam invited you to collaborate on "Bubble machine"'))
+    await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/api/notifications/n1', { read: true }))
+    expect(mockPush).not.toHaveBeenCalled()
   })
 
   it('declines an invite through the same route', async () => {

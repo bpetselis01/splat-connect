@@ -6,6 +6,7 @@ import { apiClient } from './api-client'
 import { problem, toProblem, type AuthProblem } from './auth-errors'
 import { appleCredential, googleIdToken, googleSavedIdToken, googleSignOut, type SocialResult } from './social-auth'
 import { setRecentsOwner } from './recents'
+import { setTicksOwner } from './guide-progress'
 
 /** `problem` null means it worked. `cancelled`: the person closed Apple's or
  *  Google's sheet — the screens show nothing for it. */
@@ -71,7 +72,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   // "Pick up where you left off" keeps one list per account.
-  useEffect(() => setRecentsOwner(session?.user?.id ?? null), [session?.user?.id])
+  useEffect(() => {
+    setRecentsOwner(session?.user?.id ?? null)
+    setTicksOwner(session?.user?.id ?? null)
+  }, [session?.user?.id])
 
   // Session carries no role; the profile (with role) and the agreement rows both come
   // from the API. One effect, not two: separate fetches would give two loading states

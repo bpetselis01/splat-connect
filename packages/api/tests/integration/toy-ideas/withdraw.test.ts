@@ -2,6 +2,7 @@
  * 107: an author reads their own idea at any status, and withdraws it while
  * nobody has reviewed it. Nothing else can withdraw anything.
  */
+// journeys: C08 C09
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createUserClient } from '../../../src/supabase/client.js'

@@ -1,3 +1,5 @@
+// journeys: L12 L15
+import { CLEARANCE, scrollPaddings } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { IntakeScreen } from '../../../../components/recycling/intake-screen'
 
@@ -154,4 +156,13 @@ it('publishes what the machines take, in one PATCH', async () => {
       recycling_door: 'Back gate',
     })
   )
+})
+
+jest.mock('react-native-safe-area-context', () => require('../../bottom-spacing').insetMock())
+
+it('ends its scroll one gutter above the home indicator', async () => {
+  route([drop({})])
+  render(<IntakeScreen />)
+  await screen.findByText('Tom Beattie')
+  expect(scrollPaddings(screen)).toEqual([CLEARANCE])
 })

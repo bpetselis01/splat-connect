@@ -3,6 +3,7 @@
  * client, so RLS enforces status='approved'/'published' as a second, database-level
  * backstop behind each query's own explicit filter.
  */
+import { singleRowStatus } from '../single-row.js'
 import { Hono, type Context } from 'hono'
 import { nameFormerContributors } from '../former-contributor.js'
 import { chunk } from '../chunk.js'
@@ -106,7 +107,7 @@ publicRoutes.get('/tutorials/:id', async (c) => {
     .select(
       '*, thanks_count, parts(*), tools(*), stl_files(*), steps:tutorial_steps(*), safety_notes:tutorial_safety_notes(*), tutorial_contributors(profile_id, role, former_names, former_count, profiles(name)), ' +
         'tutorial_orgs(status, organizations(id, name)), ' +
-        'tutorial_recommendations!tutorial_id(position, required, tutorials!recommended_id(id, title, kind, difficulty, toy_photo_url, status, maturity)), ' +
+        'tutorial_recommendations!tutorial_id(position, required, tutorials!recommended_id(id, title, kind, difficulty, toy_photo_url, status, maturity, build_minutes)), ' +
         'reviewer:reviewed_by(name), reviewed_for:reviewed_for_org_id(name)'
     )
     .eq('id', c.req.param('id'))
@@ -115,7 +116,7 @@ publicRoutes.get('/tutorials/:id', async (c) => {
     .order('position', { referencedTable: 'steps', ascending: true })
     .order('position', { referencedTable: 'safety_notes', ascending: true })
     .single()
-  if (error) return c.json({ error: error.message }, 404)
+  if (error) return c.json({ error: error.message }, singleRowStatus(error))
   // 092. Counted, never awaited into a failure: a view that cannot be counted
   // is not a reason to refuse the guide.
   try {
@@ -306,7 +307,7 @@ publicRoutes.get('/toys/:id', async (c) => {
   // 404 for both "no such row" and "draft row" — an unpublished toy must not
   // be distinguishable from a nonexistent one to an unauthenticated caller,
   // same reasoning as the tutorial detail route above.
-  if (error) return c.json({ error: error.message }, 404)
+  if (error) return c.json({ error: error.message }, singleRowStatus(error))
   const unavailable = await atCapacityToyIds(createAdminClient(), null, true)
   if (unavailable === null) return c.json({ error: 'Failed to load toys' }, 500)
   const hidden = new Set(unavailable)

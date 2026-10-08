@@ -26,6 +26,7 @@
  * - packages/web/components/notifications-list.tsx: the copy and the link
  */
 import { createAdminClient } from './supabase/client.js'
+import { notificationBody } from '@splat-connect/types'
 import { profileName } from './profile-name.js'
 
 type Admin = ReturnType<typeof createAdminClient>
@@ -140,4 +141,41 @@ export async function notifyTutorialSubmitted(opts: {
     tutorial_title: opts.tutorialTitle,
     actor_name: await profileName(admin, opts.actorId, 'A contributor'),
   })
+}
+
+/**
+ * A reviewer decided a project. Tell every contributor on it, not just the
+ * primary: a collaborator did the same work and needs the same signal. Shared
+ * by the admin route (actor 'SPLAT') and the leader route (actor: their org),
+ * so the two paths cannot drift apart on who is told or what the row says.
+ */
+export async function notifyTutorialReviewed(opts: {
+  tutorialId: string
+  tutorialTitle: string
+  status: 'approved' | 'rejected'
+  rejectionNote?: string | null
+  actorName: string
+}): Promise<void> {
+  const admin = createAdminClient()
+  const { data: contributors, error } = await admin
+    .from('tutorial_contributors')
+    .select('profile_id')
+    .eq('tutorial_id', opts.tutorialId)
+  if (error) {
+    console.error('[review-notifications] contributor lookup failed:', error.message)
+    return
+  }
+  if (!contributors?.length) return
+  const { error: insertError } = await admin.from('notifications').insert(
+    contributors.map((row: { profile_id: string }) => ({
+      recipient_id: row.profile_id,
+      type: opts.status === 'approved' ? 'tutorial_approved' : 'tutorial_rejected',
+      tutorial_id: opts.tutorialId,
+      tutorial_title: opts.tutorialTitle,
+      actor_name: opts.actorName,
+      // 119: the reason a guide came back, to its contributors only.
+      body: opts.status === 'approved' ? null : notificationBody(opts.rejectionNote),
+    }))
+  )
+  if (insertError) console.error(`[review-notifications] review insert failed:`, insertError.message)
 }

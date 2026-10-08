@@ -1,14 +1,20 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
+// journeys: Q01
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import MeTab from '../../../app/(tabs)/me'
 import { NAMES } from '../../special-strings'
 
 const mockPush = jest.fn()
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }))
+let mockFocus: () => (() => void) | void
+jest.mock('expo-router', () => {
+  const { useEffect } = jest.requireActual('react')
+  return { useRouter: () => ({ push: mockPush }), useFocusEffect: (e: () => (() => void) | void) => { mockFocus = e; useEffect(e, []) } }
+})
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 const mockGet = jest.fn()
 jest.mock('../../../lib/api-client', () => ({ apiClient: { get: (...a: unknown[]) => mockGet(...a) } }))
 let mockCaps: unknown
-jest.mock('../../../lib/capabilities', () => ({ useCapabilities: () => ({ caps: mockCaps, loading: false, refresh: jest.fn() }) }))
+const mockRefresh = jest.fn()
+jest.mock('../../../lib/capabilities', () => ({ useCapabilities: () => ({ caps: mockCaps, loading: false, refresh: mockRefresh }) }))
 
 const caps = (over: Record<string, unknown> = {}) => ({
   profile: { name: 'Byron P', role: 'contributor' }, isAdmin: false, ledOrgs: [],
@@ -167,7 +173,7 @@ describe('Me money panel', () => {
   })
 
   it.each([
-    ['exchange', '/exchanges/tx'], ['donation', '/exchanges/tx'], ['build', '/exchanges/build/tx'], ['print', '/exchanges/tx'],
+    ['exchange', '/exchanges/tx'], ['donation', '/exchanges/tx'], ['build', '/exchanges/build/tx'], ['print', '/printing/jobs/tx'],
   ])('a %s line opens %s and is named for who it is with', async (type, route) => {
     serve({ money: { threads: [thread({ type, other_name: 'Sam', what: 'Thing' })], owed_cents: 100, unsettled_count: 1 } })
     render(<MeTab />)
@@ -217,5 +223,26 @@ describe('Me admin and badges rows', () => {
     mockPush.mockClear()
     for (const el of screen.queryAllByText('SOON')) fireEvent.press(el)
     expect(mockPush).not.toHaveBeenCalled()
+  })
+})
+
+describe('Me stays live (S6) and recovers (S19)', () => {
+  it('refetches the money panel, counts and capabilities each time the tab takes focus again', async () => {
+    serve({ money: { threads: [thread()], owed_cents: 1060, unsettled_count: 1 } })
+    render(<MeTab />)
+    expect(await screen.findByText('To settle')).toBeTruthy()
+    expect(mockRefresh).not.toHaveBeenCalled()
+    serve({ money: { threads: [thread({ settled: true })], owed_cents: 0, unsettled_count: 0 } })
+    await act(async () => { mockFocus() })
+    expect(await screen.findByText('Settled')).toBeTruthy()
+    expect(mockRefresh).toHaveBeenCalledTimes(1)
+  })
+
+  it('offers Try again when the profile call failed, and retries through capabilities', () => {
+    mockCaps = null
+    render(<MeTab />)
+    expect(screen.getByText("Couldn't load your SPLAT.")).toBeTruthy()
+    fireEvent.press(screen.getByText('Try again'))
+    expect(mockRefresh).toHaveBeenCalledTimes(1)
   })
 })

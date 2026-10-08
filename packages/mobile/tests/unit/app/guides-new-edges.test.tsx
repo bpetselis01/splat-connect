@@ -1,4 +1,5 @@
 // packages/mobile/tests/unit/app/guides-new.test.tsx
+// journeys: N02 N03
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import NewGuideRoute from '../../../app/(tabs)/guides/new'
 import { useAuth } from '../../../lib/auth-context'
