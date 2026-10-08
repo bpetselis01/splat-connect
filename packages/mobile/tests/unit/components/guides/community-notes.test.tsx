@@ -178,3 +178,42 @@ it('ends the ⋯ menu one gutter above the home indicator', () => {
   fireEvent.press(screen.getByTestId('note-menu-theirs'))
   expect(paddingBottomOf(screen.getByTestId('note-menu'))).toBe(CLEARANCE)
 })
+
+describe('a guide with notes on many steps filters through the step picker', () => {
+  const many = Array.from({ length: 20 }, (_, i) => ({ id: `s${i + 1}`, tutorial_id: 'g', position: i + 1, title: `Part ${i + 1}`, body: 'b', photo_url: null }))
+  const notes = [1, 2, 3, 4, 5, 6, 17].map((p) => note({ id: `n${p}`, step_position: p, body: `Note on ${p}.` }))
+    .concat(note({ id: 'm', step_position: null, body: 'Whole guide.' }))
+
+  it('shows one field instead of a chip per step, and filters to the chosen step', () => {
+    render(<CommunityNotes {...props} steps={many as never} notes={notes as never} />)
+    expect(screen.queryByTestId('feedback-filter-step-17')).toBeNull()
+    expect(screen.getByTestId('feedback-filter-all')).toHaveTextContent('All 8')
+    expect(screen.getByTestId('feedback-filter-missing')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Filter by step, Filter by step' })).toBeTruthy()
+    fireEvent.press(screen.getByTestId('feedback-filter-step-field'))
+    // Only steps that have notes are listed, and there is no Missing row (it has its chip).
+    expect(screen.queryByRole('button', { name: '9. Part 9' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Missing step' })).toBeNull()
+    fireEvent.changeText(screen.getByLabelText('Search steps'), 'part 17')
+    fireEvent.press(screen.getByRole('button', { name: '17. Part 17' }))
+    expect(screen.getByRole('button', { name: 'Filter by step, 17. Part 17' })).toBeTruthy()
+    expect(screen.getByText('Note on 17.')).toBeTruthy()
+    expect(screen.queryByText('Note on 1.')).toBeNull()
+    fireEvent.press(screen.getByTestId('feedback-filter-all'))
+    expect(screen.getByText('Note on 1.')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Filter by step, Filter by step' })).toBeTruthy()
+  })
+
+  it('Missing and the field coexist: Missing still filters', () => {
+    render(<CommunityNotes {...props} steps={many as never} notes={notes as never} />)
+    fireEvent.press(screen.getByTestId('feedback-filter-missing'))
+    expect(screen.getByText('Whole guide.')).toBeTruthy()
+    expect(screen.queryByText('Note on 17.')).toBeNull()
+  })
+
+  it('five or fewer steps with notes keep their chips even in a long guide', () => {
+    render(<CommunityNotes {...props} steps={many as never} notes={notes.slice(0, 3) as never} />)
+    expect(screen.getByTestId('feedback-filter-step-2')).toBeTruthy()
+    expect(screen.queryByTestId('feedback-filter-step-field')).toBeNull()
+  })
+})

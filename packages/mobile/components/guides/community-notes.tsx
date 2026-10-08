@@ -20,6 +20,7 @@ import { FlashLine, useFlash } from '../ui/Flash'
 import { PhotoViewer } from '../ui/PhotoViewer'
 import { ReportProblem } from '../reports/report-problem'
 import { FeedbackSheet } from './feedback-sheet'
+import { StepPicker, CHIP_MAX } from './step-picker'
 
 type Props = {
   tutorialId: string
@@ -198,10 +199,15 @@ export function CommunityNotes({ tutorialId, guideTitle, authorName, steps, note
         <View style={styles.chips}>
           <Chip label={`All ${notes.length}`} active={filter === 'all'} onPress={() => setFilter('all')} testID="feedback-filter-all" />
           {summary.pinned.length ? <Chip label={`Fixes ${summary.pinned.length}`} active={filter === 'fixes'} onPress={() => setFilter('fixes')} testID="feedback-filter-fixes" /> : null}
-          {stepsWithNotes.map((s) => (
+          {stepsWithNotes.length > CHIP_MAX ? null : stepsWithNotes.map((s) => (
             <Chip key={s.id} label={`Step ${s.position}`} active={filter === s.position} onPress={() => setFilter(s.position)} testID={`feedback-filter-step-${s.position}`} />
           ))}
           {anyMissing ? <Chip label="Missing" active={filter === 'missing'} onPress={() => setFilter('missing')} testID="feedback-filter-missing" /> : null}
+          {stepsWithNotes.length > CHIP_MAX ? (
+            <View style={styles.stepField}>
+              <StepPicker steps={stepsWithNotes} value={typeof filter === 'number' ? filter : undefined} onChange={(p) => setFilter(p ?? 'missing')} title="Filter by step" placeholder="Filter by step" allowMissing={false} testID="feedback-filter-step-field" />
+            </View>
+          ) : null}
         </View>
       ) : (
         <Text style={styles.empty}>No feedback yet. Built it? Say how it went.</Text>
@@ -283,6 +289,7 @@ const styles = StyleSheet.create({
   composer: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3), paddingHorizontal: theme.spacing(3), paddingVertical: theme.spacing(2), borderRadius: theme.radii.pill, borderWidth: theme.border.hairline, borderColor: theme.colors.border, backgroundColor: theme.colors.surface, ...theme.shadow(1) },
   composerText: { fontFamily: theme.fonts.semiBold, fontSize: theme.type.label, color: theme.colors.muted },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2) },
+  stepField: { flexBasis: '100%', gap: theme.spacing(2) },
   empty: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted },
   row: { paddingVertical: theme.spacing(3), borderTopWidth: theme.border.hairline, borderTopColor: theme.colors.border, gap: theme.spacing(2) },
   fix: { borderTopWidth: 0, borderRadius: theme.radii.panel, backgroundColor: theme.colors.honeySoft, paddingHorizontal: theme.spacing(4) },
