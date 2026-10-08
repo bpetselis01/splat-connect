@@ -50,7 +50,7 @@ const send = () => fireEvent.press(screen.getByRole('button', { name: 'Send' }))
 
 describe('loading', () => {
   it('says the board could not load when the read fails', async () => {
-    mockGet.mockRejectedValue(new Error('Network request failed'))
+    mockGet.mockRejectedValue(new Error('boom'))
     render(<AskFirstScreen id="b1" />)
     expect(await screen.findByText("Couldn't load the board.")).toBeTruthy()
   })
