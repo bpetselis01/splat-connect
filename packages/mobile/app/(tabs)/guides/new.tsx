@@ -1,7 +1,7 @@
 // packages/mobile/app/(tabs)/guides/new.tsx
 import { logFailure } from '../../../lib/log'
 import { useState } from 'react'
-import { View, Text, Pressable, StyleSheet } from 'react-native'
+import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { randomUUID } from 'expo-crypto'
 import * as DocumentPicker from 'expo-document-picker'
@@ -13,7 +13,7 @@ import { uploadFile } from '../../../lib/upload'
 import { parseYears } from '../../../lib/tutorial-sections'
 import { useAuth } from '../../../lib/auth-context'
 import { theme } from '../../../lib/theme'
-import { Screen } from '../../../components/ui/Screen'
+import { useBottomClearance } from '../../../lib/bottom-clearance'
 import { TextField } from '../../../components/ui/TextField'
 import { Chip } from '../../../components/ui/Chip'
 import { Button } from '../../../components/ui/Button'
@@ -36,6 +36,7 @@ type PdfAsset = { uri: string; name: string; mimeType?: string }
 export default function NewGuideRoute() {
   const router = useRouter()
   const { acceptContributorTerms } = useAuth()
+  const bottom = useBottomClearance()
   const [title, setTitle] = useState('')
   const [kind, setKind] = useState<TutorialKind>('toy_adaptation')
   const [difficulty, setDifficulty] = useState<Difficulty>('easy')
@@ -83,8 +84,6 @@ export default function NewGuideRoute() {
   }
 
   async function chooseCover() {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
-    if (!permission.granted) return setError('Photo library access is needed to choose a photo.')
     const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ['images'] })
     const asset = result.canceled ? null : result.assets?.[0]
     if (asset) setCover({ uri: asset.uri, name: asset.fileName ?? 'photo.jpg', mimeType: asset.mimeType ?? 'image/jpeg' })
@@ -181,7 +180,15 @@ export default function NewGuideRoute() {
   }
 
   return (
-    <Screen>
+    // The sheet's root: a formSheet's ScrollView nested in a View clips to its
+    // first child on iOS. Tapping blank space or dragging closes the keyboard,
+    // which the number pad has no Return key to do.
+    <ScrollView
+      contentContainerStyle={[styles.content, { paddingBottom: bottom + theme.spacing(6) }]}
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag"
+      automaticallyAdjustKeyboardInsets
+    >
       {/* The sheet's own header says Add a guide; this is its lead. */}
       <Text style={styles.intro}>Two things to start: what the toy is, and one photo. The rest can wait for the editor.</Text>
 
@@ -282,11 +289,12 @@ export default function NewGuideRoute() {
         )}
         </>
       )}
-    </Screen>
+    </ScrollView>
   )
 }
 
 const styles = StyleSheet.create({
+  content: { paddingTop: theme.spacing(4), paddingHorizontal: theme.spacing(4) },
   intro: {
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.body,

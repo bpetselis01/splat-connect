@@ -169,13 +169,20 @@ describe('extras', () => {
     expect(sent.age_min).toBeUndefined()
   })
 
-  it('explains a refused photo-library permission and picks nothing', async () => {
+  it('opens the system photo picker without asking for library permission', async () => {
     const ImagePicker = jest.requireMock('expo-image-picker')
-    ImagePicker.requestMediaLibraryPermissionsAsync.mockResolvedValueOnce({ granted: false })
+    mockLibrary.mockResolvedValueOnce({ canceled: true })
     render(<NewGuideRoute />)
     fireEvent.press(screen.getByLabelText('Add a cover photo'))
-    expect(await screen.findByText('Photo library access is needed to choose a photo.')).toBeTruthy()
-    expect(mockLibrary).not.toHaveBeenCalled()
+    await waitFor(() => expect(mockLibrary).toHaveBeenCalled())
+    expect(ImagePicker.requestMediaLibraryPermissionsAsync).not.toHaveBeenCalled()
+  })
+
+  it('is one scrolling form that closes the keyboard on a tap or a drag', () => {
+    const { UNSAFE_getByType } = render(<NewGuideRoute />)
+    const form = UNSAFE_getByType(require('react-native').ScrollView)
+    expect(form.props.keyboardDismissMode).toBe('on-drag')
+    expect(form.props.keyboardShouldPersistTaps).toBe('handled')
   })
 
   it('shows Cover photo chosen after a pick, and still creates when the picker is cancelled', async () => {
