@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons'
 import * as ImagePicker from 'expo-image-picker'
 import * as DocumentPicker from 'expo-document-picker'
 import { uploadFile } from '../../../lib/upload'
+import { pickPreviewedPhoto } from '../../../lib/pick-photo'
 import { supabase } from '../../../lib/supabase'
 import { useDraft } from '../../../lib/use-tutorial-draft'
 import { MAX_PHOTOS, realignCaptions } from '@splat-connect/types'
@@ -55,9 +56,7 @@ export function FilesSection() {
           ? await ImagePicker.launchCameraAsync({ quality: 0.7 })
           : // The library takes as many as there are slots left (v57
             // selectionLimit, iOS 14+), so adding the last two is one trip.
-            await ImagePicker.launchImageLibraryAsync({
-              quality: 0.7,
-              mediaTypes: ['images'],
+            await pickPreviewedPhoto({
               allowsMultipleSelection: remaining > 1,
               selectionLimit: remaining,
             })

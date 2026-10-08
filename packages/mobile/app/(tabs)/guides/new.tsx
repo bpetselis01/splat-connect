@@ -1,15 +1,15 @@
 // packages/mobile/app/(tabs)/guides/new.tsx
 import { logFailure } from '../../../lib/log'
 import { useState } from 'react'
-import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native'
+import { View, Text, Pressable, Image, ScrollView, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { randomUUID } from 'expo-crypto'
 import * as DocumentPicker from 'expo-document-picker'
-import * as ImagePicker from 'expo-image-picker'
 import type { Difficulty, PdfImportDraft, TutorialKind } from '@splat-connect/types'
 import { apiMessage, KIND_LABEL, createGuideFromPdfDraft, pdfDraftChecklist, PDF_IMPORT_MAX_BYTES, PDF_IMPORT_MAX_LABEL } from '@splat-connect/types'
 import { apiClient } from '../../../lib/api-client'
 import { uploadFile } from '../../../lib/upload'
+import { pickPreviewedPhoto } from '../../../lib/pick-photo'
 import { parseYears } from '../../../lib/tutorial-sections'
 import { useAuth } from '../../../lib/auth-context'
 import { theme } from '../../../lib/theme'
@@ -84,7 +84,7 @@ export default function NewGuideRoute() {
   }
 
   async function chooseCover() {
-    const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ['images'] })
+    const result = await pickPreviewedPhoto()
     const asset = result.canceled ? null : result.assets?.[0]
     if (asset) setCover({ uri: asset.uri, name: asset.fileName ?? 'photo.jpg', mimeType: asset.mimeType ?? 'image/jpeg' })
   }
@@ -229,6 +229,7 @@ export default function NewGuideRoute() {
 
         <Text style={styles.label}>Cover photo</Text>
         <Pressable accessibilityRole="button" accessibilityLabel="Add a cover photo" onPress={() => void chooseCover()} style={styles.cover}>
+          {cover ? <Image source={{ uri: cover.uri }} style={styles.coverPreview} resizeMode="cover" accessibilityLabel="Cover photo preview" accessibilityIgnoresInvertColors /> : null}
           <Text style={styles.termsCopy}>{cover ? 'Cover photo chosen' : 'Tap to add — the finished toy, plain background'}</Text>
         </Pressable>
 
@@ -317,6 +318,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
     marginBottom: theme.spacing(4),
   },
+  coverPreview: { width: '100%', height: 180, borderRadius: theme.radii.field, marginBottom: theme.spacing(3) },
   ageBox: { flex: 1 },
   termsGate: { marginTop: theme.spacing(2) },
   found: { marginBottom: theme.spacing(4) },

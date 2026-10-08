@@ -11,6 +11,7 @@ import { apiClient } from '../../lib/api-client'
 import { loadOwnedToy } from '../../lib/my-toy'
 import { confirmDestructive, notify } from '../../lib/confirm'
 import { uploadFile } from '../../lib/upload'
+import { pickPreviewedPhoto } from '../../lib/pick-photo'
 import { theme } from '../../lib/theme'
 import { useBottomClearance } from '../../lib/bottom-clearance'
 import { useCapabilities } from '../../lib/capabilities'
@@ -250,9 +251,7 @@ export function Editor({ id }: { id: string }) {
     const result =
       source === 'camera'
         ? await ImagePicker.launchCameraAsync({ quality: 0.7 })
-        : await ImagePicker.launchImageLibraryAsync({
-            quality: 0.7,
-            mediaTypes: ['images'],
+        : await pickPreviewedPhoto({
             allowsMultipleSelection: remaining > 1,
             selectionLimit: remaining,
           })

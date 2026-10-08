@@ -8,6 +8,7 @@ import * as ImagePicker from 'expo-image-picker'
 import type { ToyTransaction } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { uploadFile } from '../../lib/upload'
+import { pickPreviewedPhoto } from '../../lib/pick-photo'
 
 export const startPrint = (id: string) =>
   apiClient.post<ToyTransaction>(`/api/toy-transactions/${id}/print-started`, {})
@@ -18,7 +19,7 @@ export const startPrint = (id: string) =>
  * backs out of the picker.
  */
 export async function markReady(id: string): Promise<ToyTransaction | null> {
-  const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ['images'] })
+  const result = await pickPreviewedPhoto()
   if (result.canceled || !result.assets?.length) return null
   const asset = result.assets[0]!
   const updated = await uploadFile(`/api/toy-transactions/${id}/print-ready`, id, {
@@ -42,7 +43,7 @@ export async function withdrawRequest(tx: Pick<ToyTransaction, 'id' | 'print_gro
  * fail. Null when they back out of the picker.
  */
 export async function submitTestPrint(printerId: string): Promise<unknown> {
-  const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ['images'] })
+  const result = await pickPreviewedPhoto()
   if (result.canceled || !result.assets?.length) return null
   const asset = result.assets[0]!
   return uploadFile(

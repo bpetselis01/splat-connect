@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons'
 import * as ImagePicker from 'expo-image-picker'
 import { useDraft, type StepRow } from '../../../lib/use-tutorial-draft'
 import { uploadFile } from '../../../lib/upload'
+import { pickPreviewedPhoto } from '../../../lib/pick-photo'
 import { theme } from '../../../lib/theme'
 import { Screen } from '../../ui/Screen'
 import { TextField } from '../../ui/TextField'
@@ -67,7 +68,7 @@ function StepsEditor() {
     if (uploading !== null) return
     setLocalError(null)
     try {
-      const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ['images'] })
+      const result = await pickPreviewedPhoto()
       if (result.canceled || !result.assets?.length) return
       const k = rows[i].k
       setUploading(k)
