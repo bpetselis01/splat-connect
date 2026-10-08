@@ -49,6 +49,7 @@ export function FindPrinterScreen({ guideId, printWith }: { guideId?: string; pr
   const [printers, setPrinters] = useState<PrinterWithOwner[] | null>(null)
   const [guide, setGuide] = useState<Guide | null>(null)
   const [error, setError] = useState(false)
+  const [reloadKey, setReloadKey] = useState(0)
   const [picks, setPicks] = useState<string[]>([])
   const [openOnly, setOpenOnly] = useState(false)
   const [hasMaterial, setHasMaterial] = useState(false)
@@ -57,6 +58,7 @@ export function FindPrinterScreen({ guideId, printWith }: { guideId?: string; pr
   const postcode = nearParam(caps?.profile.pickup_postcode)
 
   useEffect(() => {
+    setError(false)
     Promise.all([
       apiClient.get<PrinterWithOwner[]>(postcode ? `/api/printers?near=${encodeURIComponent(postcode)}` : '/api/printers'),
       guideId ? apiClient.get<Guide>(`/api/public/tutorials/${guideId}`) : Promise.resolve(null),
@@ -78,12 +80,14 @@ export function FindPrinterScreen({ guideId, printWith }: { guideId?: string; pr
         logFailure('[FindPrinterScreen] load failed:', err)
         setError(true)
       })
-  }, [guideId, postcode, printWith])
+  }, [guideId, postcode, printWith, reloadKey])
 
   if (error) {
     return (
       <Screen>
-        <EmptyState icon="cloud-offline-outline" title="Couldn't load printers." hint="Check your connection and try again." />
+        <EmptyState icon="cloud-offline-outline" title="Couldn't load printers." hint="Check your connection and try again.">
+          <Button label="Try again" variant="secondary" onPress={() => setReloadKey((k) => k + 1)} style={styles.retry} />
+        </EmptyState>
       </Screen>
     )
   }
@@ -278,6 +282,7 @@ export function FindPrinterScreen({ guideId, printWith }: { guideId?: string; pr
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  retry: { marginTop: theme.spacing(5), alignSelf: 'center', paddingHorizontal: theme.spacing(8) },
   content: { paddingBottom: theme.spacing(6), gap: theme.spacing(3) },
   guideCard: { flexDirection: 'row', gap: theme.spacing(3), padding: theme.spacing(4) },
   guideGlyph: {
