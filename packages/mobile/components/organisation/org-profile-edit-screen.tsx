@@ -8,10 +8,11 @@
  * web's form; PATCH /profile only writes the fields it is sent, so saving here
  * leaves those untouched.
  */
+import { logFailure } from '../../lib/log'
 import { useCallback, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { useFocusEffect } from 'expo-router'
-import { apiMessage, AU_STATES, type Organization, type OrgThanks } from '@splat-connect/types'
+import { apiMessage, AU_STATES, isNetworkError, type Organization, type OrgThanks } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { useCapabilities } from '../../lib/capabilities'
 import { theme } from '../../lib/theme'
@@ -47,7 +48,8 @@ export function OrgProfileEditScreen() {
   const [thanks, setThanks] = useState<OrgThanks[]>([])
   const [saving, setSaving] = useState(false)
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null)
-  const [loadFailed, setLoadFailed] = useState(false)
+  const [loadFailed, setLoadFailed] = useState<'offline' | 'other' | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
 
   useFocusEffect(
     useCallback(() => {
@@ -61,9 +63,12 @@ export function OrgProfileEditScreen() {
             ) as Record<Field, string>
           )
         )
-        .catch(() => setLoadFailed(true))
+        .catch((err) => {
+          logFailure('[OrgProfileEditScreen] load failed:', err)
+          setLoadFailed(isNetworkError(err) ? 'offline' : 'other')
+        })
       apiClient.get<OrgThanks[]>(`/api/organizations/${orgId}/thanks`).then(setThanks).catch(() => setThanks([]))
-    }, [orgId])
+    }, [orgId, reloadKey])
   )
 
   async function save() {
@@ -92,7 +97,20 @@ export function OrgProfileEditScreen() {
   if (!form && loadFailed) {
     return (
       <Screen>
-        <EmptyState icon="alert-circle-outline" title="Could not load your page." hint="Check your connection and open this screen again." />
+        <EmptyState
+          icon="alert-circle-outline"
+          title={loadFailed === 'offline' ? 'You seem to be offline.' : 'Could not load your page.'}
+          hint="Check your connection and try again."
+        >
+          <Button
+            label="Try again"
+            variant="secondary"
+            onPress={() => {
+              setLoadFailed(null)
+              setReloadKey((k) => k + 1)
+            }}
+          />
+        </EmptyState>
       </Screen>
     )
   }
