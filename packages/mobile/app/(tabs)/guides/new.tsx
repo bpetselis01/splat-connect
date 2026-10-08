@@ -18,6 +18,7 @@ import { TextField } from '../../../components/ui/TextField'
 import { Chip } from '../../../components/ui/Chip'
 import { Button } from '../../../components/ui/Button'
 import { ErrorRow } from '../../../components/ui/ErrorRow'
+import { PhotoPreviewHost } from '../../../components/ui/PhotoPreviewHost'
 import { TermsCheckbox } from '../../../components/auth/parts'
 
 const KIND_OPTIONS: { label: string; value: TutorialKind }[] = [
@@ -227,6 +228,7 @@ export default function NewGuideRoute() {
 
         <TextField label="Title" placeholder="Title" value={title} onChangeText={setTitle} />
 
+        <PhotoPreviewHost />
         <Text style={styles.label}>Cover photo</Text>
         <Pressable accessibilityRole="button" accessibilityLabel="Add a cover photo" onPress={() => void chooseCover()} style={styles.cover}>
           {cover ? <Image source={{ uri: cover.uri }} style={styles.coverPreview} resizeMode="cover" accessibilityLabel="Cover photo preview" accessibilityIgnoresInvertColors /> : null}

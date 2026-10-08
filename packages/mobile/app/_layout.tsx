@@ -9,7 +9,6 @@ import { StatusBar } from 'expo-status-bar'
 import { AuthProvider } from '../lib/auth-context'
 import { useReloadOnAppearanceChange } from '../lib/appearance'
 import { theme } from '../lib/theme'
-import { PhotoPreviewHost } from '../components/ui/PhotoPreviewHost'
 
 SplashScreen.preventAutoHideAsync()
 
@@ -47,7 +46,6 @@ export default function RootLayout() {
           {/* What a pending control opens (packages/types/src/pending.ts). */}
           <Stack.Screen name="not-built" />
         </Stack>
-        <PhotoPreviewHost />
       </AuthProvider>
     </SafeAreaProvider>
   )
