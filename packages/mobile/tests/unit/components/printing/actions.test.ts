@@ -24,14 +24,6 @@ describe.each([
   ['markReady', (id: string) => markReady(id)],
   ['submitTestPrint', (id: string) => submitTestPrint(id)],
 ])('%s', (_name, run) => {
-  it('throws a sentence the screen can show, in the API’s own form, when the library is refused', async () => {
-    mockPermission.mockResolvedValue({ granted: false })
-    const err = await run('x').catch((e) => e)
-    expect(apiMessage(err, 'fallback')).toBe('Photo library access is needed to post the photo.')
-    expect(mockLaunch).not.toHaveBeenCalled()
-    expect(mockUpload).not.toHaveBeenCalled()
-  })
-
   it('returns null and uploads nothing when the picker is cancelled', async () => {
     mockLaunch.mockResolvedValue({ canceled: true, assets: null })
     expect(await run('x')).toBeNull()

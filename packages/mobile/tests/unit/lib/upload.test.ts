@@ -224,12 +224,6 @@ describe('pickAndUploadPhoto', () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
-  it('throws the sentence to show when library access is refused', async () => {
-    mockPermission.mockResolvedValue({ granted: false })
-    await expect(pickAndUploadPhoto('/api/toy-transactions/t1/working-shot', 't1', null)).rejects.toThrow('Photo library access is needed to choose a photo.')
-    expect(mockLaunch).not.toHaveBeenCalled()
-  })
-
   it('throws the sentence to show when the upload fails', async () => {
     mockLaunch.mockResolvedValue({ canceled: false, assets: [{ uri: 'file:///p' }] })
     fetchMock.mockResolvedValue({ ok: false, status: 500, json: () => Promise.resolve({ error: 'boom' }) })

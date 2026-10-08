@@ -112,16 +112,6 @@ it('captions a photo, and the caption follows it to the cover', async () => {
   )
 })
 
-it('explains a refused permission rather than failing silently', async () => {
-  mockRequestMedia.mockResolvedValue({ granted: false })
-  render(<FilesSection />)
-  fireEvent.press(screen.getByText('Choose from library'))
-  await waitFor(() =>
-    expect(screen.getByText('Photo library access is needed to choose a photo.')).toBeTruthy()
-  )
-  expect(mockUploadFile).not.toHaveBeenCalled()
-})
-
 it('uploads a chosen PDF', async () => {
   mockGetDocument.mockResolvedValue({
     canceled: false,

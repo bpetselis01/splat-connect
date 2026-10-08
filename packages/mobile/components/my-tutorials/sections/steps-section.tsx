@@ -67,11 +67,6 @@ function StepsEditor() {
     if (uploading !== null) return
     setLocalError(null)
     try {
-      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
-      if (!permission.granted) {
-        setLocalError('Photo library access is needed to choose a photo.')
-        return
-      }
       const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ['images'] })
       if (result.canceled || !result.assets?.length) return
       const k = rows[i].k

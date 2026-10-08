@@ -241,16 +241,10 @@ export function Editor({ id }: { id: string }) {
    * one shot by definition.
    */
   async function pickImageAssets(source: 'camera' | 'library', remaining: number) {
-    const permission =
-      source === 'camera'
-        ? await ImagePicker.requestCameraPermissionsAsync()
-        : await ImagePicker.requestMediaLibraryPermissionsAsync()
-    if (!permission.granted) {
-      setPhotosError(
-        source === 'camera'
-          ? 'Camera access is needed to take a photo.'
-          : 'Photo library access is needed to choose a photo.'
-      )
+    // The library needs no permission: iOS's system picker hands over only
+    // the photos the person chooses.
+    if (source === 'camera' && !(await ImagePicker.requestCameraPermissionsAsync()).granted) {
+      setPhotosError('Camera access is needed to take a photo.')
       return []
     }
     const result =

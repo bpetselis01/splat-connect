@@ -172,11 +172,6 @@ export function BuildThreadScreen({ id }: { id: string }) {
   }
 
   async function postShot() {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
-    if (!permission.granted) {
-      setError('Photo library access is needed to post the working shot.')
-      return
-    }
     const picked = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ['images'] })
     const asset = picked.canceled ? null : picked.assets?.[0]
     if (!asset) return

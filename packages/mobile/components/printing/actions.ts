@@ -15,14 +15,9 @@ export const startPrint = (id: string) =>
 /**
  * Ready needs a photo — 058 will not store one without the other, so a family
  * never travels for a part on somebody's word alone. Null when the printer
- * backs out of the picker; throws when the library is refused, with a sentence
- * the caller can show.
+ * backs out of the picker.
  */
 export async function markReady(id: string): Promise<ToyTransaction | null> {
-  const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
-  if (!permission.granted) {
-    throw new Error('failed with status 400: Photo library access is needed to post the photo.')
-  }
   const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ['images'] })
   if (result.canceled || !result.assets?.length) return null
   const asset = result.assets[0]!
@@ -47,10 +42,6 @@ export async function withdrawRequest(tx: Pick<ToyTransaction, 'id' | 'print_gro
  * fail. Null when they back out of the picker.
  */
 export async function submitTestPrint(printerId: string): Promise<unknown> {
-  const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
-  if (!permission.granted) {
-    throw new Error('failed with status 400: Photo library access is needed to post the photo.')
-  }
   const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ['images'] })
   if (result.canceled || !result.assets?.length) return null
   const asset = result.assets[0]!

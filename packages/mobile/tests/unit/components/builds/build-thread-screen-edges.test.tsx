@@ -378,15 +378,6 @@ describe('a request addressed to a maker by name', () => {
 describe('the working shot', () => {
   beforeEach(() => as('maker'))
 
-  it('says the library is needed when permission is refused, and opens no picker', async () => {
-    serve(live())
-    mockPermission.mockResolvedValue({ granted: false })
-    render(<BuildThreadScreen id="b1" />)
-    fireEvent.press(await screen.findByText('Post the working shot'))
-    expect(await screen.findByText('Photo library access is needed to post the working shot.')).toBeTruthy()
-    expect(mockLaunch).not.toHaveBeenCalled()
-  })
-
   it('does nothing when the picker is cancelled or answers with no asset', async () => {
     serve(live())
     mockLaunch.mockResolvedValueOnce({ canceled: true }).mockResolvedValueOnce({ canceled: false, assets: [] })

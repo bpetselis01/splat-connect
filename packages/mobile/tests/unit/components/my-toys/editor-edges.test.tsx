@@ -280,15 +280,6 @@ describe('photos that fail', () => {
     expect(screen.queryByText(/Could not/)).toBeNull()
   })
 
-  it('asks for library access in words when it is refused', async () => {
-    serve(toy({ photo_urls: ['a'] }))
-    mockLibraryPerm.mockResolvedValue({ granted: false })
-    await open('Photos')
-    fireEvent.press(screen.getByLabelText('Choose from library'))
-    expect(await screen.findByText('Photo library access is needed to choose a photo.')).toBeTruthy()
-    expect(mockLibrary).not.toHaveBeenCalled()
-  })
-
   it('falls back to a jpeg name and type for a photo the picker did not name', async () => {
     serve(toy({ photo_urls: ['a'] }))
     mockLibrary.mockResolvedValue({ canceled: false, assets: [{ uri: 'file://x' }] })

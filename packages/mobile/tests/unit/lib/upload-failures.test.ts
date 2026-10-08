@@ -123,12 +123,6 @@ describe('pickAndUploadPhoto outliers', () => {
     await expect(pickAndUploadPhoto('/api/upload/photo', 't1')).resolves.toBeNull()
   })
 
-  it('does not even open the picker when library access is refused', async () => {
-    mockPermission.mockResolvedValue({ granted: false })
-    await expect(pickAndUploadPhoto('/api/upload/photo', 't1')).rejects.toThrow('Photo library access is needed to choose a photo.')
-    expect(mockLaunch).not.toHaveBeenCalled()
-  })
-
   it.each([413, 415, 500])('hides a %i behind the one retry sentence', async (status) => {
     mockLaunch.mockResolvedValue({ canceled: false, assets: [{ uri: 'file:///a.jpg' }] })
     fetchMock.mockResolvedValue(fail(status, { error: 'secret server detail' }))

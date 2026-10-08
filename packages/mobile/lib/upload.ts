@@ -107,8 +107,6 @@ export async function pickAndUploadPhoto<T = UploadResult>(
   id: string,
   idField: 'tutorialId' | 'toyId' | null = 'tutorialId'
 ): Promise<T | null> {
-  const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
-  if (!permission.granted) throw new Error('Photo library access is needed to choose a photo.')
   const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ['images'] })
   const asset = result.canceled ? null : result.assets?.[0]
   if (!asset) return null

@@ -43,16 +43,10 @@ export function FilesSection() {
     if (photoUploading) return
     setLocalError(null)
     try {
-      const permission =
-        source === 'camera'
-          ? await ImagePicker.requestCameraPermissionsAsync()
-          : await ImagePicker.requestMediaLibraryPermissionsAsync()
-      if (!permission.granted) {
-        setLocalError(
-          source === 'camera'
-            ? 'Camera access is needed to take a photo.'
-            : 'Photo library access is needed to choose a photo.'
-        )
+      // The library needs no permission: iOS's system picker hands over only
+      // the photos the person chooses.
+      if (source === 'camera' && !(await ImagePicker.requestCameraPermissionsAsync()).granted) {
+        setLocalError('Camera access is needed to take a photo.')
         return
       }
       const remaining = MAX_PHOTOS - currentPhotoUrls.length

@@ -337,8 +337,6 @@ function BookDropoff({
   async function addPhoto() {
     if (uploading) return
     setError(null)
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
-    if (!permission.granted) return setError('Photo library access is needed to choose a photo.')
     const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ['images'] })
     const asset = result.canceled ? null : result.assets?.[0]
     if (!asset) return

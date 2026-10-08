@@ -201,15 +201,6 @@ describe('step photos', () => {
     expect(mockUploadFile.mock.calls[0][2]).toEqual({ uri: 'file:///x', name: 'step.jpg', mimeType: 'image/jpeg' })
   })
 
-  it('explains a refused library permission and opens no picker', async () => {
-    withSteps([step(1)])
-    mockRequestMedia.mockResolvedValue({ granted: false })
-    render(<StepsSection />)
-    fireEvent.press(screen.getByTestId('step-photo-0'))
-    expect(await screen.findByText('Photo library access is needed to choose a photo.')).toBeTruthy()
-    expect(mockLaunchLibrary).not.toHaveBeenCalled()
-  })
-
   it('does nothing when the picker is cancelled', async () => {
     withSteps([step(1)])
     mockLaunchLibrary.mockResolvedValue({ canceled: true })
