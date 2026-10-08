@@ -134,6 +134,18 @@ describe('DetailScreen', () => {
     expect(await screen.findByText("Couldn't load tutorial. Please try again.")).toBeTruthy()
   })
 
+  it("previews the owner's own draft: a 404 from the public route falls back to the owner's route, with the public shape filled in", async () => {
+    const { tutorial_orgs: _o, tutorial_recommendations: _r, ...editorShape } = { ...DETAIL, status: 'draft' }
+    ;(apiClient.get as jest.Mock).mockImplementation((p: string) =>
+      p === '/api/saves/ids' ? Promise.resolve(NO_SAVES) : p === '/api/child-profiles' ? Promise.resolve([]) : p.endsWith('/notes') ? Promise.resolve([])
+        : p === '/api/public/tutorials/1' ? Promise.reject(new Error('API GET /api/public/tutorials/1 failed with status 404: not found'))
+        : p === '/api/tutorials/1' ? Promise.resolve(editorShape) : Promise.resolve(null)
+    )
+    render(<DetailScreen id="1" />)
+    expect(await screen.findByText('Build a Robot Arm')).toBeTruthy()
+    expect(apiClient.get).toHaveBeenCalledWith('/api/tutorials/1')
+  })
+
   it('non-network failure keeps the old message and Try again reloads the guide', async () => {
     jest.spyOn(console, 'error').mockImplementation(() => {})
     mockEndpoints({ detail: Promise.reject(new Error('API GET failed with status 500')) })

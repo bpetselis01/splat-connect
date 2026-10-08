@@ -152,6 +152,16 @@ function whoRows(t: Tutorial, child: ChildProfile | undefined) {
  * takes, with Start building pinned to the bottom; the four tabs below stick
  * to the top as you scroll.
  */
+/** The owner's route sends the editor's shape; the page reads the public one. */
+function asPublicShape(t: TutorialDetail): TutorialDetail {
+  return {
+    ...t,
+    tutorial_orgs: [], // backing is shown once an org has accepted, and a draft has no public page yet
+    tutorial_contributors: (t.tutorial_contributors ?? []).map((c) => ({ former_names: [], former_count: 0, ...c })),
+    tutorial_recommendations: (t.tutorial_recommendations ?? []).filter((r) => r.tutorials?.status === 'approved'),
+  }
+}
+
 export function DetailScreen({ id, printWith, tab: startTab }: { id: string; printWith?: string; tab?: string }) {
   const router = useRouter()
   const bottom = useBottomClearance()
@@ -237,6 +247,13 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
     setError(null)
     apiClient
       .get<TutorialDetail>(`/api/public/tutorials/${id}`)
+      // A draft or pending guide is not public: the hub's Preview opens it here,
+      // and only the owner's own route (RLS-scoped) can return it.
+      .catch((err) =>
+        err instanceof Error && /status 404/.test(err.message)
+          ? apiClient.get<TutorialDetail>(`/api/tutorials/${id}`).then(asPublicShape)
+          : Promise.reject(err)
+      )
       .then(setTutorial)
       .catch((err) => {
         logFailure('[DetailScreen] guide fetch failed:', err)
