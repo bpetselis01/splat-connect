@@ -12,7 +12,7 @@ import { useCallback, useState } from 'react'
 import { ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import type { Toy, ToyTransactionSummary } from '@splat-connect/types'
-import { apiMessage, isOwnerSide } from '@splat-connect/types'
+import { apiMessage, isNetworkError, isOwnerSide } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { invalidateCapabilities, useCapabilities } from '../../lib/capabilities'
 import { loadOwnedToy, toySummaryLead } from '../../lib/my-toy'
@@ -36,6 +36,8 @@ export function ToySummaryScreen({ id }: { id: string }) {
   const [busy, setBusy] = useState(false)
   const [retireNote, setRetireNote] = useState('')
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading')
+  const [offline, setOffline] = useState(false)
+  const [reloadKey, setReloadKey] = useState(0)
 
   useFocusEffect(
     useCallback(() => {
@@ -53,12 +55,14 @@ export function ToySummaryScreen({ id }: { id: string }) {
         })
         .catch((err) => {
           logFailure('[ToySummaryScreen] load failed:', err)
-          if (!ignore) setState('error')
+          if (ignore) return
+          setOffline(isNetworkError(err))
+          setState('error')
         })
       return () => {
         ignore = true
       }
-    }, [id])
+    }, [id, reloadKey])
   )
 
   if (state === 'loading') {
@@ -72,7 +76,21 @@ export function ToySummaryScreen({ id }: { id: string }) {
   if (state === 'error' || !toy) {
     return (
       <Screen>
-        <EmptyState icon="cloud-offline-outline" title="Couldn't load this toy." hint="Check your connection and try again." />
+        <EmptyState
+          icon="cloud-offline-outline"
+          title={offline ? 'You seem to be offline.' : "Couldn't load this toy."}
+          hint="Check your connection and try again."
+        >
+          <Button
+            label="Try again"
+            variant="secondary"
+            onPress={() => {
+              setOffline(false)
+              setState('loading')
+              setReloadKey((k) => k + 1)
+            }}
+          />
+        </EmptyState>
       </Screen>
     )
   }
