@@ -24,3 +24,7 @@ jest.mock('expo-blur', () => {
   const { View } = require('react-native')
   return { BlurView: View }
 })
+
+// The photo preview is a Modal that waits on a tap; screens' tests pick photos
+// straight through. tests/unit/lib/pick-photo.test.ts covers the preview step.
+jest.mock('./components/ui/PhotoPreviewHost', () => ({ PhotoPreviewHost: () => null }))

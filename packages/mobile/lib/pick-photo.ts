@@ -3,7 +3,7 @@
 // photo calls this instead of ImagePicker directly; <PhotoPreviewHost/> (mounted
 // once in the root layout) shows what was chosen and resolves the question.
 // With no host mounted (unit tests) the pick passes straight through.
-import { Keyboard } from 'react-native'
+import { Keyboard, Platform } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 
 export type PreviewAnswer = 'use' | 'again' | 'cancel'
@@ -27,7 +27,7 @@ export async function pickPreviewedPhoto(options: ImagePicker.ImagePickerOptions
   Keyboard.dismiss()
   for (;;) {
     const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ['images'], ...options })
-    if (result.canceled || !result.assets?.length || !hosts.length) return result
+    if (result.canceled || !result.assets?.length || !hosts.length || Platform.OS === 'web') return result
     // iOS drops a Modal presented while the picker is still sliding away, which
     // left this awaiting forever on the phone.
     await new Promise((r) => setTimeout(r, 500))
