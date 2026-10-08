@@ -84,7 +84,7 @@ const hrefs = [...new Set(FEATURES.map((f) => f.href as string))]
 
 describe.each(hrefs)('Home shortcut %s', (href) => {
   it('leaves a way back when it is the first screen of its stack', () => {
-    const file = ROUTES[href]
+    const file = ROUTES[href.split('?')[0]]
     expect(file).toBeDefined()
     const { dir, name } = layoutOf(file)
     // (my) and printing sit in the root stack beside (tabs): their first screen
