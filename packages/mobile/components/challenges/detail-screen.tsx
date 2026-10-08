@@ -28,7 +28,7 @@ import {
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { challengeHistory, challengePill, challengeStats, shortDate } from './challenge-status'
-import { isApiError, OUTCOME_STEPS, outcomeStates, PARTICIPANT_ROLE_LABEL } from '@splat-connect/types'
+import { isApiError, isNetworkError, OUTCOME_STEPS, outcomeStates, PARTICIPANT_ROLE_LABEL } from '@splat-connect/types'
 import type { ToyIdea, ToyIdeaDetail, ToyIdeaMessage, ContactPref } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { confirmDestructive } from '../../lib/confirm'
@@ -109,6 +109,7 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
   const { caps, loading: capsLoading } = useCapabilities()
   const [challenge, setChallenge] = useState<ToyIdeaDetail | null>(null)
   const [loading, setLoading] = useState(true)
+  const [offline, setOffline] = useState(false)
   // Read from the author's own list, not the public one (challenge-author-states).
   const [mine, setMine] = useState(false)
   const [withdrawn, setWithdrawn] = useState(false)
@@ -156,7 +157,9 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
       // rather than replacing a loaded challenge with "couldn't load". While
       // capabilities are still loading we do not yet know whether this is
       // the author, so the skeleton stays and the rerun decides.
-      .catch(() => {
+      .catch((err) => {
+        logFailure('[ChallengeDetailScreen] brief fetch failed:', err)
+        if (!ignore) setOffline(isNetworkError(err))
         if (!ignore && !capsLoading) setLoading(false)
       })
     return () => {
@@ -362,9 +365,18 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
       <View style={styles.screen}>
         <EmptyState
           icon="cloud-offline-outline"
-          title="Couldn't load this challenge."
-          hint="It may have been withdrawn, or your connection dropped."
-        />
+          title={offline ? 'You seem to be offline.' : "Couldn't load this challenge."}
+          hint={offline ? 'Check your connection and try again.' : 'It may have been withdrawn, or your connection dropped.'}
+        >
+          <Button
+            label="Try again"
+            variant="secondary"
+            onPress={() => {
+              setLoading(true)
+              setReloadKey((k) => k + 1)
+            }}
+          />
+        </EmptyState>
       </View>
     )
   }

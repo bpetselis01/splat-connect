@@ -257,7 +257,7 @@ describe('the author’s idea before it is public', () => {
   it('says it could not load, without trying the author’s copy, when the public read fails for a reason other than 404', async () => {
     mockGet.mockRejectedValue(new Error('Network request failed'))
     render(<ChallengeDetailScreen id="c1" />)
-    expect(await screen.findByText("Couldn't load this challenge.")).toBeTruthy()
+    expect(await screen.findByText('You seem to be offline.')).toBeTruthy()
     expect(mockGet).not.toHaveBeenCalledWith('/api/ideas/mine/c1')
   })
 
