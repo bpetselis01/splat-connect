@@ -122,3 +122,49 @@ it('sits Post one gutter above the home indicator, not 24px from the edge', () =
   render(<FeedbackSheet {...base} steps={steps as never} />)
   expect(paddingBottomOf(screen.getByTestId('feedback-sheet'))).toBe(CLEARANCE)
 })
+
+describe('a long guide picks its step from the list sheet', () => {
+  const many = Array.from({ length: 20 }, (_, i) => ({ id: `s${i + 1}`, tutorial_id: 'g', position: i + 1, title: i === 16 ? 'Seal with varnish' : `Part ${i + 1}`, body: 'b', photo_url: null }))
+
+  it('posts the step found by number, and the confirmation names it', async () => {
+    mockPost.mockResolvedValue({ ...posted, step_position: 17 })
+    render(<FeedbackSheet {...base} steps={many as never} />)
+    expect(screen.queryByText('Step 17')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Which step, Choose a step' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Post' }).props.accessibilityState?.disabled).toBe(true)
+    fireEvent.press(screen.getByTestId('step-picker-field'))
+    fireEvent.changeText(screen.getByLabelText('Search steps'), '17')
+    fireEvent.press(screen.getByRole('button', { name: '17. Seal with varnish' }))
+    expect(screen.getByRole('button', { name: 'Which step, 17. Seal with varnish' })).toBeTruthy()
+    fireEvent.changeText(screen.getByLabelText('Your note'), 'Brush it on thin.')
+    fireEvent.press(screen.getByRole('button', { name: 'Post' }))
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/tutorials/g/notes', expect.objectContaining({ step_position: 17, body: 'Brush it on thin.' })))
+    expect(await screen.findByText("It's on the guide's Feedback tab now, under Step 17.")).toBeTruthy()
+  })
+
+  it('opens on the step it was opened from, tagged "you were here"', () => {
+    render(<FeedbackSheet {...base} steps={many as never} initialStep={7} />)
+    expect(screen.getByRole('button', { name: 'Which step, 7. Part 7, you were here' })).toBeTruthy()
+    fireEvent.changeText(screen.getByLabelText('Your note'), 'x')
+    expect(screen.getByRole('button', { name: 'Post' }).props.accessibilityState?.disabled).toBeFalsy()
+  })
+
+  it('Missing step from the list posts a null step', async () => {
+    render(<FeedbackSheet {...base} steps={many as never} initialStep={7} />)
+    fireEvent.press(screen.getByTestId('step-picker-field'))
+    fireEvent.press(screen.getByRole('button', { name: 'Missing step' }))
+    fireEvent.changeText(screen.getByLabelText('Your note'), 'Whole-guide note.')
+    fireEvent.press(screen.getByRole('button', { name: 'Post' }))
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/tutorials/g/notes', expect.objectContaining({ step_position: null })))
+  })
+
+  it('opening the list and closing it leaves the step and the typed note alone', () => {
+    render(<FeedbackSheet {...base} steps={many as never} initialStep={7} />)
+    fireEvent.changeText(screen.getByLabelText('Your note'), 'half written')
+    fireEvent.press(screen.getByTestId('step-picker-field'))
+    fireEvent.press(screen.getByRole('button', { name: 'Close step list' }))
+    expect(screen.getByRole('button', { name: 'Which step, 7. Part 7, you were here' })).toBeTruthy()
+    expect(screen.getByLabelText('Your note').props.value).toBe('half written')
+    expect(base.onClose).not.toHaveBeenCalled()
+  })
+})

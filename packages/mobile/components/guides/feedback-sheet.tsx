@@ -13,7 +13,7 @@ import { pickAndUploadPhoto } from '../../lib/upload'
 import { stepLabel } from '../../lib/guide-notes'
 import { theme } from '../../lib/theme'
 import { useBottomClearance } from '../../lib/bottom-clearance'
-import { Chip } from '../ui/Chip'
+import { StepPicker } from './step-picker'
 import { TextField } from '../ui/TextField'
 import { Button } from '../ui/Button'
 import { ErrorRow } from '../ui/ErrorRow'
@@ -113,13 +113,7 @@ export function FeedbackSheet({ tutorialId, steps, authorFirstName, initialStep,
               </View>
               <ScrollView contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled">
                 <Text style={styles.sub}>{`${authorFirstName} can pin it as a fix so the next builder sees it.`}</Text>
-                <Text style={styles.eyebrow}>Which step?</Text>
-                <View accessibilityLabel="Which step is it about?" style={styles.chips}>
-                  {steps.map((s) => (
-                    <Chip key={s.id} label={`Step ${s.position}`} active={at === s.position} onPress={() => setAt(s.position)} />
-                  ))}
-                  <Chip label="Missing step" active={at === null} onPress={() => setAt(null)} />
-                </View>
+                <StepPicker steps={steps} value={at} onChange={setAt} hereStep={initialStep} eyebrow="Which step?" />
                 <TextField accessibilityLabel="Your note" placeholder="What was missing, or what you did differently…" multiline maxLength={1000} value={body} onChangeText={setBody} />
                 {photo ? (
                   <TextField accessibilityLabel="Photo caption" placeholder="Caption (optional)" maxLength={60} value={caption} onChangeText={setCaption} />
@@ -145,9 +139,7 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   title: { fontFamily: theme.fonts.display, fontSize: theme.type.title, color: theme.colors.ink },
   sub: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted, lineHeight: 20 },
-  eyebrow: { fontFamily: theme.fonts.black, fontSize: theme.type.micro, letterSpacing: 1, textTransform: 'uppercase', color: theme.colors.muted },
   form: { gap: theme.spacing(3), paddingTop: theme.spacing(2) },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing(2) },
   actions: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2) },
   post: { flex: 1 },
   done: { alignItems: 'center', gap: theme.spacing(3), paddingTop: theme.spacing(2) },
