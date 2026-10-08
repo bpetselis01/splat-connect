@@ -119,7 +119,9 @@ export function PrintForOthersScreen({ orgId }: { orgId?: string } = {}) {
   if (loadFailed && !printers) {
     return (
       <Screen>
-        <EmptyState icon="cloud-offline-outline" title="Couldn't load your printers." hint="Check your connection and try again." />
+        <EmptyState icon="cloud-offline-outline" title="Couldn't load your printers." hint="Check your connection and try again.">
+          <Button label="Try again" variant="secondary" onPress={() => void load()} style={styles.retry} />
+        </EmptyState>
       </Screen>
     )
   }
@@ -490,6 +492,7 @@ function IncomingCard({
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  retry: { marginTop: theme.spacing(5), alignSelf: 'center', paddingHorizontal: theme.spacing(8) },
   tabs: {
     flexDirection: 'row',
     padding: 4,
