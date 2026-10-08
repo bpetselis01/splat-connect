@@ -95,7 +95,7 @@ describe('IncomingPrintCard, customization answers', () => {
   it('lists the answers under the note', () => {
     render(
       <IncomingPrintCard
-        tx={{ ...tx, print_note: 'Blue please', print_fit_notes: { reach: '20–40 cm', tray: '15 mm' } }}
+        tx={{ ...tx, print_note: 'Blue please', print_fit_notes: [{ label: 'Reach from seated', value: '20–40 cm' }, { label: 'Tray thickness', value: '15 mm' }] }}
         defaultAddress={null}
       />
     )
@@ -104,7 +104,7 @@ describe('IncomingPrintCard, customization answers', () => {
   })
 
   it('shows the answers even without a note', () => {
-    render(<IncomingPrintCard tx={{ ...tx, print_fit_notes: { mount: 'None' } }} defaultAddress={null} />)
+    render(<IncomingPrintCard tx={{ ...tx, print_fit_notes: [{ label: 'Mount needed', value: 'None' }] }} defaultAddress={null} />)
     expect(screen.getByText('Mount needed: None')).toBeTruthy()
   })
 

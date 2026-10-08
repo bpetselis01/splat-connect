@@ -6,6 +6,7 @@ import { Suspense } from 'react'
 import { EditFilesSection } from '@/components/edit-files-section'
 import { AddStlForm } from '@/components/add-stl-form'
 import { StlSettingsForm, type StlSettings } from '@/components/stl-settings-form'
+import { CustomizationFieldsForm } from '@/components/customization-fields-form'
 import { EditItemsSection, type ItemInput } from '@/components/edit-items-section'
 import { PricesCheckedField } from '@/components/prices-checked-field'
 import { EditBackingSection } from '@/components/edit-backing-section'
@@ -54,7 +55,7 @@ import { formatRelativeTime } from '@/lib/relative-time'
 import { TutorialView } from '@/components/tutorial-view'
 import { getMissingFields } from '@/lib/validation'
 import { DeleteEntityButton } from '@/components/delete-entity-button'
-import type { Tutorial, Part, Tool, StlFile, TutorialWithDetails, Difficulty, TutorialKind, BuyLink, TutorialOrg, Organization, TutorialMaturity, TutorialStep } from '@splat-connect/types'
+import type { CustomizationField, Tutorial, Part, Tool, StlFile, TutorialWithDetails, Difficulty, TutorialKind, BuyLink, TutorialOrg, Organization, TutorialMaturity, TutorialStep } from '@splat-connect/types'
 
 /**
  * The body both file-saving actions share. A plain function at module scope,
@@ -236,6 +237,12 @@ export default async function EditTutorialPage({
     revalidatePath(`/tutorials/${id}/edit`)
   }
 
+  async function saveCustomizationFields(fields: CustomizationField[]) {
+    'use server'
+    await patchTutorialFiles(id, { customization_fields: fields })
+    revalidatePath(`/tutorials/${id}/edit`)
+  }
+
   async function saveRecommendations(picks: { recommended_id: string; required: boolean }[]) {
     'use server'
     await apiClient.post(`/api/tutorials/${id}/recommendations`, {
@@ -347,6 +354,7 @@ export default async function EditTutorialPage({
         <div className="panel px-5 pt-5 pb-5">
           {stlFiles.length > 0 && <StlSettingsForm files={stlFiles} onSave={saveStlSettings} />}
           <AddStlForm tutorialId={id} onAdd={addStlFileRecord} />
+          <CustomizationFieldsForm initial={tutorial.customization_fields ?? []} onSave={saveCustomizationFields} />
         </div>
       ),
     },

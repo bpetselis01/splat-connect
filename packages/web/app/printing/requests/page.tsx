@@ -15,11 +15,11 @@ import { getCapabilities } from '@/lib/capabilities'
 import { apiClient } from '@/lib/api-client'
 import { BackLink } from '@/components/back-link'
 import { RequestPrintForm, type PrintablePart } from '@/components/request-print-form'
-import type { PrinterWithOwner } from '@splat-connect/types'
+import type { CustomizationField, PrinterWithOwner } from '@splat-connect/types'
 
 export const metadata = { title: 'Request a print — SPLAT Connect' }
 
-type GuideWithFiles = { id: string; title: string; stl_files?: PrintablePart[] }
+type GuideWithFiles = { id: string; title: string; stl_files?: PrintablePart[]; customization_fields?: CustomizationField[] }
 
 export default async function RequestAPrintPage({
   searchParams,
@@ -76,6 +76,7 @@ export default async function RequestAPrintPage({
           tutorialId={tutorial.id}
           tutorialTitle={tutorial.title}
           parts={tutorial.stl_files ?? []}
+          fields={tutorial.customization_fields ?? []}
           printers={theirs}
           header={header}
           requesterSuburb={
