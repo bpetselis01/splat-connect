@@ -306,6 +306,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1.2,
     textTransform: 'uppercase',
     color: theme.colors.muted,
+    marginTop: theme.spacing(3),
     marginBottom: theme.spacing(2),
   },
   photoBroken: {
@@ -351,17 +352,16 @@ const styles = StyleSheet.create({
     borderRadius: theme.radii.field,
     marginBottom: theme.spacing(3),
   },
+  // Top-left on the image: the cell also holds the caption field, so a flag pinned to
+  // the cell's bottom drew over the caption.
   coverFlag: {
     position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
+    top: theme.spacing(2),
+    left: theme.spacing(2),
     backgroundColor: theme.colors.apricot,
-    borderTopWidth: theme.border.hairline,
-    borderTopColor: theme.colors.border,
-    borderBottomLeftRadius: theme.radii.field,
-    borderBottomRightRadius: theme.radii.field,
+    borderRadius: theme.radii.pill,
     paddingVertical: theme.spacing(0.5),
+    paddingHorizontal: theme.spacing(2),
   },
   coverFlagText: {
     fontFamily: theme.fonts.black,
