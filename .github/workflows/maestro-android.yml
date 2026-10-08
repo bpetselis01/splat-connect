@@ -1,0 +1,98 @@
+name: Device flows (Maestro, Android)
+
+# PROPOSED, NEVER RUN. Written 2026-10-08 from the pieces that exist (the
+# `device:build` / `device:fixture` / `device:test` scripts in
+# packages/mobile/package.json and the local-Supabase composite action) without
+# a runner to prove them on. What is unproven:
+#   - the Android release build (expo prebuild + gradle) finishing inside the
+#     job limit on a 2-core runner, and the emulator booting with KVM;
+#   - the flows themselves on Android: they were written and last run against
+#     the iOS simulator (Keychain "Not Now" alert, accessibilityLabel matching)
+#     and the SP6 flows (feedback-sheet-post, note-report, inbox-badge-live,
+#     deep-link-cold-start) were never run anywhere;
+#   - 10.0.2.2 reaching the runner's Supabase/API from inside the emulator.
+# So it is manual-only (workflow_dispatch), never a required check, and
+# continue-on-error keeps a red run from reading as a broken PR. Promote it to
+# a path-gated pull_request trigger (packages/mobile/**, supabase/**,
+# packages/api/**) only after a few green manual runs.
+# Static validation of the flows already runs in unit CI:
+# packages/mobile/tests/unit/lib/maestro-flows.test.ts.
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  maestro:
+    name: Maestro on Android emulator
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - uses: ./.github/actions/supabase-start
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Enable KVM for the emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Install Maestro
+        run: |
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      - name: Start the API against local Supabase
+        working-directory: packages/api
+        run: |
+          eval "$(supabase status -o env | sed 's/^/export /')"
+          SUPABASE_URL="$API_URL" SUPABASE_ANON_KEY="$ANON_KEY" SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" \
+            API_PORT=3102 PORT=3102 nohup ./node_modules/.bin/tsx src/index.ts > "$RUNNER_TEMP/api.log" 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://localhost:3102/api/public/tutorials >/dev/null && exit 0; sleep 2; done
+          cat "$RUNNER_TEMP/api.log"; exit 1
+
+      # The emulator reaches the runner at 10.0.2.2. EXPO_PUBLIC_* are baked in at build.
+      - name: Build the release APK
+        working-directory: packages/mobile
+        env:
+          EXPO_PUBLIC_API_URL: http://10.0.2.2:3102
+        run: |
+          eval "$(supabase status -o env | sed 's/^/export /')"
+          export EXPO_PUBLIC_SUPABASE_URL=http://10.0.2.2:54321 EXPO_PUBLIC_SUPABASE_ANON_KEY="$ANON_KEY"
+          pnpm device:build
+
+      - name: Provision the device account
+        id: fixture
+        working-directory: packages/mobile
+        run: pnpm --silent device:fixture >> "$RUNNER_TEMP/device.env"
+
+      - name: Run the flows on an emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          profile: pixel_6
+          working-directory: packages/mobile
+          script: |
+            adb install android/app/build/outputs/apk/release/app-release.apk
+            maestro test $(sed 's/^/--env /' "$RUNNER_TEMP/device.env" | tr '\n' ' ') --format junit --output "$RUNNER_TEMP/maestro.xml" .maestro/flows/
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: maestro-report
+          path: ${{ runner.temp }}/maestro.xml
+          if-no-files-found: ignore
+
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop --no-backup
