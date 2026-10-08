@@ -261,6 +261,7 @@ export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; p
         </View>
 
         <View style={styles.group}>
+          {/* PENDING(generated-stl-sizes): a chosen size will render its own STL. */}
           <Eyebrow>Customization</Eyebrow>
           <Text style={styles.meta}>
             Physical dimensions we use to size printed mounts and brackets. Nothing here is required.

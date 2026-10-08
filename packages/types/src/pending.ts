@@ -990,6 +990,13 @@ export const PENDING = {
     needs: "A new notification type (migration), sent from the accept and decline routes, plus its copy on web and mobile. Found by the notification-chains work.",
     question: "Add accepted and declined backing notifications (migration, API, copy on web and mobile), or leave families to find out on the guide page?",
   },
+  'generated-stl-sizes': {
+    title: "Sizes that make themselves",
+    blurb: "Choosing a size on a print request will produce the right STL automatically, so a printer no longer has to adjust the design by hand.",
+    kind: "build",
+    platforms: ["api", "mobile", "web"],
+    needs: "Follows contributor-defined customization fields (docs/superpowers/specs/2026-10-09-contributor-customization-fields-design.md). A contributor attaches a parametric OpenSCAD file whose parameters map to their fields (the optional `param` on each field); on request the API renders the STL in a sandbox with a time limit, checks the bounding box against the printer's bed, and shows the printer a preview. Small/Medium/Large are parameter-set presets.",
+  },
 } satisfies Record<string, PendingItem>
 
 export type PendingId = keyof typeof PENDING
