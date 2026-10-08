@@ -6,7 +6,7 @@ import { useFocusEffect, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import * as ImagePicker from 'expo-image-picker'
 import type { OfferType, Toy, ToyTransactionSummary } from '@splat-connect/types'
-import { apiMessage, computeToyStepStatuses, getMissingToyFields, isOwnerSide, MAX_PHOTOS, type ToyStepId } from '@splat-connect/types'
+import { apiMessage, isNetworkError, computeToyStepStatuses, getMissingToyFields, isOwnerSide, MAX_PHOTOS, type ToyStepId } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { loadOwnedToy } from '../../lib/my-toy'
 import { confirmDestructive, notify } from '../../lib/confirm'
@@ -47,6 +47,8 @@ export function Editor({ id }: { id: string }) {
   const [transactions, setTransactions] = useState<ToyTransactionSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
+  const [offline, setOffline] = useState(false)
+  const [reloadKey, setReloadKey] = useState(0)
   const [activeStep, setActiveStep] = useState<ToyStepId>('details')
 
   const [name, setName] = useState('')
@@ -82,6 +84,7 @@ export function Editor({ id }: { id: string }) {
     let ignore = false
     setLoading(true)
     setLoadError(false)
+    setOffline(false)
     Promise.all([
       loadOwnedToy(id),
       apiClient.get<ToyTransactionSummary[]>('/api/toy-transactions'),
@@ -110,7 +113,9 @@ export function Editor({ id }: { id: string }) {
       })
       .catch((err) => {
         logFailure('[Editor] toy fetch failed:', err)
-        if (!ignore) setLoadError(true)
+        if (ignore) return
+        setOffline(isNetworkError(err))
+        setLoadError(true)
       })
       .finally(() => {
         if (!ignore) setLoading(false)
@@ -126,7 +131,7 @@ export function Editor({ id }: { id: string }) {
     return () => {
       ignore = true
     }
-  }, [id])
+  }, [id, reloadKey])
 
   // The offers row is a mount-time list, and the requests it counts get
   // answered on other screens: coming back refetches just the transactions.
@@ -164,9 +169,11 @@ export function Editor({ id }: { id: string }) {
       <Screen>
         <EmptyState
           icon="cloud-offline-outline"
-          title="Couldn't load this toy."
+          title={offline ? 'You seem to be offline.' : "Couldn't load this toy."}
           hint="Check your connection and try again."
-        />
+        >
+          <Button label="Try again" variant="secondary" onPress={() => setReloadKey((k) => k + 1)} />
+        </EmptyState>
       </Screen>
     )
   }

@@ -183,7 +183,7 @@ describe('loading', () => {
   it('says the toy did not load when the request fails', async () => {
     mockGet.mockRejectedValue(new TypeError('Network request failed'))
     render(<Editor id="toy1" />)
-    expect(await screen.findByText("Couldn't load this toy.")).toBeTruthy()
+    expect(await screen.findByText('You seem to be offline.')).toBeTruthy()
   })
 })
 
