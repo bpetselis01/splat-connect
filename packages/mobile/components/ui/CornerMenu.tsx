@@ -1,4 +1,4 @@
-// Pinned corner action menu: an apricot "Actions" pill in the bottom-right,
+// Pinned corner action menu: a dark "Actions" pill (the Map tab's List button) in the bottom-right,
 // fanning its items upward as pill buttons (the same pill, hairline and
 // elevation as Button and the filter control). (A hamburger top-right until 2026-09-23, when the
 // tab headings took the mascot and that corner.) Replaces the header CTA buttons on Guides and Toy Library, which
@@ -82,7 +82,7 @@ export function CornerMenu({ label, items }: { label: string; items: CornerMenuI
       {/* The board's grid disc, bottom-right above the tab bar: reachable
           by a thumb from anywhere in the list, and clear of the mascot the
           tab heading now carries top-right. The menu fans upward from it. */}
-      <View testID="corner-menu-zone" style={[styles.zone, { bottom: tabBarClearance(insets.bottom) }]} pointerEvents="box-none">
+      <View testID="corner-menu-zone" style={[styles.zone, { bottom: tabBarClearance(insets.bottom) - theme.spacing(1) }]} pointerEvents="box-none">
         {open ? (
           <View accessibilityViewIsModal onAccessibilityEscape={toggle} style={styles.menu}>
             {items.map((item, i) => (
@@ -128,12 +128,12 @@ export function CornerMenu({ label, items }: { label: string; items: CornerMenuI
         >
           <View style={styles.triggerGlyph}>
             <Animated.View style={menuIcon}>
-              <Ionicons name="grid-outline" size={18} color={theme.colors.ink} />
+              <Ionicons name="grid-outline" size={16} color={theme.colors.onInverse} />
             </Animated.View>
             {/* Absolute so the two glyphs share one box and neither shifts the
                 other while they cross. */}
             <Animated.View style={[styles.triggerIcon, closeIcon]}>
-              <Ionicons name="close" size={20} color={theme.colors.ink} />
+              <Ionicons name="close" size={16} color={theme.colors.onInverse} />
             </Animated.View>
           </View>
           <Text style={styles.triggerLabel}>{open ? 'Close' : 'Actions'}</Text>
@@ -158,22 +158,20 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     gap: theme.spacing(2),
   },
-  triggerGlyph: { width: 20, height: 20, alignItems: 'center', justifyContent: 'center' },
+  triggerGlyph: { width: 16, height: 16, alignItems: 'center', justifyContent: 'center' },
   triggerIcon: { position: 'absolute' },
-  // Button's accent variant: apricot, hairline, elevation 2, 48px pill.
+  // The Map tab's List/Map button: the dark pill, 44px, elevation 3.
   trigger: {
-    minHeight: 48,
+    minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing(2),
-    paddingHorizontal: theme.spacing(5),
+    gap: 6,
+    paddingHorizontal: theme.spacing(4),
     borderRadius: theme.radii.pill,
-    borderWidth: theme.border.hairline,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.apricot,
-    ...theme.shadow(2),
+    backgroundColor: theme.colors.inverse,
+    ...theme.shadow(3),
   },
-  triggerLabel: { fontFamily: theme.fonts.black, fontSize: theme.type.body, color: theme.colors.ink },
+  triggerLabel: { fontFamily: theme.fonts.black, fontSize: theme.type.label, color: theme.colors.onInverse },
   menu: { alignItems: 'flex-end', gap: theme.spacing(2) },
   item: {
     flexDirection: 'row',
