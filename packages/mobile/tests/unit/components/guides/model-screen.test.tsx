@@ -49,14 +49,14 @@ it('names the part, signs its path and loads it into the page once the page is r
   expect(mockInject).toHaveBeenCalledTimes(1)
 })
 
-it('shows the error state with Retry when signing fails, and never injects', async () => {
+it('shows the error state with Try again when signing fails, and never injects', async () => {
   mockSign.mockResolvedValue({ data: null, error: { message: 'Object not found' } })
   render(<ModelScreen id="g" file="f1" />)
   expect(await screen.findByText("Couldn't load this part.")).toBeTruthy()
   page({ type: 'ready' })
   expect(mockInject).not.toHaveBeenCalled()
   mockSign.mockResolvedValue({ data: { signedUrl: 'https://s/again.stl' }, error: null })
-  fireEvent.press(screen.getByRole('button', { name: 'Retry' }))
+  fireEvent.press(screen.getByRole('button', { name: 'Try again' }))
   await waitFor(() => expect(mockSign).toHaveBeenCalledTimes(2))
 })
 
@@ -103,13 +103,13 @@ it('a file id the guide does not have shows not found', async () => {
   expect(await screen.findByText('This part is no longer on the guide.')).toBeTruthy()
 })
 
-it('Retry after an error reloads the page and injects only once it posts ready again', async () => {
+it('Try again after an error reloads the page and injects only once it posts ready again', async () => {
   mockSign.mockResolvedValueOnce({ data: null, error: { message: 'x' } })
   render(<ModelScreen id="g" file="f1" />)
   await screen.findByText("Couldn't load this part.")
   page({ type: 'ready' })
   mockSign.mockResolvedValue({ data: { signedUrl: 'https://s/new.stl' }, error: null })
-  fireEvent.press(screen.getByRole('button', { name: 'Retry' }))
+  fireEvent.press(screen.getByRole('button', { name: 'Try again' }))
   await waitFor(() => expect(mockSign).toHaveBeenCalledTimes(2))
   await screen.findByTestId('webview')
   expect(mockInject).not.toHaveBeenCalled()
@@ -117,11 +117,11 @@ it('Retry after an error reloads the page and injects only once it posts ready a
   await waitFor(() => expect(mockInject).toHaveBeenCalledWith(expect.stringContaining('https://s/new.stl')))
 })
 
-it('Retry refetches the guide when that fetch failed', async () => {
+it('Try again refetches the guide when that fetch failed', async () => {
   mockGet.mockRejectedValueOnce(new Error('offline'))
   render(<ModelScreen id="g" file="f1" />)
   await screen.findByText("Couldn't load this part.")
-  fireEvent.press(screen.getByRole('button', { name: 'Retry' }))
+  fireEvent.press(screen.getByRole('button', { name: 'Try again' }))
   expect(await screen.findByText('Lts base · lts_base.stl')).toBeTruthy()
 })
 

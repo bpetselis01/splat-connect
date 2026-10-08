@@ -9,7 +9,7 @@ import { WebView } from 'react-native-webview'
 import { Ionicons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import type { StlFile } from '@splat-connect/types'
+import { isNetworkError, type StlFile } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { supabase } from '../../lib/supabase'
 import { STL_PREVIEW_MAX_BYTES, stlName, webGuideUrl } from '../../lib/guide-files'
@@ -30,6 +30,7 @@ export function ModelScreen({ id, file }: { id: string; file: string }) {
   const [url, setUrl] = useState<string | null>(null)
   const [pageReady, setPageReady] = useState(false)
   const [state, setState] = useState<State>('loading')
+  const [offline, setOffline] = useState(false)
   const [attempt, setAttempt] = useState(0)
   const [hint, setHint] = useState(true)
   const injectedUrl = useRef<string | null>(null)
@@ -38,7 +39,7 @@ export function ModelScreen({ id, file }: { id: string; file: string }) {
   const index = files && part ? files.indexOf(part) : -1
 
   useEffect(() => {
-    apiClient.get<{ stl_files: StlFile[] }>(`/api/public/tutorials/${id}`).then((g) => setFiles(g.stl_files)).catch(() => setState('error'))
+    apiClient.get<{ stl_files: StlFile[] }>(`/api/public/tutorials/${id}`).then((g) => setFiles(g.stl_files)).catch((err) => { setOffline(isNetworkError(err)); setState('error') })
   }, [id, attempt])
 
   useEffect(() => {
@@ -72,7 +73,7 @@ export function ModelScreen({ id, file }: { id: string; file: string }) {
   }
 
   function retry() {
-    setState('loading'); setUrl(null); setFiles(null); setPageReady(false); injectedUrl.current = null; setAttempt((n) => n + 1)
+    setState('loading'); setOffline(false); setUrl(null); setFiles(null); setPageReady(false); injectedUrl.current = null; setAttempt((n) => n + 1)
   }
 
   const title = part ? `${stlName(part.filename)} · ${part.filename}` : '3D view'
@@ -94,8 +95,8 @@ export function ModelScreen({ id, file }: { id: string; file: string }) {
           <EmptyState icon="cube-outline" title="This part is no longer on the guide." />
         ) : state === 'error' ? (
           <View style={styles.center}>
-            <EmptyState icon="cloud-offline-outline" title="Couldn't load this part." />
-            <Button label="Retry" variant="secondary" onPress={retry} />
+            <EmptyState icon="cloud-offline-outline" title={offline ? 'You seem to be offline.' : "Couldn't load this part."} />
+            <Button label="Try again" variant="secondary" onPress={retry} />
           </View>
         ) : state === 'toobig' ? (
           <View style={styles.center}>
