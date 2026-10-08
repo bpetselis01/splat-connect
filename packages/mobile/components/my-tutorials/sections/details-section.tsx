@@ -155,22 +155,24 @@ export function DetailsSection() {
             a guide can go back to "any age"; the 0–18 bound is the database's. */}
         <Text style={styles.label}>Age range</Text>
         <View style={styles.chipRow}>
-          <TextField
-            accessibilityLabel="Youngest age"
-            placeholder="From"
-            keyboardType="number-pad"
-            value={tutorial.age_min == null ? '' : String(tutorial.age_min)}
-            onChangeText={(text) => save({ age_min: parseYears(text) })}
-            boxStyle={styles.ageBox}
-          />
-          <TextField
-            accessibilityLabel="Oldest age"
-            placeholder="To"
-            keyboardType="number-pad"
-            value={tutorial.age_max == null ? '' : String(tutorial.age_max)}
-            onChangeText={(text) => save({ age_max: parseYears(text) })}
-            boxStyle={styles.ageBox}
-          />
+          <View style={styles.ageBox}>
+            <TextField
+              accessibilityLabel="Youngest age"
+              placeholder="From"
+              keyboardType="number-pad"
+              value={tutorial.age_min == null ? '' : String(tutorial.age_min)}
+              onChangeText={(text) => save({ age_min: parseYears(text) })}
+            />
+          </View>
+          <View style={styles.ageBox}>
+            <TextField
+              accessibilityLabel="Oldest age"
+              placeholder="To"
+              keyboardType="number-pad"
+              value={tutorial.age_max == null ? '' : String(tutorial.age_max)}
+              onChangeText={(text) => save({ age_max: parseYears(text) })}
+            />
+          </View>
         </View>
         <Text style={styles.hint}>In years. Leave both blank if it suits any age.</Text>
 
