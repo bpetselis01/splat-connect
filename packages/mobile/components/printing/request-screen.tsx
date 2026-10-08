@@ -65,8 +65,10 @@ export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; p
   const [agree, setAgree] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
 
   useEffect(() => {
+    setLoadFailed(false)
     Promise.all([
       apiClient.get<Guide>(`/api/public/tutorials/${guideId}`),
       apiClient.get<PrinterWithOwner[]>('/api/printers'),
@@ -85,12 +87,14 @@ export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; p
       })
     // printerIds is a fresh array per render of the route; its string is stable.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [guideId, printerIds.join(',')])
+  }, [guideId, printerIds.join(','), reloadKey])
 
   if (loadFailed) {
     return (
       <Screen>
-        <EmptyState icon="cloud-offline-outline" title="Couldn't load this guide." hint="Check your connection and try again." />
+        <EmptyState icon="cloud-offline-outline" title="Couldn't load this guide." hint="Check your connection and try again.">
+          <Button label="Try again" variant="secondary" onPress={() => setReloadKey((k) => k + 1)} style={styles.retry} />
+        </EmptyState>
       </Screen>
     )
   }
@@ -354,6 +358,7 @@ export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; p
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  retry: { marginTop: theme.spacing(5), alignSelf: 'center', paddingHorizontal: theme.spacing(8) },
   content: { paddingBottom: theme.spacing(6), gap: theme.spacing(5) },
   eyebrow: {
     fontFamily: theme.fonts.black,
