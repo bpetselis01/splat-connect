@@ -119,6 +119,34 @@ const { error: stepsError } = await admin.from('tutorial_steps').insert([
 ])
 if (stepsError) throw new Error(`Failed to seed guide steps: ${stepsError.message}`)
 
+// A second guide with eight steps, past the five where the feedback sheet's
+// step chips become the "Which step?" field and list sheet. Its own guide so
+// the two-step guide above keeps the build-mode flow short.
+const longGuideTitle = `Device long guide ${Date.now()}`
+const { data: longGuide, error: longGuideError } = await admin
+  .from('tutorials')
+  .insert({
+    title: longGuideTitle,
+    description: 'Seeded by provision-device-parent for the step picker flow.',
+    difficulty: 'easy',
+    kind: 'toy_adaptation',
+    status: 'approved',
+    safety_declared_at: new Date().toISOString(),
+    photo_urls: ['https://example.invalid/device-guide-1.jpg'],
+  })
+  .select('id')
+  .single()
+if (longGuideError || !longGuide) throw new Error(`Failed to seed long guide: ${longGuideError?.message}`)
+const { error: longLinkError } = await admin
+  .from('tutorial_contributors')
+  .insert({ tutorial_id: longGuide.id, profile_id: data.user.id, role: 'primary' })
+if (longLinkError) throw new Error(`Failed to link long guide author: ${longLinkError.message}`)
+const longTitles = ['Gather your parts', 'Sand the edges', 'Glue the frame', 'Clamp it', 'Let it dry', 'Drill the holes', 'Fit the wheels', 'Seal with varnish']
+const { error: longStepsError } = await admin.from('tutorial_steps').insert(
+  longTitles.map((title, i) => ({ tutorial_id: longGuide.id, position: i + 1, title, body: 'Do it.' }))
+)
+if (longStepsError) throw new Error(`Failed to seed long guide steps: ${longStepsError.message}`)
+
 // One part, so the Files tab has a 3D pill. Signing the file's path fails for a
 // missing object, so the bytes go up too.
 const stlPath = `${guide.id}/device_base.stl`
@@ -156,3 +184,5 @@ console.log(`DEVICE_PASSWORD=${PASSWORD}`)
 console.log(`DEVICE_USER_ID=${data.user.id}`)
 console.log(`DEVICE_GUIDE_ID=${guide.id}`)
 console.log(`DEVICE_GUIDE_TITLE=${guideTitle}`)
+console.log(`DEVICE_LONG_GUIDE_ID=${longGuide.id}`)
+console.log(`DEVICE_LONG_GUIDE_TITLE=${longGuideTitle}`)

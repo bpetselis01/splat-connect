@@ -1,0 +1,68 @@
+# journeys: B04 G23
+# The "Which step?" field and its list sheet on a guide longer than five steps:
+# a second Modal stacked on the feedback sheet's Modal, with a search box that
+# must stay above the keyboard. react-native-web draws both as one layer and
+# has no keyboard, so only a device proves the list opens over the sheet, the
+# search is not trapped behind the keyboard, and the row lands on the step.
+#
+# The guide has eight steps, seeded by scripts/provision-device-parent.mjs.
+# DEVICE_EMAIL, DEVICE_PASSWORD, DEVICE_LONG_GUIDE_TITLE and DEVICE_LONG_GUIDE_ID
+# come from `maestro test --env`, as in feedback-sheet-post.yaml.
+appId: com.splatconnect.mobile
+---
+- clearState
+- runFlow: ../subflows/launch.yaml
+- runFlow: ../subflows/sign-in.yaml
+- runFlow:
+    file: ../subflows/open-device-guide.yaml
+    env:
+      DEVICE_GUIDE_TITLE: ${DEVICE_LONG_GUIDE_TITLE}
+- runFlow: ../subflows/dismiss-dev-toast.yaml
+
+# The Feedback tab's composer bar opens the sheet.
+- scrollUntilVisible:
+    element:
+      text: "Feedback.*"
+- tapOn:
+    text: "Feedback.*"
+- tapOn:
+    text: "Share a fix or a tip.*"
+- assertVisible:
+    text: "How did it go?"
+# No wall of pills: one field, and Step 8 is not a chip.
+- assertNotVisible:
+    text: "Step 8"
+- tapOn:
+    text: "Choose a step"
+
+# The list sheet is stacked on the first. Type into the search with the keyboard
+# up: the row must stay visible above it.
+- assertVisible:
+    text: "Type a number or a word"
+- tapOn:
+    text: "Type a number or a word"
+- inputText: "8"
+- assertVisible:
+    text: "Seal with varnish"
+- tapOn:
+    text: "Seal with varnish"
+
+# Back on the feedback sheet with the step chosen.
+- assertVisible:
+    text: "8. Seal with varnish"
+- tapOn:
+    text: "Your note.*"
+- inputText: "Maestro picker note on step eight"
+- tapOn:
+    text: "How did it go?"
+- tapOn:
+    text: "Post"
+- assertVisible:
+    text: "Feedback posted"
+
+# The row is the real result: the confirmation alone would show on a 500.
+- runScript:
+    file: ../scripts/assert-row.js
+    env:
+      TABLE: tutorial_notes
+      QUERY: tutorial_id=eq.${DEVICE_LONG_GUIDE_ID}&step_position=eq.8&body=eq.Maestro%20picker%20note%20on%20step%20eight
