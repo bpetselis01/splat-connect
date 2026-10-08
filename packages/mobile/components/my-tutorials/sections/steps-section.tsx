@@ -90,7 +90,7 @@ function StepsEditor() {
 
   return (
     <Screen>
-      <ScrollView showsVerticalScrollIndicator={false} automaticallyAdjustKeyboardInsets>
+      <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" automaticallyAdjustKeyboardInsets>
         {rows.length === 0 ? (
           <Text style={styles.empty}>
             One photo and one instruction per action. Optional — the PDF still carries the guide.

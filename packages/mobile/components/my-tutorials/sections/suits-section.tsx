@@ -26,7 +26,7 @@ function SuitsEditor() {
   }
   return (
     <Screen>
-      <ScrollView showsVerticalScrollIndicator={false} automaticallyAdjustKeyboardInsets>
+      <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" automaticallyAdjustKeyboardInsets>
         <SuitsFields value={form} onChange={change} guide />
         <ErrorRow message={saveError} />
       </ScrollView>

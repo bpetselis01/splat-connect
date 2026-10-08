@@ -36,7 +36,7 @@ function SafetyEditor() {
 
   return (
     <Screen>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" automaticallyAdjustKeyboardInsets>
         <Text style={styles.lead}>Anything that could hurt a child, stated plainly.</Text>
         {SAFETY_CHECKLIST.map((item) => (
           <Text key={item} style={styles.item}>

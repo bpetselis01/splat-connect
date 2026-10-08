@@ -44,7 +44,7 @@ export function DetailsSection() {
 
   return (
     <Screen>
-      <ScrollView showsVerticalScrollIndicator={false} automaticallyAdjustKeyboardInsets>
+      <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" automaticallyAdjustKeyboardInsets>
         <Text style={styles.lead}>What the toy is, who it suits, and who is backing the guide.</Text>
         <TextField
           label="Title"

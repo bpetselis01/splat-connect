@@ -67,7 +67,7 @@ function ItemsEditor({ noun }: { noun: 'parts' | 'tools' }) {
 
   return (
     <Screen>
-      <ScrollView showsVerticalScrollIndicator={false} automaticallyAdjustKeyboardInsets>
+      <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" automaticallyAdjustKeyboardInsets>
         <Text style={styles.lead}>{LEAD[noun]}</Text>
         {rows.length === 0 ? <Text style={styles.empty}>No {noun} yet.</Text> : null}
 

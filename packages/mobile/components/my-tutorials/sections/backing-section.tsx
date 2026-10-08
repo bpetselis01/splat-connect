@@ -75,7 +75,7 @@ export function BackingSection() {
 
   return (
     <Screen>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" automaticallyAdjustKeyboardInsets>
         {backing.length === 0 ? (
           <Text style={styles.lead}>
             No organisation is backing this project yet. SPLAT will review it — asking an organisation is optional.

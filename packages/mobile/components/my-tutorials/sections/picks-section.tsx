@@ -71,7 +71,7 @@ function PicksEditor() {
 
   return (
     <Screen>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" automaticallyAdjustKeyboardInsets>
         <Text style={styles.lead}>
           Up to three guides worth looking at alongside this one. Parents only see the ones that have been approved.
         </Text>

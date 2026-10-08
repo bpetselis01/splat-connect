@@ -163,7 +163,7 @@ export function FilesSection() {
 
   return (
     <Screen>
-      <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" automaticallyAdjustKeyboardInsets>
         {/* Both halves are labelled. Unlabelled, the only thing naming the PDF
             was its own filename, so which button belonged to which artefact had
             to be read off the order they happened to be in. */}
