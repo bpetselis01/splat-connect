@@ -98,6 +98,14 @@ describe('LibraryScreen', () => {
     expect(clears(screen.UNSAFE_getAllByType(FlatList))).toBe(true)
   })
 
+  it('offers Request a print in the Guide actions menu', async () => {
+    render(<LibraryScreen />)
+    await screen.findByText('Build a Robot Arm')
+    fireEvent.press(screen.getByLabelText('Guide actions'))
+    fireEvent.press(screen.getByLabelText('Request a print'))
+    expect(mockPush).toHaveBeenCalledWith('/printing')
+  })
+
   it('carries an organisation to print with into the guide it opens', async () => {
     mockParams = { printWith: 'o1' }
     render(<LibraryScreen />)

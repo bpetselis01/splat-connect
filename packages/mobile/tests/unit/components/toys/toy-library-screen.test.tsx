@@ -211,6 +211,15 @@ describe('ToyLibraryScreen', () => {
     expect(mockPush).toHaveBeenCalledWith('/toy-library/t1')
   })
 
+  it('offers Toys near me in the Toy actions menu, opening the map on toys', async () => {
+    mockGet.mockResolvedValue([toy({ id: 't1', name: 'Bubble machine' })])
+    render(<ToyLibraryScreen />)
+    await screen.findByText('Bubble machine')
+    fireEvent.press(screen.getByLabelText('Toy actions'))
+    fireEvent.press(screen.getByLabelText('Toys near me'))
+    expect(mockPush).toHaveBeenCalledWith('/map?kind=toy')
+  })
+
   it('navigates to give-a-toy and organisations from their respective rows', async () => {
     mockGet.mockResolvedValue([toy({ id: 't1', name: 'Bubble machine' })])
     render(<ToyLibraryScreen />)

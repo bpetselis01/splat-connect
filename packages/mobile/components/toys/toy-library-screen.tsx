@@ -266,6 +266,7 @@ export function ToyLibraryScreen() {
           { label: 'My toys', icon: 'cube-outline', href: '/toys', tint: theme.colors.apricotSoft },
           { label: 'My exchanges', icon: 'swap-horizontal-outline', href: '/exchanges', count: caps?.exchangeActions, tint: theme.colors.accentLight },
           { label: 'Saved toys', icon: 'heart-outline', href: '/saved/toys', tint: theme.colors.mintSoft },
+          { label: 'Toys near me', icon: 'map-outline', href: '/map?kind=toy', tint: theme.colors.violetSoft },
         ]}
       />
     </Screen>
