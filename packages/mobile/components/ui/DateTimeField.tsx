@@ -117,7 +117,7 @@ export function DateTimeField({
             display={mode === 'date' ? 'inline' : 'spinner'}
             minimumDate={minimumDate}
             accentColor={theme.colors.primary}
-            themeVariant="light"
+            themeVariant={theme.dark ? "dark" : "light"}
             onValueChange={pick}
           />
           <Pressable onPress={() => setOpen(false)} accessibilityRole="button" style={styles.done}>

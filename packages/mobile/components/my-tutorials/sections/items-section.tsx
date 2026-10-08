@@ -280,6 +280,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.muted,
     borderRadius: theme.radii.pill,
     minHeight: 50,
+    marginBottom: theme.spacing(3),
   },
   controls: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(3) },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2) },
