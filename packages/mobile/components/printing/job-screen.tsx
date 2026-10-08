@@ -153,7 +153,17 @@ export function PrintJobScreen({ id }: { id: string }) {
   if (!tx) {
     return (
       <Screen>
-        <EmptyState icon="cloud-offline-outline" title={LOAD_ERROR} hint="Check your connection and try again." />
+        <EmptyState icon="cloud-offline-outline" title={LOAD_ERROR} hint="Check your connection and try again.">
+          <Button
+            label="Try again"
+            variant="secondary"
+            onPress={() => {
+              setLoading(true)
+              void load()
+            }}
+            style={styles.retry}
+          />
+        </EmptyState>
       </Screen>
     )
   }
@@ -522,6 +532,7 @@ function StateCard({
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  retry: { marginTop: theme.spacing(5), alignSelf: 'center', paddingHorizontal: theme.spacing(8) },
   fit: { gap: theme.spacing(2) },
   fitRow: { flexDirection: 'row', gap: theme.spacing(2) },
   content: { paddingBottom: theme.spacing(4), gap: theme.spacing(4) },
