@@ -11,14 +11,27 @@ jest.mock('../../../lib/api-client', () => ({ getToken: (...a: unknown[]) => moc
 // The web-branch tests below use the real FormData instead, un-faked: that
 // stringification is exactly the bug this file guards against, so proving
 // the fix means letting the real DOM behaviour run.
+// Native reads the file through XMLHttpRequest into a Blob (lib/upload.ts); the fake
+// remembers the uri so the form-part fakes below can keep asserting {uri,name,type}.
+let lastUri = ''
+class FakeXhr {
+  responseType = ''
+  response: unknown = null
+  onload: (() => void) | null = null
+  onerror: (() => void) | null = null
+  open(_m: string, uri: string) { lastUri = uri }
+  send() { this.response = new Blob(['x']); queueMicrotask(() => this.onload?.()) }
+}
+;(globalThis as unknown as { XMLHttpRequest: unknown }).XMLHttpRequest = FakeXhr
+
 class FakeFormData {
   static instances: FakeFormData[] = []
   parts: [string, unknown][] = []
   constructor() {
     FakeFormData.instances.push(this)
   }
-  append(key: string, value: unknown) {
-    this.parts.push([key, value])
+  append(key: string, value: unknown, name?: string) {
+    this.parts.push([key, value instanceof Blob && name !== undefined && lastUri ? { uri: lastUri, name, type: value.type } : value])
   }
 }
 const RealFormData = globalThis.FormData

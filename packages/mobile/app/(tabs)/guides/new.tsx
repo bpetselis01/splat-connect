@@ -256,8 +256,12 @@ export default function NewGuideRoute() {
 
         <Text style={styles.label}>Age range</Text>
         <View style={styles.chipRow}>
-          <TextField accessibilityLabel="Youngest age" placeholder="From" keyboardType="number-pad" value={ageMin} onChangeText={setAgeMin} boxStyle={styles.ageBox} />
-          <TextField accessibilityLabel="Oldest age" placeholder="To" keyboardType="number-pad" value={ageMax} onChangeText={setAgeMax} boxStyle={styles.ageBox} />
+          <View style={styles.ageBox}>
+            <TextField accessibilityLabel="Youngest age" placeholder="From" keyboardType="number-pad" value={ageMin} onChangeText={setAgeMin} />
+          </View>
+          <View style={styles.ageBox}>
+            <TextField accessibilityLabel="Oldest age" placeholder="To" keyboardType="number-pad" value={ageMax} onChangeText={setAgeMax} />
+          </View>
         </View>
 
         {needsTerms ? (
