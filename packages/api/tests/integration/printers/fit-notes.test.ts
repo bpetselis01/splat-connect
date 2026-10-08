@@ -1,4 +1,4 @@
-/** 096. Customization answers ride on the print request, per job. */
+/** 096/134. Customization answers ride on the print request, per job, against the guide's own fields. */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -22,7 +22,13 @@ beforeAll(async () => {
   const admin = adminClient()
   const { data: t } = await admin
     .from('tutorials')
-    .insert({ title: 'Fit notes fixture', description: 'x', difficulty: 'easy', status: 'approved' })
+    .insert({
+      title: 'Fit notes fixture', description: 'x', difficulty: 'easy', status: 'approved',
+      customization_fields: [
+        { key: 'mount', label: 'Mount', kind: 'choice', options: ['Tray clamp', 'Floor stand'] },
+        { key: 'reach', label: 'Reach', kind: 'number', unit: 'mm', min: 100, max: 600 },
+      ],
+    })
     .select('id')
     .single()
   tutorialId = t!.id
@@ -48,27 +54,30 @@ afterAll(async () => {
   await deleteTestUser(owner.id)
 })
 
-describe('096 print_fit_notes', () => {
-  it('stores the answers on the job', async () => {
-    const res = await post({ fit_notes: { reach: '20–40 cm', mount: 'Floor stand' } })
+describe('134 print_fit_notes', () => {
+  it('stores labelled answers on the job', async () => {
+    const res = await post({ fit_notes: { reach: 310, mount: 'Floor stand' } })
     expect(res.status).toBe(201)
     const { id } = (await res.json()) as { id: string }
     const { data } = await adminClient().from('toy_transactions').select('print_fit_notes').eq('id', id).single()
-    expect(data!.print_fit_notes).toEqual({ reach: '20–40 cm', mount: 'Floor stand' })
+    expect(data!.print_fit_notes).toEqual([{ label: 'Mount', value: 'Floor stand' }, { label: 'Reach', value: '310 mm' }])
     await adminClient().from('toy_transactions').delete().eq('id', id)
   })
 
-  it('refuses an answer the board does not offer', async () => {
-    const res = await post({ fit_notes: { reach: '35 cm' } })
-    expect(res.status).toBe(400)
+  it.each([
+    [{ mount: 'Wall bracket' }],
+    [{ reach: 50 }],
+    [{ shoe_size: '4' }],
+  ])('refuses an answer the guide does not offer %j', async (fit_notes) => {
+    expect((await post({ fit_notes })).status).toBe(400)
   })
 
-  it('is backed by the database: an unknown key is a CHECK violation', async () => {
+  it('is backed by the database: print_fit_notes must be a list', async () => {
     const { error } = await adminClient()
       .from('toy_transactions')
       .insert({
         type: 'print', status: 'requested', tutorial_id: tutorialId, printer_id: printerId, requester_id: family.id,
-        owner_id: owner.id, print_group_id: crypto.randomUUID(), print_fit_notes: { shoe_size: '4' },
+        owner_id: owner.id, print_group_id: crypto.randomUUID(), print_fit_notes: { reach: '4' },
       })
     expect(error?.code).toBe('23514')
   })

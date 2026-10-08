@@ -11,7 +11,7 @@ import { nameFormerContributors } from '../former-contributor.js'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { pickEditable } from './pick-editable.js'
 import { notifyTutorialSubmitted } from '../review-notifications.js'
-import { readSuits, realignCaptions, GUIDE_SUITS_FIELDS } from '@splat-connect/types'
+import { readSuits, realignCaptions, GUIDE_SUITS_FIELDS, fieldKey, customizationFieldsProblem } from '@splat-connect/types'
 import { removeDroppedPhotos } from '../photo-storage.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
@@ -183,7 +183,7 @@ tutorials.post('/', async (c) => {
 /** Only these may be set through the generic edit endpoint. Unknown keys are
  *  dropped silently; the protected ones return 403 so a caller learns rather than
  *  wonders. */
-const EDITABLE = ['title', 'description', 'difficulty', 'kind', 'maturity', 'build_minutes', 'age_min', 'age_max', 'tutorial_pdf_url', 'photo_urls', 'photo_captions', 'prices_checked_on', 'layer_height_mm', 'infill_percent', 'material', 'print_minutes', 'toy_name', 'toy_brand', 'works_with', 'no_build_note', 'done_note', 'status', ...GUIDE_SUITS_FIELDS] as const
+const EDITABLE = ['title', 'description', 'difficulty', 'kind', 'maturity', 'build_minutes', 'age_min', 'age_max', 'tutorial_pdf_url', 'photo_urls', 'photo_captions', 'prices_checked_on', 'layer_height_mm', 'infill_percent', 'material', 'print_minutes', 'toy_name', 'toy_brand', 'works_with', 'no_build_note', 'done_note', 'status', 'customization_fields', ...GUIDE_SUITS_FIELDS] as const
 const PROTECTED = ['reviewed_by', 'reviewed_for_org_id', 'reviewed_at', 'rejection_note']
 
 async function hasAcceptedContributorTerms(token: string, userId: string) {
@@ -213,6 +213,17 @@ export function fieldError(body: Record<string, unknown>): string | null {
     const caps = body.photo_captions
     if (!Array.isArray(caps) || caps.some((c) => c !== null && typeof c !== 'string')) return 'Captions must be a list'
     if (caps.some((c) => typeof c === 'string' && c.trim().length > 60)) return 'A photo caption is over 60 characters'
+  }
+  // 134. Cleaned in place (labels trimmed, keys derived) so the client need not guess them.
+  if ('customization_fields' in body) {
+    const fields = body.customization_fields
+    if (Array.isArray(fields)) {
+      body.customization_fields = fields.map((f) =>
+        f && typeof f === 'object' && typeof f.label === 'string' ? { ...f, label: f.label.trim(), key: fieldKey(f.label) } : f
+      )
+    }
+    const problem = customizationFieldsProblem(body.customization_fields)
+    if (problem) return problem
   }
   const num = (k: string) => body[k] as number
   if (has('layer_height_mm') && !(typeof body.layer_height_mm === 'number' && num('layer_height_mm') >= 0.05 && num('layer_height_mm') <= 1)) return 'Layer height must be between 0.05 and 1 mm'

@@ -26,6 +26,7 @@ export type { LearnCourse, LearnCourseSaved, LearnUnit, LearnLesson, LessonKind,
 export type { ContributorBadge, ContributorBadgeInput } from './contributor-badges'
 export { TOOL_GET_BY_LABEL, partsTotalCents, checkedOn, realignCaptions, formatPrintMinutes, printSettingRows, printSettingsLine } from './guides'
 export type { ToolGetBy, PrintSettings } from './guides'
+export type { CustomizationField, PrintFitNotes } from './printing'
 export { OUTCOME_STEPS, outcomeStates, PARTICIPANT_ROLE_LABEL } from './challenges'
 export type { OutcomeState } from './challenges'
 export { BUILD_URGENCIES } from './builds'
@@ -46,10 +47,10 @@ export { isApiError, isNetworkError, apiErrorDetail, apiMessage, makeApiClient }
 export type { ApiError } from './api-core'
 export { dateBadge, shortDate, monthHeading, monthKey, longDate, formatTimeRange, isPast } from './dates'
 import { printRequestExpired } from './printing'
-import type { PrinterStats, PrintFitNotes, TestPrint } from './printing'
+import type { PrinterStats, PrintFitNotes, TestPrint, CustomizationField } from './printing'
 // Named, not only the `export *` below: the API runs under tsx, which loads
 // this package as CommonJS, and Node cannot see names behind `export *` there.
-export { printCostCents, costRange, PRINT_ANSWER_DAYS, answerBy, printRequestExpired, PRINT_FIT_QUESTIONS, fitNotesProblem, fitNotesLines, bedFits, VERIFIED_MIN_JOBS, testPrintLabel, statsLine, machineStatsLines, orgPrintFacts, guideFitLine } from './printing'
+export { printCostCents, costRange, PRINT_ANSWER_DAYS, answerBy, printRequestExpired, fieldKey, customizationFieldsProblem, customizationNotes, MAX_CUSTOMIZATION_FIELDS, fitNotesLines, bedFits, VERIFIED_MIN_JOBS, testPrintLabel, statsLine, machineStatsLines, orgPrintFacts, guideFitLine } from './printing'
 export { costSummary } from './cost-summary'
 export type { CostLine, CostSummary } from './cost-summary'
 export { getMissingToyFields, computeToyStepStatuses } from './toy-steps'
@@ -2101,6 +2102,8 @@ export interface Tutorial extends Suits {
    *  formatAgeRange() draws them. */
   age_min?: number | null
   age_max?: number | null
+  /** 134. What the contributor asks a family on a print request; none by default. */
+  customization_fields?: CustomizationField[]
   /** PostgREST computed fields (066). Present only when a select names them —
    *  the public list and detail routes do. */
   thanks_count?: number

@@ -101,17 +101,49 @@ describe('printer stats', () => {
   })
 })
 
-import { fitNotesLines, fitNotesProblem } from '@splat-connect/types'
+import { fieldKey, customizationFieldsProblem, customizationNotes, fitNotesLines } from '@splat-connect/types'
+import type { CustomizationField } from '@splat-connect/types'
 
-describe('customization', () => {
-  it('accepts the board’s options only', () => {
-    expect(fitNotesProblem({ reach: '20–40 cm', tray: 'Not sure' })).toBeNull()
-    expect(fitNotesProblem({ reach: '35 cm' })).toBe('Customization answers must be one of the options offered.')
-    expect(fitNotesProblem({ shoe_size: '4' })).toBe('Customization answers must be one of the options offered.')
-    expect(fitNotesProblem(['reach'])).toBe('Customization answers must be one of the options offered.')
+const tray: CustomizationField = { key: 'tray_thickness', label: 'Tray thickness', kind: 'choice', options: ['10 mm', '15 mm'] }
+const reach: CustomizationField = { key: 'reach', label: 'Reach', kind: 'number', unit: 'mm', min: 100, max: 600 }
+
+describe('customization fields', () => {
+  it('turns a label into a key', () => {
+    expect(fieldKey(' Tray thickness (mm)! ')).toBe('tray_thickness_mm')
   })
-  it('reads back to the printer in the board’s order', () => {
-    expect(fitNotesLines({ tray: '15 mm', reach: 'Under 20 cm' })).toEqual(['Reach from seated: Under 20 cm', 'Tray thickness: 15 mm'])
+  it('accepts none, or well-formed fields', () => {
+    expect(customizationFieldsProblem([])).toBeNull()
+    expect(customizationFieldsProblem([tray, reach])).toBeNull()
+  })
+  it.each([
+    ['not a list', {}],
+    ['more than six', Array.from({ length: 7 }, (_, i) => ({ ...tray, key: `k${i}`, label: `K${i}` }))],
+    ['a key that is not the label’s', [{ ...tray, key: 'other' }]],
+    ['a repeated label', [tray, { ...tray }]],
+    ['a blank label', [{ ...tray, label: ' ', key: '' }]],
+    ['one option', [{ ...tray, options: ['10 mm'] }]],
+    ['a repeated option', [{ ...tray, options: ['10 mm', '10 mm'] }]],
+    ['an unknown kind', [{ ...tray, kind: 'text' }]],
+    ['min not below max', [{ ...reach, min: 600 }]],
+    ['no unit', [{ ...reach, unit: '' }]],
+  ])('rejects %s', (_n, v) => {
+    expect(customizationFieldsProblem(v)).toEqual(expect.any(String))
+  })
+  it('turns answers into labelled notes, in field order', () => {
+    expect(customizationNotes([tray, reach], { reach: 310, tray_thickness: '15 mm' })).toEqual({
+      notes: [{ label: 'Tray thickness', value: '15 mm' }, { label: 'Reach', value: '310 mm' }],
+    })
+    expect(customizationNotes([tray], {})).toEqual({ notes: [] })
+  })
+  it('names the field when an answer does not fit', () => {
+    expect(customizationNotes([tray], { tray_thickness: '99 mm' })).toEqual({ error: 'Tray thickness: choose one of the options offered.' })
+    expect(customizationNotes([reach], { reach: 50 })).toEqual({ error: 'Reach: enter a number from 100 to 600 mm.' })
+    expect(customizationNotes([reach], { reach: 'abc' })).toEqual({ error: 'Reach: enter a number from 100 to 600 mm.' })
+    expect(customizationNotes([tray], { shoe: 'x' })).toEqual({ error: 'This guide has no customization field “shoe”.' })
+    expect(customizationNotes([], { x: '1' })).toEqual({ error: 'This guide has no customization field “x”.' })
+  })
+  it('prints notes as lines for the printer', () => {
+    expect(fitNotesLines([{ label: 'Tray thickness', value: '15 mm' }])).toEqual(['Tray thickness: 15 mm'])
     expect(fitNotesLines(null)).toEqual([])
   })
 })
