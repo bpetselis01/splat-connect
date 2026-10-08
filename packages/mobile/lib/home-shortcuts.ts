@@ -37,7 +37,7 @@ export const FEATURES: Feature[] = [
   { id: 'saves', name: 'My saves', icon: 'heart-outline', tint: 'apr', group: 'Toys', href: '/saved' },
   { id: 'organisations', name: 'Organisations', icon: 'business-outline', tint: 'mint', group: 'Toys', href: '/toy-library/organisations' },
   { id: 'print', name: 'Request a print', icon: 'print-outline', tint: 'mint', group: 'Printing', href: '/printing' },
-  { id: 'printers', name: 'Find a printer', icon: 'map-outline', tint: 'vio', group: 'Printing', href: '/printing' },
+  { id: 'printers', name: 'Find a printer', icon: 'map-outline', tint: 'vio', group: 'Printing', href: '/map?kind=printer' },
   { id: 'print-requests', name: 'My print requests', icon: 'list-outline', tint: 'apr', group: 'Printing', href: '/print-requests' },
   { id: 'print-for-others', name: 'Print for others', icon: 'hand-left-outline', tint: 'mint', group: 'Printing', href: '/print-for-others' },
   { id: 'print-basics', name: 'Printing basics', icon: 'help-circle-outline', tint: 'sky', group: 'Printing', href: '/printing/basics' },

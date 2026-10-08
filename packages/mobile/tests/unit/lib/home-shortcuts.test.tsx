@@ -50,7 +50,7 @@ const routeFiles = (function walk(dir: string, rel: string[] = []): string[][] {
   )
 })(appDir)
 const resolves = (href: string) => {
-  const segs = href.split('/').filter(Boolean)
+  const segs = href.split('?')[0].split('/').filter(Boolean)
   return routeFiles.some((r) => r.length === segs.length && r.every((s, i) => /^\[.*\]$/.test(s) || s === segs[i]))
 }
 
@@ -59,6 +59,10 @@ describe('FEATURES', () => {
   // /printing explains that every request starts from a guide.
   it('sends Request a print where no guide is needed', () => {
     expect(FEATURES.find((f) => f.id === 'print')?.href).toBe('/printing')
+  })
+
+  it('sends Find a printer to the map with the Printers layer picked', () => {
+    expect(FEATURES.find((f) => f.id === 'printers')?.href).toBe('/map?kind=printer')
   })
 
   it('has unique ids, real Ionicons names and hrefs that map to a route file', () => {
