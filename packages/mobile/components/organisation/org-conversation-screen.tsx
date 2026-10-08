@@ -27,14 +27,14 @@ import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { MessageBubble } from '../ui/MessageBubble'
 import { ErrorRow } from '../ui/ErrorRow'
-import { apiMessage } from '@splat-connect/types'
+import { apiMessage, isNetworkError } from '@splat-connect/types'
 
 export function OrgConversationScreen(props: { orgId: string; orgName?: string } | { cid: string }) {
   const bottom = useBottomClearance()
   const { caps } = useCapabilities()
   const [thread, setThread] = useState<OrgThread | null>(null)
   const [loading, setLoading] = useState(true)
-  const [failed, setFailed] = useState(false)
+  const [failed, setFailed] = useState<'offline' | 'other' | null>(null)
   const [draft, setDraft] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -50,10 +50,10 @@ export function OrgConversationScreen(props: { orgId: string; orgName?: string }
   const load = useCallback(async () => {
     try {
       setThread(await apiClient.get<OrgThread | null>(readPath))
-      setFailed(false)
+      setFailed(null)
     } catch (err) {
       logFailure('[OrgConversationScreen] load failed:', err)
-      setFailed(true)
+      setFailed(isNetworkError(err) ? 'offline' : 'other')
     } finally {
       setLoading(false)
     }
@@ -92,7 +92,20 @@ export function OrgConversationScreen(props: { orgId: string; orgName?: string }
   if (failed) {
     return (
       <Screen>
-        <EmptyState icon="chatbubbles-outline" title="Couldn't load this conversation." hint="It may not be yours to read, or you are offline." />
+        <EmptyState
+          icon="chatbubbles-outline"
+          title={failed === 'offline' ? 'You seem to be offline.' : "Couldn't load this conversation."}
+          hint={failed === 'offline' ? 'Check your connection and try again.' : 'It may not be yours to read, or you are offline.'}
+        >
+          <Button
+            label="Try again"
+            variant="secondary"
+            onPress={() => {
+              setLoading(true)
+              void load()
+            }}
+          />
+        </EmptyState>
       </Screen>
     )
   }
