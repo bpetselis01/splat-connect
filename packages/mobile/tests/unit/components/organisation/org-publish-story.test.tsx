@@ -52,8 +52,14 @@ describe('OrgPublishScreen', () => {
     expect(screen.getByText('No stories yet')).toBeTruthy()
   })
 
-  it('both lists failing shows the empty state, not a spinner', async () => {
+  it('both lists failing says so, not an empty page', async () => {
     serve(new Error('500'), new Error('500'))
+    render(<OrgPublishScreen />)
+    expect(await screen.findByText("Couldn't load your events and stories.")).toBeTruthy()
+  })
+
+  it('one list failing still shows the other', async () => {
+    serve(new Error('500'), [st()])
     render(<OrgPublishScreen />)
     expect(await screen.findByText('No events yet')).toBeTruthy()
   })

@@ -7,10 +7,11 @@
  * New ones are written on their own screens (organisation/events/new and
  * stories/new), linked from the top of the list.
  */
+import { logFailure } from '../../lib/log'
 import { useCallback, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
-import { apiMessage, EVENT_KIND_LABEL, isPast, STORY_KIND_LABEL, type OrgEvent, type OrgStory } from '@splat-connect/types'
+import { apiMessage, EVENT_KIND_LABEL, isNetworkError, isPast, STORY_KIND_LABEL, type OrgEvent, type OrgStory } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { confirmDestructive } from '../../lib/confirm'
 import { useCapabilities } from '../../lib/capabilities'
@@ -37,12 +38,26 @@ export function OrgPublishScreen() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const [failed, setFailed] = useState<'offline' | 'other' | null>(null)
+
   const load = useCallback(() => {
     if (!org) return
+    // One list failing leaves the other on screen; both failing is a failure,
+    // not an empty page (a leader would read it as "nothing published").
+    const soft = <T,>(p: Promise<T[]>): Promise<{ rows: T[] } | { err: unknown }> =>
+      p.then((rows) => ({ rows }), (err) => ({ err }))
     Promise.all([
-      apiClient.get<OrgEvent[]>(`/api/organizations/${org.id}/events`).catch(() => [] as OrgEvent[]),
-      apiClient.get<OrgStory[]>(`/api/organizations/${org.id}/stories`).catch(() => [] as OrgStory[]),
-    ]).then(([events, stories]) => setData({ events, stories }))
+      soft(apiClient.get<OrgEvent[]>(`/api/organizations/${org.id}/events`)),
+      soft(apiClient.get<OrgStory[]>(`/api/organizations/${org.id}/stories`)),
+    ]).then(([e, s]) => {
+      if ('err' in e && 'err' in s) {
+        logFailure('[OrgPublishScreen] load failed:', e.err)
+        setFailed(isNetworkError(e.err) ? 'offline' : 'other')
+        return
+      }
+      setFailed(null)
+      setData({ events: 'rows' in e ? e.rows : [], stories: 'rows' in s ? s.rows : [] })
+    })
   }, [org])
   useFocusEffect(load)
 
@@ -58,6 +73,27 @@ export function OrgPublishScreen() {
     } finally {
       setBusy(false)
     }
+  }
+
+  if (org && !data && failed) {
+    return (
+      <Screen>
+        <EmptyState
+          icon="cloud-offline-outline"
+          title={failed === 'offline' ? 'You seem to be offline.' : "Couldn't load your events and stories."}
+          hint="Check your connection and try again."
+        >
+          <Button
+            label="Try again"
+            variant="secondary"
+            onPress={() => {
+              setFailed(null)
+              load()
+            }}
+          />
+        </EmptyState>
+      </Screen>
+    )
   }
 
   if (!org || !data) {
