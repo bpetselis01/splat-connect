@@ -106,6 +106,7 @@ export default async function ReviewTutorialPage({
             text: 'Sent back',
           }
 
+  const steps = t.steps ?? []
   const n = (count: number, one: string) => `${count} ${one}${count === 1 ? '' : 's'}`
   const sections: Array<{ h: string; state: string; ok: boolean; body: ReactNode }> = [
     {
@@ -114,6 +115,30 @@ export default async function ReviewTutorialPage({
       ok: !!t.description,
       body: t.description || 'No summary written.',
     },
+    ...(steps.length
+      ? [
+          {
+            h: 'Steps',
+            state: n(steps.length, 'step'),
+            ok: steps.every((st) => st.photo_url),
+            body: (
+              <ol className="m-0 flex list-none flex-col gap-3 p-0">
+                {[...steps]
+                  .sort((a, b) => a.position - b.position)
+                  .map((st) => (
+                    <li key={st.id}>
+                      <span className="font-bold">
+                        {st.position}. {st.title}
+                      </span>
+                      <span className="block">{st.body}</span>
+                      <span className="block text-[13px] text-muted">{st.photo_url ? 'Photo attached' : 'No photo'}</span>
+                    </li>
+                  ))}
+              </ol>
+            ),
+          },
+        ]
+      : []),
     {
       h: 'Parts',
       state: n(t.parts.length, 'part'),
@@ -132,8 +157,8 @@ export default async function ReviewTutorialPage({
     },
     {
       h: 'Files',
-      state: t.tutorial_pdf_url ? 'Guide attached' : 'No guide PDF',
-      ok: !!t.tutorial_pdf_url,
+      state: t.tutorial_pdf_url ? 'Guide attached' : steps.length ? 'Steps used' : 'No guide PDF',
+      ok: !!t.tutorial_pdf_url || steps.length > 0,
       body: (
         <span className="flex flex-col gap-2">
           {t.tutorial_pdf_url ? (
@@ -145,8 +170,10 @@ export default async function ReviewTutorialPage({
             >
               <FileText weight="bold" aria-hidden="true" /> The guide (PDF)
             </a>
+          ) : steps.length ? (
+            'No PDF; the guide is written as steps.'
           ) : (
-            'The step-by-step guide has not been uploaded.'
+            'The guide has no steps and no PDF.'
           )}
           {t.kind === 'assistive_tech' &&
             t.stl_files.map((f) => (

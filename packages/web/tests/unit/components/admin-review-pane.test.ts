@@ -10,6 +10,7 @@ const base = {
   photo_urls: ['a.jpg'],
   parts: [{}] as never[],
   tutorial_pdf_url: 'x.pdf',
+  steps: [] as never[],
   stl_files: [] as never[],
   tutorial_collaborator_invites: [],
 }
@@ -33,9 +34,17 @@ describe('completeness', () => {
         photo_urls: [],
         parts: [],
         tutorial_pdf_url: null,
+        steps: [] as never[],
         tutorial_collaborator_invites: [{ status: 'pending' }, { status: 'declined' }] as never[],
       })
     ).toEqual({ 'No photo': 'bad', 'No parts listed': 'bad', 'No guide PDF': 'bad', 'Co-authors not confirmed': 'warn' })
+  })
+
+  it('a missing PDF is only a problem when the guide has no steps either', () => {
+    const noPdf = { ...base, tutorial_pdf_url: null }
+    expect(marks(noPdf)['No guide PDF']).toBe('bad')
+    expect(marks({ ...noPdf, steps: [{}] as never[] })['No PDF (steps used)']).toBe('ok')
+    expect(marks(base)['Guide PDF attached']).toBe('ok')
   })
 
   it('checks STL print settings only on assistive tech', () => {

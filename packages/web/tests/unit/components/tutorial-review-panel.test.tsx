@@ -60,6 +60,11 @@ describe('TutorialReviewPanel', () => {
     expect(screen.getByText('Not uploaded')).toBeInTheDocument()
   })
 
+  it('a missing PDF reads as fine when the guide has steps', () => {
+    setup({ hasPdf: false, stepCount: 3 })
+    expect(screen.getByText('Not uploaded (steps used)')).toBeInTheDocument()
+  })
+
   // Tests: the summary carries no submit control of its own
   // How:   asserts neither the button nor the bar renders here
   // Chain: this panel owned the submit bar until 2026-08-29, which is exactly why

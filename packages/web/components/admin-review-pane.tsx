@@ -21,7 +21,7 @@ export type Check = { mark: Mark; label: string; detail: string }
 
 type Reviewable = Pick<
   TutorialWithDetails,
-  'kind' | 'photo_urls' | 'parts' | 'tutorial_pdf_url' | 'stl_files' | 'tutorial_collaborator_invites'
+  'kind' | 'photo_urls' | 'parts' | 'tutorial_pdf_url' | 'steps' | 'stl_files' | 'tutorial_collaborator_invites'
 >
 
 /** The COMPLETENESS list, from real data only. */
@@ -36,7 +36,9 @@ export function completeness(t: Reviewable): Check[] {
       : { mark: 'bad', label: 'No parts listed', detail: 'Nobody can shop for this build.' },
     t.tutorial_pdf_url
       ? { mark: 'ok', label: 'Guide PDF attached', detail: 'The step-by-step file is there.' }
-      : { mark: 'bad', label: 'No guide PDF', detail: 'The step-by-step file has not been uploaded.' },
+      : t.steps?.length
+        ? { mark: 'ok', label: 'No PDF (steps used)', detail: 'The guide is written as steps.' }
+        : { mark: 'bad', label: 'No guide PDF', detail: 'The guide has no steps and no PDF.' },
   ]
 
   // Print settings only mean something for a printed design.

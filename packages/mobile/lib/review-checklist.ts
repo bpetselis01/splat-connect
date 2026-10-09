@@ -19,9 +19,15 @@ export function reviewRows(t: TutorialWithDetails): ReviewRow[] {
   return [
     { title: 'Summary', meta: t.description?.trim() ? 'Complete' : 'No summary yet', ok: Boolean(t.description?.trim()) },
     {
-      title: 'Steps',
-      meta: !steps.length ? 'No steps yet' : bare ? `${count(steps.length, 'step')}, ${bare} without a photo` : `${count(steps.length, 'step')}, all photographed`,
-      ok: steps.length > 0 && bare === 0,
+      title: 'Guide content',
+      meta: steps.length
+        ? bare
+          ? `${count(steps.length, 'step')}, ${bare} without a photo`
+          : `${count(steps.length, 'step')}, all photographed`
+        : pdf
+          ? 'PDF guide'
+          : 'No steps or PDF yet',
+      ok: pdf || (steps.length > 0 && bare === 0),
     },
     {
       title: 'Parts',
@@ -47,8 +53,8 @@ export function reviewRows(t: TutorialWithDetails): ReviewRow[] {
     },
     {
       title: 'Files',
-      meta: [pdf ? 'PDF' : 'No PDF yet', stl ? count(stl, 'STL file') : needsStl ? 'no STL yet' : 'none needed to print'].join(' · '),
-      ok: pdf && (!needsStl || stl > 0),
+      meta: [pdf ? 'PDF' : 'no PDF', stl ? count(stl, 'STL file') : needsStl ? 'no STL yet' : 'none needed to print'].join(' · '),
+      ok: !needsStl || stl > 0,
     },
   ]
 }

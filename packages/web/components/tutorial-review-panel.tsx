@@ -33,6 +33,7 @@ export function TutorialReviewPanel({
   difficulty,
   toyPhotoUrl,
   hasPdf,
+  stepCount = 0,
   partCount,
   toolCount,
   stlCount,
@@ -43,6 +44,7 @@ export function TutorialReviewPanel({
   difficulty: Difficulty
   toyPhotoUrl: string | null
   hasPdf: boolean
+  stepCount?: number
   partCount: number
   toolCount: number
   stlCount: number
@@ -72,7 +74,7 @@ export function TutorialReviewPanel({
           </div>
           <div>
             <dt className="font-semibold text-ink">Tutorial PDF</dt>
-            <dd>{hasPdf ? 'Uploaded' : 'Not uploaded'}</dd>
+            <dd>{hasPdf ? 'Uploaded' : stepCount > 0 ? 'Not uploaded (steps used)' : 'Not uploaded'}</dd>
           </div>
           <div>
             <dt className="font-semibold text-ink">Parts and tools</dt>

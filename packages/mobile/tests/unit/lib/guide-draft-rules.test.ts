@@ -17,19 +17,19 @@ describe('review checklist edges', () => {
     expect(row(draft({ description: '   \n ' }), 'Summary')).toEqual({ title: 'Summary', meta: 'No summary yet', ok: false })
   })
 
-  it('says No steps yet and flags a guide with zero steps, and treats missing steps as none', () => {
-    expect(row(draft({ steps: [] }), 'Steps')).toEqual({ title: 'Steps', meta: 'No steps yet', ok: false })
-    expect(row(draft({ steps: undefined }), 'Steps').ok).toBe(false)
+  it('says No steps or PDF yet and flags a guide with neither, and treats missing steps as none', () => {
+    expect(row(draft({ steps: [], tutorial_pdf_url: null }), 'Guide content')).toEqual({ title: 'Guide content', meta: 'No steps or PDF yet', ok: false })
+    expect(row(draft({ steps: undefined, tutorial_pdf_url: null }), 'Guide content').ok).toBe(false)
   })
 
   it('counts a 120-step guide with some bare steps', () => {
     const steps = Array.from({ length: 120 }, (_, i) => ({ photo_url: i < 100 ? 'p' : null }))
-    expect(row(draft({ steps: steps as never }), 'Steps')).toEqual({ title: 'Steps', meta: '120 steps, 20 without a photo', ok: false })
+    expect(row(draft({ steps: steps as never, tutorial_pdf_url: null }), 'Guide content')).toEqual({ title: 'Guide content', meta: '120 steps, 20 without a photo', ok: false })
   })
 
   it('uses the singular for one step, one part and one tool', () => {
     const t = draft({ steps: [{ photo_url: 'p' }] as never })
-    expect(row(t, 'Steps').meta).toBe('1 step, all photographed')
+    expect(row(t, 'Guide content').meta).toBe('1 step, all photographed')
     expect(row(t, 'Parts').meta).toBe('1 part with prices')
     expect(row(t, 'Tools').meta).toBe('1 tool')
   })
@@ -55,18 +55,18 @@ describe('review checklist edges', () => {
     expect(row(draft({ safety_declared_at: null, safety_notes: [{ title: 'x' }] as never }), 'Safety notes').meta).toBe('1 note · checklist not affirmed')
   })
 
-  it('needs the PDF, and for assistive tech an STL too', () => {
-    expect(row(draft({ tutorial_pdf_url: null }), 'Files')).toEqual({ title: 'Files', meta: 'No PDF yet · none needed to print', ok: false })
+  it('needs an STL for assistive tech, and no longer needs the PDF', () => {
+    expect(row(draft({ tutorial_pdf_url: null }), 'Files')).toEqual({ title: 'Files', meta: 'no PDF · none needed to print', ok: true })
     expect(row(draft({ kind: 'assistive_tech', stl_files: [{}] as never }), 'Files')).toEqual({ title: 'Files', meta: 'PDF · 1 STL file', ok: true })
     expect(row(draft({ kind: 'assistive_tech', stl_files: [{}, {}] as never }), 'Files').meta).toBe('PDF · 2 STL files')
     expect(row(draft({ kind: 'assistive_tech', stl_files: [] }), 'Files').ok).toBe(false)
   })
 
-  it('leads with 6 of 6 for a finished guide and 0 for a bare one', () => {
+  it('leads with 6 of 6 for a finished guide and 1 for a bare one (Files needs nothing)', () => {
     const full = draft({ steps: [{ photo_url: 'p' }] as never })
     expect(reviewLead(reviewRows(full))).toBe('6 sections, 6 complete.')
     const bare = draft({ description: null, steps: [], parts: [], tools: [], safety_declared_at: null, tutorial_pdf_url: null })
-    expect(reviewLead(reviewRows(bare))).toBe('6 sections, 0 complete.')
+    expect(reviewLead(reviewRows(bare))).toBe('6 sections, 1 complete.')
   })
 
   it('never throws on emoji or very long summaries', () => {
