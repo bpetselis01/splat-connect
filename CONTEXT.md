@@ -53,7 +53,7 @@ An Exchange where a Toy is traded for another.
 _Avoid_: Exchange (for this kind alone)
 
 **Build**:
-An Exchange where a family asks a maker to make a Toy from a Guide.
+An Exchange where a family asks a maker to make a Toy from a Guide. Exactly one Maker claims it; there are no shared builds.
 
 **Print**:
 An Exchange where a family asks a printer's owner to print files for a Guide.
