@@ -112,6 +112,18 @@ it('captions a photo, and the caption follows it to the cover', async () => {
   )
 })
 
+it('calls the PDF optional when the guide already has steps', () => {
+  mockDraft.tutorial = { ...mockDraft.tutorial, steps: [{ id: 's1' }] }
+  render(<FilesSection />)
+  expect(screen.getByText('Guide PDF (optional)')).toBeTruthy()
+})
+
+it('does not call it optional when there are no steps', () => {
+  mockDraft.tutorial = { ...mockDraft.tutorial, steps: [] }
+  render(<FilesSection />)
+  expect(screen.getByText('Guide PDF')).toBeTruthy()
+})
+
 it('uploads a chosen PDF', async () => {
   mockGetDocument.mockResolvedValue({
     canceled: false,

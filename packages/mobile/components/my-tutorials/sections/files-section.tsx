@@ -275,7 +275,7 @@ export function FilesSection() {
           <Text style={styles.photoHint}>That is all {MAX_PHOTOS}. Remove one to add another.</Text>
         )}
 
-        <Text style={styles.heading}>Guide PDF</Text>
+        <Text style={styles.heading}>{(tutorial.steps?.length ?? 0) > 0 ? 'Guide PDF (optional)' : 'Guide PDF'}</Text>
         <View style={styles.pdfRow}>
           <Text style={styles.pdfLabel}>
             {currentPdfPath ? currentPdfPath.split('/').pop() : 'No PDF yet'}
