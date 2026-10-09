@@ -1,7 +1,7 @@
 // packages/mobile/app/(tabs)/explore/_layout.tsx
 import { Stack } from 'expo-router'
 import { useTabFocused } from '../../../lib/use-tab-focused'
-import { stackScreenOptions } from '../../../lib/nav-options'
+import { headerLeftSlot, headerRightSlot, stackScreenOptions } from '../../../lib/nav-options'
 import { CloseButton } from '../../../components/ui/CloseButton'
 import { BackButton } from '../../../components/ui/BackButton'
 import { HeaderAddButton } from '../../../components/ui/HeaderAddButton'
@@ -32,7 +32,7 @@ export default function ExploreStackLayout() {
         name="challenges/index"
         options={{
           title: 'Design challenges',
-          headerRight: () => <HeaderAddButton label="Submit an idea" href="/explore/challenges/new" />,
+          ...headerRightSlot(() => <HeaderAddButton label="Submit an idea" href="/explore/challenges/new" />),
         }}
       />
       {/* The brief carries its own title, so the header stays generic rather
@@ -53,7 +53,7 @@ export default function ExploreStackLayout() {
           headerTransparent: false,
           sheetGrabberVisible: true,
           sheetAllowedDetents: [1.0],
-          headerLeft: () => <CloseButton />,
+          ...headerLeftSlot(() => <CloseButton />),
         }}
       />
       <Stack.Screen name="about" options={{ title: 'About SPLAT' }} />

@@ -1,7 +1,7 @@
 // packages/mobile/app/(tabs)/guides/_layout.tsx
 import { Stack } from 'expo-router'
 import { useTabFocused } from '../../../lib/use-tab-focused'
-import { stackScreenOptions } from '../../../lib/nav-options'
+import { headerLeftSlot, stackScreenOptions } from '../../../lib/nav-options'
 import { CloseButton } from '../../../components/ui/CloseButton'
 
 // A deep link or notification straight to a pushed screen still lands with
@@ -42,7 +42,7 @@ export default function GuidesStackLayout() {
           // One detent, full height: this is a form, not a peek — a half-height
           // rest position would put Create draft under the fold.
           sheetAllowedDetents: [1.0],
-          headerLeft: () => <CloseButton />,
+          ...headerLeftSlot(() => <CloseButton />),
         }}
       />
       <Stack.Screen name="[id]/index" options={{ title: 'Guide' }} />

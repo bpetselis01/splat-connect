@@ -33,6 +33,7 @@ import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
 import { ErrorRow } from '../ui/ErrorRow'
+import { headerRightSlot } from '../../lib/nav-options'
 import { apiMessage, buildRowMeta } from '@splat-connect/types'
 
 /** GET /api/toy-transactions/open-builds, one row. No requester name — by design. */
@@ -175,7 +176,7 @@ export function MakersWantedScreen() {
     <Screen>
       <Stack.Screen
         options={{
-          headerRight: () => (
+          ...headerRightSlot(() => (
             <Pressable
               onPress={() => router.push('/explore/makers-wanted/new')}
               accessibilityRole="button"
@@ -185,7 +186,7 @@ export function MakersWantedScreen() {
             >
               <Ionicons name="add" size={24} color={theme.colors.onColor} />
             </Pressable>
-          ),
+          )),
         }}
       />
       <ScrollView

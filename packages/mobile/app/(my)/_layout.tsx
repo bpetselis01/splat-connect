@@ -1,7 +1,7 @@
 // Everything behind the Me tab. Pushed over the tabs, not presented: a row on
 // Me slides its screen in and the back chevron returns to Me.
 import { Redirect, Stack } from 'expo-router'
-import { stackScreenOptions } from '../../lib/nav-options'
+import { headerRightSlot, stackScreenOptions } from '../../lib/nav-options'
 import { useAuthGate } from '../../lib/use-auth-gate'
 import { HeaderAddButton } from '../../components/ui/HeaderAddButton'
 import { savedTitle } from '../../components/saved/saved-list-screen'
@@ -26,7 +26,7 @@ export default function MyLayout() {
         name="tutorials/index"
         options={{
           title: 'My tutorials',
-          headerRight: () => <HeaderAddButton label="Add a tutorial" href="/guides/new" />,
+          ...headerRightSlot(() => <HeaderAddButton label="Add a tutorial" href="/guides/new" />),
         }}
       />
       {/* The editor is its own nested stack now (tutorials/[id]/_layout.tsx),
