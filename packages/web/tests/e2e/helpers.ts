@@ -130,6 +130,8 @@ export async function createTutorial(
     toyPhotoUrl: string | null
     /** false leaves tutorial_pdf_url null, which makes the tutorial incomplete. */
     withPdf: boolean
+    /** true adds one step. withPdf:false + withSteps:false is the "Steps or a guide PDF" gap. */
+    withSteps: boolean
     /** false omits the STL row, so the detail page drops its 3D-print section. */
     withStl: boolean
     /** Defaults to whatever the STL row implies: a tutorial seeded with one is
@@ -176,6 +178,13 @@ export async function createTutorial(
     .from('tutorial_contributors')
     .insert({ tutorial_id: id, profile_id: contributorId, role: 'primary' })
   if (linkError) throw new Error(`Failed to link tutorial contributor: ${linkError.message}`)
+
+  if (overrides.withSteps) {
+    const { error: stepError } = await admin
+      .from('tutorial_steps')
+      .insert({ tutorial_id: id, position: 1, title: null, body: 'E2E step' })
+    if (stepError) throw new Error(`Failed to add step: ${stepError.message}`)
+  }
 
   // A buy link and an STL row so the public detail spec has something to assert
   // on. Additive: no existing spec asserts on part, tool or STL counts.

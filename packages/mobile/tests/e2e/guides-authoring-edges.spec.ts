@@ -124,14 +124,25 @@ test('a step with no instructions is flagged and never saved', async ({ page }) 
   await expect(page.getByTestId('step-row-0')).toHaveCount(0)
 })
 
-test('the hub counts steps and Submit stays shut until the guide is complete', async ({ page }) => {
+test('the hub counts steps, and steps alone open Submit', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
-  const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile HubSteps'), status: 'draft', withPdf: false })
-  await addSteps(id, [{ body: 'One' }, { body: 'Two' }, { body: 'Three' }])
+  const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile HubSteps'), status: 'draft', withPdf: false, withSteps: false, buildMinutes: 30 })
 
   await page.goto(`/tutorials/${id}`)
-  await expect(page.getByTestId('hub-row-steps')).toContainText('3 steps')
   await expect(page.getByTestId('hub-submit')).toBeDisabled()
+
+  await addSteps(id, [{ body: 'One' }, { body: 'Two' }, { body: 'Three' }])
+  await page.reload()
+  await expect(page.getByTestId('hub-row-steps')).toContainText('3 steps')
+  await expect(page.getByTestId('hub-submit')).toBeEnabled()
+})
+
+test('a guide PDF alone opens Submit', async ({ page }) => {
+  const contributor = await signInAsNewContributor(page)
+  const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile HubPdfOnly'), status: 'draft', withPdf: true, withSteps: false, buildMinutes: 30 })
+
+  await page.goto(`/tutorials/${id}`)
+  await expect(page.getByTestId('hub-submit')).toBeEnabled()
 })
 
 test('Delete draft asks first, and cancelling keeps the draft', async ({ page }) => {

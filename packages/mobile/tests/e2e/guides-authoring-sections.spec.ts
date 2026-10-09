@@ -114,7 +114,7 @@ test('Withdraw drops the backing request and offers the organisation again', asy
 
 test('the section footer\'s Next goes to the next gap and Checklist returns to the hub', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
-  const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Footer'), status: 'draft', withPdf: false })
+  const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Footer'), status: 'draft', withPdf: false, withSteps: false })
 
   await page.goto(`/tutorials/${id}/details`)
   await page.getByTestId('section-next').click()
