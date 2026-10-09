@@ -469,7 +469,7 @@
  },
  {
   "id": "ed_details",
-  "name": "Editor \u00b7 details",
+  "name": "Editor · details",
   "group": "push",
   "boardRoute": "tutorials/[id]/details",
   "route": "/tutorials/[id]/details",
@@ -492,7 +492,7 @@
  },
  {
   "id": "ed_steps",
-  "name": "Editor \u00b7 steps",
+  "name": "Editor · steps",
   "group": "push",
   "boardRoute": "tutorials/[id]/steps",
   "route": "/tutorials/[id]/steps",
@@ -515,7 +515,7 @@
  },
  {
   "id": "ed_parts",
-  "name": "Editor \u00b7 parts",
+  "name": "Editor · parts",
   "group": "push",
   "boardRoute": "tutorials/[id]/parts",
   "route": "/tutorials/[id]/parts",
@@ -538,7 +538,7 @@
  },
  {
   "id": "ed_tools",
-  "name": "Editor \u00b7 tools",
+  "name": "Editor · tools",
   "group": "push",
   "boardRoute": "tutorials/[id]/tools",
   "route": "/tutorials/[id]/tools",
@@ -561,7 +561,7 @@
  },
  {
   "id": "ed_safety",
-  "name": "Editor \u00b7 safety",
+  "name": "Editor · safety",
   "group": "push",
   "boardRoute": "tutorials/[id]/safety",
   "route": "/tutorials/[id]/safety",
@@ -578,7 +578,7 @@
  },
  {
   "id": "ed_stl",
-  "name": "Editor \u00b7 STL",
+  "name": "Editor · STL",
   "group": "push",
   "boardRoute": "tutorials/[id]/stl",
   "route": "/tutorials/[id]/stl",
@@ -778,21 +778,7 @@
   "boardRoute": "account/child/[id]",
   "route": "/account/child/[id]",
   "idFrom": "child",
-  "role": "parent",
-  "explained": [
-   {
-    "type": "missing-section",
-    "match": "name or nickname",
-    "why": "intended",
-    "reason": "The board's child form asks for \"Name or nickname\". SPLAT collects no child's name (spec 2026-10-09-remove-child-name); a child is \"Child N\" plus age, so the field is removed."
-   },
-   {
-    "type": "copy",
-    "match": "ollie",
-    "why": "intended",
-    "reason": "The board shows a named child (Ollie) and \"About Ollie\"/\"Suits Ollie\" wording. Live says \"your child\" and shows \"Child N\" (spec 2026-10-09-remove-child-name)."
-   }
-  ]
+  "role": "parent"
  },
  {
   "id": "org_queue",
@@ -877,12 +863,6 @@
     "match": "extra Skip",
     "why": "intended",
     "reason": "Every wizard question is optional; Skip moves on without saving an answer."
-   },
-   {
-    "type": "missing-section",
-    "match": "name or nickname",
-    "why": "intended",
-    "reason": "The board's child form asks for \"Name or nickname\". SPLAT collects no child's name (spec 2026-10-09-remove-child-name); a child is \"Child N\" plus age, so the field is removed."
    }
   ]
  },
