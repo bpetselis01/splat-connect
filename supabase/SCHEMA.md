@@ -204,12 +204,13 @@ create table public.tutorial_recommendations (
 RLS mirrors `parts`: anyone reads rows of an approved tutorial, a contributor reads and writes their own, admin has full access.
 
 ### `child_profiles`  *(added in 003)*
-One row per parent account (unique `parent_id`) holding a child's ability, everyday-needs, and customization data. Backs the mobile parent experience.
+One row per child; a parent may have several (020), ordered by `created_at` and shown as "Child N". No name is stored (136). Holds a child's ability, everyday-needs, and customization data. Backs the mobile parent experience.
 
 | Column | Type | Constraints / default |
 |--------|------|-----------------------|
 | `id` | uuid | PK, default `gen_random_uuid()` |
-| `parent_id` | uuid | FK → `profiles` on delete cascade, not null, **unique** |
+| `parent_id` | uuid | FK → `profiles` on delete cascade, not null |
+| `created_at` | timestamptz | not null, default `now()` |
 | `age` | integer | nullable |
 | **Ability Profile** | | |
 | `macs_level` | text | nullable |
@@ -237,7 +238,8 @@ One row per parent account (unique `parent_id`) holding a child's ability, every
 ```sql
 create table public.child_profiles (
   id uuid primary key default gen_random_uuid(),
-  parent_id uuid references public.profiles on delete cascade not null unique,
+  parent_id uuid references public.profiles on delete cascade not null,
+  created_at timestamptz not null default now(),
   age integer,
   -- Ability Profile
   macs_level text,

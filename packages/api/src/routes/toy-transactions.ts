@@ -12,21 +12,6 @@ import type { AuthVariables } from '../middleware/auth.js'
 
 const toyTransactions = new Hono<{ Variables: AuthVariables }>()
 
-// child_label is retired: a family no longer gives one, but legacy rows still
-// hold a child's name until the drop migration. Strip the key from every JSON
-// response here, once, rather than at each of the `*` selects.
-// ponytail: delete this with the drop migration.
-const withoutChildLabel = (v: unknown): unknown =>
-  Array.isArray(v) ? v.map(withoutChildLabel)
-  : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).filter(([k]) => k !== 'child_label').map(([k, x]) => [k, withoutChildLabel(x)]))
-  : v
-toyTransactions.use('*', async (c, next) => {
-  await next()
-  if (!c.res.headers.get('content-type')?.includes('application/json')) return
-  const body = withoutChildLabel(await c.res.clone().json())
-  c.res = c.json(body as object, c.res.status as 200)
-})
-
 const RLS_VIOLATION = '42501'
 
 function generateCode(): string {
