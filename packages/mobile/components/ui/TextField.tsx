@@ -35,6 +35,7 @@ export function TextField({
   boxTestID,
   search = false,
   trailing,
+  labelAccessory,
   style,
   ...input
 }: TextInputProps & {
@@ -56,6 +57,8 @@ export function TextField({
   search?: boolean
   /** Renders inside the box after the input — the password field's eye. */
   trailing?: React.ReactNode
+  /** Renders beside the label — an InfoHint. */
+  labelAccessory?: React.ReactNode
 }) {
   const focus = useSharedValue(0)
   const rest = search ? theme.colors.border : theme.colors.ink
@@ -70,7 +73,14 @@ export function TextField({
 
   return (
     <View style={search ? null : styles.field}>
-      {label ? <Text style={styles.label}>{label}</Text> : null}
+      {label && labelAccessory ? (
+        <View style={styles.labelRow}>
+          <Text style={[styles.label, styles.labelInRow]}>{label}</Text>
+          {labelAccessory}
+        </View>
+      ) : label ? (
+        <Text style={styles.label}>{label}</Text>
+      ) : null}
       {hint ? <Text style={styles.hint}>{hint}</Text> : null}
       <Animated.View
         testID={boxTestID}
@@ -107,6 +117,8 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     marginBottom: theme.spacing(1),
   },
+  labelRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2), marginBottom: theme.spacing(1) },
+  labelInRow: { marginBottom: 0 },
   hint: {
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.caption,

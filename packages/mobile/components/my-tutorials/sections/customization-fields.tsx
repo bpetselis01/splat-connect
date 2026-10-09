@@ -8,6 +8,7 @@ import { View, Text, StyleSheet } from 'react-native'
 import { fieldKey, customizationFieldsProblem, MAX_CUSTOMIZATION_FIELDS } from '@splat-connect/types'
 import type { CustomizationField } from '@splat-connect/types'
 import { theme } from '../../../lib/theme'
+import { InfoHint } from '../../ui/InfoHint'
 import { Button } from '../../ui/Button'
 import { Chip } from '../../ui/Chip'
 import { TextField } from '../../ui/TextField'
@@ -64,11 +65,13 @@ export function CustomizationFields({
 
   return (
     <View>
-      <Text style={styles.title}>Customization fields</Text>
-      <Text style={styles.hint}>
-        What a family tells the printer when they request this guide’s parts, like “Tray thickness” with the options 10 mm and
-        15 mm. Leave empty if one size fits all.
-      </Text>
+      <View style={styles.titleRow}>
+        <Text style={styles.title}>Customization fields</Text>
+        <InfoHint title="Customization fields">
+          What a family tells the printer when they request this guide’s parts, like “Tray thickness” with the options 10 mm and
+          15 mm. Leave empty if one size fits all.
+        </InfoHint>
+      </View>
       {rows.map((r, i) => (
         <View key={i} style={styles.block}>
           <TextField
@@ -126,8 +129,8 @@ export function CustomizationFields({
 }
 
 const styles = StyleSheet.create({
-  title: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.text, marginTop: theme.spacing(4), marginBottom: theme.spacing(2) },
-  hint: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted, lineHeight: 20, marginBottom: theme.spacing(3) },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2), marginTop: theme.spacing(4), marginBottom: theme.spacing(3) },
+  title: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.text },
   block: { marginBottom: theme.spacing(4), gap: theme.spacing(2) },
   row: { flexDirection: 'row', gap: theme.spacing(2) },
   cell: { flex: 1 },
