@@ -302,7 +302,10 @@ export function TutorialHub({ id, justCreated, fromPdf }: { id: string; justCrea
               {done ? (
                 <Ionicons testID={`hub-done-${section}`} name="checkmark-circle" size={22} color={theme.colors.success} />
               ) : optionalEmpty ? (
-                <Pill label="Empty" bg={theme.colors.honeySoft} />
+                // Pill is alignSelf: flex-start, which beats the row's centring.
+                <View style={styles.emptyPill}>
+                  <Pill label="Empty" bg={theme.colors.honeySoft} />
+                </View>
               ) : null}
               <Ionicons name="chevron-forward" size={18} color={theme.colors.muted} />
             </Pressable>
@@ -510,6 +513,7 @@ const styles = StyleSheet.create({
 
   rowText: { flex: 1 },
   rowSummary: {
+  emptyPill: { alignSelf: 'center' },
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.caption,
     color: theme.colors.muted,
