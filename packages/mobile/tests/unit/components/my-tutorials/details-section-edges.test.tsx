@@ -1,4 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react-native'
+import { BUILD_TIME_OPTIONS } from '@splat-connect/types'
 import { DetailsSection } from '../../../../components/my-tutorials/sections/details-section'
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
@@ -82,10 +83,10 @@ describe('age range', () => {
 })
 
 describe('chips', () => {
-  it('saves each build time, naming the longest "4 h or more"', () => {
+  it.each([0, 3, BUILD_TIME_OPTIONS.length - 1])('saves build time stop %i on slider release', (n) => {
     render(<DetailsSection />)
-    fireEvent.press(screen.getByText('4 h or more'))
-    expect(lastSave()).toEqual({ build_minutes: 240 })
+    fireEvent(screen.getByLabelText('Build time'), 'slidingComplete', n)
+    expect(lastSave()).toEqual({ build_minutes: BUILD_TIME_OPTIONS[n] })
   })
 
   it('does not un-pick difficulty when the chosen chip is pressed again', () => {

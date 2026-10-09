@@ -6,11 +6,7 @@
 // with the one the hub is reading.
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import type { Difficulty, TutorialKind } from '@splat-connect/types'
-import {
-  BUILD_TIME_OPTIONS,
-  KIND_LABEL,
-  formatBuildTime,
-} from '@splat-connect/types'
+import { KIND_LABEL } from '@splat-connect/types'
 import { useDraft } from '../../../lib/use-tutorial-draft'
 import { SectionProgress } from './section-progress'
 import { parseYears } from '../../../lib/tutorial-sections'
@@ -18,6 +14,7 @@ import { theme } from '../../../lib/theme'
 import { Screen } from '../../ui/Screen'
 import { TextField } from '../../ui/TextField'
 import { InfoHint } from '../../ui/InfoHint'
+import { BuildTimeSlider } from '../../ui/BuildTimeSlider'
 import { Chip } from '../../ui/Chip'
 import { ErrorRow } from '../../ui/ErrorRow'
 import { SectionFooter } from '../section-footer'
@@ -127,19 +124,8 @@ export function DetailsSection() {
           ))}
         </View>
 
-        {/* Web's field (edit-details-section.tsx), as chips: the same values,
-            the same "printing isn't included" rule. */}
         <LabelRow hint={{ title: 'About how long does it take?', text: "Hands-on time only — printing time isn't included." }}>About how long does it take?</LabelRow>
-        <View style={styles.chipRow}>
-          {BUILD_TIME_OPTIONS.map((m) => (
-            <Chip
-              key={m}
-              label={m === 240 ? '4 h or more' : formatBuildTime(m)}
-              active={tutorial.build_minutes === m}
-              onPress={() => save({ build_minutes: m })}
-            />
-          ))}
-        </View>
+        <BuildTimeSlider value={tutorial.build_minutes} onCommit={(m) => save({ build_minutes: m })} />
 
         {/* Web's two number fields (071). The empty string clears the end, so
             a guide can go back to "any age"; the 0–18 bound is the database's. */}
