@@ -266,7 +266,7 @@ test('submit-for-review is blocked when required fields are missing', async ({ p
   // checklist names what is missing.
   const submitButton = page.getByRole('button', { name: 'Submit for review' }).first()
   await expect(submitButton).toBeDisabled()
-  await expect(page.getByRole('tabpanel')).toContainText('Steps or a guide PDF')
+  await expect(page.getByRole('tabpanel')).toContainText('Still needs steps or a guide PDF')
   // getMissingFields is unit-tested, but nothing checked that the disabled
   // button actually prevents the status transition.
   const { data } = await adminClient().from('tutorials').select('status').eq('id', id).single()
