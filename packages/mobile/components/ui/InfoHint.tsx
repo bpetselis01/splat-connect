@@ -4,7 +4,7 @@
 // Replaces the grey paragraphs under fields. The Modal is rendered here, inside
 // the screen's own tree: an iOS formSheet cannot be presented over from the root.
 import { useState, type ReactNode } from 'react'
-import { Modal, Pressable, Text, StyleSheet } from 'react-native'
+import { Modal, Pressable, Text, View, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { theme } from '../../lib/theme'
 import { Button } from './Button'
@@ -17,13 +17,14 @@ export function InfoHint({ title, children }: { title: string; children: ReactNo
         <Ionicons name="information-circle-outline" size={20} color={theme.colors.primaryDeep} />
       </Pressable>
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-        <Pressable style={styles.backdrop} onPress={() => setOpen(false)} accessibilityLabel="Close">
-          <Pressable testID="info-hint-card" style={styles.card} onPress={() => {}}>
+        <View style={styles.backdrop} accessibilityViewIsModal onAccessibilityEscape={() => setOpen(false)}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setOpen(false)} accessibilityLabel="Close" accessibilityRole="button" />
+          <Pressable accessible={false} testID="info-hint-card" style={styles.card} onPress={() => {}}>
             <Text style={styles.title} accessibilityRole="header">{title}</Text>
             <Text style={styles.body}>{children}</Text>
             <Button label="Got it" onPress={() => setOpen(false)} />
           </Pressable>
-        </Pressable>
+        </View>
       </Modal>
     </>
   )
