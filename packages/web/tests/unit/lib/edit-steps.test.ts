@@ -88,8 +88,9 @@ describe('computeStepStatuses', () => {
     expect(computeStepStatuses(tutorial({ stl_files: [] }), []).stl).toBe('done')
   })
 
-  // 080: optional, so never 'attention' — an older guide has no steps at all.
-  it('steps is neutral when empty and done once one exists', () => {
+  // Steps or a PDF: attention only when neither; a PDF alone is neutral.
+  it('steps is attention with neither, neutral with a PDF alone, done once one exists', () => {
+    expect(computeStepStatuses(tutorial({ tutorial_pdf_url: null }), []).steps).toBe('attention')
     expect(computeStepStatuses(tutorial(), []).steps).toBe('neutral')
     expect(
       computeStepStatuses(

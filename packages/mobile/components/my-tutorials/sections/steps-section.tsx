@@ -5,8 +5,8 @@
 // every mutation calls replaceSteps, which debounces a PUT of the whole list —
 // so there is no Save button and leaving the screen flushes.
 //
-// Optional: not in getMissingFields, because guides written before steps
-// existed have none and the PDF still carries the guide.
+// A guide needs steps or a PDF (either): getMissingFields gaps this section
+// only when it has neither.
 import { logFailure } from '../../../lib/log'
 import { useRef, useState } from 'react'
 import { View, Text, Image, ScrollView, Pressable, StyleSheet } from 'react-native'

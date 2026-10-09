@@ -60,7 +60,7 @@ describe('getMissingFields', () => {
       { section: 'details', label: 'A title' },
       { section: 'details', label: 'A difficulty' },
       { section: 'details', label: 'A build time' },
-      { section: 'files', label: 'The guide PDF' },
+      { section: 'steps', label: 'Steps or a guide PDF' },
       { section: 'files', label: 'A photo' },
       { section: 'parts', label: 'A part' },
       { section: 'tools', label: 'A tool' },
@@ -136,9 +136,8 @@ describe('sectionSummary', () => {
     expect(getMissingFields(base()).some((g) => g.section === 'picks')).toBe(false)
   })
 
-  // 080: optional, so the empty line is an invitation rather than a gap.
-  it('counts steps, and says nothing is there yet without calling it missing', () => {
-    expect(sectionSummary('steps', base())).toBe('0 steps - nothing yet')
+  // A PDF alone satisfies the rule, so base() (which has one) is not a gap.
+  it('counts steps, and a PDF alone is not a gap', () => {
     expect(sectionSummary('steps', base({ steps: [{ id: 's' }, { id: 't' }] as never }))).toBe('2 steps')
     expect(getMissingFields(base()).some((g) => g.section === 'steps')).toBe(false)
   })
@@ -179,5 +178,46 @@ describe('sectionChecks', () => {
   it('marks a satisfied requirement done instead of dropping it', () => {
     const t = base({ title: 'Drum' })
     expect(sectionChecks(t).find((c) => c.label === 'A title')?.done).toBe(true)
+  })
+})
+
+const step = () => ({ id: 's1', position: 1, title: 'Cut', body: 'Cut it', photo_url: null, tip: null, minutes: null }) as never
+
+describe('steps or a guide PDF', () => {
+  const gap = (t: TutorialWithDetails) => getMissingFields(t).find((g) => g.label === 'Steps or a guide PDF')
+
+  it('is a gap, on the Steps section, when there are neither', () => {
+    expect(gap(base({ steps: [], tutorial_pdf_url: null }))?.section).toBe('steps')
+  })
+  it('is satisfied by a PDF alone', () => {
+    expect(gap(base({ steps: [], tutorial_pdf_url: 'a/b.pdf' }))).toBeUndefined()
+  })
+  it('is satisfied by steps alone', () => {
+    expect(gap(base({ steps: [step()], tutorial_pdf_url: null }))).toBeUndefined()
+  })
+  it('is satisfied by both', () => {
+    expect(gap(base({ steps: [step()], tutorial_pdf_url: 'a/b.pdf' }))).toBeUndefined()
+  })
+  it('never asks for "The guide PDF" any more', () => {
+    expect(getMissingFields(base({ steps: [], tutorial_pdf_url: null })).map((g) => g.label)).not.toContain('The guide PDF')
+  })
+  it('counts Steps as a section that can be incomplete in the progress total', () => {
+    const { ready, total } = sectionProgress(base({ steps: [], tutorial_pdf_url: null }))
+    expect(total - ready).toBeGreaterThanOrEqual(1)
+  })
+})
+
+describe('sectionSummary for steps and files', () => {
+  it('Steps says it is using the PDF when there are no steps and a PDF', () => {
+    expect(sectionSummary('steps', base({ steps: [], tutorial_pdf_url: 'a.pdf' }))).toBe('Using your PDF')
+  })
+  it('Steps asks for steps or a PDF when there is neither', () => {
+    expect(sectionSummary('steps', base({ steps: [], tutorial_pdf_url: null }))).toBe('Steps or PDF needed')
+  })
+  it('Files only asks for a photo when steps exist and there is no PDF', () => {
+    expect(sectionSummary('files', base({ steps: [step()], tutorial_pdf_url: null, photo_urls: [] }))).toBe('A photo - PDF optional')
+  })
+  it('Files says PDF optional with steps, a photo and no PDF', () => {
+    expect(sectionSummary('files', base({ steps: [step()], tutorial_pdf_url: null, photo_urls: ['p.jpg'] }))).toBe('Photo added - PDF optional')
   })
 })

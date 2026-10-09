@@ -242,7 +242,9 @@ describe('EditTutorialPage', () => {
     render(await EditTutorialPage(pageParams))
     const stepper = screen.getByTestId('edit-stepper')
     // Each gap is named on the Status checklist beside the step that closes it.
-    expect(screen.getByText('Still needs the guide PDF, a photo')).toBeInTheDocument()
+    expect(screen.getByText('Still needs steps or a guide PDF')).toBeInTheDocument()
+    expect(screen.getByText('Still needs a photo')).toBeInTheDocument()
+    expect(stepper.querySelector('[data-step="steps"]')).toHaveAttribute('data-step-status', 'attention')
     expect(screen.getByText('Still needs a part')).toBeInTheDocument()
     expect(stepper.querySelector('[data-step="details"]')).toHaveAttribute('data-step-status', 'done')
     expect(stepper.querySelector('[data-step="files"]')).toHaveAttribute('data-step-status', 'attention')

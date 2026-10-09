@@ -83,7 +83,7 @@ describe('MyTutorialsListScreen', () => {
       }),
     ])
     render(<MyTutorialsListScreen />)
-    expect(await screen.findByText('Draft · 4 of 6 sections done')).toBeTruthy()
+    expect(await screen.findByText('Draft · 3 of 6 sections done')).toBeTruthy()
     expect(screen.getByText('With Northside Therapy since 28 Aug')).toBeTruthy()
   })
 

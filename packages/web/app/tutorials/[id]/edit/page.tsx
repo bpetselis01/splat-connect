@@ -439,8 +439,7 @@ export default async function EditTutorialPage({
   const byStep = (step: EditStepId) => missing.filter((m) => m.step === step).map((m) => m.label)
   const checklist = walk.map((step) => {
     const gaps = byStep(step)
-    // Steps are optional too (080): guides written before them have none.
-    const optional = step === 'recommended' || step === 'steps'
+    const optional = step === 'recommended'
     const done = optional ? stepStatuses[step] === 'done' : gaps.length === 0
     return {
       step,
@@ -448,9 +447,7 @@ export default async function EditTutorialPage({
       note: done
         ? 'Done'
         : optional
-          ? step === 'steps'
-            ? 'No steps yet — optional'
-            : 'Nothing picked yet — optional'
+          ? 'Nothing picked yet — optional'
           : `Still needs ${gaps.map((g) => g.charAt(0).toLowerCase() + g.slice(1)).join(', ')}`,
       done,
     }
@@ -462,7 +459,7 @@ export default async function EditTutorialPage({
       meta: `Draft · saved ${formatRelativeTime(tutorial.updated_at)}`,
       head: 'Only you can see this',
       body: 'A draft is invisible to everyone — families, organisations, even us. It stays here as long as you like, and nothing is checked until you ask for it to be.',
-      progress: `${filled} of ${checklist.length} sections filled in. Steps and Worth a look are optional — Safety is not.`,
+      progress: `${filled} of ${checklist.length} sections filled in. Worth a look is optional — Safety is not.`,
       privacyLead: 'Nothing here is public.',
       privacy: 'A draft is visible only to you. Submitting shows it to your reviewer, and nobody else, until it is approved.',
     },

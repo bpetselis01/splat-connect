@@ -110,9 +110,9 @@ it('opens a section when its row is tapped', () => {
 it('counts what is ready and what is left', () => {
   mockDraft.tutorial = tutorial({ safety_declared_at: '2026-09-02', parts: [{ name: 'a' }] })
   render(<TutorialHub id="t1" />)
-  // details + steps (optional, so never a gap) + safety + parts, of seven
-  expect(screen.getByText('4 of 7 sections complete')).toBeTruthy()
-  expect(screen.getByRole('progressbar').props.accessibilityValue).toEqual({ min: 0, max: 7, now: 4 })
+  // details + safety + parts, of seven (steps has neither steps nor a PDF here)
+  expect(screen.getByText('3 of 7 sections complete')).toBeTruthy()
+  expect(screen.getByRole('progressbar').props.accessibilityValue).toEqual({ min: 0, max: 7, now: 3 })
   expect(screen.getByText('4 things still needed')).toBeTruthy()
 })
 

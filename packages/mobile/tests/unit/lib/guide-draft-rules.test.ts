@@ -84,7 +84,7 @@ describe('getMissingFields edges', () => {
   })
 
   it('treats a whitespace-only PDF path as no PDF', () => {
-    expect(getMissingFields(draft({ tutorial_pdf_url: '   ' }))).toEqual([{ section: 'files', label: 'The guide PDF' }])
+    expect(getMissingFields(draft({ tutorial_pdf_url: '   ' }))).toEqual([{ section: 'steps', label: 'Steps or a guide PDF' }])
   })
 
   it('accepts each of the three difficulties and nothing else', () => {
@@ -105,7 +105,8 @@ describe('getMissingFields edges', () => {
 describe('nextIncompleteSection', () => {
   it('walks a fresh draft section by section', () => {
     const t = draft({ title: '', difficulty: null as never, build_minutes: null, tutorial_pdf_url: null, photo_urls: [], parts: [], tools: [], safety_declared_at: null })
-    expect(nextIncompleteSection('details', t)).toBe('parts')
+    expect(nextIncompleteSection('details', t)).toBe('steps')
+    expect(nextIncompleteSection('steps', t)).toBe('parts')
     expect(nextIncompleteSection('parts', t)).toBe('tools')
     expect(nextIncompleteSection('tools', t)).toBe('safety')
     expect(nextIncompleteSection('safety', t)).toBe('files')

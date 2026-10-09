@@ -5,13 +5,12 @@
 // Ported from web's lib/validation.ts getMissingFields, with one deliberate
 // divergence: the safety gap reports `section: 'safety'` rather than riding
 // along with details, because the hub gives safety a row of its own. Every
-// other rule is the same eight lines in the same order — a change there is the
+// other rule is the same lines in the same order — a change there is the
 // reminder to bring this copy along.
 import type { Difficulty, TutorialKind, TutorialWithDetails } from '@splat-connect/types'
 import { KIND_LABEL, formatCents, partsTotalCents } from '@splat-connect/types'
 
-// 'steps' (080) is optional: no gap ever names it, so it never blocks submit
-// and Next never lands on it — a contributor opens it from the hub.
+// 'steps' gaps only when a guide has neither steps nor a PDF.
 export type SectionId = 'details' | 'steps' | 'safety' | 'suits' | 'picks' | 'parts' | 'tools' | 'files' | 'stl'
 
 export interface Gap {
@@ -45,7 +44,11 @@ export function sectionChecks(tutorial: TutorialWithDetails): Check[] {
     { section: 'details', label: 'A title', done: Boolean(tutorial.title.trim()) },
     { section: 'details', label: 'A difficulty', done: DIFFICULTIES.includes(tutorial.difficulty) },
     { section: 'details', label: 'A build time', done: tutorial.build_minutes != null },
-    { section: 'files', label: 'The guide PDF', done: Boolean(tutorial.tutorial_pdf_url?.trim()) },
+    {
+      section: 'steps',
+      label: 'Steps or a guide PDF',
+      done: (tutorial.steps?.length ?? 0) > 0 || Boolean(tutorial.tutorial_pdf_url?.trim()),
+    },
     { section: 'files', label: 'A photo', done: tutorial.photo_urls.length > 0 },
     { section: 'parts', label: 'A part', done: tutorial.parts.length > 0 },
     { section: 'tools', label: 'A tool', done: tutorial.tools.length > 0 },
@@ -128,7 +131,8 @@ export function sectionSummary(section: SectionId, t: TutorialWithDetails): stri
     }
     case 'steps': {
       const n = t.steps?.length ?? 0
-      return n ? count(n, 'step') : '0 steps - nothing yet'
+      if (n) return count(n, 'step')
+      return t.tutorial_pdf_url?.trim() ? 'Using your PDF' : 'Steps or PDF needed'
     }
     case 'safety':
       return t.safety_declared_at ? 'Declared' : 'Not declared yet'
@@ -149,6 +153,8 @@ export function sectionSummary(section: SectionId, t: TutorialWithDetails): stri
     case 'files': {
       const pdf = Boolean(t.tutorial_pdf_url?.trim())
       const photo = t.photo_urls.length > 0
+      const steps = (t.steps?.length ?? 0) > 0
+      if (steps && !pdf) return photo ? 'Photo added - PDF optional' : 'A photo - PDF optional'
       if (pdf && photo) return 'PDF and photo added'
       if (!pdf && !photo) return 'Guide PDF and a photo'
       return pdf ? 'A photo' : 'The guide PDF'
