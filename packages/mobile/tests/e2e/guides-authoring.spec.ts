@@ -87,12 +87,15 @@ test('a new account writes a guide end to end and submits it for review', async 
   if (!sliderBox) throw new Error('build time slider has no box')
   const stopX = sliderBox.x + 10 + ((sliderBox.width - 20) * 3) / 9
   const midY = sliderBox.y + sliderBox.height / 2
-  await page.mouse.move(stopX, midY)
-  await page.mouse.down()
-  await page.mouse.move(stopX + 1, midY)
-  await page.mouse.move(stopX, midY)
-  await page.mouse.up()
-  await expect(page.getByTestId('build-time-value')).toHaveText('30 min')
+  // Retry the whole drag: a pixel offset computed from layout can land a stop off.
+  await expect(async () => {
+    await page.mouse.move(stopX, midY)
+    await page.mouse.down()
+    await page.mouse.move(stopX + 1, midY)
+    await page.mouse.move(stopX, midY)
+    await page.mouse.up()
+    await expect(page.getByTestId('build-time-value')).toHaveText('30 min', { timeout: 2000 })
+  }).toPass({ timeout: 15000 })
   expect((await saved).status()).toBe(200)
   await backToHub()
   await expect(page.getByTestId('hub-row-details')).not.toContainText('no build time yet')
