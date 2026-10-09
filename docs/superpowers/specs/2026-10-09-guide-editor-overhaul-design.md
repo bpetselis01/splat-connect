@@ -38,7 +38,9 @@ Slider over `BUILD_TIME_OPTIONS` (10, 15, 20, 30, 45, 60, 90, 120, 180, 240), wh
 
 ## 4. Collaborators and Recommendations sections
 
-Two new sections, added to `SectionId`, `SECTION_LABEL`, `sectionsFor`, the hub's **More** list (replacing the "edit on the web" text) and the hub icon map. Both are optional: they never appear in `getMissingFields` and are excluded from `sectionProgress`, like `suits` and `picks`.
+**Correction (found while planning):** Recommendations already exists on mobile as the "Worth a look" section (`picks-section.tsx`); only the hub's "edit on the web" More row is stale, so that row now links to it. Only Collaborators is a new section.
+
+One new section (Collaborators), added to `SectionId`, `SECTION_LABEL`, `sectionsFor`, the hub's **More** list (replacing the "edit on the web" text) and the hub icon map. Both are optional: they never appear in `getMissingFields` and are excluded from `sectionProgress`, like `suits` and `picks`.
 
 - **Collaborators**: lists contributors and pending invites (already returned by `GET /api/tutorials/:id`: `tutorial_contributors`, `tutorial_collaborator_invites`). Invite by name/email via `POST /api/tutorials/:id/collaborators/invite`; remove via `DELETE /api/tutorials/:id/collaborators/:profileId`. Port behaviour and copy from web `edit-collaborators-section.tsx`.
 - **Recommendations**: up to three other approved guides, each with a "required" toggle, replace-all write through the recommendations route (`api/src/routes/recommendations.ts`). Picker lists approved guides from `/api/public/tutorials`. Port from web `edit-recommendations-section.tsx`, including the tag on rows that are no longer approved.
