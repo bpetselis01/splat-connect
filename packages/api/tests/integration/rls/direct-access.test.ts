@@ -44,7 +44,7 @@ beforeAll(async () => {
   if (t.error) throw t.error
   tutorialId = t.data.id
 
-  const c = await db.from('child_profiles').insert({ parent_id: family.id, name: 'Zed', age: 6 }).select('id').single()
+  const c = await db.from('child_profiles').insert({ parent_id: family.id, age: 6 }).select('id').single()
   if (c.error) throw c.error
   childId = c.data.id
 
@@ -87,10 +87,10 @@ describe("a child's profile", () => {
     expect(data ?? []).toHaveLength(0)
   })
   it('cannot be changed or deleted by another member', async () => {
-    await as(outsider).from('child_profiles').update({ name: 'Hacked' }).eq('id', childId)
+    await as(outsider).from('child_profiles').update({ age: 99 }).eq('id', childId)
     await as(outsider).from('child_profiles').delete().eq('id', childId)
-    const { data } = await adminClient().from('child_profiles').select('name').eq('id', childId)
-    expect(data).toEqual([{ name: 'Zed' }])
+    const { data } = await adminClient().from('child_profiles').select('age').eq('id', childId)
+    expect(data).toEqual([{ age: 6 }])
   })
 })
 

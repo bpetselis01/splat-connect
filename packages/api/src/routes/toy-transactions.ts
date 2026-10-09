@@ -12,6 +12,21 @@ import type { AuthVariables } from '../middleware/auth.js'
 
 const toyTransactions = new Hono<{ Variables: AuthVariables }>()
 
+// child_label is retired: a family no longer gives one, but legacy rows still
+// hold a child's name until the drop migration. Strip the key from every JSON
+// response here, once, rather than at each of the `*` selects.
+// ponytail: delete this with the drop migration.
+const withoutChildLabel = (v: unknown): unknown =>
+  Array.isArray(v) ? v.map(withoutChildLabel)
+  : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).filter(([k]) => k !== 'child_label').map(([k, x]) => [k, withoutChildLabel(x)]))
+  : v
+toyTransactions.use('*', async (c, next) => {
+  await next()
+  if (!c.res.headers.get('content-type')?.includes('application/json')) return
+  const body = withoutChildLabel(await c.res.clone().json())
+  c.res = c.json(body as object, c.res.status as 200)
+})
+
 const RLS_VIOLATION = '42501'
 
 function generateCode(): string {
@@ -183,7 +198,7 @@ toyTransactions.get('/open-builds', async (c) => {
   const { data, error } = await supabase
     .from('toy_transactions')
     .select(
-      'id, tutorial_id, build_brief, travel_km, urgency, child_label, requester_suburb, family_has_toy, requester_id, created_at'
+      'id, tutorial_id, build_brief, travel_km, urgency, requester_suburb, family_has_toy, requester_id, created_at'
     )
     .eq('type', 'build')
     .eq('status', 'requested')
@@ -250,7 +265,7 @@ toyTransactions.get('/builds-board', async (c) => {
   const { data, error } = await admin
     .from('toy_transactions')
     .select(
-      'id, tutorial_id, build_brief, travel_km, urgency, child_label, requester_suburb, family_has_toy, requester_id, owner_id, owner_org_id, created_at, updated_at'
+      'id, tutorial_id, build_brief, travel_km, urgency, requester_suburb, family_has_toy, requester_id, owner_id, owner_org_id, created_at, updated_at'
     )
     .eq('type', 'build')
     .eq('status', tab === 'live' ? 'accepted' : 'completed')
@@ -271,7 +286,7 @@ toyTransactions.get('/builds-board', async (c) => {
         return {
           ...rest,
           ...(tab === 'done' || !party
-            ? { build_brief: null, travel_km: null, urgency: null, child_label: null, requester_suburb: null, family_has_toy: false }
+            ? { build_brief: null, travel_km: null, urgency: null, requester_suburb: null, family_has_toy: false }
             : {}),
           km: null,
           tutorial: found.guides.get(rest.tutorial_id as string) ?? null,
@@ -1432,7 +1447,7 @@ toyTransactions.post('/build', async (c) => {
   }
 
   // What the board's cards show, and all of it is deliberately coarse: a
-  // suburb rather than an address, a first name and an age rather than a child
+  // suburb rather than an address, a brief rather than a child
   // profile. See 064 — the least a maker needs to decide whether they can help
   // is the most a family should have to publish.
   const short = (field: string, max: number) => {
@@ -1443,7 +1458,6 @@ toyTransactions.post('/build', async (c) => {
   const board = {
     travel_km: Number.isInteger(travelKm) && travelKm >= 1 && travelKm <= 500 ? travelKm : null,
     urgency: short('urgency', 60),
-    child_label: short('child_label', 60),
     requester_suburb: short('requester_suburb', 80),
     family_has_toy: body.family_has_toy === true,
   }

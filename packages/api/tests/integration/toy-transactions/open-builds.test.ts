@@ -37,7 +37,6 @@ const json = (token: string, method: string, body: unknown) => ({
 const ask = (over: Record<string, unknown> = {}) => ({
   tutorial_id: tutorialId,
   build_brief: 'Leo lights up at bubbles but I do not own a soldering iron.',
-  child_label: 'Leo, 3',
   requester_suburb: 'Newtown',
   travel_km: 10,
   urgency: 'No rush',
@@ -93,9 +92,12 @@ describe('posting to the board', () => {
   })
 
   it('posts one with no maker at all', async () => {
-    const res = await app.request('/api/toy-transactions/build', json(family.token, 'POST', ask()))
+    const res = await app.request('/api/toy-transactions/build', json(family.token, 'POST', ask({ child_label: 'Leo, 3' })))
     expect(res.status).toBe(201)
-    const tx = (await res.json()) as {
+    // A child_label in the body is ignored, and the response carries no name.
+    const text = await res.text()
+    expect(text).not.toContain('Leo, 3')
+    const tx = JSON.parse(text) as {
       id: string
       owner_id: string | null
       owner_org_id: string | null
@@ -106,6 +108,7 @@ describe('posting to the board', () => {
     expect(tx.owner_org_id).toBeNull()
     expect(tx.status).toBe('requested')
     expect(tx.travel_km).toBe(10)
+    expect(text).not.toContain('child_label')
   })
 
   // Chain: 064's constraint, checked from outside. An ownerless donation would
@@ -141,6 +144,8 @@ describe('the board', () => {
     // The name is not in the payload at all, under any key.
     expect(JSON.stringify(mine)).not.toContain(family.id)
     expect(mine!.mine).toBe(false)
+    expect(JSON.stringify(rows)).not.toContain('child_label')
+    expect(JSON.stringify(rows)).not.toContain('Leo, 3')
   })
 
   it('tells the family which row is their own', async () => {

@@ -77,10 +77,10 @@ export const ONE_HAND_LABEL = 'One hand is enough'
  * item works with for a guide or toy.
  */
 export const CHILD_QUESTIONS = [
-  { child: 'helps_with', item: 'helps_with', label: 'Helps with', prompt: 'What would help {name} day to day?', hint: 'Pick any. We use this to put the right guides first, and never share it.', options: HELPS_WITH },
-  { child: 'access', item: 'access', label: 'How the child uses it', prompt: 'How does {name} start or control things?', hint: 'Pick everything that works, even sometimes.', options: ACCESS },
-  { child: 'press_force', item: 'press_force', label: 'Press force', prompt: 'How hard can {name} press?', hint: "Skip it if they don't press things.", options: PRESS_FORCE },
-  { child: 'enjoys', item: 'play', label: 'Play', prompt: 'What does {name} enjoy?', hint: 'Pick any.', options: ENJOYS },
+  { child: 'helps_with', item: 'helps_with', label: 'Helps with', prompt: 'What would help your child day to day?', hint: 'Pick any. We use this to put the right guides first, and never share it.', options: HELPS_WITH },
+  { child: 'access', item: 'access', label: 'How the child uses it', prompt: 'How does your child start or control things?', hint: 'Pick everything that works, even sometimes.', options: ACCESS },
+  { child: 'press_force', item: 'press_force', label: 'Press force', prompt: 'How hard can your child press?', hint: "Skip it if they don't press things.", options: PRESS_FORCE },
+  { child: 'enjoys', item: 'play', label: 'Play', prompt: 'What does your child enjoy?', hint: 'Pick any.', options: ENJOYS },
 ] as const
 
 /** The tag columns 128 puts on tutorials (all six) and toys (all but device_types). */
@@ -170,10 +170,9 @@ export function byRecommended<T extends Suits & { created_at: string }>(items: T
   return [...items].sort((a, b) => score.get(b)! - score.get(a)! || b.created_at.localeCompare(a.created_at))
 }
 
-/** "Suits Ollie": the first of a parent's children the guide shares an answer with, or null. */
-export function fitLine(item: Suits, children: (ChildTags & Pick<ChildProfile, 'name'>)[]): string | null {
-  const child = children.find((c) => recommendScore(item, c) > 0)
-  return child ? `Suits ${child.name?.trim() || 'your child'}` : null
+/** "Suits your child" when the guide shares an answer with any of a parent's children, else null. */
+export function fitLine(item: Suits, children: ChildTags[]): string | null {
+  return children.some((c) => recommendScore(item, c) > 0) ? 'Suits your child' : null
 }
 
 /**

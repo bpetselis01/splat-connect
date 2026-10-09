@@ -61,9 +61,6 @@ export type Role = 'admin' | 'contributor'
 export interface ChildProfile {
   id: string
   parent_id: string
-  // Optional: a parent may add a child without naming one. The UI falls back to
-  // "Child N" by position — see packages/web/lib/child-label.ts.
-  name: string | null
   age: number | null
   // Ability Profile
   macs_level: string | null
@@ -132,7 +129,13 @@ export function readMeasure(m: ChildMeasure, text: string): number | null | unde
 export type EverydayNeed = (typeof EVERYDAY_NEEDS)[number]['value']
 
 /** Everything a child profile form writes. The retired columns are not in it. */
-export type ChildAnswers = Pick<ChildProfile, 'name' | 'age' | 'helps_with' | 'access' | 'one_hand' | 'press_force' | 'enjoys' | 'everyday_needs'>
+/** How a family's own list names a child: position, plus age when set. `index`
+ *  is the zero-based position by created_at. No name is stored or shown. */
+export function childLabel(index: number, age: number | null): string {
+  return age == null ? `Child ${index + 1}` : `Child ${index + 1}, age ${age}`
+}
+
+export type ChildAnswers = Pick<ChildProfile, 'age' | 'helps_with' | 'access' | 'one_hand' | 'press_force' | 'enjoys' | 'everyday_needs'>
 
 const labelOf = (vocab: readonly { value: string; label: string }[], v: string | null) =>
   vocab.find((o) => o.value === v)?.label
@@ -408,10 +411,6 @@ export interface ToyTransaction {
    *  never stored (064). */
   travel_km: number | null
   urgency: string | null
-  /** "Leo, 3" — free text, not a child_profiles reference. A child profile
-   *  carries clinical scores and measurements, and none of that belongs on a
-   *  public board (064). */
-  child_label: string | null
   /** Suburb only. "Family in Newtown" is the whole of what the board shows. */
   requester_suburb: string | null
   /** Whether the family already owns the toy, which changes what a maker is

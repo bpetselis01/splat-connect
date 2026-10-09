@@ -28,7 +28,6 @@ type Row = {
   party: boolean
   km: number | null
   requester_id?: string
-  child_label: string | null
   requester_suburb: string | null
   build_brief: string | null
   updated_at: string
@@ -58,8 +57,8 @@ beforeAll(async () => {
     requester_code: '222222',
   }
   const rows = await db.from('toy_transactions').insert([
-    { ...base, status: 'accepted', travel_km: 10, requester_suburb: 'Newtown', child_label: 'Leo, 3', build_brief: 'Live note', urgency: 'No rush' },
-    { ...base, status: 'completed', travel_km: 5, requester_suburb: 'Enmore', child_label: 'Mia, 5', build_brief: 'Her chair' },
+    { ...base, status: 'accepted', travel_km: 10, requester_suburb: 'Newtown', build_brief: 'Live note', urgency: 'No rush' },
+    { ...base, status: 'completed', travel_km: 5, requester_suburb: 'Enmore', build_brief: 'Her chair' },
     // Asked of this maker by name: private to the two of them.
     { ...base, status: 'accepted', build_brief: 'Just for you' },
   ])
@@ -81,12 +80,12 @@ describe('GET /api/toy-transactions/builds-board', () => {
     expect(rows).toHaveLength(1)
     expect(rows[0]).toMatchObject({
       mine: false, party: false, km: null,
-      child_label: null, requester_suburb: null, build_brief: null, travel_km: null, urgency: null, family_has_toy: false,
+      requester_suburb: null, build_brief: null, travel_km: null, urgency: null, family_has_toy: false,
     })
     expect(rows[0].requester_id).toBeUndefined()
     expect(text).not.toContain(family.id)
     expect(text).not.toContain('Just for you')
-    expect(text).not.toContain('Leo, 3')
+    expect(text).not.toContain('child_label')
     expect(text).not.toContain('Newtown')
     expect(text).not.toContain('Live note')
   })
@@ -94,7 +93,7 @@ describe('GET /api/toy-transactions/builds-board', () => {
   it('marks the maker and the family as parties, who still see their own build', async () => {
     const forMaker = ((await (await board(maker, 'tab=live')).json()) as Row[]).find((r) => r.maker_name === MAKER)
     const forFamily = ((await (await board(family, 'tab=live')).json()) as Row[]).find((r) => r.maker_name === MAKER)
-    const own = { child_label: 'Leo, 3', requester_suburb: 'Newtown', build_brief: 'Live note' }
+    const own = { requester_suburb: 'Newtown', build_brief: 'Live note' }
     expect(forMaker).toMatchObject({ party: true, mine: false, ...own })
     expect(forFamily).toMatchObject({ party: true, mine: true, ...own })
   })
@@ -104,9 +103,9 @@ describe('GET /api/toy-transactions/builds-board', () => {
     const text = await res.text()
     const rows = (JSON.parse(text) as Row[]).filter((r) => r.maker_name === MAKER)
     expect(rows).toHaveLength(1)
-    expect(rows[0]).toMatchObject({ child_label: null, requester_suburb: null, build_brief: null, km: null })
+    expect(rows[0]).toMatchObject({ requester_suburb: null, build_brief: null, km: null })
     expect(typeof rows[0].updated_at).toBe('string')
-    expect(text).not.toContain('Mia, 5')
+    expect(text).not.toContain('child_label')
     expect(text).not.toContain('Enmore')
     expect(text).not.toContain('Her chair')
   })

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { CHILD_QUESTIONS, byRecommended, fitLine, matchesForChild, matchesSuits, readSuits, recommendScore, NO_SUITS_FILTER, suitsFilterCount } from '@splat-connect/types'
+import { CHILD_QUESTIONS, childLabel, byRecommended, fitLine, matchesForChild, matchesSuits, readSuits, recommendScore, NO_SUITS_FILTER, suitsFilterCount } from '@splat-connect/types'
 
 describe('readSuits', () => {
   it('keeps answers, drops duplicates, turns an empty list into null, and leaves out what the body leaves out', () => {
@@ -39,7 +39,7 @@ describe('matchesSuits', () => {
 })
 
 describe('recommendScore and byRecommended', () => {
-  const child = { name: 'Ollie', helps_with: ['seeing' as const, 'calm' as const], access: ['touch' as const], one_hand: true, press_force: 'light' as const, enjoys: ['light' as const] }
+  const child = { helps_with: ['seeing' as const, 'calm' as const], access: ['touch' as const], one_hand: true, press_force: 'light' as const, enjoys: ['light' as const] }
   it('counts shared answers across the four questions, one for one hand and one for a press it works with', () => {
     const g = { helps_with: ['seeing' as const], access: ['touch' as const, 'press' as const], one_hand: true, press_force: ['light' as const], play: ['light' as const, 'sound' as const] }
     expect(recommendScore(g, child)).toBe(5)
@@ -55,9 +55,18 @@ describe('recommendScore and byRecommended', () => {
     expect(byRecommended(items, child).map((i) => i.id)).toEqual(['two', 'one', 'new-none', 'old-none'])
     expect(byRecommended(items, null).map((i) => i.id)).toEqual(['new-none', 'two', 'one', 'old-none'])
   })
-  it('fitLine names the first child a guide shares an answer with, or says nothing', () => {
-    expect(fitLine({ play: ['light'] }, [child])).toBe('Suits Ollie')
+  it('fitLine says "Suits your child" when a guide shares an answer with any child, or says nothing', () => {
+    expect(fitLine({ play: ['light'] }, [child])).toBe('Suits your child')
     expect(fitLine({ play: ['water'] }, [child])).toBeNull()
+  })
+  it('childLabel is the position, plus the age when there is one', () => {
+    expect(childLabel(0, null)).toBe('Child 1')
+    expect(childLabel(1, 6)).toBe('Child 2, age 6')
+    expect(childLabel(2, 0)).toBe('Child 3, age 0')
+  })
+  it('no child question asks by name', () => {
+    for (const q of CHILD_QUESTIONS) expect(q.prompt).not.toMatch(/[{}]/)
+    expect(CHILD_QUESTIONS[0]!.prompt).toBe('What would help your child day to day?')
   })
   it('matchesForChild counts guides and live toys that share an answer', () => {
     const m = matchesForChild(child, [{ id: 'g1', access: ['touch'] }, { id: 'g2' }], [

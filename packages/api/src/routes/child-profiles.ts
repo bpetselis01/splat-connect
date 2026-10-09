@@ -46,9 +46,18 @@ const childProfiles = new Hono<{ Variables: AuthVariables }>()
 // 120 by decision (2026-09-30: "Measurements as an optional step"). The rest
 // stay in the table and still come back on GET until a decision drops them.
 const EDITABLE = [
-  'name', 'age', 'helps_with', 'access', 'one_hand', 'press_force', 'enjoys',
+  'age', 'helps_with', 'access', 'one_hand', 'press_force', 'enjoys',
   'everyday_needs', 'palm_width_mm', 'reach_cm', 'tray_mm',
 ] as const
+
+// Every ChildProfile column except the retired name. Explicit so the response
+// stays name-free for as long as the column exists, and `*` cannot bring it back.
+const COLUMNS = [
+  'id', 'parent_id', 'age', 'macs_level', 'macs_source', 'hand_involvement', 'assist_hand', 'bfmf_score', 'bfmf_source',
+  'challenges', 'challenge_other', 'grip_type', 'env_context', 'palm_width_mm', 'wrist_circ_mm', 'needs_arm_attachment',
+  'forearm_length_mm', 'hand_dominance', 'sensory_preferences', 'helps_with', 'access', 'one_hand', 'press_force', 'enjoys',
+  'everyday_needs', 'reach_cm', 'tray_mm', 'created_at', 'updated_at',
+].join(', ')
 
 const valuesOf = (vocab: readonly { value: string }[]) => vocab.map((o) => o.value) as readonly string[]
 const SINGLE_CHOICE: Record<string, readonly string[]> = {
@@ -97,7 +106,7 @@ childProfiles.get('/', async (c) => {
   const supabase = createUserClient(c.get('token'))
   const { data, error } = await supabase
     .from('child_profiles')
-    .select('*')
+    .select(COLUMNS)
     .eq('parent_id', c.get('userId'))
     .order('created_at', { ascending: true })
   if (error) return c.json({ error: error.message }, 500)
@@ -112,7 +121,7 @@ childProfiles.post('/', async (c) => {
   const { data, error } = await supabase
     .from('child_profiles')
     .insert({ ...row, parent_id: c.get('userId') })
-    .select()
+    .select(COLUMNS)
     .single()
   if (error) return c.json({ error: error.message }, 500)
   return c.json(data, 201)
@@ -128,7 +137,7 @@ childProfiles.patch('/:id', async (c) => {
     .update(row)
     .eq('id', c.req.param('id'))
     .eq('parent_id', c.get('userId'))
-    .select()
+    .select(COLUMNS)
     .maybeSingle()
   if (error) {
     if (error.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
@@ -145,7 +154,7 @@ childProfiles.delete('/:id', async (c) => {
     .delete()
     .eq('id', c.req.param('id'))
     .eq('parent_id', c.get('userId'))
-    .select()
+    .select(COLUMNS)
     .maybeSingle()
   if (error) {
     if (error.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
