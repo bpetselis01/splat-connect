@@ -9,7 +9,8 @@
  *  - A notification is readable only by its recipient.
  *  - An open build request is readable by signed-in users and NEVER by anon (064).
  *  - Once a maker claims a build, only the family and that maker can see it.
- *  - Pickup addresses are denied to every direct caller, the owner included (028).
+ *  - Pickup addresses and emails are denied to every direct caller, the owner included (028, 029).
+ *  - Nobody can create a profile row by hand: there is no insert policy.
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createClient } from '@supabase/supabase-js'
@@ -137,6 +138,26 @@ describe('the Makers wanted board', () => {
     const body = JSON.stringify(await res.json())
     expect(body).toContain(claimedBuildId)
     expect(body).not.toContain(family.id)
+  })
+})
+
+describe('an email address', () => {
+  // 029 took email off the grant list: an anon key could otherwise read it from any visible row.
+  it.each([
+    ['its owner', () => as(family)],
+    ['another member', () => as(outsider)],
+    ['an anonymous caller', () => as(null)],
+  ])('is denied to %s', async (_n, client) => {
+    const { data, error } = await client().from('profiles').select('email').eq('id', family.id)
+    expect(data ?? null).toBeNull()
+    expect(error?.code).toBe('42501')
+  })
+})
+
+describe('profile rows', () => {
+  it('cannot be created by hand, even by a signed-in member', async () => {
+    const { error } = await as(outsider).from('profiles').insert({ id: crypto.randomUUID(), role: 'admin' })
+    expect(error).not.toBeNull()
   })
 })
 
