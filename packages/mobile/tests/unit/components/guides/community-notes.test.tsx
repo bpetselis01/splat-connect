@@ -217,3 +217,9 @@ describe('a guide with notes on many steps filters through the step picker', () 
     expect(screen.queryByTestId('feedback-filter-step-field')).toBeNull()
   })
 })
+
+it('on a guide with no steps a note is tagged Whole guide and there is no Missing filter', () => {
+  render(<CommunityNotes {...props} steps={[]} notes={[note({ step_position: null })] as never} />)
+  expect(screen.getAllByText('Whole guide').length).toBeGreaterThan(0)
+  expect(screen.queryByTestId('feedback-filter-missing')).toBeNull()
+})

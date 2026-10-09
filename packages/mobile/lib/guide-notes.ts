@@ -26,7 +26,7 @@ export function useGuideNotes(tutorialId: string) {
 const isMissing = (n: GuideNote, stepCount: number) => n.step_position == null || n.step_position > stepCount
 
 export const stepLabel = (n: GuideNote, stepCount: number) =>
-  isMissing(n, stepCount) ? 'Missing step' : `Step ${n.step_position}`
+  isMissing(n, stepCount) ? (stepCount === 0 ? 'Whole guide' : 'Missing step') : `Step ${n.step_position}`
 
 export const pinCountLabel = (n: number) => `${n} pinned revision${n === 1 ? '' : 's'}`
 

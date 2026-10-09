@@ -535,7 +535,7 @@ export function TutorialView({
               {pinned.map((n) => (
                 <li key={n.id} className="rounded-[var(--radius-inset)] border border-line bg-surface p-4">
                   <p className="m-0 text-xs font-bold text-muted">
-                    {n.step_position && n.step_position <= steps.length ? `Step ${n.step_position}` : 'Missing step'} · {n.author_name}
+                    {n.step_position && n.step_position <= steps.length ? `Step ${n.step_position}` : steps.length === 0 ? 'Whole guide' : 'Missing step'} · {n.author_name}
                   </p>
                   <p className="m-0 mt-1 text-[15px] leading-[1.55] text-ink">{n.body}</p>
                   <p className="m-0 mt-2 text-xs font-bold text-ink">Pinned by {n.pinned_by_name ?? 'Deleted member'}</p>
@@ -550,7 +550,7 @@ export function TutorialView({
                   {open.map((n) => (
                     <li key={n.id} className="rounded-[var(--radius-inset)] border border-line bg-surface p-4">
                       <p className="m-0 text-xs font-bold text-muted">
-                        {n.step_position && n.step_position <= steps.length ? `Step ${n.step_position}` : 'Missing step'} · {n.author_name}
+                        {n.step_position && n.step_position <= steps.length ? `Step ${n.step_position}` : steps.length === 0 ? 'Whole guide' : 'Missing step'} · {n.author_name}
                       </p>
                       <p className="m-0 mt-1 text-[15px] leading-[1.55] text-ink">{n.body}</p>
                       <NotePinButton tutorialId={tutorial.id} noteId={n.id} pinned={false} />

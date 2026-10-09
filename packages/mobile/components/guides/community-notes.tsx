@@ -202,7 +202,7 @@ export function CommunityNotes({ tutorialId, guideTitle, authorName, steps, note
           {stepsWithNotes.length > CHIP_MAX ? null : stepsWithNotes.map((s) => (
             <Chip key={s.id} label={`Step ${s.position}`} active={filter === s.position} onPress={() => setFilter(s.position)} testID={`feedback-filter-step-${s.position}`} />
           ))}
-          {anyMissing ? <Chip label="Missing" active={filter === 'missing'} onPress={() => setFilter('missing')} testID="feedback-filter-missing" /> : null}
+          {anyMissing && steps.length > 0 ? <Chip label="Missing" active={filter === 'missing'} onPress={() => setFilter('missing')} testID="feedback-filter-missing" /> : null}
           {stepsWithNotes.length > CHIP_MAX ? (
             <View style={styles.stepField}>
               <StepPicker steps={stepsWithNotes} value={typeof filter === 'number' ? filter : undefined} onChange={(p) => setFilter(p ?? 'missing')} title="Filter by step" placeholder="Filter by step" allowMissing={false} testID="feedback-filter-step-field" />

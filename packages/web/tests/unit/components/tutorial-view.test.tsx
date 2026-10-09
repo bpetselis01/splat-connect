@@ -293,4 +293,10 @@ describe('pinning community notes', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Unpin' }))
     await waitFor(() => expect(browserApiClient.post).toHaveBeenCalledWith('/api/tutorials/t1/notes/q/unpin', {}))
   })
+
+  it('labels a note on a guide with no steps "Whole guide"', () => {
+    render(<TutorialView signedIn canPin tutorial={tutorial({ steps: [] })} notes={[{ ...note, step_position: null }]} />)
+    expect(screen.getByText(/Whole guide · Priya/)).toBeInTheDocument()
+    expect(screen.queryByText(/Missing step/)).toBeNull()
+  })
 })

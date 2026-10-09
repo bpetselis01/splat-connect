@@ -80,7 +80,7 @@ describe('noteSummary edges', () => {
     const s = noteSummary([pinned({ id: 'p', step_position: 1, body: 'x' }), note({ id: 'o', step_position: 1 })], 0)
     expect(s.labels.size).toBe(0)
     expect(s.extras).toEqual([{ no: 1, body: 'x', by: 'Priya', pinnedBy: 'Owen' }])
-    expect(stepLabel(note({ step_position: 1 }) as never, 0)).toBe('Missing step')
+    expect(stepLabel(note({ step_position: 1 }) as never, 0)).toBe('Whole guide')
   })
 
   it('numbers extras after the last step in the order they were pinned', () => {

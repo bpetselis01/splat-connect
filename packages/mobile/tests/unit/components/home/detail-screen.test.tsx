@@ -729,7 +729,6 @@ describe('DetailScreen Feedback hand-off', () => {
     tab('Feedback')
     withNote()
     fireEvent.press(screen.getByTestId('feedback-composer'))
-    fireEvent.press(screen.getByText('Missing step'))
     fireEvent.changeText(screen.getByLabelText('Your note'), 'Posted from build mode.')
     fireEvent.press(screen.getByRole('button', { name: 'Post' }))
     await screen.findByText('Feedback posted')
