@@ -175,7 +175,7 @@ test('Recommended puts the guides that share the child\'s answers first, then ne
   const match = await createTutorial(contributor.id, { title: `${prefix} Match`, status: 'approved' })
   await createTutorial(contributor.id, { title: `${prefix} Plain`, status: 'approved' })
   await admin.from('tutorials').update({ helps_with: ['hearing'], play: ['sound'] }).eq('id', match)
-  await admin.from('child_profiles').insert({ parent_id: contributor.id, name: 'Iris', helps_with: ['hearing'], enjoys: ['sound'] })
+  await admin.from('child_profiles').insert({ parent_id: contributor.id, helps_with: ['hearing'], enjoys: ['sound'] })
 
   await page.goto('/guides')
   await page.getByPlaceholder('Search guides').fill(prefix)
