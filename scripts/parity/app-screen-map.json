@@ -11,7 +11,7 @@
     "type": "missing-section",
     "match": "suits ollie",
     "why": "fixture",
-    "reason": "The board's child Ollie fits a guide, so a Suits Ollie heading draws; the parity child has no name or fit answers."
+    "reason": "The board's child Ollie fits a guide, so a Suits Ollie heading draws; the parity child has no fit answers, and SPLAT no longer stores a child name (spec 2026-10-09-remove-child-name)."
    }
   ]
  },
@@ -778,7 +778,21 @@
   "boardRoute": "account/child/[id]",
   "route": "/account/child/[id]",
   "idFrom": "child",
-  "role": "parent"
+  "role": "parent",
+  "explained": [
+   {
+    "type": "missing-section",
+    "match": "name or nickname",
+    "why": "intended",
+    "reason": "The board's child form asks for \"Name or nickname\". SPLAT collects no child's name (spec 2026-10-09-remove-child-name); a child is \"Child N\" plus age, so the field is removed."
+   },
+   {
+    "type": "copy",
+    "match": "ollie",
+    "why": "intended",
+    "reason": "The board shows a named child (Ollie) and \"About Ollie\"/\"Suits Ollie\" wording. Live says \"your child\" and shows \"Child N\" (spec 2026-10-09-remove-child-name)."
+   }
+  ]
  },
  {
   "id": "org_queue",
@@ -863,6 +877,12 @@
     "match": "extra Skip",
     "why": "intended",
     "reason": "Every wizard question is optional; Skip moves on without saving an answer."
+   },
+   {
+    "type": "missing-section",
+    "match": "name or nickname",
+    "why": "intended",
+    "reason": "The board's child form asks for \"Name or nickname\". SPLAT collects no child's name (spec 2026-10-09-remove-child-name); a child is \"Child N\" plus age, so the field is removed."
    }
   ]
  },

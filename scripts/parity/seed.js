@@ -164,7 +164,6 @@ async function seedBuild(db, parentId) {
       owner_id: maker,
       tutorial_id,
       build_brief: 'A 100 mm button, standard 3.5 mm. Whenever suits.',
-      child_label: 'Leo, 3',
       requester_suburb: 'Glebe',
       // The board's build has a working shot up; the page only links the path.
       working_photo_url: 'parity/shot.jpg',
@@ -499,7 +498,7 @@ async function seedEventParts(db, eventId, orgId, requesterId) {
   const tutorial_id = await approvedGuide(db)
   if (!tutorial_id || !requesterId) return
   undo.push((d) => d.from('toy_transactions').delete().eq('event_id', eventId))
-  const req = (part_sets, child_label, requester_suburb, print_note) => ({
+  const req = (part_sets, requester_suburb, print_note) => ({
     type: 'print',
     status: 'requested',
     requester_id: requesterId,
@@ -507,14 +506,13 @@ async function seedEventParts(db, eventId, orgId, requesterId) {
     tutorial_id,
     event_id: eventId,
     part_sets,
-    child_label,
     requester_suburb,
     print_note,
   })
   await swallow(
     db.from('toy_transactions').insert([
-      req(3, 'Leo, 3', 'Newtown', 'Cot-rail version if you have it.'),
-      req(2, 'Mia, 5', 'Crows Nest', null),
+      req(3, 'Newtown', 'Cot-rail version if you have it.'),
+      req(2, 'Crows Nest', null),
     ])
   )
 }
