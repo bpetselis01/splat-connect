@@ -13,6 +13,7 @@
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createClient } from '@supabase/supabase-js'
+import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
 
 const URL = process.env.SUPABASE_URL ?? 'http://localhost:54321'
@@ -122,6 +123,20 @@ describe('build requests', () => {
     expect(await seen(maker)).toBe(1)
     expect(await seen(outsider)).toBe(0)
     expect(await seen(null)).toBe(0)
+  })
+})
+
+describe('the Makers wanted board', () => {
+  // The table row is hidden from outsiders once claimed (064), but the board lists
+  // claimed builds on its Live tab through the API, naming the maker and never the family.
+  it('lists a claimed build to another member without naming the family', async () => {
+    const res = await app.request('/api/toy-transactions/builds-board?tab=live', {
+      headers: { Authorization: `Bearer ${outsider.token}` },
+    })
+    expect(res.status).toBe(200)
+    const body = JSON.stringify(await res.json())
+    expect(body).toContain(claimedBuildId)
+    expect(body).not.toContain(family.id)
   })
 })
 
