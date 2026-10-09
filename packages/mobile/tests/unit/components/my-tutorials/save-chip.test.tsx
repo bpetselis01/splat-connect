@@ -5,16 +5,18 @@ import { SaveChip } from '../../../../components/my-tutorials/sections/save-chip
 const mockDraft = { saveState: 'idle' as string }
 jest.mock('../../../../lib/use-tutorial-draft', () => ({ useDraft: () => mockDraft }))
 
-it('says a write is in flight', () => {
+it('shows the saving icon while a write is in flight', async () => {
   mockDraft.saveState = 'saving'
   render(<SaveChip />)
-  expect(screen.getByText('Saving...')).toBeTruthy()
+  expect(screen.getByLabelText('Saving')).toBeTruthy()
+  expect(await screen.findByTestId('save-chip-saving')).toBeTruthy()
 })
 
-it('says a write landed', () => {
+it('shows the tick when a write landed', async () => {
   mockDraft.saveState = 'saved'
   render(<SaveChip />)
-  expect(screen.getByText('Saved')).toBeTruthy()
+  expect(screen.getByLabelText('Saved')).toBeTruthy()
+  expect(await screen.findByTestId('save-chip-saved')).toBeTruthy()
 })
 
 it('says nothing at rest, so an untouched screen makes no claim', () => {
