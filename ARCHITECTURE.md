@@ -1,3 +1,5 @@
+> **Out of date:** this document describes the original schema. The `parent` role was removed (2026-08-01), child profiles hold the four child questions rather than MACS/BFMF scores, and section 4's `role = parent` guard no longer exists. Read [CONTEXT.md](./CONTEXT.md) and `docs/adr/` first; treat the rest as history until it is rewritten.
+
 # SPLAT Connect — Architecture
 
 **S**upporting **P**lay by **A**dapting **T**oys. Diagrams below are traced from the source in
@@ -200,18 +202,18 @@ erDiagram
     TUTORIALS ||--o{ PARTS : requires
     TUTORIALS ||--o{ TOOLS : requires
     TUTORIALS ||--o{ STL_FILES : "prints from"
-    PROFILES ||--o| CHILD_PROFILES : "one per parent"
+    PROFILES ||--o{ CHILD_PROFILES : "many per member"
 
     AUTH_USERS {
         uuid id PK
         text email
-        jsonb raw_user_meta_data "role whitelisted to parent"
+        jsonb raw_user_meta_data "role defaults to contributor"
     }
     PROFILES {
         uuid id PK "FK auth.users, cascade"
         text name
         text email
-        text role "admin | contributor | parent"
+        text role "admin | contributor"
         boolean approved
         timestamptz created_at
     }
