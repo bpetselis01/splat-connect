@@ -71,11 +71,11 @@ describe('TutorialView', () => {
       { id: 'b', tutorial_id: 't1', position: 2, title: null, body: 'Fit the interrupter.', photo_url: null },
     ]
     const { unmount } = render(
-      <TutorialView tutorial={tutorial({ steps })} signedIn fit="Suits Ollie — big button, light press, short hold" />
+      <TutorialView tutorial={tutorial({ steps })} signedIn fit="Suits your child" />
     )
     expect(screen.getByText('Open it')).toBeInTheDocument()
     expect(screen.getByText('Fit the interrupter.')).toBeInTheDocument()
-    expect(screen.getByTestId('fit-callout')).toHaveTextContent('Suits Ollie — big button, light press, short hold')
+    expect(screen.getByTestId('fit-callout')).toHaveTextContent('Suits your child')
     unmount()
     render(<TutorialView tutorial={tutorial({ steps })} signedIn />)
     expect(screen.queryByTestId('fit-callout')).toBeNull()

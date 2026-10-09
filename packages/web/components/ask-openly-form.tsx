@@ -86,7 +86,6 @@ export function AskOpenlyForm({
   const [tutorialId, setTutorialId] = useState(initialGuide ?? '')
   const [query, setQuery] = useState('')
   const [kind, setKind] = useState<(typeof KINDS)[number]['id']>('all')
-  const [childLabel, setChildLabel] = useState('')
   const [suburb, setSuburb] = useState('')
   const [travelKm, setTravelKm] = useState(10)
   const [urgency, setUrgency] = useState<string>(BUILD_URGENCIES[0])
@@ -117,7 +116,6 @@ export function AskOpenlyForm({
       const tx = await browserApiClient.post<{ id: string }>('/api/toy-transactions/build', {
         tutorial_id: tutorialId,
         build_brief: brief.trim() || null,
-        child_label: childLabel.trim(),
         requester_suburb: suburb.trim(),
         travel_km: travelKm,
         urgency,
@@ -235,21 +233,7 @@ export function AskOpenlyForm({
       </div>
 
       <div className="card flex flex-col gap-4 p-[22px]">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="block">
-            <span className={LABEL}>
-              Who is it for? <span className="font-semibold text-muted">(optional)</span>
-            </span>
-            <input
-              value={childLabel}
-              onChange={(e) => setChildLabel(e.target.value)}
-              maxLength={60}
-              placeholder="e.g. Leo, 3 — uses a 100 mm button switch"
-              className="field"
-            />
-            {/* Said where the decision is made, not in a policy page. */}
-            <span className={HINT}>First name and age is plenty. This goes on a public board.</span>
-          </label>
+        <div className="grid gap-4">
           <label className="block">
             <span className={LABEL}>Your suburb</span>
             <input
@@ -301,8 +285,8 @@ export function AskOpenlyForm({
             className="field"
           />
           <span className={HINT}>
-            The only free text on the card. Everything else is agreed in the thread once somebody
-            claims it.
+            This goes on a public board. Please do not include names, yours or your child&apos;s.
+            Everything else is agreed in the thread once somebody claims it.
           </span>
         </label>
 

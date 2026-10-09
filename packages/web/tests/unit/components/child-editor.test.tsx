@@ -20,7 +20,6 @@ function child(overrides: Partial<ChildProfile> = {}): ChildProfile {
   return {
     id: 'c1',
     parent_id: 'u1',
-    name: null,
     age: null,
     macs_level: null,
     macs_source: 'manual',
@@ -53,7 +52,7 @@ function child(overrides: Partial<ChildProfile> = {}): ChildProfile {
 }
 
 const NEW_FIELDS = [
-  'name', 'age', 'helps_with', 'access', 'one_hand', 'press_force', 'enjoys', 'everyday_needs',
+  'age', 'helps_with', 'access', 'one_hand', 'press_force', 'enjoys', 'everyday_needs',
   'palm_width_mm', 'reach_cm', 'tray_mm',
 ]
 
@@ -69,14 +68,14 @@ describe('ChildEditor', () => {
     expect(screen.getByRole('heading', { name: 'Add a child' })).toBeInTheDocument()
   })
 
-  it('falls back to the passed-in label when the child has no name', () => {
+  it('heads the page with the passed-in label', () => {
     render(<ChildEditor child={child()} label="Child 2" />)
     expect(screen.getByRole('heading', { name: 'Child 2' })).toBeInTheDocument()
   })
 
-  it("prefers the child's own name over the passed-in label", () => {
-    render(<ChildEditor child={child({ name: 'Emma' })} label="Child 2" />)
-    expect(screen.getByRole('heading', { name: 'Emma' })).toBeInTheDocument()
+  it('asks for no name', () => {
+    render(<ChildEditor child={child()} label="Child 2" />)
+    expect(screen.queryByLabelText(/name/i)).not.toBeInTheDocument()
   })
 
   it('says the profile is private and optional, and is not a medical device', () => {
@@ -116,10 +115,9 @@ describe('ChildEditor', () => {
   })
 
   it('creates the profile with only the form fields and swaps the URL to its id', async () => {
-    vi.mocked(browserApiClient.post).mockResolvedValue(child({ id: 'new-id', name: 'Emma' }))
+    vi.mocked(browserApiClient.post).mockResolvedValue(child({ id: 'new-id' }))
     render(<ChildEditor child={null} />)
 
-    fireEvent.change(screen.getByLabelText('Name or nickname'), { target: { value: ' Emma ' } })
     fireEvent.change(screen.getByLabelText('Age'), { target: { value: '6' } })
     fireEvent.click(screen.getByRole('button', { name: 'Seeing' }))
     fireEvent.click(screen.getByRole('button', { name: 'Feeling calm' }))
@@ -136,7 +134,7 @@ describe('ChildEditor', () => {
     expect(path).toBe('/api/child-profiles')
     expect(Object.keys(body as object).sort()).toEqual([...NEW_FIELDS].sort())
     expect(body).toEqual({
-      name: 'Emma', age: 6, helps_with: ['seeing', 'calm'], access: ['touch'], one_hand: true, press_force: 'light',
+      age: 6, helps_with: ['seeing', 'calm'], access: ['touch'], one_hand: true, press_force: 'light',
       enjoys: [], everyday_needs: ['quiet', 'wipeable'],
       palm_width_mm: null, reach_cm: null, tray_mm: null,
     })
@@ -144,8 +142,8 @@ describe('ChildEditor', () => {
   })
 
   it('PATCHes an existing child from its stored answers, unticking a need', async () => {
-    vi.mocked(browserApiClient.patch).mockResolvedValue(child({ name: 'Emma' }))
-    render(<ChildEditor child={child({ id: 'c1', name: 'Emma', helps_with: ['seeing'], one_hand: true, everyday_needs: ['quiet', 'wipeable'] })} />)
+    vi.mocked(browserApiClient.patch).mockResolvedValue(child())
+    render(<ChildEditor child={child({ id: 'c1', helps_with: ['seeing'], one_hand: true, everyday_needs: ['quiet', 'wipeable'] })} />)
 
     expect(screen.getByRole('button', { name: 'Seeing' })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByRole('button', { name: 'One hand is enough' })).toHaveAttribute('aria-pressed', 'true')
@@ -155,7 +153,7 @@ describe('ChildEditor', () => {
     await screen.findByText('Saved')
     expect(browserApiClient.patch).toHaveBeenCalledWith(
       '/api/child-profiles/c1',
-      expect.objectContaining({ name: 'Emma', helps_with: ['seeing'], one_hand: true, everyday_needs: ['wipeable'] })
+      expect.objectContaining({ helps_with: ['seeing'], one_hand: true, everyday_needs: ['wipeable'] })
     )
   })
 
@@ -165,7 +163,7 @@ describe('ChildEditor', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Create profile' }))
     await screen.findByText('Saved')
     expect(browserApiClient.post).toHaveBeenCalledWith('/api/child-profiles', {
-      name: null, age: null, helps_with: [], access: [], one_hand: false, press_force: null, enjoys: [], everyday_needs: [],
+      age: null, helps_with: [], access: [], one_hand: false, press_force: null, enjoys: [], everyday_needs: [],
       palm_width_mm: null, reach_cm: null, tray_mm: null,
     })
   })

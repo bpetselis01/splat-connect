@@ -2,7 +2,7 @@
  * Makers wanted.
  *
  * Two pages in one, and the split is deliberate. Signed out, this is an
- * explainer with four steps and a sign-in — a board of children's first names,
+ * explainer with four steps and a sign-in — a board of requests,
  * ages and suburbs is not something to put behind no account at all, which is
  * also why 064's read policy is granted to `authenticated` and never to `anon`.
  * Signed in, it is the board.

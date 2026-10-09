@@ -7,8 +7,8 @@ vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }))
 vi.mock('@/lib/browser-api-client', () => ({ browserApiClient: { post: vi.fn(), get: vi.fn() } }))
 
 export const build = (over: Partial<OpenBuild> = {}): OpenBuild => ({
-  id: 'b1', tutorial_id: 'g1', build_brief: 'Leo lights up at bubbles.', travel_km: 10, urgency: 'No rush',
-  child_label: 'Leo, 3', requester_suburb: 'Newtown', family_has_toy: false, created_at: '2026-09-28T00:00:00Z', mine: false,
+  id: 'b1', tutorial_id: 'g1', build_brief: 'A child who lights up at bubbles.', travel_km: 10, urgency: 'No rush',
+  requester_suburb: 'Newtown', family_has_toy: false, created_at: '2026-09-28T00:00:00Z', mine: false,
   tutorial: { id: 'g1', title: 'Bubble machine', difficulty: 'easy', status: 'approved', build_minutes: 20, parts_total_cents: 2800 },
   ...over,
 })
@@ -44,7 +44,7 @@ describe('MakersWantedBoard Live and Handed over', () => {
     fireEvent.mouseDown(screen.getByRole('tab', { name: /^Live/ }))
     expect(await screen.findByRole('link', { name: 'Open the thread' })).toHaveAttribute('href', '/dashboard/exchanges/build/l1')
     vi.mocked(browserApiClient.get).mockResolvedValueOnce([
-      { ...build({ id: 'd1', build_brief: null, child_label: null, requester_suburb: null, travel_km: null, urgency: null }), maker_name: 'Rachel Kaur', party: false, updated_at: '2026-09-30T00:00:00Z' },
+      { ...build({ id: 'd1', build_brief: null, requester_suburb: null, travel_km: null, urgency: null }), maker_name: 'Rachel Kaur', party: false, updated_at: '2026-09-30T00:00:00Z' },
     ])
     fireEvent.mouseDown(screen.getByRole('tab', { name: /^Handed over/ }))
     expect(await screen.findByText('Built by Rachel Kaur')).toBeInTheDocument()

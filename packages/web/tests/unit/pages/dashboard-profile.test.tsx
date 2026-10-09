@@ -23,7 +23,6 @@ import { apiClient } from '@/lib/api-client'
 const child = (over: Partial<ChildProfile>): ChildProfile => ({
   id: 'c1',
   parent_id: 'u1',
-  name: null,
   age: null,
   macs_level: null,
   macs_source: 'manual',
@@ -85,17 +84,17 @@ describe('ProfileTabPage', () => {
 
   it('renders one row per child, each linking to its edit page', async () => {
     vi.mocked(apiClient.get).mockResolvedValue([
-      child({ id: 'c1', name: 'Emma' }),
-      child({ id: 'c2', name: null }),
+      child({ id: 'c1', age: 6 }),
+      child({ id: 'c2' }),
     ])
     render(await ProfileTabPage())
-    expect(screen.getByRole('link', { name: /Emma/ })).toHaveAttribute('href', '/dashboard/child/c1')
+    expect(screen.getByRole('link', { name: /Child 1, age 6/ })).toHaveAttribute('href', '/dashboard/child/c1')
     expect(screen.getByRole('link', { name: /Child 2/ })).toHaveAttribute('href', '/dashboard/child/c2')
   })
 
   it('summarises each child from the board questions, never a score', async () => {
     vi.mocked(apiClient.get).mockResolvedValue([
-      child({ id: 'c1', name: 'Arlo', age: 6, helps_with: ['seeing', 'calm'], press_force: 'light', macs_level: 'II' }),
+      child({ id: 'c1', age: 6, helps_with: ['seeing', 'calm'], press_force: 'light', macs_level: 'II' }),
       child({ id: 'c2' }),
     ])
     render(await ProfileTabPage())

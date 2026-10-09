@@ -26,7 +26,7 @@
  * only, with the banner above the tabs; notes are posted from the app. The
  * guide's author and admins (`canPin`) also see the unpinned notes, to pin.
  *
- * `fit` is the board's "Suits Ollie — big button, light press, short hold",
+ * `fit` is the board's "Suits your child",
  * worked out by the caller (suitsChild) and drawn above the tabs: a parent
  * should know it suits their child before reading a single step.
  *
@@ -136,7 +136,7 @@ export function TutorialView({
    * are three callers.
    */
   signedIn: boolean
-  /** "Suits Ollie — big button, …", or nothing. Never an assessment of the child. */
+  /** "Suits your child", or nothing. Never an assessment of the child. */
   fit?: string | null
   /** 093. Pinned revisions show here; posting is on the app. */
   notes?: GuideNote[]

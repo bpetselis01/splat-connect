@@ -2,7 +2,7 @@
 /**
  * The child profile as the board draws it: one page, three cards, one save.
  *
- * Basics (name, age), the four child questions (128's CHILD_QUESTIONS — the
+ * Basics (age), the four child questions (128's CHILD_QUESTIONS — the
  * same answers guides are tagged with, so Recommended counts what they share),
  * the room's everyday needs, and the Measurements (120). Every field is
  * optional, and nothing else is asked — the older MACS, BFMF, grip, wrist and
@@ -38,7 +38,6 @@ import { NotMedicalNote } from '@/components/not-medical-note'
 /** What a form holds before it is sent: the answers, age still as typed. */
 export function answersOf(child: ChildProfile | null): ChildAnswers {
   return {
-    name: child?.name ?? null,
     age: child?.age ?? null,
     helps_with: child?.helps_with ?? [],
     access: child?.access ?? [],
@@ -209,7 +208,6 @@ export function ChildEditor({ child: initialChild, label }: { child: ChildProfil
     const read = CHILD_MEASURES.map((m) => [m.field, readMeasure(m, measures[m.field])] as const)
     const body = {
       ...form,
-      name: form.name?.trim() || null,
       age: age.trim() === '' ? null : Number(age),
       ...Object.fromEntries(read),
     }
@@ -229,7 +227,7 @@ export function ChildEditor({ child: initialChild, label }: { child: ChildProfil
     }
   }
 
-  const heading = child?.name?.trim() || label || 'Add a child'
+  const heading = label || 'Add a child'
 
   return (
     <section className="max-w-[760px]">
@@ -248,16 +246,7 @@ export function ChildEditor({ child: initialChild, label }: { child: ChildProfil
 
       <form onSubmit={save} className="mt-[26px] flex flex-col gap-4">
         <Card id="basics" title="Basics">
-          <div className="grid gap-4 sm:grid-cols-[1fr_200px]">
-            <label className="flex flex-col">
-              <span className="field-label">Name or nickname</span>
-              <input
-                value={form.name ?? ''}
-                onChange={(e) => set({ name: e.target.value })}
-                maxLength={60}
-                className="field"
-              />
-            </label>
+          <div className="grid gap-4 sm:grid-cols-[200px]">
             <label className="flex flex-col">
               <span className="field-label">Age</span>
               <input

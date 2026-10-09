@@ -20,7 +20,7 @@ import { ProfileForm } from '@/components/profile-form'
 import { SignOutButton } from '@/components/sign-out-button'
 import { OrgInvites } from '@/components/org-invites'
 import { PersonSimple } from '@phosphor-icons/react/dist/ssr'
-import { childSummary, type ChildProfile, type Tutorial, type UserAgreement } from '@splat-connect/types'
+import { childLabel, childSummary, type ChildProfile, type Tutorial, type UserAgreement } from '@splat-connect/types'
 
 // The board's avatar tints, in its order; a child keeps its tint by position.
 const TINTS = ['var(--b100)', 'var(--tcoral)', 'var(--tmint)', 'var(--tamber)', 'var(--tviolet)']
@@ -106,7 +106,7 @@ export default async function ProfileTabPage() {
       ) : (
         <ul className="mt-[22px] grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
           {children.map((child, i) => {
-            const name = child.name?.trim() || `Child ${i + 1}`
+            const name = childLabel(i, child.age)
             return (
               <li key={child.id}>
                 <Link
@@ -118,7 +118,7 @@ export default async function ProfileTabPage() {
                     className="grid h-11 w-11 flex-none place-items-center rounded-full text-[15px] font-extrabold text-[var(--tink)]"
                     style={{ background: TINTS[i % TINTS.length] }}
                   >
-                    {name.charAt(0).toUpperCase()}
+                    {i + 1}
                   </span>
                   <span className="min-w-0">
                     <span className="block truncate text-base font-extrabold">{name}</span>

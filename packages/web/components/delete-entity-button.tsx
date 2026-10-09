@@ -42,7 +42,8 @@ export function DeleteEntityButton({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const phrase = `confirm_delete_${label.replace(/ /g, '_')}`
+  // A child's label may carry ", age 6"; the typed phrase is the position alone.
+  const phrase = `confirm_delete_${label.replace(/, age \d+$/, '').replace(/ /g, '_')}`
 
   useEffect(() => {
     const dialog = ref.current

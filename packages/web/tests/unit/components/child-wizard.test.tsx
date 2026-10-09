@@ -25,10 +25,10 @@ describe('ChildWizard', () => {
     vi.mocked(browserApiClient.patch).mockReset().mockResolvedValue(saved)
   })
 
-  it('walks name, the four child questions and the notes, skipping without saving', async () => {
+  it('walks age, the four child questions and the notes, skipping without saving', async () => {
     render(<ChildWizard child={null} />)
     for (const h of [
-      'Who are we finding toys for?',
+      'How old is your child?',
       'What would help your child day to day?',
       'How does your child start or control things?',
       'How hard can your child press?',
@@ -44,34 +44,32 @@ describe('ChildWizard', () => {
     expect(screen.queryByText(/MACS|BFMF|measure/i)).not.toBeInTheDocument()
   })
 
-  it("puts the child's name in the headings", async () => {
+  it('asks for no name', () => {
     render(<ChildWizard child={null} />)
-    fireEvent.change(screen.getByPlaceholderText('e.g. Sam'), { target: { value: 'Sam' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Skip' }))
-    await heading('What would help Sam day to day?')
+    expect(screen.queryByLabelText(/name/i)).not.toBeInTheDocument()
   })
 
   it('saves each answered step on Continue: create first, then only that step', async () => {
     render(<ChildWizard child={null} />)
-    fireEvent.change(screen.getByPlaceholderText('e.g. Sam'), { target: { value: 'Sam' } })
+    fireEvent.change(screen.getByLabelText('Age in years'), { target: { value: '6' } })
     fireEvent.click(screen.getByRole('button', { name: /Continue/ }))
-    await heading('What would help Sam day to day?')
-    expect(browserApiClient.post).toHaveBeenCalledWith('/api/child-profiles', { name: 'Sam' })
+    await heading('What would help your child day to day?')
+    expect(browserApiClient.post).toHaveBeenCalledWith('/api/child-profiles', { age: 6 })
 
     fireEvent.click(screen.getByRole('button', { name: 'Seeing' }))
     fireEvent.click(screen.getByRole('button', { name: /Continue/ }))
-    await heading('How does Sam start or control things?')
+    await heading('How does your child start or control things?')
     expect(browserApiClient.patch).toHaveBeenLastCalledWith('/api/child-profiles/c1', { helps_with: ['seeing'] })
 
     // The One hand chip is a flag saved with the access list.
     fireEvent.click(screen.getByRole('button', { name: 'One hand is enough' }))
     fireEvent.click(screen.getByRole('button', { name: /Continue/ }))
-    await heading('How hard can Sam press?')
+    await heading('How hard can your child press?')
     expect(browserApiClient.patch).toHaveBeenLastCalledWith('/api/child-profiles/c1', { one_hand: true })
 
     // Continue with nothing picked is a skip — no write.
     fireEvent.click(screen.getByRole('button', { name: /Continue/ }))
-    await heading('What does Sam enjoy?')
+    await heading('What does your child enjoy?')
     expect(browserApiClient.patch).toHaveBeenCalledTimes(2)
   })
 

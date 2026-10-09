@@ -1,6 +1,6 @@
 'use client'
 /**
- * The child profile as six short steps, all skippable: name and age, the four
+ * The child profile as six short steps, all skippable: age, the four
  * child questions (128 — the same answers guides are tagged with), then the
  * room's Good to know notes. Measurements are the editor's, not the wizard's.
  *
@@ -30,22 +30,18 @@ import { ChildQuestion, NeedsChips, answersOf } from '@/components/child-editor'
 import { SplatMascot, type MascotPose } from '@/components/splat-mascot'
 import { CHILD_QUESTIONS, type ChildAnswers, type ChildProfile } from '@splat-connect/types'
 
-/** Step one: a name and an age, and nothing else. */
+/** Step one: an age, and nothing else. */
 function AboutStep({
   profile,
   onChange,
 }: {
   profile: ChildProfile | null
-  onChange: (fields: { name: string | null; age: number | null }) => void
+  onChange: (fields: { age: number | null }) => void
 }) {
-  const [name, setName] = useState(profile?.name ?? '')
   const [age, setAge] = useState(profile?.age?.toString() ?? '')
 
-  function push(nextName: string, nextAge: string) {
-    onChange({
-      name: nextName.trim() || null,
-      age: nextAge.trim() === '' ? null : Number(nextAge),
-    })
+  function push(nextAge: string) {
+    onChange({ age: nextAge.trim() === '' ? null : Number(nextAge) })
   }
 
   // The board's −/+ stepper: an age is a small whole number, and two big
@@ -53,28 +49,13 @@ function AboutStep({
   function stepAge(delta: number) {
     const next = Math.min(21, Math.max(0, (age === '' ? 0 : Number(age)) + delta)).toString()
     setAge(next)
-    push(name, next)
+    push(next)
   }
   const stepBtn =
     'grid h-[52px] w-[52px] flex-none place-items-center rounded-[14px] border border-line bg-surface text-ink active:scale-[.94]'
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
-      <label className="flex flex-col gap-1.5 text-sm font-extrabold text-ink">
-        <span>
-          First name <span className="block font-semibold text-muted">(optional)</span>
-        </span>
-        <input
-          value={name}
-          onChange={(e) => {
-            setName(e.target.value)
-            push(e.target.value, age)
-          }}
-          maxLength={60}
-          placeholder="e.g. Sam"
-          className="field"
-        />
-      </label>
+    <div className="grid gap-4">
       <div className="flex flex-col gap-1.5 text-sm font-extrabold text-ink">
         <span id="wizard-age">Age</span>
         <div className="flex items-center gap-2">
@@ -88,7 +69,7 @@ function AboutStep({
             value={age}
             onChange={(e) => {
               setAge(e.target.value)
-              push(name, e.target.value)
+              push(e.target.value)
             }}
             aria-label="Age in years"
             className="field min-w-0 flex-1 text-center font-display text-xl font-extrabold tabular-nums"
@@ -106,8 +87,8 @@ const STEPS = [
   {
     id: 'about',
     label: 'About',
-    heading: 'Who are we finding toys for?',
-    help: 'A name helps us talk about them naturally. It is never shared.',
+    heading: 'How old is your child?',
+    help: 'An age helps us suggest guides that suit. It is never shared.',
   },
   ...CHILD_QUESTIONS.map((q) => ({
     id: q.child,
@@ -133,7 +114,7 @@ const MASCOT = [
 
 /** The fields each step writes on Continue. */
 const STEP_FIELDS: (keyof ChildAnswers)[][] = [
-  ['name', 'age'],
+  ['age'],
   ...CHILD_QUESTIONS.map((q): (keyof ChildAnswers)[] => (q.child === 'access' ? ['access', 'one_hand'] : [q.child])),
   ['everyday_needs'],
 ]
@@ -244,7 +225,7 @@ export function ChildWizard({ child: initial }: { child: ChildProfile | null }) 
             Step {step + 1} of {STEPS.length}
           </p>
           <h1 className="m-0 mb-1.5 mt-2 font-display text-[34px] font-extrabold leading-[1.15] text-ink">
-            {current.heading.replace('{name}', answers.name?.trim() || 'your child')}
+            {current.heading}
           </h1>
           {'help' in current && (
             <p className="m-0 text-[17px] leading-[1.5] text-muted">{current.help}</p>
