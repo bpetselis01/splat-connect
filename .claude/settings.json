@@ -18,6 +18,15 @@
             "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/graphify-guard-once.py\" read"
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/block-dangerous-git.sh"
+          }
+        ]
       }
     ]
   }
