@@ -33,24 +33,34 @@ export const SECTION_LABEL: Record<SectionId, string> = {
 
 const DIFFICULTIES: string[] = ['easy', 'medium', 'hard']
 
+export interface Check {
+  section: SectionId
+  label: string
+  done: boolean
+}
+
+/** Every requirement, met or not. getMissingFields and the per-page strip both read this. */
+export function sectionChecks(tutorial: TutorialWithDetails): Check[] {
+  return [
+    { section: 'details', label: 'A title', done: Boolean(tutorial.title.trim()) },
+    { section: 'details', label: 'A difficulty', done: DIFFICULTIES.includes(tutorial.difficulty) },
+    { section: 'details', label: 'A build time', done: tutorial.build_minutes != null },
+    { section: 'files', label: 'The guide PDF', done: Boolean(tutorial.tutorial_pdf_url?.trim()) },
+    { section: 'files', label: 'A photo', done: tutorial.photo_urls.length > 0 },
+    { section: 'parts', label: 'A part', done: tutorial.parts.length > 0 },
+    { section: 'tools', label: 'A tool', done: tutorial.tools.length > 0 },
+    // A printed part is what an assistive-tech tutorial IS; a toy adaptation has no STL section.
+    ...(tutorial.kind === 'assistive_tech'
+      ? [{ section: 'stl' as const, label: 'A 3D-print file', done: tutorial.stl_files.length > 0 }]
+      : []),
+    { section: 'safety', label: 'The safety declaration', done: Boolean(tutorial.safety_declared_at) },
+  ]
+}
+
 export function getMissingFields(tutorial: TutorialWithDetails): Gap[] {
-  const missing: Gap[] = []
-  if (!tutorial.title.trim()) missing.push({ section: 'details', label: 'A title' })
-  if (!DIFFICULTIES.includes(tutorial.difficulty))
-    missing.push({ section: 'details', label: 'A difficulty' })
-  if (tutorial.build_minutes == null) missing.push({ section: 'details', label: 'A build time' })
-  if (!tutorial.tutorial_pdf_url?.trim()) missing.push({ section: 'files', label: 'The guide PDF' })
-  if (tutorial.photo_urls.length === 0) missing.push({ section: 'files', label: 'A photo' })
-  if (tutorial.parts.length === 0) missing.push({ section: 'parts', label: 'A part' })
-  if (tutorial.tools.length === 0) missing.push({ section: 'tools', label: 'A tool' })
-  // A printed part is what an assistive-tech tutorial IS, so it cannot be
-  // submitted without one. A toy adaptation has no STL section at all, so the
-  // gap must never appear for it.
-  if (tutorial.kind === 'assistive_tech' && tutorial.stl_files.length === 0)
-    missing.push({ section: 'stl', label: 'A 3D-print file' })
-  if (!tutorial.safety_declared_at)
-    missing.push({ section: 'safety', label: 'The safety declaration' })
-  return missing
+  return sectionChecks(tutorial)
+    .filter((c) => !c.done)
+    .map(({ section, label }) => ({ section, label }))
 }
 
 /** The rows this tutorial's kind shows, in hub order. */

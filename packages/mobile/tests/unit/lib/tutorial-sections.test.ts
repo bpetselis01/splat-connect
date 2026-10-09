@@ -1,5 +1,6 @@
 import {
   getMissingFields,
+  sectionChecks,
   sectionProgress,
   sectionsFor,
   sectionSummary,
@@ -163,5 +164,20 @@ describe('sectionProgress', () => {
   it('counts the sections with nothing missing, out of the sections this kind shows', () => {
     const t = { title: 'T', difficulty: 'easy', build_minutes: 30, tutorial_pdf_url: 'x', photo_urls: ['p'], parts: [{}], tools: [], stl_files: [], kind: 'toy_adaptation', safety_declared_at: null } as never
     expect(sectionProgress(t)).toEqual({ ready: 4, total: 6 })
+  })
+})
+
+describe('sectionChecks', () => {
+  it('lists every requirement with its done state, in the order getMissingFields reports them', () => {
+    const t = base({ title: '', build_minutes: null })
+    const checks = sectionChecks(t)
+    const missingLabels = checks.filter((c) => !c.done).map((c) => c.label)
+    expect(getMissingFields(t).map((g) => g.label)).toEqual(missingLabels)
+    expect(checks.every((c) => typeof c.section === 'string')).toBe(true)
+  })
+
+  it('marks a satisfied requirement done instead of dropping it', () => {
+    const t = base({ title: 'Drum' })
+    expect(sectionChecks(t).find((c) => c.label === 'A title')?.done).toBe(true)
   })
 })
