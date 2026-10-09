@@ -17,6 +17,15 @@ import type { AuthVariables } from '../middleware/auth.js'
 
 const tutorials = new Hono<{ Variables: AuthVariables }>()
 
+const NEEDS_CONTENT = 'A guide needs steps or a PDF'
+
+/** True when a guide with these facts would have neither steps nor a PDF. */
+export const hasNoGuideContent = (stepCount: number, pdfPath: string | null | undefined) =>
+  stepCount === 0 && !pdfPath?.trim()
+
+/** Pending and approved guides are in front of reviewers or readers; drafts are not. */
+const isLive = (status: unknown) => status === 'pending' || status === 'approved'
+
 // tutorial_orgs is embedded for the leader dashboard, which splits its two
 // lists by each row's backing status. The embed is itself RLS-filtered, so a
 // caller only ever sees backing rows for a project they authored or an
@@ -326,11 +335,13 @@ tutorials.patch('/:id', async (c) => {
   }
 
   const submitting = body.status === 'pending'
-  const current = submitting
+  // Clearing the PDF needs the same read: whether the guide is live, and what it has left.
+  const clearsPdf = 'tutorial_pdf_url' in update && !(update.tutorial_pdf_url as string | null)?.trim()
+  const current = submitting || clearsPdf
     ? (
         await supabase
           .from('tutorials')
-          .select('status, safety_declared_at, build_minutes')
+          .select('status, safety_declared_at, build_minutes, tutorial_pdf_url')
           .eq('id', c.req.param('id'))
           .maybeSingle()
       ).data
@@ -338,7 +349,7 @@ tutorials.patch('/:id', async (c) => {
   // Any status but pending is a real hand-over: a draft, and a rejected or
   // approved guide the author edited and sent back (T22). Only pending ->
   // pending is the editor resending its whole form.
-  const enteringPending = current != null && current.status !== 'pending'
+  const enteringPending = submitting && current != null && current.status !== 'pending'
 
   // The safety gate: a draft is not offered for review until its author has
   // affirmed the checklist (SAFETY_CHECKLIST in @splat-connect/types). Checked
@@ -352,6 +363,17 @@ tutorials.patch('/:id', async (c) => {
   const buildMinutes = 'build_minutes' in update ? update.build_minutes : current?.build_minutes
   if (submitting && buildMinutes == null) {
     return c.json({ error: 'Add how long the build takes before submitting' }, 400)
+  }
+
+  // Never leave a live guide empty: submitting, or clearing the PDF of a guide
+  // that is already pending/approved, must leave it with steps or a PDF. This
+  // PATCH is the only route to pending, so the submit check cannot be bypassed.
+  if (current && isLive(submitting ? 'pending' : (body.status ?? current.status))) {
+    const pdf = 'tutorial_pdf_url' in update ? (update.tutorial_pdf_url as string | null) : current.tutorial_pdf_url
+    if (!pdf?.trim()) {
+      const { count } = await supabase.from('tutorial_steps').select('id', { count: 'exact', head: true }).eq('tutorial_id', c.req.param('id'))
+      if (hasNoGuideContent(count ?? 0, pdf)) return c.json({ error: NEEDS_CONTENT }, 400)
+    }
   }
 
   const { data, error } = await supabase
@@ -539,6 +561,9 @@ tutorials.put('/:id/steps', async (c) => {
     // on the insert has to be asked for here.
     const { data: own } = await supabase.rpc('is_tutorial_contributor', { p_tutorial_id: id })
     if (!own && c.get('role') !== 'admin') return c.json({ error: 'Not found' }, 404)
+    // A pending or approved guide with no PDF must keep its steps.
+    const { data: guide } = await supabase.from('tutorials').select('status, tutorial_pdf_url').eq('id', id).maybeSingle()
+    if (guide && isLive(guide.status) && hasNoGuideContent(0, guide.tutorial_pdf_url)) return c.json({ error: NEEDS_CONTENT }, 400)
   }
 
   const oldIds = (before ?? []).map((s) => s.id)
