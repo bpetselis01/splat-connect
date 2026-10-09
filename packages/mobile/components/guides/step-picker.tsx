@@ -23,7 +23,7 @@ type Row = { key: string; position: number | null; title: string; sub?: string }
 
 export type StepPickerProps = {
   steps: StepLike[]
-  /** undefined: nothing chosen; null: Missing step; n: step n. */
+  /** undefined: nothing chosen; null: the whole guide (Missing step, or the guide has no steps); n: step n. */
   value: number | null | undefined
   onChange: (position: number | null) => void
   /** The step the person was on when they opened the sheet. */

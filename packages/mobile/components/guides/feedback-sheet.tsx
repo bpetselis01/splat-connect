@@ -22,7 +22,7 @@ export type FeedbackSheetProps = {
   tutorialId: string
   steps: TutorialStep[]
   authorFirstName: string
-  /** undefined: nothing chosen yet; null: Missing step; n: Step n. */
+  /** undefined: nothing chosen yet; null: the whole guide (Missing step, or the guide has no steps); n: Step n. */
   initialStep?: number | null
   open: boolean
   onClose: () => void
