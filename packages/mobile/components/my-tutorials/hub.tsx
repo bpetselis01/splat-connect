@@ -45,6 +45,7 @@ const SECTION_ICON: Record<SectionId, ComponentProps<typeof Ionicons>['name']> =
   tools: 'construct-outline',
   files: 'folder-open-outline',
   stl: 'cube-outline',
+  collaborators: 'people-circle-outline',
 }
 
 /** What the More row says about backing: who said yes, who is still deciding. */
@@ -131,6 +132,8 @@ export function TutorialHub({ id, justCreated, fromPdf }: { id: string; justCrea
   const missing = getMissingFields(tutorial)
   const sections = sectionsFor(tutorial.kind)
   const incomplete = new Set(missing.map((g) => g.section))
+  const collaborators = tutorial.tutorial_contributors.map((c) => c.profiles.name).join(', ') || 'Just you'
+  const recommendations = `${tutorial.tutorial_recommendations.length} of 3`
   const { ready, total } = sectionProgress(tutorial)
   const isDraft = tutorial.status === 'draft'
 
@@ -306,8 +309,7 @@ export function TutorialHub({ id, justCreated, fromPdf }: { id: string; justCrea
           )
         })}
 
-        {/* Facts under the checklist rather than in the menu. Backing opens its
-            own screen; collaborators and recommendations are edited on the web. */}
+        {/* Facts under the checklist. Backing, Collaborators and Recommendations each open their own screen. */}
         <ListSection style={styles.moreHeading}>More</ListSection>
         <Pressable
           accessibilityRole="button"
@@ -318,19 +320,24 @@ export function TutorialHub({ id, justCreated, fromPdf }: { id: string; justCrea
           <Text style={styles.moreLabel}>Backing</Text>
           <Text style={styles.moreValue}>{backingSummary(backing)}</Text>
         </Pressable>
-        <View style={styles.moreRow}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Collaborators. ${collaborators}`}
+          onPress={() => router.push(`/tutorials/${id}/collaborators`)}
+          style={styles.moreRow}
+        >
           <Text style={styles.moreLabel}>Collaborators</Text>
-          <Text style={styles.moreValue}>
-            {tutorial.tutorial_contributors.map((c) => c.profiles.name).join(', ') || 'Just you'}
-            {' - edit on the web'}
-          </Text>
-        </View>
-        <View style={styles.moreRow}>
+          <Text style={styles.moreValue}>{collaborators}</Text>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Recommendations. ${recommendations}`}
+          onPress={() => router.push(`/tutorials/${id}/picks`)}
+          style={styles.moreRow}
+        >
           <Text style={styles.moreLabel}>Recommendations</Text>
-          <Text style={styles.moreValue}>
-            {tutorial.tutorial_recommendations.length} of 3 - edit on the web
-          </Text>
-        </View>
+          <Text style={styles.moreValue}>{recommendations}</Text>
+        </Pressable>
       </ScrollView>
 
       <View testID="hub-footer" style={[styles.footer, { paddingBottom: bottom }]}>

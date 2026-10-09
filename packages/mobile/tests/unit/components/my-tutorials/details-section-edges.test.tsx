@@ -99,10 +99,9 @@ describe('chips', () => {
     expect(screen.queryByText('What the switch asks')).toBeNull()
   })
 
-  it('opens Backing for this guide', () => {
+  it('no longer has a Backing button (it lives under the hub More row)', () => {
     render(<DetailsSection />)
-    fireEvent.press(screen.getByText('Backing'))
-    expect(mockPush).toHaveBeenCalledWith('/tutorials/t1/backing')
+    expect(screen.queryByText('Backing')).toBeNull()
   })
 
   it('renders nothing while the draft has not arrived', () => {

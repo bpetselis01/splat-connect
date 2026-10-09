@@ -11,7 +11,7 @@ import type { Difficulty, TutorialKind, TutorialWithDetails } from '@splat-conne
 import { KIND_LABEL, formatCents, partsTotalCents } from '@splat-connect/types'
 
 // 'steps' gaps only when a guide has neither steps nor a PDF.
-export type SectionId = 'details' | 'steps' | 'safety' | 'suits' | 'picks' | 'parts' | 'tools' | 'files' | 'stl'
+export type SectionId = 'details' | 'steps' | 'safety' | 'suits' | 'picks' | 'parts' | 'tools' | 'files' | 'stl' | 'collaborators'
 
 export interface Gap {
   section: SectionId
@@ -28,6 +28,7 @@ export const SECTION_LABEL: Record<SectionId, string> = {
   tools: 'Tools',
   files: 'Files',
   stl: '3D print files',
+  collaborators: 'Collaborators',
 }
 
 const DIFFICULTIES: string[] = ['easy', 'medium', 'hard']
@@ -158,6 +159,10 @@ export function sectionSummary(section: SectionId, t: TutorialWithDetails): stri
       if (pdf && photo) return 'PDF and photo added'
       if (!pdf && !photo) return 'Guide PDF and a photo'
       return pdf ? 'A photo' : 'The guide PDF'
+    }
+    case 'collaborators': {
+      const n = t.tutorial_contributors.length
+      return n > 1 ? count(n, 'person') : 'Just you'
     }
     case 'stl':
       return t.stl_files.length ? count(t.stl_files.length, 'file') : 'No STL yet'

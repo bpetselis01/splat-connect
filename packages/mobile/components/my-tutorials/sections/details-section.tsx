@@ -5,7 +5,6 @@
 // no Save button here, and no local copy of the tutorial to fall out of sync
 // with the one the hub is reading.
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
-import { useRouter } from 'expo-router'
 import type { Difficulty, TutorialKind } from '@splat-connect/types'
 import {
   BUILD_TIME_OPTIONS,
@@ -18,7 +17,6 @@ import { parseYears } from '../../../lib/tutorial-sections'
 import { theme } from '../../../lib/theme'
 import { Screen } from '../../ui/Screen'
 import { TextField } from '../../ui/TextField'
-import { Button } from '../../ui/Button'
 import { Chip } from '../../ui/Chip'
 import { ErrorRow } from '../../ui/ErrorRow'
 import { SectionFooter } from '../section-footer'
@@ -34,7 +32,6 @@ const DIFFICULTY_OPTIONS: { label: string; value: Difficulty }[] = [
 ]
 
 export function DetailsSection() {
-  const router = useRouter()
   const { tutorial, save, saveError } = useDraft()
   if (!tutorial) return null
 
@@ -42,7 +39,7 @@ export function DetailsSection() {
     <Screen>
       <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" automaticallyAdjustKeyboardInsets>
         <SectionProgress section="details" />
-        <Text style={styles.lead}>What the toy is, who it suits, and who is backing the guide.</Text>
+        <Text style={styles.lead}>What the toy is and who it suits.</Text>
         <TextField
           label="Title"
           accessibilityLabel="Title"
@@ -172,8 +169,6 @@ export function DetailsSection() {
           </View>
         </View>
         <Text style={styles.hint}>In years. Leave both blank if it suits any age.</Text>
-
-        <Button label="Backing" variant="secondary" onPress={() => router.push(`/tutorials/${tutorial.id}/backing`)} />
 
         <ErrorRow message={saveError} />
       </ScrollView>

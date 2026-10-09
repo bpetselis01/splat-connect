@@ -155,6 +155,7 @@ describe('SECTION_LABEL', () => {
       tools: 'Tools',
       files: 'Files',
       stl: '3D print files',
+      collaborators: 'Collaborators',
     })
   })
 })

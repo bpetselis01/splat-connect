@@ -238,10 +238,10 @@ describe('header and rows', () => {
   it('lists several collaborators, with emoji names, and says Just you with none', () => {
     mockDraft.tutorial = tutorial({ tutorial_contributors: [{ profiles: { name: 'Ada 🧸' } }, { profiles: { name: "O'Brien" } }] })
     const view = render(<TutorialHub id="t1" />)
-    expect(screen.getByText("Ada 🧸, O'Brien - edit on the web")).toBeTruthy()
+    expect(screen.getByText("Ada 🧸, O'Brien")).toBeTruthy()
     mockDraft.tutorial = tutorial()
     view.rerender(<TutorialHub id="t1" />)
-    expect(screen.getByText('Just you - edit on the web')).toBeTruthy()
+    expect(screen.getByText('Just you')).toBeTruthy()
   })
 })
 
