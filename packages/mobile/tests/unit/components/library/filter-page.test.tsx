@@ -261,19 +261,19 @@ describe('Guides filter page', () => {
 
   describe('child-profile pre-fill', () => {
     beforeEach(() => {
-      children = [{ name: 'Ollie', helps_with: ['moving'], access: ['press'], one_hand: true, press_force: 'light', enjoys: ['light'] }]
+      children = [{ helps_with: ['moving'], access: ['press'], one_hand: true, press_force: 'light', enjoys: ['light'] }]
       guides = [
-        guide({ id: 'a', title: 'Fits Ollie', helps_with: ['moving'], access: ['press'], one_hand: true, press_force: ['light'], play: ['light'] }),
+        guide({ id: 'a', title: 'Fits the child', helps_with: ['moving'], access: ['press'], one_hand: true, press_force: ['light'], play: ['light'] }),
         guide({ id: 'b', title: 'Does not fit', helps_with: ['seeing'], access: ['eyes'], press_force: ['full'], play: ['sound'] }),
       ]
     })
 
     it('shows the child answers on the page but applies nothing until Show', async () => {
       render(<LibraryScreen />)
-      await screen.findByText('Fits Ollie')
+      await screen.findByText('Fits the child')
       await act(async () => {})
       await openFilters()
-      expect(screen.getByText('About Ollie')).toBeTruthy()
+      expect(screen.getByText('About your child')).toBeTruthy()
       expect(screen.getByRole('button', { name: 'Moving and using hands', selected: true })).toBeTruthy()
       expect(screen.getByRole('button', { name: 'Press', selected: true })).toBeTruthy()
       expect(screen.getByRole('button', { name: 'One hand is enough', selected: true })).toBeTruthy()
@@ -287,18 +287,18 @@ describe('Guides filter page', () => {
 
     it('applies the suggestion when Show is pressed', async () => {
       render(<LibraryScreen />)
-      await screen.findByText('Fits Ollie')
+      await screen.findByText('Fits the child')
       await act(async () => {})
       await openFilters()
       show('guides')
       expect(screen.queryByText('Does not fit')).toBeNull()
-      expect(screen.getByText('Fits Ollie')).toBeTruthy()
+      expect(screen.getByText('Fits the child')).toBeTruthy()
       expect(screen.getByRole('button', { name: 'Filters, 5 on' })).toBeTruthy()
     })
 
     it('does not overwrite filters already applied on those questions', async () => {
       render(<LibraryScreen />)
-      await screen.findByText('Fits Ollie')
+      await screen.findByText('Fits the child')
       await act(async () => {})
       await openFilters()
       fireEvent.press(screen.getByText('Reset'))
@@ -375,7 +375,7 @@ describe('Toys filter page', () => {
   })
 
   it('shows the child pre-fill on the page, applying nothing until Show', async () => {
-    children = [{ name: 'Ollie', helps_with: [], access: [], one_hand: false, press_force: null, enjoys: ['sound'] }]
+    children = [{ helps_with: [], access: [], one_hand: false, press_force: null, enjoys: ['sound'] }]
     render(<ToyLibraryScreen />)
     await screen.findByText('Press toy')
     await act(async () => {})

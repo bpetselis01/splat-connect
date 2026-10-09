@@ -401,21 +401,21 @@ describe('DetailScreen steps and fit', () => {
       { id: 's2', tutorial_id: '1', position: 2, title: null, body: 'Fit the interrupter.', photo_url: null },
     ],
   }
-  const ollie = { name: 'Ollie', helps_with: null, access: ['press', 'eyes'], one_hand: false, press_force: 'light', enjoys: null }
+  const kid = { helps_with: null, access: ['press', 'eyes'], one_hand: false, press_force: 'light', enjoys: null }
 
   it('numbers the steps and says it suits the child', async () => {
-    mockEndpoints({ detail: Promise.resolve(tagged), children: Promise.resolve([ollie]) })
+    mockEndpoints({ detail: Promise.resolve(tagged), children: Promise.resolve([kid]) })
     render(<DetailScreen id="1" />)
     expect(await screen.findByText('Open it')).toBeTruthy()
     expect(screen.getByText('Fit the interrupter.')).toBeTruthy()
-    expect(await screen.findByText('Suits Ollie')).toBeTruthy()
+    expect(await screen.findByText('Suits your child')).toBeTruthy()
     expect(screen.getByText('Switch · Mounting and positioning · Toy adaptation')).toBeTruthy()
   })
 
   it('says nothing when the guide does not suit the child', async () => {
     mockEndpoints({
       detail: Promise.resolve(tagged),
-      children: Promise.resolve([{ ...ollie, access: ['voice'], press_force: 'full' }]),
+      children: Promise.resolve([{ ...kid, access: ['voice'], press_force: 'full' }]),
     })
     render(<DetailScreen id="1" />)
     await screen.findByText('Open it')
@@ -607,10 +607,10 @@ describe('DetailScreen combined layout', () => {
   })
 
   it('ticks the answers the child shares in Who it’s for', async () => {
-    const ollie = { name: 'Ollie', helps_with: null, access: ['head'], one_hand: false, press_force: null, enjoys: null }
-    mockEndpoints({ detail: Promise.resolve(guide), children: Promise.resolve([ollie]) })
+    const kid = { helps_with: null, access: ['head'], one_hand: false, press_force: null, enjoys: null }
+    mockEndpoints({ detail: Promise.resolve(guide), children: Promise.resolve([kid]) })
     render(<DetailScreen id="1" />)
-    await screen.findByText('Suits Ollie')
+    await screen.findByText('Suits your child')
     expect(screen.getByText('Head or chin')).toBeTruthy()
     expect(screen.UNSAFE_getAllByProps({ name: 'checkmark', size: 14 })).toHaveLength(1)
   })

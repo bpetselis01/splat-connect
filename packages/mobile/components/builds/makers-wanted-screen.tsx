@@ -43,7 +43,6 @@ export type OpenBuild = {
   build_brief: string | null
   travel_km: number | null
   urgency: string | null
-  child_label: string | null
   requester_suburb: string | null
   family_has_toy: boolean
   created_at: string
@@ -389,7 +388,6 @@ function BuildCard({
 
       <View style={styles.facts}>
         {b.km != null ? <Fact icon="navigate-outline" text={`${b.km} km away`} /> : null}
-        {b.child_label ? <Fact icon="happy-outline" text={b.child_label} /> : null}
         {b.travel_km !== null ? <Fact icon="car-outline" text={`${b.travel_km} km`} /> : null}
         {b.urgency ? <Fact icon="calendar-outline" text={b.urgency} /> : null}
       </View>

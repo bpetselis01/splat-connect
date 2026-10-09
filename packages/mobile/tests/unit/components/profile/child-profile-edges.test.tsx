@@ -34,7 +34,7 @@ jest.mock('expo-router', () => {
 })
 
 const child = (over: object = {}) => ({
-  id: 'cp1', parent_id: 'u1', name: null, age: null, helps_with: [], access: [], one_hand: false, press_force: null,
+  id: 'cp1', parent_id: 'u1', age: null, helps_with: [], access: [], one_hand: false, press_force: null,
   everyday_needs: [], enjoys: [], palm_width_mm: null, reach_cm: null, tray_mm: null, created_at: '', updated_at: '',
   ...over,
 })
@@ -62,10 +62,10 @@ beforeEach(() => {
 })
 afterEach(() => jest.useRealTimers())
 
-describe('Wizard, age and name', () => {
+describe('Wizard, age', () => {
   async function aboutStep() {
     render(<ChildWizard />)
-    return { name: await screen.findByPlaceholderText('e.g. Sam'), age: screen.getByLabelText('Age in years') }
+    return { age: await screen.findByLabelText('Age in years') }
   }
   const next = () => fireEvent.press(screen.getByRole('button', { name: 'Continue' }))
 
@@ -92,35 +92,14 @@ describe('Wizard, age and name', () => {
     expect(screen.getByLabelText('Age in years').props.value).toBe('5')
   })
 
-  it.each([
-    ['  Sam  ', 'Sam'],
-    ["O'Brien", "O'Brien"],
-    ['<b>Sam</b> & "co"', '<b>Sam</b> & "co"'],
-    ['Zoë 🧸 سارة', 'Zoë 🧸 سارة'],
-  ])('saves the name %j as %j', async (typed, saved) => {
-    const f = await aboutStep()
-    fireEvent.changeText(f.name, typed)
-    next()
-    await flush()
-    expect(mockPost).toHaveBeenCalledWith('/api/child-profiles', { name: saved })
-  })
-
-  it('a whitespace-only name for a child with none is a skip, not a blank profile', async () => {
-    const f = await aboutStep()
-    fireEvent.changeText(f.name, '   ')
-    next()
-    await flush()
-    expect(mockPost).not.toHaveBeenCalled()
-  })
-
   it('Back is off on the first step and returns to the previous one, with its answer kept', async () => {
     const f = await aboutStep()
     expect(screen.getByRole('button', { name: 'Back' }).props.accessibilityState?.disabled).toBe(true)
-    fireEvent.changeText(f.name, 'Sam')
+    fireEvent.changeText(f.age, '6')
     next()
-    await screen.findByText('What would help Sam day to day?')
+    await screen.findByText('What would help your child day to day?')
     fireEvent.press(screen.getByRole('button', { name: 'Back' }))
-    expect((await screen.findByPlaceholderText('e.g. Sam')).props.value).toBe('Sam')
+    expect((await screen.findByLabelText('Age in years')).props.value).toBe('6')
   })
 
   it('shows the step count and moves it on', async () => {
@@ -133,26 +112,25 @@ describe('Wizard, age and name', () => {
 
 describe('Wizard, an existing child', () => {
   beforeEach(() => {
-    mockGet.mockResolvedValue([child({ name: 'Sam', age: 6, helps_with: ['seeing'], everyday_needs: ['quiet'] })])
+    mockGet.mockResolvedValue([child({ age: 6, helps_with: ['seeing'], everyday_needs: ['quiet'] })])
   })
 
   it('opens with what is already set', async () => {
     render(<ChildWizard />)
-    expect((await screen.findByPlaceholderText('e.g. Sam')).props.value).toBe('Sam')
-    expect(screen.getByLabelText('Age in years').props.value).toBe('6')
+    expect((await screen.findByLabelText('Age in years')).props.value).toBe('6')
   })
 
-  it('clearing the name and pressing Continue clears it on the server', async () => {
+  it('clearing the age and pressing Continue clears it on the server', async () => {
     render(<ChildWizard />)
-    fireEvent.changeText(await screen.findByPlaceholderText('e.g. Sam'), '')
+    fireEvent.changeText(await screen.findByLabelText('Age in years'), '')
     fireEvent.press(screen.getByRole('button', { name: 'Continue' }))
     await flush()
-    expect(mockPatch).toHaveBeenCalledWith('/api/child-profiles/cp1', expect.objectContaining({ name: null }))
+    expect(mockPatch).toHaveBeenCalledWith('/api/child-profiles/cp1', expect.objectContaining({ age: null }))
   })
 
   it('un-choosing the chip that was set and pressing Continue clears it on the server', async () => {
     render(<ChildWizard />)
-    await screen.findByPlaceholderText('e.g. Sam')
+    await screen.findByLabelText('Age in years')
     fireEvent.press(screen.getByRole('button', { name: 'Skip' }))
     fireEvent.press(await screen.findByRole('button', { name: 'Seeing' }))
     fireEvent.press(screen.getByRole('button', { name: 'Continue' }))
@@ -162,7 +140,7 @@ describe('Wizard, an existing child', () => {
 
   it('skipping a step leaves what was set alone', async () => {
     render(<ChildWizard />)
-    await screen.findByPlaceholderText('e.g. Sam')
+    await screen.findByLabelText('Age in years')
     // Skip on every step, the last included: its Good to know chip is already set, so Finish would re-save it.
     for (let i = 0; i < 6; i++) fireEvent.press(screen.getByRole('button', { name: 'Skip' }))
     await flush()
@@ -182,15 +160,15 @@ describe('Wizard, failures', () => {
   it('a save that fails still moves on to the next step, and the last step still finishes', async () => {
     mockPost.mockRejectedValue(new Error('500'))
     render(<ChildWizard />)
-    fireEvent.changeText(await screen.findByPlaceholderText('e.g. Sam'), 'Sam')
+    fireEvent.changeText(await screen.findByLabelText('Age in years'), '6')
     fireEvent.press(screen.getByRole('button', { name: 'Continue' }))
     await flush()
     expect(screen.getByText('STEP 2 OF 6')).toBeTruthy()
   })
 })
 
-describe('Child editor, age and name', () => {
-  beforeEach(() => mockGet.mockResolvedValue([child({ name: 'Maya', age: 5 })]))
+describe('Child editor, age', () => {
+  beforeEach(() => mockGet.mockResolvedValue([child({ age: 5 })]))
   const ageField = async () => screen.findByLabelText("Child's age")
 
   it.each([['0', 0], ['9', 9], [' 7 ', 7]])('saves the age %j as %j', async (typed, saved) => {
@@ -214,22 +192,9 @@ describe('Child editor, age and name', () => {
     expect(mockPatch).toHaveBeenCalledWith('/api/child-profiles/cp1', { age: null })
   })
 
-  it.each([
-    ['Zoë 🧸 سارة', 'Zoë 🧸 سارة'],
-    ['<b>M</b> & "m"', '<b>M</b> & "m"'],
-    ['  Maya  ', 'Maya'],
-    ['   ', null],
-    ['', null],
-  ])('saves the name %j as %j', async (typed, saved) => {
-    render(<ChildEditorHome childId="cp1" />)
-    fireEvent.changeText(await screen.findByLabelText("Child's name"), typed)
-    await flush()
-    expect(mockPatch).toHaveBeenCalledWith('/api/child-profiles/cp1', { name: saved })
-  })
-
   it('says Saved after a save lands, and never after one that fails', async () => {
     render(<ChildEditorHome childId="cp1" />)
-    fireEvent.changeText(await screen.findByLabelText("Child's name"), 'Amara')
+    fireEvent.changeText(await ageField(), '7')
     await flush()
     expect(await screen.findByText('Saved')).toBeTruthy()
   })
@@ -237,10 +202,10 @@ describe('Child editor, age and name', () => {
   it('a failed save never says Saved and keeps what was typed', async () => {
     mockPatch.mockRejectedValue(new Error('500'))
     render(<ChildEditorHome childId="cp1" />)
-    fireEvent.changeText(await screen.findByLabelText("Child's name"), 'Amara')
+    fireEvent.changeText(await ageField(), '7')
     await flush()
     expect(screen.queryByText('Saved')).toBeNull()
-    expect(screen.getByLabelText("Child's name").props.value ?? 'Amara').toBe('Amara')
+    expect(screen.getByLabelText("Child's age").props.value ?? '7').toBe('7')
   })
 
   it('a failed delete tells the parent and stays on the profile', async () => {
@@ -314,31 +279,18 @@ describe('Child list', () => {
   })
 
   it('one child is one row, and the empty invitation goes away', async () => {
-    mockGet.mockResolvedValue([child({ name: 'Maya', age: 5 })])
+    mockGet.mockResolvedValue([child({ age: 5 })])
     render(<ChildProfileHome />)
-    expect(await screen.findByText('Maya')).toBeTruthy()
+    expect(await screen.findByText('Child 1')).toBeTruthy()
     expect(screen.queryByText(/No child profiles yet/)).toBeNull()
     expect(screen.queryByText('Answer a few quick questions')).toBeNull()
   })
 
-  it('an unnamed child is "Child 1", and a second is "Child 2"', async () => {
-    mockGet.mockResolvedValue([child({ id: 'a' }), child({ id: 'b', name: '   ' })])
+  it('children are numbered by position: "Child 1", then "Child 2"', async () => {
+    mockGet.mockResolvedValue([child({ id: 'a' }), child({ id: 'b' })])
     render(<ChildProfileHome />)
     expect(await screen.findByText('Child 1')).toBeTruthy()
     expect(screen.getByText('Child 2')).toBeTruthy()
-  })
-
-  it('a name that starts with an emoji is initialled with the whole emoji', async () => {
-    mockGet.mockResolvedValue([child({ name: '🧸 Bear' })])
-    render(<ChildProfileHome />)
-    await screen.findByText('🧸 Bear')
-    expect(screen.getByText('🧸', { includeHiddenElements: true })).toBeTruthy()
-  })
-
-  it('names with markup and quotes are shown as text', async () => {
-    mockGet.mockResolvedValue([child({ name: `<b>M</b> "o'b" & co` })])
-    render(<ChildProfileHome />)
-    expect(await screen.findByText(`<b>M</b> "o'b" & co`)).toBeTruthy()
   })
 
   it('a failed load is an error, never the "no profiles yet" invitation', async () => {

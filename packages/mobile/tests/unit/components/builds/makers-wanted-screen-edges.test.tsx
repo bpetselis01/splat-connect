@@ -33,7 +33,7 @@ const row = (id: string, over: object = {}) => ({
   build_brief: null,
   travel_km: 30,
   urgency: null,
-  child_label: null,
+ 
   requester_suburb: 'Newtown',
   family_has_toy: false,
   created_at: new Date().toISOString(),
@@ -436,11 +436,10 @@ describe('what a card says', () => {
     expect(await screen.findByText('1.5 h · ~$0.00')).toBeTruthy()
   })
 
-  it('shows the child, range and urgency facts when given, and omits them when null', async () => {
-    serve({ open: [row('a', { child_label: 'Leo, 3', urgency: 'This month', travel_km: 25 }), row('b', { travel_km: null })] })
+  it('shows the range and urgency facts when given, and omits them when null', async () => {
+    serve({ open: [row('a', { urgency: 'This month', travel_km: 25 }), row('b', { travel_km: null })] })
     render(<MakersWantedScreen />)
     await screen.findByText('Guide a')
-    expect(screen.getByText('Leo, 3')).toBeTruthy()
     expect(screen.getByText('This month')).toBeTruthy()
     expect(screen.getByText('25 km')).toBeTruthy()
     expect(screen.queryByText(/null|undefined/)).toBeNull()

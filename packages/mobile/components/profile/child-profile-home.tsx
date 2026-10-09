@@ -10,7 +10,7 @@ import { logFailure } from '../../lib/log'
 import { useCallback, useEffect, useState } from 'react'
 import { View, Text, StyleSheet, ActivityIndicator, Linking } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
-import { childSummary as summaryOf, type ChildProfile } from '@splat-connect/types'
+import { childLabel, childSummary as summaryOf, type ChildProfile } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { Button } from '../ui/Button'
@@ -26,10 +26,10 @@ const TINTS = [
   theme.colors.accentLight,
 ]
 
-function Initial({ name, i }: { name: string; i: number }) {
+function Numbered({ n }: { n: number }) {
   return (
-    <View style={[styles.avatar, { backgroundColor: TINTS[i % TINTS.length] }]}>
-      <Text style={styles.avatarText}>{Array.from(name.trim())[0]?.toUpperCase() ?? '?'}</Text>
+    <View style={[styles.avatar, { backgroundColor: TINTS[(n - 1) % TINTS.length] }]}>
+      <Text style={styles.avatarText}>{n}</Text>
     </View>
   )
 }
@@ -116,14 +116,14 @@ export function ChildProfileHome() {
 
       <View style={styles.list}>
         {children.map((child, i) => {
-          const name = child.name?.trim() || `Child ${i + 1}`
+          const name = childLabel(i, null) // the row's summary line below already carries the age
           return (
             <ListRow
               key={child.id}
               title={name}
               meta={summaryOf(child)}
               metaLines={1}
-              thumb={<Initial name={name} i={i} />}
+              thumb={<Numbered n={i + 1} />}
               onPress={() => router.push({ pathname: '/account/child/[id]', params: { id: child.id } })}
               accessibilityHint={`${summaryOf(child)}. Opens the profile.`}
             />

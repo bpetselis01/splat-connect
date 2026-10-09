@@ -144,7 +144,7 @@ export function LibraryScreen() {
         guideMatches(t, draft)
     )
   const visible = sortGuides(matching(filters), filters.sort as GuideSort, child)
-  const groups = guideGroups(child ? child.name?.trim() || 'your child' : null)
+  const groups = guideGroups(!!child)
   const tags = filterTags(groups, filters, GUIDE_DEFAULTS, ['sort'])
   const filtered = tags.length > 0 || !!q
   const heading = filtered ? 'Matching guides' : 'All guides'

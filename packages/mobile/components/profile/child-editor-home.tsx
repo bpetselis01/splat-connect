@@ -67,8 +67,7 @@ export function ChildEditorHome({ childId }: { childId: string }) {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={[styles.content, { paddingBottom: bottom }]}>
-      {/* The header names the child, as on the board. */}
-      <Stack.Screen options={{ title: profile.name || 'Child profile' }} />
+            <Stack.Screen options={{ title: 'Child profile' }} />
       <Text style={styles.eyebrow}>PRIVATE TO YOU</Text>
       <Text style={styles.intro}>
         Every field is optional. We use this only to suggest guides that suit your child — it is
@@ -80,13 +79,6 @@ export function ChildEditorHome({ childId }: { childId: string }) {
       </Text>
 
       <Section title="Basics">
-        <TextField
-          label="Name or nickname"
-          accessibilityLabel="Child's name"
-          placeholder="Optional"
-          defaultValue={profile.name ?? ''}
-          onChangeText={(v) => save({ name: v.trim() || null })}
-        />
         <TextField
           label="Age"
           accessibilityLabel="Child's age"

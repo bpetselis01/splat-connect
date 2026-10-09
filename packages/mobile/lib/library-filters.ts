@@ -64,11 +64,11 @@ export function withChildSuggestion(v: FilterValues, child: ChildProfile | undef
 export type GuideSort = 'recommended' | 'new' | 'quick' | 'easy'
 export const GUIDE_DEFAULTS: FilterValues = { sort: 'recommended', ...CHILD_DEFAULTS, device_types: [], diff: [], time: 'any', parts: [] }
 
-/** Sort first, then the child's questions ("About Ollie"), then the guide's own. */
-export function guideGroups(childName: string | null): FilterGroup[] {
+/** Sort first, then the child's questions ("About your child"), then the guide's own. */
+export function guideGroups(hasChild: boolean): FilterGroup[] {
   return [
-    { kind: 'one', key: 'sort', label: 'Sort by', hint: childName ? `${childName}'s matches, then newest` : undefined, options: [{ value: 'recommended', label: 'Recommended' }, { value: 'new', label: 'Newest' }, { value: 'quick', label: 'Quickest' }, { value: 'easy', label: 'Easiest' }] },
-    { kind: 'heading', key: 'about-child', label: `About ${childName ?? 'your child'}`, hint: childName ? 'filled in from the profile' : undefined },
+    { kind: 'one', key: 'sort', label: 'Sort by', hint: hasChild ? 'Matches for your child, then newest' : undefined, options: [{ value: 'recommended', label: 'Recommended' }, { value: 'new', label: 'Newest' }, { value: 'quick', label: 'Quickest' }, { value: 'easy', label: 'Easiest' }] },
+    { kind: 'heading', key: 'about-child', label: 'About your child', hint: hasChild ? 'filled in from the profile' : undefined },
     ...CHILD_GROUPS,
     { kind: 'heading', key: 'about-guide', label: 'About the guide' },
     { kind: 'many', key: 'device_types', label: 'Device type', options: DEVICE_TYPES },

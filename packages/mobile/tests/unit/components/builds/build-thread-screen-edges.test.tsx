@@ -74,7 +74,7 @@ const build = (over: object = {}) => ({
   build_brief: null,
   travel_km: null,
   urgency: null,
-  child_label: null,
+ 
   requester_suburb: 'Newtown',
   family_has_toy: false,
   working_photo_url: null,
@@ -565,7 +565,7 @@ describe('approval and the handover code', () => {
 
 describe('the brief', () => {
   it('shows the family their own words as "You asked", and a maker "Family in <suburb>"', async () => {
-    serve(claimed({ build_brief: 'For Leo' }))
+    serve(claimed({ build_brief: 'For a child' }))
     const { unmount } = render(<BuildThreadScreen id="b1" />)
     expect(await screen.findByText(/^You asked: /)).toBeTruthy()
     unmount()
@@ -574,12 +574,12 @@ describe('the brief', () => {
     expect(await screen.findByText(/^Family in Newtown: /)).toBeTruthy()
   })
 
-  it('joins the child, range and urgency that were given and skips the ones that were not', async () => {
-    serve(claimed({ build_brief: 'x', child_label: 'Leo, 3', travel_km: 25, urgency: 'This month' }))
+  it('joins the range and urgency that were given and skips the ones that were not', async () => {
+    serve(claimed({ build_brief: 'x', travel_km: 25, urgency: 'This month' }))
     const { unmount } = render(<BuildThreadScreen id="b1" />)
-    expect(await screen.findByText('Leo, 3 · Can travel 25 km · This month')).toBeTruthy()
+    expect(await screen.findByText('Can travel 25 km · This month')).toBeTruthy()
     unmount()
-    serve(claimed({ build_brief: 'x', child_label: null, travel_km: null, urgency: null }))
+    serve(claimed({ build_brief: 'x', travel_km: null, urgency: null }))
     render(<BuildThreadScreen id="b1" />)
     await screen.findByText(/^You asked: /)
     expect(screen.queryByText(/Can travel/)).toBeNull()

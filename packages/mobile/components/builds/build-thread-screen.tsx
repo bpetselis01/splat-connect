@@ -434,7 +434,7 @@ export function BuildThreadScreen({ id }: { id: string }) {
                 “{tx.build_brief}”
               </Text>
               <Text style={styles.briefFacts}>
-                {[tx.child_label, tx.travel_km !== null ? `Can travel ${tx.travel_km} km` : null, tx.urgency]
+                {[tx.travel_km !== null ? `Can travel ${tx.travel_km} km` : null, tx.urgency]
                   .filter(Boolean)
                   .join(' · ')}
               </Text>

@@ -28,7 +28,7 @@ describe('useChildProfile, edges', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     jest.useFakeTimers()
-    mockGet.mockResolvedValue([{ id: 'cp1', age: 5, name: 'Maya' }])
+    mockGet.mockResolvedValue([{ id: 'cp1', age: 5 }])
     mockPatch.mockResolvedValue({})
   })
   afterEach(() => jest.useRealTimers())
@@ -65,10 +65,10 @@ describe('useChildProfile, edges', () => {
 
   it('clearing a field sends null, not nothing', async () => {
     const { result } = await ready()
-    act(() => result.current.save({ name: null }))
+    act(() => result.current.save({ age: null }))
     await advance(300)
-    expect(mockPatch).toHaveBeenCalledWith('/api/child-profiles/cp1', { name: null })
-    expect(result.current.profile?.name).toBeNull()
+    expect(mockPatch).toHaveBeenCalledWith('/api/child-profiles/cp1', { age: null })
+    expect(result.current.profile?.age).toBeNull()
   })
 
   it('a value changed three times in one burst goes out once, with the last value', async () => {
@@ -85,14 +85,14 @@ describe('useChildProfile, edges', () => {
 
   it('each keystroke inside the window pushes the write back instead of sending a PATCH per letter', async () => {
     const { result } = await ready()
-    for (const name of ['M', 'Ma', 'Mar', 'Mari']) {
-      act(() => result.current.save({ name }))
+    for (const age of [1, 2, 3, 4]) {
+      act(() => result.current.save({ age }))
       await advance(200)
     }
     expect(mockPatch).not.toHaveBeenCalled()
     await advance(100)
     expect(mockPatch).toHaveBeenCalledTimes(1)
-    expect(mockPatch).toHaveBeenCalledWith('/api/child-profiles/cp1', { name: 'Mari' })
+    expect(mockPatch).toHaveBeenCalledWith('/api/child-profiles/cp1', { age: 4 })
   })
 
   it('a second burst sends only its own fields, not the first burst again', async () => {
@@ -121,10 +121,10 @@ describe('useChildProfile, edges', () => {
 
   it('leaving the screen inside the debounce window does not lose the edit', async () => {
     const { result, unmount } = await ready()
-    act(() => result.current.save({ name: 'Zoë 🧸' }))
+    act(() => result.current.save({ age: 9 }))
     unmount()
     await advance(300)
-    expect(mockPatch).toHaveBeenCalledWith('/api/child-profiles/cp1', { name: 'Zoë 🧸' })
+    expect(mockPatch).toHaveBeenCalledWith('/api/child-profiles/cp1', { age: 9 })
   })
 
   it('an account whose list read answers nothing at all is a null profile, not a crash', async () => {
@@ -133,11 +133,11 @@ describe('useChildProfile, edges', () => {
     expect(result.current.profile).toBeNull()
   })
 
-  it('markup and emoji in a value reach the API untouched', async () => {
+  it('a free-text value reaches the API untouched', async () => {
     const { result } = await ready()
-    act(() => result.current.save({ name: `<b>"O'Brien"</b> 🧸 & سارة` }))
+    act(() => result.current.save({ everyday_needs: [`<b>"O'Brien"</b> 🧸 & سارة`] as never }))
     await advance(300)
-    expect(mockPatch).toHaveBeenCalledWith('/api/child-profiles/cp1', { name: `<b>"O'Brien"</b> 🧸 & سارة` })
+    expect(mockPatch).toHaveBeenCalledWith('/api/child-profiles/cp1', { everyday_needs: [`<b>"O'Brien"</b> 🧸 & سارة`] })
   })
 
   it('a pinned child that was deleted elsewhere is a null profile, and saving to it never creates one', async () => {
@@ -156,7 +156,7 @@ describe('useMyChildren', () => {
   beforeEach(() => jest.clearAllMocks())
 
   it('starts empty, then holds the parent\'s children', async () => {
-    mockGet.mockResolvedValue([{ id: 'a', name: 'Maya' }, { id: 'b', name: 'Sam' }])
+    mockGet.mockResolvedValue([{ id: 'a' }, { id: 'b' }])
     const { result } = renderHook(() => useMyChildren())
     expect(result.current).toEqual([])
     await waitFor(() => expect(result.current).toHaveLength(2))

@@ -1,5 +1,5 @@
 // packages/mobile/components/profile/child-done.tsx
-// The wizard's last screen (MB is_wizard, wDone): the party bear, "{name}'s
+// The wizard's last screen (MB is_wizard, wDone): the party bear, "Your child's
 // profile is ready", what the answers found, and See the matches. Counts come
 // from the two public lists through matchesForChild, so the number promised is
 // the list Guides shows. A failed read drops the sentence, never the screen.
@@ -7,7 +7,7 @@ import { logFailure } from '../../lib/log'
 import { useEffect, useState } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
-import { matchesForChild, type ChildProfile, type ChildTags, type Toy, type Tutorial } from '@splat-connect/types'
+import { matchesForChild, type ChildTags, type Toy, type Tutorial } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { Button } from '../ui/Button'
@@ -15,7 +15,7 @@ import { Mascot } from '../ui/TabHero'
 
 const plural = (n: number, one: string) => `${n} ${one}${n === 1 ? '' : 's'}`
 
-export function ChildDone({ child }: { child: ChildTags & Pick<ChildProfile, 'name'> }) {
+export function ChildDone({ child }: { child: ChildTags }) {
   const router = useRouter()
   const [found, setFound] = useState<{ guides: number; toys: number } | null>(null)
 
@@ -34,17 +34,16 @@ export function ChildDone({ child }: { child: ChildTags & Pick<ChildProfile, 'na
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const name = child.name?.trim()
   return (
     <View style={styles.done}>
       <Mascot pose="party" size={132} />
       <Text accessibilityRole="header" style={styles.heading}>
-        {name ? `${name}'s profile is ready` : "Your child's profile is ready"}
+        Your child's profile is ready
       </Text>
       {found ? (
         <Text style={styles.line}>
           We found <Text style={styles.strong}>{plural(found.guides, 'guide')}</Text> and{' '}
-          <Text style={styles.strong}>{plural(found.toys, 'toy')}</Text> that suit {name || 'your child'}.
+          <Text style={styles.strong}>{plural(found.toys, 'toy')}</Text> that suit your child.
         </Text>
       ) : null}
       <Button

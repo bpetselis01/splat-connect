@@ -330,11 +330,11 @@ describe('LibraryScreen', () => {
 describe('Recommended and About <child>', () => {
   const older = row({ id: 't9', title: 'Light touch switch', created_at: '2026-01-01T00:00:00Z', helps_with: ['moving'], access: ['press'], play: ['sound'] })
   const newer = row({ id: 't8', title: 'Untagged newer', created_at: '2026-09-01T00:00:00Z' })
-  const ollie = { name: 'Ollie', helps_with: ['moving'], access: ['press'], one_hand: false, press_force: null, enjoys: ['sound'] }
+  const kid = { helps_with: ['moving'], access: ['press'], one_hand: false, press_force: null, enjoys: ['sound'] }
   const order = () => screen.getAllByText(/^(Light touch switch|Untagged newer)$/).map((t) => t.props.children)
 
   it('puts the guides that share the child’s answers first, then newest', async () => {
-    mockEndpoints({ tutorials: Promise.resolve([newer, older]), children: Promise.resolve([ollie]) })
+    mockEndpoints({ tutorials: Promise.resolve([newer, older]), children: Promise.resolve([kid]) })
     render(<LibraryScreen />)
     await screen.findByText('Light touch switch')
     await waitFor(() => expect(order()).toEqual(['Light touch switch', 'Untagged newer']))
@@ -348,14 +348,14 @@ describe('Recommended and About <child>', () => {
     expect(order()).toEqual(['Untagged newer', 'Light touch switch'])
   })
 
-  it('opens the filter page with About <name> filled in from the profile, applying nothing until Show', async () => {
-    mockEndpoints({ tutorials: Promise.resolve([older, newer]), children: Promise.resolve([ollie]) })
+  it('opens the filter page with About your child filled in from the profile, applying nothing until Show', async () => {
+    mockEndpoints({ tutorials: Promise.resolve([older, newer]), children: Promise.resolve([kid]) })
     render(<LibraryScreen />)
     await screen.findByText('Light touch switch')
     await waitFor(() => expect(mockGet).toHaveBeenCalledWith('/api/child-profiles'))
     await act(async () => {})
     fireEvent.press(screen.getByRole('button', { name: 'Filters' }))
-    expect(screen.getByText('About Ollie')).toBeTruthy()
+    expect(screen.getByText('About your child')).toBeTruthy()
     expect(screen.getByText('About the guide')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Moving and using hands', selected: true })).toBeTruthy()
     expect(screen.getByText('Show 1 guide')).toBeTruthy()

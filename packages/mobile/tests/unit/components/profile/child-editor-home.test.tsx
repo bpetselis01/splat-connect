@@ -29,7 +29,6 @@ jest.mock('expo-router', () => ({
 const child = (over: object = {}) => ({
   id: 'cp1',
   parent_id: 'u1',
-  name: 'Maya',
   age: 5,
   macs_level: null,
   macs_source: 'manual',
@@ -146,25 +145,6 @@ describe('ChildEditorHome', () => {
     fireEvent.press(await screen.findByRole('button', { name: 'Delete profile' }))
     expect(mockDelete).not.toHaveBeenCalled()
     alertSpy.mockRestore()
-  })
-
-  it('saves a rename against this child', async () => {
-    mockPatch.mockResolvedValue({})
-    jest.useFakeTimers()
-    try {
-      render(<ChildEditorHome childId="cp1" />)
-      fireEvent.changeText(await screen.findByLabelText("Child's name"), 'Amara')
-      await waitFor(() => {})
-      jest.advanceTimersByTime(300)
-      await waitFor(() =>
-        expect(mockPatch).toHaveBeenCalledWith(
-          '/api/child-profiles/cp1',
-          expect.objectContaining({ name: 'Amara' })
-        )
-      )
-    } finally {
-      jest.useRealTimers()
-    }
   })
 
   // 120: Play and the three measurements are editable here (the wizard no longer asks for measurements).
