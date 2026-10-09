@@ -16,4 +16,14 @@ Before reporting mobile work done, run the whole `npx jest` for `packages/mobile
 
 Before reporting any work done, run `scripts/verify-plan.sh --run` (add `--e2e` when behaviour changed). It reads git, runs the typecheck and unit tests the change needs, and lists the e2e specs to run. `scripts/doctor.sh` checks stale servers and live-vs-local data first. Vocabulary is in `CONTEXT.md`; decisions in `docs/adr/`.
 
+## Workflow
+
+pstack is the main workflow (superpowers, the code-review plugin and pr-review-toolkit are switched off on purpose).
+- More than one file, a design choice, or a bug of unknown cause: start with `pstack:poteto-mode`; it routes.
+- Bug of unknown cause: `diagnosing-bugs` first. Build the pass/fail loop before changing code.
+- Feature or fix with a cheap test target: `pstack:tdd`.
+- Before merging: `code-review` (standards and spec, in parallel).
+- Agents run on sonnet or haiku only, whatever `~/.claude/pstack-models.md` says.
+- `.claude/hooks/block-dangerous-git.sh` blocks pushes to main, force pushes and `git reset --hard`.
+
 @~/.claude/pstack-models.md
