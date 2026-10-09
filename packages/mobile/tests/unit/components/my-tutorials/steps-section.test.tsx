@@ -106,12 +106,14 @@ describe('adding, editing and removing steps', () => {
     expect(screen.getByLabelText('Step 2 instructions').props.value).toBe('Body 3')
   })
 
-  it('removing the last remaining step sends an empty list and brings the choice back', () => {
+  it('removing the last remaining step sends an empty list and keeps the editor open', () => {
     withSteps([step(1)])
     render(<StepsSection />)
     fireEvent.press(screen.getByTestId('step-remove-0'))
     expect(lastRows()).toEqual([])
-    expect(screen.getByText('Write the steps here')).toBeTruthy()
+    expect(screen.getByText('+ Add a step')).toBeTruthy()
+    expect(screen.queryByText('Write the steps here')).toBeNull()
+    expect(screen.queryByText('Your guide is the PDF')).toBeNull()
   })
 
   it('shows an existing blank-bodied step as unsaved, not as saved', () => {
@@ -337,6 +339,17 @@ describe('steps or a PDF', () => {
     fireEvent.press(screen.getByText('View PDF'))
     await waitFor(() => expect(mockRouter.push).toHaveBeenCalledWith({ pathname: '/guides/[id]/preview', params: { id: 't1', pdfUrl: 'https://signed' } }))
     expect(mockSign).toHaveBeenCalledWith('a/guide.pdf', 60)
+  })
+
+  it.each([
+    ['an error result', () => mockSign.mockResolvedValue({ data: null, error: { message: 'x' } })],
+    ['a rejection', () => mockSign.mockRejectedValue(new Error('offline'))],
+  ])('"View PDF" still opens the preview with an empty url on %s', async (_n, arrange) => {
+    withSteps([], 'a/guide.pdf')
+    arrange()
+    render(<StepsSection />)
+    fireEvent.press(screen.getByText('View PDF'))
+    await waitFor(() => expect(mockRouter.push).toHaveBeenCalledWith({ pathname: '/guides/[id]/preview', params: { id: 't1', pdfUrl: '' } }))
   })
 
   it('shows the editor, not the card, when there are steps and a PDF', () => {

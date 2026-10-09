@@ -51,7 +51,7 @@ function StepsEditor() {
   const [uploading, setUploading] = useState<number | null>(null)
   const [localError, setLocalError] = useState<string | null>(null)
   const router = useRouter()
-  const [wantsSteps, setWantsSteps] = useState(false)
+  const [wantsSteps, setWantsSteps] = useState(rows.length > 0)
 
   if (!tutorial) return null
   const id = tutorial.id
@@ -59,6 +59,7 @@ function StepsEditor() {
   function commit(next: (StepRow & { k: number })[]) {
     rowsRef.current = next
     setRows(next)
+    setWantsSteps(true) // once the editor is showing, emptying it must not swap it out
     replaceSteps(next.map(({ k: _k, ...row }) => row))
   }
   const update = (i: number, patch: Partial<StepRow>) =>
@@ -95,8 +96,14 @@ function StepsEditor() {
 
   // Same signing as home/detail-screen openPreview: the bucket is private.
   async function openPdf(path: string) {
-    const { data, error } = await supabase.storage.from('tutorial-pdfs').createSignedUrl(path, 60)
-    router.push({ pathname: '/guides/[id]/preview', params: { id, pdfUrl: error || !data ? '' : data.signedUrl } })
+    let pdfUrl = ''
+    try {
+      const { data, error } = await supabase.storage.from('tutorial-pdfs').createSignedUrl(path, 60)
+      if (!error && data) pdfUrl = data.signedUrl
+    } catch (err) {
+      logFailure('[StepsSection] pdf signing failed:', err)
+    }
+    router.push({ pathname: '/guides/[id]/preview', params: { id, pdfUrl } })
   }
 
   const pdf = tutorial.tutorial_pdf_url?.trim() || null
