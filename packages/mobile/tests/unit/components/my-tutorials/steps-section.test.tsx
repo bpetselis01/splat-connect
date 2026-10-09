@@ -11,6 +11,8 @@ jest.mock('../../../../lib/auth-context', () => ({ useAuth: jest.fn() }))
 jest.mock('../../../../lib/api-client', () => ({ apiClient: {} }))
 
 const mockUploadFile = jest.fn()
+const mockPickPdf = jest.fn()
+jest.mock('../../../../lib/pick-pdf', () => ({ pickAndUploadPdf: (...a: unknown[]) => mockPickPdf(...a) }))
 jest.mock('../../../../lib/upload', () => ({ uploadFile: (...a: unknown[]) => mockUploadFile(...a) }))
 
 const mockRequestMedia = jest.fn()
@@ -26,6 +28,7 @@ const mockDraft = {
   loadError: false,
   saveState: 'idle',
   saveError: null as string | null,
+  saveNow: jest.fn(),
   replaceSteps: jest.fn(),
   flush: jest.fn().mockResolvedValue(undefined),
   reload: jest.fn(),
@@ -300,7 +303,7 @@ describe('steps or a PDF', () => {
   it('offers a choice when the guide has neither steps nor a PDF', () => {
     render(<StepsSection />)
     expect(screen.getByText('Write the steps here')).toBeTruthy()
-    expect(screen.getByText('Or upload a PDF guide')).toBeTruthy()
+    expect(screen.getByText('Or use a PDF guide')).toBeTruthy()
     expect(screen.getAllByTestId('section-progress')).toHaveLength(1)
   })
 
@@ -326,10 +329,28 @@ describe('steps or a PDF', () => {
     expect(screen.getByText(stepsLabel)).toBeTruthy()
   })
 
-  it('"Upload a PDF" goes to Files', () => {
+  it('"Choose PDF from Files" uploads inline and saves the path, without leaving Steps', async () => {
+    mockPickPdf.mockResolvedValue('t1/guide.pdf')
     render(<StepsSection />)
-    fireEvent.press(screen.getByText('Upload a PDF'))
-    expect(mockRouter.push).toHaveBeenCalledWith('/tutorials/t1/files')
+    fireEvent.press(screen.getByText('Choose PDF from Files'))
+    await waitFor(() => expect(mockDraft.saveNow).toHaveBeenCalledWith({ tutorial_pdf_url: 't1/guide.pdf' }))
+    expect(mockPickPdf).toHaveBeenCalledWith('t1', expect.any(Function))
+    expect(mockRouter.push).not.toHaveBeenCalled()
+  })
+
+  it('saves nothing when the picker is cancelled', async () => {
+    mockPickPdf.mockResolvedValue(null)
+    render(<StepsSection />)
+    fireEvent.press(screen.getByText('Choose PDF from Files'))
+    await waitFor(() => expect(mockPickPdf).toHaveBeenCalled())
+    expect(mockDraft.saveNow).not.toHaveBeenCalled()
+  })
+
+  it('says so when the PDF upload fails', async () => {
+    mockPickPdf.mockRejectedValue(new Error('boom'))
+    render(<StepsSection />)
+    fireEvent.press(screen.getByText('Choose PDF from Files'))
+    expect(await screen.findByText('Could not upload the PDF. Please try again.')).toBeTruthy()
   })
 
   it('"View PDF" signs the path and opens the preview', async () => {

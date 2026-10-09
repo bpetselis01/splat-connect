@@ -57,10 +57,10 @@ it('points Next at the next section still missing something, not the next in the
 })
 
 it('skips complete sections rather than walking them', () => {
-  // Only Files is open. From Details, Next jumps past Safety/Parts/Tools.
+  // Only Photos is open. From Details, Next jumps past Safety/Parts/Tools.
   mockDraft.tutorial = tutorial({ photo_urls: [] })
   render(<SectionFooter section="details" />)
-  expect(screen.getByText('Next: Files')).toBeTruthy()
+  expect(screen.getByText('Next: Photos')).toBeTruthy()
 })
 
 it('wraps past the end rather than dead-ending on the last section', () => {

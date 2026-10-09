@@ -1,6 +1,7 @@
 // journeys: T13 T14
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { FilesSection } from '../../../../components/my-tutorials/sections/files-section'
+import { PhotosSection } from '../../../../components/my-tutorials/sections/photos-section'
 import { StlSection } from '../../../../components/my-tutorials/sections/stl-section'
 import { apiClient } from '../../../../lib/api-client'
 
@@ -89,7 +90,7 @@ it('uploads a chosen photo and appends it to the guide immediately', async () =>
   })
   mockUploadFile.mockResolvedValue({ url: 'photos/a.jpg' })
 
-  render(<FilesSection />)
+  render(<PhotosSection />)
   fireEvent.press(screen.getByText('Choose from library'))
 
   await waitFor(() =>
@@ -102,10 +103,10 @@ it('captions a photo, and the caption follows it to the cover', async () => {
   mockDraft.save.mockImplementation((f: Record<string, unknown>) => {
     mockDraft.tutorial = { ...mockDraft.tutorial, ...f }
   })
-  const view = render(<FilesSection />)
+  const view = render(<PhotosSection />)
   fireEvent.changeText(screen.getByLabelText('Caption for photo 1'), 'The drum')
   expect(mockDraft.save).toHaveBeenLastCalledWith({ photo_captions: ['The drum', 'The jack'] })
-  view.rerender(<FilesSection />)
+  view.rerender(<PhotosSection />)
   fireEvent.press(screen.getByLabelText('Make photo 2 the cover'))
   await waitFor(() =>
     expect(mockDraft.saveNow).toHaveBeenLastCalledWith({ photo_urls: ['b', 'a'], photo_captions: ['The jack', 'The drum'] })

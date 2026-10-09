@@ -37,6 +37,7 @@ import { ErrorRow } from '../ui/ErrorRow'
 
 const SECTION_ICON: Record<SectionId, ComponentProps<typeof Ionicons>['name']> = {
   details: 'document-text-outline',
+  photos: 'images-outline',
   steps: 'list-outline',
   safety: 'shield-checkmark-outline',
   suits: 'people-outline',
@@ -512,8 +513,8 @@ const styles = StyleSheet.create({
 
 
   rowText: { flex: 1 },
-  rowSummary: {
   emptyPill: { alignSelf: 'center' },
+  rowSummary: {
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.caption,
     color: theme.colors.muted,

@@ -91,7 +91,7 @@ it('shows a row per section with what each still needs', () => {
   expect(screen.getByTestId('hub-row-details')).toBeTruthy()
   expect(screen.getByTestId('hub-row-safety')).toBeTruthy()
   expect(screen.getAllByText('None yet - at least one')).toHaveLength(2)
-  expect(screen.getByText('Guide PDF and a photo')).toBeTruthy()
+  expect(screen.getByText('None yet - the first is the cover')).toBeTruthy()
 })
 
 it('omits the STL row for a toy adaptation', () => {

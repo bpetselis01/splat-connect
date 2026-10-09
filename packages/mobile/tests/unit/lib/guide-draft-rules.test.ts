@@ -105,11 +105,12 @@ describe('getMissingFields edges', () => {
 describe('nextIncompleteSection', () => {
   it('walks a fresh draft section by section', () => {
     const t = draft({ title: '', difficulty: null as never, build_minutes: null, tutorial_pdf_url: null, photo_urls: [], parts: [], tools: [], safety_declared_at: null })
-    expect(nextIncompleteSection('details', t)).toBe('steps')
+    expect(nextIncompleteSection('details', t)).toBe('photos')
+    expect(nextIncompleteSection('photos', t)).toBe('steps')
     expect(nextIncompleteSection('steps', t)).toBe('parts')
     expect(nextIncompleteSection('parts', t)).toBe('tools')
     expect(nextIncompleteSection('tools', t)).toBe('safety')
-    expect(nextIncompleteSection('safety', t)).toBe('files')
+    expect(nextIncompleteSection('safety', t)).toBe('details')
   })
 
   it('wraps past the end back to an earlier gap', () => {
@@ -150,8 +151,8 @@ describe('sectionSummary and progress edges', () => {
     expect(sectionSummary('parts', mixed)).toBe('2 parts')
   })
 
-  it('says the guide PDF alone is what is left', () => {
-    expect(sectionSummary('files', draft({ tutorial_pdf_url: null }))).toBe('The guide PDF')
+  it('calls the guide PDF optional when it is the only thing not there', () => {
+    expect(sectionSummary('files', draft({ tutorial_pdf_url: null, steps: [] }))).toBe('Optional - or write the steps instead')
   })
 
   it('counts 7 of 7 for a finished assistive tech guide and 6 of 7 without its STL', () => {

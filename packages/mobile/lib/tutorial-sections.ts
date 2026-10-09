@@ -11,7 +11,7 @@ import type { Difficulty, TutorialKind, TutorialWithDetails } from '@splat-conne
 import { KIND_LABEL, formatCents, partsTotalCents } from '@splat-connect/types'
 
 // 'steps' gaps only when a guide has neither steps nor a PDF.
-export type SectionId = 'details' | 'steps' | 'safety' | 'suits' | 'picks' | 'parts' | 'tools' | 'files' | 'stl' | 'collaborators'
+export type SectionId = 'details' | 'photos' | 'steps' | 'safety' | 'suits' | 'picks' | 'parts' | 'tools' | 'files' | 'stl' | 'collaborators'
 
 export interface Gap {
   section: SectionId
@@ -20,6 +20,7 @@ export interface Gap {
 
 export const SECTION_LABEL: Record<SectionId, string> = {
   details: 'Details',
+  photos: 'Photos',
   steps: 'Steps',
   safety: 'Safety',
   suits: "Who it's for",
@@ -50,7 +51,7 @@ export function sectionChecks(tutorial: TutorialWithDetails): Check[] {
       label: 'Steps or a guide PDF',
       done: (tutorial.steps?.length ?? 0) > 0 || Boolean(tutorial.tutorial_pdf_url?.trim()),
     },
-    { section: 'files', label: 'A photo', done: tutorial.photo_urls.length > 0 },
+    { section: 'photos', label: 'A photo', done: tutorial.photo_urls.length > 0 },
     { section: 'parts', label: 'A part', done: tutorial.parts.length > 0 },
     { section: 'tools', label: 'A tool', done: tutorial.tools.length > 0 },
     // A printed part is what an assistive-tech tutorial IS; a toy adaptation has no STL section.
@@ -71,14 +72,14 @@ export function getMissingFields(tutorial: TutorialWithDetails): Gap[] {
 export function sectionsFor(kind: TutorialKind): SectionId[] {
   // The board's order: what it is, how to build it, what to buy, what to use,
   // what could hurt, then the files.
-  const base: SectionId[] = ['details', 'steps', 'parts', 'tools', 'safety', 'suits', 'picks', 'files']
+  const base: SectionId[] = ['details', 'photos', 'steps', 'parts', 'tools', 'safety', 'suits', 'picks', 'files']
   return kind === 'assistive_tech' ? [...base, 'stl'] : base
 }
 
 /** The hub's "{ready} of {total} sections complete", shared with My tutorials. */
 export function sectionProgress(t: TutorialWithDetails): { ready: number; total: number } {
-  // 'suits' and 'picks' are all optional: counting them would show a finished bar for a section nobody has opened.
-  const sections = sectionsFor(t.kind).filter((s) => s !== 'suits' && s !== 'picks')
+  // 'suits', 'picks' and 'files' (the PDF) are all optional: counting them would show a finished bar for a section nobody has opened.
+  const sections = sectionsFor(t.kind).filter((s) => s !== 'suits' && s !== 'picks' && s !== 'files')
   const incomplete = new Set(getMissingFields(t).map((g) => g.section))
   return { ready: sections.filter((s) => !incomplete.has(s)).length, total: sections.length }
 }
@@ -151,15 +152,11 @@ export function sectionSummary(section: SectionId, t: TutorialWithDetails): stri
     }
     case 'tools':
       return t.tools.length ? count(t.tools.length, 'tool') : 'None yet - at least one'
-    case 'files': {
-      const pdf = Boolean(t.tutorial_pdf_url?.trim())
-      const photo = t.photo_urls.length > 0
-      const steps = (t.steps?.length ?? 0) > 0
-      if (steps && !pdf) return photo ? 'Photo added - PDF optional' : 'A photo - PDF optional'
-      if (pdf && photo) return 'PDF and photo added'
-      if (!pdf && !photo) return 'Guide PDF and a photo'
-      return pdf ? 'A photo' : 'The guide PDF'
-    }
+    case 'photos':
+      return t.photo_urls.length ? count(t.photo_urls.length, 'photo') : 'None yet - the first is the cover'
+    case 'files':
+      if (t.tutorial_pdf_url?.trim()) return 'PDF added'
+      return (t.steps?.length ?? 0) > 0 ? 'Optional - a PDF to go with your steps' : 'Optional - or write the steps instead'
     case 'collaborators': {
       const n = t.tutorial_contributors.length
       return n > 1 ? count(n, 'person') : 'Just you'

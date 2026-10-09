@@ -137,11 +137,11 @@ test('a new account writes a guide end to end and submits it for review', async 
   await backToHub()
   await expect(page.getByTestId('hub-row-tools')).toContainText('1 tool')
 
-  // Files still hold Submit shut.
-  await expect(page.getByTestId('hub-row-files')).toContainText('Guide PDF and a photo')
+  // Photos still hold Submit shut.
+  await expect(page.getByTestId('hub-row-photos')).toContainText('None yet')
   await expect(page.getByTestId('hub-submit')).toBeDisabled()
 
-  // --- Files -------------------------------------------------------------
+  // --- Files (the guide PDF) ---------------------------------------------
   await page.getByTestId('hub-row-files').click()
   await expect(page.getByText('No PDF yet')).toBeVisible()
 
@@ -151,9 +151,14 @@ test('a new account writes a guide end to end and submits it for review', async 
   // the next save is working from a fresh updated_at.
   await expect(page.getByText('tutorial.pdf')).toBeVisible()
 
+  await backToHub()
+  await expect(page.getByTestId('hub-row-files')).toContainText('PDF added')
+
+  // --- Photos ------------------------------------------------------------
+  await page.getByTestId('hub-row-photos').click()
   await chooseFile(page, 'Choose from library', PHOTO_FIXTURE)
   await backToHub()
-  await expect(page.getByTestId('hub-row-files')).toContainText('PDF and photo added')
+  await expect(page.getByTestId('hub-row-photos')).toContainText('1 photo')
 
   // --- Submit, from the hub ----------------------------------------------
   await expect(page.getByText('6 of 6 sections complete')).toBeVisible()

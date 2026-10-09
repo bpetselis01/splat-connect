@@ -61,7 +61,7 @@ describe('getMissingFields', () => {
       { section: 'details', label: 'A difficulty' },
       { section: 'details', label: 'A build time' },
       { section: 'steps', label: 'Steps or a guide PDF' },
-      { section: 'files', label: 'A photo' },
+      { section: 'photos', label: 'A photo' },
       { section: 'parts', label: 'A part' },
       { section: 'tools', label: 'A tool' },
       { section: 'safety', label: 'The safety declaration' },
@@ -77,13 +77,14 @@ describe('getMissingFields', () => {
 })
 
 describe('sectionsFor', () => {
-  it('gives a toy adaptation eight sections and no STL', () => {
-    expect(sectionsFor('toy_adaptation')).toEqual(['details', 'steps', 'parts', 'tools', 'safety', 'suits', 'picks', 'files'])
+  it('gives a toy adaptation nine sections and no STL', () => {
+    expect(sectionsFor('toy_adaptation')).toEqual(['details', 'photos', 'steps', 'parts', 'tools', 'safety', 'suits', 'picks', 'files'])
   })
 
   it('adds STL for assistive tech', () => {
     expect(sectionsFor('assistive_tech')).toEqual([
       'details',
+      'photos',
       'steps',
       'parts',
       'tools',
@@ -100,10 +101,8 @@ describe('sectionSummary', () => {
   it('says what is missing, in the words the row shows', () => {
     expect(sectionSummary('parts', base({ parts: [] }))).toBe('None yet - at least one')
     expect(sectionSummary('tools', base({ tools: [] }))).toBe('None yet - at least one')
-    expect(sectionSummary('files', base({ tutorial_pdf_url: null, photo_urls: [] }))).toBe(
-      'Guide PDF and a photo'
-    )
-    expect(sectionSummary('files', base({ photo_urls: [] }))).toBe('A photo')
+    expect(sectionSummary('photos', base({ photo_urls: [] }))).toBe('None yet - the first is the cover')
+    expect(sectionSummary('files', base({ tutorial_pdf_url: null, steps: [] }))).toBe('Optional - or write the steps instead')
     expect(sectionSummary('stl', base({ kind: 'assistive_tech', stl_files: [] }))).toBe(
       'No STL yet'
     )
@@ -120,7 +119,8 @@ describe('sectionSummary', () => {
     expect(
       sectionSummary('tools', base({ tools: [{ name: 'a' }, { name: 'b' }] as never }))
     ).toBe('2 tools')
-    expect(sectionSummary('files', base())).toBe('PDF and photo added')
+    expect(sectionSummary('files', base())).toBe('PDF added')
+    expect(sectionSummary('photos', base({ photo_urls: ['a', 'b'] }))).toBe('2 photos')
   })
 
   // 128: Who it's for counts every tag answer; one_hand is one answer.
@@ -153,6 +153,7 @@ describe('SECTION_LABEL', () => {
       picks: 'Worth a look',
       parts: 'Parts',
       tools: 'Tools',
+      photos: 'Photos',
       files: 'Files',
       stl: '3D print files',
       collaborators: 'Collaborators',
@@ -215,10 +216,7 @@ describe('sectionSummary for steps and files', () => {
   it('Steps asks for steps or a PDF when there is neither', () => {
     expect(sectionSummary('steps', base({ steps: [], tutorial_pdf_url: null }))).toBe('Steps or PDF needed')
   })
-  it('Files only asks for a photo when steps exist and there is no PDF', () => {
-    expect(sectionSummary('files', base({ steps: [step()], tutorial_pdf_url: null, photo_urls: [] }))).toBe('A photo - PDF optional')
-  })
-  it('Files says PDF optional with steps, a photo and no PDF', () => {
-    expect(sectionSummary('files', base({ steps: [step()], tutorial_pdf_url: null, photo_urls: ['p.jpg'] }))).toBe('Photo added - PDF optional')
+  it('Files calls the PDF optional when steps exist and there is none', () => {
+    expect(sectionSummary('files', base({ steps: [step()], tutorial_pdf_url: null }))).toBe('Optional - a PDF to go with your steps')
   })
 })

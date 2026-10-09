@@ -15,6 +15,8 @@ import { Ionicons } from '@expo/vector-icons'
 import * as ImagePicker from 'expo-image-picker'
 import { useDraft, type StepRow } from '../../../lib/use-tutorial-draft'
 import { uploadFile } from '../../../lib/upload'
+import { pickAndUploadPdf } from '../../../lib/pick-pdf'
+import { PickerNote } from './picker-note'
 import { pickPreviewedPhoto } from '../../../lib/pick-photo'
 import { theme } from '../../../lib/theme'
 import { supabase } from '../../../lib/supabase'
@@ -40,7 +42,7 @@ export function StepsSection() {
 }
 
 function StepsEditor() {
-  const { tutorial, replaceSteps, saveError } = useDraft()
+  const { tutorial, replaceSteps, saveNow, saveError } = useDraft()
   // `k` names a row for as long as the screen is open, so an upload that lands
   // after the rows were edited, moved or removed still finds the row it was for.
   const nextKey = useRef(0)
@@ -51,6 +53,7 @@ function StepsEditor() {
   const [uploading, setUploading] = useState<number | null>(null)
   const [localError, setLocalError] = useState<string | null>(null)
   const router = useRouter()
+  const [pdfUploading, setPdfUploading] = useState(false)
   const [wantsSteps, setWantsSteps] = useState(rows.length > 0)
 
   if (!tutorial) return null
@@ -95,6 +98,19 @@ function StepsEditor() {
   }
 
   // Same signing as home/detail-screen openPreview: the bucket is private.
+  async function choosePdf() {
+    setLocalError(null)
+    try {
+      const url = await pickAndUploadPdf(id, () => setPdfUploading(true))
+      if (url) await saveNow({ tutorial_pdf_url: url })
+    } catch (err) {
+      logFailure('[StepsSection] pdf upload failed:', err)
+      setLocalError('Could not upload the PDF. Please try again.')
+    } finally {
+      setPdfUploading(false)
+    }
+  }
+
   async function openPdf(path: string) {
     let pdfUrl = ''
     try {
@@ -128,12 +144,14 @@ function StepsEditor() {
                 <Button label="Add the first step" onPress={() => setWantsSteps(true)} />
               </View>
               <View style={styles.choiceCard}>
-                <Text style={styles.cardTitle}>Or upload a PDF guide</Text>
-                <Text style={styles.cardBody}>Already have one? Upload it and skip writing steps.</Text>
-                <Button label="Upload a PDF" variant="secondary" onPress={() => router.push(`/tutorials/${id}/files`)} />
+                <Text style={styles.cardTitle}>Or use a PDF guide</Text>
+                <Text style={styles.cardBody}>Already have one? Add it and skip writing steps.</Text>
+                <Button label="Choose PDF from Files" variant="secondary" onPress={() => void choosePdf()} loading={pdfUploading} />
+                <PickerNote noun="PDF" />
               </View>
             </>
           )}
+          <ErrorRow message={localError ?? saveError} />
         </ScrollView>
         <SectionFooter section="steps" />
       </Screen>

@@ -1,5 +1,6 @@
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { FilesSection } from '../../../../components/my-tutorials/sections/files-section'
+import { PhotosSection } from '../../../../components/my-tutorials/sections/photos-section'
 import { StlSection } from '../../../../components/my-tutorials/sections/stl-section'
 import { apiClient } from '../../../../lib/api-client'
 
@@ -94,7 +95,7 @@ describe('adding photos', () => {
   it('asks the library for only as many photos as there are slots left', async () => {
     withPhotos(3)
     mockLaunchLibrary.mockResolvedValue({ canceled: true })
-    render(<FilesSection />)
+    render(<PhotosSection />)
     fireEvent.press(screen.getByText('Choose from library'))
     await waitFor(() => expect(mockLaunchLibrary).toHaveBeenCalled())
     expect(mockLaunchLibrary.mock.calls[0][0]).toMatchObject({ allowsMultipleSelection: true, selectionLimit: 2 })
@@ -103,7 +104,7 @@ describe('adding photos', () => {
   it('asks for a single photo when one slot is left', async () => {
     withPhotos(4)
     mockLaunchLibrary.mockResolvedValue({ canceled: true })
-    render(<FilesSection />)
+    render(<PhotosSection />)
     fireEvent.press(screen.getByText('Choose from library'))
     await waitFor(() => expect(mockLaunchLibrary).toHaveBeenCalled())
     expect(mockLaunchLibrary.mock.calls[0][0]).toMatchObject({ allowsMultipleSelection: false, selectionLimit: 1 })
@@ -113,7 +114,7 @@ describe('adding photos', () => {
     withPhotos(4)
     mockLaunchLibrary.mockResolvedValue(lib(3))
     mockUploadFile.mockImplementation((_p: string, _id: string, f: { name: string }) => Promise.resolve({ url: `up/${f.name}` }))
-    render(<FilesSection />)
+    render(<PhotosSection />)
     fireEvent.press(screen.getByText('Choose from library'))
     await waitFor(() => expect(mockDraft.saveNow).toHaveBeenCalled())
     expect(mockUploadFile).toHaveBeenCalledTimes(1)
@@ -123,7 +124,7 @@ describe('adding photos', () => {
   it('keeps the photos that did upload when a later one in the same batch fails', async () => {
     mockLaunchLibrary.mockResolvedValue(lib(3))
     mockUploadFile.mockResolvedValueOnce({ url: 'up/0.jpg' }).mockRejectedValueOnce(new Error('413')).mockResolvedValueOnce({ url: 'up/2.jpg' })
-    render(<FilesSection />)
+    render(<PhotosSection />)
     fireEvent.press(screen.getByText('Choose from library'))
     expect(await screen.findByText('Could not upload the photo. Please try again.')).toBeTruthy()
     expect(mockDraft.saveNow).toHaveBeenCalledWith({ photo_urls: ['up/0.jpg'], photo_captions: [] })
@@ -132,7 +133,7 @@ describe('adding photos', () => {
   it('saves nothing when the very first upload fails, and offers the buttons again', async () => {
     mockLaunchLibrary.mockResolvedValue(lib(1))
     mockUploadFile.mockRejectedValue(new Error('network'))
-    render(<FilesSection />)
+    render(<PhotosSection />)
     fireEvent.press(screen.getByText('Choose from library'))
     expect(await screen.findByText('Could not upload the photo. Please try again.')).toBeTruthy()
     expect(mockDraft.saveNow).not.toHaveBeenCalled()
@@ -141,7 +142,7 @@ describe('adding photos', () => {
 
   it('does not upload when the picker is cancelled or returns nothing', async () => {
     mockLaunchLibrary.mockResolvedValueOnce({ canceled: true }).mockResolvedValueOnce({ canceled: false, assets: [] })
-    render(<FilesSection />)
+    render(<PhotosSection />)
     fireEvent.press(screen.getByText('Choose from library'))
     await waitFor(() => expect(mockLaunchLibrary).toHaveBeenCalledTimes(1))
     fireEvent.press(screen.getByText('Choose from library'))
@@ -152,7 +153,7 @@ describe('adding photos', () => {
   it('takes a photo with the camera and refuses without camera access', async () => {
     const ImagePicker = jest.requireMock('expo-image-picker')
     ImagePicker.requestCameraPermissionsAsync.mockResolvedValueOnce({ granted: false })
-    render(<FilesSection />)
+    render(<PhotosSection />)
     fireEvent.press(screen.getByText('Take a photo'))
     expect(await screen.findByText('Camera access is needed to take a photo.')).toBeTruthy()
     expect(ImagePicker.launchCameraAsync).not.toHaveBeenCalled()
@@ -162,7 +163,7 @@ describe('adding photos', () => {
     let finish!: (v: { url: string }) => void
     mockLaunchLibrary.mockResolvedValue(lib(1))
     mockUploadFile.mockReturnValue(new Promise((r) => { finish = r }))
-    render(<FilesSection />)
+    render(<PhotosSection />)
     fireEvent.press(screen.getByText('Choose from library'))
     await waitFor(() => expect(mockUploadFile).toHaveBeenCalled())
     fireEvent.press(screen.getAllByRole('button', { name: /Choose from library/ })[0])
@@ -174,7 +175,7 @@ describe('adding photos', () => {
 describe('the photo list', () => {
   it('says that is all five and offers no more picks at the limit', () => {
     withPhotos(5)
-    render(<FilesSection />)
+    render(<PhotosSection />)
     expect(screen.getByText(/That is all 5\. Remove one to add another\./)).toBeTruthy()
     expect(screen.queryByText('Choose from library')).toBeNull()
     expect(screen.queryByText('Take a photo')).toBeNull()
@@ -182,7 +183,7 @@ describe('the photo list', () => {
 
   it('will not remove the only photo, and says to add another first', () => {
     withPhotos(1)
-    render(<FilesSection />)
+    render(<PhotosSection />)
     expect(screen.getByText('Add another photo before you can remove this one.')).toBeTruthy()
     fireEvent.press(screen.getByLabelText('Remove photo 1 — add another photo first'))
     expect(mockDraft.saveNow).not.toHaveBeenCalled()
@@ -190,14 +191,14 @@ describe('the photo list', () => {
 
   it('removes a photo and drops its caption, keeping the others’ in step', async () => {
     withPhotos(3, { photo_captions: ['one', 'two', 'three'] })
-    render(<FilesSection />)
+    render(<PhotosSection />)
     fireEvent.press(screen.getByLabelText('Remove photo 2'))
     await waitFor(() => expect(mockDraft.saveNow).toHaveBeenCalledWith({ photo_urls: ['p1', 'p3'], photo_captions: ['one', 'three'] }))
   })
 
   it('flags the cover and offers Make cover on the rest only', () => {
     withPhotos(3)
-    render(<FilesSection />)
+    render(<PhotosSection />)
     expect(screen.getByText('Cover')).toBeTruthy()
     expect(screen.queryByLabelText('Make photo 1 the cover')).toBeNull()
     expect(screen.getByLabelText('Make photo 3 the cover')).toBeTruthy()
@@ -205,14 +206,14 @@ describe('the photo list', () => {
 
   it('moves a photo to the front as the cover and keeps its caption with it', async () => {
     withPhotos(3, { photo_captions: [null, null, 'The jack'] })
-    render(<FilesSection />)
+    render(<PhotosSection />)
     fireEvent.press(screen.getByLabelText('Make photo 3 the cover'))
     await waitFor(() => expect(mockDraft.saveNow).toHaveBeenCalledWith({ photo_urls: ['p3', 'p1', 'p2'], photo_captions: ['The jack'] }))
   })
 
   it('turns an emptied caption into null, trims trailing nulls and caps the length at 60', () => {
     withPhotos(2, { photo_captions: ['one', null] })
-    render(<FilesSection />)
+    render(<PhotosSection />)
     expect(screen.getByLabelText('Caption for photo 1').props.maxLength).toBe(60)
     fireEvent.changeText(screen.getByLabelText('Caption for photo 1'), '')
     expect(mockDraft.save).toHaveBeenLastCalledWith({ photo_captions: [] })
@@ -220,14 +221,14 @@ describe('the photo list', () => {
 
   it('keeps emoji, quotes and markup in a caption', () => {
     withPhotos(1)
-    render(<FilesSection />)
+    render(<PhotosSection />)
     fireEvent.changeText(screen.getByLabelText('Caption for photo 1'), '🧸 "red" <jack> & lead')
     expect(mockDraft.save).toHaveBeenLastCalledWith({ photo_captions: ['🧸 "red" <jack> & lead'] })
   })
 
   it('shows a placeholder, not an empty box, for a photo that will not decode', () => {
     withPhotos(2)
-    const { UNSAFE_getAllByType } = render(<FilesSection />)
+    const { UNSAFE_getAllByType } = render(<PhotosSection />)
     const Image = jest.requireActual('react-native').Image
     act(() => { UNSAFE_getAllByType(Image)[0].props.onError() })
     expect(screen.getAllByText("Saved, but it can't be shown here.")).toHaveLength(1)

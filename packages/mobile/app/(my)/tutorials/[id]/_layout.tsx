@@ -56,6 +56,7 @@ function EditorStack() {
       <Stack.Screen name="picks" options={{ title: 'Worth a look' }} />
       <Stack.Screen name="parts" options={{ title: 'Parts' }} />
       <Stack.Screen name="tools" options={{ title: 'Tools' }} />
+      <Stack.Screen name="photos" options={{ title: 'Photos' }} />
       <Stack.Screen name="files" options={{ title: 'Files' }} />
       <Stack.Screen name="stl" options={{ title: '3D print files' }} />
       <Stack.Screen name="backing" options={{ title: 'Backing' }} />
