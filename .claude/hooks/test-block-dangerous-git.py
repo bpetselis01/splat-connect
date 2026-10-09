@@ -29,6 +29,13 @@ BLOCKED = [
     "cd x && git reset --hard HEAD~1",
     "git reset HEAD~1 --hard",
     "git commit -m \"don't\" && git push -f",
+    "git push origin $(echo main)",
+    'git push origin "$BR"',
+    "git push origin `echo main`",
+    "env -u X git push -f",
+    "sudo -u root git reset --hard",
+    'eval "git push -f"',
+    "nohup git push --force &",
 ]
 ALLOWED = [
     "git push origin development",
@@ -44,6 +51,9 @@ ALLOWED = [
     "git commit -m \"git push -f is blocked\"",
     "ls -la",
     "pnpm test",
+    'git commit -m "$(cat notes.txt)" && git push origin development',
+    'git commit -m "the git guard now checks every push target $T"',
+    'T=$(date) && git commit -m "x$T" && git push origin development',
 ]
 
 

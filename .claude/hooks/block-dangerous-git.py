@@ -3,7 +3,12 @@
 
 Reads the hook JSON on stdin. Exit 2 blocks and sends the message to Claude. Unreadable input
 blocks (fail closed). Commands are tokenised with shlex, so quoted text such as a commit message
-is not mistaken for a command, and wrappers (sudo, env, bash -c, $(...), full paths, -C dir) are seen through.
+is not mistaken for a command, and wrappers (sudo, env -u X, bash -c, eval, $(...), full paths,
+-C dir) are seen through. A push whose target is built dynamically ($VAR, $(...), backticks) is
+blocked because it cannot be resolved here.
+
+This stops an agent's accidental or careless push. It is not a security boundary: a script file,
+an alias, `python -c` or the GitHub API can still reach main. Enforce that with branch protection on main.
 """
 import json
 import os
@@ -13,7 +18,7 @@ import subprocess
 import sys
 
 PROTECTED = {"main", "master"}
-WRAPPERS = {"sudo", "command", "env", "exec", "nohup", "time", "builtin"}
+WRAPPERS = {"sudo", "command", "env", "exec", "nohup", "time", "builtin", "nice", "xargs"}
 SHELLS = {"bash", "sh", "zsh", "dash", "ksh"}
 GIT_OPTS_WITH_ARG = {"-c", "--git-dir", "--work-tree", "--namespace", "--exec-path"}
 
@@ -23,8 +28,9 @@ def block(why):
     sys.exit(2)
 
 
-def segments(cmd):
-    cmd = re.sub(r"\$\(|`|\)", " ; ", cmd)  # command substitutions become their own segments
+def segments(cmd, rewrite=True):
+    if rewrite:
+        cmd = re.sub(r"\$\(|`|\)", " ; ", cmd)  # command substitutions become their own segments
     lex = shlex.shlex(cmd, posix=True, punctuation_chars=True)
     lex.whitespace_split = True
     seg = []
@@ -65,41 +71,67 @@ def check_push(rest, directory):
             block("push from main")
 
 
+def command_index(seg):
+    """Index of the real command: skip wrappers, VAR=x assignments, options and an option's argument."""
+    after_opt = False
+    for i, tok in enumerate(seg):
+        is_opt = tok.startswith("-")
+        if tok in WRAPPERS or re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", tok) or is_opt or after_opt:
+            after_opt = is_opt and not after_opt
+            continue
+        return i
+    return None
+
+
 def check(seg, cwd):
-    seg = list(seg)
-    while seg and (re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", seg[0]) or seg[0] in WRAPPERS):
-        seg.pop(0)
-    if not seg:
+    i = command_index(seg)
+    if i is None:
         return
-    prog = os.path.basename(seg[0])
+    prog, args = os.path.basename(seg[i]), seg[i + 1 :]
+    if prog == "eval":
+        scan(" ".join(args), cwd)
+        return
     if prog in SHELLS:
-        for i, tok in enumerate(seg):
-            if re.fullmatch(r"-[a-zA-Z]*c[a-zA-Z]*", tok) and i + 1 < len(seg):
-                scan(seg[i + 1], cwd)
+        for j, tok in enumerate(args):
+            if re.fullmatch(r"-[a-zA-Z]*c[a-zA-Z]*", tok) and j + 1 < len(args):
+                scan(args[j + 1], cwd)
                 return
         return
     if prog != "git":
         return
-    args, i, directory = seg[1:], 0, cwd
-    while i < len(args) and args[i].startswith("-"):
-        if args[i] == "-C" and i + 1 < len(args):
-            directory = os.path.join(cwd, args[i + 1])
-            i += 2
-        elif args[i] in GIT_OPTS_WITH_ARG:
-            i += 2
+    j, directory = 0, cwd
+    while j < len(args) and args[j].startswith("-"):
+        if args[j] == "-C" and j + 1 < len(args):
+            directory = os.path.join(cwd, args[j + 1])
+            j += 2
+        elif args[j] in GIT_OPTS_WITH_ARG:
+            j += 2
         else:
-            i += 1
-    if i >= len(args):
+            j += 1
+    if j >= len(args):
         return
-    sub, rest = args[i], args[i + 1 :]
+    sub, rest = args[j], args[j + 1 :]
     if sub == "reset" and "--hard" in rest:
         block("git reset --hard (discards uncommitted work)")
     if sub == "push":
         check_push(rest, directory)
 
 
+def is_dynamic_push(seg):
+    """A git push whose own words contain $VAR, $(...) or backticks: its target cannot be read here."""
+    i = command_index(seg)
+    if i is None or os.path.basename(seg[i]) != "git":
+        return False
+    args, j = seg[i + 1 :], 0
+    while j < len(args) and args[j].startswith("-"):
+        j += 2 if args[j] in GIT_OPTS_WITH_ARG | {"-C"} else 1
+    return j < len(args) and args[j] == "push" and any("$" in t or "`" in t for t in args[j + 1 :])
+
+
 def scan(cmd, cwd):
     try:
+        if any(is_dynamic_push(seg) for seg in segments(cmd, rewrite=False)):
+            block("push with a dynamic target ($VAR, $(...) or backticks)")
         for seg in segments(cmd):
             check(seg, cwd)
     except ValueError:
