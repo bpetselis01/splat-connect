@@ -86,6 +86,8 @@ test('steps added in the editor are saved in order and survive a reload', async 
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile EditSteps'), status: 'draft' })
 
   await page.goto(`/tutorials/${id}/steps`)
+  // A PDF-only guide opens on the choice card; the editor is one tap further.
+  await page.getByRole('button', { name: 'Add steps as well', exact: true }).click()
   await page.getByTestId('steps-add').click()
   await page.getByLabel('Step 1 instructions').fill('First, open it.')
   await page.getByTestId('steps-add').click()
@@ -117,6 +119,8 @@ test('a step with no instructions is flagged and never saved', async ({ page }) 
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile BlankStep'), status: 'draft' })
 
   await page.goto(`/tutorials/${id}/steps`)
+  // A PDF-only guide opens on the choice card; the editor is one tap further.
+  await page.getByRole('button', { name: 'Add steps as well', exact: true }).click()
   await page.getByTestId('steps-add').click()
   await expect(page.getByText('Add the instructions to save this step')).toBeVisible()
   await page.getByTestId('section-back').click()

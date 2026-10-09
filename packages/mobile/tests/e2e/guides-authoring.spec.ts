@@ -81,9 +81,17 @@ test('a new account writes a guide end to end and submits it for review', async 
   saved = patched()
   // The slider's web build is a pointer-release control: a click at the 4th of
   // its 10 stops (10, 15, 20, 30 ...) sets and commits that stop, as a release does.
-  const sliderBox = await page.getByLabel('Build time').boundingBox()
+  const slider = page.getByRole('slider', { name: 'Build time' })
+  await slider.scrollIntoViewIfNeeded()
+  const sliderBox = await slider.boundingBox()
   if (!sliderBox) throw new Error('build time slider has no box')
-  await page.mouse.click(sliderBox.x + 10 + ((sliderBox.width - 20) * 3) / 9, sliderBox.y + sliderBox.height / 2)
+  const stopX = sliderBox.x + 10 + ((sliderBox.width - 20) * 3) / 9
+  const midY = sliderBox.y + sliderBox.height / 2
+  await page.mouse.move(stopX, midY)
+  await page.mouse.down()
+  await page.mouse.move(stopX + 1, midY)
+  await page.mouse.move(stopX, midY)
+  await page.mouse.up()
   await expect(page.getByTestId('build-time-value')).toHaveText('30 min')
   expect((await saved).status()).toBe(200)
   await backToHub()
