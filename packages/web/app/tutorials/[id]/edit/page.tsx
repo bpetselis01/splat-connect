@@ -297,7 +297,7 @@ export default async function EditTutorialPage({
       id: 'files',
       label: 'Files',
       icon: <FileArrowDown size={19} weight="duotone" aria-hidden="true" />,
-      hint: 'The photos a parent sees first, and the guide PDF itself.',
+      hint: 'The photos a parent sees first, and the guide PDF, if it has one.',
       status: stepStatuses.files,
       content: (
         <div className="panel pt-5">

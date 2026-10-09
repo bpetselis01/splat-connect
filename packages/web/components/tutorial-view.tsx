@@ -640,7 +640,7 @@ export function TutorialView({
 
           {!signedIn && (tutorial.tutorial_pdf_url || tutorial.stl_files.length > 0) && (
             <p className="m-0 text-[13px] leading-[1.5] text-muted">
-              The PDF and your saved list come with an account. Both are free.
+              Downloads and your saved list come with an account. Both are free.
             </p>
           )}
 
