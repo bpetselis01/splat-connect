@@ -104,6 +104,8 @@ test('a new account writes a guide end to end and submits it for review', async 
   // Its own screen now, and its own gate: nothing submits without it.
   await page.getByTestId('hub-row-safety').click()
   saved = patched()
+  // The declaration cannot be undone, so tapping it asks first (window.confirm on web).
+  page.once('dialog', (d) => void d.accept())
   await page.getByTestId('safety-declare').click()
   expect((await saved).status()).toBe(200)
   await backToHub()

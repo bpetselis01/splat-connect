@@ -7,6 +7,7 @@ import { useState } from 'react'
 import { Text, ScrollView, Pressable, StyleSheet, View } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { SAFETY_CHECKLIST } from '@splat-connect/types'
+import { confirmDestructive } from '../../../lib/confirm'
 import { useDraft, type SafetyNoteRow } from '../../../lib/use-tutorial-draft'
 import { SectionProgress } from './section-progress'
 import { theme } from '../../../lib/theme'
@@ -59,7 +60,14 @@ function SafetyEditor() {
             testID="safety-declare"
             accessibilityRole="checkbox"
             accessibilityState={{ checked: false }}
-            onPress={() => save({ safety_declared: true })}
+            onPress={() =>
+              confirmDestructive(
+                'Declare this design safe?',
+                "Once you declare it, you can't untick it. Check every point above first.",
+                'Declare',
+                () => save({ safety_declared: true })
+              )
+            }
             style={styles.tick}
           >
             <Ionicons name="square-outline" size={20} color={theme.colors.primaryDeep} />

@@ -3,6 +3,8 @@ import { render, screen, fireEvent } from '@testing-library/react-native'
 import { SAFETY_CHECKLIST } from '@splat-connect/types'
 import { SafetySection } from '../../../../components/my-tutorials/sections/safety-section'
 
+const mockConfirm = jest.fn()
+jest.mock('../../../../lib/confirm', () => ({ confirmDestructive: (...a: unknown[]) => mockConfirm(...a) }))
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 
 jest.mock('expo-router', () => ({
@@ -41,7 +43,17 @@ it('lists every checklist point', () => {
 it('affirms rather than sets a date', () => {
   render(<SafetySection />)
   fireEvent.press(screen.getByTestId('safety-declare'))
+  // Nothing is saved until the person confirms the warning.
+  expect(mockDraft.save).not.toHaveBeenCalled()
+  expect(mockConfirm).toHaveBeenCalledWith(expect.stringMatching(/declare/i), expect.stringMatching(/untick/), 'Declare', expect.any(Function))
+  mockConfirm.mock.calls[0][3]()
   expect(mockDraft.save).toHaveBeenCalledWith({ safety_declared: true })
+})
+
+it('saves nothing when the warning is cancelled', () => {
+  render(<SafetySection />)
+  fireEvent.press(screen.getByTestId('safety-declare'))
+  expect(mockDraft.save).not.toHaveBeenCalled()
 })
 
 it('shows the declaration once made and offers no way to unmake it', () => {
