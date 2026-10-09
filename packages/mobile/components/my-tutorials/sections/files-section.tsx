@@ -14,6 +14,7 @@ import { uploadFile } from '../../../lib/upload'
 import { pickPreviewedPhoto } from '../../../lib/pick-photo'
 import { supabase } from '../../../lib/supabase'
 import { useDraft } from '../../../lib/use-tutorial-draft'
+import { SectionProgress } from './section-progress'
 import { MAX_PHOTOS, realignCaptions } from '@splat-connect/types'
 import { theme } from '../../../lib/theme'
 import { Screen } from '../../ui/Screen'
@@ -164,6 +165,7 @@ export function FilesSection() {
   return (
     <Screen>
       <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" automaticallyAdjustKeyboardInsets>
+        <SectionProgress section="files" />
         {/* Both halves are labelled. Unlabelled, the only thing naming the PDF
             was its own filename, so which button belonged to which artefact had
             to be read off the order they happened to be in. */}

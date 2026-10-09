@@ -13,6 +13,7 @@ import {
   formatBuildTime,
 } from '@splat-connect/types'
 import { useDraft } from '../../../lib/use-tutorial-draft'
+import { SectionProgress } from './section-progress'
 import { parseYears } from '../../../lib/tutorial-sections'
 import { theme } from '../../../lib/theme'
 import { Screen } from '../../ui/Screen'
@@ -40,6 +41,7 @@ export function DetailsSection() {
   return (
     <Screen>
       <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" automaticallyAdjustKeyboardInsets>
+        <SectionProgress section="details" />
         <Text style={styles.lead}>What the toy is, who it suits, and who is backing the guide.</Text>
         <TextField
           label="Title"

@@ -13,6 +13,7 @@ import type { StlFile } from '@splat-connect/types'
 import { apiClient } from '../../../lib/api-client'
 import { uploadFile } from '../../../lib/upload'
 import { useDraft } from '../../../lib/use-tutorial-draft'
+import { SectionProgress } from './section-progress'
 import { theme } from '../../../lib/theme'
 import { Screen } from '../../ui/Screen'
 import { Button } from '../../ui/Button'
@@ -119,6 +120,7 @@ function StlEditor() {
   return (
     <Screen>
       <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
+        <SectionProgress section="stl" />
         {files.length ? (
           files.map((f) => (
             <View key={f.id} style={styles.fileBlock}>

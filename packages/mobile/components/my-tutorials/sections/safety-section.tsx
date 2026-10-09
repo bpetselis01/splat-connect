@@ -8,6 +8,7 @@ import { Text, ScrollView, Pressable, StyleSheet, View } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { SAFETY_CHECKLIST } from '@splat-connect/types'
 import { useDraft, type SafetyNoteRow } from '../../../lib/use-tutorial-draft'
+import { SectionProgress } from './section-progress'
 import { theme } from '../../../lib/theme'
 import { Screen } from '../../ui/Screen'
 import { ErrorRow } from '../../ui/ErrorRow'
@@ -37,6 +38,7 @@ function SafetyEditor() {
   return (
     <Screen>
       <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" automaticallyAdjustKeyboardInsets>
+        <SectionProgress section="safety" />
         <Text style={styles.lead}>Anything that could hurt a child, stated plainly.</Text>
         {SAFETY_CHECKLIST.map((item) => (
           <Text key={item} style={styles.item}>

@@ -13,6 +13,7 @@ import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { TOOL_GET_BY_LABEL, dollarsToCents, type ToolGetBy } from '@splat-connect/types'
 import { useDraft, type ItemRow } from '../../../lib/use-tutorial-draft'
+import { SectionProgress } from './section-progress'
 import { theme } from '../../../lib/theme'
 import { Screen } from '../../ui/Screen'
 import { TextField } from '../../ui/TextField'
@@ -68,6 +69,7 @@ function ItemsEditor({ noun }: { noun: 'parts' | 'tools' }) {
   return (
     <Screen>
       <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" automaticallyAdjustKeyboardInsets>
+        <SectionProgress section={noun} />
         <Text style={styles.lead}>{LEAD[noun]}</Text>
         {rows.length === 0 ? <Text style={styles.empty}>No {noun} yet.</Text> : null}
 
