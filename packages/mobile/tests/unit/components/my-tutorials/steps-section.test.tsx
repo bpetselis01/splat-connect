@@ -3,7 +3,10 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-
 import { StepsSection } from '../../../../components/my-tutorials/sections/steps-section'
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn(), canGoBack: () => true }) }))
+const mockRouter = { push: jest.fn(), replace: jest.fn(), back: jest.fn(), canGoBack: () => true }
+jest.mock('expo-router', () => ({ useRouter: () => mockRouter }))
+const mockSign = jest.fn()
+jest.mock('../../../../lib/supabase', () => ({ supabase: { storage: { from: () => ({ createSignedUrl: (...a: unknown[]) => mockSign(...a) }) } } }))
 jest.mock('../../../../lib/auth-context', () => ({ useAuth: jest.fn() }))
 jest.mock('../../../../lib/api-client', () => ({ apiClient: {} }))
 
@@ -30,7 +33,7 @@ const mockDraft = {
 jest.mock('../../../../lib/use-tutorial-draft', () => ({ useDraft: () => mockDraft }))
 
 const step = (n: number, over: object = {}) => ({ id: `s${n}`, tutorial_id: 't1', position: n, title: `Title ${n}`, body: `Body ${n}`, photo_url: null, ...over })
-const withSteps = (steps: object[]) => { mockDraft.tutorial = { id: 't1', kind: 'toy_adaptation', status: 'draft', steps, parts: [], tools: [], stl_files: [], photo_urls: [], title: 'T', difficulty: 'easy', safety_declared_at: null, build_minutes: 5 } }
+const withSteps = (steps: object[], pdf: string | null = null) => { mockDraft.tutorial = { id: 't1', tutorial_pdf_url: pdf, kind: 'toy_adaptation', status: 'draft', steps, parts: [], tools: [], stl_files: [], photo_urls: [], title: 'T', difficulty: 'easy', safety_declared_at: null, build_minutes: 5 } }
 const lastRows = () => mockDraft.replaceSteps.mock.lastCall![0] as { title: string | null; body: string; photo_url: string | null; tip?: string | null; minutes?: number | null }[]
 
 beforeEach(() => {
@@ -45,12 +48,14 @@ afterEach(() => jest.restoreAllMocks())
 describe('adding, editing and removing steps', () => {
   it('invites the first step when the guide has none, and sends no write until something changes', () => {
     render(<StepsSection />)
+    fireEvent.press(screen.getByText('Add the first step'))
     expect(screen.getByText(/One photo and one instruction per action/)).toBeTruthy()
     expect(mockDraft.replaceSteps).not.toHaveBeenCalled()
   })
 
   it('adds a blank step that names why it will not be saved yet', () => {
     render(<StepsSection />)
+    fireEvent.press(screen.getByText('Add the first step'))
     fireEvent.press(screen.getByTestId('steps-add'))
     expect(screen.getByText('Add the instructions to save this step')).toBeTruthy()
     expect(lastRows()).toEqual([{ title: null, body: '', photo_url: null, tip: null, minutes: null }])
@@ -101,12 +106,12 @@ describe('adding, editing and removing steps', () => {
     expect(screen.getByLabelText('Step 2 instructions').props.value).toBe('Body 3')
   })
 
-  it('removing the last remaining step sends an empty list and brings the invitation back', () => {
+  it('removing the last remaining step sends an empty list and brings the choice back', () => {
     withSteps([step(1)])
     render(<StepsSection />)
     fireEvent.press(screen.getByTestId('step-remove-0'))
     expect(lastRows()).toEqual([])
-    expect(screen.getByText(/One photo and one instruction per action/)).toBeTruthy()
+    expect(screen.getByText('Write the steps here')).toBeTruthy()
   })
 
   it('shows an existing blank-bodied step as unsaved, not as saved', () => {
@@ -285,5 +290,59 @@ describe('save errors', () => {
     mockDraft.saveError = 'Could not save. Your changes are still here - try again.'
     render(<StepsSection />)
     expect(screen.getByText('Could not save. Your changes are still here - try again.')).toBeTruthy()
+  })
+})
+
+describe('steps or a PDF', () => {
+  const stepsLabel = '+ Add a step'
+  it('offers a choice when the guide has neither steps nor a PDF', () => {
+    render(<StepsSection />)
+    expect(screen.getByText('Write the steps here')).toBeTruthy()
+    expect(screen.getByText('Or upload a PDF guide')).toBeTruthy()
+    expect(screen.getAllByTestId('section-progress')).toHaveLength(1)
+  })
+
+  it('shows the redirect card when there is a PDF and no steps', () => {
+    withSteps([], 'a/guide.pdf')
+    render(<StepsSection />)
+    expect(screen.getByText('Your guide is the PDF')).toBeTruthy()
+    expect(screen.getByText('View PDF')).toBeTruthy()
+    expect(screen.queryByText(stepsLabel)).toBeNull()
+  })
+
+  it('"Add steps as well" opens the editor even with a PDF', () => {
+    withSteps([], 'a/guide.pdf')
+    render(<StepsSection />)
+    fireEvent.press(screen.getByText('Add steps as well'))
+    expect(screen.getByText(stepsLabel)).toBeTruthy()
+    expect(screen.getAllByTestId('section-progress')).toHaveLength(1)
+  })
+
+  it('"Add the first step" opens the editor', () => {
+    render(<StepsSection />)
+    fireEvent.press(screen.getByText('Add the first step'))
+    expect(screen.getByText(stepsLabel)).toBeTruthy()
+  })
+
+  it('"Upload a PDF" goes to Files', () => {
+    render(<StepsSection />)
+    fireEvent.press(screen.getByText('Upload a PDF'))
+    expect(mockRouter.push).toHaveBeenCalledWith('/tutorials/t1/files')
+  })
+
+  it('"View PDF" signs the path and opens the preview', async () => {
+    withSteps([], 'a/guide.pdf')
+    mockSign.mockResolvedValue({ data: { signedUrl: 'https://signed' }, error: null })
+    render(<StepsSection />)
+    fireEvent.press(screen.getByText('View PDF'))
+    await waitFor(() => expect(mockRouter.push).toHaveBeenCalledWith({ pathname: '/guides/[id]/preview', params: { id: 't1', pdfUrl: 'https://signed' } }))
+    expect(mockSign).toHaveBeenCalledWith('a/guide.pdf', 60)
+  })
+
+  it('shows the editor, not the card, when there are steps and a PDF', () => {
+    withSteps([step(1)], 'a/guide.pdf')
+    render(<StepsSection />)
+    expect(screen.queryByText('Your guide is the PDF')).toBeNull()
+    expect(screen.getByTestId('step-row-0')).toBeTruthy()
   })
 })
