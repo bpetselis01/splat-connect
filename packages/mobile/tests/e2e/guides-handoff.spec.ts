@@ -68,7 +68,7 @@ test('a guide with no printable files offers no printing, and says so', async ({
 
   await page.goto(`/guides/${guide}`)
   await page.getByRole('tab', { name: 'Files' }).click()
-  await expect(page.getByText('Nothing to download for this guide.')).toBeVisible()
+  await expect(page.getByText('This guide has no files to download.')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Ask someone to print' })).toHaveCount(0)
 })
 

@@ -102,8 +102,7 @@ export function EditStepsSection({
       )}
       {rows.length === 0 && (
         <p className="m-0 text-sm leading-relaxed text-muted">
-          One photo and one instruction per action. Optional — the PDF still carries the guide — but
-          a parent can follow numbered steps on a phone without downloading anything.
+          One photo and one instruction per action. A parent can follow numbered steps on a phone without downloading anything.
         </p>
       )}
       <ol className="m-0 flex list-none flex-col gap-3 p-0">

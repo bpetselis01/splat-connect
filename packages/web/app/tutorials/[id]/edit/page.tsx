@@ -285,7 +285,7 @@ export default async function EditTutorialPage({
       id: 'steps',
       label: 'Steps',
       icon: <ListNumbers size={19} weight="duotone" aria-hidden="true" />,
-      hint: 'One photo and one instruction per action, in order. Optional — the PDF still carries the guide.',
+      hint: 'One photo and one instruction per action, in order.',
       status: stepStatuses.steps,
       content: (
         <div className="panel pt-5">
@@ -482,10 +482,10 @@ export default async function EditTutorialPage({
     live: {
       meta: `Published ${day(tutorial.reviewed_at ?? tutorial.updated_at)}`,
       head: 'Families are using this',
-      body: 'It is in the library, in search, and in the PDF anyone can download.',
+      body: 'It is in the library and in search.',
       progress: `Live since ${day(tutorial.reviewed_at ?? tutorial.updated_at)}. Saving a change sends it back for review.`,
       privacyLead: 'This one is public.',
-      privacy: 'Families can read it and download the PDF.',
+      privacy: 'Families can read it and download its files.',
     },
     declined: { meta: '', head: '', body: '', progress: '', privacyLead: '', privacy: '' },
     gone: { meta: '', head: '', body: '', progress: '', privacyLead: '', privacy: '' },

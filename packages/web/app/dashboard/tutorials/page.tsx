@@ -69,8 +69,8 @@ export default async function DashboardPage({
             You haven&apos;t submitted any tutorials yet.
           </p>
           <p className="mt-1 max-w-xs text-sm leading-relaxed text-muted">
-            A tutorial is a PDF guide plus the parts and tools a parent needs to
-            adapt one toy.
+            A tutorial is step-by-step instructions or a PDF guide, plus the parts and
+            tools a parent needs to adapt one toy.
           </p>
           <BoundaryLink href="/upload" className="btn btn-accent mt-6">
             Upload your first tutorial

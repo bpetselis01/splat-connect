@@ -684,7 +684,7 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
                   ) : null}
                 </View>
               ) : (
-                <Text style={styles.small}>Nothing to download for this guide.</Text>
+                <Text style={styles.small}>This guide has no files to download.</Text>
               )}
               {tutorial.stl_files.length > 0 ? (
                 <View ref={printCard} collapsable={false} testID="print-card">

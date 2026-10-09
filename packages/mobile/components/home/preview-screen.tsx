@@ -18,7 +18,7 @@ export function PreviewScreen({ pdfUrl, tutorialId }: { pdfUrl: string | null; t
         <EmptyState
           icon="document-outline"
           title="No PDF is available for this tutorial yet."
-          hint="Contributors add the step-by-step PDF once a tutorial is approved."
+          hint="This guide has no PDF. Its steps are on the guide page."
         />
       </View>
     )

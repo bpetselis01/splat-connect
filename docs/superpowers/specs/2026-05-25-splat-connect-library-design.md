@@ -1,4 +1,6 @@
 # SPLAT Connect — Toy Adaptation Library: Design Spec
+
+> Superseded 2026-10-09: a guide needs steps or a PDF (see 2026-10-09-guide-editor-overhaul-design).
 **Date:** 2026-05-25  
 **Author:** Byron Petselis  
 **Status:** Approved for implementation
