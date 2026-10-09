@@ -80,7 +80,6 @@ const baseTutorialWithDetails: TutorialWithDetails = {
   difficulty: 'easy',
   kind: 'toy_adaptation',
   status: 'draft',
-  maturity: 'complete',
   safety_declared_at: '2026-08-01T00:00:00Z',
   build_minutes: 30,
   description: null,

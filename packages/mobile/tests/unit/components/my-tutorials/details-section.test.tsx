@@ -20,7 +20,6 @@ const mockDraft = {
     description: null,
     kind: 'toy_adaptation',
     difficulty: 'easy',
-    maturity: 'complete',
     status: 'draft',
     updated_at: 'v1',
     safety_declared_at: null,

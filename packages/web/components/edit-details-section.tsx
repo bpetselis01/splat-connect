@@ -9,7 +9,7 @@ import { PanelActions, useSaveOnLeave } from '@/components/panel-actions'
  */
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { BUILD_TIME_OPTIONS, KIND_LABEL, MATURITY_LABEL, SAFETY_CHECKLIST, formatBuildTime, type Tutorial, type Difficulty, type TutorialKind, type TutorialMaturity } from '@splat-connect/types'
+import { BUILD_TIME_OPTIONS, KIND_LABEL, SAFETY_CHECKLIST, formatBuildTime, type Tutorial, type Difficulty, type TutorialKind } from '@splat-connect/types'
 import { useToast } from '@/components/toast'
 
 export function EditDetailsSection({
@@ -17,7 +17,7 @@ export function EditDetailsSection({
   onSave,
 }: {
   tutorial: Tutorial
-  onSave: (patch: { title: string; description: string | null; difficulty: Difficulty; build_minutes: number | null; age_min: number | null; age_max: number | null; kind: TutorialKind; maturity: TutorialMaturity; safety_declared?: true; toy_name: string | null; toy_brand: string | null; works_with: string | null; no_build_note: string | null; done_note: string | null; layer_height_mm?: number | null; infill_percent?: number | null; material?: string | null; print_minutes?: number | null; updated_at: string }) => Promise<void>
+  onSave: (patch: { title: string; description: string | null; difficulty: Difficulty; build_minutes: number | null; age_min: number | null; age_max: number | null; kind: TutorialKind; safety_declared?: true; toy_name: string | null; toy_brand: string | null; works_with: string | null; no_build_note: string | null; done_note: string | null; layer_height_mm?: number | null; infill_percent?: number | null; material?: string | null; print_minutes?: number | null; updated_at: string }) => Promise<void>
 }) {
   const router = useRouter()
   const showToast = useToast()
@@ -38,7 +38,6 @@ export function EditDetailsSection({
         age_min: formData.get('age_min') === '' ? null : Number(formData.get('age_min')),
         age_max: formData.get('age_max') === '' ? null : Number(formData.get('age_max')),
         kind: formData.get('kind') as TutorialKind,
-        maturity: formData.get('maturity') as TutorialMaturity,
         // Once declared, always declared — the timestamp on the row is the
         // record; the checkbox only exists until then.
         ...(formData.get('safety_declared') === 'on' ? { safety_declared: true as const } : {}),
@@ -196,18 +195,6 @@ export function EditDetailsSection({
             <option key={k} value={k}>{KIND_LABEL[k]}</option>
           ))}
         </select>
-      </div>
-      <div>
-        <label htmlFor="edit-maturity" className="field-label">How far along is it?</label>
-        <select id="edit-maturity" key={tutorial.maturity} name="maturity" defaultValue={tutorial.maturity} className="field">
-          {(Object.keys(MATURITY_LABEL) as TutorialMaturity[]).map((m) => (
-            <option key={m} value={m}>{MATURITY_LABEL[m]}</option>
-          ))}
-        </select>
-        <p className="mt-1 text-xs leading-relaxed text-muted">
-          Only complete guides appear in the public library listing. Anything earlier
-          wears its stage as a badge.
-        </p>
       </div>
       {tutorial.kind === 'assistive_tech' && (
         <fieldset>

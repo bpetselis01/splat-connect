@@ -6,7 +6,7 @@ import { isNetworkError } from '@splat-connect/types'
 import { logFailure } from '../../lib/log'
 import type { Tutorial, Part, Tool, StlFile, Recommendation, TutorialStep, TutorialSafetyNote, ChildProfile, Difficulty } from '@splat-connect/types'
 import {
-  CHILD_QUESTIONS, DEVICE_TYPES, DIFFICULTY_LABEL, KIND_LABEL, MATURITY_LABEL, ONE_HAND_LABEL, SAFETY_CHECKLIST,
+  CHILD_QUESTIONS, DEVICE_TYPES, DIFFICULTY_LABEL, KIND_LABEL, ONE_HAND_LABEL, SAFETY_CHECKLIST,
   fitLine, formatAgeRange, formatBuildTime, printSettingRows,
 } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
@@ -405,9 +405,6 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
             ) : null}
           </View>
 
-          {tutorial.maturity !== 'complete' ? (
-            <View style={styles.badgeRow}><Badge status={tutorial.maturity} label={MATURITY_LABEL[tutorial.maturity]} /></View>
-          ) : null}
           <View style={styles.titleRow}>
             <Text style={styles.title}>{tutorial.title}</Text>
           </View>

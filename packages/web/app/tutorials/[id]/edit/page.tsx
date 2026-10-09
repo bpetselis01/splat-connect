@@ -55,7 +55,7 @@ import { formatRelativeTime } from '@/lib/relative-time'
 import { TutorialView } from '@/components/tutorial-view'
 import { getMissingFields } from '@/lib/validation'
 import { DeleteEntityButton } from '@/components/delete-entity-button'
-import type { CustomizationField, Tutorial, Part, Tool, StlFile, TutorialWithDetails, Difficulty, TutorialKind, BuyLink, TutorialOrg, Organization, TutorialMaturity, TutorialStep } from '@splat-connect/types'
+import type { CustomizationField, Tutorial, Part, Tool, StlFile, TutorialWithDetails, Difficulty, TutorialKind, BuyLink, TutorialOrg, Organization, TutorialStep } from '@splat-connect/types'
 
 /**
  * The body both file-saving actions share. A plain function at module scope,
@@ -141,7 +141,7 @@ export default async function EditTutorialPage({
     revalidatePath('/dashboard')
   }
 
-  async function saveDetails(patch: { title: string; description: string | null; difficulty: Difficulty; build_minutes: number | null; age_min: number | null; age_max: number | null; kind: TutorialKind; maturity: TutorialMaturity; safety_declared?: true; toy_name: string | null; toy_brand: string | null; works_with: string | null; no_build_note: string | null; done_note: string | null; layer_height_mm?: number | null; infill_percent?: number | null; material?: string | null; print_minutes?: number | null; updated_at: string }) {
+  async function saveDetails(patch: { title: string; description: string | null; difficulty: Difficulty; build_minutes: number | null; age_min: number | null; age_max: number | null; kind: TutorialKind; safety_declared?: true; toy_name: string | null; toy_brand: string | null; works_with: string | null; no_build_note: string | null; done_note: string | null; layer_height_mm?: number | null; infill_percent?: number | null; material?: string | null; print_minutes?: number | null; updated_at: string }) {
     'use server'
     const body: Record<string, unknown> = { ...patch }
     if (tutorial.status === 'approved' || tutorial.status === 'rejected') {

@@ -422,7 +422,7 @@ async function seed() {
     const id = await insert('tutorials', {
       title: g.title,
       description: g.description + credit({ repo: repoOf(g), licence: g.licence }),
-      difficulty: g.difficulty, kind: g.kind, status: 'draft', maturity: 'complete',
+      difficulty: g.difficulty, kind: g.kind, status: 'draft',
       build_minutes: g.build, age_min: g.age[0], age_max: g.age[1],
       safety_declared_at: days(-40), prices_checked_on: days(-6).slice(0, 10),
       done_note: g.done, ...g.toy, ...g.print, ...g.tags,

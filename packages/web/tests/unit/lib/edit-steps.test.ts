@@ -10,7 +10,6 @@ function tutorial(overrides: Partial<TutorialWithDetails> = {}): TutorialWithDet
     difficulty: 'easy',
     kind: 'toy_adaptation',
     status: 'draft',
-    maturity: 'complete',
     safety_declared_at: '2026-08-01T00:00:00Z',
     build_minutes: 30,
     photo_urls: ['https://test.supabase.co/storage/v1/object/public/photos/photo.jpg'],
@@ -106,7 +105,7 @@ describe('computeStepStatuses', () => {
       computeStepStatuses(
         tutorial({
           tutorial_recommendations: [
-            { position: 1, tutorials: { id: 't2', title: 'Other', kind: 'toy_adaptation', difficulty: 'easy', toy_photo_url: null, status: 'approved', maturity: 'complete' } },
+            { position: 1, tutorials: { id: 't2', title: 'Other', kind: 'toy_adaptation', difficulty: 'easy', toy_photo_url: null, status: 'approved' } },
           ],
         }),
         []

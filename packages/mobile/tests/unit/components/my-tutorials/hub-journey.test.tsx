@@ -50,7 +50,6 @@ const tutorial = (over: Record<string, unknown> = {}) => ({
   title: 'Roaring dinosaur',
   kind: 'assistive_tech',
   difficulty: 'medium',
-  maturity: 'complete',
   status: 'draft',
   updated_at: 'v1',
   safety_declared_at: null,

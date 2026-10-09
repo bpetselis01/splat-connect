@@ -308,7 +308,6 @@ export default function DesignSystemPage() {
               <Badge status="easy" label="Easy" />
               <Badge status="medium" label="Medium" />
               <Badge status="hard" label="Hard" />
-              <Badge status="prototype" label="Prototype" />
             </div>
           </Card>
         </div>

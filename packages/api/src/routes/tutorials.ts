@@ -94,7 +94,7 @@ tutorials.get('/:id', async (c) => {
     .select(
       '*, parts(*), tools(*), stl_files(*), steps:tutorial_steps(*), safety_notes:tutorial_safety_notes(*), tutorial_contributors(*, profiles(id, name, role, created_at)), \
 tutorial_collaborator_invites(*, profiles:invited_profile_id(id, name, role, created_at)), \
-tutorial_recommendations!tutorial_id(position, recommended_id, required, tutorials!recommended_id(id, title, kind, difficulty, toy_photo_url, status, maturity)), \
+tutorial_recommendations!tutorial_id(position, recommended_id, required, tutorials!recommended_id(id, title, kind, difficulty, toy_photo_url, status)), \
 reviewer:reviewed_by(name), reviewed_for:reviewed_for_org_id(name)'
     )
     .eq('id', c.req.param('id'))
@@ -183,7 +183,7 @@ tutorials.post('/', async (c) => {
 /** Only these may be set through the generic edit endpoint. Unknown keys are
  *  dropped silently; the protected ones return 403 so a caller learns rather than
  *  wonders. */
-const EDITABLE = ['title', 'description', 'difficulty', 'kind', 'maturity', 'build_minutes', 'age_min', 'age_max', 'tutorial_pdf_url', 'photo_urls', 'photo_captions', 'prices_checked_on', 'layer_height_mm', 'infill_percent', 'material', 'print_minutes', 'toy_name', 'toy_brand', 'works_with', 'no_build_note', 'done_note', 'status', 'customization_fields', ...GUIDE_SUITS_FIELDS] as const
+const EDITABLE = ['title', 'description', 'difficulty', 'kind', 'build_minutes', 'age_min', 'age_max', 'tutorial_pdf_url', 'photo_urls', 'photo_captions', 'prices_checked_on', 'layer_height_mm', 'infill_percent', 'material', 'print_minutes', 'toy_name', 'toy_brand', 'works_with', 'no_build_note', 'done_note', 'status', 'customization_fields', ...GUIDE_SUITS_FIELDS] as const
 const PROTECTED = ['reviewed_by', 'reviewed_for_org_id', 'reviewed_at', 'rejection_note']
 
 async function hasAcceptedContributorTerms(token: string, userId: string) {

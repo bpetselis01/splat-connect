@@ -1081,18 +1081,6 @@ export interface ThreadMessage {
 export type Difficulty = 'easy' | 'medium' | 'hard'
 export type TutorialStatus = 'draft' | 'pending' | 'approved' | 'rejected'
 
-/** How far along a design is, declared by its author and worn as a badge.
- *  Only 'complete' items appear in the default public library listing — the
- *  practical control that stops an untested design reaching a child. */
-export type TutorialMaturity = 'concept' | 'prototype' | 'in_progress' | 'complete'
-
-export const MATURITY_LABEL: Record<TutorialMaturity, string> = {
-  concept: 'Concept',
-  prototype: 'Prototype',
-  in_progress: 'In progress',
-  complete: 'Complete',
-}
-
 /** The safety checklist a contributor affirms before a tutorial can be
  *  submitted for review, and the reviewer checks against. One copy, shown on
  *  web and mobile submission and on the admin review screen. */
@@ -2087,7 +2075,6 @@ export interface Tutorial extends Suits {
   difficulty: Difficulty
   kind: TutorialKind
   status: TutorialStatus
-  maturity: TutorialMaturity
   /** When the author affirmed SAFETY_CHECKLIST; null until they have, and a
    *  draft cannot be submitted for review while it is null. */
   safety_declared_at: string | null
@@ -2227,7 +2214,7 @@ export interface Recommendation {
   position: number
   /** 129. "Required first": make the recommended guide before this one. */
   required?: boolean
-  tutorials: Pick<Tutorial, 'id' | 'title' | 'kind' | 'difficulty' | 'toy_photo_url' | 'status' | 'maturity'> & { build_minutes?: number | null }
+  tutorials: Pick<Tutorial, 'id' | 'title' | 'kind' | 'difficulty' | 'toy_photo_url' | 'status'> & { build_minutes?: number | null }
 }
 
 // A tutorial with all its related information: the parts needed, tools needed,

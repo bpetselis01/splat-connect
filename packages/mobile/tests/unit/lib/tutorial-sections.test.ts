@@ -14,7 +14,6 @@ const base = (over: Partial<TutorialWithDetails> = {}): TutorialWithDetails =>
     description: null,
     kind: 'toy_adaptation',
     difficulty: 'easy',
-    maturity: 'complete',
     status: 'draft',
     updated_at: '2026-09-02T00:00:00Z',
     safety_declared_at: '2026-09-02T00:00:00Z',

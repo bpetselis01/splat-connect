@@ -67,7 +67,6 @@ import {
   CHILD_QUESTIONS,
   DEVICE_TYPES,
   KIND_LABEL,
-  MATURITY_LABEL,
   ONE_HAND_LABEL,
   SAFETY_CHECKLIST,
   TOOL_GET_BY_LABEL,
@@ -450,9 +449,6 @@ export function TutorialView({
             <span className="pill-tag pill-tag--lg">{KIND_LABEL[tutorial.kind]}</span>
             {formatAgeRange(tutorial.age_min, tutorial.age_max) && (
               <span className="pill-tag pill-tag--lg">{formatAgeRange(tutorial.age_min, tutorial.age_max)}</span>
-            )}
-            {tutorial.maturity !== 'complete' && (
-              <span className="pill-tag pill-tag--lg">{MATURITY_LABEL[tutorial.maturity]}</span>
             )}
             {backers.length > 0 && (
               <span className="pill-tag pill-tag--lg" style={{ backgroundColor: 'var(--tok)' }}>

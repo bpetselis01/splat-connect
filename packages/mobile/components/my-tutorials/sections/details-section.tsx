@@ -6,11 +6,10 @@
 // with the one the hub is reading.
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
-import type { Difficulty, TutorialKind, TutorialMaturity } from '@splat-connect/types'
+import type { Difficulty, TutorialKind } from '@splat-connect/types'
 import {
   BUILD_TIME_OPTIONS,
   KIND_LABEL,
-  MATURITY_LABEL,
   formatBuildTime,
 } from '@splat-connect/types'
 import { useDraft } from '../../../lib/use-tutorial-draft'
@@ -32,10 +31,6 @@ const DIFFICULTY_OPTIONS: { label: string; value: Difficulty }[] = [
   { label: 'Medium', value: 'medium' },
   { label: 'Hard', value: 'hard' },
 ]
-const MATURITY_OPTIONS = (Object.keys(MATURITY_LABEL) as TutorialMaturity[]).map((m) => ({
-  label: MATURITY_LABEL[m],
-  value: m,
-}))
 
 export function DetailsSection() {
   const router = useRouter()
@@ -175,19 +170,6 @@ export function DetailsSection() {
           </View>
         </View>
         <Text style={styles.hint}>In years. Leave both blank if it suits any age.</Text>
-
-        <Text style={styles.label}>How far along is it?</Text>
-        <View style={styles.chipRow}>
-          {MATURITY_OPTIONS.map((o) => (
-            <Chip
-              key={o.value}
-              label={o.label}
-              active={tutorial.maturity === o.value}
-              onPress={() => save({ maturity: o.value })}
-            />
-          ))}
-        </View>
-        <Text style={styles.hint}>Only complete guides appear in the public library listing.</Text>
 
         <Button label="Backing" variant="secondary" onPress={() => router.push(`/tutorials/${tutorial.id}/backing`)} />
 

@@ -7,7 +7,7 @@ jest.mock('expo-router', () => ({ useRouter: () => ({ push: (...a: unknown[]) =>
 jest.mock('../../../../lib/auth-context', () => ({ useAuth: jest.fn() }))
 
 const base = () => ({
-  id: 't1', title: 'Roaring dinosaur', description: null, kind: 'toy_adaptation', difficulty: 'easy', maturity: 'complete', status: 'draft',
+  id: 't1', title: 'Roaring dinosaur', description: null, kind: 'toy_adaptation', difficulty: 'easy', status: 'draft',
   safety_declared_at: null, build_minutes: 30, tutorial_pdf_url: null, photo_urls: [], parts: [], tools: [], stl_files: [],
   age_min: null, age_max: null,
 }) as Record<string, unknown>
