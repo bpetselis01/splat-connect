@@ -14,4 +14,6 @@ Before changing any UI, read the memory notes `soft-pop-source-of-truth` and `re
 
 Before reporting mobile work done, run the whole `npx jest` for `packages/mobile`, not a subset. A shortcut href change once broke a guard test that a subset run skipped.
 
+Before reporting any work done, run `scripts/verify-plan.sh --run` (add `--e2e` when behaviour changed). It reads git, runs the typecheck and unit tests the change needs, and lists the e2e specs to run. `scripts/doctor.sh` checks stale servers and live-vs-local data first. Vocabulary is in `CONTEXT.md`; decisions in `docs/adr/`.
+
 @~/.claude/pstack-models.md
