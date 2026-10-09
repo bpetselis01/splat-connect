@@ -83,18 +83,12 @@
     "match": "input background",
     "why": "intended",
     "reason": "The Input component fills with canvas on a white card (globals .field, the board's own majority); this board screen hand-sets surface."
-   },
-   {
-    "type": "missing-section",
-    "match": "name or nickname",
-    "why": "intended",
-    "reason": "The board's child form asks for \"Name or nickname\". SPLAT collects no child's name (spec 2026-10-09-remove-child-name); a child is \"Child N\" plus age, so the field is removed."
    }
   ]
  },
  {
   "id": "learn",
-  "name": "Learn \u00b7 Course home",
+  "name": "Learn · Course home",
   "group": "Learn",
   "boardRoute": "/learn",
   "route": "/learn"
@@ -616,7 +610,7 @@
  },
  {
   "id": "legal_purpose",
-  "name": "What Connect is (and isn\u2019t)",
+  "name": "What Connect is (and isn’t)",
   "group": "Legal",
   "boardRoute": "/legal/intended-purpose",
   "route": "/legal/intended-purpose",
@@ -859,21 +853,7 @@
   "boardRoute": "/dashboard/child/[id]",
   "route": "/dashboard/child/[id]",
   "role": "parent",
-  "sampleFrom": "/dashboard/profile",
-  "explained": [
-   {
-    "type": "missing-section",
-    "match": "name or nickname",
-    "why": "intended",
-    "reason": "The board's child form asks for \"Name or nickname\". SPLAT collects no child's name (spec 2026-10-09-remove-child-name); a child is \"Child N\" plus age, so the field is removed."
-   },
-   {
-    "type": "copy",
-    "match": "ollie",
-    "why": "intended",
-    "reason": "The board shows a named child (Ollie) and \"About Ollie\"/\"Suits Ollie\" wording. Live says \"your child\" and shows \"Child N\" (spec 2026-10-09-remove-child-name)."
-   }
-  ]
+  "sampleFrom": "/dashboard/profile"
  },
  {
   "id": "child_new",
@@ -881,15 +861,7 @@
   "group": "My SPLAT",
   "boardRoute": "/dashboard/child/new",
   "route": "/dashboard/child/new",
-  "role": "parent",
-  "explained": [
-   {
-    "type": "missing-section",
-    "match": "name or nickname",
-    "why": "intended",
-    "reason": "The board's child form asks for \"Name or nickname\". SPLAT collects no child's name (spec 2026-10-09-remove-child-name); a child is \"Child N\" plus age, so the field is removed."
-   }
-  ]
+  "role": "parent"
  },
  {
   "id": "org_queue",
