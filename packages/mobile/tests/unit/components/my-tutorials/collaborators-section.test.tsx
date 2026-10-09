@@ -3,7 +3,8 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react-nativ
 import { CollaboratorsSection } from '../../../../components/my-tutorials/sections/collaborators-section'
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn(), canGoBack: () => true }) }))
+const mockReplace = jest.fn()
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), replace: mockReplace, back: jest.fn(), canGoBack: () => true }) }))
 jest.mock('../../../../components/my-tutorials/section-footer', () => ({ SectionFooter: () => null }))
 jest.mock('../../../../components/my-tutorials/sections/draft-gate', () => ({ DraftGate: ({ children }: any) => children() }))
 
@@ -59,14 +60,19 @@ it('lets the owner remove a member, and a member leave', async () => {
   const view = render(<CollaboratorsSection />)
   fireEvent.press(screen.getByLabelText('Remove Bo'))
   await waitFor(() => expect(mockDelete).toHaveBeenCalledWith('/api/tutorials/t1/collaborators/b'))
+  await waitFor(() => expect(mockReload).toHaveBeenCalled())
+  expect(mockReplace).not.toHaveBeenCalled()
   view.unmount()
 
   mockDelete.mockClear()
   setDraft([owner, member], 'b')
   render(<CollaboratorsSection />)
   expect(screen.queryByLabelText('Remove Ada')).toBeNull()
+  mockReload.mockClear()
   fireEvent.press(screen.getByText('Leave'))
   await waitFor(() => expect(mockDelete).toHaveBeenCalledWith('/api/tutorials/t1/collaborators/b'))
+  await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/tutorials'))
+  expect(mockReload).not.toHaveBeenCalled()
 })
 
 it('hides the invite box from a non-owner', () => {

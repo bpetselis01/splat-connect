@@ -5,6 +5,7 @@
 // API and then reloads the draft, which carries the team.
 import { useState } from 'react'
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
+import { useRouter } from 'expo-router'
 import { apiMessage } from '@splat-connect/types'
 import { apiClient } from '../../../lib/api-client'
 import { useCapabilities } from '../../../lib/capabilities'
@@ -34,6 +35,7 @@ export function CollaboratorsSection() {
 function CollaboratorsEditor() {
   const { tutorial, reload } = useDraft()
   const { caps } = useCapabilities()
+  const router = useRouter()
   const viewerId = caps?.profile.id ?? null
   const [email, setEmail] = useState('')
   const [busy, setBusy] = useState<string | null>(null)
@@ -48,7 +50,10 @@ function CollaboratorsEditor() {
     setError(null)
     try {
       await fn()
-      reload()
+      // After leaving, the draft is no longer readable (RLS 404s the refetch),
+      // so a reload would keep showing the old team. Leave the editor instead.
+      if (key === viewerId) router.replace('/tutorials')
+      else reload()
     } catch (err) {
       logFailure('[CollaboratorsSection]', err)
       setError(apiMessage(err, 'That did not work. Please try again.'))
