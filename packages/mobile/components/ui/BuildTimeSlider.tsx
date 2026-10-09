@@ -26,11 +26,13 @@ export function BuildTimeSlider({ value, onCommit }: { value: number | null; onC
   const stored = indexForMinutes(value)
   const [drag, setDrag] = useState<number | null>(stored)
   useEffect(() => setDrag(stored), [stored])
+  const shown = drag == null ? 'Not set' : label(minutesForIndex(drag))
   return (
     <View>
-      <Text style={styles.value}>{drag == null ? 'Not set' : label(minutesForIndex(drag))}</Text>
+      <Text testID="build-time-value" style={styles.value}>{shown}</Text>
       <Slider
         accessibilityLabel="Build time"
+        accessibilityValue={{ text: shown }}
         minimumValue={0}
         maximumValue={LAST}
         step={1}

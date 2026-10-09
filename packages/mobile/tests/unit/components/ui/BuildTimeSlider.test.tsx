@@ -24,9 +24,10 @@ it('shows Not set until a value exists and saves only on release', () => {
   fireEvent(slider, 'slidingComplete', 5)
   expect(onCommit).toHaveBeenCalledWith(BUILD_TIME_OPTIONS[5])
 })
-it('labels the top stop "4 h or more"', () => {
-  render(<BuildTimeSlider value={240} onCommit={() => {}} />)
-  expect(screen.getAllByText('4 h or more').length).toBeGreaterThan(0)
+it.each([[240, '4 h or more'], [60, '1 h'], [null, 'Not set'], [100, '1.5 h']])('value %s displays %s, also as the VoiceOver value', (v, text) => {
+  render(<BuildTimeSlider value={v} onCommit={() => {}} />)
+  expect(screen.getByTestId('build-time-value').props.children).toBe(text)
+  expect(screen.getByLabelText('Build time').props.accessibilityValue).toEqual({ text })
 })
 it('does not save on mount', () => {
   const onCommit = jest.fn()
