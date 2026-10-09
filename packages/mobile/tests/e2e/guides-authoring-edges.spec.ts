@@ -228,7 +228,7 @@ test('choosing a PDF as the guide photo is refused and no photo is added', async
   const contributor = await signInAsNewContributor(page)
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile WrongPhoto'), status: 'draft' })
 
-  await page.goto(`/tutorials/${id}/files`)
+  await page.goto(`/tutorials/${id}/photos`)
   await chooseFile(page, 'Choose from library', PDF_FIXTURE)
   await expect(page.getByText('Could not upload the photo. Please try again.')).toBeVisible()
 })
@@ -237,7 +237,7 @@ test('a photo upload that drops mid-way shows the error, and trying again works'
   const contributor = await signInAsNewContributor(page)
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile DropUpload'), status: 'draft' })
 
-  await page.goto(`/tutorials/${id}/files`)
+  await page.goto(`/tutorials/${id}/photos`)
   await page.route('**/api/upload/photo', (route) => route.abort())
   await chooseFile(page, 'Choose from library', PHOTO_FIXTURE)
   await expect(page.getByText('Could not upload the photo. Please try again.')).toBeVisible()
