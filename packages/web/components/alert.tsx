@@ -19,7 +19,7 @@ const TONE = {
   bad: { bg: 'var(--color-danger-soft)', Icon: WarningOctagon },
 } as const
 
-export type AlertTone = keyof typeof TONE
+type AlertTone = keyof typeof TONE
 
 export function Alert({
   tone = 'info',

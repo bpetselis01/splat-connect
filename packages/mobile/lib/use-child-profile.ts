@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { ChildProfile } from '@splat-connect/types'
 import { apiClient } from './api-client'
 
-export type SaveState = 'idle' | 'saving' | 'saved'
+type SaveState = 'idle' | 'saving' | 'saved'
 
 /**
  * @param childId Pin the hook to one child. With it, the write chain PATCHes

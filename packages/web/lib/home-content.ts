@@ -14,7 +14,7 @@ export const HOME_HERO = {
   secondary_label: 'Borrow a toy',
 }
 
-export type HomeHero = typeof HOME_HERO
+type HomeHero = typeof HOME_HERO
 
 const text = (v: unknown): string | null => (typeof v === 'string' && v.trim() ? v.trim() : null)
 const obj = (v: unknown): Record<string, unknown> =>

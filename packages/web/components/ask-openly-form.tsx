@@ -36,7 +36,7 @@ import { browserApiClient } from '@/lib/browser-api-client'
 /** The ranges the board filters by, so a family picks one it can be found under. */
 const RANGES = [5, 10, 15, 25, 50]
 
-export type AskGuide = {
+type AskGuide = {
   id: string
   title: string
   difficulty: Difficulty

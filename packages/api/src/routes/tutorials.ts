@@ -20,7 +20,7 @@ const tutorials = new Hono<{ Variables: AuthVariables }>()
 const NEEDS_CONTENT = 'A guide needs steps or a PDF'
 
 /** True when a guide with these facts would have neither steps nor a PDF. */
-export const hasNoGuideContent = (stepCount: number, pdfPath: string | null | undefined) =>
+const hasNoGuideContent = (stepCount: number, pdfPath: string | null | undefined) =>
   stepCount === 0 && !pdfPath?.trim()
 
 /** Pending and approved guides are in front of reviewers or readers; drafts are not. */

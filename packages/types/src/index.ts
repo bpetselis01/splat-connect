@@ -531,7 +531,7 @@ export const PRINT_COLOURS = ['Any colour', 'Black', 'White', 'Blue'] as const
 export const MAX_PRINTERS_PER_REQUEST = 3
 
 export const PRINT_MATERIALS = ['PLA', 'PETG', 'ABS', 'TPU', 'ASA', 'Nylon'] as const
-export type PrintMaterial = (typeof PRINT_MATERIALS)[number]
+type PrintMaterial = (typeof PRINT_MATERIALS)[number]
 
 /**
  * Which step of a print job a record is at, derived from what the row stores.
@@ -540,7 +540,7 @@ export type PrintMaterial = (typeof PRINT_MATERIALS)[number]
  * statuses would mean every `status = 'accepted'` predicate in the API stops
  * matching a job that is on the bed.
  */
-export type PrintStep = 'asked' | 'accepted' | 'printing' | 'ready' | 'closed'
+type PrintStep = 'asked' | 'accepted' | 'printing' | 'ready' | 'closed'
 
 export function printStep(
   tx: Pick<ToyTransaction, 'status' | 'printing_started_at' | 'ready_at'>
@@ -906,7 +906,7 @@ export interface ToyTransactionMessage {
 // depends on who is asking: the requester takes toy_id, and on an exchange the
 // owner takes offered_toy_id. Null when the viewer received nothing — the giver
 // on a donation, or any open transaction.
-export type ReceivedToy = { id: string; name: string; status: Toy['status'] }
+type ReceivedToy = { id: string; name: string; status: Toy['status'] }
 
 export interface ToyTransactionDetail extends ToyTransaction {
   toy_name: string
@@ -1043,7 +1043,7 @@ export const CHALLENGE_FILTERS: { id: string; label: string; keep: (c: PublicCha
 ]
 
 /** A named constraint on a challenge (110). Who added it is never public. */
-export interface IdeaConstraint {
+interface IdeaConstraint {
   id: string
   label: string
   note: string | null
@@ -1093,7 +1093,7 @@ export const SAFETY_CHECKLIST: readonly string[] = [
 ]
 export type ContributorRole = 'primary' | 'collaborator'
 
-export type OrgStatus = 'active' | 'suspended'
+type OrgStatus = 'active' | 'suspended'
 export type TutorialOrgStatus = 'pending' | 'accepted' | 'declined'
 export type AgreementType = 'contributor_terms' | 'org_leader_terms'
 
@@ -1182,7 +1182,7 @@ export const ORG_KINDS = [
   'Charity or disability service',
 ] as const
 
-export type PaymentMethod = 'cash' | 'bank_transfer' | 'payid' | 'any'
+type PaymentMethod = 'cash' | 'bank_transfer' | 'payid' | 'any'
 export const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
   { value: 'cash', label: 'Cash on the day' },
   { value: 'bank_transfer', label: 'Bank transfer' },
@@ -1200,7 +1200,7 @@ export const ORG_DOOR_TARGETS: { value: OrgDoorTarget; label: string }[] = [
   { value: 'build', label: 'Ask for a build' },
   { value: 'message', label: 'Message them' },
 ]
-export interface OrgDoor {
+interface OrgDoor {
   id: string
   org_id: string
   position: number
@@ -1233,14 +1233,14 @@ export interface OrgThanks {
 
 /** 077. Message: one conversation per person per organisation, readable by
  *  that person and every leader of the org. */
-export interface OrgConversation {
+interface OrgConversation {
   id: string
   org_id: string
   profile_id: string
   created_at: string
   updated_at: string
 }
-export interface OrgMessage {
+interface OrgMessage {
   id: string
   conversation_id: string
   sender_id: string
@@ -1260,7 +1260,7 @@ export const ORG_CAPABILITIES = [
 ] as const
 export type OrgCapability = (typeof ORG_CAPABILITIES)[number]
 
-export type OrgPublishStatus = 'draft' | 'published'
+type OrgPublishStatus = 'draft' | 'published'
 
 /** The four kinds the publish form offers as radios, with the sentence each
  *  one carries there. 061. */
@@ -1281,7 +1281,7 @@ export const EVENT_KIND_LABEL: Record<EventKind, string> = {
 
 /** The state filter on /get-involved/events, and the publish form's dropdown. */
 export const AU_STATES = ['NSW', 'VIC', 'QLD', 'WA', 'SA', 'TAS', 'ACT', 'NT'] as const
-export type AuState = (typeof AU_STATES)[number]
+type AuState = (typeof AU_STATES)[number]
 
 /** What a host can have out on the benches. 061. */
 export const EVENT_TOOLS = [
@@ -1636,7 +1636,7 @@ export interface RecyclingDropoff {
   contributor_name?: string | null
 }
 
-export type OrgRequestStatus = 'pending' | 'approved' | 'declined'
+type OrgRequestStatus = 'pending' | 'approved' | 'declined'
 
 /**
  * 060. Somebody asking for an organisation to exist.
@@ -1682,8 +1682,8 @@ export interface OrgLeader {
  * consumer: two copies would let the clients offer a leader different actions
  * on the same project.
  */
-export type LeaderAction = 'back' | 'decline' | 'approve' | 'reject'
-export type AdminAction = 'approve' | 'reject' | 'unpublish'
+type LeaderAction = 'back' | 'decline' | 'approve' | 'reject'
+type AdminAction = 'approve' | 'reject' | 'unpublish'
 
 export function leaderActions(
   backing: TutorialOrgStatus | null,
@@ -2436,7 +2436,7 @@ export interface OrgThread {
  * later is a code change rather than a migration. Every member is live — see
  * SAVE_SLUGS.
  */
-export type SaveEntityType =
+type SaveEntityType =
   | 'tutorial'
   | 'toy'
   | 'challenge'

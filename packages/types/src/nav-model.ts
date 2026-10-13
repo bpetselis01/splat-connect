@@ -95,7 +95,7 @@ export type NavRow = {
   count?: number
 }
 
-export type NavGroup = { heading: string; rows: NavRow[] }
+type NavGroup = { heading: string; rows: NavRow[] }
 
 export function buildNav(caps: Capabilities, counts?: MeCounts): NavGroup[] {
   const groups: NavGroup[] = [

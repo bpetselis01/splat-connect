@@ -7,7 +7,7 @@ import { Platform } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 import { getToken } from './api-client'
 
-export type UploadPath =
+type UploadPath =
   | '/api/upload/photo'
   // 080: a guide step's photo; kept out of the five-photo gallery.
   | '/api/upload/step-photo'

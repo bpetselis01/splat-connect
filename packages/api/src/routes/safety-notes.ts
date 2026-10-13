@@ -4,7 +4,7 @@ type SafetyNoteInput = { title: string; detail?: string | null }
 
 const MAX_NOTES = 20
 
-export function safetyNotesError(notes: SafetyNoteInput[]): string | null {
+function safetyNotesError(notes: SafetyNoteInput[]): string | null {
   if (notes.length > MAX_NOTES) return `A guide can have up to ${MAX_NOTES} safety notes`
   for (const [i, n] of notes.entries()) {
     const k = i + 1

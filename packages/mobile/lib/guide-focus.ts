@@ -4,7 +4,7 @@
 // mounted beneath it. The guide must open on Feedback with that note in view,
 // and router.back() carries no params, so the hand-off lives here: set before
 // closing, taken once by the guide's focus effect.
-export type GuideFocus = { tutorialId: string; noteId: string | null }
+type GuideFocus = { tutorialId: string; noteId: string | null }
 
 let pending: GuideFocus | null = null
 

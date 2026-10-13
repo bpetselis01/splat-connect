@@ -10,7 +10,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { theme } from '../../lib/theme'
 
-export type ViewerPhoto = { uri: string; caption?: string | null }
+type ViewerPhoto = { uri: string; caption?: string | null }
 
 /** Open with `index` set; null keeps it closed. */
 export function PhotoViewer({ photos, index, onClose }: { photos: ViewerPhoto[]; index: number | null; onClose: () => void }) {

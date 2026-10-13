@@ -4,7 +4,7 @@ import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
-export interface ProfileTab {
+interface ProfileTab {
   key: string
   label: string
   content: ReactNode

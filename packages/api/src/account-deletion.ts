@@ -11,7 +11,7 @@ import { createAdminClient } from './supabase/client.js'
 import { subjectName } from './routes/toy-transactions.js'
 
 type Admin = ReturnType<typeof createAdminClient>
-export type DeletionResult = {
+type DeletionResult = {
   cancelled: { id: string; status: 'withdrawn' | 'rejected'; other: string | null }[]
   toyIds: string[]
   tutorialIds: string[]

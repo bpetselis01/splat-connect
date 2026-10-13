@@ -11,7 +11,7 @@ import type { ReactNode } from 'react'
  * The icon is optional. With one it takes a tinted square, which is how the
  * homepage hero draws its three; without, the chip is just number and label.
  */
-export interface Stat {
+interface Stat {
   label: string
   value: ReactNode
   icon?: ReactNode

@@ -5,7 +5,7 @@
 // submit rules are the gate.
 import type { TutorialWithDetails } from '@splat-connect/types'
 
-export type ReviewRow = { title: string; meta: string; ok: boolean }
+type ReviewRow = { title: string; meta: string; ok: boolean }
 
 const count = (n: number, noun: string) => `${n} ${noun}${n === 1 ? '' : 's'}`
 

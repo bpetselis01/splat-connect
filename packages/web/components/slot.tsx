@@ -25,7 +25,7 @@ import type { IllustrationKey } from '@/components/editorial-image'
 import { toneClass, type Tone } from '@/lib/tone'
 
 /** What the finished asset will be. Drives the label, and nothing else. */
-export type SlotKind = 'sticker' | 'overlay' | 'animation' | 'art'
+type SlotKind = 'sticker' | 'overlay' | 'animation' | 'art'
 
 const KIND_LABEL: Record<SlotKind, string> = {
   sticker: 'Sticker',

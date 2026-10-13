@@ -36,7 +36,7 @@ export type IllustrationKey =
   | 'organisation'
   | 'bear-on-shelf'
 
-export type ImageRatio = '3/2' | '2/1' | '1/1'
+type ImageRatio = '3/2' | '2/1' | '1/1'
 
 const RATIO_CLASS: Record<ImageRatio, string> = {
   '3/2': 'aspect-[3/2]',

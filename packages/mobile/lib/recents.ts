@@ -24,7 +24,7 @@ export type Recent = {
 export const RECENTS_KEY = 'home-recents'
 // A dot, not a colon: iOS's secure store takes only letters, digits, '.', '-' and '_' in a key.
 export const recentsKeyFor = (userId: string) => `${RECENTS_KEY}.${userId}`
-export const RECENTS_CAP = 10
+const RECENTS_CAP = 10
 const CAP = RECENTS_CAP
 const KINDS = ['guide', 'toy', 'event', 'printer', 'recycling', 'challenge', 'organisation']
 
