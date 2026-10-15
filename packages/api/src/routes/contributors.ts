@@ -203,7 +203,6 @@ contributors.post('/:id/thanks', async (c) => {
 })
 
 /** The thanks you have been given, to read and hide. */
-// PENDING(profile-thanks-hide): nothing calls this route or the PATCH below; wire a screen or delete both.
 contributors.get('/me/thanks', async (c) => {
   const { data, error } = await createUserClient(c.get('token'))
     .from('profile_thanks')
