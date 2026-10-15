@@ -59,6 +59,9 @@ const ICON: Record<NotificationType, [Glyph, string]> = {
   org_message: [Inbox, 'var(--tmint)'],
   org_thanked: [Handshake, 'var(--tamber)'],
   profile_thanked: [Handshake, 'var(--tamber)'],
+  backing_accepted: [Check, 'var(--tok)'],
+  backing_declined: [Undo, 'var(--tbad)'],
+  report_resolved: [Check, 'var(--tok)'],
 }
 
 function linkFor(n: Notification, isAdmin: boolean): string {

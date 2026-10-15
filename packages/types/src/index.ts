@@ -1768,6 +1768,9 @@ export type NotificationType =
   | 'build_approved'
   | 'build_question'
   | 'profile_thanked'
+  | 'backing_accepted'
+  | 'backing_declined'
+  | 'report_resolved'
   | 'print_started'
   | 'print_ready'
   | 'org_event_published'
@@ -1826,6 +1829,9 @@ const NOTIFICATION_BUCKET = {
   build_approved: 'exchanges',
   build_question: 'exchanges',
   profile_thanked: 'exchanges',
+  backing_accepted: 'tutorials',
+  backing_declined: 'tutorials',
+  report_resolved: 'exchanges',
   print_started: 'exchanges',
   print_ready: 'exchanges',
   idea_approved: 'challenges',
@@ -1903,6 +1909,10 @@ export const COPY: Record<NotificationType, (n: Notification) => string> = {
   build_question: (n) => `${n.actor_name} wrote about ${toy(n)} before anyone claimed it`,
   // 117. Signed with the byline they typed, or "A family".
   profile_thanked: (n) => `${n.actor_name} said thanks to you`,
+  // 137. actor_name is the organisation that answered.
+  backing_accepted: (n) => `${n.actor_name} agreed to back "${title(n)}"`,
+  backing_declined: (n) => `${n.actor_name} can't back "${title(n)}" right now`,
+  report_resolved: () => 'Your report was looked at',
   print_started: (n) => `${n.actor_name} started printing ${toy(n)}`,
   print_ready: (n) => `${n.actor_name} finished printing ${toy(n)}`,
   // 077. For the two publish types the event or story title rides in
@@ -1974,6 +1984,8 @@ export interface Notification {
   /** 117: a thanks sent from someone's showcase. A thanks for an exchange,
    *  print or build carries toy_transaction_id instead. */
   profile_id?: string | null
+  /** 137: the member report a report_resolved notice is about. */
+  member_report_id?: string | null
   actor_name: string
   /** 119: the reason or message, ≤ 300. */
   body?: string | null
