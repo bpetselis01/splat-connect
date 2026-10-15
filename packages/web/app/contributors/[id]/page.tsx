@@ -15,6 +15,7 @@ import Link from 'next/link'
 import type { Route } from 'next'
 import { notFound } from 'next/navigation'
 import { BookOpen, CaretRight, Gift, Hammer, Medal } from '@phosphor-icons/react/dist/ssr'
+import { PersonThanksButton } from '@/components/person-thanks-button'
 import { ShelfToyCard } from '@/components/shelf-toy-card'
 import { tintFor } from '@/components/card-photo'
 import { getCapabilities } from '@/lib/capabilities'
@@ -151,6 +152,9 @@ export default async function ContributorPage({
               <Hammer size={18} weight="bold" aria-hidden="true" />
               Ask {first} to build a guide
             </Link>
+            {caps?.profile.id !== contributor.id && (
+              <PersonThanksButton profileId={contributor.id} name={first} signedIn={signedIn} />
+            )}
           </div>
         </div>
         <div className="grid grid-cols-3 border-t border-line">
