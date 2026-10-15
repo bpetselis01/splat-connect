@@ -702,7 +702,26 @@ select * from (values
         and p.prosrc like '%having count(*) >= 3%'
         and p.prosrc not like '%pickup_line1%'
         and not has_function_privilege('authenticated', p.oid, 'execute')
-        and not has_function_privilege('anon', p.oid, 'execute')))
+        and not has_function_privilege('anon', p.oid, 'execute'))),
+
+  -- 137. Until this is on the remote every backing_accepted, backing_declined
+  -- and report_resolved insert fails the CHECK and is only logged.
+  ('137 notifications_type_check permits the three parity types',
+   (select pg_get_constraintdef(oid) like '%backing_accepted%'
+       and pg_get_constraintdef(oid) like '%backing_declined%'
+       and pg_get_constraintdef(oid) like '%report_resolved%'
+      from pg_constraint
+     where conname = 'notifications_type_check'
+       and conrelid = 'public.notifications'::regclass)),
+
+  ('137 notifications.member_report_id exists and is a counted subject',
+   (select count(*) = 1 from information_schema.columns
+      where table_schema = 'public' and table_name = 'notifications'
+        and column_name = 'member_report_id')
+   and (select pg_get_constraintdef(oid) like '%member_report_id%'
+      from pg_constraint
+     where conname = 'notifications_one_subject'
+       and conrelid = 'public.notifications'::regclass))
 ) as t(guard, ok)
 where not ok;
 EOSQL
