@@ -158,6 +158,8 @@ Gaps: 0 · Waived: 1
 | Q15 | P | Me, inbox, map, explore, admin | Learn hub / article "Next" (tick) | – | "Continue" card | web | ✅ | ✅ | ✅ | – |
 | Q16 | P | Me, inbox, map, explore, admin | About LinkRows → web | – | – | n/a | ✅ | ✅ | – | – |
 | Q17 | A | Me, inbox, map, explore, admin | Admin cards → web | – | six counts | web | ✅ | ✅ | ✅ | – |
+| Q18 | A | Me, inbox, map, explore, admin | Admin review queue → open a pending guide | – | – | n/a | ✅ | – | – | – |
+| Q19 | A | Me, inbox, map, explore, admin | Admin Approve / Request changes (note required) | – | – | n/a | ✅ | – | – | – |
 | R01 | P | Printing | finder filters: Open now/material/10 km/Verified | – | – | web | ✅ | ✅ | ✅ | – |
 | R02 | P | Printing | Pick / Unpick (max 3) | – | – | n/a | ✅ | ✅ | – | – |
 | R03 | P | Printing | "Send request" (parts, qty, colour, delivery, credit) | toy_request | printer's "Print for others" count | mobile | ✅ | ✅ | ✅ | – |

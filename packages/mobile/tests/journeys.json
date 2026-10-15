@@ -249,5 +249,7 @@
   {"id":"Q14","seat":"P","screen":"Me, inbox, map, explore, admin","element":"Explore doors","api":[],"db":[],"notifies":[],"counts":["impact stats"],"setter":"n/a","required":["unit","e2e"]},
   {"id":"Q15","seat":"P","screen":"Me, inbox, map, explore, admin","element":"Learn hub / article \"Next\" (tick)","api":["GET /api/public/learn-course"],"db":["site_content"],"notifies":[],"counts":["\"Continue\" card"],"setter":"web","required":["unit","e2e","api"]},
   {"id":"Q16","seat":"P","screen":"Me, inbox, map, explore, admin","element":"About LinkRows → web","api":[],"db":[],"notifies":[],"counts":[],"setter":"n/a","required":["unit","e2e"]},
-  {"id":"Q17","seat":"A","screen":"Me, inbox, map, explore, admin","element":"Admin cards → web","api":["GET /api/admin/counts"],"db":[],"notifies":[],"counts":["six counts"],"setter":"web","required":["unit","e2e","api"]}
+  {"id":"Q17","seat":"A","screen":"Me, inbox, map, explore, admin","element":"Admin cards → web","api":["GET /api/admin/counts"],"db":[],"notifies":[],"counts":["six counts"],"setter":"web","required":["unit","e2e","api"]},
+  {"id":"Q18","seat":"A","screen":"Me, inbox, map, explore, admin","element":"Admin review queue → open a pending guide","api":[],"db":[],"notifies":[],"counts":[],"setter":"n/a","required":["unit"]},
+  {"id":"Q19","seat":"A","screen":"Me, inbox, map, explore, admin","element":"Admin Approve / Request changes (note required)","api":[],"db":[],"notifies":[],"counts":[],"setter":"n/a","required":["unit"]}
 ]

@@ -1,10 +1,11 @@
 // packages/mobile/app/(my)/admin.tsx
-// The board's Admin (MB is_admin): six count cards from one call. Review
-// tables don't fit a phone, so each card opens its queue on the web, where
-// the admin is signed in as themselves.
+// The board's Admin (MB is_admin): six count cards from one call. A card with
+// a `route` opens its queue on the phone; the rest open on the web, where the
+// admin is signed in as themselves.
 import { logFailure } from '../../lib/log'
 import { useEffect, useState } from 'react'
 import { View, Text, Linking, StyleSheet } from 'react-native'
+import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { AdminCounts } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
@@ -16,8 +17,8 @@ import { useCapabilities } from '../../lib/capabilities'
 type Icon = React.ComponentProps<typeof Ionicons>['name']
 
 // MB:2953–2959, in its order and words; the paths are web's /admin cards.
-const CARDS: { key: keyof AdminCounts; label: string; path: string; icon: Icon; tint: string }[] = [
-  { key: 'tutorials', label: 'Tutorials awaiting review', path: '/admin/review', icon: 'clipboard-outline', tint: theme.colors.honeySoft },
+const CARDS: { key: keyof AdminCounts; label: string; path: string; route?: '/admin/review'; icon: Icon; tint: string }[] = [
+  { key: 'tutorials', label: 'Tutorials awaiting review', path: '/admin/review', route: '/admin/review', icon: 'clipboard-outline', tint: theme.colors.honeySoft },
   { key: 'reports', label: 'Reports from members', path: '/admin/reports', icon: 'flag-outline', tint: theme.colors.apricotSoft },
   { key: 'ideas', label: 'Ideas awaiting review', path: '/admin/ideas', icon: 'bulb-outline', tint: theme.colors.violetSoft },
   { key: 'spotCheck', label: 'Spot-check', path: '/admin/spot-check', icon: 'search-outline', tint: theme.colors.accentLight },
@@ -35,6 +36,7 @@ export default function MyAdmin() {
 }
 
 function AdminCards() {
+  const router = useRouter()
   const [counts, setCounts] = useState<AdminCounts | null>(null)
   useEffect(() => {
     let ignore = false
@@ -60,10 +62,10 @@ function AdminCards() {
           return (
             <AnimatedPressable
               key={card.key}
-              onPress={() => Linking.openURL(`${process.env.EXPO_PUBLIC_WEB_URL}${card.path}`)}
+              onPress={() => (card.route ? router.push(card.route) : Linking.openURL(`${process.env.EXPO_PUBLIC_WEB_URL}${card.path}`))}
               accessibilityRole="button"
               accessibilityLabel={n === null ? card.label : `${card.label}, ${n}`}
-              accessibilityHint="Opens on the web."
+              accessibilityHint={card.route ? undefined : 'Opens on the web.'}
               pressScale={0.98}
               style={styles.card}
             >

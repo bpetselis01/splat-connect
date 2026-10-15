@@ -124,6 +124,14 @@ describe('ReviewDetailScreen', () => {
     )
   })
 
+  it('a leader (not admin mode) never touches the admin route', async () => {
+    respond(detail({ status: 'pending' }), [acceptedBacking])
+    render(<ReviewDetailScreen tutorialId="t1" />)
+    fireEvent.press(await screen.findByRole('button', { name: 'Approve' }))
+    await waitFor(() => expect(mockPost).toHaveBeenCalled())
+    expect(mockGet).toHaveBeenCalledWith('/api/tutorials/t1/orgs')
+  })
+
   it('refuses Request changes without a note, before spending the round trip', async () => {
     respond(detail({ status: 'pending' }), [acceptedBacking])
     render(<ReviewDetailScreen tutorialId="t1" />)

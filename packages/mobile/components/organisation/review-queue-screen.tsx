@@ -79,7 +79,6 @@ export function ReviewQueueScreen() {
   const isLeader = ledOrgs.length > 0
 
   useEffect(() => {
-    // PENDING(admin-guide-review-screen): a non-leader admin lands on this empty state; the review decision is web-only.
     if (!isLeader) {
       setLoading(false)
       return
@@ -129,8 +128,16 @@ export function ReviewQueueScreen() {
         <EmptyState
           icon="business-outline"
           title="This screen belongs to organisation leaders."
-          hint="When an organisation makes you a leader, what is waiting on it shows up here."
-        />
+          hint={
+            caps?.isAdmin
+              ? 'As an admin you review submitted guides from the admin queue.'
+              : 'When an organisation makes you a leader, what is waiting on it shows up here.'
+          }
+        >
+          {caps?.isAdmin ? (
+            <Button label="Guides to review" variant="accent" onPress={() => router.push('/admin/review')} style={styles.retry} />
+          ) : null}
+        </EmptyState>
       </Screen>
     )
   }
@@ -161,6 +168,8 @@ export function ReviewQueueScreen() {
         <ListIntro
           // PENDING(multi-org-leader-switch): ledOrgs[0], the first organisation, is used silently.
           lead={`Guides waiting for ${ledOrgs.length === 1 ? ledOrgs[0].name : 'your organisations'}. Oldest first.`}
+          cta={caps?.isAdmin ? 'Guides to review as admin' : undefined}
+          onCta={() => router.push('/admin/review')}
         />
         {loading ? (
           <View>
