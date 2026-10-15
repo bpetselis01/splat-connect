@@ -125,7 +125,7 @@ async function answer(c: Context<{ Variables: AuthVariables }>, status: 'accepte
   if (error) return c.json({ error: error.message }, 500)
   if (!data.length) return c.json({ error: 'not a leader of that organisation' }, 403)
   if (before?.status !== status) {
-    await notifyBacking({ tutorialId: c.req.param('id'), orgId: c.req.param('orgId'), status }).catch((e) =>
+    await notifyBacking({ tutorialId: data[0].tutorial_id, orgId: data[0].org_id, status }).catch((e) =>
       console.error('[tutorial-orgs] backing notification failed:', e)
     )
   }
