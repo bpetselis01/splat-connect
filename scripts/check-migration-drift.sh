@@ -13,7 +13,7 @@ set -euo pipefail
 pending=$(supabase migration list --linked --output-format json 2>/dev/null \
   | sed -n '/^[[{]/,$p' \
   | jq -r '(if type == "array" then . else .migrations end) // [] | .[]
-           | select(.local and (.remote | not)) | .local')
+           | select((.local // "") != "" and (.remote // "") == "") | .local')
 
 if [ -n "$pending" ]; then
   echo "✗ Migrations committed but NOT applied to the remote database:" >&2
