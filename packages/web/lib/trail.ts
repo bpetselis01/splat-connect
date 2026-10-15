@@ -67,6 +67,7 @@ const SCREENS: Record<string, Screen> = {
   '/dashboard/saved/challenges': { label: 'Saved challenges', parent: '/dashboard/saved' },
   '/dashboard/saved/organisations': { label: 'Saved organisations', parent: '/dashboard/saved' },
   '/dashboard/saved/parts': { label: 'Saved parts', parent: '/dashboard/saved' },
+  '/dashboard/thanks': { label: 'Thank-you notes', parent: '/dashboard' },
   '/notifications': { label: 'Notifications', parent: '/dashboard' },
 
   // Printing
