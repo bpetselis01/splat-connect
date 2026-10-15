@@ -129,14 +129,6 @@ export const PENDING = {
     question: "Build an admin guide-review screen on the phone (a new screen plus tests, reusing the organisation review screen), or change the notification to say \"review on the website\" and link there (a small copy change)?",
     shipped: true,
   },
-  'profile-thanks-hide': {
-    title: "Hiding a thank-you note",
-    blurb: "People can thank a contributor with a note and it shows on their profile, but the person cannot hide a note: no screen lists them.",
-    kind: "decision",
-    platforms: ["mobile","web"],
-    needs: "A \"Notes people sent you\" list with Hide and Show: one small screen on the phone, optionally the web. GET/PATCH /contributors/me/thanks already exist.",
-    question: "Build the Hide and Show list (one small screen per platform, routes already built), or delete the two routes (small, but it drops hiding for good)?",
-  },
   'multi-org-leader-switch': {
     title: "Leading more than one organisation",
     blurb: "A person who leads two or more organisations silently acts for the first one on every leader screen. Nothing shows a choice.",
@@ -155,11 +147,11 @@ export const PENDING = {
   },
   'unused-api-routes': {
     title: "Routes nothing uses",
-    blurb: "Six API routes have tests but no screen calls them: report an idea participant, list and resolve admin reports, reinstate a removed idea participant, read and hide profile thanks, a reporter's own reports, and print-at-event. A person who reports something never hears the outcome.",
+    blurb: "Five API routes have tests but no screen calls them: report an idea participant, list and resolve admin reports, reinstate a removed idea participant, a reporter's own reports, and print-at-event. A person who reports something never hears the outcome.",
     kind: "decision",
     platforms: ["api"],
     needs: "Per route, a screen that calls it or deletion with its tests. Telling a reporter their report was resolved also needs a new notification type and the web admin screen to send it.",
-    question: "For each of the six routes: wire it to a screen (a screen each) or delete it and its tests (small, but it removes the only hint of the intended feature)? Should a reporter be told when their report is resolved (new notification type plus web admin screen)?",
+    question: "For each of the five routes: wire it to a screen (a screen each) or delete it and its tests (small, but it removes the only hint of the intended feature)? Should a reporter be told when their report is resolved (new notification type plus web admin screen)?",
   },
   'backing-notifications': {
     title: "Telling a family about backing",
