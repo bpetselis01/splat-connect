@@ -33,11 +33,11 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 ### `unused-api-routes` — Routes nothing uses
 
-**Question:** For each of the seven routes: wire it to a screen (a screen each) or delete it and its tests (small, but it removes the only hint of the intended feature)? Should a reporter be told when their report is resolved (new notification type plus web admin screen)?
+**Question:** For each of the six routes: wire it to a screen (a screen each) or delete it and its tests (small, but it removes the only hint of the intended feature)? Should a reporter be told when their report is resolved (new notification type plus web admin screen)?
 
 - Platforms: api
 - Needs: Per route, a screen that calls it or deletion with its tests. Telling a reporter their report was resolved also needs a new notification type and the web admin screen to send it.
-- In code: `packages/api/src/routes/admin.ts`, `packages/api/src/routes/notifications.ts`, `packages/api/src/routes/reports.ts`, `packages/api/src/routes/toy-ideas.ts`, `packages/api/src/routes/toy-transactions.ts`
+- In code: `packages/api/src/routes/admin.ts`, `packages/api/src/routes/reports.ts`, `packages/api/src/routes/toy-ideas.ts`, `packages/api/src/routes/toy-transactions.ts`
 
 ### `backing-notifications` — Telling a family about backing
 

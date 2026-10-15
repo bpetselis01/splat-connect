@@ -42,14 +42,6 @@ describe('GET /api/notifications/me', () => {
   })
 })
 
-describe('GET /api/notifications/me/unread-count', () => {
-  it('counts unread notifications', async () => {
-    const res = await app.request('/api/notifications/me/unread-count', authed(user.token))
-    const body = (await res.json()) as { count: number }
-    expect(body.count).toBeGreaterThanOrEqual(1)
-  })
-})
-
 describe('PATCH /api/notifications/:id', () => {
   it('marks my own notification read', async () => {
     const res = await app.request(`/api/notifications/${notificationId}`, {

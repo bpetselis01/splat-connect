@@ -155,11 +155,11 @@ export const PENDING = {
   },
   'unused-api-routes': {
     title: "Routes nothing uses",
-    blurb: "Seven API routes have tests but no screen calls them: report an idea participant, list and resolve admin reports, reinstate a removed idea participant, read and hide profile thanks, a reporter's own reports, the old singular unread count, and print-at-event. A person who reports something never hears the outcome.",
+    blurb: "Six API routes have tests but no screen calls them: report an idea participant, list and resolve admin reports, reinstate a removed idea participant, read and hide profile thanks, a reporter's own reports, and print-at-event. A person who reports something never hears the outcome.",
     kind: "decision",
     platforms: ["api"],
     needs: "Per route, a screen that calls it or deletion with its tests. Telling a reporter their report was resolved also needs a new notification type and the web admin screen to send it.",
-    question: "For each of the seven routes: wire it to a screen (a screen each) or delete it and its tests (small, but it removes the only hint of the intended feature)? Should a reporter be told when their report is resolved (new notification type plus web admin screen)?",
+    question: "For each of the six routes: wire it to a screen (a screen each) or delete it and its tests (small, but it removes the only hint of the intended feature)? Should a reporter be told when their report is resolved (new notification type plus web admin screen)?",
   },
   'backing-notifications': {
     title: "Telling a family about backing",

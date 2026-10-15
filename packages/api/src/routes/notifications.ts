@@ -29,22 +29,8 @@ notifications.get('/me', async (c) => {
   return c.json(data)
 })
 
-// PENDING(unused-api-routes): the old singular count; nothing calls it, /me/unread-counts replaced it.
-notifications.get('/me/unread-count', async (c) => {
-  const supabase = createUserClient(c.get('token'))
-  const { count, error } = await supabase
-    .from('notifications')
-    .select('id', { count: 'exact', head: true })
-    .eq('recipient_id', c.get('userId'))
-    .is('read_at', null)
-  if (error) return c.json({ error: error.message }, 500)
-  return c.json({ count: count ?? 0 })
-})
-
 /**
- * Unread, split by which My SPLAT card owns it. The singular /me/unread-count
- * above has no caller left in web or mobile; it stays for the integration
- * test that still exercises it and for any external consumer.
+ * Unread, split by which My SPLAT card owns it.
  *
  * Counted in JS over the unread rows rather than as three grouped queries:
  * one round trip, and the set is a single user's *unread* notifications.
