@@ -215,6 +215,34 @@ export async function systemMessage(ideaId: string, actorId: string, body: strin
 }
 
 /**
+ * Removes a participant: stamps removed_at/removed_by, posts the system
+ * message and sends the challenge_removed notification, naming 'SPLAT' so a
+ * report's filer is never revealed. Admin client throughout. Returns false,
+ * writing nothing else, when the person holds no current participant row --
+ * an update matching nothing is a silent no-op, and the message and
+ * notification would announce a removal that never happened.
+ */
+export async function removeParticipant(ideaId: string, profileId: string, removedBy: string) {
+  const { data, error } = await createAdminClient()
+    .from('toy_idea_participants')
+    .update({ removed_at: new Date().toISOString(), removed_by: removedBy })
+    .eq('idea_id', ideaId)
+    .eq('profile_id', profileId)
+    .is('removed_at', null)
+    .select('profile_id')
+  if (error) {
+    console.error('report removal failed', { ideaId, error: error.message })
+    return false
+  }
+  if (!data?.length) return false
+  await systemMessage(ideaId, removedBy, `${await actorName(profileId)} was removed from this challenge`)
+  await createAdminClient().from('notifications').insert({
+    recipient_id: profileId, type: 'challenge_removed', idea_id: ideaId, actor_name: 'SPLAT',
+  })
+  return true
+}
+
+/**
  * The idea as the caller may see it (RLS on the user client decides), plus
  * its author_id from the admin client — 108 took that column away from
  * every signed-in reader, and join/leave/report need it to notify and check.
@@ -301,13 +329,26 @@ toyIdeas.delete('/:id/participants/:profileId', async (c) => {
 })
 
 toyIdeas.get('/:id/messages', async (c) => {
-  const { data, error } = await createUserClient(c.get('token'))
+  const id = c.req.param('id')
+  // A report hides its target from the reporter until an admin resolves it.
+  // toy_idea_reports has no select policy for authenticated (041), so the admin client reads it, scoped to the viewer's own reports.
+  const { data: reports, error: reportsError } = await createAdminClient()
+    .from('toy_idea_reports')
+    .select('reported_profile_id')
+    .eq('idea_id', id)
+    .eq('reported_by', c.get('userId'))
+    .is('resolved_at', null)
+  if (reportsError) return c.json({ error: reportsError.message }, 500)
+  const hidden = new Set((reports ?? []).map((r) => r.reported_profile_id as string))
+
+  const { data: rows, error } = await createUserClient(c.get('token'))
     .from('toy_idea_messages')
     .select('*')
-    .eq('idea_id', c.req.param('id'))
+    .eq('idea_id', id)
     .order('created_at', { ascending: true })
 
   if (error) return c.json({ error: error.message }, 500)
+  const data = (rows ?? []).filter((m) => !hidden.has(m.sender_id as string))
   // RLS returns an empty set rather than an error to a non-participant, which
   // is the correct answer: they see a challenge with no readable thread.
   return c.json(data ?? [])
@@ -415,8 +456,10 @@ toyIdeas.post('/:id/answer', async (c) => {
 })
 
 /**
- * Files a report and, in the same request, carries out the removal it
- * triggers. Body: { reported_profile_id, reason }.
+ * Files a report. Body: { reported_profile_id, reason }. Nothing is removed
+ * here: the reported person is hidden from the reporter's thread until an
+ * admin resolves the report (PATCH /api/admin/reports/:id, action 'remove'
+ * or 'dismiss'), and the reporter can leave separately.
  *
  * `reason` is mandatory and must survive trimming — the owner's explicit
  * call: a report with no account of what happened gives an admin nothing to
@@ -429,26 +472,14 @@ toyIdeas.post('/:id/answer', async (c) => {
  * `INSERT ... RETURNING` would fail RLS even though the row itself was
  * written, and look like a failed insert.
  *
- * An author can't be evicted from their own idea, and someone uncomfortable
- * enough to report should not be left sitting in the thread — so reporting
- * the author removes the *reporter* instead of the author. Either way the
- * report's reason never appears in the system message or the notification
- * that follow; only that a removal happened.
- *
  * `reported_profile_id` is checked against this idea (author, or a current
  * participant) *before* anything is written. 041's insert policy validates
  * only the reporter's own relationship to the idea, never the target's — an
  * unchecked target would let anyone with a single legitimate relationship on
  * the platform file a report naming an arbitrary, unrelated profile, which
- * still writes a system message and a "you were removed" notification to a
- * real person who was never part of this challenge. Same failure class the
- * sibling DELETE route's row-count check already guards against.
- *
- * The removed person's notification names 'SPLAT', not the reporter, as the
- * actor. Unlike the author's own removal button (DELETE, non-anonymous by
- * design), a report is confidential — the whole point of routing through
- * SPLAT rather than a direct block is that the reporter never has to be
- * named to the person they reported.
+ * still hides an arbitrary, unrelated profile from the reporter's reads. Same
+ * failure class the sibling DELETE route's row-count check already guards
+ * against.
  */
 // PENDING(unused-api-routes): no screen starts a participant report; wire one or delete the route.
 toyIdeas.post('/:id/reports', async (c) => {
@@ -483,21 +514,6 @@ toyIdeas.post('/:id/reports', async (c) => {
 
   if (error?.code === RLS_VIOLATION) return c.json({ error: 'You cannot report on this challenge' }, 403)
   if (error) return c.json({ error: error.message }, 500)
-
-  const removedId = targetIsAuthor ? userId : reportedProfileId
-
-  const { error: removeError } = await createAdminClient()
-    .from('toy_idea_participants')
-    .update({ removed_at: new Date().toISOString(), removed_by: userId })
-    .eq('idea_id', id)
-    .eq('profile_id', removedId)
-  if (removeError) console.error('report removal failed', { ideaId: id, error: removeError.message })
-
-  const removedName = await actorName(removedId)
-  await systemMessage(id, userId, `${removedName} was removed from this challenge`)
-  await createAdminClient().from('notifications').insert({
-    recipient_id: removedId, type: 'challenge_removed', idea_id: id, actor_name: 'SPLAT',
-  })
 
   return c.json({ reported: true }, 201)
 })

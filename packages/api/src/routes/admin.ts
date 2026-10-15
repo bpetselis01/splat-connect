@@ -9,7 +9,7 @@ import { deleteAccount } from '../account-deletion.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { notifyTutorialReviewed } from '../review-notifications.js'
 import { ORG_COLUMNS } from './organizations.js'
-import { systemMessage, withPhotoUrl } from './toy-ideas.js'
+import { systemMessage, removeParticipant, withPhotoUrl } from './toy-ideas.js'
 import type { AuthVariables } from '../middleware/auth.js'
 import { notificationBody, readLearnCourse, type AdminCounts, type TutorialStatus } from '@splat-connect/types'
 
@@ -519,31 +519,52 @@ admin.get('/reports', async (c) => {
 /**
  * PATCH /api/admin/reports/:id
  *
- * Resolves a report with a note. `.is('resolved_at', null)` on the update
- * itself is the same compare-and-swap as graduate's status claim above: a
+ * Resolves a report with a note and an action. 'dismiss' just resolves it, which
+ * un-hides the reported person for the reporter; 'remove' also removes them from
+ * the challenge (system message and notification included).
+ * `.is('resolved_at', null)` on the update itself is the same compare-and-swap as graduate's status claim above: a
  * double-click resolves once, and the loser's update matches no row rather
  * than overwriting the first admin's resolved_by/resolution_note.
  */
 admin.patch('/reports/:id', async (c) => {
-  const body = await c.req.json<{ resolution_note?: string }>().catch(() => null)
+  const body = await c.req.json<{ resolution_note?: string; action?: string }>().catch(() => null)
   if (body?.resolution_note !== undefined && typeof body.resolution_note !== 'string') {
     return c.json({ error: 'resolution_note must be a string' }, 400)
   }
-  const resolutionNote = body?.resolution_note?.trim() || null
+  if (body?.action !== 'remove' && body?.action !== 'dismiss') {
+    return c.json({ error: "action must be 'remove' or 'dismiss'" }, 400)
+  }
+  const resolutionNote = body.resolution_note?.trim() || null
+  const sb = createAdminClient()
+  const id = c.req.param('id')
 
-  const { data, error } = await createAdminClient()
+  // An author cannot be removed from their own idea. Refused before the claim,
+  // so the report stays open for 'dismiss' or for a review of the idea itself.
+  if (body.action === 'remove') {
+    const { data: report } = await sb.from('toy_idea_reports').select('idea_id, reported_profile_id').eq('id', id).maybeSingle()
+    if (report) {
+      const { data: idea } = await sb.from('toy_ideas').select('author_id').eq('id', report.idea_id).maybeSingle()
+      if (idea?.author_id === report.reported_profile_id) {
+        return c.json({ error: "The reported person wrote this challenge and can't be removed. Dismiss the report instead." }, 409)
+      }
+    }
+  }
+
+  const { data, error } = await sb
     .from('toy_idea_reports')
     .update({
       resolved_at: new Date().toISOString(),
       resolved_by: c.get('userId'),
       resolution_note: resolutionNote,
     })
-    .eq('id', c.req.param('id'))
+    .eq('id', id)
     .is('resolved_at', null)
-    .select('id, idea_id, resolved_at, resolved_by, resolution_note')
+    .select('id, idea_id, reported_profile_id, resolved_at, resolved_by, resolution_note')
     .maybeSingle()
   if (error) return c.json({ error: error.message }, 500)
   if (!data) return c.json({ error: 'No unresolved report with that id' }, 404)
+
+  if (body.action === 'remove') await removeParticipant(data.idea_id, data.reported_profile_id, c.get('userId'))
   return c.json(data)
 })
 
