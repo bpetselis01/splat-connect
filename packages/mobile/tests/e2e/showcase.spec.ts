@@ -21,6 +21,7 @@ test('Say thanks flashes the confirmation, stores one thanks, and tells the pers
   await expect(page.getByText('Thanked 0 times')).toBeVisible()
   const posted = page.waitForResponse((r) => r.url().endsWith(`/api/contributors/${subject.id}/thanks`) && r.request().method() === 'POST')
   await page.getByRole('button', { name: 'Say thanks', exact: true }).click()
+  await page.getByRole('button', { name: 'Send thanks', exact: true }).click()
   expect((await posted).status()).toBe(201)
 
   await expect(page.getByText('Thanks sent — they will see it in their notifications')).toBeVisible()

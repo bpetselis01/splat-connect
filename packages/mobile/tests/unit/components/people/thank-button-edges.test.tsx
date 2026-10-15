@@ -13,13 +13,16 @@ beforeEach(() => {
   mockSession = { user: { id: 'me' } }
 })
 const press = (name: string) => fireEvent.press(screen.getByRole('button', { name }))
+// A person's thanks opens the note sheet first; "Send thanks" posts it.
+const send = () => fireEvent.press(screen.getByRole('button', { name: 'Send thanks' }))
+const pressSend = (name: string) => { press(name); send() }
 
 describe('ThankButton edges', () => {
   it('a double tap sends one thanks, not two', async () => {
     let resolve!: (v: unknown) => void
     mockPost.mockReturnValue(new Promise((r) => { resolve = r }))
     render(<ThankButton label="Thanks" to={{ profileId: 'p1' }} />)
-    press('Thanks'); press('Thanks')
+    pressSend('Thanks'); press('Thanks')
     await act(async () => { resolve({}) })
     expect(mockPost).toHaveBeenCalledTimes(1)
   })
@@ -27,11 +30,11 @@ describe('ThankButton edges', () => {
   it('a network failure says so and leaves the button usable to try again', async () => {
     mockPost.mockRejectedValueOnce(new Error('Network request failed'))
     render(<ThankButton label="Thanks" to={{ profileId: 'p1' }} />)
-    press('Thanks')
+    pressSend('Thanks')
     expect(await screen.findByText('Could not send that. Try again.')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Thanks' })).not.toBeDisabled()
     mockPost.mockResolvedValueOnce({})
-    press('Thanks')
+    pressSend('Thanks')
     expect(await screen.findByText('Thanks sent — they will see it in their notifications')).toBeTruthy()
     expect(mockPost).toHaveBeenCalledTimes(2)
   })
@@ -40,7 +43,7 @@ describe('ThankButton edges', () => {
     'a %s is a retryable failure, not "already thanked"', async (_c, msg) => {
       mockPost.mockRejectedValue(new Error(msg))
       render(<ThankButton label="Thanks" to={{ profileId: 'p1' }} />)
-      press('Thanks')
+      pressSend('Thanks')
       expect(await screen.findByText('Could not send that. Try again.')).toBeTruthy()
       expect(screen.getByRole('button', { name: 'Thanks' })).not.toBeDisabled()
     })
@@ -48,14 +51,14 @@ describe('ThankButton edges', () => {
   it('a non-Error rejection is a retryable failure and does not crash', async () => {
     mockPost.mockRejectedValue('boom')
     render(<ThankButton label="Thanks" to={{ profileId: 'p1' }} />)
-    press('Thanks')
+    pressSend('Thanks')
     expect(await screen.findByText('Could not send that. Try again.')).toBeTruthy()
   })
 
   it('a 409 locks the button, so a second thanks cannot be sent', async () => {
     mockPost.mockRejectedValue(new Error('Request failed with status 409'))
     render(<ThankButton label="Thanks" to={{ profileId: 'p1' }} />)
-    press('Thanks')
+    pressSend('Thanks')
     await screen.findByText('You already thanked them')
     expect(screen.getByRole('button', { name: 'Thanks' })).toBeDisabled()
     press('Thanks')
@@ -65,7 +68,7 @@ describe('ThankButton edges', () => {
   it('sends an empty body when there is no transaction, and no transaction_id key at all', async () => {
     mockPost.mockResolvedValue({})
     render(<ThankButton label="Thanks" to={{ profileId: 'p1' }} />)
-    press('Thanks')
+    pressSend('Thanks')
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/contributors/p1/thanks', {}))
   })
 

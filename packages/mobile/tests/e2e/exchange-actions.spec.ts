@@ -113,6 +113,7 @@ test('Say thanks writes one profile thanks, tells the giver, and cannot be sent 
   await page.goto(`/exchanges/${txId}`)
   const thanks = page.getByRole('button', { name: `Say thanks to ${ownerName}`, exact: true })
   await thanks.click()
+  await page.getByRole('button', { name: 'Send thanks', exact: true }).click()
   await expect(page.getByText('Thanks sent — they will see it in their notifications')).toBeVisible()
   await expect(thanks).toBeDisabled()
 
