@@ -183,9 +183,6 @@ export function MyTutorialsListScreen() {
               onPress={() => router.push({ pathname: '/tutorials/[id]', params: { id: item.id } })}
             />
           )}
-          ListFooterComponent={
-            <Text style={styles.footnote}>Collaborators and recommendations are edited on the web for now.</Text>
-          }
         />
       )}
     </Screen>
@@ -203,11 +200,4 @@ const styles = StyleSheet.create({
     padding: theme.spacing(3),
   },
   noteText: { fontFamily: theme.fonts.regular, color: theme.colors.ink, fontSize: theme.type.caption, lineHeight: 18 },
-  footnote: {
-    fontFamily: theme.fonts.regular,
-    color: theme.colors.muted,
-    fontSize: theme.type.caption,
-    textAlign: 'center',
-    marginTop: theme.spacing(4),
-  },
 })

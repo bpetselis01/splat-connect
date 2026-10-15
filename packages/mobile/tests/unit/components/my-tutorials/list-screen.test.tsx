@@ -109,14 +109,13 @@ describe('MyTutorialsListScreen', () => {
     expect(screen.queryByText('Fan')).toBeNull()
   })
 
-  it('links to Add a tutorial, and shows the web-editing footnote', async () => {
+  it('links to Add a tutorial', async () => {
     mockGet.mockResolvedValue([tutorial({ id: 't1', title: 'Bubble machine switch' })])
     render(<MyTutorialsListScreen />)
 
     expect(await screen.findByText('Bubble machine switch')).toBeTruthy()
     fireEvent.press(screen.getByLabelText('+ Add a tutorial'))
     expect(mockPush).toHaveBeenCalledWith('/guides/new')
-    expect(screen.getByText('Collaborators and recommendations are edited on the web for now.')).toBeTruthy()
   })
 
   it('invites the first guide when there are none yet', async () => {
