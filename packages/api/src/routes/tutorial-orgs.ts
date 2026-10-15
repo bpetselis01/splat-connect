@@ -36,7 +36,7 @@
  */
 import { Hono, type Context } from 'hono'
 import { createAdminClient, createUserClient } from '../supabase/client.js'
-import { notifyBackingRequested, notifyTutorialReviewed } from '../review-notifications.js'
+import { notifyBacking, notifyBackingRequested, notifyTutorialReviewed } from '../review-notifications.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
 const tutorialOrgs = new Hono<{ Variables: AuthVariables }>()
@@ -105,6 +105,13 @@ tutorialOrgs.delete('/:id/orgs/:orgId', async (c) => {
 
 async function answer(c: Context<{ Variables: AuthVariables }>, status: 'accepted' | 'declined') {
   const supabase = createUserClient(c.get('token'))
+  // Read first so only a real change of state notifies; a re-answer is a no-op to the author.
+  const { data: before } = await supabase
+    .from('tutorial_orgs')
+    .select('status')
+    .eq('tutorial_id', c.req.param('id'))
+    .eq('org_id', c.req.param('orgId'))
+    .maybeSingle()
   const { data, error } = await supabase
     .from('tutorial_orgs')
     .update({
@@ -117,10 +124,14 @@ async function answer(c: Context<{ Variables: AuthVariables }>, status: 'accepte
     .select()
   if (error) return c.json({ error: error.message }, 500)
   if (!data.length) return c.json({ error: 'not a leader of that organisation' }, 403)
+  if (before?.status !== status) {
+    await notifyBacking({ tutorialId: c.req.param('id'), orgId: c.req.param('orgId'), status }).catch((e) =>
+      console.error('[tutorial-orgs] backing notification failed:', e)
+    )
+  }
   return c.json(data[0])
 }
 
-// PENDING(backing-notifications): accept and decline tell the family nothing; needs a new notification type plus web and mobile copy.
 tutorialOrgs.post('/:id/orgs/:orgId/accept', (c) => answer(c, 'accepted'))
 tutorialOrgs.post('/:id/orgs/:orgId/decline', (c) => answer(c, 'declined'))
 

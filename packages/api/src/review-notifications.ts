@@ -67,7 +67,7 @@ async function adminIds(admin: Admin, exclude: string): Promise<string[]> {
 async function insert(
   admin: Admin,
   recipients: string[],
-  row: { type: 'backing_requested' | 'tutorial_submitted'; tutorial_id: string; tutorial_title: string; actor_name: string }
+  row: { type: 'backing_requested' | 'tutorial_submitted' | 'backing_accepted' | 'backing_declined'; tutorial_id: string; tutorial_title: string; actor_name: string }
 ) {
   if (!recipients.length) return
   const { error } = await admin
@@ -178,4 +178,34 @@ export async function notifyTutorialReviewed(opts: {
     }))
   )
   if (insertError) console.error(`[review-notifications] review insert failed:`, insertError.message)
+}
+
+/**
+ * A leader answered a backing request. Tell the guide's author (the primary
+ * contributor), naming the organisation. Called only when the answer changed
+ * the row's state, so answering twice never tells them twice.
+ */
+export async function notifyBacking(opts: {
+  tutorialId: string
+  orgId: string
+  status: 'accepted' | 'declined'
+}): Promise<void> {
+  const admin = createAdminClient()
+  const [{ data: tutorial }, { data: org }, { data: author }] = await Promise.all([
+    admin.from('tutorials').select('title').eq('id', opts.tutorialId).maybeSingle(),
+    admin.from('organizations').select('name').eq('id', opts.orgId).maybeSingle(),
+    admin
+      .from('tutorial_contributors')
+      .select('profile_id')
+      .eq('tutorial_id', opts.tutorialId)
+      .eq('role', 'primary')
+      .maybeSingle(),
+  ])
+  if (!author) return
+  await insert(admin, [author.profile_id as string], {
+    type: opts.status === 'accepted' ? 'backing_accepted' : 'backing_declined',
+    tutorial_id: opts.tutorialId,
+    tutorial_title: (tutorial?.title as string | undefined) ?? '',
+    actor_name: (org?.name as string | undefined) ?? 'An organisation',
+  })
 }

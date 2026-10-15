@@ -160,6 +160,7 @@ export const PENDING = {
     platforms: ["api","mobile"],
     needs: "A new notification type (migration), sent from the accept and decline routes, plus its copy on web and mobile. Found by the notification-chains work.",
     question: "Add accepted and declined backing notifications (migration, API, copy on web and mobile), or leave families to find out on the guide page?",
+    shipped: true,
   },
   'generated-stl-sizes': {
     title: "Sizes that make themselves",
