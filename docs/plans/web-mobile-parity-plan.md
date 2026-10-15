@@ -36,7 +36,7 @@ Order: Unit 0 (mockups) gates Units 4, 8 and 15. Units 10–12 are sequential. U
 **Goal:** A public event page on the phone, where registration starts.
 **Requirements trace:** R1, R13. **Dependencies:** Unit 0.
 **Files:** `packages/mobile/app/events/[id].tsx` (new), `components/events/event-detail-screen.tsx` (new), `components/organisation/org-profile-screen.tsx` (make the event rows at about line 165 pressable), the Map tab's event pin (link to the detail screen), `lib/notifications.ts` (event types link to the detail screen, not the org profile), `components/organisation/org-news-screen.tsx`, `tests/unit/components/events/event-detail-screen{,-failure}.test.tsx`.
-**Approach:** `GET /api/public/events/:id?viewer=`. Show the same capacity copy as web's `get-involved/events/[id]/page.tsx`: "This one is full", "N seats left", "Everyone is welcome", plus the closed and cancelled states. Show cost and `cost_note`. The "I'm going" button posts directly when the event has no questions, as `event-rsvp-button.tsx` does. Otherwise it pushes the register screen. When `viewer_going` is set, show "Can't make it" (DELETE).
+**Approach:** The route sits outside `(my)`, so guests can read it. A signed-out "I'm going" goes to sign-in and comes back to the event. `GET /api/public/events/:id?viewer=`. Show the same capacity copy as web's `get-involved/events/[id]/page.tsx`: "This one is full", "N seats left", "Everyone is welcome", plus the closed and cancelled states. Show cost and `cost_note`. The "I'm going" button posts directly when the event has no questions, as `event-rsvp-button.tsx` does. Otherwise it pushes the register screen. When `viewer_going` is set, show "Can't make it" (DELETE).
 **Patterns:** layout follows the approved mockup. Data loading follows `my-events-screen.tsx`.
 **Test scenarios:** [ ] open event with seats shows the seat count and "I'm going" · [ ] full or closed or cancelled event shows its message and no button · [ ] 404 shows "No such event." · [ ] the viewer already going sees "Can't make it".
 **Verification:** an event can be reached from all three entry points in the simulator. **Unknowns:** whether the Map pin component already accepts an href (deferred to implementation).
@@ -87,19 +87,27 @@ Order: Unit 0 (mockups) gates Units 4, 8 and 15. Units 10–12 are sequential. U
 **Requirements trace:** R14. **Dependencies:** Units 0 and 6.
 **Files:** `packages/mobile/app/(my)/admin/spot-check.tsx`, `admin/accounts.tsx`, `admin/organisations.tsx`, the matching `components/admin/*-screen.tsx` files, `app/(my)/admin.tsx` (all six cards go native; drop the "Opens on the web." hint and the `Linking` import), plus unit tests.
 **Approach:**
+- Every admin screen relies on the API's `is_admin` guard. The tests mock a 403 and the screen shows "Admins only"; no client-side check stands in for the server one.
 - Spot-check: `GET /api/admin/spot-check`, with unpublish requiring a note (via the tutorial status PATCH).
 - Accounts: `GET /api/admin/contributors`, searchable, with delete behind a confirm. A 409 `sole_leader` shows "Make someone else a leader first."
 - Organisations: list, create, edit, and add or remove a leader, through the admin organisations routes.
 **Test scenarios:** [ ] unpublishing without a note is blocked · [ ] an account delete 409 shows the sole-leader copy · [ ] a leader added shows in the list · [ ] the 1000-account cap shows "Showing first 1000".
 **Verification:** `grep "Opens on the web" packages/mobile` finds nothing. **Unknowns:** none.
 
-### Unit 9: Idea participant reports, reinstate, and "My reports"
-**Goal:** Wire the report-participant, list and resolve idea reports, reinstate and "my reports" routes on both platforms.
-**Requirements trace:** R7. **Dependencies:** Unit 7.
-**Files:** the mobile challenge thread (a "Report" action on a participant, `POST /api/ideas/:id/reports`), `packages/web/components/challenge-thread.tsx` (the same), `components/admin/member-reports-screen.tsx` and `web/app/admin/reports/page.tsx` (an "Idea reports" tab using `GET/PATCH /api/admin/reports` plus reinstate via `DELETE /api/admin/ideas/:id/participants/:profileId/removal`), a new mobile `components/me/my-reports-screen.tsx` and web `app/dashboard/reports/page.tsx` (`GET /api/reports`, showing status and `note_to_reporter`), `packages/api/tests/integration/toy-ideas/report-participant.test.ts` (new; take the route off UNTESTED).
-**Approach:** Reporting removes the participant immediately (the API does this), so the confirm sheet says so. "My reports" is linked from the Me tab and the web hub. Each new hub row gets its line in `my-routes.ts`.
-**Test scenarios:** [ ] reporting asks for a reason and confirms the removal · [ ] reinstate brings the participant back · [ ] My reports shows the resolved status with the admin's note · [ ] no reports shows an EmptyState.
-**Verification:** report a participant, then reinstate them, end to end on web. **Unknowns:** none.
+### Unit 9a: A participant report hides the person until an admin decides
+**Goal:** Reporting someone on a challenge hides them from the reporter only. Removal happens when an admin decides (Byron, 2026-10-16: "Hide until reviewed").
+**Requirements trace:** R7. **Dependencies:** none.
+**Files:** `packages/api/src/routes/toy-ideas.ts` (`POST /:id/reports` stops calling the participant update, the system message and the `challenge_removed` insert), the idea thread and participant reads in the same file (filter out messages and profiles the viewer has an unresolved report against), `packages/api/src/routes/admin.ts` (`PATCH /reports/:id` takes `{resolution_note, action: 'remove'|'dismiss'}`; `remove` runs the removal, system message and notification moved here; keep the `.is('resolved_at', null)` once-only guard), `packages/api/tests/unit/routes/toy-ideas.test.ts`, `packages/api/tests/integration/admin/reports.test.ts`, `packages/api/tests/integration/toy-ideas/report-participant.test.ts` (new; take the route off UNTESTED).
+**Approach:** Reporting the author no longer removes the reporter. The report is filed, the author is hidden from the reporter, and the reply offers "Leave this challenge" as a separate action. The notification actor stays "SPLAT", and the reporter is never named.
+**Test scenarios:** [ ] after a report, the reporter's thread read excludes the reported person and everyone else's doesn't · [ ] `action: remove` removes them, posts the system message and notifies once · [ ] `action: dismiss` un-hides them for the reporter · [ ] a double resolve acts once (404 on the second).
+**Verification:** API integration suite green. **Unknowns:** none.
+
+### Unit 9b: Report, idea reports queue, reinstate and "My reports" screens
+**Goal:** Wire the report-participant, idea-reports and reinstate routes on both platforms, plus "my reports".
+**Requirements trace:** R7. **Dependencies:** Units 7 and 9a.
+**Files:** the mobile challenge thread and `packages/web/components/challenge-thread.tsx` (a "Report" action on a participant; the confirm reads "You won't see them here any more. SPLAT will look at it, and they won't see your name."), `components/admin/member-reports-screen.tsx` and `web/app/admin/reports/page.tsx` (an "Idea reports" tab with Remove, Dismiss and, for already-removed people, Reinstate via `DELETE /api/admin/ideas/:id/participants/:profileId/removal`), new mobile `components/me/my-reports-screen.tsx` and web `app/dashboard/reports/page.tsx` (`GET /api/reports`, status and `note_to_reporter`), plus `my-routes.ts`.
+**Test scenarios:** [ ] the report sheet requires a reason · [ ] Remove, Dismiss and Reinstate each call the right route and update the row · [ ] My reports shows the resolved status and the note · [ ] no reports shows an EmptyState.
+**Verification:** on web, report a participant, they vanish for the reporter only, and an admin removes or dismisses them. **Unknowns:** none.
 
 ### Unit 10: Migration 137, three notification types
 **Goal:** The database and the types package learn `backing_accepted`, `backing_declined` and `report_resolved`.
@@ -107,7 +115,7 @@ Order: Unit 0 (mockups) gates Units 4, 8 and 15. Units 10–12 are sequential. U
 **Files:** `supabase/migrations/137_parity_notifications.sql`, `packages/types/src/index.ts` (`NotificationType`, `NOTIFICATION_BUCKET`, `COPY`), `scripts/check-schema-guards.sh`, `packages/web/tests/unit/lib/notification-bucket.test.ts` (33 → 36).
 **Approach:** Copy 117's guard: check the live constraint, abort if a value would be dropped, then re-add the full list. Add `member_report_id uuid references member_reports(id) on delete cascade` and put it in `notifications_one_subject`. Backing notices use `tutorial_id`. Copy: "{Org} agreed to back {guide}", "{Org} can't back {guide} right now", "Your report was looked at".
 **Test scenarios:** [ ] the migration applies on a fresh `supabase db reset` · [ ] the schema guard finds the three values and the column · [ ] an insert with two subjects fails the check.
-**Verification:** applied locally, then `supabase db push` to hosted, then assert the objects exist (never trust the ledger). **Unknowns:** none.
+**Verification:** applied locally, then `supabase db push` to hosted, then assert the objects exist (never trust the ledger). **Deploy order:** 137 must be on hosted *before* the API from Units 11 and 12 deploys, or every insert fails the CHECK and is only logged. CI deploy secrets are unset, so this push is a manual step. **Unknowns:** none.
 
 ### Unit 11: Send backing notifications
 **Goal:** Accepting or declining a backing notifies the guide's author.
@@ -118,7 +126,7 @@ Order: Unit 0 (mockups) gates Units 4, 8 and 15. Units 10–12 are sequential. U
 
 ### Unit 12: Send report_resolved, and copy and links on both platforms
 **Goal:** Resolving a member report tells the reporter, and all three new types render on web and the phone.
-**Requirements trace:** R9, R6. **Dependencies:** Units 9 and 10.
+**Requirements trace:** R9, R6. **Dependencies:** Units 9b and 10.
 **Files:** `packages/api/src/routes/admin.ts` (the member-reports PATCH at about line 775 sends on the transition to `resolved`), `packages/api/tests/integration/admin/reports.test.ts`, `packages/web/components/notifications-list.tsx` (`ICON` and `linkFor`: report goes to `/dashboard/reports`, backing to the guide), `packages/mobile/lib/notifications.ts`, `packages/mobile/components/inbox/inbox-screen.tsx` (`TYPE_TILE`), `packages/mobile/tests/unit/lib/notifications-types.test.ts`.
 **Test scenarios:** [ ] resolved → one notification to the reporter · [ ] "looking" or a re-save while already resolved sends nothing · [ ] a report with no reporter (a deleted account) sends nothing and doesn't error · [ ] each new type links to the right place on both platforms.
 **Verification:** resolve on the phone (Unit 7), and the reporter sees it on web. **Unknowns:** none.
@@ -146,7 +154,7 @@ Order: Unit 0 (mockups) gates Units 4, 8 and 15. Units 10–12 are sequential. U
 ### Unit 15: The acting organisation, hook and switcher on the phone
 **Goal:** A person who leads two or more organisations picks which one they're acting for, and the phone remembers it.
 **Requirements trace:** R5. **Dependencies:** Unit 0.
-**Files:** `packages/mobile/lib/acting-org.tsx` (a provider and `useActingOrg()`, SecureStore key `acting_org_id`), `app/_layout.tsx` (mount the provider), the Organisation hub screen (the switcher, only when `ledOrgs.length > 1`), `tests/unit/lib/acting-org.test.tsx`.
+**Files:** `packages/mobile/lib/acting-org.tsx` (a provider and `useActingOrg()`, SecureStore key `acting_org_id`, copying `lib/home-shortcuts.ts`'s storage handling so the Expo web export used by the parity harness and e2e still works), `app/_layout.tsx` (mount the provider), the Organisation hub screen (the switcher, only when `ledOrgs.length > 1`), `tests/unit/lib/acting-org.test.tsx`.
 **Test scenarios:** [ ] one org gives no switcher and returns it · [ ] a stored id still in `ledOrgs` is returned · [ ] a stored id the person no longer leads falls back to `[0]` and clears the store · [ ] no orgs returns null.
 **Verification:** with a second org seeded for the parity leader, switching changes the hub heading. **Unknowns:** none.
 
@@ -172,9 +180,25 @@ Order: Unit 0 (mockups) gates Units 4, 8 and 15. Units 10–12 are sequential. U
 **Test scenarios:** [ ] `pending-features.test.ts` passes · [ ] the my-routes and me tests show no SOON · [ ] the app harness stays at 0 findings, and the web harness is re-run after any shared fingerprint change.
 **Verification:** run the full `npx jest` in `packages/mobile`, then `scripts/verify-plan.sh --run --e2e`. Web and mobile e2e never run at the same time, and the parity stack is stopped before e2e. Then run `graphify update .`.
 
+## Review findings (Phase 5, Hold Scope)
+
+| # | Sev | Finding | Resolution |
+|---|-----|---------|------------|
+| 1 | P1 | Reporting a participant removed them immediately and anonymously, and wiring it exposes that | Byron chose hide-until-reviewed, so Unit 9 split into 9a (API) and 9b (screens) |
+| 2 | P1 | API that writes new notification types deploying before migration 137 is on hosted fails silently | Deploy order written into Unit 10 |
+| 3 | P1 | SecureStore isn't available in the Expo web export the harness and e2e use | Unit 15 copies `home-shortcuts.ts`'s storage handling |
+| 4 | P1 | A guest on the public event page had no defined path to register | Unit 2: sign-in, then return |
+| 5 | P2 | Older installed phone builds show the generic copy and an `/inbox` link for the three new types | Accepted: `copyFor` and `linkFor` fall back safely |
+| 6 | P2 | Print-at-event doesn't check the requester is registered for the event | Accepted: it matches web's flow, so no change is in scope |
+| 7 | P2 | Admin screens could appear to rely on hiding the cards | Unit 8: a 403 test on each screen, and the server guard is the only check |
+
+**Design review (0–10):** Clarity 8 · Hierarchy 7 · Consistency 8 · Feedback 8 · Error recovery 8 (server sentences shown word for word) · Empty states 9 (every list unit tests one) · Accessibility 6. To raise accessibility to 10, every new pressable gets `accessibilityRole` and `accessibilityLabel`, the switcher announces the acting org's name, and the register form's required questions say "required" to screen readers. These are added to each unit's tests in review. Hierarchy reaches 10 through Unit 0's sign-off.
+
+**Engineering review:** No route is new except the 9a and 12 changes. The guard tests in Units 16 and 17 make `ledOrgs[0]` impossible to bring back. Coverage gaps closed: print-at-event and report-participant come off the UNTESTED ratchet (Units 5 and 9a). The CSV export stays web-only, said so on screen. Not covered by automation: real-device SecureStore (one on-phone check in Unit 18), and the hosted migration (asserted by query).
+
 ## Quality bar
 
-- Every unit traces to a requirement, and the dependencies form a DAG (0 → 2 → 3, 5; 0/15 → 4; 10 → 11; 7 → 9 → 12; 10 → 12; 15 → 14, 16, 17; all → 18).
+- Every unit traces to a requirement, and the dependencies form a DAG (0 → 2 → 3, 5; 0/15 → 4; 10 → 11; 9a → 9b; 7 → 9b → 12; 10 → 12; 15 → 14, 16, 17; all → 18).
 - Every unit has at least 3 test scenarios. Units 16 and 17 are pre-split to stay at 8 files or fewer.
 - New abstractions number two in all: the acting-org hook (once per platform) and the upload extra fields. Everything else is a screen.
 - Handoff test: an engineer still has to make the visual choices for the three mockup screens (Unit 0 gates them), choose the guide picker's source in Unit 5, and decide where the thanks list sits in Unit 13. All three are recorded above.
