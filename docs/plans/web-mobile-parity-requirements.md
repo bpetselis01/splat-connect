@@ -1,6 +1,6 @@
 # Web ↔ Mobile Parity Requirements
 
-**Version:** 1.0
+**Version:** 1.1
 **Status:** Draft
 **Date:** 2026-10-16
 
@@ -28,16 +28,16 @@ unregistered "edited on the web" notes in mobile screens.
 | R1 | A member can register for an event on the phone, answering the organiser's questions and seeing the capacity and full messages web shows | Must Have | `event-registration-mobile` |
 | R2 | A leader can see the list of who registered for their event on the phone | Must Have | `event-registration-mobile` |
 | R3 | An admin can approve a guide or request changes to it on the phone, reached from the "guide submitted" notification | Must Have | `admin-guide-review-screen` |
-| R4 | A contributor can list the thank-you notes sent to them and hide or show each one, on phone and web | Must Have | `profile-thanks-hide`; uses GET/PATCH /contributors/me/thanks |
+| R4 | A member thanking a person can add an optional note (phone and web; web gains a person-thanks button), and the thanked contributor can list their notes and hide or show each one, on phone and web | Must Have | `profile-thanks-hide`; no client writes a note today, so the list alone would be empty |
 | R5 | A person who leads more than one organisation can choose which one they are acting for, and every leader screen acts for the chosen one, on both platforms | Must Have | `multi-org-leader-switch`; full picker (Byron's call over the name-only alternative) |
 | R6 | A family is notified when an organisation accepts or declines backing their guide, with copy on web and mobile | Must Have | `backing-notifications`; new notification type (migration) |
 | R7 | Six of the seven unused API routes each get a calling screen: report an idea participant, list and resolve admin reports, reinstate a removed idea participant, profile thanks (via R4), a reporter's own reports, print-at-event | Must Have | `unused-api-routes` |
 | R8 | The singular unread-count route is deleted, along with its tests | Must Have | `unused-api-routes`; the plural count replaced it |
-| R9 | A reporter is notified when their report is resolved, sent from the admin resolve action on both platforms | Must Have | new notification type (migration) |
-| R10 | A leader can write and edit an event on the phone | Must Have | unregistered gap |
-| R11 | A member can write and edit a story on the phone | Must Have | unregistered gap |
+| R9 | A reporter is notified when their member report is resolved, sent by `PATCH /api/admin/member-reports/:id` | Must Have | new type plus a `member_report_id` subject column (migration 137) |
+| R10 | Writing events and stories already works on the phone; editing a posted event or story exists on neither platform and is registered as a new `build` item (`edit-event-story`), not built here | Must Have | not a parity gap |
+| R11 | Stale "edited on the web" copy is removed where the phone already does the job | Must Have | `my-tutorials/list-screen.tsx` footnote |
 | R12 | A leader can edit the organisation's pictures, doors and rates on the phone | Must Have | `org-profile-edit-screen.tsx` says "edited on the web" |
-| R13 | A guide author can edit collaborators and recommendations on the phone | Must Have | `my-tutorials/list-screen.tsx` says "edited on the web for now" |
+| R13 | Event registration on the phone includes the entry points it needs: an event detail screen, reached from the organisation profile's event rows, the Map tab's event pins and event notifications | Must Have | the phone has no public event page today |
 | R14 | Each of the six admin queues behind the phone's admin count cards opens a phone queue where the admin can act, not a web page | Must Have | `app/(my)/admin.tsx` |
 | R15 | Every shipped item's `PENDING(...)` references are removed, `shipped: true` is set, `docs/PENDING.md` is regenerated, and the drift test passes | Must Have | registry rule |
 | R16 | Every new phone screen gets a line in `my-routes.ts` where a web hub row maps to it, and Me-tab rows show no SOON | Must Have | `mobile-nav-route-parity` rule |
@@ -83,6 +83,6 @@ unregistered "edited on the web" notes in mobile screens.
 
 | # | Question | Impact if Wrong | Owner |
 |---|----------|-----------------|-------|
-| Q1 | Visual design of the board-less phone screens (admin queues, register, picker) | Rework after review | Byron, from mockups built before the screens (rule: design decisions need visuals) |
-| Q2 | Where the org picker lives (Me tab header vs. each leader screen) | Six screens change twice | Resolved in Phase 4 |
-| Q3 | Whether any web flow (admin queues, event/story writing, picture uploads) bypasses `packages/api`, so the phone needs new routes | Units grow by an API route each | Codebase map, Phase 4 |
+| Q1 | Mockups for event detail and register, an admin queue, and the org switcher | Rework after review | Byron signs off before Units 4, 8 and 15 |
+| Q2 | ~~Picker placement~~: resolved as one switcher on the Organisation hub, remembered per device, read by every leader screen | | resolved 2026-10-16 |
+| Q3 | ~~Does web bypass the API?~~: no. Every flow goes through `packages/api`, so the phone needs no new routes except the notification work | | resolved 2026-10-16 |
