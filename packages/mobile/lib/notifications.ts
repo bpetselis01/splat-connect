@@ -9,7 +9,7 @@ import type { Notification } from '@splat-connect/types'
  * Where a notification lands on mobile. Web's linkFor with its hrefs swapped
  * for these routes; every branch below is web's branch, in web's order.
  */
-export function linkFor(n: Notification): string {
+export function linkFor(n: Notification, isAdmin = false): string {
   // 111: a question before a claim opens Ask first, for the maker and the family alike.
   if (n.type === 'build_question' && n.toy_transaction_id) return `/exchanges/build/ask/${n.toy_transaction_id}`
   // A build has its own thread. Only these two types say so on the row; any
@@ -37,10 +37,11 @@ export function linkFor(n: Notification): string {
   // of these two is a reviewer, not the author, and /tutorials/:id is the
   // author's editor — a leader sent there lands on a screen they cannot save.
   //
-  // Web splits admin (/admin/review/:id) from leader (/dashboard/organisation)
-  // here. Mobile has no admin review screen at all, so both collapse to the
-  // organisation hub, which lists everything waiting on them either way.
-  if (n.type === 'backing_requested' || n.type === 'tutorial_submitted') return '/organisation'
+  // Web splits admin (/admin/review/:id) from leader (/dashboard/organisation);
+  // so does mobile. The row carries no org_id, so a leader gets the hub.
+  if (n.type === 'backing_requested' || n.type === 'tutorial_submitted') {
+    return isAdmin && n.tutorial_id ? `/admin/review/${n.tutorial_id}` : '/organisation'
+  }
   // Web's thanks branch: the published guide, not the editor.
   if (n.type === 'tutorial_thanked' && n.tutorial_id) return `/guides/${n.tutorial_id}`
   if (n.type === 'tutorial_noted' && n.tutorial_id) return `/guides/${n.tutorial_id}`

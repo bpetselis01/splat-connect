@@ -21,7 +21,11 @@ jest.mock('../../../../lib/api-client', () => ({
 }))
 
 const mockInvalidate = jest.fn()
-jest.mock('../../../../lib/capabilities', () => ({ invalidateCapabilities: () => mockInvalidate() }))
+let mockCaps: { isAdmin: boolean } | null = null
+jest.mock('../../../../lib/capabilities', () => ({
+  invalidateCapabilities: () => mockInvalidate(),
+  useCapabilities: () => ({ caps: mockCaps, loading: false }),
+}))
 
 const mockPush = jest.fn()
 jest.mock('expo-router', () => {
@@ -77,6 +81,7 @@ const tx = (over: object) => ({
 
 beforeEach(() => {
   jest.clearAllMocks()
+  mockCaps = null
   respond([])
   mockPatch.mockResolvedValue(null)
   mockPost.mockResolvedValue(null)
@@ -199,6 +204,21 @@ describe('InboxScreen', () => {
     render(<InboxScreen />)
     fireEvent.press(await screen.findByLabelText('A print job with Northside Therapy'))
     expect(mockPush).toHaveBeenCalledWith('/printing/jobs/tx9')
+  })
+
+  it("opens an admin's submitted-guide notice on the admin review screen, a non-admin's on the organisation hub", async () => {
+    const note = notification({ type: 'tutorial_submitted', tutorial_id: 't1', tutorial_title: 'Bubble machine', toy_transaction_id: null })
+    mockCaps = { isAdmin: true }
+    respond([note])
+    const admin = render(<InboxScreen />)
+    fireEvent.press(await screen.findByText('Sam submitted "Bubble machine" for review'))
+    expect(mockPush).toHaveBeenCalledWith('/admin/review/t1')
+    admin.unmount()
+
+    mockCaps = { isAdmin: false }
+    render(<InboxScreen />)
+    fireEvent.press(await screen.findByText('Sam submitted "Bubble machine" for review'))
+    expect(mockPush).toHaveBeenLastCalledWith('/organisation')
   })
 
   it('opens on Notifications when there are no exchanges, and where it is told to', async () => {

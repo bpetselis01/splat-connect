@@ -74,6 +74,14 @@ describe('linkFor', () => {
     expect(linkFor(notification({ type: 'toy_accepted', toy_transaction_id: 'tx1' }))).toBe('/exchanges/tx1')
   })
 
+  it("sends an admin's tutorial_submitted to the admin review screen, a leader's to the hub", () => {
+    const n = notification({ type: 'tutorial_submitted', tutorial_id: 't1' })
+    expect(linkFor(n, true)).toBe('/admin/review/t1')
+    expect(linkFor(n, false)).toBe('/organisation')
+    expect(linkFor(notification({ type: 'backing_requested', tutorial_id: 't1' }), true)).toBe('/admin/review/t1')
+    expect(linkFor(notification({ type: 'tutorial_submitted', tutorial_id: null }), true)).toBe('/organisation')
+  })
+
   it('sends both review-queue types to the organisation hub, ahead of the editor', () => {
     // Both carry a tutorial_id; the editor branch below must not claim them.
     for (const type of ['backing_requested', 'tutorial_submitted'] as const) {

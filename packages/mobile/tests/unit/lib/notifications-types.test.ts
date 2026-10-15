@@ -89,4 +89,11 @@ describe('every notification type', () => {
     expect(copyFor(row(type))).toBe(TABLE[type].copy)
     expect(linkFor(row(type))).toBe(TABLE[type].link)
   })
+
+  it('an admin is sent to the admin review screen for the two review-queue types, and nowhere else differs', () => {
+    for (const type of Object.keys(TABLE) as NotificationType[]) {
+      const admin = type === 'backing_requested' || type === 'tutorial_submitted' ? '/admin/review/t1' : TABLE[type].link
+      expect(linkFor(row(type), true)).toBe(admin)
+    }
+  })
 })

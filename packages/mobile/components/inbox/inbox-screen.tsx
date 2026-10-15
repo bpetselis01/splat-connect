@@ -26,7 +26,7 @@ import type {
 } from '@splat-connect/types'
 import { copyFor, isNetworkError, notificationBucket, notificationSecondLine, subjectName } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
-import { invalidateCapabilities } from '../../lib/capabilities'
+import { invalidateCapabilities, useCapabilities } from '../../lib/capabilities'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { theme } from '../../lib/theme'
 import { tabBarClearance } from '../../lib/tab-bar-layout'
@@ -150,6 +150,7 @@ export function InboxScreen({
 }) {
   const insets = useSafeAreaInsets()
   const router = useRouter()
+  const { caps } = useCapabilities()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [transactions, setTransactions] = useState<ToyTransactionSummary[]>([])
   const [invites, setInvites] = useState<TutorialCollaboratorInvite[]>([])
@@ -258,7 +259,7 @@ export function InboxScreen({
   function open(n: Notification) {
     if (n.read_at === null) markRead([n.id])
     // '/inbox' is "nowhere better": already here, so there is nothing to push.
-    const href = linkFor(n)
+    const href = linkFor(n, caps?.isAdmin ?? false)
     if (href !== '/inbox') router.push(href)
   }
 
