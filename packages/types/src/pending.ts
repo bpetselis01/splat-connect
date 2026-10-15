@@ -176,6 +176,13 @@ export const PENDING = {
     platforms: ["api", "mobile", "web"],
     needs: "Follows contributor-defined customization fields (docs/superpowers/specs/2026-10-09-contributor-customization-fields-design.md). A contributor attaches a parametric OpenSCAD file whose parameters map to their fields (the optional `param` on each field); on request the API renders the STL in a sandbox with a time limit, checks the bounding box against the printer's bed, and shows the printer a preview. Small/Medium/Large are parameter-set presets.",
   },
+  'edit-event-story': {
+    title: "Editing a posted event or story",
+    blurb: "Once an event or story is posted, a leader can't change it; fixing a typo or a time means posting it again.",
+    kind: "build",
+    platforms: ["mobile", "web"],
+    needs: "Edit mode for events and stories on both platforms; web's EventForm already takes an event prop, only events/new renders it.",
+  },
 } satisfies Record<string, PendingItem>
 
 export type PendingId = keyof typeof PENDING

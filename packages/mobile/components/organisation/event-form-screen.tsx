@@ -1,4 +1,5 @@
 // packages/mobile/components/organisation/event-form-screen.tsx
+// PENDING(edit-event-story): create only; no edit mode for a posted event.
 /**
  * Publish an event — web's components/event-form.tsx on the phone.
  *

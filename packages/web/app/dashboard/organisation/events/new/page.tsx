@@ -7,6 +7,7 @@
  * removing questions is not a thing a server round trip should be in the middle
  * of.
  */
+// PENDING(edit-event-story): EventForm takes an event prop; only this create page renders it.
 import { notFound } from 'next/navigation'
 import { getCapabilities } from '@/lib/capabilities'
 import { EventForm } from '@/components/event-form'
