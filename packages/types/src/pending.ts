@@ -127,6 +127,7 @@ export const PENDING = {
     platforms: ["mobile"],
     needs: "A phone review screen for admins (about the size of the organisation review screen, which it can reuse) plus its tests. The API route already exists.",
     question: "Build an admin guide-review screen on the phone (a new screen plus tests, reusing the organisation review screen), or change the notification to say \"review on the website\" and link there (a small copy change)?",
+    shipped: true,
   },
   'profile-thanks-hide': {
     title: "Hiding a thank-you note",
