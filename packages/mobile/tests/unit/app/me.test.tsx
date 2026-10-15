@@ -73,6 +73,8 @@ it('sends every row to its own screen, so none is drawn as SOON', () => {
   expect(mockPush).toHaveBeenCalledWith('/events')
   fireEvent.press(screen.getByLabelText('Print for others'))
   expect(mockPush).toHaveBeenCalledWith('/print-for-others')
+  fireEvent.press(screen.getByLabelText('Thank-you notes'))
+  expect(mockPush).toHaveBeenCalledWith('/thanks')
   expect(screen.queryAllByText('SOON')).toHaveLength(0)
 })
 

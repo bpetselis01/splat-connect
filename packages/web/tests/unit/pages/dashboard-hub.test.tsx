@@ -180,14 +180,14 @@ describe('DashboardHub', () => {
   })
 
   // Eight before: Submit an idea folded into Design challenges.
-  it('renders eleven cards for a plain account', async () => {
+  it('renders twelve cards for a plain account', async () => {
     const { container } = render(await DashboardHub())
     // Saved produces a card here too, because this hub is built from the same
     // nav model. Nine since 058 added Print for others, eleven since 061 and
     // 063 added My events and Recycle plastic, twelve with the board's Build
     // for a family, eleven since me-rows-structure moved Recycle plastic to the
-    // public header.
-    expect(container.querySelectorAll('a.card')).toHaveLength(11)
+    // public header. Twelve with Thank-you notes (117).
+    expect(container.querySelectorAll('a.card')).toHaveLength(12)
   })
 
   it('draws Build for a family from the shared model, and no Recycle plastic card', async () => {

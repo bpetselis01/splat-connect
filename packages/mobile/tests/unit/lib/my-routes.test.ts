@@ -21,5 +21,6 @@ it('sends the one public row to Explore and unknown hrefs to the hub', () => {
   expect(myRoute('/get-involved/submit-an-idea')).toBe('/explore/challenges/new')
   expect(myRoute('/get-involved/makers-wanted')).toBe('/explore/makers-wanted')
   expect(myRoute('/dashboard/organisation/recycling')).toBe('/organisation/recycling')
+  expect(myRoute('/dashboard/thanks')).toBe('/thanks')
   expect(myRoute('/nowhere')).toBe('/me')
 })

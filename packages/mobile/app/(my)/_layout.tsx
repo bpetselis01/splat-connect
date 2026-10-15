@@ -50,6 +50,7 @@ export default function MyLayout() {
         name="saved/[slug]"
         options={({ route }) => ({ title: savedTitle((route.params as { slug?: string } | undefined)?.slug) })}
       />
+      <Stack.Screen name="thanks" options={{ title: 'Thank-you notes' }} />
       <Stack.Screen name="notifications" options={{ title: 'Notifications' }} />
       <Stack.Screen name="print-requests" options={{ title: 'My print requests' }} />
       <Stack.Screen name="print-for-others/index" options={{ title: 'Print for others' }} />

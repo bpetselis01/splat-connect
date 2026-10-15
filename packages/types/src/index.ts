@@ -1231,6 +1231,19 @@ export interface OrgThanks {
   created_at: string
 }
 
+/** 117. A thanks given to a person. The note is private to them; hiding it
+ *  (hidden_at) only tidies their own list. */
+export interface PersonThanks {
+  profile_id: string
+  thanker_id: string
+  note: string | null
+  byline: string | null
+  show_note: boolean
+  hidden_at: string | null
+  transaction_id: string | null
+  created_at: string
+}
+
 /** 077. Message: one conversation per person per organisation, readable by
  *  that person and every leader of the org. */
 interface OrgConversation {

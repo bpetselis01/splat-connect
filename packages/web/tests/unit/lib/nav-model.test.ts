@@ -90,13 +90,14 @@ describe('buildNav', () => {
 
   // Same total as before Child profiles moved to the Account page: it left
   // and Submit an idea arrived in its place.
-  it('builds twenty-one linked rows for a leader-admin', () => {
+  it('builds twenty-two linked rows for a leader-admin', () => {
     const rows = buildNav(caps({ ledOrgs: [org], isAdmin: true })).flatMap((g) => g.rows)
     // Fourteen after 058 added Print for others; seventeen after 059 added the
     // organisation's own three — events and stories, recycling intake, and the
     // profile editor; twenty-one after 077 added the organisation's messages.
     // Still twenty-one after me-rows-structure: Makers wanted in, Recycle plastic out.
-    expect(rows).toHaveLength(21)
+    // Twenty-two once Thank-you notes (117) joined the Account group.
+    expect(rows).toHaveLength(22)
   })
 
   it('includes a Design challenges row for every account', () => {
@@ -179,9 +180,9 @@ describe('buildNav', () => {
    * hub is built from this model — which is why adding it here was the whole of
    * decision 8 rather than two separate changes.
    */
-  it('puts Saved first in the Account group, ahead of Notifications', () => {
+  it('puts Saved first in the Account group, then Thank-you notes, ahead of Notifications', () => {
     const account = buildNav(caps()).find((g) => g.heading === 'Account')!
-    expect(account.rows.map((r) => r.label)).toEqual(['Saved', 'Notifications', 'Account'])
+    expect(account.rows.map((r) => r.label)).toEqual(['Saved', 'Thank-you notes', 'Notifications', 'Account'])
     expect(account.rows[0].href).toBe('/dashboard/saved')
   })
 
