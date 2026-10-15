@@ -5,6 +5,8 @@ import { Linking } from 'react-native'
 import MyAdmin from '../../../app/(my)/admin'
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
+const mockPush = jest.fn()
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }))
 const mockGet = jest.fn()
 jest.mock('../../../lib/api-client', () => ({ apiClient: { get: (...a: unknown[]) => mockGet(...a) } }))
 
@@ -28,12 +30,21 @@ describe('MyAdmin seat guard (S7)', () => {
 })
 
 describe('MyAdmin', () => {
-  it("shows the board's six counts, each opening its web queue", async () => {
+  it('opens the review queue on the phone, not the web', async () => {
+    const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(true)
+    render(<MyAdmin />)
+    fireEvent.press(await screen.findByRole('button', { name: 'Tutorials awaiting review, 7' }))
+    expect(mockPush).toHaveBeenCalledWith('/admin/review')
+    expect(open).not.toHaveBeenCalled()
+    open.mockRestore()
+  })
+
+  it("shows the board's six counts, the other five opening their web queue", async () => {
     const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(true)
     render(<MyAdmin />)
     expect(await screen.findByText('57')).toBeTruthy()
+    expect(screen.getByText('7')).toBeTruthy()
     for (const [label, count, path] of [
-      ['Tutorials awaiting review', '7', '/admin/review'],
       ['Reports from members', '2', '/admin/reports'],
       ['Ideas awaiting review', '3', '/admin/ideas'],
       ['Spot-check', '5', '/admin/spot-check'],
