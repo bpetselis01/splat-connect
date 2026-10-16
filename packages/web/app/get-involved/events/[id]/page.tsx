@@ -241,7 +241,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                       eventId={event.id}
                       going={event.viewer_going}
                       signedIn={!!caps}
-                      needsForm={event.questions.length > 0}
+                      needsForm={event.questions.length > 0 || (event.cost_cents ?? 0) > 0}
                       name={caps?.profile.name ?? undefined}
                       email={caps?.profile.email ?? undefined}
                       size="lg"
