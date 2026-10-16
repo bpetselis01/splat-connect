@@ -8,10 +8,12 @@
 //     Remote Function", 2026-10-06) passes jest, tsc and web.
 // The key builders sit beside auth-context, which builds a Supabase client on import.
 jest.mock('../../../lib/auth-context', () => ({ useAuth: () => ({}) }))
+jest.mock('../../../lib/capabilities', () => ({ useCapabilities: () => ({}) }))
 import { RECENTS_KEY, recentsKeyFor } from '../../../lib/recents'
 import { homeKey } from '../../../lib/home-shortcuts'
 import { ticksKey } from '../../../lib/guide-progress'
 import { LEARN_PROGRESS_KEY } from '../../../lib/learn'
+import { ACTING_ORG_KEY } from '../../../lib/acting-org'
 
 type Entry = { name: string; isDirectory(): boolean }
 const fs = require('fs') as { readdirSync(d: string, o: { withFileTypes: true }): Entry[]; readFileSync(f: string, e: 'utf8'): string }
@@ -34,7 +36,7 @@ describe('SecureStore keys', () => {
 
   it('every key builder yields only letters, digits, dot, dash, underscore', () => {
     const keys = [
-      RECENTS_KEY, recentsKeyFor(uuid), homeKey(uuid), homeKey(null), LEARN_PROGRESS_KEY,
+      RECENTS_KEY, recentsKeyFor(uuid), homeKey(uuid), homeKey(null), LEARN_PROGRESS_KEY, ACTING_ORG_KEY,
       ...(['steps', 'tools', 'parts'] as const).map((k) => ticksKey(k, uuid)),
     ]
     for (const k of keys) expect(k).toMatch(SAFE)
@@ -43,7 +45,7 @@ describe('SecureStore keys', () => {
   it('only the files whose keys are checked above touch the on-device store', () => {
     const users = source().filter((s) => /resolveAuthStorage\(/.test(s.src)).map((s) => s.rel).sort()
     // A new consumer must add its key builder to the test above, then list itself here (supabase* hold the library's own fixed key).
-    expect(users).toEqual(['lib/guide-progress.ts', 'lib/home-shortcuts.ts', 'lib/learn.ts', 'lib/recents.ts', 'lib/supabase-storage.ts', 'lib/supabase.ts'])
+    expect(users).toEqual(['lib/acting-org.tsx', 'lib/guide-progress.ts', 'lib/home-shortcuts.ts', 'lib/learn.ts', 'lib/recents.ts', 'lib/supabase-storage.ts', 'lib/supabase.ts'])
   })
 })
 

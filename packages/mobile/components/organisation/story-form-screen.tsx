@@ -15,7 +15,7 @@ import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { apiMessage, STORY_KINDS, STORY_KIND_LABEL, readMinutes, type StoryKind } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
-import { useCapabilities } from '../../lib/capabilities'
+import { useActingOrg } from '../../lib/acting-org'
 import { theme } from '../../lib/theme'
 import { useBottomClearance } from '../../lib/bottom-clearance'
 import { Screen } from '../ui/Screen'
@@ -31,8 +31,7 @@ const KINDS = (Object.keys(STORY_KINDS) as StoryKind[]).filter((k) => k !== 'ann
 export function StoryFormScreen() {
   const bottom = useBottomClearance()
   const router = useRouter()
-  const { caps } = useCapabilities()
-  const org = caps?.ledOrgs[0]
+  const { org } = useActingOrg()
   const [kind, setKind] = useState<StoryKind>('family')
   const [title, setTitle] = useState('')
   const [summary, setSummary] = useState('')

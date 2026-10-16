@@ -31,7 +31,7 @@ import {
   type OrgEvent,
 } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
-import { useCapabilities } from '../../lib/capabilities'
+import { useActingOrg } from '../../lib/acting-org'
 import { theme } from '../../lib/theme'
 import { useBottomClearance } from '../../lib/bottom-clearance'
 import { Screen } from '../ui/Screen'
@@ -71,8 +71,7 @@ const hourToday = (hour: number) => new Date(new Date().setHours(hour, 0, 0, 0))
 export function EventFormScreen() {
   const bottom = useBottomClearance()
   const router = useRouter()
-  const { caps } = useCapabilities()
-  const org = caps?.ledOrgs[0]
+  const { org } = useActingOrg()
 
   const [title, setTitle] = useState('')
   const [kind, setKind] = useState<EventKind>('build_day')
