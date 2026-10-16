@@ -29,7 +29,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 - Platforms: api
 - Needs: Per route, a screen that calls it or deletion with its tests. Telling a reporter their report was resolved also needs a new notification type and the web admin screen to send it.
-- In code: `packages/api/src/routes/admin.ts`, `packages/api/src/routes/reports.ts`, `packages/api/src/routes/toy-ideas.ts`, `packages/api/src/routes/toy-transactions.ts`
+- In code: `packages/api/src/routes/toy-transactions.ts`
 
 
 ## Setup — needs Byron’s accounts
