@@ -112,6 +112,14 @@ beforeEach(() => {
 })
 
 describe('ChallengeDetailScreen', () => {
+  it('offers Report on another maker but not on yourself', async () => {
+    respond(joinedDetail({ participants: [{ profile_id: 'viewer1', name: 'Viewer', joined_at: '2026-08-14T03:00:00Z' }, { profile_id: 'p1', name: 'Sam', joined_at: '2026-08-14T03:00:00Z' }] }))
+    render(<ChallengeDetailScreen id="c1" />)
+    fireEvent.press(await screen.findByRole('tab', { name: 'Makers' }))
+    expect(screen.getByRole('button', { name: 'Report Sam' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Report Viewer' })).toBeNull()
+  })
+
   it('renders the brief the public route returns', async () => {
     mockGet.mockResolvedValue(detail({ participants: [{ profile_id: 'p1', name: 'Sam' }] }))
     render(<ChallengeDetailScreen id="c1" />)
