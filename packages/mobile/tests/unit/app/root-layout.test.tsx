@@ -12,6 +12,7 @@ jest.mock('expo-router', () => {
 })
 jest.mock('expo-splash-screen', () => ({ preventAutoHideAsync: jest.fn(), hideAsync: jest.fn() }))
 jest.mock('@expo-google-fonts/nunito', () => ({ useFonts: () => [true] }))
+jest.mock('../../../lib/acting-org', () => ({ ActingOrgProvider: ({ children }: { children: React.ReactNode }) => children }))
 jest.mock('../../../lib/auth-context', () => ({ AuthProvider: ({ children }: { children: React.ReactNode }) => children }))
 
 describe('RootLayout', () => {
