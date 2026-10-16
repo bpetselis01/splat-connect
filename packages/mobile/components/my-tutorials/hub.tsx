@@ -37,6 +37,7 @@ import { ErrorRow } from '../ui/ErrorRow'
 
 const SECTION_ICON: Record<SectionId, ComponentProps<typeof Ionicons>['name']> = {
   details: 'document-text-outline',
+  photos: 'images-outline',
   steps: 'list-outline',
   safety: 'shield-checkmark-outline',
   suits: 'people-outline',
@@ -45,6 +46,7 @@ const SECTION_ICON: Record<SectionId, ComponentProps<typeof Ionicons>['name']> =
   tools: 'construct-outline',
   files: 'folder-open-outline',
   stl: 'cube-outline',
+  collaborators: 'people-circle-outline',
 }
 
 /** What the More row says about backing: who said yes, who is still deciding. */
@@ -131,6 +133,8 @@ export function TutorialHub({ id, justCreated, fromPdf }: { id: string; justCrea
   const missing = getMissingFields(tutorial)
   const sections = sectionsFor(tutorial.kind)
   const incomplete = new Set(missing.map((g) => g.section))
+  const collaborators = tutorial.tutorial_contributors.map((c) => c.profiles.name).join(', ') || 'Just you'
+  const recommendations = `${tutorial.tutorial_recommendations.length} of 3`
   const { ready, total } = sectionProgress(tutorial)
   const isDraft = tutorial.status === 'draft'
 
@@ -299,15 +303,17 @@ export function TutorialHub({ id, justCreated, fromPdf }: { id: string; justCrea
               {done ? (
                 <Ionicons testID={`hub-done-${section}`} name="checkmark-circle" size={22} color={theme.colors.success} />
               ) : optionalEmpty ? (
-                <Pill label="Empty" bg={theme.colors.honeySoft} />
+                // Pill is alignSelf: flex-start, which beats the row's centring.
+                <View style={styles.emptyPill}>
+                  <Pill label="Empty" bg={theme.colors.honeySoft} />
+                </View>
               ) : null}
               <Ionicons name="chevron-forward" size={18} color={theme.colors.muted} />
             </Pressable>
           )
         })}
 
-        {/* Facts under the checklist rather than in the menu. Backing opens its
-            own screen; collaborators and recommendations are edited on the web. */}
+        {/* Facts under the checklist. Backing, Collaborators and Recommendations each open their own screen. */}
         <ListSection style={styles.moreHeading}>More</ListSection>
         <Pressable
           accessibilityRole="button"
@@ -318,19 +324,24 @@ export function TutorialHub({ id, justCreated, fromPdf }: { id: string; justCrea
           <Text style={styles.moreLabel}>Backing</Text>
           <Text style={styles.moreValue}>{backingSummary(backing)}</Text>
         </Pressable>
-        <View style={styles.moreRow}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Collaborators. ${collaborators}`}
+          onPress={() => router.push(`/tutorials/${id}/collaborators`)}
+          style={styles.moreRow}
+        >
           <Text style={styles.moreLabel}>Collaborators</Text>
-          <Text style={styles.moreValue}>
-            {tutorial.tutorial_contributors.map((c) => c.profiles.name).join(', ') || 'Just you'}
-            {' - edit on the web'}
-          </Text>
-        </View>
-        <View style={styles.moreRow}>
+          <Text style={styles.moreValue}>{collaborators}</Text>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Recommendations. ${recommendations}`}
+          onPress={() => router.push(`/tutorials/${id}/picks`)}
+          style={styles.moreRow}
+        >
           <Text style={styles.moreLabel}>Recommendations</Text>
-          <Text style={styles.moreValue}>
-            {tutorial.tutorial_recommendations.length} of 3 - edit on the web
-          </Text>
-        </View>
+          <Text style={styles.moreValue}>{recommendations}</Text>
+        </Pressable>
       </ScrollView>
 
       <View testID="hub-footer" style={[styles.footer, { paddingBottom: bottom }]}>
@@ -365,6 +376,10 @@ export function TutorialHub({ id, justCreated, fromPdf }: { id: string; justCrea
                 ? `${missing.length} thing${missing.length === 1 ? '' : 's'} still needed`
                 : 'Everything is ready'}
         </Text>
+        {isDraft && missing.length > 0 ? (
+          // The count alone left a family-less contributor guessing which two.
+          <Text style={styles.footnote}>{missing.map((g) => g.label).join(' · ')}</Text>
+        ) : null}
       </View>
     </Screen>
   )
@@ -498,6 +513,7 @@ const styles = StyleSheet.create({
 
 
   rowText: { flex: 1 },
+  emptyPill: { alignSelf: 'center' },
   rowSummary: {
     fontFamily: theme.fonts.regular,
     fontSize: theme.type.caption,

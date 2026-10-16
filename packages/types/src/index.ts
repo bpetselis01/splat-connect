@@ -26,6 +26,7 @@ export type { LearnCourse, LearnCourseSaved, LearnUnit, LearnLesson, LessonKind,
 export type { ContributorBadge, ContributorBadgeInput } from './contributor-badges'
 export { TOOL_GET_BY_LABEL, partsTotalCents, checkedOn, realignCaptions, formatPrintMinutes, printSettingRows, printSettingsLine } from './guides'
 export type { ToolGetBy, PrintSettings } from './guides'
+export type { CustomizationField, PrintFitNotes } from './printing'
 export { OUTCOME_STEPS, outcomeStates, PARTICIPANT_ROLE_LABEL } from './challenges'
 export type { OutcomeState } from './challenges'
 export { BUILD_URGENCIES } from './builds'
@@ -46,10 +47,10 @@ export { isApiError, isNetworkError, apiErrorDetail, apiMessage, makeApiClient }
 export type { ApiError } from './api-core'
 export { dateBadge, shortDate, monthHeading, monthKey, longDate, formatTimeRange, isPast } from './dates'
 import { printRequestExpired } from './printing'
-import type { PrinterStats, PrintFitNotes, TestPrint } from './printing'
+import type { PrinterStats, PrintFitNotes, TestPrint, CustomizationField } from './printing'
 // Named, not only the `export *` below: the API runs under tsx, which loads
 // this package as CommonJS, and Node cannot see names behind `export *` there.
-export { printCostCents, costRange, PRINT_ANSWER_DAYS, answerBy, printRequestExpired, PRINT_FIT_QUESTIONS, fitNotesProblem, fitNotesLines, bedFits, VERIFIED_MIN_JOBS, testPrintLabel, statsLine, machineStatsLines, orgPrintFacts, guideFitLine } from './printing'
+export { printCostCents, costRange, PRINT_ANSWER_DAYS, answerBy, printRequestExpired, fieldKey, customizationFieldsProblem, customizationNotes, MAX_CUSTOMIZATION_FIELDS, fitNotesLines, bedFits, VERIFIED_MIN_JOBS, testPrintLabel, statsLine, machineStatsLines, orgPrintFacts, guideFitLine } from './printing'
 export { costSummary } from './cost-summary'
 export type { CostLine, CostSummary } from './cost-summary'
 export { getMissingToyFields, computeToyStepStatuses } from './toy-steps'
@@ -60,9 +61,6 @@ export type Role = 'admin' | 'contributor'
 export interface ChildProfile {
   id: string
   parent_id: string
-  // Optional: a parent may add a child without naming one. The UI falls back to
-  // "Child N" by position — see packages/web/lib/child-label.ts.
-  name: string | null
   age: number | null
   // Ability Profile
   macs_level: string | null
@@ -131,7 +129,13 @@ export function readMeasure(m: ChildMeasure, text: string): number | null | unde
 export type EverydayNeed = (typeof EVERYDAY_NEEDS)[number]['value']
 
 /** Everything a child profile form writes. The retired columns are not in it. */
-export type ChildAnswers = Pick<ChildProfile, 'name' | 'age' | 'helps_with' | 'access' | 'one_hand' | 'press_force' | 'enjoys' | 'everyday_needs'>
+/** How a family's own list names a child: position, plus age when set. `index`
+ *  is the zero-based position by created_at. No name is stored or shown. */
+export function childLabel(index: number, age: number | null): string {
+  return age == null ? `Child ${index + 1}` : `Child ${index + 1}, age ${age}`
+}
+
+export type ChildAnswers = Pick<ChildProfile, 'age' | 'helps_with' | 'access' | 'one_hand' | 'press_force' | 'enjoys' | 'everyday_needs'>
 
 const labelOf = (vocab: readonly { value: string; label: string }[], v: string | null) =>
   vocab.find((o) => o.value === v)?.label
@@ -407,10 +411,6 @@ export interface ToyTransaction {
    *  never stored (064). */
   travel_km: number | null
   urgency: string | null
-  /** "Leo, 3" — free text, not a child_profiles reference. A child profile
-   *  carries clinical scores and measurements, and none of that belongs on a
-   *  public board (064). */
-  child_label: string | null
   /** Suburb only. "Family in Newtown" is the whole of what the board shows. */
   requester_suburb: string | null
   /** Whether the family already owns the toy, which changes what a maker is
@@ -531,7 +531,7 @@ export const PRINT_COLOURS = ['Any colour', 'Black', 'White', 'Blue'] as const
 export const MAX_PRINTERS_PER_REQUEST = 3
 
 export const PRINT_MATERIALS = ['PLA', 'PETG', 'ABS', 'TPU', 'ASA', 'Nylon'] as const
-export type PrintMaterial = (typeof PRINT_MATERIALS)[number]
+type PrintMaterial = (typeof PRINT_MATERIALS)[number]
 
 /**
  * Which step of a print job a record is at, derived from what the row stores.
@@ -540,7 +540,7 @@ export type PrintMaterial = (typeof PRINT_MATERIALS)[number]
  * statuses would mean every `status = 'accepted'` predicate in the API stops
  * matching a job that is on the bed.
  */
-export type PrintStep = 'asked' | 'accepted' | 'printing' | 'ready' | 'closed'
+type PrintStep = 'asked' | 'accepted' | 'printing' | 'ready' | 'closed'
 
 export function printStep(
   tx: Pick<ToyTransaction, 'status' | 'printing_started_at' | 'ready_at'>
@@ -906,7 +906,7 @@ export interface ToyTransactionMessage {
 // depends on who is asking: the requester takes toy_id, and on an exchange the
 // owner takes offered_toy_id. Null when the viewer received nothing — the giver
 // on a donation, or any open transaction.
-export type ReceivedToy = { id: string; name: string; status: Toy['status'] }
+type ReceivedToy = { id: string; name: string; status: Toy['status'] }
 
 export interface ToyTransactionDetail extends ToyTransaction {
   toy_name: string
@@ -1043,7 +1043,7 @@ export const CHALLENGE_FILTERS: { id: string; label: string; keep: (c: PublicCha
 ]
 
 /** A named constraint on a challenge (110). Who added it is never public. */
-export interface IdeaConstraint {
+interface IdeaConstraint {
   id: string
   label: string
   note: string | null
@@ -1080,18 +1080,6 @@ export interface ThreadMessage {
 export type Difficulty = 'easy' | 'medium' | 'hard'
 export type TutorialStatus = 'draft' | 'pending' | 'approved' | 'rejected'
 
-/** How far along a design is, declared by its author and worn as a badge.
- *  Only 'complete' items appear in the default public library listing — the
- *  practical control that stops an untested design reaching a child. */
-export type TutorialMaturity = 'concept' | 'prototype' | 'in_progress' | 'complete'
-
-export const MATURITY_LABEL: Record<TutorialMaturity, string> = {
-  concept: 'Concept',
-  prototype: 'Prototype',
-  in_progress: 'In progress',
-  complete: 'Complete',
-}
-
 /** The safety checklist a contributor affirms before a tutorial can be
  *  submitted for review, and the reviewer checks against. One copy, shown on
  *  web and mobile submission and on the admin review screen. */
@@ -1105,7 +1093,7 @@ export const SAFETY_CHECKLIST: readonly string[] = [
 ]
 export type ContributorRole = 'primary' | 'collaborator'
 
-export type OrgStatus = 'active' | 'suspended'
+type OrgStatus = 'active' | 'suspended'
 export type TutorialOrgStatus = 'pending' | 'accepted' | 'declined'
 export type AgreementType = 'contributor_terms' | 'org_leader_terms'
 
@@ -1194,7 +1182,7 @@ export const ORG_KINDS = [
   'Charity or disability service',
 ] as const
 
-export type PaymentMethod = 'cash' | 'bank_transfer' | 'payid' | 'any'
+type PaymentMethod = 'cash' | 'bank_transfer' | 'payid' | 'any'
 export const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
   { value: 'cash', label: 'Cash on the day' },
   { value: 'bank_transfer', label: 'Bank transfer' },
@@ -1212,7 +1200,7 @@ export const ORG_DOOR_TARGETS: { value: OrgDoorTarget; label: string }[] = [
   { value: 'build', label: 'Ask for a build' },
   { value: 'message', label: 'Message them' },
 ]
-export interface OrgDoor {
+interface OrgDoor {
   id: string
   org_id: string
   position: number
@@ -1245,14 +1233,14 @@ export interface OrgThanks {
 
 /** 077. Message: one conversation per person per organisation, readable by
  *  that person and every leader of the org. */
-export interface OrgConversation {
+interface OrgConversation {
   id: string
   org_id: string
   profile_id: string
   created_at: string
   updated_at: string
 }
-export interface OrgMessage {
+interface OrgMessage {
   id: string
   conversation_id: string
   sender_id: string
@@ -1272,7 +1260,7 @@ export const ORG_CAPABILITIES = [
 ] as const
 export type OrgCapability = (typeof ORG_CAPABILITIES)[number]
 
-export type OrgPublishStatus = 'draft' | 'published'
+type OrgPublishStatus = 'draft' | 'published'
 
 /** The four kinds the publish form offers as radios, with the sentence each
  *  one carries there. 061. */
@@ -1293,7 +1281,7 @@ export const EVENT_KIND_LABEL: Record<EventKind, string> = {
 
 /** The state filter on /get-involved/events, and the publish form's dropdown. */
 export const AU_STATES = ['NSW', 'VIC', 'QLD', 'WA', 'SA', 'TAS', 'ACT', 'NT'] as const
-export type AuState = (typeof AU_STATES)[number]
+type AuState = (typeof AU_STATES)[number]
 
 /** What a host can have out on the benches. 061. */
 export const EVENT_TOOLS = [
@@ -1648,7 +1636,7 @@ export interface RecyclingDropoff {
   contributor_name?: string | null
 }
 
-export type OrgRequestStatus = 'pending' | 'approved' | 'declined'
+type OrgRequestStatus = 'pending' | 'approved' | 'declined'
 
 /**
  * 060. Somebody asking for an organisation to exist.
@@ -1694,8 +1682,8 @@ export interface OrgLeader {
  * consumer: two copies would let the clients offer a leader different actions
  * on the same project.
  */
-export type LeaderAction = 'back' | 'decline' | 'approve' | 'reject'
-export type AdminAction = 'approve' | 'reject' | 'unpublish'
+type LeaderAction = 'back' | 'decline' | 'approve' | 'reject'
+type AdminAction = 'approve' | 'reject' | 'unpublish'
 
 export function leaderActions(
   backing: TutorialOrgStatus | null,
@@ -2086,7 +2074,6 @@ export interface Tutorial extends Suits {
   difficulty: Difficulty
   kind: TutorialKind
   status: TutorialStatus
-  maturity: TutorialMaturity
   /** When the author affirmed SAFETY_CHECKLIST; null until they have, and a
    *  draft cannot be submitted for review while it is null. */
   safety_declared_at: string | null
@@ -2101,6 +2088,8 @@ export interface Tutorial extends Suits {
    *  formatAgeRange() draws them. */
   age_min?: number | null
   age_max?: number | null
+  /** 134. What the contributor asks a family on a print request; none by default. */
+  customization_fields?: CustomizationField[]
   /** PostgREST computed fields (066). Present only when a select names them —
    *  the public list and detail routes do. */
   thanks_count?: number
@@ -2224,7 +2213,7 @@ export interface Recommendation {
   position: number
   /** 129. "Required first": make the recommended guide before this one. */
   required?: boolean
-  tutorials: Pick<Tutorial, 'id' | 'title' | 'kind' | 'difficulty' | 'toy_photo_url' | 'status' | 'maturity'> & { build_minutes?: number | null }
+  tutorials: Pick<Tutorial, 'id' | 'title' | 'kind' | 'difficulty' | 'toy_photo_url' | 'status'> & { build_minutes?: number | null }
 }
 
 // A tutorial with all its related information: the parts needed, tools needed,
@@ -2447,7 +2436,7 @@ export interface OrgThread {
  * later is a code change rather than a migration. Every member is live — see
  * SAVE_SLUGS.
  */
-export type SaveEntityType =
+type SaveEntityType =
   | 'tutorial'
   | 'toy'
   | 'challenge'

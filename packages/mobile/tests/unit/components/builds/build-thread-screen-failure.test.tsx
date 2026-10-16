@@ -24,7 +24,7 @@ const build = {
   id: 'b1', type: 'build', status: 'requested', toy_id: null, offered_toy_id: null, requester_id: 'fam', owner_id: null,
   owner_org_id: null, owner_code: '111111', requester_code: '222222', owner_confirmed_at: null, requester_confirmed_at: null,
   pickup_line1: null, pickup_suburb: null, pickup_state: null, pickup_postcode: null, pickup_instructions: null,
-  tutorial_id: 'g1', tutorial_title: 'Bubble machine', build_brief: null, travel_km: null, urgency: null, child_label: null,
+  tutorial_id: 'g1', tutorial_title: 'Bubble machine', build_brief: null, travel_km: null, urgency: null,
   requester_suburb: 'Newtown', family_has_toy: false, working_photo_url: null, work_approved_at: null, owner_name: 'Tom Beattie',
   requester_name: 'Sam', toy_name: '', offered_toy_name: null, blocked_by_rival_accept: false, received_toy: null, messages: [],
   created_at: new Date().toISOString(), updated_at: new Date().toISOString(),

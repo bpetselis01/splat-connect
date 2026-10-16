@@ -51,7 +51,6 @@ const tutorial = (over: Record<string, unknown> = {}) => ({
   title: 'Roaring dinosaur',
   kind: 'assistive_tech',
   difficulty: 'medium',
-  maturity: 'complete',
   status: 'draft',
   updated_at: 'v1',
   safety_declared_at: null,
@@ -92,7 +91,7 @@ it('shows a row per section with what each still needs', () => {
   expect(screen.getByTestId('hub-row-details')).toBeTruthy()
   expect(screen.getByTestId('hub-row-safety')).toBeTruthy()
   expect(screen.getAllByText('None yet - at least one')).toHaveLength(2)
-  expect(screen.getByText('Guide PDF and a photo')).toBeTruthy()
+  expect(screen.getByText('None yet - the first is the cover')).toBeTruthy()
 })
 
 it('omits the STL row for a toy adaptation', () => {
@@ -111,9 +110,9 @@ it('opens a section when its row is tapped', () => {
 it('counts what is ready and what is left', () => {
   mockDraft.tutorial = tutorial({ safety_declared_at: '2026-09-02', parts: [{ name: 'a' }] })
   render(<TutorialHub id="t1" />)
-  // details + steps (optional, so never a gap) + safety + parts, of seven
-  expect(screen.getByText('4 of 7 sections complete')).toBeTruthy()
-  expect(screen.getByRole('progressbar').props.accessibilityValue).toEqual({ min: 0, max: 7, now: 4 })
+  // details + safety + parts, of seven (steps has neither steps nor a PDF here)
+  expect(screen.getByText('3 of 7 sections complete')).toBeTruthy()
+  expect(screen.getByRole('progressbar').props.accessibilityValue).toEqual({ min: 0, max: 7, now: 3 })
   expect(screen.getByText('4 things still needed')).toBeTruthy()
 })
 
@@ -197,7 +196,7 @@ it('asks a PDF-started draft to be checked, and says which steps were not saved'
 
 // The spec's "More" section: read-only facts, below the checklist. Not in the
 // menu, which holds actions.
-it('lists what is edited elsewhere, and opens Backing', async () => {
+it('lists the More rows, and each opens its own screen', async () => {
   mockDraft.tutorial = tutorial({
     tutorial_contributors: [{ profiles: { name: 'Ada' } }],
     tutorial_recommendations: [{ id: 'r1' }],
@@ -207,10 +206,12 @@ it('lists what is edited elsewhere, and opens Backing', async () => {
   expect(await screen.findByText('None yet - optional')).toBeTruthy()
   fireEvent.press(screen.getByRole('button', { name: /^Backing/ }))
   expect(mockPush).toHaveBeenCalledWith('/tutorials/t1/backing')
-  expect(screen.getByText('Collaborators')).toBeTruthy()
-  expect(screen.getByText(/Ada - edit on the web/)).toBeTruthy()
-  expect(screen.getByText('Recommendations')).toBeTruthy()
-  expect(screen.getByText('1 of 3 - edit on the web')).toBeTruthy()
+  expect(screen.getByText('Ada')).toBeTruthy()
+  fireEvent.press(screen.getByRole('button', { name: /^Collaborators/ }))
+  expect(mockPush).toHaveBeenCalledWith('/tutorials/t1/collaborators')
+  expect(screen.getByText('1 of 3')).toBeTruthy()
+  fireEvent.press(screen.getByRole('button', { name: /^Recommendations/ }))
+  expect(mockPush).toHaveBeenCalledWith('/tutorials/t1/picks')
 })
 
 it('shows a load failure rather than an empty hub', () => {

@@ -8,6 +8,7 @@ import * as ImagePicker from 'expo-image-picker'
 import type { ToyTransaction } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { uploadFile } from '../../lib/upload'
+import { pickPreviewedPhoto } from '../../lib/pick-photo'
 
 export const startPrint = (id: string) =>
   apiClient.post<ToyTransaction>(`/api/toy-transactions/${id}/print-started`, {})
@@ -15,15 +16,10 @@ export const startPrint = (id: string) =>
 /**
  * Ready needs a photo — 058 will not store one without the other, so a family
  * never travels for a part on somebody's word alone. Null when the printer
- * backs out of the picker; throws when the library is refused, with a sentence
- * the caller can show.
+ * backs out of the picker.
  */
 export async function markReady(id: string): Promise<ToyTransaction | null> {
-  const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
-  if (!permission.granted) {
-    throw new Error('failed with status 400: Photo library access is needed to post the photo.')
-  }
-  const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ['images'] })
+  const result = await pickPreviewedPhoto()
   if (result.canceled || !result.assets?.length) return null
   const asset = result.assets[0]!
   const updated = await uploadFile(`/api/toy-transactions/${id}/print-ready`, id, {
@@ -47,11 +43,7 @@ export async function withdrawRequest(tx: Pick<ToyTransaction, 'id' | 'print_gro
  * fail. Null when they back out of the picker.
  */
 export async function submitTestPrint(printerId: string): Promise<unknown> {
-  const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
-  if (!permission.granted) {
-    throw new Error('failed with status 400: Photo library access is needed to post the photo.')
-  }
-  const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ['images'] })
+  const result = await pickPreviewedPhoto()
   if (result.canceled || !result.assets?.length) return null
   const asset = result.assets[0]!
   return uploadFile(

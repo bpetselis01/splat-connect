@@ -88,7 +88,7 @@
  },
  {
   "id": "learn",
-  "name": "Learn \u00b7 Course home",
+  "name": "Learn · Course home",
   "group": "Learn",
   "boardRoute": "/learn",
   "route": "/learn"
@@ -610,7 +610,7 @@
  },
  {
   "id": "legal_purpose",
-  "name": "What Connect is (and isn\u2019t)",
+  "name": "What Connect is (and isn’t)",
   "group": "Legal",
   "boardRoute": "/legal/intended-purpose",
   "route": "/legal/intended-purpose",

@@ -18,7 +18,7 @@ const stl = [{ id: 's1', tutorial_id: 't1', filename: 'bracket.stl', file_url: '
 function rec(id: string, position: number, status: Recommendation['tutorials']['status'] = 'approved'): Recommendation {
   return {
     position,
-    tutorials: { id, title: `Rec ${id}`, kind: 'assistive_tech', difficulty: 'easy', toy_photo_url: null, status, maturity: 'complete' },
+    tutorials: { id, title: `Rec ${id}`, kind: 'assistive_tech', difficulty: 'easy', toy_photo_url: null, status },
   }
 }
 
@@ -30,7 +30,6 @@ function tutorial(overrides: Partial<TutorialWithDetails> = {}): TutorialWithDet
     difficulty: 'easy',
     kind: 'toy_adaptation',
     status: 'approved',
-    maturity: 'complete',
     safety_declared_at: null,
     build_minutes: 30,
     tutorial_pdf_url: null,
@@ -72,11 +71,11 @@ describe('TutorialView', () => {
       { id: 'b', tutorial_id: 't1', position: 2, title: null, body: 'Fit the interrupter.', photo_url: null },
     ]
     const { unmount } = render(
-      <TutorialView tutorial={tutorial({ steps })} signedIn fit="Suits Ollie — big button, light press, short hold" />
+      <TutorialView tutorial={tutorial({ steps })} signedIn fit="Suits your child" />
     )
     expect(screen.getByText('Open it')).toBeInTheDocument()
     expect(screen.getByText('Fit the interrupter.')).toBeInTheDocument()
-    expect(screen.getByTestId('fit-callout')).toHaveTextContent('Suits Ollie — big button, light press, short hold')
+    expect(screen.getByTestId('fit-callout')).toHaveTextContent('Suits your child')
     unmount()
     render(<TutorialView tutorial={tutorial({ steps })} signedIn />)
     expect(screen.queryByTestId('fit-callout')).toBeNull()
@@ -293,5 +292,11 @@ describe('pinning community notes', () => {
     await waitFor(() => expect(browserApiClient.post).toHaveBeenCalledWith('/api/tutorials/t1/notes/n/pin', {}))
     fireEvent.click(screen.getByRole('button', { name: 'Unpin' }))
     await waitFor(() => expect(browserApiClient.post).toHaveBeenCalledWith('/api/tutorials/t1/notes/q/unpin', {}))
+  })
+
+  it('labels a note on a guide with no steps "Whole guide"', () => {
+    render(<TutorialView signedIn canPin tutorial={tutorial({ steps: [] })} notes={[{ ...note, step_position: null }]} />)
+    expect(screen.getByText(/Whole guide · Priya/)).toBeInTheDocument()
+    expect(screen.queryByText(/Missing step/)).toBeNull()
   })
 })

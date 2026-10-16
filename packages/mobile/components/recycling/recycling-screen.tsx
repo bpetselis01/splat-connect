@@ -34,6 +34,7 @@ import {
 } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { uploadFile } from '../../lib/upload'
+import { pickPreviewedPhoto } from '../../lib/pick-photo'
 import { useCapabilities } from '../../lib/capabilities'
 import { theme } from '../../lib/theme'
 import { useBottomClearance } from '../../lib/bottom-clearance'
@@ -337,9 +338,7 @@ function BookDropoff({
   async function addPhoto() {
     if (uploading) return
     setError(null)
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
-    if (!permission.granted) return setError('Photo library access is needed to choose a photo.')
-    const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ['images'] })
+    const result = await pickPreviewedPhoto()
     const asset = result.canceled ? null : result.assets?.[0]
     if (!asset) return
     setUploading(true)

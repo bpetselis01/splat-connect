@@ -8,7 +8,7 @@ import { Animated, Pressable, Text, StyleSheet, type StyleProp, type ViewStyle }
 import { Ionicons } from '@expo/vector-icons'
 import { theme } from '../../lib/theme'
 
-export type ToastMessage = { text: string; undo?: () => void }
+type ToastMessage = { text: string; undo?: () => void }
 
 export function useToast(ms = 2800) {
   const [toast, setToast] = useState<ToastMessage | null>(null)

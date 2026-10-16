@@ -186,7 +186,6 @@ describe('what is sent', () => {
     expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions/build', {
       tutorial_id: 'g0',
       build_brief: null,
-      child_label: '',
       requester_suburb: 'Glebe',
       travel_km: 10,
       urgency: 'No rush',
@@ -201,14 +200,13 @@ describe('what is sent', () => {
     expect(body().travel_km).toBe(km)
   })
 
-  it('trims the suburb, the child label and the note, and sends a blank note as null', async () => {
+  it('trims the suburb and the note, and sends a blank note as null', async () => {
     await ready()
     fireEvent.changeText(screen.getByPlaceholderText('Newtown'), '  Glebe  ')
-    fireEvent.changeText(screen.getByPlaceholderText('e.g. Leo, 3 — 100 mm button switch'), '  Leo, 3  ')
     fireEvent.changeText(screen.getByPlaceholderText(/^Why this toy/), '   ')
     post()
     await waitFor(() => expect(mockPost).toHaveBeenCalled())
-    expect(body()).toMatchObject({ requester_suburb: 'Glebe', child_label: 'Leo, 3', build_brief: null })
+    expect(body()).toMatchObject({ requester_suburb: 'Glebe', build_brief: null })
   })
 
   it.each(NAMES.filter((n) => n.label !== 'very long' && n.value.trim() === n.value))('sends a note with $label as typed', async ({ value }) => {
@@ -219,12 +217,17 @@ describe('what is sent', () => {
     expect(body().build_brief).toBe(value)
   })
 
-  it('caps the fields at what the API keeps: child label 60, suburb 80, note 2000', async () => {
+  it('caps the fields at what the API keeps: suburb 80, note 2000', async () => {
     render(<AskForBuildScreen />)
     await screen.findByText('Guide 0')
-    expect(screen.getByPlaceholderText('e.g. Leo, 3 — 100 mm button switch').props.maxLength).toBe(60)
     expect(screen.getByPlaceholderText('Newtown').props.maxLength).toBe(80)
     expect(screen.getByPlaceholderText(/^Why this toy/).props.maxLength).toBe(2000)
+  })
+
+  it('no longer asks who the build is for', async () => {
+    render(<AskForBuildScreen />)
+    await screen.findByText('Guide 0')
+    expect(screen.queryByText('Who is it for?')).toBeNull()
   })
 
   it('goes to the Yours tab on the board after posting', async () => {

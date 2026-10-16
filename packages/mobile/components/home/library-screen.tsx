@@ -8,7 +8,6 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { View, Text, FlatList, RefreshControl, StyleSheet } from 'react-native'
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import Animated, { FadeInDown } from 'react-native-reanimated'
 import type { Tutorial, TutorialOrg, Difficulty } from '@splat-connect/types'
 import { KIND_LABEL, formatBuildTime } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
@@ -144,7 +143,7 @@ export function LibraryScreen() {
         guideMatches(t, draft)
     )
   const visible = sortGuides(matching(filters), filters.sort as GuideSort, child)
-  const groups = guideGroups(child ? child.name?.trim() || 'your child' : null)
+  const groups = guideGroups(!!child)
   const tags = filterTags(groups, filters, GUIDE_DEFAULTS, ['sort'])
   const filtered = tags.length > 0 || !!q
   const heading = filtered ? 'Matching guides' : 'All guides'
@@ -240,11 +239,9 @@ export function LibraryScreen() {
           const org = backer(item)
           const pill = DIFF_PILL[item.difficulty]
           return (
-            // Past the first screenful the stagger is invisible and only adds
-            // latency, so the delay is capped rather than growing with the index.
-            <Animated.View
-              entering={FadeInDown.delay(Math.min(index, 7) * theme.motion.stagger).duration(theme.motion.base)}
-            >
+            // A Reanimated `entering` on a FlatList cell corrupts the cell's measured height
+            // (stacked and blank rows), so rows appear without an animation.
+            <>
               <RowCard
                 title={item.title}
                 photo={item.toy_photo_url}
@@ -274,7 +271,7 @@ export function LibraryScreen() {
                 }
                 aside={<SaveButton slug="tutorials" id={item.id} saves={saves} />}
               />
-            </Animated.View>
+            </>
           )
         }}
       />

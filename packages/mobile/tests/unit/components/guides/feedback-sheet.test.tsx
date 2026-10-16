@@ -40,11 +40,12 @@ it('preselects the step it was opened on', () => {
   expect(screen.getByRole('button', { name: 'Post' }).props.accessibilityState?.disabled).toBeFalsy()
 })
 
-it('a guide with no steps still posts, as a missing step', async () => {
+it('on a guide with no steps there is no step picker and Post only needs a note', async () => {
   render(<FeedbackSheet {...base} steps={[]} />)
-  expect(screen.queryByText(/^Step \d/)).toBeNull()
-  fireEvent.press(screen.getByText('Missing step'))
-  fireEvent.changeText(screen.getByLabelText('Your note'), 'Worked great.')
+  expect(screen.queryByText('Which step?')).toBeNull()
+  expect(screen.queryByText('Missing step')).toBeNull()
+  expect(screen.getByText(/Your note goes on the whole guide/)).toBeTruthy()
+  fireEvent.changeText(screen.getByLabelText('Your note'), 'The strap length is missing')
   fireEvent.press(screen.getByRole('button', { name: 'Post' }))
   await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/tutorials/g/notes', expect.objectContaining({ step_position: null })))
 })

@@ -28,7 +28,7 @@ const EMPTY: PickupAddress = {
   pickup_postcode: '',
 }
 
-export function formatAddress(address: PickupAddress): string {
+function formatAddress(address: PickupAddress): string {
   return FIELDS.map((f) => address[f.key])
     .filter(Boolean)
     .join(', ')

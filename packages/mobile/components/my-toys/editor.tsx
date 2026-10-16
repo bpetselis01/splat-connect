@@ -11,6 +11,7 @@ import { apiClient } from '../../lib/api-client'
 import { loadOwnedToy } from '../../lib/my-toy'
 import { confirmDestructive, notify } from '../../lib/confirm'
 import { uploadFile } from '../../lib/upload'
+import { pickPreviewedPhoto } from '../../lib/pick-photo'
 import { theme } from '../../lib/theme'
 import { useBottomClearance } from '../../lib/bottom-clearance'
 import { useCapabilities } from '../../lib/capabilities'
@@ -241,24 +242,16 @@ export function Editor({ id }: { id: string }) {
    * one shot by definition.
    */
   async function pickImageAssets(source: 'camera' | 'library', remaining: number) {
-    const permission =
-      source === 'camera'
-        ? await ImagePicker.requestCameraPermissionsAsync()
-        : await ImagePicker.requestMediaLibraryPermissionsAsync()
-    if (!permission.granted) {
-      setPhotosError(
-        source === 'camera'
-          ? 'Camera access is needed to take a photo.'
-          : 'Photo library access is needed to choose a photo.'
-      )
+    // The library needs no permission: iOS's system picker hands over only
+    // the photos the person chooses.
+    if (source === 'camera' && !(await ImagePicker.requestCameraPermissionsAsync()).granted) {
+      setPhotosError('Camera access is needed to take a photo.')
       return []
     }
     const result =
       source === 'camera'
         ? await ImagePicker.launchCameraAsync({ quality: 0.7 })
-        : await ImagePicker.launchImageLibraryAsync({
-            quality: 0.7,
-            mediaTypes: ['images'],
+        : await pickPreviewedPhoto({
             allowsMultipleSelection: remaining > 1,
             selectionLimit: remaining,
           })

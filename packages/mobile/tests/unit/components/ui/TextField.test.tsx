@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react-native'
-import { StyleSheet } from 'react-native'
+import { StyleSheet, Text } from 'react-native'
 import { interpolateColor } from 'react-native-reanimated'
 import { TextField } from '../../../../components/ui/TextField'
 import { theme } from '../../../../lib/theme'
@@ -11,4 +11,10 @@ it('a text field rests on an ink border', () => {
   // so the rest value is read the same way reanimated produces it.
   expect(style.borderColor).toBe(interpolateColor(0, [0, 1], [theme.colors.ink, theme.colors.primary]))
   expect(style.borderWidth).toBe(theme.border.hairline)
+})
+
+it('renders a label accessory beside the label', () => {
+  render(<TextField label="Works with" labelAccessory={<Text>accessory</Text>} />)
+  expect(screen.getByText('Works with')).toBeTruthy()
+  expect(screen.getByText('accessory')).toBeTruthy()
 })

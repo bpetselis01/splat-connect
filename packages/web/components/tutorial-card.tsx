@@ -4,7 +4,6 @@ import { HandTap, HandHeart, Clock, Cube, Smiley, CircleHalf, Fire, SealCheck } 
 import { CardPhoto, tintFor } from './card-photo'
 import {
   KIND_LABEL,
-  MATURITY_LABEL,
   formatBuildTime,
   type Difficulty,
   type Tutorial,
@@ -16,7 +15,6 @@ import {
  *  the tutorial — can be a card too. */
 type Listed = Pick<Tutorial, 'id' | 'title' | 'difficulty' | 'kind' | 'toy_photo_url'> & {
   description?: string | null
-  maturity?: Tutorial['maturity']
   tutorial_orgs?: TutorialOrg[]
   // 066. Optional because a recommendation's embedded target does not carry
   // them; the card draws each only when it is there.
@@ -91,9 +89,6 @@ export function TutorialCard({
               <Cube weight="bold" aria-hidden="true" />
               Needs printing
             </span>
-          )}
-          {tutorial.maturity && tutorial.maturity !== 'complete' && (
-            <span className="pill-tag">{MATURITY_LABEL[tutorial.maturity]}</span>
           )}
         </div>
         <p className="browse-card__title">{tutorial.title}</p>

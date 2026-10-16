@@ -5,7 +5,7 @@
 // copy of the draft to fall out of step with the first.
 import { Stack, useLocalSearchParams } from 'expo-router'
 import { TutorialDraftProvider, useDraft } from '../../../../lib/use-tutorial-draft'
-import { stackScreenOptions } from '../../../../lib/nav-options'
+import { headerLeftSlot, headerRightSlot, stackScreenOptions } from '../../../../lib/nav-options'
 import { SaveChip, SAVE_CHIP_LABEL } from '../../../../components/my-tutorials/sections/save-chip'
 import { CloseToTabsButton } from '../../../../components/ui/CloseButton'
 
@@ -36,13 +36,13 @@ function EditorStack() {
         headerBackTitle: 'Back',
         // Every editor screen closes through the draft, so a tap inside the
         // 250ms debounce is saved rather than dropped on unmount.
-        headerLeft: () => <HubCloseButton />,
+        ...headerLeftSlot(() => <HubCloseButton />),
         // The save chip belongs to the header, not to the top of each
         // section's scroll: it is the only feedback autosave has, and in the
         // body it shifted the content by a line every time it changed. One
         // declaration here covers all seven screens, and it sits inside the
         // provider so it reads the same draft they write.
-        headerRight: SAVE_CHIP_LABEL[saveState] ? () => <SaveChip /> : undefined,
+        ...(SAVE_CHIP_LABEL[saveState] ? headerRightSlot(() => <SaveChip />) : {}),
       }}
     >
       <Stack.Screen
@@ -56,9 +56,11 @@ function EditorStack() {
       <Stack.Screen name="picks" options={{ title: 'Worth a look' }} />
       <Stack.Screen name="parts" options={{ title: 'Parts' }} />
       <Stack.Screen name="tools" options={{ title: 'Tools' }} />
+      <Stack.Screen name="photos" options={{ title: 'Photos' }} />
       <Stack.Screen name="files" options={{ title: 'Files' }} />
       <Stack.Screen name="stl" options={{ title: '3D print files' }} />
       <Stack.Screen name="backing" options={{ title: 'Backing' }} />
+      <Stack.Screen name="collaborators" options={{ title: 'Collaborators' }} />
     </Stack>
   )
 }

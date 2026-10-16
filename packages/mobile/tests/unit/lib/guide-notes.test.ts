@@ -44,3 +44,16 @@ it('counts revisions in words', () => {
   expect(pinCountLabel(1)).toBe('1 pinned revision')
   expect(pinCountLabel(2)).toBe('2 pinned revisions')
 })
+
+describe('stepLabel', () => {
+  it('calls a note on a guide with no steps "Whole guide"', () => {
+    expect(stepLabel(note({ step_position: null }) as never, 0)).toBe('Whole guide')
+  })
+  it('keeps "Missing step" when the guide has steps', () => {
+    expect(stepLabel(note({ step_position: null }) as never, 3)).toBe('Missing step')
+    expect(stepLabel(note({ step_position: 9 }) as never, 3)).toBe('Missing step')
+  })
+  it('keeps "Step n" for a real step', () => {
+    expect(stepLabel(note({ step_position: 2 }) as never, 3)).toBe('Step 2')
+  })
+})

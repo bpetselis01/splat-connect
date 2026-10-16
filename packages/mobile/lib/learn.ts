@@ -5,7 +5,7 @@ import { LEARN_ARTICLES, type LearnArticle } from './learn-content'
 
 export const LEARN_PROGRESS_KEY = 'learn-progress'
 
-export type LearnProgress = {
+type LearnProgress = {
   read: Set<string>
   markRead: (slug: string) => void
   next: LearnArticle | null

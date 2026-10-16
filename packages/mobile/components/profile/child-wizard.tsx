@@ -1,6 +1,6 @@
 // packages/mobile/components/profile/child-wizard.tsx
 // The child profile wizard, (onboarding)/child — the phone twin of web's
-// components/child-wizard.tsx, so the two first runs match: name and age, the
+// components/child-wizard.tsx, so the two first runs match: age, the
 // four child questions (128's CHILD_QUESTIONS — the same answers guides are
 // tagged with), then the room. One question a screen, every one skippable.
 // Measurements live in the child editor, not here. Continue saves what the step answered; Skip saves nothing, because
@@ -32,7 +32,7 @@ const LINES: Record<(typeof CHILD_QUESTIONS)[number]['child'], [string, MascotPo
   enjoys: ['Lights and sound are the classic reward. Some children prefer calm.', 'party'],
 }
 const STEPS: { kind: Kind; q?: (typeof CHILD_QUESTIONS)[number]; heading: string; line: string; pose: MascotPose; help?: string; fields: (keyof Answers)[] }[] = [
-  { kind: 'about', heading: 'Who are we finding toys for?', line: 'Hi! A few quick questions. Skip any you like.', pose: 'wave', fields: ['name', 'age'] },
+  { kind: 'about', heading: 'Who are we finding toys for?', line: 'Hi! A few quick questions. Skip any you like.', pose: 'wave', fields: ['age'] },
   ...CHILD_QUESTIONS.map((q) => ({
     kind: 'question' as const,
     q,
@@ -45,7 +45,7 @@ const STEPS: { kind: Kind; q?: (typeof CHILD_QUESTIONS)[number]; heading: string
   { kind: 'room', heading: 'Good to know', help: 'Notes for whoever makes or lends a toy. Pick any that apply.', line: 'Almost done.', pose: 'party', fields: ['everyday_needs'] },
 ]
 
-const EMPTY: Answers = { name: null, age: null, helps_with: [], access: [], one_hand: false, press_force: null, enjoys: [], everyday_needs: [] }
+const EMPTY: Answers = { age: null, helps_with: [], access: [], one_hand: false, press_force: null, enjoys: [], everyday_needs: [] }
 
 export function ChildWizard() {
   const bottom = useBottomClearance()
@@ -67,7 +67,7 @@ export function ChildWizard() {
 
   function saveAndNext() {
     // Only what this step answered. A cleared answer (an emptied list, a
-    // chip or name taken back out) is an answer when the child had one
+    // chip taken back out) is an answer when the child had one
     // before; otherwise empty is the same as a skip.
     const answered = STEPS[step].fields.filter((f) => {
       const v = draft[f]
@@ -77,13 +77,11 @@ export function ChildWizard() {
       return v !== null || (before != null && !Array.isArray(before))
     })
     const fields: Partial<Answers> = Object.fromEntries(answered.map((f) => [f, draft[f]]))
-    if ('name' in fields) fields.name = fields.name?.trim() || null
     if (Object.keys(fields).length) save(fields)
     next()
   }
 
   const current = STEPS[step]
-  const name = draft.name?.trim() || profile?.name?.trim() || 'your child'
 
   if (done) {
     return (
@@ -104,7 +102,7 @@ export function ChildWizard() {
         ))}
       </View>
       <Text style={styles.stepOf}>STEP {step + 1} OF {STEPS.length}</Text>
-      <Text accessibilityRole="header" style={styles.heading}>{current.heading.replace('{name}', name)}</Text>
+      <Text accessibilityRole="header" style={styles.heading}>{current.heading}</Text>
       <View style={styles.says}>
         <Mascot pose={current.pose} size={74} />
         <Text style={styles.saysText}>{current.line}</Text>
@@ -113,12 +111,6 @@ export function ChildWizard() {
 
       {loading ? null : current.kind === 'about' ? (
         <>
-          <TextField
-            label="First name (optional)"
-            placeholder="e.g. Sam"
-            value={draft.name ?? ''}
-            onChangeText={(v) => set({ name: v.trim() ? v : null })}
-          />
           <TextField
             label="Age"
             accessibilityLabel="Age in years"
@@ -142,7 +134,7 @@ export function ChildWizard() {
             />
             {current.q.child === 'access' ? (
               <ManyChips
-                options={[{ value: 'one_hand', label: `${ONE_HAND_LABEL} for ${name}` }]}
+                options={[{ value: 'one_hand', label: `${ONE_HAND_LABEL} for your child` }]}
                 value={draft.one_hand ? ['one_hand'] : []}
                 onChange={(v) => set({ one_hand: v.length > 0 })}
               />
@@ -168,7 +160,7 @@ export function ChildWizard() {
 
 function pick(p: Answers): Answers {
   return {
-    name: p.name, age: p.age, helps_with: p.helps_with ?? [], access: p.access ?? [], one_hand: p.one_hand === true,
+    age: p.age, helps_with: p.helps_with ?? [], access: p.access ?? [], one_hand: p.one_hand === true,
     press_force: p.press_force, enjoys: p.enjoys ?? [], everyday_needs: p.everyday_needs ?? [],
   }
 }

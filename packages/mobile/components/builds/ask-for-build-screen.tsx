@@ -39,7 +39,6 @@ export function AskForBuildScreen() {
   const [tutorials, setTutorials] = useState<Tutorial[]>([])
   const [query, setQuery] = useState('')
   const [tutorialId, setTutorialId] = useState(guide ?? '')
-  const [childLabel, setChildLabel] = useState('')
   const [suburb, setSuburb] = useState('')
   const [brief, setBrief] = useState('')
   const [travelKm, setTravelKm] = useState(10)
@@ -81,7 +80,6 @@ export function AskForBuildScreen() {
       await apiClient.post('/api/toy-transactions/build', {
         tutorial_id: tutorialId,
         build_brief: brief.trim() || null,
-        child_label: childLabel.trim(),
         requester_suburb: suburb.trim(),
         travel_km: travelKm,
         urgency,
@@ -141,14 +139,6 @@ export function AskForBuildScreen() {
       </View>
 
       <TextField
-        label="Who is it for?"
-        placeholder="e.g. Leo, 3 — 100 mm button switch"
-        maxLength={60}
-        value={childLabel}
-        onChangeText={setChildLabel}
-        hint="The maker sees this and your suburb, never your address."
-      />
-      <TextField
         label="Your suburb"
         placeholder="Newtown"
         maxLength={80}
@@ -158,6 +148,7 @@ export function AskForBuildScreen() {
       />
       <TextField
         label="A note to the maker (optional)"
+        hint="The maker sees this and your suburb, never your address. Please do not include names."
         placeholder="Why this toy, the switch you have, what makes handover easy"
         maxLength={2000}
         multiline

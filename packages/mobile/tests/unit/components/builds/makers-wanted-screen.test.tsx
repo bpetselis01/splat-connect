@@ -19,7 +19,7 @@ const mockCaps = { current: null as null | { profile: Record<string, unknown> } 
 jest.mock('../../../../lib/capabilities', () => ({ useCapabilities: () => ({ caps: mockCaps.current }) }))
 
 const build = (id: string, km: number | null, suburb: string) => ({
-  id, tutorial_id: 'g', build_brief: 'Please.', travel_km: 30, urgency: null, child_label: null, requester_suburb: suburb,
+  id, tutorial_id: 'g', build_brief: 'Please.', travel_km: 30, urgency: null, requester_suburb: suburb,
   family_has_toy: false, created_at: new Date().toISOString(), mine: false, km,
   tutorial: { id: 'g', title: 'Bubble machine', difficulty: 'easy', status: 'approved' },
 })
@@ -49,8 +49,8 @@ it('filters on the real distance from the maker, and says it on the row', async 
 
 /** Tasks 13–15's rows: no distance, and the guide's time and cost (makers-row-meta). */
 export const row = (over: object = {}) => ({
-  id: 'b1', tutorial_id: 'g1', build_brief: 'Leo lights up at bubbles.', travel_km: 10, urgency: 'No rush',
-  child_label: 'Leo, 3', requester_suburb: 'Newtown', family_has_toy: false, created_at: '2026-09-28T00:00:00Z', mine: false, km: null,
+  id: 'b1', tutorial_id: 'g1', build_brief: 'A child lights up at bubbles.', travel_km: 10, urgency: 'No rush',
+  requester_suburb: 'Newtown', family_has_toy: false, created_at: '2026-09-28T00:00:00Z', mine: false, km: null,
   tutorial: { id: 'g1', title: 'Bubble machine', difficulty: 'easy', status: 'approved', build_minutes: 20, parts_total_cents: 2800 },
   ...over,
 })
@@ -77,7 +77,7 @@ it('reads Live and Done from the board feed, naming the maker', async () => {
       : path.startsWith('/api/toy-transactions/builds-board?tab=done')
         ? Promise.resolve([
             row({
-              id: 'd1', maker_name: 'Rachel Kaur', party: false, build_brief: null, child_label: null,
+              id: 'd1', maker_name: 'Rachel Kaur', party: false, build_brief: null,
               requester_suburb: null, travel_km: null, urgency: null, updated_at: '2026-09-30T00:00:00Z',
             }),
           ])

@@ -12,9 +12,9 @@ import { getMissingFields } from '@/lib/validation'
 
 export type EditStepId =
   | 'details'
-  /* A guide's numbered steps (080), alongside the PDF. Optional, like
-     Recommended: guides written before steps existed have none, and the
-     submit gate never asks for them. */
+  /* A guide's numbered steps (080), alongside the PDF. The submit gate
+     asks for steps or a PDF (either one), and flags this step when both
+     are missing. */
   | 'steps'
   | 'files'
   | 'parts'
@@ -66,7 +66,13 @@ export function computeStepStatuses(
   const missing = getMissingFields(tutorial)
   return {
     details: fieldStatus(missing, 'details'),
-    steps: (tutorial.steps?.length ?? 0) > 0 ? 'done' : 'neutral',
+    // Steps or a PDF satisfies the gate: attention only when neither, and
+    // neutral (not done) when a PDF alone stands in for the steps.
+    steps: missing.some((m) => m.step === 'steps')
+      ? 'attention'
+      : (tutorial.steps?.length ?? 0) > 0
+        ? 'done'
+        : 'neutral',
     files: fieldStatus(missing, 'files'),
     parts: fieldStatus(missing, 'parts'),
     tools: fieldStatus(missing, 'tools'),

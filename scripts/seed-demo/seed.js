@@ -319,7 +319,6 @@ async function phaseA(P) {
       difficulty: t.difficulty,
       kind: t.kind,
       status: 'draft',
-      maturity: t.maturity || 'complete',
       build_minutes: t.build_minutes,
       age_min: t.age[0],
       age_max: t.age[1],
@@ -470,7 +469,6 @@ async function phaseA(P) {
     difficulty: 'easy',
     kind: 'assistive_tech',
     status: 'approved',
-    maturity: 'prototype',
     build_minutes: 70,
     age: [6, 18],
     photos: ['book_photo', 'book_photo2'],
@@ -579,16 +577,16 @@ async function phaseA(P) {
 
   // Children
   const arlo = await insert('child_profiles', {
-    parent_id: priya.id, name: 'Arlo', age: 6, macs_level: 'III', macs_source: 'manual', bfmf_score: '3', bfmf_source: 'manual',
+    parent_id: priya.id, age: 6, macs_level: 'III', macs_source: 'manual', bfmf_score: '3', bfmf_source: 'manual',
     hand_involvement: 'unilateral', assist_hand: 'left', challenges: ['Grasping', 'Fine motor', 'Fatigue'], grip_type: 'Palmar',
     env_context: 'Home', palm_width_mm: 58, wrist_circ_mm: 120, hand_dominance: 'Right', sensory_preferences: ['Soft', 'Lightweight'],
     // 128 — the four child questions, the same answers guides are tagged with.
     helps_with: ['moving'], access: ['press', 'touch'], one_hand: true, press_force: 'light', enjoys: ['light', 'sound', 'water'],
     everyday_needs: ['quiet', 'wipeable'], reach_cm: 45, tray_mm: 30,
   })
-  await insert('child_profiles', { parent_id: priya.id, name: 'Zara', age: 3, macs_source: 'estimated', bfmf_source: 'estimated', challenges: ['Coordination'], helps_with: ['seeing', 'calm'], access: ['watch'], enjoys: ['light', 'soft'] })
+  await insert('child_profiles', { parent_id: priya.id, age: 3, macs_source: 'estimated', bfmf_source: 'estimated', challenges: ['Coordination'], helps_with: ['seeing', 'calm'], access: ['watch'], enjoys: ['light', 'soft'] })
   await insert('child_profiles', {
-    parent_id: tom.id, name: 'Ruby', age: 8, macs_level: 'II', macs_source: 'manual', hand_involvement: 'bilateral',
+    parent_id: tom.id, age: 8, macs_level: 'II', macs_source: 'manual', hand_involvement: 'bilateral',
     challenges: ['Strength', 'Holding'], grip_type: 'Cylindrical', env_context: 'School', hand_dominance: 'Left', sensory_preferences: ['Textured'],
     helps_with: ['moving', 'learning'], access: ['grasp', 'press'], press_force: 'moderate', enjoys: ['move', 'calm', 'build'],
     everyday_needs: ['shared_siblings'], reach_cm: 60, tray_mm: 40,
@@ -742,7 +740,7 @@ async function phaseA(P) {
     pending: await insert('toy_ideas', { author_id: priya.id, status: 'pending', title: 'Switch-operated crayon holder', summary: 'Arlo can hold a switch but not a crayon.', description: 'Something that holds a thick crayon and lets him draw by moving his whole arm, maybe with a cuff.', intended_use: 'Drawing at the kitchen table', primary_user: 'Arlo, 6, palmar grasp' }),
     active: await insert('toy_ideas', { author_id: priya.id, status: 'challenge', title: 'A page turner for picture books', summary: 'Turn a board-book page with one switch press.', description: 'Bedtime stories where Arlo turns the page himself. Board books first; paperbacks would be a bonus.', intended_use: 'Bedtime reading', primary_user: 'Arlo, 6' }),
     rejected: await insert('toy_ideas', { author_id: tom.id, status: 'rejected', review_note: 'This one needs mains power inside the toy, which we cannot publish safely.', title: 'Adapted ride-on car', summary: 'Switch control for a 12V ride-on.', description: 'Replace the pedal with a switch.', intended_use: 'Backyard', primary_user: 'Ruby, 8' }),
-    graduated: await insert('toy_ideas', { author_id: priya.id, status: 'graduated', tutorial_id: G.penguin, title: 'Switch start for the racing penguins', summary: 'Let Zara start the penguin race.', description: 'The penguin toy has a tiny slide switch. A battery interrupter might do it.', intended_use: 'Play with her brother', primary_user: 'Zara, 3' }),
+    graduated: await insert('toy_ideas', { author_id: priya.id, status: 'graduated', tutorial_id: G.penguin, title: 'Switch start for the racing penguins', summary: 'Let a young child start the penguin race.', description: 'The penguin toy has a tiny slide switch. A battery interrupter might do it.', intended_use: 'Play with her brother', primary_user: 'A 3-year-old' }),
     // Questions (078): answered in the thread, never graduated.
     tomQuestion: await insert('toy_ideas', { author_id: tom.id, status: 'challenge', kind: 'question', title: 'Can holding a switch down for a minute damage the toy?', summary: 'Ruby holds the button and the bubble motor gets warm. Normal, or a problem?', description: 'Ruby holds the switch down for a minute at a time. The motor housing gets warm. Is that normal for an adapted toy, or is the interrupter doing something it should not?', intended_use: 'Bubble machine at home', primary_user: 'Ruby, 8' }),
     priyaQuestion: await insert('toy_ideas', { author_id: priya.id, status: 'challenge', kind: 'question', title: 'Best glue for a plush toy that gets washed?', summary: 'Hot glue lets go after two washes. What do the clinics use?', description: 'We adapted a plush dog with a big button and it needs washing weekly. Hot glue on the jack housing lets go after two washes.', intended_use: 'Cuddly toy, washed weekly', primary_user: 'Arlo, 6' }),
@@ -822,22 +820,22 @@ async function phaseB(P, S) {
   log('6 exchanges')
 
   // Builds
-  X.buildDone = await newTx(priya, '/toy-transactions/build', { tutorial_id: G.bubble, maker_id: mei.id, build_brief: 'Could you adapt a bubble machine for Arlo? He uses a big button switch already.', child_label: 'Arlo, 6', requester_suburb: 'Merewether' })
+  X.buildDone = await newTx(priya, '/toy-transactions/build', { tutorial_id: G.bubble, maker_id: mei.id, build_brief: 'Could you adapt a bubble machine for a child who uses a big button switch already.', requester_suburb: 'Merewether' })
   await api(mei, 'POST', `/toy-transactions/${X.buildDone}/accept`, pickup('mei'))
   await api(mei, 'POST', `/toy-transactions/${X.buildDone}/working-shot`, await photoForm('bubble_photo'))
   await api(priya, 'POST', `/toy-transactions/${X.buildDone}/approve-work`)
   await confirm(mei, X.buildDone, 'owner')
   await confirm(priya, X.buildDone, 'requester')
 
-  X.buildShot = await newTx(priya, '/toy-transactions/build', { tutorial_id: G.lps, maker_id: mei.id, build_brief: 'A flat switch Arlo can roll his wrist onto, for the iPad switch interface at school.', child_label: 'Arlo, 6', requester_suburb: 'Merewether', urgency: 'Before school holidays' })
+  X.buildShot = await newTx(priya, '/toy-transactions/build', { tutorial_id: G.lps, maker_id: mei.id, build_brief: 'A flat switch a child can roll his wrist onto, for the iPad switch interface at school.', requester_suburb: 'Merewether', urgency: 'Before school holidays' })
   await api(mei, 'POST', `/toy-transactions/${X.buildShot}/accept`, pickup('mei'))
   await api(mei, 'POST', `/exchange-costs/${X.buildShot}`, { description: 'Tactile switch and mono cable', amount_cents: 1290 })
   await api(mei, 'POST', `/toy-transactions/${X.buildShot}/working-shot`, await photoForm('lps_photo'))
 
-  X.buildOpen = await newTx(priya, '/toy-transactions/build', { tutorial_id: G.lts, build_brief: 'A second Light Touch Switch for Arlo’s classroom. Happy to pay for parts.', child_label: 'Arlo, 6', requester_suburb: 'Merewether', travel_km: 15, urgency: 'Within a month', family_has_toy: true })
-  X.buildSilent = await newTx(tom, '/toy-transactions/build', { tutorial_id: G.bubble, build_brief: 'Bubble machine for Ruby’s class, switch on a long lead.', child_label: 'Ruby, 8', requester_suburb: 'Lambton', travel_km: 40 })
+  X.buildOpen = await newTx(priya, '/toy-transactions/build', { tutorial_id: G.lts, build_brief: 'A second Light Touch Switch for a classroom. Happy to pay for parts.', requester_suburb: 'Merewether', travel_km: 15, urgency: 'Within a month', family_has_toy: true })
+  X.buildSilent = await newTx(tom, '/toy-transactions/build', { tutorial_id: G.bubble, build_brief: 'Bubble machine for a class, switch on a long lead.', requester_suburb: 'Lambton', travel_km: 40 })
   await api(dan, 'POST', `/toy-transactions/${X.buildSilent}/claim`)
-  X.buildOrg = await newTx(priya, '/toy-transactions/build', { tutorial_id: G.lts, maker_org_id: northbank, build_brief: 'Could the club build one for Zara too? She is 3.', child_label: 'Zara, 3', requester_suburb: 'Merewether' })
+  X.buildOrg = await newTx(priya, '/toy-transactions/build', { tutorial_id: G.lts, maker_org_id: northbank, build_brief: 'Could the club build one for a 3-year-old too?', requester_suburb: 'Merewether' })
   log('5 builds')
 
   // Print jobs
@@ -866,12 +864,12 @@ async function phaseB(P, S) {
   log('6 print jobs')
 
   // Registrations
-  const answers = (childName, n, choice, photos) => ({
-    [E.buildDayQ1]: childName, [E.buildDayQ2]: 'Uses the side of his hand; light presses only.', [E.buildDayQ3]: n,
+  const answers = (n, choice, photos) => ({
+    [E.buildDayQ1]: 'Prefer not to say', [E.buildDayQ2]: 'Uses the side of his hand; light presses only.', [E.buildDayQ3]: n,
     [E.buildDayQ4]: choice, [E.buildDayQ5]: photos,
   })
-  await api(priya, 'POST', `/events/${E.buildDay}/registrations`, { name: priya.name, email: priya.email, cost_acknowledged: true, answers: answers('Arlo', 3, 'Light Touch Switch', true) })
-  await api(tom, 'POST', `/events/${E.buildDay}/registrations`, { name: tom.name, email: tom.email, cost_acknowledged: true, answers: answers('Ruby', 2, 'Not sure yet', false) })
+  await api(priya, 'POST', `/events/${E.buildDay}/registrations`, { name: priya.name, email: priya.email, cost_acknowledged: true, answers: answers(3, 'Light Touch Switch', true) })
+  await api(tom, 'POST', `/events/${E.buildDay}/registrations`, { name: tom.name, email: tom.email, cost_acknowledged: true, answers: answers(2, 'Not sure yet', false) })
   await api(priya, 'POST', `/events/${E.workshop}/registrations`, { name: priya.name, email: priya.email })
   await api(tom, 'POST', `/events/${E.openDay}/registrations`, { name: tom.name, email: tom.email })
   await put('org_event_registrations', { event_id: E.past, user_id: priya.id, name: priya.name, email: priya.email })

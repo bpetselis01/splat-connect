@@ -11,11 +11,20 @@ import { nameFormerContributors } from '../former-contributor.js'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { pickEditable } from './pick-editable.js'
 import { notifyTutorialSubmitted } from '../review-notifications.js'
-import { readSuits, realignCaptions, GUIDE_SUITS_FIELDS } from '@splat-connect/types'
+import { readSuits, realignCaptions, GUIDE_SUITS_FIELDS, fieldKey, customizationFieldsProblem } from '@splat-connect/types'
 import { removeDroppedPhotos } from '../photo-storage.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
 const tutorials = new Hono<{ Variables: AuthVariables }>()
+
+const NEEDS_CONTENT = 'A guide needs steps or a PDF'
+
+/** True when a guide with these facts would have neither steps nor a PDF. */
+const hasNoGuideContent = (stepCount: number, pdfPath: string | null | undefined) =>
+  stepCount === 0 && !pdfPath?.trim()
+
+/** Pending and approved guides are in front of reviewers or readers; drafts are not. */
+const isLive = (status: unknown) => status === 'pending' || status === 'approved'
 
 // tutorial_orgs is embedded for the leader dashboard, which splits its two
 // lists by each row's backing status. The embed is itself RLS-filtered, so a
@@ -94,7 +103,7 @@ tutorials.get('/:id', async (c) => {
     .select(
       '*, parts(*), tools(*), stl_files(*), steps:tutorial_steps(*), safety_notes:tutorial_safety_notes(*), tutorial_contributors(*, profiles(id, name, role, created_at)), \
 tutorial_collaborator_invites(*, profiles:invited_profile_id(id, name, role, created_at)), \
-tutorial_recommendations!tutorial_id(position, recommended_id, required, tutorials!recommended_id(id, title, kind, difficulty, toy_photo_url, status, maturity)), \
+tutorial_recommendations!tutorial_id(position, recommended_id, required, tutorials!recommended_id(id, title, kind, difficulty, toy_photo_url, status)), \
 reviewer:reviewed_by(name), reviewed_for:reviewed_for_org_id(name)'
     )
     .eq('id', c.req.param('id'))
@@ -183,7 +192,7 @@ tutorials.post('/', async (c) => {
 /** Only these may be set through the generic edit endpoint. Unknown keys are
  *  dropped silently; the protected ones return 403 so a caller learns rather than
  *  wonders. */
-const EDITABLE = ['title', 'description', 'difficulty', 'kind', 'maturity', 'build_minutes', 'age_min', 'age_max', 'tutorial_pdf_url', 'photo_urls', 'photo_captions', 'prices_checked_on', 'layer_height_mm', 'infill_percent', 'material', 'print_minutes', 'toy_name', 'toy_brand', 'works_with', 'no_build_note', 'done_note', 'status', ...GUIDE_SUITS_FIELDS] as const
+const EDITABLE = ['title', 'description', 'difficulty', 'kind', 'build_minutes', 'age_min', 'age_max', 'tutorial_pdf_url', 'photo_urls', 'photo_captions', 'prices_checked_on', 'layer_height_mm', 'infill_percent', 'material', 'print_minutes', 'toy_name', 'toy_brand', 'works_with', 'no_build_note', 'done_note', 'status', 'customization_fields', ...GUIDE_SUITS_FIELDS] as const
 const PROTECTED = ['reviewed_by', 'reviewed_for_org_id', 'reviewed_at', 'rejection_note']
 
 async function hasAcceptedContributorTerms(token: string, userId: string) {
@@ -213,6 +222,17 @@ export function fieldError(body: Record<string, unknown>): string | null {
     const caps = body.photo_captions
     if (!Array.isArray(caps) || caps.some((c) => c !== null && typeof c !== 'string')) return 'Captions must be a list'
     if (caps.some((c) => typeof c === 'string' && c.trim().length > 60)) return 'A photo caption is over 60 characters'
+  }
+  // 134. Cleaned in place (labels trimmed, keys derived) so the client need not guess them.
+  if ('customization_fields' in body) {
+    const fields = body.customization_fields
+    if (Array.isArray(fields)) {
+      body.customization_fields = fields.map((f) =>
+        f && typeof f === 'object' && typeof f.label === 'string' ? { ...f, label: f.label.trim(), key: fieldKey(f.label) } : f
+      )
+    }
+    const problem = customizationFieldsProblem(body.customization_fields)
+    if (problem) return problem
   }
   const num = (k: string) => body[k] as number
   if (has('layer_height_mm') && !(typeof body.layer_height_mm === 'number' && num('layer_height_mm') >= 0.05 && num('layer_height_mm') <= 1)) return 'Layer height must be between 0.05 and 1 mm'
@@ -315,11 +335,13 @@ tutorials.patch('/:id', async (c) => {
   }
 
   const submitting = body.status === 'pending'
-  const current = submitting
+  // Clearing the PDF needs the same read: whether the guide is live, and what it has left.
+  const clearsPdf = 'tutorial_pdf_url' in update && !(update.tutorial_pdf_url as string | null)?.trim()
+  const current = submitting || clearsPdf
     ? (
         await supabase
           .from('tutorials')
-          .select('status, safety_declared_at, build_minutes')
+          .select('status, safety_declared_at, build_minutes, tutorial_pdf_url')
           .eq('id', c.req.param('id'))
           .maybeSingle()
       ).data
@@ -327,7 +349,7 @@ tutorials.patch('/:id', async (c) => {
   // Any status but pending is a real hand-over: a draft, and a rejected or
   // approved guide the author edited and sent back (T22). Only pending ->
   // pending is the editor resending its whole form.
-  const enteringPending = current != null && current.status !== 'pending'
+  const enteringPending = submitting && current != null && current.status !== 'pending'
 
   // The safety gate: a draft is not offered for review until its author has
   // affirmed the checklist (SAFETY_CHECKLIST in @splat-connect/types). Checked
@@ -341,6 +363,17 @@ tutorials.patch('/:id', async (c) => {
   const buildMinutes = 'build_minutes' in update ? update.build_minutes : current?.build_minutes
   if (submitting && buildMinutes == null) {
     return c.json({ error: 'Add how long the build takes before submitting' }, 400)
+  }
+
+  // Never leave a live guide empty: submitting, or clearing the PDF of a guide
+  // that is already pending/approved, must leave it with steps or a PDF. This
+  // PATCH is the only route to pending, so the submit check cannot be bypassed.
+  if (current && isLive(submitting ? 'pending' : (body.status ?? current.status))) {
+    const pdf = 'tutorial_pdf_url' in update ? (update.tutorial_pdf_url as string | null) : current.tutorial_pdf_url
+    if (!pdf?.trim()) {
+      const { count } = await supabase.from('tutorial_steps').select('id', { count: 'exact', head: true }).eq('tutorial_id', c.req.param('id'))
+      if (hasNoGuideContent(count ?? 0, pdf)) return c.json({ error: NEEDS_CONTENT }, 400)
+    }
   }
 
   const { data, error } = await supabase
@@ -528,6 +561,9 @@ tutorials.put('/:id/steps', async (c) => {
     // on the insert has to be asked for here.
     const { data: own } = await supabase.rpc('is_tutorial_contributor', { p_tutorial_id: id })
     if (!own && c.get('role') !== 'admin') return c.json({ error: 'Not found' }, 404)
+    // A pending or approved guide with no PDF must keep its steps.
+    const { data: guide } = await supabase.from('tutorials').select('status, tutorial_pdf_url').eq('id', id).maybeSingle()
+    if (guide && isLive(guide.status) && hasNoGuideContent(0, guide.tutorial_pdf_url)) return c.json({ error: NEEDS_CONTENT }, 400)
   }
 
   const oldIds = (before ?? []).map((s) => s.id)

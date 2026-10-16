@@ -154,7 +154,7 @@ it('shows the printer the family’s customization answers', async () => {
     Promise.resolve(
       path === '/api/printers/mine'
         ? [machine('Ender PLA', { materials: ['PLA'] })]
-        : [{ ...REQUEST, print_fit_notes: { reach: '20–40 cm' } }]
+        : [{ ...REQUEST, print_fit_notes: [{ label: 'Reach from seated', value: '20–40 cm' }] }]
     )
   )
   render(<PrintForOthersScreen />)

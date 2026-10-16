@@ -2,17 +2,19 @@
 
 **Supporting Play by Adapting Toys** — a platform that helps children with disabilities access play by making toy adaptation knowledge discoverable and shareable.
 
-SPLAT Connect is a free, open platform for parents and contributors to explore, share, and discover toy adaptation tutorials for inclusive play.
+SPLAT Connect is a free, open platform for families and makers to explore, share, and discover toy adaptation guides for inclusive play.
 
 ## Overview
 
 Three audiences share one platform:
 
-- **Parents & guardians** — browse a searchable library of toy adaptation tutorials, and borrow or request adapted toys.
-- **Contributors** — write, upload, and submit tutorials for review, individually or on behalf of an organisation.
-- **Administrators** — review submissions, approve tutorials, and manage organisations.
+- **Families** — browse the guide library, and give, swap or request adapted toys.
+- **Makers** — write and submit guides for review, build and print for families, individually or on behalf of an organisation.
+- **Admins** — review guides and ideas, and manage organisations.
 
-There is a companion **mobile app** (Expo / React Native) covering the library, the child ability profile, and tutorial previews.
+Every signed-in account is a Member; Family and Maker are what a Member says they are at signup. See [CONTEXT.md](./CONTEXT.md) for the project's vocabulary.
+
+There is a companion **mobile app** (Expo / React Native) covering the guide library, child profiles, and guide previews.
 
 ## Where the documentation lives
 

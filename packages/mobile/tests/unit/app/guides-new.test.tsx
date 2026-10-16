@@ -145,6 +145,7 @@ describe('NewGuideRoute', () => {
     fireEvent.changeText(screen.getByPlaceholderText('Title'), 'Light-up drum')
     fireEvent.press(screen.getByLabelText('Add a cover photo'))
     await screen.findByText('Cover photo chosen')
+    expect(screen.getByLabelText('Cover photo preview').props.source).toEqual({ uri: 'file:///cover.jpg' })
     fireEvent.changeText(screen.getByLabelText('Youngest age'), '3')
     fireEvent.changeText(screen.getByLabelText('Oldest age'), '7')
     fireEvent.press(screen.getByLabelText('Create draft'))

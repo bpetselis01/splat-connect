@@ -10,6 +10,7 @@ import { apiClient } from '../../../lib/api-client'
 import { useDraft } from '../../../lib/use-tutorial-draft'
 import { theme } from '../../../lib/theme'
 import { Screen } from '../../ui/Screen'
+import { InfoHint } from '../../ui/InfoHint'
 import { Button } from '../../ui/Button'
 import { ErrorRow } from '../../ui/ErrorRow'
 import { ListRow, Pill } from '../../list/list-kit'
@@ -75,7 +76,7 @@ export function BackingSection() {
 
   return (
     <Screen>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" automaticallyAdjustKeyboardInsets>
         {backing.length === 0 ? (
           <Text style={styles.lead}>
             No organisation is backing this project yet. SPLAT will review it — asking an organisation is optional.
@@ -105,10 +106,12 @@ export function BackingSection() {
 
         {!readOnly ? (
           <>
-            <Text style={styles.label}>Ask another organisation</Text>
-            <Text style={styles.hint}>
-              Their leaders can read this while they decide, including if they say no. Choose the one or two who know your work.
-            </Text>
+            <View style={styles.labelRow}>
+              <Text style={styles.label}>Ask another organisation</Text>
+              <InfoHint title="Ask another organisation">
+                Their leaders can read this while they decide, including if they say no. Choose the one or two who know your work.
+              </InfoHint>
+            </View>
             {available.length === 0 ? (
               <Text style={styles.hint}>
                 {orgs.length === 0 ? 'There are no organisations on the platform yet.' : 'You have already asked every organisation.'}
@@ -137,7 +140,8 @@ export function BackingSection() {
 const styles = StyleSheet.create({
   lead: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted, lineHeight: 20, marginBottom: theme.spacing(3) },
   row: { marginBottom: theme.spacing(3) },
-  label: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.ink, marginTop: theme.spacing(4) },
+  labelRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2), marginTop: theme.spacing(4) },
+  label: { fontFamily: theme.fonts.bold, fontSize: theme.type.label, color: theme.colors.ink },
   hint: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted, lineHeight: 18, marginVertical: theme.spacing(1) },
   ask: { marginTop: theme.spacing(2) },
 })

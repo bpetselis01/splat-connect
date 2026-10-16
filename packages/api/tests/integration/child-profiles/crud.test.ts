@@ -43,11 +43,11 @@ describe('child profiles collection', () => {
   it('creates children and returns them in created_at order', async () => {
     const first = await app.request('/api/child-profiles', authed(parent.token, {
       method: 'POST',
-      body: JSON.stringify({ name: 'Emma', age: 7 }),
+      body: JSON.stringify({ age: 7 }),
     }))
     expect(first.status).toBe(201)
-    const emma = (await first.json()) as { id: string; name: string; parent_id: string }
-    expect(emma.name).toBe('Emma')
+    const emma = (await first.json()) as { id: string; age: number; parent_id: string }
+    expect(emma.age).toBe(7)
     // parent_id is server-set from the token, never read from the body.
     expect(emma.parent_id).toBe(parent.id)
 
@@ -58,17 +58,16 @@ describe('child profiles collection', () => {
     expect(second.status).toBe(201)
 
     const list = await app.request('/api/child-profiles', authed(parent.token))
-    const rows = (await list.json()) as { id: string; name: string | null }[]
+    const rows = (await list.json()) as { id: string; age: number | null }[]
     expect(rows).toHaveLength(2)
-    expect(rows[0].name).toBe('Emma')
-    // A child may be created with no name at all — the UI labels it by position.
-    expect(rows[1].name).toBeNull()
+    expect(rows[0].age).toBe(7)
+    expect(rows[1].age).toBe(4)
   })
 
   it('ignores a parent_id in the body instead of trusting it', async () => {
     const res = await app.request('/api/child-profiles', authed(parent.token, {
       method: 'POST',
-      body: JSON.stringify({ name: 'Spoofed', parent_id: stranger.id }),
+      body: JSON.stringify({ parent_id: stranger.id }),
     }))
     expect(res.status).toBe(201)
     expect(((await res.json()) as { parent_id: string }).parent_id).toBe(parent.id)
@@ -77,25 +76,50 @@ describe('child profiles collection', () => {
   it('patches only whitelisted columns', async () => {
     const created = await app.request('/api/child-profiles', authed(parent.token, {
       method: 'POST',
-      body: JSON.stringify({ name: 'Patch me' }),
+      body: JSON.stringify({}),
     }))
     const { id } = (await created.json()) as { id: string }
 
     const res = await app.request(`/api/child-profiles/${id}`, authed(parent.token, {
       method: 'PATCH',
-      body: JSON.stringify({ name: 'Patched', age: 9, nonsense: true }),
+      body: JSON.stringify({ name: 'X', age: 9, nonsense: true }),
     }))
     expect(res.status).toBe(200)
-    const row = (await res.json()) as { name: string; age: number }
-    expect(row.name).toBe('Patched')
+    const row = (await res.json()) as { age: number }
     expect(row.age).toBe(9)
+    expect(row).not.toHaveProperty('name')
     expect(row).not.toHaveProperty('nonsense')
+  })
+
+  it('never stores or returns a name: POST ignores it, PATCH ignores it, GET omits it', async () => {
+    const created = await app.request('/api/child-profiles', authed(parent.token, {
+      method: 'POST',
+      body: JSON.stringify({ name: 'Leo', age: 5 }),
+    }))
+    expect(created.status).toBe(201)
+    const text = await created.text()
+    expect(text).not.toContain('Leo')
+    const { id } = JSON.parse(text) as { id: string }
+
+    const patched = await app.request(`/api/child-profiles/${id}`, authed(parent.token, {
+      method: 'PATCH',
+      body: JSON.stringify({ name: 'X' }),
+    }))
+    expect(patched.status).toBe(200)
+    expect(await patched.json()).not.toHaveProperty('name')
+
+    const list = (await (await app.request('/api/child-profiles', authed(parent.token))).json()) as Record<string, unknown>[]
+    expect(list.length).toBeGreaterThan(0)
+    for (const r of list) expect(r).not.toHaveProperty('name')
+    // The stored value never changed from "none" (column dropped in a later migration).
+    const { data } = await userClient(parent.token).from('child_profiles').select('*').eq('id', id).single()
+    expect((data as { name?: string | null }).name ?? null).toBeNull()
   })
 
   it('deletes a child', async () => {
     const created = await app.request('/api/child-profiles', authed(parent.token, {
       method: 'POST',
-      body: JSON.stringify({ name: 'Delete me' }),
+      body: JSON.stringify({}),
     }))
     const { id } = (await created.json()) as { id: string }
 
@@ -110,7 +134,7 @@ describe('child profiles collection', () => {
   it('hides one parent\'s children from another parent', async () => {
     const created = await app.request('/api/child-profiles', authed(parent.token, {
       method: 'POST',
-      body: JSON.stringify({ name: 'Private' }),
+      body: JSON.stringify({ age: 3 }),
     }))
     const { id } = (await created.json()) as { id: string }
 
@@ -118,7 +142,7 @@ describe('child profiles collection', () => {
     // is 404 — a 403 would confirm the row exists.
     const patch = await app.request(`/api/child-profiles/${id}`, authed(stranger.token, {
       method: 'PATCH',
-      body: JSON.stringify({ name: 'Hijacked' }),
+      body: JSON.stringify({ age: 99 }),
     }))
     expect(patch.status).toBe(404)
 
@@ -130,8 +154,8 @@ describe('child profiles collection', () => {
 
     // And the row survived both attempts.
     const ownerList = await app.request('/api/child-profiles', authed(parent.token))
-    const rows = (await ownerList.json()) as { id: string; name: string }[]
-    expect(rows.find((r) => r.id === id)?.name).toBe('Private')
+    const rows = (await ownerList.json()) as { id: string; age: number }[]
+    expect(rows.find((r) => r.id === id)?.age).toBe(3)
   })
 
   it('exercises the SELECT RLS policy directly, below the API', async () => {
@@ -171,7 +195,7 @@ describe('child profiles collection', () => {
 
     const created = await app.request('/api/child-profiles', authed(parent.token, {
       method: 'POST',
-      body: JSON.stringify({ name: 'Body check' }),
+      body: JSON.stringify({}),
     }))
     const { id } = (await created.json()) as { id: string }
 
@@ -186,7 +210,7 @@ describe('child profiles collection', () => {
     const created = await app.request('/api/child-profiles', authed(parent.token, {
       method: 'POST',
       body: JSON.stringify({
-        name: 'Board', helps_with: ['seeing', 'calm', 'seeing'], access: ['touch', 'eyes'], one_hand: true,
+        helps_with: ['seeing', 'calm', 'seeing'], access: ['touch', 'eyes'], one_hand: true,
         press_force: 'light', enjoys: ['light', 'pretend'], everyday_needs: ['quiet', 'wipeable', 'quiet'],
       }),
     }))
@@ -215,7 +239,7 @@ describe('child profiles collection', () => {
   it('no longer accepts the retired ability and needs fields', async () => {
     const res = await app.request('/api/child-profiles', authed(parent.token, {
       method: 'POST',
-      body: JSON.stringify({ name: 'Minimal', macs_level: 'II', challenges: ['Grasping'] }),
+      body: JSON.stringify({ macs_level: 'II', challenges: ['Grasping'] }),
     }))
     expect(res.status).toBe(201)
     const row = (await res.json()) as { macs_level: string | null; challenges: string[] }

@@ -38,8 +38,8 @@ import {
   Palette,
   PaperPlaneTilt,
 } from '@phosphor-icons/react/dist/ssr'
-import { bedFits, initials, MAX_PRINTERS_PER_REQUEST, PRINT_COLOURS, PRINT_FIT_QUESTIONS } from '@splat-connect/types'
-import type { PrintFitNotes, PrinterWithOwner, StlFile } from '@splat-connect/types'
+import { bedFits, initials, MAX_PRINTERS_PER_REQUEST, PRINT_COLOURS } from '@splat-connect/types'
+import type { CustomizationField, PrinterWithOwner, StlFile } from '@splat-connect/types'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { apiErrorDetail } from '@splat-connect/types'
 import { pickSummary, togglePrinterPick } from '@/lib/print-groups'
@@ -76,6 +76,7 @@ export function RequestPrintForm({
   printers,
   header,
   requesterSuburb,
+  fields = [],
 }: {
   tutorialId: string
   tutorialTitle: string
@@ -85,6 +86,8 @@ export function RequestPrintForm({
   header: ReactNode
   /** What the printer will see of the requester, when the profile has it. */
   requesterSuburb?: string | null
+  /** The guide contributor's own questions (134); none is a sentence, not a form. */
+  fields?: CustomizationField[]
 }) {
   const router = useRouter()
   const [picked, setPicked] = useState<string[]>(parts.map((p) => p.id))
@@ -96,10 +99,16 @@ export function RequestPrintForm({
   })
   const [colour, setColour] = useState<string>(PRINT_COLOURS[0])
   const [note, setNote] = useState('')
-  const [fitNotes, setFitNotes] = useState<PrintFitNotes>({})
+  const [fitNotes, setFitNotes] = useState<Record<string, string>>({})
   const [agree, setAgree] = useState(false)
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+
+  const setAnswer = (key: string, value: string) =>
+    setFitNotes((cur) => {
+      const { [key]: _gone, ...rest } = cur
+      return value.trim() ? { ...rest, [key]: value } : rest
+    })
 
   const ticked = parts.filter((p) => picked.includes(p.id)).map((p) => ({ ...p, quantity: qtyOf(p.id) }))
   // 097: a printer whose bed cannot hold the ticked parts is not offered, with
@@ -267,35 +276,45 @@ export function RequestPrintForm({
             <div>
               <p className="text-sm font-extrabold text-ink">Customization</p>
               <p className="text-[13px] text-muted">
-                Physical dimensions we use to size printed mounts and brackets. Nothing here is required.
+                {fields.length
+                  ? 'Set by this guide’s contributor, to size the print for you. Nothing here is required.'
+                  : 'The contributor hasn’t set any customization fields.'}
               </p>
             </div>
-            {PRINT_FIT_QUESTIONS.map((q) => (
-              <fieldset key={q.key} className="flex flex-col gap-2">
-                <legend className="mb-2 text-sm font-extrabold text-ink">{q.label}</legend>
-                <div className="flex flex-wrap gap-2">
-                  {q.options.map((o) => (
-                    <button
-                      key={o}
-                      type="button"
-                      aria-pressed={fitNotes[q.key] === o}
-                      // A second click clears it: every question is optional.
-                      onClick={() =>
-                        setFitNotes((cur) => {
-                          const next = { ...cur }
-                          if (next[q.key] === o) delete next[q.key]
-                          else next[q.key] = o
-                          return next
-                        })
-                      }
-                      className="chip"
-                    >
-                      {o}
-                    </button>
-                  ))}
-                </div>
-              </fieldset>
-            ))}
+            {fields.map((f) =>
+              f.kind === 'choice' ? (
+                <fieldset key={f.key} className="flex flex-col gap-2">
+                  <legend className="mb-2 text-sm font-extrabold text-ink">{f.label}</legend>
+                  <div className="flex flex-wrap gap-2">
+                    {f.options.map((o) => (
+                      <button
+                        key={o}
+                        type="button"
+                        aria-pressed={fitNotes[f.key] === o}
+                        // A second click clears it: every question is optional.
+                        onClick={() => setAnswer(f.key, fitNotes[f.key] === o ? '' : o)}
+                        className="chip"
+                      >
+                        {o}
+                      </button>
+                    ))}
+                  </div>
+                </fieldset>
+              ) : (
+                <label key={f.key} className="flex flex-col gap-1 text-sm font-extrabold text-ink">
+                  {f.label}
+                  <input
+                    type="number"
+                    min={f.min}
+                    max={f.max}
+                    placeholder={`${f.min}–${f.max} ${f.unit}`}
+                    className="field w-full rounded-[var(--radius-inset)] font-semibold"
+                    value={fitNotes[f.key] ?? ''}
+                    onChange={(e) => setAnswer(f.key, e.target.value)}
+                  />
+                </label>
+              )
+            )}
           </div>
         </section>
 

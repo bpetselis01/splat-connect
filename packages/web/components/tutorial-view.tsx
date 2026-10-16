@@ -26,7 +26,7 @@
  * only, with the banner above the tabs; notes are posted from the app. The
  * guide's author and admins (`canPin`) also see the unpinned notes, to pin.
  *
- * `fit` is the board's "Suits Ollie — big button, light press, short hold",
+ * `fit` is the board's "Suits your child",
  * worked out by the caller (suitsChild) and drawn above the tabs: a parent
  * should know it suits their child before reading a single step.
  *
@@ -67,7 +67,6 @@ import {
   CHILD_QUESTIONS,
   DEVICE_TYPES,
   KIND_LABEL,
-  MATURITY_LABEL,
   ONE_HAND_LABEL,
   SAFETY_CHECKLIST,
   TOOL_GET_BY_LABEL,
@@ -137,7 +136,7 @@ export function TutorialView({
    * are three callers.
    */
   signedIn: boolean
-  /** "Suits Ollie — big button, …", or nothing. Never an assessment of the child. */
+  /** "Suits your child", or nothing. Never an assessment of the child. */
   fit?: string | null
   /** 093. Pinned revisions show here; posting is on the app. */
   notes?: GuideNote[]
@@ -451,9 +450,6 @@ export function TutorialView({
             {formatAgeRange(tutorial.age_min, tutorial.age_max) && (
               <span className="pill-tag pill-tag--lg">{formatAgeRange(tutorial.age_min, tutorial.age_max)}</span>
             )}
-            {tutorial.maturity !== 'complete' && (
-              <span className="pill-tag pill-tag--lg">{MATURITY_LABEL[tutorial.maturity]}</span>
-            )}
             {backers.length > 0 && (
               <span className="pill-tag pill-tag--lg" style={{ backgroundColor: 'var(--tok)' }}>
                 <SealCheck weight="fill" aria-hidden="true" />
@@ -539,7 +535,7 @@ export function TutorialView({
               {pinned.map((n) => (
                 <li key={n.id} className="rounded-[var(--radius-inset)] border border-line bg-surface p-4">
                   <p className="m-0 text-xs font-bold text-muted">
-                    {n.step_position && n.step_position <= steps.length ? `Step ${n.step_position}` : 'Missing step'} · {n.author_name}
+                    {n.step_position && n.step_position <= steps.length ? `Step ${n.step_position}` : steps.length === 0 ? 'Whole guide' : 'Missing step'} · {n.author_name}
                   </p>
                   <p className="m-0 mt-1 text-[15px] leading-[1.55] text-ink">{n.body}</p>
                   <p className="m-0 mt-2 text-xs font-bold text-ink">Pinned by {n.pinned_by_name ?? 'Deleted member'}</p>
@@ -554,7 +550,7 @@ export function TutorialView({
                   {open.map((n) => (
                     <li key={n.id} className="rounded-[var(--radius-inset)] border border-line bg-surface p-4">
                       <p className="m-0 text-xs font-bold text-muted">
-                        {n.step_position && n.step_position <= steps.length ? `Step ${n.step_position}` : 'Missing step'} · {n.author_name}
+                        {n.step_position && n.step_position <= steps.length ? `Step ${n.step_position}` : steps.length === 0 ? 'Whole guide' : 'Missing step'} · {n.author_name}
                       </p>
                       <p className="m-0 mt-1 text-[15px] leading-[1.55] text-ink">{n.body}</p>
                       <NotePinButton tutorialId={tutorial.id} noteId={n.id} pinned={false} />
@@ -642,9 +638,9 @@ export function TutorialView({
 
           {actions && <div className="rail-actions">{actions}</div>}
 
-          {!signedIn && (
+          {!signedIn && (tutorial.tutorial_pdf_url || tutorial.stl_files.length > 0) && (
             <p className="m-0 text-[13px] leading-[1.5] text-muted">
-              The PDF and your saved list come with an account. Both are free.
+              Downloads and your saved list come with an account. Both are free.
             </p>
           )}
 

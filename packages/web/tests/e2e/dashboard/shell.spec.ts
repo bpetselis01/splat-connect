@@ -165,10 +165,9 @@ test('a contributor adds two children, edits one, and deletes one', async ({ pag
       await expect(page).toHaveURL('/dashboard/profile')
     }
 
-    // First child, named, with one of the four questions answered.
+    // First child, with one of the four questions answered.
     await page.getByRole('link', { name: 'Add child' }).click()
     await expect(page).toHaveURL('/dashboard/child/new')
-    await page.getByLabel('Name or nickname').fill('Emma')
     await page.getByLabel('Age').fill('7')
     await page.getByRole('group', { name: 'Press force' }).getByRole('button', { name: 'Light', exact: true }).click()
     await page.getByRole('button', { name: 'Create profile' }).click()
@@ -176,9 +175,9 @@ test('a contributor adds two children, edits one, and deletes one', async ({ pag
     await expect(main.getByText('Saved', { exact: true })).toBeVisible()
     await expect(page).toHaveURL(/\/dashboard\/child\/[0-9a-f-]{36}/)
     await backToAccount()
-    await expect(page.getByRole('link', { name: /Emma/ })).toBeVisible()
+    await expect(page.getByRole('link', { name: /Child 1/ })).toBeVisible()
 
-    // Second child, left unnamed — the list must still tell them apart.
+    // Second child — the list must still tell them apart.
     await page.getByRole('link', { name: 'Add child' }).click()
     await page.getByLabel('Age').fill('4')
     await page.getByRole('button', { name: 'Create profile' }).click()
@@ -187,7 +186,7 @@ test('a contributor adds two children, edits one, and deletes one', async ({ pag
     await expect(page.getByRole('link', { name: /Child 2/ })).toBeVisible()
 
     // Edit the first child and confirm it persists across a reload.
-    await page.getByRole('link', { name: /Emma/ }).click()
+    await page.getByRole('link', { name: /Child 1/ }).click()
     await expect(page.getByLabel('Age')).toHaveValue('7')
     await expect(page.getByRole('button', { name: 'Light', exact: true })).toHaveAttribute('aria-pressed', 'true')
     await page.getByLabel('Age').fill('8')
@@ -200,13 +199,13 @@ test('a contributor adds two children, edits one, and deletes one', async ({ pag
     // the phrase back — components/delete-entity-button.tsx builds both from the
     // same label, so the user reads the identifier twice. Same shape as the toy
     // deletion in dashboard/toys.spec.ts.
-    await page.getByRole('button', { name: 'Delete Emma' }).click()
-    await page.getByLabel(/to confirm/i).fill('confirm_delete_Emma')
+    await page.getByRole('button', { name: 'Delete Child 1, age 8' }).click()
+    await page.getByLabel(/to confirm/i).fill('confirm_delete_Child_1')
     await page.getByRole('button', { name: 'Delete', exact: true }).click()
     await expect(page).toHaveURL('/dashboard/profile')
-    await expect(page.getByRole('link', { name: /Emma/ })).toHaveCount(0)
+    await expect(page.getByRole('link', { name: /Child 2/ })).toHaveCount(0)
     // The survivor renumbers, because position is computed and not stored.
-    await expect(page.getByRole('link', { name: /Child 1/ })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Child 1, age 4' })).toBeVisible()
   } finally {
     await deleteUser(contributor.id)
   }

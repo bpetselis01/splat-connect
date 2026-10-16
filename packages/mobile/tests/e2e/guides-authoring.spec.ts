@@ -79,7 +79,23 @@ test('a new account writes a guide end to end and submits it for review', async 
   expect((await saved).status()).toBe(200)
   // A build time is required to submit (066), and until it is set the row says so.
   saved = patched()
-  await page.getByRole('button', { name: '30 min', exact: true }).click()
+  // The slider's web build is a pointer-release control: a click at the 4th of
+  // its 10 stops (10, 15, 20, 30 ...) sets and commits that stop, as a release does.
+  const slider = page.getByRole('slider', { name: 'Build time' })
+  await slider.scrollIntoViewIfNeeded()
+  const sliderBox = await slider.boundingBox()
+  if (!sliderBox) throw new Error('build time slider has no box')
+  const stopX = sliderBox.x + 10 + ((sliderBox.width - 20) * 3) / 9
+  const midY = sliderBox.y + sliderBox.height / 2
+  // Retry the whole drag: a pixel offset computed from layout can land a stop off.
+  await expect(async () => {
+    await page.mouse.move(stopX, midY)
+    await page.mouse.down()
+    await page.mouse.move(stopX + 1, midY)
+    await page.mouse.move(stopX, midY)
+    await page.mouse.up()
+    await expect(page.getByTestId('build-time-value')).toHaveText('30 min', { timeout: 2000 })
+  }).toPass({ timeout: 15000 })
   expect((await saved).status()).toBe(200)
   await backToHub()
   await expect(page.getByTestId('hub-row-details')).not.toContainText('no build time yet')
@@ -88,6 +104,8 @@ test('a new account writes a guide end to end and submits it for review', async 
   // Its own screen now, and its own gate: nothing submits without it.
   await page.getByTestId('hub-row-safety').click()
   saved = patched()
+  // The declaration cannot be undone, so tapping it asks first (window.confirm on web).
+  page.once('dialog', (d) => void d.accept())
   await page.getByTestId('safety-declare').click()
   expect((await saved).status()).toBe(200)
   await backToHub()
@@ -119,11 +137,11 @@ test('a new account writes a guide end to end and submits it for review', async 
   await backToHub()
   await expect(page.getByTestId('hub-row-tools')).toContainText('1 tool')
 
-  // Files still hold Submit shut.
-  await expect(page.getByTestId('hub-row-files')).toContainText('Guide PDF and a photo')
+  // Photos still hold Submit shut.
+  await expect(page.getByTestId('hub-row-photos')).toContainText('None yet')
   await expect(page.getByTestId('hub-submit')).toBeDisabled()
 
-  // --- Files -------------------------------------------------------------
+  // --- Files (the guide PDF) ---------------------------------------------
   await page.getByTestId('hub-row-files').click()
   await expect(page.getByText('No PDF yet')).toBeVisible()
 
@@ -133,9 +151,14 @@ test('a new account writes a guide end to end and submits it for review', async 
   // the next save is working from a fresh updated_at.
   await expect(page.getByText('tutorial.pdf')).toBeVisible()
 
+  await backToHub()
+  await expect(page.getByTestId('hub-row-files')).toContainText('PDF added')
+
+  // --- Photos ------------------------------------------------------------
+  await page.getByTestId('hub-row-photos').click()
   await chooseFile(page, 'Choose from library', PHOTO_FIXTURE)
   await backToHub()
-  await expect(page.getByTestId('hub-row-files')).toContainText('PDF and photo added')
+  await expect(page.getByTestId('hub-row-photos')).toContainText('1 photo')
 
   // --- Submit, from the hub ----------------------------------------------
   await expect(page.getByText('6 of 6 sections complete')).toBeVisible()

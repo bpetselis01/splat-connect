@@ -231,12 +231,12 @@ describe('the printer’s side', () => {
   })
 
   it('shows the customization the family chose, and nothing when they chose none', async () => {
-    serve(accepted({ print_fit_notes: { reach: 'Under 20 cm', tray: '10 mm' } }))
+    serve(accepted({ print_fit_notes: [{ label: 'Reach from seated', value: 'Under 20 cm' }, { label: 'Tray thickness', value: '10 mm' }] }))
     const { unmount } = render(<PrintJobScreen id="j1" />)
     expect(await screen.findByText('Reach from seated: Under 20 cm')).toBeTruthy()
     expect(screen.getByText('Tray thickness: 10 mm')).toBeTruthy()
     unmount()
-    serve(accepted({ print_fit_notes: {} }))
+    serve(accepted({ print_fit_notes: [] }))
     render(<PrintJobScreen id="j1" />)
     await screen.findByText('Started printing')
     expect(screen.queryByText('Customization')).toBeNull()

@@ -10,7 +10,7 @@ import { BuyLinksInput } from '@/components/buy-links-input'
 import { useToast } from '@/components/toast'
 import { SaveStatusLine } from '@/components/save-status-line'
 
-export type EditableItem = {
+type EditableItem = {
   id: string
   name: string
   is_optional: boolean

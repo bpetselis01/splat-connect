@@ -4,7 +4,7 @@
 // Supabase reports the same failure as a `code` on newer servers and only as a
 // message on older ones, so each kind matches either.
 
-export type AuthProblemKind =
+type AuthProblemKind =
   | 'credentials'
   | 'unconfirmed'
   | 'registered'

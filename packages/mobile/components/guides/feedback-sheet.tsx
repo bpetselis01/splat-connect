@@ -22,7 +22,7 @@ export type FeedbackSheetProps = {
   tutorialId: string
   steps: TutorialStep[]
   authorFirstName: string
-  /** undefined: nothing chosen yet; null: Missing step; n: Step n. */
+  /** undefined: nothing chosen yet; null: the whole guide (Missing step, or the guide has no steps); n: Step n. */
   initialStep?: number | null
   open: boolean
   onClose: () => void
@@ -34,7 +34,7 @@ export type FeedbackSheetProps = {
 
 export function FeedbackSheet({ tutorialId, steps, authorFirstName, initialStep, open, onClose, onPosted, onSeeOnGuide }: FeedbackSheetProps) {
   const bottom = useBottomClearance()
-  const [at, setAt] = useState<number | null | undefined>(initialStep)
+  const [at, setAt] = useState<number | null | undefined>(steps.length === 0 ? null : initialStep)
   const [body, setBody] = useState('')
   const [photo, setPhoto] = useState<string | null>(null)
   const [caption, setCaption] = useState('')
@@ -45,7 +45,7 @@ export function FeedbackSheet({ tutorialId, steps, authorFirstName, initialStep,
   // A blank form every time it opens: the last post must not linger.
   useEffect(() => {
     if (!open) return
-    setAt(initialStep)
+    setAt(steps.length === 0 ? null : initialStep)
     setBody('')
     setPhoto(null)
     setCaption('')
@@ -112,8 +112,8 @@ export function FeedbackSheet({ tutorialId, steps, authorFirstName, initialStep,
                 </Pressable>
               </View>
               <ScrollView contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled">
-                <Text style={styles.sub}>{`${authorFirstName} can pin it as a fix so the next builder sees it.`}</Text>
-                <StepPicker steps={steps} value={at} onChange={setAt} hereStep={initialStep} eyebrow="Which step?" />
+                <Text style={styles.sub}>{`${authorFirstName} can pin it as a fix so the next builder sees it.${steps.length === 0 ? ' Your note goes on the whole guide.' : ''}`}</Text>
+                {steps.length === 0 ? null : <StepPicker steps={steps} value={at} onChange={setAt} hereStep={initialStep} eyebrow="Which step?" />}
                 <TextField accessibilityLabel="Your note" placeholder="What was missing, or what you did differently…" multiline maxLength={1000} value={body} onChangeText={setBody} />
                 {photo ? (
                   <TextField accessibilityLabel="Photo caption" placeholder="Caption (optional)" maxLength={60} value={caption} onChangeText={setCaption} />

@@ -31,7 +31,7 @@ const NO_SAVES = { tutorials: [], toys: [], challenges: [] }
 const pick = (id: string, title: string, required = false) => ({
   position: 1,
   required,
-  tutorials: { id, title, kind: 'toy_adaptation', difficulty: 'easy', toy_photo_url: null, status: 'approved', maturity: 'complete', build_minutes: 20 },
+  tutorials: { id, title, kind: 'toy_adaptation', difficulty: 'easy', toy_photo_url: null, status: 'approved', build_minutes: 20 },
 })
 const DETAIL = {
   id: '1',
@@ -40,7 +40,6 @@ const DETAIL = {
   difficulty: 'easy',
   kind: 'toy_adaptation',
   status: 'approved',
-  maturity: 'complete',
   safety_declared_at: null,
   build_minutes: 30,
   tutorial_pdf_url: null,

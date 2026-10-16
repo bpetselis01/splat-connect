@@ -9,7 +9,6 @@ import { useEffect, useState } from 'react'
 import { View, Text, FlatList, RefreshControl, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import Animated, { FadeInDown } from 'react-native-reanimated'
 import type { ToyWithOwner } from '@splat-connect/types'
 import { gradeOf, toyHolderName, type GradeKey } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
@@ -209,9 +208,9 @@ export function ToyLibraryScreen() {
           const grade = conditionGrade(item.condition)
           const available = item.quantity > 0
           return (
-            <Animated.View
-              entering={FadeInDown.delay(Math.min(index, 7) * theme.motion.stagger).duration(theme.motion.base)}
-            >
+            // A Reanimated `entering` on a FlatList cell corrupts the cell's measured height
+            // (stacked and blank rows), so rows appear without an animation.
+            <>
               <RowCard
                 title={item.name}
                 photo={item.cover_photo_url}
@@ -245,7 +244,7 @@ export function ToyLibraryScreen() {
                 }
                 aside={<SaveButton slug="toys" id={item.id} saves={saves} />}
               />
-            </Animated.View>
+            </>
           )
         }}
       />

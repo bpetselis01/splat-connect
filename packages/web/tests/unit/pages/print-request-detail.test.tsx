@@ -68,7 +68,7 @@ async function open(over: object) {
 //        printer's job page, and a job without them draws no empty lines.
 describe('print request detail, customization answers', () => {
   it('lists the answers under the note', async () => {
-    await open({ print_fit_notes: { reach: '20–40 cm', switch_size: 'Large (100 mm)' } })
+    await open({ print_fit_notes: [{ label: 'Reach from seated', value: '20–40 cm' }, { label: 'Preferred switch size', value: 'Large (100 mm)' }] })
     expect(screen.getByText('Blue please')).toBeTruthy()
     expect(screen.getByText('Reach from seated: 20–40 cm')).toBeTruthy()
     expect(screen.getByText('Preferred switch size: Large (100 mm)')).toBeTruthy()

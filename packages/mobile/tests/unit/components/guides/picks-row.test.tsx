@@ -13,7 +13,7 @@ const pick = (id: string, title: string) => ({
     difficulty: 'easy' as const,
     photo_urls: [],
     toy_photo_url: null,
-    status: 'approved' as const, maturity: 'complete' as const },
+    status: 'approved' as const },
 })
 
 it('renders up to three titles and fires onOpen on press', () => {

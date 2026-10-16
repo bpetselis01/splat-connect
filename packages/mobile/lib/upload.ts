@@ -7,7 +7,7 @@ import { Platform } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 import { getToken } from './api-client'
 
-export type UploadPath =
+type UploadPath =
   | '/api/upload/photo'
   // 080: a guide step's photo; kept out of the five-photo gallery.
   | '/api/upload/step-photo'
@@ -40,6 +40,17 @@ export interface UploadResult {
   path?: string
 }
 
+function readLocalBlob(uri: string): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    xhr.onload = () => resolve(xhr.response as Blob)
+    xhr.onerror = () => reject(new Error(`Could not read ${uri}`))
+    xhr.responseType = 'blob'
+    xhr.open('GET', uri)
+    xhr.send()
+  })
+}
+
 /**
  * `idField` names the form part the API's readUpload(c, idField) expects
  * (packages/api/src/routes/upload.ts) — 'tutorialId' for the three guide
@@ -66,14 +77,14 @@ export async function uploadFile<T = UploadResult>(
     const blob = await (await fetch(file.uri)).blob()
     formData.append('file', blob, file.name)
   } else {
-    // RN's own FormData accepts this {uri,name,type} object in place of a
-    // Blob — there is no DOM File on device. The cast is for TypeScript's DOM
-    // lib typing of FormData.append, not for the runtime, which is RN's own.
-    formData.append('file', {
-      uri: file.uri,
-      name: file.name,
-      type: file.mimeType ?? 'application/octet-stream',
-    } as unknown as Blob)
+    // The global fetch here is expo's (SDK 57), whose FormData encoder only takes
+    // strings and Blob/File parts — RN's {uri,name,type} shape throws "Unsupported
+    // FormDataPart implementation" and no guide, photo or PDF uploaded from a phone.
+    // RN's XMLHttpRequest still reads a file:// uri into a Blob.
+    const blob = await readLocalBlob(file.uri)
+    const type = file.mimeType ?? 'application/octet-stream'
+    const typed = blob.type === type ? blob : new Blob([blob], { type })
+    formData.append('file', typed, file.name)
   }
   if (idField) formData.append(idField, id)
 
@@ -107,8 +118,6 @@ export async function pickAndUploadPhoto<T = UploadResult>(
   id: string,
   idField: 'tutorialId' | 'toyId' | null = 'tutorialId'
 ): Promise<T | null> {
-  const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
-  if (!permission.granted) throw new Error('Photo library access is needed to choose a photo.')
   const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ['images'] })
   const asset = result.canceled ? null : result.assets?.[0]
   if (!asset) return null

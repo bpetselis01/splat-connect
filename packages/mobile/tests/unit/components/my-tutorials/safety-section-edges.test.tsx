@@ -1,6 +1,8 @@
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { SafetySection } from '../../../../components/my-tutorials/sections/safety-section'
 
+const mockConfirm = jest.fn()
+jest.mock('../../../../lib/confirm', () => ({ confirmDestructive: (...a: unknown[]) => mockConfirm(...a) }))
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn(), canGoBack: () => true }) }))
 jest.mock('../../../../lib/auth-context', () => ({ useAuth: jest.fn() }))
@@ -22,6 +24,7 @@ describe('the declaration', () => {
   it('sends only the affirmation, never a date, when ticked', () => {
     render(<SafetySection />)
     fireEvent.press(screen.getByTestId('safety-declare'))
+    mockConfirm.mock.calls[0][3]()
     expect(mockDraft.save).toHaveBeenCalledWith({ safety_declared: true })
   })
 

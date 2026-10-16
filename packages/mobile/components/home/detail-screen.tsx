@@ -6,7 +6,7 @@ import { isNetworkError } from '@splat-connect/types'
 import { logFailure } from '../../lib/log'
 import type { Tutorial, Part, Tool, StlFile, Recommendation, TutorialStep, TutorialSafetyNote, ChildProfile, Difficulty } from '@splat-connect/types'
 import {
-  CHILD_QUESTIONS, DEVICE_TYPES, DIFFICULTY_LABEL, KIND_LABEL, MATURITY_LABEL, ONE_HAND_LABEL, SAFETY_CHECKLIST,
+  CHILD_QUESTIONS, DEVICE_TYPES, DIFFICULTY_LABEL, KIND_LABEL, ONE_HAND_LABEL, SAFETY_CHECKLIST,
   fitLine, formatAgeRange, formatBuildTime, printSettingRows,
 } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
@@ -152,6 +152,16 @@ function whoRows(t: Tutorial, child: ChildProfile | undefined) {
  * takes, with Start building pinned to the bottom; the four tabs below stick
  * to the top as you scroll.
  */
+/** The owner's route sends the editor's shape; the page reads the public one. */
+function asPublicShape(t: TutorialDetail): TutorialDetail {
+  return {
+    ...t,
+    tutorial_orgs: [], // backing is shown once an org has accepted, and a draft has no public page yet
+    tutorial_contributors: (t.tutorial_contributors ?? []).map((c) => ({ former_names: [], former_count: 0, ...c })),
+    tutorial_recommendations: (t.tutorial_recommendations ?? []).filter((r) => r.tutorials?.status === 'approved'),
+  }
+}
+
 export function DetailScreen({ id, printWith, tab: startTab }: { id: string; printWith?: string; tab?: string }) {
   const router = useRouter()
   const bottom = useBottomClearance()
@@ -237,6 +247,13 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
     setError(null)
     apiClient
       .get<TutorialDetail>(`/api/public/tutorials/${id}`)
+      // A draft or pending guide is not public: the hub's Preview opens it here,
+      // and only the owner's own route (RLS-scoped) can return it.
+      .catch((err) =>
+        err instanceof Error && /status 404/.test(err.message)
+          ? apiClient.get<TutorialDetail>(`/api/tutorials/${id}`).then(asPublicShape)
+          : Promise.reject(err)
+      )
       .then(setTutorial)
       .catch((err) => {
         logFailure('[DetailScreen] guide fetch failed:', err)
@@ -388,9 +405,6 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
             ) : null}
           </View>
 
-          {tutorial.maturity !== 'complete' ? (
-            <View style={styles.badgeRow}><Badge status={tutorial.maturity} label={MATURITY_LABEL[tutorial.maturity]} /></View>
-          ) : null}
           <View style={styles.titleRow}>
             <Text style={styles.title}>{tutorial.title}</Text>
           </View>
@@ -670,7 +684,7 @@ export function DetailScreen({ id, printWith, tab: startTab }: { id: string; pri
                   ) : null}
                 </View>
               ) : (
-                <Text style={styles.small}>Nothing to download for this guide.</Text>
+                <Text style={styles.small}>This guide has no files to download.</Text>
               )}
               {tutorial.stl_files.length > 0 ? (
                 <View ref={printCard} collapsable={false} testID="print-card">

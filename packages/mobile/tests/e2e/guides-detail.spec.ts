@@ -90,7 +90,7 @@ test('the Files tab explains when a tutorial has no PDF', async ({ page }) => {
   await page.getByText(title).click()
   await page.getByRole('tab', { name: 'Files' }).click()
 
-  await expect(page.getByText('Nothing to download for this guide.')).toBeVisible()
+  await expect(page.getByText('This guide has no files to download.')).toBeVisible()
   await expect(page.getByRole('button', { name: 'View', exact: true })).toHaveCount(0)
 })
 

@@ -32,21 +32,13 @@ vi.mock('@/components/edit-details-section', () => ({ EditDetailsSection: () => 
 vi.mock('@/components/edit-backing-section', () => ({ EditBackingSection: () => null }))
 vi.mock('@/components/edit-collaborators-section', () => ({ EditCollaboratorsSection: () => null }))
 vi.mock('@/components/edit-recommendations-section', () => ({ EditRecommendationsSection: () => null }))
-// The Review step is a summary and nothing else since 2026-08-29 — what is
-// missing, and whether the tutorial has been handed over, reach the stepper's
-// finish bar instead, so that is where both are asserted.
-vi.mock('@/components/tutorial-review-panel', () => ({
-  TutorialReviewPanel: ({ title }: { title: string }) => (
-    <div data-testid="review-panel" data-title={title} />
-  ),
-}))
 // Reads ?created= through hooks this test does not mock, and announces the
 // redirect out of /upload rather than anything the page computes.
 vi.mock('@/components/created-toast', () => ({ CreatedToast: () => null }))
 vi.mock('@/components/pdf-import-banner', () => ({ PdfImportBanner: () => null }))
 vi.mock('@/components/stepper', () => ({
-  // Renders each step's content, which is how the review panel above is
-  // reached. Every section component is mocked to null, so this stays cheap.
+  // Renders each step's content. Every section component is mocked to null,
+  // so this stays cheap.
   Stepper: ({ steps, finish }: { steps: EditStep[]; finish?: { missing: { step: string; label: string }[]; done?: unknown } }) => (
     <div
       data-testid="edit-stepper"
@@ -80,7 +72,6 @@ const baseTutorialWithDetails: TutorialWithDetails = {
   difficulty: 'easy',
   kind: 'toy_adaptation',
   status: 'draft',
-  maturity: 'complete',
   safety_declared_at: '2026-08-01T00:00:00Z',
   build_minutes: 30,
   description: null,
@@ -243,7 +234,9 @@ describe('EditTutorialPage', () => {
     render(await EditTutorialPage(pageParams))
     const stepper = screen.getByTestId('edit-stepper')
     // Each gap is named on the Status checklist beside the step that closes it.
-    expect(screen.getByText('Still needs the guide PDF, a photo')).toBeInTheDocument()
+    expect(screen.getByText('Still needs steps or a guide PDF')).toBeInTheDocument()
+    expect(screen.getByText('Still needs a photo')).toBeInTheDocument()
+    expect(stepper.querySelector('[data-step="steps"]')).toHaveAttribute('data-step-status', 'attention')
     expect(screen.getByText('Still needs a part')).toBeInTheDocument()
     expect(stepper.querySelector('[data-step="details"]')).toHaveAttribute('data-step-status', 'done')
     expect(stepper.querySelector('[data-step="files"]')).toHaveAttribute('data-step-status', 'attention')

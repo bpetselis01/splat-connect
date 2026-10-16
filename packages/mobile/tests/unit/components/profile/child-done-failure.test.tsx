@@ -13,9 +13,9 @@ jest.mock('../../../../lib/api-client', () => ({ apiClient: { get: (...a: unknow
 it('offline: still ready, no match sentence, no console.error', async () => {
   const errSpy = jest.spyOn(console, 'error')
   mockGet.mockRejectedValue(new Error('Network request failed'))
-  render(<ChildDone child={{ name: 'Leo' } as never} />)
+  render(<ChildDone child={{} as never} />)
   await waitFor(() => expect(mockGet).toHaveBeenCalled())
-  expect(screen.getByText("Leo's profile is ready")).toBeTruthy()
+  expect(screen.getByText("Your child's profile is ready")).toBeTruthy()
   expect(screen.getByText('See the matches')).toBeTruthy()
   expect(screen.queryByText(/We found/)).toBeNull()
   expect(errSpy).not.toHaveBeenCalled()

@@ -79,4 +79,37 @@ describe('admin project page', () => {
     expect(screen.getByText(/Step 4 is unsafe/)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Approve|Unpublish/i })).not.toBeInTheDocument()
   })
+
+  it('shows a Steps section and no missing-PDF flag for a steps-only guide', async () => {
+    get.mockResolvedValue({
+      ...baseTutorial,
+      steps: [{ id: 's1', position: 1, title: 'Drill the lid', body: 'Mark then drill.', photo_url: 'p.jpg' }],
+    })
+    const { default: Page } = await import('@/app/admin/review/[id]/page')
+    render(await Page({ params: params() }))
+
+    expect(screen.getByRole('heading', { name: 'Steps' })).toBeInTheDocument()
+    expect(screen.getByText(/Drill the lid/)).toBeInTheDocument()
+    expect(screen.getByText(/Mark then drill/)).toBeInTheDocument()
+    expect(screen.getByText('Steps used')).toBeInTheDocument()
+    expect(screen.queryByText('No guide PDF')).toBeNull()
+  })
+
+  it('still flags a guide with neither steps nor PDF', async () => {
+    get.mockResolvedValue({ ...baseTutorial, steps: [] })
+    const { default: Page } = await import('@/app/admin/review/[id]/page')
+    render(await Page({ params: params() }))
+
+    expect(screen.getByText('No guide PDF')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Steps' })).toBeNull()
+  })
+
+  it('a PDF-only guide shows the PDF and no Steps section', async () => {
+    get.mockResolvedValue({ ...baseTutorial, tutorial_pdf_url: 'a.pdf', steps: [] })
+    const { default: Page } = await import('@/app/admin/review/[id]/page')
+    render(await Page({ params: params() }))
+
+    expect(screen.getByText('Guide attached')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Steps' })).toBeNull()
+  })
 })

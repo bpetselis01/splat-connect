@@ -87,7 +87,7 @@ test('ticked tools survive a reload', async ({ page }) => {
 
 test('a reader posts a note as a missing step and sees it under Discussion', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
-  const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile Notes'), status: 'approved' })
+  const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile Notes'), status: 'approved', withSteps: true })
 
   await page.goto(`/guides/${id}`)
   await page.getByRole('tab', { name: /^Feedback/ }).click()
@@ -113,7 +113,7 @@ test('a reader posts a note as a missing step and sees it under Discussion', asy
 
 test('a note that fails to post keeps its words and says so', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
-  const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile NoteFails'), status: 'approved' })
+  const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile NoteFails'), status: 'approved', withSteps: true })
 
   await page.goto(`/guides/${id}`)
   await page.getByRole('tab', { name: /^Feedback/ }).click()
@@ -129,7 +129,7 @@ test('a note that fails to post keeps its words and says so', async ({ page }) =
 
 test('the author deletes their own note', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
-  const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile NoteDelete'), status: 'approved' })
+  const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile NoteDelete'), status: 'approved', withSteps: true })
 
   await page.goto(`/guides/${id}`)
   await page.getByRole('tab', { name: /^Feedback/ }).click()

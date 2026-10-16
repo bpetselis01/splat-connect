@@ -278,7 +278,7 @@ select * from (values
       where conrelid = 'public.toy_transactions'::regclass
         and conname = 'toy_transactions_one_owner'
         and pg_get_constraintdef(oid) like '%type = ''build''%'
-        and pg_get_constraintdef(oid) like '%status = ''requested''%')),
+        and pg_get_constraintdef(oid) like '%''requested''%''withdrawn''%')),
 
   -- The Makers wanted board is signed-in. A public board of children's first
   -- names, ages and suburbs is not something to put behind no account at all,
@@ -674,6 +674,13 @@ select * from (values
       where schemaname = 'public' and tablename = 'child_profiles'
         and coalesce(qual, with_check) not like '%auth.uid()%'
         and coalesce(qual, with_check) not like '%is_admin()%')),
+
+  -- 136. A child's name is never stored. A restored migration must not bring it back.
+  ('136 child_profiles.name and toy_transactions.child_label are gone',
+   (select count(*) = 0 from information_schema.columns
+      where table_schema = 'public'
+        and ((table_name = 'child_profiles' and column_name = 'name')
+          or (table_name = 'toy_transactions' and column_name = 'child_label')))),
 
   ('130 parts and tools buy links are web addresses only',
    (select count(*) = 2 from pg_constraint

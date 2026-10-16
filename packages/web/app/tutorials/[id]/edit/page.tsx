@@ -6,6 +6,7 @@ import { Suspense } from 'react'
 import { EditFilesSection } from '@/components/edit-files-section'
 import { AddStlForm } from '@/components/add-stl-form'
 import { StlSettingsForm, type StlSettings } from '@/components/stl-settings-form'
+import { CustomizationFieldsForm } from '@/components/customization-fields-form'
 import { EditItemsSection, type ItemInput } from '@/components/edit-items-section'
 import { PricesCheckedField } from '@/components/prices-checked-field'
 import { EditBackingSection } from '@/components/edit-backing-section'
@@ -54,7 +55,7 @@ import { formatRelativeTime } from '@/lib/relative-time'
 import { TutorialView } from '@/components/tutorial-view'
 import { getMissingFields } from '@/lib/validation'
 import { DeleteEntityButton } from '@/components/delete-entity-button'
-import type { Tutorial, Part, Tool, StlFile, TutorialWithDetails, Difficulty, TutorialKind, BuyLink, TutorialOrg, Organization, TutorialMaturity, TutorialStep } from '@splat-connect/types'
+import type { CustomizationField, Tutorial, Part, Tool, StlFile, TutorialWithDetails, Difficulty, TutorialKind, BuyLink, TutorialOrg, Organization, TutorialStep } from '@splat-connect/types'
 
 /**
  * The body both file-saving actions share. A plain function at module scope,
@@ -140,7 +141,7 @@ export default async function EditTutorialPage({
     revalidatePath('/dashboard')
   }
 
-  async function saveDetails(patch: { title: string; description: string | null; difficulty: Difficulty; build_minutes: number | null; age_min: number | null; age_max: number | null; kind: TutorialKind; maturity: TutorialMaturity; safety_declared?: true; toy_name: string | null; toy_brand: string | null; works_with: string | null; no_build_note: string | null; done_note: string | null; layer_height_mm?: number | null; infill_percent?: number | null; material?: string | null; print_minutes?: number | null; updated_at: string }) {
+  async function saveDetails(patch: { title: string; description: string | null; difficulty: Difficulty; build_minutes: number | null; age_min: number | null; age_max: number | null; kind: TutorialKind; safety_declared?: true; toy_name: string | null; toy_brand: string | null; works_with: string | null; no_build_note: string | null; done_note: string | null; layer_height_mm?: number | null; infill_percent?: number | null; material?: string | null; print_minutes?: number | null; updated_at: string }) {
     'use server'
     const body: Record<string, unknown> = { ...patch }
     if (tutorial.status === 'approved' || tutorial.status === 'rejected') {
@@ -236,6 +237,12 @@ export default async function EditTutorialPage({
     revalidatePath(`/tutorials/${id}/edit`)
   }
 
+  async function saveCustomizationFields(fields: CustomizationField[]) {
+    'use server'
+    await patchTutorialFiles(id, { customization_fields: fields })
+    revalidatePath(`/tutorials/${id}/edit`)
+  }
+
   async function saveRecommendations(picks: { recommended_id: string; required: boolean }[]) {
     'use server'
     await apiClient.post(`/api/tutorials/${id}/recommendations`, {
@@ -278,7 +285,7 @@ export default async function EditTutorialPage({
       id: 'steps',
       label: 'Steps',
       icon: <ListNumbers size={19} weight="duotone" aria-hidden="true" />,
-      hint: 'One photo and one instruction per action, in order. Optional — the PDF still carries the guide.',
+      hint: 'One photo and one instruction per action, in order.',
       status: stepStatuses.steps,
       content: (
         <div className="panel pt-5">
@@ -290,7 +297,7 @@ export default async function EditTutorialPage({
       id: 'files',
       label: 'Files',
       icon: <FileArrowDown size={19} weight="duotone" aria-hidden="true" />,
-      hint: 'The photos a parent sees first, and the guide PDF itself.',
+      hint: 'The photos a parent sees first, and the guide PDF, if it has one.',
       status: stepStatuses.files,
       content: (
         <div className="panel pt-5">
@@ -347,6 +354,7 @@ export default async function EditTutorialPage({
         <div className="panel px-5 pt-5 pb-5">
           {stlFiles.length > 0 && <StlSettingsForm files={stlFiles} onSave={saveStlSettings} />}
           <AddStlForm tutorialId={id} onAdd={addStlFileRecord} />
+          <CustomizationFieldsForm initial={tutorial.customization_fields ?? []} onSave={saveCustomizationFields} />
         </div>
       ),
     },
@@ -431,8 +439,7 @@ export default async function EditTutorialPage({
   const byStep = (step: EditStepId) => missing.filter((m) => m.step === step).map((m) => m.label)
   const checklist = walk.map((step) => {
     const gaps = byStep(step)
-    // Steps are optional too (080): guides written before them have none.
-    const optional = step === 'recommended' || step === 'steps'
+    const optional = step === 'recommended'
     const done = optional ? stepStatuses[step] === 'done' : gaps.length === 0
     return {
       step,
@@ -440,9 +447,7 @@ export default async function EditTutorialPage({
       note: done
         ? 'Done'
         : optional
-          ? step === 'steps'
-            ? 'No steps yet — optional'
-            : 'Nothing picked yet — optional'
+          ? 'Nothing picked yet — optional'
           : `Still needs ${gaps.map((g) => g.charAt(0).toLowerCase() + g.slice(1)).join(', ')}`,
       done,
     }
@@ -454,7 +459,7 @@ export default async function EditTutorialPage({
       meta: `Draft · saved ${formatRelativeTime(tutorial.updated_at)}`,
       head: 'Only you can see this',
       body: 'A draft is invisible to everyone — families, organisations, even us. It stays here as long as you like, and nothing is checked until you ask for it to be.',
-      progress: `${filled} of ${checklist.length} sections filled in. Steps and Worth a look are optional — Safety is not.`,
+      progress: `${filled} of ${checklist.length} sections filled in. Worth a look is optional — Safety is not.`,
       privacyLead: 'Nothing here is public.',
       privacy: 'A draft is visible only to you. Submitting shows it to your reviewer, and nobody else, until it is approved.',
     },
@@ -477,10 +482,10 @@ export default async function EditTutorialPage({
     live: {
       meta: `Published ${day(tutorial.reviewed_at ?? tutorial.updated_at)}`,
       head: 'Families are using this',
-      body: 'It is in the library, in search, and in the PDF anyone can download.',
+      body: 'It is in the library and in search.',
       progress: `Live since ${day(tutorial.reviewed_at ?? tutorial.updated_at)}. Saving a change sends it back for review.`,
       privacyLead: 'This one is public.',
-      privacy: 'Families can read it and download the PDF.',
+      privacy: 'Families can read it and download its files.',
     },
     declined: { meta: '', head: '', body: '', progress: '', privacyLead: '', privacy: '' },
     gone: { meta: '', head: '', body: '', progress: '', privacyLead: '', privacy: '' },

@@ -7,10 +7,10 @@
 import { readdirSync } from 'node:fs'
 import { createAdminClient } from './supabase/client.js'
 
-export type SchemaStatus = { code: string | null; db: string | null; behind: boolean }
+type SchemaStatus = { code: string | null; db: string | null; behind: boolean }
 
 /** The highest NNN_ prefix in supabase/migrations, resolved from the API package's cwd as the dev and start scripts run it. Null when the repo is not beside the build. */
-export function codeSchemaVersion(dir = '../../supabase/migrations'): string | null {
+function codeSchemaVersion(dir = '../../supabase/migrations'): string | null {
   try {
     return readdirSync(dir).map((f) => f.match(/^(\d{3})_/)?.[1]).filter((v): v is string => !!v).sort().at(-1) ?? null
   } catch {

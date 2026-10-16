@@ -4,7 +4,7 @@
 import * as SecureStore from 'expo-secure-store'
 import { Platform } from 'react-native'
 
-export type AuthStorage = {
+type AuthStorage = {
   getItem: (key: string) => Promise<string | null>
   setItem: (key: string, value: string) => Promise<void>
   removeItem: (key: string) => Promise<void>

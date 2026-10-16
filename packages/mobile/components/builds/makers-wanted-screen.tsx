@@ -33,6 +33,7 @@ import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
 import { ErrorRow } from '../ui/ErrorRow'
+import { headerRightSlot } from '../../lib/nav-options'
 import { apiMessage, buildRowMeta } from '@splat-connect/types'
 
 /** GET /api/toy-transactions/open-builds, one row. No requester name — by design. */
@@ -42,7 +43,6 @@ export type OpenBuild = {
   build_brief: string | null
   travel_km: number | null
   urgency: string | null
-  child_label: string | null
   requester_suburb: string | null
   family_has_toy: boolean
   created_at: string
@@ -175,7 +175,7 @@ export function MakersWantedScreen() {
     <Screen>
       <Stack.Screen
         options={{
-          headerRight: () => (
+          ...headerRightSlot(() => (
             <Pressable
               onPress={() => router.push('/explore/makers-wanted/new')}
               accessibilityRole="button"
@@ -185,7 +185,7 @@ export function MakersWantedScreen() {
             >
               <Ionicons name="add" size={24} color={theme.colors.onColor} />
             </Pressable>
-          ),
+          )),
         }}
       />
       <ScrollView
@@ -388,7 +388,6 @@ function BuildCard({
 
       <View style={styles.facts}>
         {b.km != null ? <Fact icon="navigate-outline" text={`${b.km} km away`} /> : null}
-        {b.child_label ? <Fact icon="happy-outline" text={b.child_label} /> : null}
         {b.travel_km !== null ? <Fact icon="car-outline" text={`${b.travel_km} km`} /> : null}
         {b.urgency ? <Fact icon="calendar-outline" text={b.urgency} /> : null}
       </View>

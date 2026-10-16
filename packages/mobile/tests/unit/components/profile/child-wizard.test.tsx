@@ -16,7 +16,6 @@ jest.mock('../../../../lib/api-client', () => ({
 const mockReplace = jest.fn()
 jest.mock('expo-router', () => ({ useRouter: () => ({ replace: mockReplace, push: jest.fn() }) }))
 
-// No name typed, so '{name}' falls back to "your child".
 const HEADINGS = [
   'Who are we finding toys for?',
   'What would help your child day to day?',
@@ -60,19 +59,18 @@ describe('ChildWizard', () => {
     jest.useFakeTimers()
     try {
       render(<ChildWizard />)
-      fireEvent.changeText(await screen.findByPlaceholderText('e.g. Sam'), ' Sam ')
+      fireEvent.changeText(await screen.findByLabelText('Age in years'), '6')
       fireEvent.press(screen.getByRole('button', { name: 'Continue' }))
-      // The headings use the name once there is one.
-      expect(await screen.findByText('What would help Sam day to day?')).toBeTruthy()
+      expect(await screen.findByText('What would help your child day to day?')).toBeTruthy()
       fireEvent.press(screen.getByRole('button', { name: 'Seeing' }))
       fireEvent.press(screen.getByRole('button', { name: 'Continue' }))
       // An unanswered step on Continue is a skip.
       fireEvent.press(screen.getByRole('button', { name: 'Continue' }))
-      expect(screen.getByText('How hard can Sam press?')).toBeTruthy()
+      expect(screen.getByText('How hard can your child press?')).toBeTruthy()
       await act(async () => { jest.advanceTimersByTime(500) })
       // The hook batches the two answers into the one create.
       await waitFor(() =>
-        expect(mockPost).toHaveBeenCalledWith('/api/child-profiles', { name: 'Sam', helps_with: ['seeing'] })
+        expect(mockPost).toHaveBeenCalledWith('/api/child-profiles', { age: 6, helps_with: ['seeing'] })
       )
     } finally {
       jest.useRealTimers()
@@ -133,13 +131,13 @@ describe('ChildWizard', () => {
     jest.useFakeTimers()
     try {
       render(<ChildWizard />)
-      fireEvent.changeText(await screen.findByPlaceholderText('e.g. Sam'), 'Ollie')
+      fireEvent.changeText(await screen.findByLabelText('Age in years'), '6')
       fireEvent.press(screen.getByRole('button', { name: 'Continue' }))
       fireEvent.press(screen.getByRole('button', { name: 'Seeing' }))
       fireEvent.press(screen.getByRole('button', { name: 'Continue' }))
       for (let i = 0; i < 4; i++) fireEvent.press(screen.getByRole('button', { name: 'Skip' })) // access, force, enjoys, good to know
-      expect(await screen.findByText("Ollie's profile is ready")).toBeTruthy()
-      expect(await screen.findByText('We found 1 guide and 1 toy that suit Ollie.')).toBeTruthy()
+      expect(await screen.findByText("Your child's profile is ready")).toBeTruthy()
+      expect(await screen.findByText('We found 1 guide and 1 toy that suit your child.')).toBeTruthy()
       fireEvent.press(screen.getByRole('button', { name: 'See the matches' }))
       expect(mockReplace).toHaveBeenCalledWith('/guides')
       await act(async () => { jest.advanceTimersByTime(500) })

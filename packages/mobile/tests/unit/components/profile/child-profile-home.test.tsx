@@ -28,7 +28,6 @@ jest.mock('expo-router', () => {
 const child = (over: object) => ({
   id: 'cp1',
   parent_id: 'u1',
-  name: null,
   age: null,
   macs_level: null,
   macs_source: 'manual',
@@ -67,23 +66,23 @@ beforeEach(() => {
 describe('ChildProfileHome', () => {
   it('lists each child with its one-line summary, falling back per the spec', async () => {
     mockGet.mockResolvedValue([
-      child({ id: 'cp1', name: 'Maya', age: 5, helps_with: ['seeing', 'calm'], press_force: 'light' }),
-      child({ id: 'cp2', name: null }),
+      child({ id: 'cp1', age: 5, helps_with: ['seeing', 'calm'], press_force: 'light' }),
+      child({ id: 'cp2' }),
     ])
     render(<ChildProfileHome />)
 
-    expect(await screen.findByText('Maya')).toBeTruthy()
+    expect(await screen.findByText('Child 1')).toBeTruthy()
     expect(screen.getByText('Age 5 · Seeing, Feeling calm · Light press')).toBeTruthy()
-    // Unnamed children take their position; a blank profile says so plainly.
+    // Children are numbered by position; a blank profile says so plainly.
     expect(screen.getByText('Child 2')).toBeTruthy()
     expect(screen.getByText('Not set yet')).toBeTruthy()
   })
 
   it("opens a child's own editor", async () => {
-    mockGet.mockResolvedValue([child({ id: 'cp7', name: 'Maya' })])
+    mockGet.mockResolvedValue([child({ id: 'cp7' })])
     render(<ChildProfileHome />)
 
-    fireEvent.press(await screen.findByRole('button', { name: 'Maya' }))
+    fireEvent.press(await screen.findByRole('button', { name: /Child 1/ }))
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/account/child/[id]', params: { id: 'cp7' } })
   })
 

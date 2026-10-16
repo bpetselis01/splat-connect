@@ -2,6 +2,7 @@
 import { View, StyleSheet, type ViewProps } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { theme } from '../../lib/theme'
+import { PhotoPreviewHost } from './PhotoPreviewHost'
 
 /**
  * Root container for any screen in the app.
@@ -36,6 +37,7 @@ export function Screen({
       {...rest}
     >
       {children}
+      <PhotoPreviewHost />
     </View>
   )
 }

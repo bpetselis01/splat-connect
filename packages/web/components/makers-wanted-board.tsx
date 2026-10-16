@@ -22,7 +22,6 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
-  Baby,
   BookOpen,
   CalendarBlank,
   Car,
@@ -44,7 +43,6 @@ export type OpenBuild = {
   build_brief: string | null
   travel_km: number | null
   urgency: string | null
-  child_label: string | null
   requester_suburb: string | null
   family_has_toy: boolean
   created_at: string
@@ -278,11 +276,6 @@ export function MakersWantedBoard({ builds }: { builds: OpenBuild[] }) {
                   )}
 
                   <div className="flex flex-wrap gap-3.5 text-[13px] font-bold text-muted">
-                    {b.child_label && (
-                      <span className="inline-flex items-center gap-1">
-                        <Baby aria-hidden="true" /> {b.child_label}
-                      </span>
-                    )}
                     {b.travel_km !== null && (
                       <span className="inline-flex items-center gap-1">
                         <Car aria-hidden="true" /> Can travel {b.travel_km} km

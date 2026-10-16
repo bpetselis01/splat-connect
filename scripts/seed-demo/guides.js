@@ -382,12 +382,12 @@ const PICKS = {
 
 /** Six children answering the four questions (128), each matching some guides. */
 const CHILDREN = [
-  { parent: 'priya', name: 'Arlo', age: 6, helps_with: ['moving'], access: ['press', 'touch'], one_hand: true, press_force: 'light', enjoys: ['light', 'sound', 'water'], everyday_needs: ['wipeable'], palm_width_mm: 58, reach_cm: 45, tray_mm: 30 },
-  { parent: 'priya', name: 'Zara', age: 3, helps_with: ['seeing', 'calm'], access: ['grasp', 'watch'], one_hand: false, press_force: null, enjoys: ['soft', 'light', 'calm'], everyday_needs: ['no_flashing'] },
-  { parent: 'tom', name: 'Ruby', age: 8, helps_with: ['communicating', 'learning'], access: ['press', 'eyes'], one_hand: false, press_force: 'very_light', enjoys: ['sound', 'pretend'], everyday_needs: ['shared_siblings'] },
-  { parent: 'amira', name: 'Leo', age: 5, helps_with: ['hearing', 'moving'], access: ['press', 'head', 'foot'], one_hand: false, press_force: 'moderate', enjoys: ['move', 'build'], everyday_needs: ['travels_bag'] },
-  { parent: 'ben', name: 'Mia', age: 10, helps_with: ['daily', 'calm'], access: ['grasp'], one_hand: true, press_force: null, enjoys: ['calm', 'move'], everyday_needs: ['quiet'] },
-  { parent: 'sofia', name: 'Noah', age: 4, helps_with: ['moving', 'calm'], access: ['watch', 'press'], one_hand: false, press_force: 'full', enjoys: ['water', 'move'], everyday_needs: ['wheelchair_tray'] },
+  { parent: 'priya', age: 6, helps_with: ['moving'], access: ['press', 'touch'], one_hand: true, press_force: 'light', enjoys: ['light', 'sound', 'water'], everyday_needs: ['wipeable'], palm_width_mm: 58, reach_cm: 45, tray_mm: 30 },
+  { parent: 'priya', age: 3, helps_with: ['seeing', 'calm'], access: ['grasp', 'watch'], one_hand: false, press_force: null, enjoys: ['soft', 'light', 'calm'], everyday_needs: ['no_flashing'] },
+  { parent: 'tom', age: 8, helps_with: ['communicating', 'learning'], access: ['press', 'eyes'], one_hand: false, press_force: 'very_light', enjoys: ['sound', 'pretend'], everyday_needs: ['shared_siblings'] },
+  { parent: 'amira', age: 5, helps_with: ['hearing', 'moving'], access: ['press', 'head', 'foot'], one_hand: false, press_force: 'moderate', enjoys: ['move', 'build'], everyday_needs: ['travels_bag'] },
+  { parent: 'ben', age: 10, helps_with: ['daily', 'calm'], access: ['grasp'], one_hand: true, press_force: null, enjoys: ['calm', 'move'], everyday_needs: ['quiet'] },
+  { parent: 'sofia', age: 4, helps_with: ['moving', 'calm'], access: ['watch', 'press'], one_hand: false, press_force: 'full', enjoys: ['water', 'move'], everyday_needs: ['wheelchair_tray'] },
 ]
 
 // ── assets: sources.json keys, or "@<device type>[:n]" from mmc-sources ──────
@@ -422,7 +422,7 @@ async function seed() {
     const id = await insert('tutorials', {
       title: g.title,
       description: g.description + credit({ repo: repoOf(g), licence: g.licence }),
-      difficulty: g.difficulty, kind: g.kind, status: 'draft', maturity: 'complete',
+      difficulty: g.difficulty, kind: g.kind, status: 'draft',
       build_minutes: g.build, age_min: g.age[0], age_max: g.age[1],
       safety_declared_at: days(-40), prices_checked_on: days(-6).slice(0, 10),
       done_note: g.done, ...g.toy, ...g.print, ...g.tags,

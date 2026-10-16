@@ -2,13 +2,13 @@ import { notFound } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
 import { requireCapabilities } from '@/lib/require-capabilities'
 import { ChildEditor } from '@/components/child-editor'
-import type { ChildProfile } from '@splat-connect/types'
+import { childLabel, type ChildProfile } from '@splat-connect/types'
 
 export default async function EditChildPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   await requireCapabilities()
 
-  // Reads the collection rather than one row: the heading labels an unnamed
+  // Reads the collection rather than one row: the heading labels a
   // child by its position among its siblings, which a single-row fetch cannot
   // tell us. RLS scopes the list to the caller, so a child missing from it is
   // either gone or someone else's — 404 either way.
@@ -16,9 +16,9 @@ export default async function EditChildPage({ params }: { params: Promise<{ id: 
   const index = children.findIndex((c) => c.id === id)
   if (index === -1) notFound()
   const child = children[index]
-  // `name` is optional: an unnamed child is identified by its position in the
-  // list, computed rather than stored so a delete leaves no gap in the numbering.
-  const label = child.name?.trim() || `Child ${index + 1}`
+  // A child is identified by its position in the list, computed rather than
+  // stored so a delete leaves no gap in the numbering.
+  const label = childLabel(index, child.age)
 
   return (
     <div>

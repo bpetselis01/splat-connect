@@ -58,7 +58,6 @@ const DETAIL = {
   difficulty: 'easy',
   kind: 'toy_adaptation',
   status: 'approved',
-  maturity: 'complete',
   safety_declared_at: null,
   build_minutes: 30,
   // Object path (049), not a URL — the preview button signs it in-process.
@@ -132,6 +131,18 @@ describe('DetailScreen', () => {
     mockEndpoints({ detail: Promise.reject(new Error('API GET failed with status 500')) })
     render(<DetailScreen id="1" />)
     expect(await screen.findByText("Couldn't load tutorial. Please try again.")).toBeTruthy()
+  })
+
+  it("previews the owner's own draft: a 404 from the public route falls back to the owner's route, with the public shape filled in", async () => {
+    const { tutorial_orgs: _o, tutorial_recommendations: _r, ...editorShape } = { ...DETAIL, status: 'draft' }
+    ;(apiClient.get as jest.Mock).mockImplementation((p: string) =>
+      p === '/api/saves/ids' ? Promise.resolve(NO_SAVES) : p === '/api/child-profiles' ? Promise.resolve([]) : p.endsWith('/notes') ? Promise.resolve([])
+        : p === '/api/public/tutorials/1' ? Promise.reject(new Error('API GET /api/public/tutorials/1 failed with status 404: not found'))
+        : p === '/api/tutorials/1' ? Promise.resolve(editorShape) : Promise.resolve(null)
+    )
+    render(<DetailScreen id="1" />)
+    expect(await screen.findByText('Build a Robot Arm')).toBeTruthy()
+    expect(apiClient.get).toHaveBeenCalledWith('/api/tutorials/1')
   })
 
   it('non-network failure keeps the old message and Try again reloads the guide', async () => {
@@ -390,21 +401,21 @@ describe('DetailScreen steps and fit', () => {
       { id: 's2', tutorial_id: '1', position: 2, title: null, body: 'Fit the interrupter.', photo_url: null },
     ],
   }
-  const ollie = { name: 'Ollie', helps_with: null, access: ['press', 'eyes'], one_hand: false, press_force: 'light', enjoys: null }
+  const kid = { helps_with: null, access: ['press', 'eyes'], one_hand: false, press_force: 'light', enjoys: null }
 
   it('numbers the steps and says it suits the child', async () => {
-    mockEndpoints({ detail: Promise.resolve(tagged), children: Promise.resolve([ollie]) })
+    mockEndpoints({ detail: Promise.resolve(tagged), children: Promise.resolve([kid]) })
     render(<DetailScreen id="1" />)
     expect(await screen.findByText('Open it')).toBeTruthy()
     expect(screen.getByText('Fit the interrupter.')).toBeTruthy()
-    expect(await screen.findByText('Suits Ollie')).toBeTruthy()
+    expect(await screen.findByText('Suits your child')).toBeTruthy()
     expect(screen.getByText('Switch · Mounting and positioning · Toy adaptation')).toBeTruthy()
   })
 
   it('says nothing when the guide does not suit the child', async () => {
     mockEndpoints({
       detail: Promise.resolve(tagged),
-      children: Promise.resolve([{ ...ollie, access: ['voice'], press_force: 'full' }]),
+      children: Promise.resolve([{ ...kid, access: ['voice'], press_force: 'full' }]),
     })
     render(<DetailScreen id="1" />)
     await screen.findByText('Open it')
@@ -596,10 +607,10 @@ describe('DetailScreen combined layout', () => {
   })
 
   it('ticks the answers the child shares in Who it’s for', async () => {
-    const ollie = { name: 'Ollie', helps_with: null, access: ['head'], one_hand: false, press_force: null, enjoys: null }
-    mockEndpoints({ detail: Promise.resolve(guide), children: Promise.resolve([ollie]) })
+    const kid = { helps_with: null, access: ['head'], one_hand: false, press_force: null, enjoys: null }
+    mockEndpoints({ detail: Promise.resolve(guide), children: Promise.resolve([kid]) })
     render(<DetailScreen id="1" />)
-    await screen.findByText('Suits Ollie')
+    await screen.findByText('Suits your child')
     expect(screen.getByText('Head or chin')).toBeTruthy()
     expect(screen.UNSAFE_getAllByProps({ name: 'checkmark', size: 14 })).toHaveLength(1)
   })
@@ -718,7 +729,6 @@ describe('DetailScreen Feedback hand-off', () => {
     tab('Feedback')
     withNote()
     fireEvent.press(screen.getByTestId('feedback-composer'))
-    fireEvent.press(screen.getByText('Missing step'))
     fireEvent.changeText(screen.getByLabelText('Your note'), 'Posted from build mode.')
     fireEvent.press(screen.getByRole('button', { name: 'Post' }))
     await screen.findByText('Feedback posted')

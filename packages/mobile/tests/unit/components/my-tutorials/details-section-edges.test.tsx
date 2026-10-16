@@ -1,4 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react-native'
+import { BUILD_TIME_OPTIONS } from '@splat-connect/types'
 import { DetailsSection } from '../../../../components/my-tutorials/sections/details-section'
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
@@ -7,7 +8,7 @@ jest.mock('expo-router', () => ({ useRouter: () => ({ push: (...a: unknown[]) =>
 jest.mock('../../../../lib/auth-context', () => ({ useAuth: jest.fn() }))
 
 const base = () => ({
-  id: 't1', title: 'Roaring dinosaur', description: null, kind: 'toy_adaptation', difficulty: 'easy', maturity: 'complete', status: 'draft',
+  id: 't1', title: 'Roaring dinosaur', description: null, kind: 'toy_adaptation', difficulty: 'easy', status: 'draft',
   safety_declared_at: null, build_minutes: 30, tutorial_pdf_url: null, photo_urls: [], parts: [], tools: [], stl_files: [],
   age_min: null, age_max: null,
 }) as Record<string, unknown>
@@ -82,10 +83,10 @@ describe('age range', () => {
 })
 
 describe('chips', () => {
-  it('saves each build time, naming the longest "4 h or more"', () => {
+  it.each([0, 3, BUILD_TIME_OPTIONS.length - 1])('saves build time stop %i on slider release', (n) => {
     render(<DetailsSection />)
-    fireEvent.press(screen.getByText('4 h or more'))
-    expect(lastSave()).toEqual({ build_minutes: 240 })
+    fireEvent(screen.getByLabelText('Build time'), 'slidingComplete', n)
+    expect(lastSave()).toEqual({ build_minutes: BUILD_TIME_OPTIONS[n] })
   })
 
   it('does not un-pick difficulty when the chosen chip is pressed again', () => {
@@ -99,10 +100,9 @@ describe('chips', () => {
     expect(screen.queryByText('What the switch asks')).toBeNull()
   })
 
-  it('opens Backing for this guide', () => {
+  it('no longer has a Backing button (it lives under the hub More row)', () => {
     render(<DetailsSection />)
-    fireEvent.press(screen.getByText('Backing'))
-    expect(mockPush).toHaveBeenCalledWith('/tutorials/t1/backing')
+    expect(screen.queryByText('Backing')).toBeNull()
   })
 
   it('renders nothing while the draft has not arrived', () => {

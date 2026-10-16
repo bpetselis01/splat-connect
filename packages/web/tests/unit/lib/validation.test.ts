@@ -9,7 +9,6 @@ const baseTutorial: TutorialWithDetails = {
   difficulty: 'easy',
   kind: 'toy_adaptation',
   status: 'draft',
-  maturity: 'complete',
   safety_declared_at: '2026-08-01T00:00:00Z',
   build_minutes: 30,
   tutorial_pdf_url: 'https://example.com/tutorial.pdf',
@@ -61,10 +60,25 @@ describe('getMissingFields', () => {
     })
   })
 
-  it('pairs a missing guide PDF with the Files step', () => {
-    expect(getMissingFields({ ...baseTutorial, tutorial_pdf_url: null })).toContainEqual({
-      step: 'files',
-      label: 'The guide PDF',
+  describe('steps or a guide PDF', () => {
+    const step = { id: 's1', position: 1, title: 'Cut', body: 'Cut it', photo_url: null, tip: null, minutes: null }
+    const gap = (over: object) =>
+      getMissingFields({ ...baseTutorial, ...over } as never).find((g) => g.label === 'Steps or a guide PDF')
+
+    it('is a gap on the Steps step when there are neither', () => {
+      expect(gap({ steps: [], tutorial_pdf_url: null })).toEqual({ step: 'steps', label: 'Steps or a guide PDF' })
+    })
+    it('is satisfied by a PDF alone', () => {
+      expect(gap({ steps: [], tutorial_pdf_url: 'a/b.pdf' })).toBeUndefined()
+    })
+    it('is satisfied by steps alone', () => {
+      expect(gap({ steps: [step], tutorial_pdf_url: null })).toBeUndefined()
+    })
+    it('is satisfied by both', () => {
+      expect(gap({ steps: [step], tutorial_pdf_url: 'a/b.pdf' })).toBeUndefined()
+    })
+    it('treats a whitespace-only PDF path as no PDF', () => {
+      expect(gap({ steps: [], tutorial_pdf_url: '  ' })?.step).toBe('steps')
     })
   })
 
@@ -104,14 +118,13 @@ describe('getMissingFields', () => {
     })
   })
 
-  // Chain: the bar renders these in order, and reading "A photo" before "The
-  //        guide PDF" would not match the order the Files step asks for them
+  // Chain: the bar renders these in order, matching the order the steps are walked
   it('lists gaps in step order', () => {
     expect(
       getMissingFields({ ...baseTutorial, title: '', tutorial_pdf_url: null, tools: [] })
     ).toEqual([
       { step: 'details', label: 'A title' },
-      { step: 'files', label: 'The guide PDF' },
+      { step: 'steps', label: 'Steps or a guide PDF' },
       { step: 'tools', label: 'A tool' },
     ])
   })

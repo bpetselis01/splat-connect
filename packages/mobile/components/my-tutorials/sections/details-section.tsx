@@ -5,20 +5,16 @@
 // no Save button here, and no local copy of the tutorial to fall out of sync
 // with the one the hub is reading.
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
-import { useRouter } from 'expo-router'
-import type { Difficulty, TutorialKind, TutorialMaturity } from '@splat-connect/types'
-import {
-  BUILD_TIME_OPTIONS,
-  KIND_LABEL,
-  MATURITY_LABEL,
-  formatBuildTime,
-} from '@splat-connect/types'
+import type { Difficulty, TutorialKind } from '@splat-connect/types'
+import { KIND_LABEL } from '@splat-connect/types'
 import { useDraft } from '../../../lib/use-tutorial-draft'
+import { SectionProgress } from './section-progress'
 import { parseYears } from '../../../lib/tutorial-sections'
 import { theme } from '../../../lib/theme'
 import { Screen } from '../../ui/Screen'
 import { TextField } from '../../ui/TextField'
-import { Button } from '../../ui/Button'
+import { InfoHint } from '../../ui/InfoHint'
+import { BuildTimeSlider } from '../../ui/BuildTimeSlider'
 import { Chip } from '../../ui/Chip'
 import { ErrorRow } from '../../ui/ErrorRow'
 import { SectionFooter } from '../section-footer'
@@ -32,20 +28,16 @@ const DIFFICULTY_OPTIONS: { label: string; value: Difficulty }[] = [
   { label: 'Medium', value: 'medium' },
   { label: 'Hard', value: 'hard' },
 ]
-const MATURITY_OPTIONS = (Object.keys(MATURITY_LABEL) as TutorialMaturity[]).map((m) => ({
-  label: MATURITY_LABEL[m],
-  value: m,
-}))
 
 export function DetailsSection() {
-  const router = useRouter()
   const { tutorial, save, saveError } = useDraft()
   if (!tutorial) return null
 
   return (
     <Screen>
-      <ScrollView showsVerticalScrollIndicator={false} automaticallyAdjustKeyboardInsets>
-        <Text style={styles.lead}>What the toy is, who it suits, and who is backing the guide.</Text>
+      <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" automaticallyAdjustKeyboardInsets>
+        <SectionProgress section="details" />
+        <Text style={styles.lead}>What the toy is and who it suits.</Text>
         <TextField
           label="Title"
           accessibilityLabel="Title"
@@ -80,29 +72,26 @@ export function DetailsSection() {
         />
         <TextField
           label="Works with"
+          labelAccessory={<InfoHint title="Works with">The switches this build accepts. Shown as its own card in the guide sidebar - a parent checks it before they start.</InfoHint>}
           accessibilityLabel="Works with"
           placeholder="Any 3.5mm switch - Jelly Bean, Big Red, or a printed lever switch."
           maxLength={300}
           defaultValue={tutorial.works_with ?? ''}
           onChangeText={(text) => save({ works_with: text.trim() ? text : null })}
         />
-        <Text style={styles.hint}>
-          The switches this build accepts. Shown as its own card in the guide sidebar - a parent checks it before they start.
-        </Text>
         <TextField
           label="If someone would rather not build it (optional)"
+          labelAccessory={<InfoHint title="If someone would rather not build it">Sits next to "Get help with this build" in the sidebar, before the link to the toy library. Leave blank and we just show the link.</InfoHint>}
           accessibilityLabel="If someone would rather not build it"
           placeholder="e.g. Organisation 2 keeps printed mounts on the shelf if you would rather not print one."
           maxLength={300}
           defaultValue={tutorial.no_build_note ?? ''}
           onChangeText={(text) => save({ no_build_note: text.trim() ? text : null })}
         />
-        <Text style={styles.hint}>
-          Sits next to "Get help with this build" in the sidebar, before the link to the toy library. Leave blank and we just show the link.
-        </Text>
 
         <TextField
           label="Your closing line (optional)"
+          labelAccessory={<InfoHint title="Your closing line">Shown to the builder once every step is ticked off. Leave blank to skip it.</InfoHint>}
           accessibilityLabel="Your closing line"
           placeholder="e.g. Nice work - show us how it turned out."
           multiline
@@ -110,7 +99,6 @@ export function DetailsSection() {
           defaultValue={tutorial.done_note ?? ''}
           onChangeText={(text) => save({ done_note: text.trim() ? text : null })}
         />
-        <Text style={styles.hint}>Shown to the builder once every step is ticked off. Leave blank to skip it.</Text>
 
         <Text style={styles.label}>Kind</Text>
         <View style={styles.chipRow}>
@@ -136,58 +124,32 @@ export function DetailsSection() {
           ))}
         </View>
 
-        {/* Web's field (edit-details-section.tsx), as chips: the same values,
-            the same "printing isn't included" rule. */}
-        <Text style={styles.label}>About how long does it take?</Text>
-        <View style={styles.chipRow}>
-          {BUILD_TIME_OPTIONS.map((m) => (
-            <Chip
-              key={m}
-              label={m === 240 ? '4 h or more' : formatBuildTime(m)}
-              active={tutorial.build_minutes === m}
-              onPress={() => save({ build_minutes: m })}
-            />
-          ))}
-        </View>
-        <Text style={styles.hint}>Hands-on time only — printing time isn't included.</Text>
+        <LabelRow hint={{ title: 'About how long does it take?', text: "Hands-on time only — printing time isn't included." }}>About how long does it take?</LabelRow>
+        <BuildTimeSlider value={tutorial.build_minutes} onCommit={(m) => save({ build_minutes: m })} />
 
         {/* Web's two number fields (071). The empty string clears the end, so
             a guide can go back to "any age"; the 0–18 bound is the database's. */}
-        <Text style={styles.label}>Age range</Text>
+        <LabelRow hint={{ title: 'Age range', text: 'In years. Leave both blank if it suits any age.' }}>Age range</LabelRow>
         <View style={styles.chipRow}>
-          <TextField
-            accessibilityLabel="Youngest age"
-            placeholder="From"
-            keyboardType="number-pad"
-            value={tutorial.age_min == null ? '' : String(tutorial.age_min)}
-            onChangeText={(text) => save({ age_min: parseYears(text) })}
-            boxStyle={styles.ageBox}
-          />
-          <TextField
-            accessibilityLabel="Oldest age"
-            placeholder="To"
-            keyboardType="number-pad"
-            value={tutorial.age_max == null ? '' : String(tutorial.age_max)}
-            onChangeText={(text) => save({ age_max: parseYears(text) })}
-            boxStyle={styles.ageBox}
-          />
-        </View>
-        <Text style={styles.hint}>In years. Leave both blank if it suits any age.</Text>
-
-        <Text style={styles.label}>How far along is it?</Text>
-        <View style={styles.chipRow}>
-          {MATURITY_OPTIONS.map((o) => (
-            <Chip
-              key={o.value}
-              label={o.label}
-              active={tutorial.maturity === o.value}
-              onPress={() => save({ maturity: o.value })}
+          <View style={styles.ageBox}>
+            <TextField
+              accessibilityLabel="Youngest age"
+              placeholder="From"
+              keyboardType="number-pad"
+              value={tutorial.age_min == null ? '' : String(tutorial.age_min)}
+              onChangeText={(text) => save({ age_min: parseYears(text) })}
             />
-          ))}
+          </View>
+          <View style={styles.ageBox}>
+            <TextField
+              accessibilityLabel="Oldest age"
+              placeholder="To"
+              keyboardType="number-pad"
+              value={tutorial.age_max == null ? '' : String(tutorial.age_max)}
+              onChangeText={(text) => save({ age_max: parseYears(text) })}
+            />
+          </View>
         </View>
-        <Text style={styles.hint}>Only complete guides appear in the public library listing.</Text>
-
-        <Button label="Backing" variant="secondary" onPress={() => router.push(`/tutorials/${tutorial.id}/backing`)} />
 
         <ErrorRow message={saveError} />
       </ScrollView>
@@ -196,7 +158,18 @@ export function DetailsSection() {
   )
 }
 
+function LabelRow({ children, hint }: { children: string; hint?: { title: string; text: string } }) {
+  return (
+    <View style={styles.labelRow}>
+      <Text style={[styles.label, styles.labelInRow]}>{children}</Text>
+      {hint ? <InfoHint title={hint.title}>{hint.text}</InfoHint> : null}
+    </View>
+  )
+}
+
 const styles = StyleSheet.create({
+  labelInRow: { marginBottom: 0 },
+  labelRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing(2), marginBottom: theme.spacing(2) },
   // The board opens each section with what it is for.
   lead: {
     fontFamily: theme.fonts.regular,
@@ -219,12 +192,5 @@ const styles = StyleSheet.create({
   },
   ageBox: {
     flex: 1,
-  },
-  hint: {
-    fontFamily: theme.fonts.regular,
-    fontSize: theme.type.caption,
-    color: theme.colors.muted,
-    lineHeight: 18,
-    marginBottom: theme.spacing(4),
   },
 })

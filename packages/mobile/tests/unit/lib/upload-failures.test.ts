@@ -10,9 +10,22 @@ jest.mock('expo-image-picker', () => ({
   launchImageLibraryAsync: (...a: unknown[]) => mockLaunch(...a),
 }))
 
+// Native reads the file through XMLHttpRequest into a Blob (lib/upload.ts); the fake
+// remembers the uri so the form-part fakes below can keep asserting {uri,name,type}.
+let lastUri = ''
+class FakeXhr {
+  responseType = ''
+  response: unknown = null
+  onload: (() => void) | null = null
+  onerror: (() => void) | null = null
+  open(_m: string, uri: string) { lastUri = uri }
+  send() { this.response = new Blob(['x']); queueMicrotask(() => this.onload?.()) }
+}
+;(globalThis as unknown as { XMLHttpRequest: unknown }).XMLHttpRequest = FakeXhr
+
 class FakeFormData {
   parts: [string, unknown][] = []
-  append(key: string, value: unknown) { this.parts.push([key, value]) }
+  append(key: string, value: unknown, name?: string) { this.parts.push([key, value instanceof Blob && name !== undefined && lastUri ? { uri: lastUri, name, type: value.type } : value]) }
 }
 const RealFormData = globalThis.FormData
 const fetchMock = jest.fn()
@@ -121,12 +134,6 @@ describe('pickAndUploadPhoto outliers', () => {
   it('answers null when assets is missing', async () => {
     mockLaunch.mockResolvedValue({ canceled: false })
     await expect(pickAndUploadPhoto('/api/upload/photo', 't1')).resolves.toBeNull()
-  })
-
-  it('does not even open the picker when library access is refused', async () => {
-    mockPermission.mockResolvedValue({ granted: false })
-    await expect(pickAndUploadPhoto('/api/upload/photo', 't1')).rejects.toThrow('Photo library access is needed to choose a photo.')
-    expect(mockLaunch).not.toHaveBeenCalled()
   })
 
   it.each([413, 415, 500])('hides a %i behind the one retry sentence', async (status) => {

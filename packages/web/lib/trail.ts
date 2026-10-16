@@ -28,7 +28,7 @@
 import { ACCOUNT_NAV } from '@/lib/public-nav'
 
 /** `icon` names the board's duotone glyph for a crumb; components/breadcrumb.tsx draws it. */
-export type Crumb = { label: string; href?: string; icon?: string }
+type Crumb = { label: string; href?: string; icon?: string }
 
 /** A screen with no `parent` is a root: its own trail is empty. */
 type Screen = { label: string; parent?: string; icon?: string }

@@ -170,13 +170,13 @@ describe('suitsFilterOf', () => {
 describe('groups', () => {
   const keys = (gs: FilterGroup[]) => gs.map((x) => x.key)
   it('orders the guide page: sort, About the child, its four questions, About the guide, then the guide’s own', () => {
-    expect(keys(guideGroups('Ollie'))).toEqual(['sort', 'about-child', 'helps_with', 'access', 'press_force', 'play', 'about-guide', 'device_types', 'diff', 'time', 'parts'])
-    const gs = guideGroups('Ollie')
-    expect(gs.find((x) => x.key === 'about-child')).toMatchObject({ kind: 'heading', label: 'About Ollie' })
-    expect(guideGroups(null).find((x) => x.key === 'about-child')).toMatchObject({ label: 'About your child' })
+    expect(keys(guideGroups(true))).toEqual(['sort', 'about-child', 'helps_with', 'access', 'press_force', 'play', 'about-guide', 'device_types', 'diff', 'time', 'parts'])
+    const gs = guideGroups(true)
+    expect(gs.find((x) => x.key === 'about-child')).toMatchObject({ kind: 'heading', label: 'About your child' })
+    expect(guideGroups(false).find((x) => x.key === 'about-child')).toMatchObject({ label: 'About your child' })
   })
   it('sorts by Recommended first, and puts One hand is enough among the access chips', () => {
-    const gs = guideGroups(null)
+    const gs = guideGroups(false)
     const sort = gs.find((x) => x.key === 'sort') as Extract<FilterGroup, { kind: 'one' }>
     expect(sort.options.map((o) => o.label)).toEqual(['Recommended', 'Newest', 'Quickest', 'Easiest'])
     const access = gs.find((x) => x.key === 'access') as Extract<FilterGroup, { kind: 'many' }>
@@ -190,7 +190,7 @@ describe('groups', () => {
 })
 
 describe('filterTags', () => {
-  const groups = guideGroups('Ollie')
+  const groups = guideGroups(true)
 
   it('is empty at the defaults', () => {
     expect(filterTags(groups, GUIDE_DEFAULTS, GUIDE_DEFAULTS)).toEqual([])

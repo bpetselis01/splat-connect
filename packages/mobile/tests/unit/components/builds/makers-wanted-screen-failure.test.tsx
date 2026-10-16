@@ -18,7 +18,7 @@ jest.mock('expo-router', () => {
 jest.mock('../../../../lib/capabilities', () => ({ useCapabilities: () => ({ caps: null, loading: false }) }))
 
 const row = {
-  id: 'b1', tutorial_id: 'g1', build_brief: null, travel_km: 30, urgency: null, child_label: null, requester_suburb: 'Newtown',
+  id: 'b1', tutorial_id: 'g1', build_brief: null, travel_km: 30, urgency: null, requester_suburb: 'Newtown',
   family_has_toy: false, created_at: new Date().toISOString(), mine: false, km: null,
   tutorial: { id: 'g1', title: 'Guide b1', difficulty: 'easy', status: 'approved', build_minutes: 20, parts_total_cents: 2800 },
 }

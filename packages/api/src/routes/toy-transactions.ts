@@ -1,8 +1,8 @@
 import { chunk } from '../chunk.js'
 import { Hono, type Context } from 'hono'
 import { randomInt, randomUUID } from 'node:crypto'
-import { needsAction, isOwnerSide, answerBy, printRequestExpired, shortDate, fitNotesProblem, partsTotalCents, notificationBody } from '@splat-connect/types'
-import type { PrintJobFile, PrintSettings, BuildQuestion, BuildQuestions } from '@splat-connect/types'
+import { needsAction, isOwnerSide, answerBy, printRequestExpired, shortDate, customizationNotes, partsTotalCents, notificationBody } from '@splat-connect/types'
+import type { CustomizationField, PrintJobFile, PrintSettings, BuildQuestion, BuildQuestions } from '@splat-connect/types'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { ledOrgIds, atCapacityToyIds } from '../toy-access.js'
@@ -183,7 +183,7 @@ toyTransactions.get('/open-builds', async (c) => {
   const { data, error } = await supabase
     .from('toy_transactions')
     .select(
-      'id, tutorial_id, build_brief, travel_km, urgency, child_label, requester_suburb, family_has_toy, requester_id, created_at'
+      'id, tutorial_id, build_brief, travel_km, urgency, requester_suburb, family_has_toy, requester_id, created_at'
     )
     .eq('type', 'build')
     .eq('status', 'requested')
@@ -250,7 +250,7 @@ toyTransactions.get('/builds-board', async (c) => {
   const { data, error } = await admin
     .from('toy_transactions')
     .select(
-      'id, tutorial_id, build_brief, travel_km, urgency, child_label, requester_suburb, family_has_toy, requester_id, owner_id, owner_org_id, created_at, updated_at'
+      'id, tutorial_id, build_brief, travel_km, urgency, requester_suburb, family_has_toy, requester_id, owner_id, owner_org_id, created_at, updated_at'
     )
     .eq('type', 'build')
     .eq('status', tab === 'live' ? 'accepted' : 'completed')
@@ -271,7 +271,7 @@ toyTransactions.get('/builds-board', async (c) => {
         return {
           ...rest,
           ...(tab === 'done' || !party
-            ? { build_brief: null, travel_km: null, urgency: null, child_label: null, requester_suburb: null, family_has_toy: false }
+            ? { build_brief: null, travel_km: null, urgency: null, requester_suburb: null, family_has_toy: false }
             : {}),
           km: null,
           tutorial: found.guides.get(rest.tutorial_id as string) ?? null,
@@ -1432,7 +1432,7 @@ toyTransactions.post('/build', async (c) => {
   }
 
   // What the board's cards show, and all of it is deliberately coarse: a
-  // suburb rather than an address, a first name and an age rather than a child
+  // suburb rather than an address, a brief rather than a child
   // profile. See 064 — the least a maker needs to decide whether they can help
   // is the most a family should have to publish.
   const short = (field: string, max: number) => {
@@ -1443,7 +1443,6 @@ toyTransactions.post('/build', async (c) => {
   const board = {
     travel_km: Number.isInteger(travelKm) && travelKm >= 1 && travelKm <= 500 ? travelKm : null,
     urgency: short('urgency', 60),
-    child_label: short('child_label', 60),
     requester_suburb: short('requester_suburb', 80),
     family_has_toy: body.family_has_toy === true,
   }
@@ -1856,10 +1855,11 @@ toyTransactions.post('/print', async (c) => {
   if (delivery !== null && delivery !== 'collect' && delivery !== 'post') {
     return c.json({ error: 'Choose collect or post.' }, 400)
   }
-  // 096. Optional, and only the board's options (printing.ts).
-  const fitNotes = (body.fit_notes ?? null) as Record<string, string> | null
-  const fitProblem = fitNotes === null ? null : fitNotesProblem(fitNotes)
-  if (fitProblem) return c.json({ error: fitProblem }, 400)
+  // 096/134. Optional answers to the guide's own fields; checked once the guide is loaded.
+  const fitAnswers = body.fit_notes ?? {}
+  if (typeof fitAnswers !== 'object' || Array.isArray(fitAnswers)) {
+    return c.json({ error: 'Customization answers must be an object.' }, 400)
+  }
 
   // `files` carries a quantity per part (058's print_job_files.quantity,
   // 1–20). `stl_file_ids` is the form every client sent before, and still
@@ -1941,10 +1941,12 @@ toyTransactions.post('/print', async (c) => {
 
   const { data: tutorial } = await admin
     .from('tutorials')
-    .select('id, title, status')
+    .select('id, title, status, customization_fields')
     .eq('id', body.tutorial_id)
     .maybeSingle()
   if (!tutorial || tutorial.status !== 'approved') return c.json({ error: 'Not found' }, 404)
+  const fitNotes = customizationNotes((tutorial.customization_fields ?? []) as CustomizationField[], fitAnswers as Record<string, unknown>)
+  if ('error' in fitNotes) return c.json({ error: fitNotes.error }, 400)
 
   // 114: recycling credit, at one organisation being asked. Grams, never
   // money; spent only if that organisation's printer is the one that accepts.
@@ -2009,7 +2011,7 @@ toyTransactions.post('/print', async (c) => {
         print_note: note || null,
         print_colour: colour,
         print_delivery: delivery,
-        print_fit_notes: fitNotes && Object.keys(fitNotes).length ? fitNotes : null,
+        print_fit_notes: fitNotes.notes.length ? fitNotes.notes : null,
         print_group_id: groupId,
         type: 'print',
         status: 'requested',

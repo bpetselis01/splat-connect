@@ -1,5 +1,7 @@
 # Mobile guide authoring: a checklist hub
 
+> Superseded 2026-10-09: a guide needs steps or a PDF (see 2026-10-09-guide-editor-overhaul-design).
+
 **Date:** 2026-09-02
 **Status:** Design, awaiting review. Not committed.
 **Touches:** `components/my-tutorials/editor.tsx` (931 lines, split up),

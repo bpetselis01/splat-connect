@@ -5,22 +5,28 @@
 // every mutation calls replaceSteps, which debounces a PUT of the whole list —
 // so there is no Save button and leaving the screen flushes.
 //
-// Optional: not in getMissingFields, because guides written before steps
-// existed have none and the PDF still carries the guide.
+// A guide needs steps or a PDF (either): getMissingFields gaps this section
+// only when it has neither.
 import { logFailure } from '../../../lib/log'
 import { useRef, useState } from 'react'
+import { useRouter } from 'expo-router'
 import { View, Text, Image, ScrollView, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import * as ImagePicker from 'expo-image-picker'
 import { useDraft, type StepRow } from '../../../lib/use-tutorial-draft'
 import { uploadFile } from '../../../lib/upload'
+import { pickAndUploadPdf } from '../../../lib/pick-pdf'
+import { PickerNote } from './picker-note'
+import { pickPreviewedPhoto } from '../../../lib/pick-photo'
 import { theme } from '../../../lib/theme'
+import { supabase } from '../../../lib/supabase'
 import { Screen } from '../../ui/Screen'
 import { TextField } from '../../ui/TextField'
 import { Button } from '../../ui/Button'
 import { ErrorRow } from '../../ui/ErrorRow'
 import { SectionFooter } from '../section-footer'
 import { DraftGate } from './draft-gate'
+import { SectionProgress } from './section-progress'
 
 const MAX_STEPS = 60
 
@@ -36,7 +42,7 @@ export function StepsSection() {
 }
 
 function StepsEditor() {
-  const { tutorial, replaceSteps, saveError } = useDraft()
+  const { tutorial, replaceSteps, saveNow, saveError } = useDraft()
   // `k` names a row for as long as the screen is open, so an upload that lands
   // after the rows were edited, moved or removed still finds the row it was for.
   const nextKey = useRef(0)
@@ -46,6 +52,9 @@ function StepsEditor() {
   const rowsRef = useRef(rows)
   const [uploading, setUploading] = useState<number | null>(null)
   const [localError, setLocalError] = useState<string | null>(null)
+  const router = useRouter()
+  const [pdfUploading, setPdfUploading] = useState(false)
+  const [wantsSteps, setWantsSteps] = useState(rows.length > 0)
 
   if (!tutorial) return null
   const id = tutorial.id
@@ -53,6 +62,7 @@ function StepsEditor() {
   function commit(next: (StepRow & { k: number })[]) {
     rowsRef.current = next
     setRows(next)
+    setWantsSteps(true) // once the editor is showing, emptying it must not swap it out
     replaceSteps(next.map(({ k: _k, ...row }) => row))
   }
   const update = (i: number, patch: Partial<StepRow>) =>
@@ -67,12 +77,7 @@ function StepsEditor() {
     if (uploading !== null) return
     setLocalError(null)
     try {
-      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
-      if (!permission.granted) {
-        setLocalError('Photo library access is needed to choose a photo.')
-        return
-      }
-      const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ['images'] })
+      const result = await pickPreviewedPhoto()
       if (result.canceled || !result.assets?.length) return
       const k = rows[i].k
       setUploading(k)
@@ -92,14 +97,72 @@ function StepsEditor() {
     }
   }
 
+  // Same signing as home/detail-screen openPreview: the bucket is private.
+  async function choosePdf() {
+    setLocalError(null)
+    try {
+      const url = await pickAndUploadPdf(id, () => setPdfUploading(true))
+      if (url) await saveNow({ tutorial_pdf_url: url })
+    } catch (err) {
+      logFailure('[StepsSection] pdf upload failed:', err)
+      setLocalError('Could not upload the PDF. Please try again.')
+    } finally {
+      setPdfUploading(false)
+    }
+  }
+
+  async function openPdf(path: string) {
+    let pdfUrl = ''
+    try {
+      const { data, error } = await supabase.storage.from('tutorial-pdfs').createSignedUrl(path, 60)
+      if (!error && data) pdfUrl = data.signedUrl
+    } catch (err) {
+      logFailure('[StepsSection] pdf signing failed:', err)
+    }
+    router.push({ pathname: '/guides/[id]/preview', params: { id, pdfUrl } })
+  }
+
+  const pdf = tutorial.tutorial_pdf_url?.trim() || null
+  if (rows.length === 0 && !wantsSteps) {
+    return (
+      <Screen>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <SectionProgress section="steps" />
+          {pdf ? (
+            <View style={styles.choiceCard}>
+              <Text style={styles.pdfPill}>PDF guide added</Text>
+              <Text style={styles.cardTitle}>Your guide is the PDF</Text>
+              <Text style={styles.cardBody}>Builders will download and follow it. Steps are optional.</Text>
+              <Button label="View PDF" onPress={() => void openPdf(pdf)} />
+              <Button label="Add steps as well" variant="secondary" onPress={() => setWantsSteps(true)} />
+            </View>
+          ) : (
+            <>
+              <View style={styles.choiceCard}>
+                <Text style={styles.cardTitle}>Write the steps here</Text>
+                <Text style={styles.cardBody}>Step by step instructions with photos. Builders can tick them off as they go.</Text>
+                <Button label="Add the first step" onPress={() => setWantsSteps(true)} />
+              </View>
+              <View style={styles.choiceCard}>
+                <Text style={styles.cardTitle}>Or use a PDF guide</Text>
+                <Text style={styles.cardBody}>Already have one? Add it and skip writing steps.</Text>
+                <Button label="Choose PDF from Files" variant="secondary" onPress={() => void choosePdf()} loading={pdfUploading} />
+                <PickerNote noun="PDF" />
+              </View>
+            </>
+          )}
+          <ErrorRow message={localError ?? saveError} />
+        </ScrollView>
+        <SectionFooter section="steps" />
+      </Screen>
+    )
+  }
+
   return (
     <Screen>
-      <ScrollView showsVerticalScrollIndicator={false} automaticallyAdjustKeyboardInsets>
-        {rows.length === 0 ? (
-          <Text style={styles.empty}>
-            One photo and one instruction per action. Optional — the PDF still carries the guide.
-          </Text>
-        ) : null}
+      <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" automaticallyAdjustKeyboardInsets>
+        <SectionProgress section="steps" />
+        {rows.length === 0 ? <Text style={styles.empty}>One photo and one instruction per action.</Text> : null}
 
         {rows.map((row, i) => (
           <View key={row.k} testID={`step-row-${i}`} style={styles.card}>
@@ -217,6 +280,28 @@ const styles = StyleSheet.create({
     color: theme.colors.muted,
     marginBottom: theme.spacing(3),
   },
+  choiceCard: {
+    backgroundColor: theme.colors.surface,
+    borderWidth: theme.border.hairline,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radii.card,
+    padding: theme.spacing(4),
+    gap: theme.spacing(2),
+    marginBottom: theme.spacing(3),
+  },
+  pdfPill: {
+    alignSelf: 'flex-start',
+    fontFamily: theme.fonts.bold,
+    fontSize: theme.type.caption,
+    color: theme.colors.tone.mint.fg,
+    backgroundColor: theme.colors.tone.mint.bg,
+    borderRadius: theme.radii.pill,
+    paddingHorizontal: theme.spacing(3),
+    paddingVertical: theme.spacing(1),
+    overflow: 'hidden',
+  },
+  cardTitle: { fontFamily: theme.fonts.bold, fontSize: theme.type.body, color: theme.colors.ink },
+  cardBody: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.muted },
   // The board's section card: panel radius, one elevation, 14px in.
   card: {
     backgroundColor: theme.colors.surface,

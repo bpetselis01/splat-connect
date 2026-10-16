@@ -11,7 +11,7 @@ import { useAuth } from './auth-context'
 import { resolveAuthStorage } from './supabase-storage'
 
 export type ShortcutGroup = 'Learn and build' | 'Toys' | 'Printing' | 'Community' | 'Me'
-export type ShortcutTint = 'sky' | 'apr' | 'mint' | 'honey' | 'vio' | 'sun'
+type ShortcutTint = 'sky' | 'apr' | 'mint' | 'honey' | 'vio' | 'sun'
 export type Feature = {
   id: string
   name: string

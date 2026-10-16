@@ -89,32 +89,86 @@ export function orgPrintFacts(s?: PrinterStats | null): Array<{ k: string; v: st
   ].filter((f): f is { k: string; v: string } => f !== null)
 }
 
-/** The board's Customization questions and options, asked per print request (096). */
-export const PRINT_FIT_QUESTIONS = [
-  { key: 'reach', label: 'Reach from seated', options: ['Under 20 cm', '20–40 cm', 'Over 40 cm'] },
-  { key: 'switch_size', label: 'Preferred switch size', options: ['Small (50 mm)', 'Large (100 mm)', 'Extra large'] },
-  { key: 'mount', label: 'Mount needed', options: ['Tray clamp', 'Floor stand', 'None'] },
-  { key: 'tray', label: 'Tray thickness', options: ['10 mm', '15 mm', '20 mm', 'Not sure'] },
-] as const
+/**
+ * A question the guide's contributor asks of whoever requests a print (134).
+ * `param` names the OpenSCAD parameter it will drive once sizes make their own
+ * STL (PENDING generated-stl-sizes); nothing reads it yet.
+ */
+export type CustomizationField =
+  | { key: string; label: string; kind: 'choice'; options: string[]; param?: string }
+  | { key: string; label: string; kind: 'number'; unit: string; min: number; max: number; param?: string }
 
-export type PrintFitKey = (typeof PRINT_FIT_QUESTIONS)[number]['key']
-export type PrintFitNotes = Partial<Record<PrintFitKey, string>>
+export const MAX_CUSTOMIZATION_FIELDS = 6
 
-/** Null when every answer is an option its question offers; otherwise the 400's sentence. */
-export function fitNotesProblem(v: unknown): string | null {
-  const bad = 'Customization answers must be one of the options offered.'
-  if (typeof v !== 'object' || v === null || Array.isArray(v)) return bad
-  for (const [key, answer] of Object.entries(v)) {
-    const q = PRINT_FIT_QUESTIONS.find((x) => x.key === key)
-    if (!q || !(q.options as readonly string[]).includes(answer as string)) return bad
+/** A request's answers, kept with their labels so they read right after the guide changes. */
+export type PrintFitNotes = Array<{ label: string; value: string }>
+
+export const fieldKey = (label: string): string =>
+  label.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '')
+
+/** Null when every field is well formed; otherwise the 400's sentence. */
+export function customizationFieldsProblem(v: unknown): string | null {
+  if (!Array.isArray(v)) return 'Customization fields must be a list.'
+  if (v.length > MAX_CUSTOMIZATION_FIELDS) return `A guide can have at most ${MAX_CUSTOMIZATION_FIELDS} customization fields.`
+  const keys = new Set<string>()
+  for (const f of v as Array<Record<string, unknown>>) {
+    const label = typeof f?.label === 'string' ? f.label.trim() : ''
+    if (!label || label.length > 40) return 'Each customization field needs a name of 40 characters or fewer.'
+    const key = fieldKey(label)
+    if (!key || f.key !== key) return `The field “${label}” has the wrong key.`
+    if (keys.has(key)) return `Two customization fields are both called “${label}”.`
+    keys.add(key)
+    if (f.param !== undefined && (typeof f.param !== 'string' || !/^[A-Za-z_][A-Za-z0-9_]{0,39}$/.test(f.param))) {
+      return `“${label}”: the parameter name is not valid.`
+    }
+    if (f.kind === 'choice') {
+      const o = f.options
+      if (!Array.isArray(o) || o.length < 2 || o.length > 8) return `“${label}” needs 2 to 8 options.`
+      if (o.some((x) => typeof x !== 'string' || !x.trim() || x.length > 40)) return `“${label}”: each option is 1 to 40 characters.`
+      if (new Set(o).size !== o.length) return `“${label}” lists an option twice.`
+    } else if (f.kind === 'number') {
+      if (typeof f.unit !== 'string' || !f.unit.trim() || f.unit.length > 10) return `“${label}” needs a unit, like mm.`
+      if (!Number.isFinite(f.min) || !Number.isFinite(f.max) || (f.min as number) >= (f.max as number)) {
+        return `“${label}”: the smallest value must be below the largest.`
+      }
+    } else {
+      return `“${label}” must be a choice or a number.`
+    }
   }
   return null
 }
 
-/** "Reach from seated: 20–40 cm", in the board's order, for the printer. */
+/**
+ * Checks a request's answers (field key → value) against the guide's fields
+ * and returns them as labelled notes in field order, or the 400's sentence.
+ * Every answer is optional.
+ */
+export function customizationNotes(
+  fields: CustomizationField[],
+  answers: Record<string, unknown>
+): { notes: PrintFitNotes } | { error: string } {
+  for (const key of Object.keys(answers)) {
+    if (!fields.some((f) => f.key === key)) return { error: `This guide has no customization field “${key}”.` }
+  }
+  const notes: PrintFitNotes = []
+  for (const f of fields) {
+    const a = answers[f.key]
+    if (a === undefined || a === null || a === '') continue
+    if (f.kind === 'choice') {
+      if (typeof a !== 'string' || !f.options.includes(a)) return { error: `${f.label}: choose one of the options offered.` }
+      notes.push({ label: f.label, value: a })
+    } else {
+      const n = typeof a === 'number' ? a : typeof a === 'string' && a.trim() !== '' ? Number(a) : NaN
+      if (!Number.isFinite(n) || n < f.min || n > f.max) return { error: `${f.label}: enter a number from ${f.min} to ${f.max} ${f.unit}.` }
+      notes.push({ label: f.label, value: `${n} ${f.unit}` })
+    }
+  }
+  return { notes }
+}
+
+/** "Reach from seated: 20–40 cm", in the guide's order, for the printer. */
 export function fitNotesLines(notes?: PrintFitNotes | null): string[] {
-  if (!notes) return []
-  return PRINT_FIT_QUESTIONS.filter((q) => notes[q.key]).map((q) => `${q.label}: ${notes[q.key]}`)
+  return (notes ?? []).map((n) => `${n.label}: ${n.value}`)
 }
 
 type Sized = { size_x_mm?: number | null; size_y_mm?: number | null; size_z_mm?: number | null }

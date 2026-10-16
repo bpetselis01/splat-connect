@@ -122,7 +122,7 @@ export function LibraryClient({
   signedIn: boolean
   initialSearch?: string
   /** The signed-in parent's first child: Recommended puts their matches first. */
-  child?: (ChildTags & { name?: string | null }) | null
+  child?: ChildTags | null
 }) {
   // A Set rather than repeated .includes: this is the busiest page on the site
   // and the lookup runs once per card.
@@ -131,7 +131,6 @@ export function LibraryClient({
   const [filters, setFilters] = useState<Filters>({})
   const [sortKey, setSortKey] = useState<SortKey>('recommended')
   const suits = filters.suits ?? NO_SUITS_FILTER
-  const childName = child?.name?.trim() || null
 
   // Tapping the chosen option clears it — one choice per facet, as the board has it.
   function toggle(key: keyof Filters, value: string) {
@@ -246,7 +245,7 @@ export function LibraryClient({
 
           <h3 className="m-0 flex items-center gap-1.5 font-display text-base font-extrabold text-ink">
             <UserCircle size={18} weight="duotone" className="text-brand-dark" aria-hidden="true" />
-            About {childName ?? 'your child'}
+            About your child
           </h3>
           {CHILD_GROUPS.map((g) => (
             <TagGroup key={g.key} group={g} chosen={chosen} onToggle={toggleTag} />

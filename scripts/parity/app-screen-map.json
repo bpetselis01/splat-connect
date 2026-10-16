@@ -11,7 +11,7 @@
     "type": "missing-section",
     "match": "suits ollie",
     "why": "fixture",
-    "reason": "The board's child Ollie fits a guide, so a Suits Ollie heading draws; the parity child has no name or fit answers."
+    "reason": "The board's child Ollie fits a guide, so a Suits Ollie heading draws; the parity child has no fit answers, and SPLAT no longer stores a child name (spec 2026-10-09-remove-child-name)."
    }
   ]
  },
@@ -469,7 +469,7 @@
  },
  {
   "id": "ed_details",
-  "name": "Editor \u00b7 details",
+  "name": "Editor · details",
   "group": "push",
   "boardRoute": "tutorials/[id]/details",
   "route": "/tutorials/[id]/details",
@@ -492,7 +492,7 @@
  },
  {
   "id": "ed_steps",
-  "name": "Editor \u00b7 steps",
+  "name": "Editor · steps",
   "group": "push",
   "boardRoute": "tutorials/[id]/steps",
   "route": "/tutorials/[id]/steps",
@@ -515,7 +515,7 @@
  },
  {
   "id": "ed_parts",
-  "name": "Editor \u00b7 parts",
+  "name": "Editor · parts",
   "group": "push",
   "boardRoute": "tutorials/[id]/parts",
   "route": "/tutorials/[id]/parts",
@@ -538,7 +538,7 @@
  },
  {
   "id": "ed_tools",
-  "name": "Editor \u00b7 tools",
+  "name": "Editor · tools",
   "group": "push",
   "boardRoute": "tutorials/[id]/tools",
   "route": "/tutorials/[id]/tools",
@@ -561,7 +561,7 @@
  },
  {
   "id": "ed_safety",
-  "name": "Editor \u00b7 safety",
+  "name": "Editor · safety",
   "group": "push",
   "boardRoute": "tutorials/[id]/safety",
   "route": "/tutorials/[id]/safety",
@@ -578,7 +578,7 @@
  },
  {
   "id": "ed_stl",
-  "name": "Editor \u00b7 STL",
+  "name": "Editor · STL",
   "group": "push",
   "boardRoute": "tutorials/[id]/stl",
   "route": "/tutorials/[id]/stl",

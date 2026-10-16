@@ -255,13 +255,6 @@ describe('booking', () => {
     expect(screen.getByText('1 declaration line still to tick.')).toBeTruthy()
   })
 
-  it('asks for photo access in words when it is refused', async () => {
-    mockPermission = false
-    await ready()
-    fireEvent.press(screen.getByLabelText('Photo of the sorted plastic'))
-    expect(await screen.findByText('Photo library access is needed to choose a photo.')).toBeTruthy()
-  })
-
   it('does nothing, and shows no error, when the photo picker is cancelled', async () => {
     await ready()
     fireEvent.press(screen.getByLabelText('Photo of the sorted plastic'))

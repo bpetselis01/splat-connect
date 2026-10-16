@@ -44,9 +44,6 @@ publicRoutes.get('/tutorials', async (c) => {
     // never the rows behind them.
     .select('*, thanks_count, has_stl, parts(name), tutorial_orgs(status, organizations(id, name))')
     .eq('status', 'approved')
-    // The default public listing carries only finished designs; anything less
-    // mature stays reachable by direct link, wearing its maturity badge.
-    .eq('maturity', 'complete')
     .order('created_at', { ascending: false })
   if (difficulty) query = query.eq('difficulty', difficulty)
   const { data, error } = await query
@@ -81,7 +78,6 @@ publicRoutes.get('/tutorials/stats', async (c) => {
     .from('tutorials')
     .select('id, tutorial_contributors(profile_id), tutorial_orgs(org_id, status)')
     .eq('status', 'approved')
-    .eq('maturity', 'complete')
   if (error) return c.json({ error: error.message }, 500)
   const rows = (data ?? []) as unknown as Array<{
     tutorial_contributors: { profile_id: string }[]
@@ -107,7 +103,7 @@ publicRoutes.get('/tutorials/:id', async (c) => {
     .select(
       '*, thanks_count, parts(*), tools(*), stl_files(*), steps:tutorial_steps(*), safety_notes:tutorial_safety_notes(*), tutorial_contributors(profile_id, role, former_names, former_count, profiles(name)), ' +
         'tutorial_orgs(status, organizations(id, name)), ' +
-        'tutorial_recommendations!tutorial_id(position, required, tutorials!recommended_id(id, title, kind, difficulty, toy_photo_url, status, maturity, build_minutes)), ' +
+        'tutorial_recommendations!tutorial_id(position, required, tutorials!recommended_id(id, title, kind, difficulty, toy_photo_url, status, build_minutes)), ' +
         'reviewer:reviewed_by(name), reviewed_for:reviewed_for_org_id(name)'
     )
     .eq('id', c.req.param('id'))

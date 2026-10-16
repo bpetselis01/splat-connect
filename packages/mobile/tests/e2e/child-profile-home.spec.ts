@@ -16,13 +16,12 @@ test('the age field autosaves and survives a reload', async ({ page }) => {
 test('a child appears on the family list with its summary line', async ({ page }) => {
   await signUpNewAccount(page, uniqueSignupEmail())
   await openChildProfile(page)
-  await page.getByLabel("Child's name").fill('Maya')
   await page.getByLabel("Child's age").fill('5')
   await page.waitForTimeout(1000)
 
-  // Back on Account, the list names the child and its summary.
+  // Back on Account, the list numbers the child and shows its summary.
   await page.goto('/account')
-  await expect(page.getByRole('button', { name: 'Maya' })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Child 1/ })).toBeVisible()
   await expect(page.getByText('Age 5')).toBeVisible()
 })
 

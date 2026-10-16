@@ -86,6 +86,8 @@ test('steps added in the editor are saved in order and survive a reload', async 
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile EditSteps'), status: 'draft' })
 
   await page.goto(`/tutorials/${id}/steps`)
+  // A PDF-only guide opens on the choice card; the editor is one tap further.
+  await page.getByRole('button', { name: 'Add steps as well', exact: true }).click()
   await page.getByTestId('steps-add').click()
   await page.getByLabel('Step 1 instructions').fill('First, open it.')
   await page.getByTestId('steps-add').click()
@@ -117,6 +119,8 @@ test('a step with no instructions is flagged and never saved', async ({ page }) 
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile BlankStep'), status: 'draft' })
 
   await page.goto(`/tutorials/${id}/steps`)
+  // A PDF-only guide opens on the choice card; the editor is one tap further.
+  await page.getByRole('button', { name: 'Add steps as well', exact: true }).click()
   await page.getByTestId('steps-add').click()
   await expect(page.getByText('Add the instructions to save this step')).toBeVisible()
   await page.getByTestId('section-back').click()
@@ -124,14 +128,25 @@ test('a step with no instructions is flagged and never saved', async ({ page }) 
   await expect(page.getByTestId('step-row-0')).toHaveCount(0)
 })
 
-test('the hub counts steps and Submit stays shut until the guide is complete', async ({ page }) => {
+test('the hub counts steps, and steps alone open Submit', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
-  const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile HubSteps'), status: 'draft', withPdf: false })
-  await addSteps(id, [{ body: 'One' }, { body: 'Two' }, { body: 'Three' }])
+  const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile HubSteps'), status: 'draft', withPdf: false, withSteps: false, buildMinutes: 30 })
 
   await page.goto(`/tutorials/${id}`)
-  await expect(page.getByTestId('hub-row-steps')).toContainText('3 steps')
   await expect(page.getByTestId('hub-submit')).toBeDisabled()
+
+  await addSteps(id, [{ body: 'One' }, { body: 'Two' }, { body: 'Three' }])
+  await page.reload()
+  await expect(page.getByTestId('hub-row-steps')).toContainText('3 steps')
+  await expect(page.getByTestId('hub-submit')).toBeEnabled()
+})
+
+test('a guide PDF alone opens Submit', async ({ page }) => {
+  const contributor = await signInAsNewContributor(page)
+  const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile HubPdfOnly'), status: 'draft', withPdf: true, withSteps: false, buildMinutes: 30 })
+
+  await page.goto(`/tutorials/${id}`)
+  await expect(page.getByTestId('hub-submit')).toBeEnabled()
 })
 
 test('Delete draft asks first, and cancelling keeps the draft', async ({ page }) => {
@@ -213,7 +228,7 @@ test('choosing a PDF as the guide photo is refused and no photo is added', async
   const contributor = await signInAsNewContributor(page)
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile WrongPhoto'), status: 'draft' })
 
-  await page.goto(`/tutorials/${id}/files`)
+  await page.goto(`/tutorials/${id}/photos`)
   await chooseFile(page, 'Choose from library', PDF_FIXTURE)
   await expect(page.getByText('Could not upload the photo. Please try again.')).toBeVisible()
 })
@@ -222,7 +237,7 @@ test('a photo upload that drops mid-way shows the error, and trying again works'
   const contributor = await signInAsNewContributor(page)
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile DropUpload'), status: 'draft' })
 
-  await page.goto(`/tutorials/${id}/files`)
+  await page.goto(`/tutorials/${id}/photos`)
   await page.route('**/api/upload/photo', (route) => route.abort())
   await chooseFile(page, 'Choose from library', PHOTO_FIXTURE)
   await expect(page.getByText('Could not upload the photo. Please try again.')).toBeVisible()

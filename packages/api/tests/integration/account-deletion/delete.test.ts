@@ -57,7 +57,7 @@ beforeAll(async () => {
     idea_id: ids.idea, sender_id: leaving.id, kind: 'user', body: 'Try a zip pocket.',
   }).select('id').single()).data!.id
 
-  await admin.from('child_profiles').insert({ parent_id: leaving.id, name: 'Maya' })
+  await admin.from('child_profiles').insert({ parent_id: leaving.id, age: 5 })
 })
 
 afterAll(async () => {

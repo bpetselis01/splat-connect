@@ -27,7 +27,6 @@ import { apiClient } from '@/lib/api-client'
 const child = (over: Partial<ChildProfile>): ChildProfile => ({
   id: 'c1',
   parent_id: 'u1',
-  name: null,
   age: null,
   macs_level: null,
   macs_source: 'manual',
@@ -62,10 +61,10 @@ describe('EditChildPage', () => {
   beforeEach(() => vi.clearAllMocks())
 
   it('seeds the form from the requested child', async () => {
-    vi.mocked(apiClient.get).mockResolvedValue([child({ id: 'c1', name: 'Emma', age: 7, helps_with: ['seeing'] })])
+    vi.mocked(apiClient.get).mockResolvedValue([child({ id: 'c1', age: 7, helps_with: ['seeing'] })])
     render(await EditChildPage({ params: Promise.resolve({ id: 'c1' }) }))
     expect(screen.getByRole('region', { name: 'Who they are' })).toBeInTheDocument()
-    expect(screen.getByLabelText('Name or nickname')).toHaveValue('Emma')
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Child 1, age 7')
     expect(screen.getByLabelText('Age')).toHaveValue(7)
     expect(screen.getByRole('button', { name: 'Seeing' })).toHaveAttribute('aria-pressed', 'true')
   })

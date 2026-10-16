@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Hono } from 'hono'
 import type { AuthVariables } from '../../../src/middleware/auth.js'
 
-const mockUserClient = { from: vi.fn() }
+const mockUserClient = { from: vi.fn(), rpc: vi.fn() }
 const mockAdminClient = { from: vi.fn() }
 
 // --- Mock strategy ---
@@ -295,9 +295,9 @@ describe('PATCH /:id', () => {
   /** The tutorials table now answers two shapes on a submit: the pre-read of the
    *  current status (select -> eq -> maybeSingle) and the update itself. `was` is
    *  the status the pre-read reports. */
-  function patchable(updated: unknown, was: string | null, declared = '2026-08-01T00:00:00Z', minutes: number | null = 30) {
+  function patchable(updated: unknown, was: string | null, declared = '2026-08-01T00:00:00Z', minutes: number | null = 30, pdf: string | null = 'guide.pdf') {
     return {
-      select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: was ? { status: was, safety_declared_at: declared, build_minutes: minutes } : null, error: null }) }) }),
+      select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: was ? { status: was, safety_declared_at: declared, build_minutes: minutes, tutorial_pdf_url: pdf } : null, error: null }) }) }),
       update: () => ({ eq: () => ({ eq: () => ({ select: () => ({ data: [updated], error: null }) }) }) }),
     }
   }
@@ -425,6 +425,82 @@ describe('PATCH /:id', () => {
       body: JSON.stringify({ status: 'pending', updated_at: '2026-01-01T00:00:00Z' }),
     })
     expect(res.status).toBe(500)
+  })
+})
+
+describe('a live guide is never left empty (T9)', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  /** tutorials answers the pre-read and the update; tutorial_steps answers the head count. */
+  function withGuide(opts: { status: string; pdf: string | null; steps: number }) {
+    withTerms(true)
+    const base = mockUserClient.from.getMockImplementation()!
+    mockUserClient.from.mockImplementation((table: string) => {
+      if (table === 'tutorials')
+        return {
+          select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { status: opts.status, safety_declared_at: '2026-08-01T00:00:00Z', build_minutes: 30, tutorial_pdf_url: opts.pdf }, error: null }) }) }),
+          update: () => ({ eq: () => ({ eq: () => ({ select: () => ({ data: [{ id: '1', title: 't' }], error: null }) }) }) }),
+        }
+      if (table === 'tutorial_steps')
+        return {
+          select: () => ({ eq: async () => ({ count: opts.steps, data: [], error: null }) }),
+          insert: () => ({ select: () => ({ data: [], error: null }) }),
+          delete: () => ({ in: async () => ({ error: null }) }),
+        }
+      return base(table)
+    })
+    mockUserClient.rpc.mockResolvedValue({ data: true })
+  }
+  const patch = (body: Record<string, unknown>) =>
+    makeApp().request('/1', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ updated_at: '2026-01-01T00:00:00Z', ...body }) })
+  const putSteps = (steps: unknown[]) =>
+    makeApp().request('/1/steps', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ steps }) })
+
+  it('refuses a submit with neither steps nor a PDF', async () => {
+    withGuide({ status: 'draft', pdf: null, steps: 0 })
+    const res = await patch({ status: 'pending' })
+    expect(res.status).toBe(400)
+    expect(((await res.json()) as any).error).toBe('A guide needs steps or a PDF')
+  })
+
+  it('accepts a submit with only a PDF, or only steps', async () => {
+    withGuide({ status: 'draft', pdf: 'g.pdf', steps: 0 })
+    expect((await patch({ status: 'pending' })).status).toBe(200)
+    withGuide({ status: 'draft', pdf: null, steps: 2 })
+    expect((await patch({ status: 'pending' })).status).toBe(200)
+  })
+
+  it('accepts a submit that sends the PDF in the same save', async () => {
+    withGuide({ status: 'draft', pdf: null, steps: 0 })
+    expect((await patch({ status: 'pending', tutorial_pdf_url: 'g.pdf' })).status).toBe(200)
+  })
+
+  it('refuses a submit that clears the PDF of a guide with no steps', async () => {
+    withGuide({ status: 'draft', pdf: 'g.pdf', steps: 0 })
+    expect((await patch({ status: 'pending', tutorial_pdf_url: null })).status).toBe(400)
+  })
+
+  it('refuses clearing the PDF of an approved guide with no steps; allows it with steps or on a draft', async () => {
+    withGuide({ status: 'approved', pdf: 'g.pdf', steps: 0 })
+    expect((await patch({ tutorial_pdf_url: null })).status).toBe(400)
+    withGuide({ status: 'approved', pdf: 'g.pdf', steps: 3 })
+    expect((await patch({ tutorial_pdf_url: null })).status).toBe(200)
+    withGuide({ status: 'draft', pdf: 'g.pdf', steps: 0 })
+    expect((await patch({ tutorial_pdf_url: null })).status).toBe(200)
+    expect(mockNotifySubmitted).not.toHaveBeenCalled()
+  })
+
+  it('refuses emptying the steps of an approved guide with no PDF; allows it with a PDF or on a draft', async () => {
+    withGuide({ status: 'approved', pdf: null, steps: 2 })
+    const res = await putSteps([])
+    expect(res.status).toBe(400)
+    expect(((await res.json()) as any).error).toBe('A guide needs steps or a PDF')
+    withGuide({ status: 'approved', pdf: 'g.pdf', steps: 2 })
+    expect((await putSteps([])).status).toBe(200)
+    withGuide({ status: 'draft', pdf: null, steps: 2 })
+    expect((await putSteps([])).status).toBe(200)
+    withGuide({ status: 'pending', pdf: null, steps: 2 })
+    expect((await putSteps([])).status).toBe(400)
   })
 })
 

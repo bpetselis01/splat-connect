@@ -42,7 +42,6 @@ function tx(overrides: Partial<ToyTransactionSummary> = {}): ToyTransactionSumma
     build_brief: null,
     travel_km: null,
     urgency: null,
-    child_label: null,
     requester_suburb: null,
     family_has_toy: false,
     working_photo_url: null,

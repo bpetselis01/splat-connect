@@ -24,7 +24,7 @@ export default function PrivacyPage() {
           </li>
           <li>
             <strong>Child profile information.</strong> If you create a child profile,
-            we store the name or nickname you enter, and the abilities and preferences
+            we store the age you enter, and the abilities and preferences
             you record so guides can be matched to them. This is the most sensitive
             data on the platform. It is visible only to your account. It is never
             published, never shown on a public page, and never shared with
@@ -137,8 +137,9 @@ export default function PrivacyPage() {
         <p>
           Accounts are for adults. Child profiles are created and managed by a parent
           or carer from their own account; children do not have accounts of their own.
-          We ask for the minimum needed to match a guide to a child, and we recommend
-          using a first name or nickname rather than a full legal name.
+          We ask for the minimum needed to match a guide to a child. We do not ask
+          for a child&apos;s name: a profile holds an age and preferences, and is
+          shown to you as Child 1, Child 2 and so on.
         </p>
         <p>
           If your child is old enough to understand, please ask them before you create

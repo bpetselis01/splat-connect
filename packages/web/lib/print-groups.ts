@@ -34,7 +34,7 @@ export function othersAskedLabel(size: number | null | undefined): string | null
   return `${others} other printer${others === 1 ? ' was' : 's were'} asked — first to accept wins`
 }
 
-export type MachineFit = { printer: PrinterWithOwner; ok: boolean; why: string[] }
+type MachineFit = { printer: PrinterWithOwner; ok: boolean; why: string[] }
 
 /**
  * Whether one of an organisation's machines can take this job: it holds every

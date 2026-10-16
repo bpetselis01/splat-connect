@@ -97,6 +97,10 @@ export async function createTutorial(
     kind: 'toy_adaptation' | 'assistive_tech'
     /** false leaves tutorial_pdf_url null, so the preview screen has nothing to open. */
     withPdf: boolean
+    /** true adds one step. A guide needs a step or a PDF to submit, so withPdf:false + withSteps:false is the "Steps or a guide PDF" gap. */
+    withSteps: boolean
+    /** Hands-on minutes; a submitted guide needs one (066). Unset leaves the column null. */
+    buildMinutes: number
     /** true adds one optional part and one optional tool alongside the required pair. */
     withOptionalExtras: boolean
     /**
@@ -124,6 +128,7 @@ export async function createTutorial(
     // Fixtures model tutorials whose author already affirmed the safety checklist.
     safety_declared_at: new Date().toISOString(),
     tutorial_pdf_url: pdfPath,
+    build_minutes: overrides.buildMinutes ?? null,
     // Not toy_photo_url: 053 made it generated from photo_urls[1], and an
     // insert naming a generated column is rejected outright (428C9). The web
     // helper was fixed in 82623653; this copy and createPublishedToy below
@@ -141,6 +146,13 @@ export async function createTutorial(
       .from('tutorial-pdfs')
       .upload(pdfPath, new Blob(['%PDF-1.4 E2E'], { type: 'application/pdf' }))
     if (uploadError) throw new Error(`Failed to upload tutorial PDF: ${uploadError.message}`)
+  }
+
+  if (overrides.withSteps) {
+    const { error: stepError } = await admin
+      .from('tutorial_steps')
+      .insert({ tutorial_id: id, position: 1, title: null, body: 'E2E step' })
+    if (stepError) throw new Error(`Failed to add step: ${stepError.message}`)
   }
 
   // tutorial_contributors is (tutorial_id, profile_id, role, added_at) with a

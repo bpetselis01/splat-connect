@@ -15,8 +15,8 @@ import { useEffect, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import type { PrintDelivery, PrintFitNotes, PrinterWithOwner, RecyclingCredit, StlFile, Tutorial } from '@splat-connect/types'
-import { apiMessage, costRange, formatCents, PRINT_COLOURS, PRINT_FIT_QUESTIONS, printCostCents, printSettingsLine } from '@splat-connect/types'
+import type { PrintDelivery, PrinterWithOwner, RecyclingCredit, StlFile, Tutorial } from '@splat-connect/types'
+import { apiMessage, costRange, formatCents, PRINT_COLOURS, printCostCents, printSettingsLine } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { useBottomClearance } from '../../lib/bottom-clearance'
@@ -60,7 +60,7 @@ export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; p
   const [qty, setQty] = useState<Record<string, number>>({})
   const [colour, setColour] = useState<string>(PRINT_COLOURS[0])
   const [delivery, setDelivery] = useState<PrintDelivery>('collect')
-  const [fitNotes, setFitNotes] = useState<PrintFitNotes>({})
+  const [fitNotes, setFitNotes] = useState<Record<string, string>>({})
   const [note, setNote] = useState('')
   const [agree, setAgree] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -109,6 +109,12 @@ export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; p
   const qtyOf = (id: string) => qty[id] ?? 1
   const bump = (id: string, by: number) =>
     setQty((cur) => ({ ...cur, [id]: Math.min(20, Math.max(1, (cur[id] ?? 1) + by)) }))
+  const fields = guide.customization_fields ?? []
+  const setAnswer = (key: string, value: string) =>
+    setFitNotes((cur) => {
+      const { [key]: _gone, ...rest } = cur
+      return value.trim() ? { ...rest, [key]: value } : rest
+    })
   const ticked = guide.stl_files.filter((f) => parts.includes(f.id)).map((f) => ({ ...f, quantity: qtyOf(f.id) }))
   // The board's agree line names the figure when a picked printer's rate and
   // every part's grams are known; a range when the printers differ.
@@ -156,7 +162,7 @@ export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; p
 
   return (
     <Screen>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
         <View>
           <Eyebrow>Asking</Eyebrow>
           <View style={styles.row}>
@@ -261,35 +267,43 @@ export function RequestPrintScreen({ guideId, printerIds }: { guideId: string; p
         </View>
 
         <View style={styles.group}>
+          {/* PENDING(generated-stl-sizes): a chosen size will render its own STL. */}
           <Eyebrow>Customization</Eyebrow>
-          <Text style={styles.meta}>
-            Physical dimensions we use to size printed mounts and brackets. Nothing here is required.
-          </Text>
-          {PRINT_FIT_QUESTIONS.map((q) => (
-            <View key={q.key} style={styles.group}>
-              <Text style={styles.partName}>{q.label}</Text>
-              <View accessibilityRole="radiogroup" accessibilityLabel={q.label} style={styles.row}>
-                {q.options.map((o) => (
-                  <Chip
-                    key={o}
-                    label={o}
-                    role="radio"
-                    variant="filter"
-                    active={fitNotes[q.key] === o}
-                    // A second tap clears it: every question is optional.
-                    onPress={() =>
-                      setFitNotes((cur) => {
-                        const next = { ...cur }
-                        if (next[q.key] === o) delete next[q.key]
-                        else next[q.key] = o
-                        return next
-                      })
-                    }
-                  />
-                ))}
-              </View>
-            </View>
-          ))}
+          {fields.length === 0 ? (
+            <Text style={styles.meta}>The contributor hasn’t set any customization fields.</Text>
+          ) : (
+            <>
+              <Text style={styles.meta}>Set by this guide’s contributor, to size the print for you. Nothing here is required.</Text>
+              {fields.map((f) => (
+                <View key={f.key} style={styles.group}>
+                  <Text style={styles.partName}>{f.label}</Text>
+                  {f.kind === 'choice' ? (
+                    <View accessibilityRole="radiogroup" accessibilityLabel={f.label} style={styles.row}>
+                      {f.options.map((o) => (
+                        <Chip
+                          key={o}
+                          label={o}
+                          role="radio"
+                          variant="filter"
+                          active={fitNotes[f.key] === o}
+                          // A second tap clears it: every question is optional.
+                          onPress={() => setAnswer(f.key, fitNotes[f.key] === o ? '' : o)}
+                        />
+                      ))}
+                    </View>
+                  ) : (
+                    <TextField
+                      accessibilityLabel={f.label}
+                      placeholder={`${f.min}–${f.max} ${f.unit}`}
+                      keyboardType="decimal-pad"
+                      value={fitNotes[f.key] ?? ''}
+                      onChangeText={(v) => setAnswer(f.key, v)}
+                    />
+                  )}
+                </View>
+              ))}
+            </>
+          )}
         </View>
 
         <TextField

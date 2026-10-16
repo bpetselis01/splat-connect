@@ -50,7 +50,6 @@ const tutorial = (over: Record<string, unknown> = {}) => ({
   title: 'Roaring dinosaur',
   kind: 'assistive_tech',
   difficulty: 'medium',
-  maturity: 'complete',
   status: 'draft',
   updated_at: 'v1',
   safety_declared_at: null,
@@ -229,20 +228,20 @@ describe('header and rows', () => {
     expect(screen.getByTestId('hub-done-steps')).toBeTruthy()
   })
 
-  it('counts only the optional Steps row as ready on a bare draft', () => {
+  it('counts nothing as ready on a bare draft (steps needs steps or a PDF)', () => {
     mockDraft.tutorial = tutorial({ difficulty: null, build_minutes: null, safety_declared_at: null, title: '' })
     render(<TutorialHub id="t1" />)
-    expect(screen.getByText('1 of 7 sections complete')).toBeTruthy()
-    expect(screen.getByTestId('hub-progress-fill')).toHaveStyle({ width: `${(1 / 7) * 100}%` })
+    expect(screen.getByText('0 of 7 sections complete')).toBeTruthy()
+    expect(screen.getByTestId('hub-progress-fill')).toHaveStyle({ width: '0%' })
   })
 
   it('lists several collaborators, with emoji names, and says Just you with none', () => {
     mockDraft.tutorial = tutorial({ tutorial_contributors: [{ profiles: { name: 'Ada 🧸' } }, { profiles: { name: "O'Brien" } }] })
     const view = render(<TutorialHub id="t1" />)
-    expect(screen.getByText("Ada 🧸, O'Brien - edit on the web")).toBeTruthy()
+    expect(screen.getByText("Ada 🧸, O'Brien")).toBeTruthy()
     mockDraft.tutorial = tutorial()
     view.rerender(<TutorialHub id="t1" />)
-    expect(screen.getByText('Just you - edit on the web')).toBeTruthy()
+    expect(screen.getByText('Just you')).toBeTruthy()
   })
 })
 

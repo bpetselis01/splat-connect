@@ -33,11 +33,10 @@ export default async function LibraryPage({
   ])
 
   // Recommended puts the first child's matches first (guide-tags spec); only
-  // their answers and name reach the client, not the whole profile.
+  // their answers reach the client, not the whole profile.
   const first = saved ? (await getMyChildren())[0] : undefined
   const child = first
     ? {
-        name: first.name,
         helps_with: first.helps_with,
         access: first.access,
         one_hand: first.one_hand,

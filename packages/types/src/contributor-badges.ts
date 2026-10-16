@@ -27,12 +27,12 @@ export interface ContributorBadgeInput {
 
 /** The thresholds contributorBadges() awards at; the explainer and the
  *  "next badge" line read these too, so none of them can drift. */
-export const GUIDE_TIERS = [
+const GUIDE_TIERS = [
   { id: 'first-guide', label: 'First guide', at: 1 },
   { id: 'guides-10', label: '10 guides', at: 10 },
   { id: 'guides-25', label: '25 guides', at: 25 },
 ] as const
-export const BUILDS_TIER = { id: 'builds-100', label: '100 builds', at: 100 } as const
+const BUILDS_TIER = { id: 'builds-100', label: '100 builds', at: 100 } as const
 
 export function contributorBadges(
   input: ContributorBadgeInput,

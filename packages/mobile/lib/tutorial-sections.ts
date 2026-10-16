@@ -5,14 +5,13 @@
 // Ported from web's lib/validation.ts getMissingFields, with one deliberate
 // divergence: the safety gap reports `section: 'safety'` rather than riding
 // along with details, because the hub gives safety a row of its own. Every
-// other rule is the same eight lines in the same order — a change there is the
+// other rule is the same lines in the same order — a change there is the
 // reminder to bring this copy along.
 import type { Difficulty, TutorialKind, TutorialWithDetails } from '@splat-connect/types'
 import { KIND_LABEL, formatCents, partsTotalCents } from '@splat-connect/types'
 
-// 'steps' (080) is optional: no gap ever names it, so it never blocks submit
-// and Next never lands on it — a contributor opens it from the hub.
-export type SectionId = 'details' | 'steps' | 'safety' | 'suits' | 'picks' | 'parts' | 'tools' | 'files' | 'stl'
+// 'steps' gaps only when a guide has neither steps nor a PDF.
+export type SectionId = 'details' | 'photos' | 'steps' | 'safety' | 'suits' | 'picks' | 'parts' | 'tools' | 'files' | 'stl' | 'collaborators'
 
 export interface Gap {
   section: SectionId
@@ -21,6 +20,7 @@ export interface Gap {
 
 export const SECTION_LABEL: Record<SectionId, string> = {
   details: 'Details',
+  photos: 'Photos',
   steps: 'Steps',
   safety: 'Safety',
   suits: "Who it's for",
@@ -29,42 +29,57 @@ export const SECTION_LABEL: Record<SectionId, string> = {
   tools: 'Tools',
   files: 'Files',
   stl: '3D print files',
+  collaborators: 'Collaborators',
 }
 
 const DIFFICULTIES: string[] = ['easy', 'medium', 'hard']
 
+export interface Check {
+  section: SectionId
+  label: string
+  done: boolean
+}
+
+/** Every requirement, met or not. getMissingFields and the per-page strip both read this. */
+export function sectionChecks(tutorial: TutorialWithDetails): Check[] {
+  return [
+    { section: 'details', label: 'A title', done: Boolean(tutorial.title.trim()) },
+    { section: 'details', label: 'A difficulty', done: DIFFICULTIES.includes(tutorial.difficulty) },
+    { section: 'details', label: 'A build time', done: tutorial.build_minutes != null },
+    {
+      section: 'steps',
+      label: 'Steps or a guide PDF',
+      done: (tutorial.steps?.length ?? 0) > 0 || Boolean(tutorial.tutorial_pdf_url?.trim()),
+    },
+    { section: 'photos', label: 'A photo', done: tutorial.photo_urls.length > 0 },
+    { section: 'parts', label: 'A part', done: tutorial.parts.length > 0 },
+    { section: 'tools', label: 'A tool', done: tutorial.tools.length > 0 },
+    // A printed part is what an assistive-tech tutorial IS; a toy adaptation has no STL section.
+    ...(tutorial.kind === 'assistive_tech'
+      ? [{ section: 'stl' as const, label: 'A 3D-print file', done: tutorial.stl_files.length > 0 }]
+      : []),
+    { section: 'safety', label: 'The safety declaration', done: Boolean(tutorial.safety_declared_at) },
+  ]
+}
+
 export function getMissingFields(tutorial: TutorialWithDetails): Gap[] {
-  const missing: Gap[] = []
-  if (!tutorial.title.trim()) missing.push({ section: 'details', label: 'A title' })
-  if (!DIFFICULTIES.includes(tutorial.difficulty))
-    missing.push({ section: 'details', label: 'A difficulty' })
-  if (tutorial.build_minutes == null) missing.push({ section: 'details', label: 'A build time' })
-  if (!tutorial.tutorial_pdf_url?.trim()) missing.push({ section: 'files', label: 'The guide PDF' })
-  if (tutorial.photo_urls.length === 0) missing.push({ section: 'files', label: 'A photo' })
-  if (tutorial.parts.length === 0) missing.push({ section: 'parts', label: 'A part' })
-  if (tutorial.tools.length === 0) missing.push({ section: 'tools', label: 'A tool' })
-  // A printed part is what an assistive-tech tutorial IS, so it cannot be
-  // submitted without one. A toy adaptation has no STL section at all, so the
-  // gap must never appear for it.
-  if (tutorial.kind === 'assistive_tech' && tutorial.stl_files.length === 0)
-    missing.push({ section: 'stl', label: 'A 3D-print file' })
-  if (!tutorial.safety_declared_at)
-    missing.push({ section: 'safety', label: 'The safety declaration' })
-  return missing
+  return sectionChecks(tutorial)
+    .filter((c) => !c.done)
+    .map(({ section, label }) => ({ section, label }))
 }
 
 /** The rows this tutorial's kind shows, in hub order. */
 export function sectionsFor(kind: TutorialKind): SectionId[] {
   // The board's order: what it is, how to build it, what to buy, what to use,
   // what could hurt, then the files.
-  const base: SectionId[] = ['details', 'steps', 'parts', 'tools', 'safety', 'suits', 'picks', 'files']
+  const base: SectionId[] = ['details', 'photos', 'steps', 'parts', 'tools', 'safety', 'suits', 'picks', 'files']
   return kind === 'assistive_tech' ? [...base, 'stl'] : base
 }
 
 /** The hub's "{ready} of {total} sections complete", shared with My tutorials. */
 export function sectionProgress(t: TutorialWithDetails): { ready: number; total: number } {
-  // 'suits' and 'picks' are all optional: counting them would show a finished bar for a section nobody has opened.
-  const sections = sectionsFor(t.kind).filter((s) => s !== 'suits' && s !== 'picks')
+  // 'suits', 'picks' and 'files' (the PDF) are all optional: counting them would show a finished bar for a section nobody has opened.
+  const sections = sectionsFor(t.kind).filter((s) => s !== 'suits' && s !== 'picks' && s !== 'files')
   const incomplete = new Set(getMissingFields(t).map((g) => g.section))
   return { ready: sections.filter((s) => !incomplete.has(s)).length, total: sections.length }
 }
@@ -118,7 +133,8 @@ export function sectionSummary(section: SectionId, t: TutorialWithDetails): stri
     }
     case 'steps': {
       const n = t.steps?.length ?? 0
-      return n ? count(n, 'step') : '0 steps - nothing yet'
+      if (n) return count(n, 'step')
+      return t.tutorial_pdf_url?.trim() ? 'Using your PDF' : 'Steps or PDF needed'
     }
     case 'safety':
       return t.safety_declared_at ? 'Declared' : 'Not declared yet'
@@ -136,12 +152,14 @@ export function sectionSummary(section: SectionId, t: TutorialWithDetails): stri
     }
     case 'tools':
       return t.tools.length ? count(t.tools.length, 'tool') : 'None yet - at least one'
-    case 'files': {
-      const pdf = Boolean(t.tutorial_pdf_url?.trim())
-      const photo = t.photo_urls.length > 0
-      if (pdf && photo) return 'PDF and photo added'
-      if (!pdf && !photo) return 'Guide PDF and a photo'
-      return pdf ? 'A photo' : 'The guide PDF'
+    case 'photos':
+      return t.photo_urls.length ? count(t.photo_urls.length, 'photo') : 'None yet - the first is the cover'
+    case 'files':
+      if (t.tutorial_pdf_url?.trim()) return 'PDF added'
+      return (t.steps?.length ?? 0) > 0 ? 'Optional - a PDF to go with your steps' : 'Optional - or write the steps instead'
+    case 'collaborators': {
+      const n = t.tutorial_contributors.length
+      return n > 1 ? count(n, 'person') : 'Just you'
     }
     case 'stl':
       return t.stl_files.length ? count(t.stl_files.length, 'file') : 'No STL yet'

@@ -14,6 +14,10 @@ jest.mock('expo-router', () => ({ useRouter: () => ({ replace: jest.fn(), push: 
 const GUIDE = {
   id: 'g1',
   title: 'Switch mount',
+  customization_fields: [
+    { key: 'mount', label: 'Mount needed', kind: 'choice', options: ['Tray clamp', 'Floor stand'] },
+    { key: 'reach', label: 'Reach', kind: 'number', unit: 'mm', min: 100, max: 600 },
+  ],
   stl_files: [
     { id: 's1', filename: 'mount.stl', print_minutes: 60, filament_grams: 10, material: 'PETG' },
     { id: 's2', filename: 'clip.stl', print_minutes: 20, filament_grams: 4, material: 'PETG' },
@@ -100,19 +104,26 @@ it('multiplies by quantity', async () => {
 it('sends the customization answers that were picked', async () => {
   mockPost.mockResolvedValue({ id: 'j1' })
   render(<RequestPrintScreen guideId="g1" printerIds={['p1']} />)
-  expect(
-    await screen.findByText('Physical dimensions we use to size printed mounts and brackets. Nothing here is required.')
-  ).toBeTruthy()
-  fireEvent.press(screen.getByText('20–40 cm'))
+  expect(await screen.findByText('Set by this guide’s contributor, to size the print for you. Nothing here is required.')).toBeTruthy()
   fireEvent.press(screen.getByText('Floor stand'))
+  fireEvent.changeText(screen.getByLabelText('Reach'), '310')
   fireEvent.press(screen.getByRole('checkbox', { name: /I understand/ }))
   fireEvent.press(screen.getByText('Send request'))
   await waitFor(() =>
     expect(mockPost).toHaveBeenCalledWith(
       '/api/toy-transactions/print',
-      expect.objectContaining({ fit_notes: { reach: '20–40 cm', mount: 'Floor stand' } })
+      expect.objectContaining({ fit_notes: { mount: 'Floor stand', reach: '310' } })
     )
   )
+})
+
+it('says so when the contributor has set no customization fields', async () => {
+  mockGet.mockImplementation((path: string) =>
+    Promise.resolve(path === '/api/printers' ? [PRINTER] : path === '/api/organizations/recycling/credit' ? [] : { ...GUIDE, customization_fields: [] })
+  )
+  render(<RequestPrintScreen guideId="g1" printerIds={['p1']} />)
+  expect(await screen.findByText('The contributor hasn’t set any customization fields.')).toBeTruthy()
+  expect(screen.queryByText('Floor stand')).toBeNull()
 })
 
 const ORG_PRINTER = { id: 'p2', owner_id: null, owner_org_id: 'north', owner_name: null, org_name: 'Northside Therapy', filament_cents_per_g: null }

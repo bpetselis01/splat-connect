@@ -61,7 +61,7 @@ export function StatusCard({ stage, head, body }: { stage: StageKey; head: strin
   )
 }
 
-export type ChecklistRow = { step: string; label: string; note: string; done: boolean }
+type ChecklistRow = { step: string; label: string; note: string; done: boolean }
 
 /** "What is left before you can submit": one row per section, with a jump. */
 export function EditorChecklist({ title, sub, rows }: { title: string; sub: string; rows: ChecklistRow[] }) {

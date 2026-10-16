@@ -30,7 +30,7 @@ export function InvolvedIntro({
   )
 }
 
-export type FlowStep = { t: string; d: string; icon: Icon; tint: string }
+type FlowStep = { t: string; d: string; icon: Icon; tint: string }
 
 /** The icon-disc flow: what happens, in order, with no card around each step. */
 export function FlowSteps({ steps }: { steps: FlowStep[] }) {

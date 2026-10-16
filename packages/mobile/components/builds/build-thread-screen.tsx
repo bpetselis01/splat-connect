@@ -34,6 +34,7 @@ import * as ImagePicker from 'expo-image-picker'
 import type { ToyTransaction, ToyTransactionDetail, ToyTransactionMessage } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { uploadFile } from '../../lib/upload'
+import { pickPreviewedPhoto } from '../../lib/pick-photo'
 import { supabase } from '../../lib/supabase'
 import { theme } from '../../lib/theme'
 import { useCapabilities } from '../../lib/capabilities'
@@ -172,12 +173,7 @@ export function BuildThreadScreen({ id }: { id: string }) {
   }
 
   async function postShot() {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
-    if (!permission.granted) {
-      setError('Photo library access is needed to post the working shot.')
-      return
-    }
-    const picked = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ['images'] })
+    const picked = await pickPreviewedPhoto()
     const asset = picked.canceled ? null : picked.assets?.[0]
     if (!asset) return
     await run(
@@ -438,7 +434,7 @@ export function BuildThreadScreen({ id }: { id: string }) {
                 “{tx.build_brief}”
               </Text>
               <Text style={styles.briefFacts}>
-                {[tx.child_label, tx.travel_km !== null ? `Can travel ${tx.travel_km} km` : null, tx.urgency]
+                {[tx.travel_km !== null ? `Can travel ${tx.travel_km} km` : null, tx.urgency]
                   .filter(Boolean)
                   .join(' · ')}
               </Text>

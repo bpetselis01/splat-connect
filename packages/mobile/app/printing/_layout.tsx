@@ -2,7 +2,7 @@
 // 3D printing, reached from a guide or the Explore card — never a tab, so it
 // sits at the root beside (tabs) and (my) rather than inside either stack.
 import { Redirect, Stack } from 'expo-router'
-import { stackScreenOptions } from '../../lib/nav-options'
+import { headerLeftSlot, stackScreenOptions } from '../../lib/nav-options'
 import { useAuthGate } from '../../lib/use-auth-gate'
 import { CloseButton } from '../../components/ui/CloseButton'
 
@@ -12,7 +12,7 @@ import { CloseButton } from '../../components/ui/CloseButton'
 export function finderIndexOptions(params?: { guide?: string }) {
   return {
     title: 'Find a printer',
-    ...(params?.guide ? { headerLeft: () => <CloseButton /> } : {}),
+    ...(params?.guide ? headerLeftSlot(() => <CloseButton />) : {}),
   }
 }
 
@@ -30,7 +30,7 @@ export default function PrintingLayout() {
           dismissed with an ✕ rather than gone back from. */}
       <Stack.Screen
         name="request"
-        options={{ title: 'Request a print', presentation: 'modal', headerLeft: () => <CloseButton /> }}
+        options={{ title: 'Request a print', presentation: 'modal', ...headerLeftSlot(() => <CloseButton />) }}
       />
       <Stack.Screen name="jobs/[id]" options={{ title: 'Print job' }} />
       <Stack.Screen name="basics" options={{ title: 'Printing basics' }} />
