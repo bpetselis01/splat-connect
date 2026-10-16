@@ -40,5 +40,12 @@
   "group": "Extra",
   "route": "/admin/organization-requests",
   "role": "admin"
+ },
+ {
+  "id": "x_my_reports",
+  "name": "My reports",
+  "group": "Extra",
+  "route": "/dashboard/reports",
+  "role": "parent"
  }
 ]

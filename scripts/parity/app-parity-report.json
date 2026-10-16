@@ -1,5 +1,5 @@
 {
- "at": "2026-10-03T13:04:39.730Z",
+ "at": "2026-10-16T02:36:33.443Z",
  "live": "http://localhost:3112",
  "screens": [
   {
@@ -18,7 +18,7 @@
      "board": "suits ollie",
      "live": null,
      "why": "fixture",
-     "reason": "The board's child Ollie fits a guide, so a Suits Ollie heading draws; the parity child has no name or fit answers."
+     "reason": "The board's child Ollie fits a guide, so a Suits Ollie heading draws; the parity child has no fit answers, and SPLAT no longer stores a child name (spec 2026-10-09-remove-child-name)."
     }
    ],
    "boardHeadings": 8,
@@ -28,22 +28,51 @@
    "id": "guide_detail",
    "name": "Guide detail",
    "group": "push",
-   "route": "/guides/64379b3a-eb02-43f6-a7cd-696210649079",
-   "findings": [],
+   "route": "/guides/5f44f1c3-82f0-4327-825e-51d2ce00dacd",
+   "findings": [
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h3 \"parts\" has no counterpart",
+     "board": "parts",
+     "live": null
+    },
+    {
+     "type": "missing-section",
+     "severity": "high",
+     "what": "h3 \"tools you'll need\" has no counterpart",
+     "board": "tools you'll need",
+     "live": null
+    },
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "h2 \"switch-adapted light-up drum\" size",
+     "board": "24px",
+     "live": "28px"
+    },
+    {
+     "type": "missing-section",
+     "severity": "medium",
+     "what": "no inputs on live",
+     "board": 2,
+     "live": 0
+    }
+   ],
    "role": "parent",
-   "finalUrl": "/guides/64379b3a-eb02-43f6-a7cd-696210649079",
+   "finalUrl": "/guides/5f44f1c3-82f0-4327-825e-51d2ce00dacd",
    "explained": [],
    "boardHeadings": 6,
-   "liveHeadings": 7
+   "liveHeadings": 5
   },
   {
    "id": "guide_preview",
    "name": "Guide preview",
    "group": "push",
-   "route": "/guides/64379b3a-eb02-43f6-a7cd-696210649079/preview",
+   "route": "/guides/5f44f1c3-82f0-4327-825e-51d2ce00dacd/preview",
    "findings": [],
    "role": "contributor",
-   "finalUrl": "/guides/64379b3a-eb02-43f6-a7cd-696210649079/preview",
+   "finalUrl": "/guides/5f44f1c3-82f0-4327-825e-51d2ce00dacd/preview",
    "explained": [
     {
      "type": "missing-section",
@@ -123,10 +152,10 @@
    "id": "guide_org",
    "name": "Organisation",
    "group": "push",
-   "route": "/guides/organisation/6be9c8e3-3810-44c0-8277-86a3690eadf4",
+   "route": "/guides/organisation/5293fb31-785d-4dc9-af3c-4ff9ff3b1643",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/guides/organisation/6be9c8e3-3810-44c0-8277-86a3690eadf4",
+   "finalUrl": "/guides/organisation/5293fb31-785d-4dc9-af3c-4ff9ff3b1643",
    "explained": [],
    "boardHeadings": 8,
    "liveHeadings": 10
@@ -135,7 +164,7 @@
    "id": "print_find",
    "name": "Find a printer",
    "group": "push",
-   "route": "/printing?guide=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+   "route": "/printing?guide=cbb75564-81fb-44e8-b5b7-57228f6d3ea5",
    "findings": [],
    "role": "parent",
    "finalUrl": "/printing",
@@ -157,7 +186,7 @@
    "id": "print_request",
    "name": "Request a print",
    "group": "modal",
-   "route": "/printing/request?guide=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa&printers=20104acc-dada-428d-9c18-e842ea0372b4,9a563289-d6d7-443a-a1a8-b5a33c36fd85",
+   "route": "/printing/request?guide=cbb75564-81fb-44e8-b5b7-57228f6d3ea5&printers=60acbb1e-1224-4851-bc5d-9459fc454346,59c00b67-78cf-4af6-8c7a-6ccdf1326ceb",
    "findings": [],
    "role": "parent",
    "finalUrl": "/printing/request",
@@ -169,10 +198,18 @@
    "id": "print_job",
    "name": "Print job",
    "group": "push",
-   "route": "/printing/jobs/57e44f9e-3ec9-42df-8d8b-d56fad9242a6",
-   "findings": [],
+   "route": "/printing/jobs/374bf37e-d3a3-4e62-a11d-31de970da135",
+   "findings": [
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "h2 \"switch mount, printable\" size",
+     "board": "20px",
+     "live": "24px"
+    }
+   ],
    "role": "parent",
-   "finalUrl": "/printing/jobs/57e44f9e-3ec9-42df-8d8b-d56fad9242a6",
+   "finalUrl": "/printing/jobs/374bf37e-d3a3-4e62-a11d-31de970da135",
    "explained": [
     {
      "type": "shadow",
@@ -192,7 +229,15 @@
    "name": "Printing basics",
    "group": "push",
    "route": "/printing/basics",
-   "findings": [],
+   "findings": [
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "h2 \"printing basics\" size",
+     "board": "25px",
+     "live": "28px"
+    }
+   ],
    "role": "parent",
    "finalUrl": "/printing/basics",
    "explained": [
@@ -248,10 +293,10 @@
    "id": "lib_toy",
    "name": "Toy detail",
    "group": "push",
-   "route": "/toy-library/cd4b3fda-32c1-4ff0-a931-d413f86af628",
+   "route": "/toy-library/9b7aab6f-c4cb-4405-8acd-7487af7d27cf",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/toy-library/cd4b3fda-32c1-4ff0-a931-d413f86af628",
+   "finalUrl": "/toy-library/9b7aab6f-c4cb-4405-8acd-7487af7d27cf",
    "explained": [
     {
      "type": "font",
@@ -291,10 +336,10 @@
    "id": "lib_org",
    "name": "Organisation",
    "group": "push",
-   "route": "/toy-library/organisation/6be9c8e3-3810-44c0-8277-86a3690eadf4",
+   "route": "/toy-library/organisation/5293fb31-785d-4dc9-af3c-4ff9ff3b1643",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/toy-library/organisation/6be9c8e3-3810-44c0-8277-86a3690eadf4",
+   "finalUrl": "/toy-library/organisation/5293fb31-785d-4dc9-af3c-4ff9ff3b1643",
    "explained": [],
    "boardHeadings": 8,
    "liveHeadings": 10
@@ -316,19 +361,49 @@
    "name": "Learn",
    "group": "push",
    "route": "/explore/learn",
-   "findings": [],
+   "findings": [
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "1/1 board paragraphs absent",
+     "board": "how switch adaptation works, from first switch to safe finish. for ins",
+     "live": "how switch adaptation works, from first switch to safe finish. # short"
+    },
+    {
+     "type": "shadow",
+     "severity": "low",
+     "what": "card shadow",
+     "board": "set",
+     "live": "none"
+    }
+   ],
    "role": "parent",
    "finalUrl": "/explore/learn",
    "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 1
+   "liveHeadings": 3
   },
   {
    "id": "article",
    "name": "Learn article",
    "group": "push",
    "route": "/explore/learn/toy-adaptation-101",
-   "findings": [],
+   "findings": [
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "h2 \"toy adaptation #\" size",
+     "board": "25px",
+     "live": "28px"
+    },
+    {
+     "type": "shadow",
+     "severity": "medium",
+     "what": "no button on live carries a shadow",
+     "board": "set",
+     "live": "none"
+    }
+   ],
    "role": "parent",
    "finalUrl": "/explore/learn/toy-adaptation-101",
    "explained": [
@@ -373,16 +448,16 @@
    "finalUrl": "/explore/challenges",
    "explained": [],
    "boardHeadings": 5,
-   "liveHeadings": 9
+   "liveHeadings": 0
   },
   {
    "id": "challenge_detail",
    "name": "Challenge",
    "group": "push",
-   "route": "/explore/challenges/bce3e87a-2689-4f1a-a37f-e69f8742cb46",
+   "route": "/explore/challenges/142e9aa5-0b6a-4857-b9f4-67f07a8e9185",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/explore/challenges/bce3e87a-2689-4f1a-a37f-e69f8742cb46",
+   "finalUrl": "/explore/challenges/142e9aa5-0b6a-4857-b9f4-67f07a8e9185",
    "explained": [
     {
      "type": "radius",
@@ -455,10 +530,10 @@
    "id": "build_thread",
    "name": "Build thread",
    "group": "push",
-   "route": "/exchanges/build/7ea220aa-3a8e-4db8-a547-2e86a3464b7d",
+   "route": "/exchanges/build/3460025f-6594-4eb6-adc2-6c6816ddfa02",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/exchanges/build/7ea220aa-3a8e-4db8-a547-2e86a3464b7d",
+   "finalUrl": "/exchanges/build/3460025f-6594-4eb6-adc2-6c6816ddfa02",
    "explained": [
     {
      "type": "shadow",
@@ -471,14 +546,22 @@
     }
    ],
    "boardHeadings": 2,
-   "liveHeadings": 1
+   "liveHeadings": 0
   },
   {
    "id": "recycling",
    "name": "Recycling",
    "group": "push",
    "route": "/explore/recycling",
-   "findings": [],
+   "findings": [
+    {
+     "type": "font",
+     "severity": "high",
+     "what": "body font",
+     "board": "Nunito",
+     "live": "Baloo 2"
+    }
+   ],
    "role": "parent",
    "finalUrl": "/explore/recycling",
    "explained": [
@@ -535,10 +618,10 @@
    "id": "exchange",
    "name": "Exchange thread",
    "group": "push",
-   "route": "/exchanges/96353eea-8de9-41c9-80dc-8eadda7677a7",
+   "route": "/exchanges/fdd9a5d9-260e-4b20-8b6a-6f90877f1bc7",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/exchanges/96353eea-8de9-41c9-80dc-8eadda7677a7",
+   "finalUrl": "/exchanges/fdd9a5d9-260e-4b20-8b6a-6f90877f1bc7",
    "explained": [
     {
      "type": "missing-section",
@@ -567,7 +650,15 @@
    "name": "Me",
    "group": "tabs",
    "route": "/me",
-   "findings": [],
+   "findings": [
+    {
+     "type": "size",
+     "severity": "medium",
+     "what": "h2 \"$#\" size",
+     "board": "32px",
+     "live": "28px"
+    }
+   ],
    "role": "parent",
    "finalUrl": "/me",
    "explained": [],
@@ -590,10 +681,10 @@
    "id": "editor",
    "name": "Editor hub",
    "group": "push",
-   "route": "/tutorials/ef6ab801-159f-4a5a-a779-7becb6286572",
+   "route": "/tutorials/ecdd2a3d-dc5e-4556-9db5-d243111e6cf8",
    "findings": [],
    "role": "contributor",
-   "finalUrl": "/tutorials/ef6ab801-159f-4a5a-a779-7becb6286572",
+   "finalUrl": "/tutorials/ecdd2a3d-dc5e-4556-9db5-d243111e6cf8",
    "explained": [],
    "boardHeadings": 1,
    "liveHeadings": 1
@@ -602,10 +693,10 @@
    "id": "ed_details",
    "name": "Editor · details",
    "group": "push",
-   "route": "/tutorials/ef6ab801-159f-4a5a-a779-7becb6286572/details",
+   "route": "/tutorials/ecdd2a3d-dc5e-4556-9db5-d243111e6cf8/details",
    "findings": [],
    "role": "contributor",
-   "finalUrl": "/tutorials/ef6ab801-159f-4a5a-a779-7becb6286572/details",
+   "finalUrl": "/tutorials/ecdd2a3d-dc5e-4556-9db5-d243111e6cf8/details",
    "explained": [
     {
      "type": "colour",
@@ -624,10 +715,10 @@
    "id": "ed_steps",
    "name": "Editor · steps",
    "group": "push",
-   "route": "/tutorials/ef6ab801-159f-4a5a-a779-7becb6286572/steps",
+   "route": "/tutorials/ecdd2a3d-dc5e-4556-9db5-d243111e6cf8/steps",
    "findings": [],
    "role": "contributor",
-   "finalUrl": "/tutorials/ef6ab801-159f-4a5a-a779-7becb6286572/steps",
+   "finalUrl": "/tutorials/ecdd2a3d-dc5e-4556-9db5-d243111e6cf8/steps",
    "explained": [
     {
      "type": "colour",
@@ -646,10 +737,10 @@
    "id": "ed_parts",
    "name": "Editor · parts",
    "group": "push",
-   "route": "/tutorials/ef6ab801-159f-4a5a-a779-7becb6286572/parts",
+   "route": "/tutorials/ecdd2a3d-dc5e-4556-9db5-d243111e6cf8/parts",
    "findings": [],
    "role": "contributor",
-   "finalUrl": "/tutorials/ef6ab801-159f-4a5a-a779-7becb6286572/parts",
+   "finalUrl": "/tutorials/ecdd2a3d-dc5e-4556-9db5-d243111e6cf8/parts",
    "explained": [
     {
      "type": "colour",
@@ -668,10 +759,10 @@
    "id": "ed_tools",
    "name": "Editor · tools",
    "group": "push",
-   "route": "/tutorials/ef6ab801-159f-4a5a-a779-7becb6286572/tools",
+   "route": "/tutorials/ecdd2a3d-dc5e-4556-9db5-d243111e6cf8/tools",
    "findings": [],
    "role": "contributor",
-   "finalUrl": "/tutorials/ef6ab801-159f-4a5a-a779-7becb6286572/tools",
+   "finalUrl": "/tutorials/ecdd2a3d-dc5e-4556-9db5-d243111e6cf8/tools",
    "explained": [
     {
      "type": "colour",
@@ -690,10 +781,10 @@
    "id": "ed_safety",
    "name": "Editor · safety",
    "group": "push",
-   "route": "/tutorials/ef6ab801-159f-4a5a-a779-7becb6286572/safety",
+   "route": "/tutorials/ecdd2a3d-dc5e-4556-9db5-d243111e6cf8/safety",
    "findings": [],
    "role": "contributor",
-   "finalUrl": "/tutorials/ef6ab801-159f-4a5a-a779-7becb6286572/safety",
+   "finalUrl": "/tutorials/ecdd2a3d-dc5e-4556-9db5-d243111e6cf8/safety",
    "explained": [
     {
      "type": "colour",
@@ -712,10 +803,10 @@
    "id": "ed_stl",
    "name": "Editor · STL",
    "group": "push",
-   "route": "/tutorials/ef6ab801-159f-4a5a-a779-7becb6286572/stl",
+   "route": "/tutorials/ecdd2a3d-dc5e-4556-9db5-d243111e6cf8/stl",
    "findings": [],
    "role": "contributor",
-   "finalUrl": "/tutorials/ef6ab801-159f-4a5a-a779-7becb6286572/stl",
+   "finalUrl": "/tutorials/ecdd2a3d-dc5e-4556-9db5-d243111e6cf8/stl",
    "explained": [
     {
      "type": "missing-section",
@@ -786,10 +877,10 @@
    "id": "toy_detail",
    "name": "Toy detail",
    "group": "push",
-   "route": "/toys/9b75f5e6-43f1-481d-8346-88a7513c01c9",
+   "route": "/toys/c84b9091-9504-4d45-81c8-bf2321bb58c1",
    "findings": [],
    "role": "parent",
-   "finalUrl": "/toys/9b75f5e6-43f1-481d-8346-88a7513c01c9",
+   "finalUrl": "/toys/c84b9091-9504-4d45-81c8-bf2321bb58c1",
    "explained": [],
    "boardHeadings": 0,
    "liveHeadings": 0
@@ -883,7 +974,15 @@
    "name": "Add a printer",
    "group": "push",
    "route": "/print-for-others/add",
-   "findings": [],
+   "findings": [
+    {
+     "type": "shadow",
+     "severity": "medium",
+     "what": "no button on live carries a shadow",
+     "board": "set",
+     "live": "none"
+    }
+   ],
    "role": "parent",
    "finalUrl": "/print-for-others/add",
    "explained": [
@@ -934,25 +1033,41 @@
    "id": "ability",
    "name": "Ability profile",
    "group": "push",
-   "route": "/account/child/5c472a19-1085-4578-a797-f9d8ef4f214d",
-   "findings": [],
+   "route": "/account/child/9b6810cd-12ab-4f38-b555-a38ab6c0421b",
+   "findings": [
+    {
+     "type": "shadow",
+     "severity": "medium",
+     "what": "no button on live carries a shadow",
+     "board": "set",
+     "live": "none"
+    }
+   ],
    "role": "parent",
-   "finalUrl": "/account/child/5c472a19-1085-4578-a797-f9d8ef4f214d",
+   "finalUrl": "/account/child/9b6810cd-12ab-4f38-b555-a38ab6c0421b",
    "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 5
+   "liveHeadings": 4
   },
   {
    "id": "needs",
    "name": "Everyday needs",
    "group": "push",
-   "route": "/account/child/5c472a19-1085-4578-a797-f9d8ef4f214d",
-   "findings": [],
+   "route": "/account/child/9b6810cd-12ab-4f38-b555-a38ab6c0421b",
+   "findings": [
+    {
+     "type": "shadow",
+     "severity": "medium",
+     "what": "no button on live carries a shadow",
+     "board": "set",
+     "live": "none"
+    }
+   ],
    "role": "parent",
-   "finalUrl": "/account/child/5c472a19-1085-4578-a797-f9d8ef4f214d",
+   "finalUrl": "/account/child/9b6810cd-12ab-4f38-b555-a38ab6c0421b",
    "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 5
+   "liveHeadings": 4
   },
   {
    "id": "customization",
@@ -968,13 +1083,21 @@
    "id": "child",
    "name": "Child profile",
    "group": "push",
-   "route": "/account/child/5c472a19-1085-4578-a797-f9d8ef4f214d",
-   "findings": [],
+   "route": "/account/child/9b6810cd-12ab-4f38-b555-a38ab6c0421b",
+   "findings": [
+    {
+     "type": "shadow",
+     "severity": "medium",
+     "what": "no button on live carries a shadow",
+     "board": "set",
+     "live": "none"
+    }
+   ],
    "role": "parent",
-   "finalUrl": "/account/child/5c472a19-1085-4578-a797-f9d8ef4f214d",
+   "finalUrl": "/account/child/9b6810cd-12ab-4f38-b555-a38ab6c0421b",
    "explained": [],
    "boardHeadings": 0,
-   "liveHeadings": 5
+   "liveHeadings": 4
   },
   {
    "id": "org_queue",
@@ -984,7 +1107,17 @@
    "findings": [],
    "role": "leader",
    "finalUrl": "/organisation",
-   "explained": [],
+   "explained": [
+    {
+     "type": "copy",
+     "severity": "medium",
+     "what": "1/1 board paragraphs absent",
+     "board": "guides waiting for northside therapy collective. oldest first.",
+     "live": "guides waiting for your organisations. oldest first.",
+     "why": "fixture",
+     "reason": "The parity leader now leads two organisations (switcher fixture), so the queue lede says your organisations; the board names its one org."
+    }
+   ],
    "boardHeadings": 0,
    "liveHeadings": 0
   },
@@ -992,10 +1125,10 @@
    "id": "org_review",
    "name": "Review a guide",
    "group": "push",
-   "route": "/organisation/bbe789c6-9902-4d6f-b852-ce1d8c17e079",
+   "route": "/organisation/2df96caa-27d0-4cd4-945f-45db7c3ea46b",
    "findings": [],
    "role": "leader",
-   "finalUrl": "/organisation/bbe789c6-9902-4d6f-b852-ce1d8c17e079",
+   "finalUrl": "/organisation/2df96caa-27d0-4cd4-945f-45db7c3ea46b",
    "explained": [
     {
      "type": "copy",
@@ -1046,7 +1179,7 @@
      "severity": "medium",
      "what": "3/4 board paragraphs absent",
      "board": "# of # parts · # h # · ~# g petg",
-     "live": "seeded switch-adapted bubble machine",
+     "live": "# part · about # h · ~# g petg",
      "why": "fixture",
      "reason": "The board's sample files and its 'other printers asked' group; the card draws each when the data has them."
     }
@@ -1122,12 +1255,18 @@
  ],
  "summary": {
   "screens": 61,
-  "clean": 60,
-  "withFindings": 0,
+  "clean": 49,
+  "withFindings": 11,
   "errored": 0,
   "skipped": 1,
-  "findings": 0,
-  "explained": 40,
-  "byType": {}
+  "findings": 16,
+  "explained": 41,
+  "byType": {
+   "missing-section": 3,
+   "size": 5,
+   "copy": 1,
+   "shadow": 6,
+   "font": 1
+  }
  }
 }
