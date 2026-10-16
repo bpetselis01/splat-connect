@@ -136,6 +136,7 @@ export const PENDING = {
     platforms: ["mobile"],
     needs: "An organisation picker plus passing the chosen organisation through about six leader screens.",
     question: "Add an organisation picker (about six screens touched), or leave it until someone actually leads two organisations (nobody in the test data does)?",
+    shipped: true,
   },
   'event-registration-mobile': {
     title: "Registering for events on the phone",
@@ -144,6 +145,7 @@ export const PENDING = {
     platforms: ["mobile"],
     needs: "A register screen with dynamic questions and capacity messages, and a registrations list for leaders: the largest of the open choices.",
     question: "Build event registration and the leader registrations list on the phone (two screens, the biggest cost here), or keep both on the website and point the phone there?",
+    shipped: true,
   },
   'unused-api-routes': {
     title: "Routes nothing uses",
@@ -152,6 +154,7 @@ export const PENDING = {
     platforms: ["api"],
     needs: "Per route, a screen that calls it or deletion with its tests. Telling a reporter their report was resolved also needs a new notification type and the web admin screen to send it.",
     question: "For each of the five routes: wire it to a screen (a screen each) or delete it and its tests (small, but it removes the only hint of the intended feature)? Should a reporter be told when their report is resolved (new notification type plus web admin screen)?",
+    shipped: true,
   },
   'backing-notifications': {
     title: "Telling a family about backing",
