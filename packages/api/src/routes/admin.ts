@@ -820,14 +820,21 @@ admin.patch('/member-reports/:id', async (c) => {
     patch.note_to_reporter = note || null
   }
 
-  const { data, error } = await createAdminClient()
-    .from('member_reports')
-    .update(patch)
-    .eq('id', c.req.param('id'))
-    .select(REPORT_COLUMNS)
-    .maybeSingle()
+  const sb = createAdminClient()
+  const id = c.req.param('id')
+  const { data: before } = await sb.from('member_reports').select('status').eq('id', id).maybeSingle()
+  const { data, error } = await sb.from('member_reports').update(patch).eq('id', id).select(REPORT_COLUMNS).maybeSingle()
   if (error) return c.json({ error: error.message }, 500)
   if (!data) return c.json({ error: 'No such report' }, 404)
+
+  // Only the move into 'resolved' tells the reporter; saving a note on an already
+  // resolved report must not. The answer is committed by now, so a failed insert is logged, never returned.
+  if (before && before.status !== 'resolved' && data.status === 'resolved') {
+    const { error: notifyError } = await sb
+      .from('notifications')
+      .insert({ recipient_id: data.reporter_id, type: 'report_resolved', member_report_id: data.id, actor_name: 'SPLAT' })
+    if (notifyError) console.error('[admin] report_resolved insert failed:', notifyError.message)
+  }
   return c.json(data)
 })
 
