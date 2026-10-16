@@ -39,14 +39,20 @@ describe('MyAdmin', () => {
     open.mockRestore()
   })
 
-  it("shows the board's six counts, the other five opening their web queue", async () => {
+  it("shows the board's six counts, reports and ideas opening on the phone, the other three on the web", async () => {
     const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(true)
     render(<MyAdmin />)
     expect(await screen.findByText('57')).toBeTruthy()
     expect(screen.getByText('7')).toBeTruthy()
-    for (const [label, count, path] of [
+    for (const [label, count, route] of [
       ['Reports from members', '2', '/admin/reports'],
       ['Ideas awaiting review', '3', '/admin/ideas'],
+    ] as const) {
+      fireEvent.press(screen.getByRole('button', { name: `${label}, ${count}` }))
+      expect(mockPush).toHaveBeenCalledWith(route)
+    }
+    expect(open).not.toHaveBeenCalled()
+    for (const [label, count, path] of [
       ['Spot-check', '5', '/admin/spot-check'],
       ['Accounts', '57', '/admin/contributors'],
       ['Organisations', '14', '/admin/organizations'],

@@ -17,10 +17,10 @@ import { useCapabilities } from '../../lib/capabilities'
 type Icon = React.ComponentProps<typeof Ionicons>['name']
 
 // MB:2953–2959, in its order and words; the paths are web's /admin cards.
-const CARDS: { key: keyof AdminCounts; label: string; path: string; route?: '/admin/review'; icon: Icon; tint: string }[] = [
+const CARDS: { key: keyof AdminCounts; label: string; path: string; route?: '/admin/review' | '/admin/reports' | '/admin/ideas'; icon: Icon; tint: string }[] = [
   { key: 'tutorials', label: 'Tutorials awaiting review', path: '/admin/review', route: '/admin/review', icon: 'clipboard-outline', tint: theme.colors.honeySoft },
-  { key: 'reports', label: 'Reports from members', path: '/admin/reports', icon: 'flag-outline', tint: theme.colors.apricotSoft },
-  { key: 'ideas', label: 'Ideas awaiting review', path: '/admin/ideas', icon: 'bulb-outline', tint: theme.colors.violetSoft },
+  { key: 'reports', label: 'Reports from members', path: '/admin/reports', route: '/admin/reports', icon: 'flag-outline', tint: theme.colors.apricotSoft },
+  { key: 'ideas', label: 'Ideas awaiting review', path: '/admin/ideas', route: '/admin/ideas', icon: 'bulb-outline', tint: theme.colors.violetSoft },
   { key: 'spotCheck', label: 'Spot-check', path: '/admin/spot-check', icon: 'search-outline', tint: theme.colors.accentLight },
   { key: 'accounts', label: 'Accounts', path: '/admin/contributors', icon: 'people-outline', tint: theme.colors.mintSoft },
   { key: 'organisations', label: 'Organisations', path: '/admin/organizations', icon: 'business-outline', tint: theme.colors.apricotSoft },
