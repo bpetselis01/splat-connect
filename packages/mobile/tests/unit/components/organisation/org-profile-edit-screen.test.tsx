@@ -5,8 +5,8 @@ import { OrgProfileEditScreen } from '../../../../components/organisation/org-pr
 import { NAMES } from '../../../special-strings'
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
-const mockGet = jest.fn(); const mockPatch = jest.fn()
-jest.mock('../../../../lib/api-client', () => ({ apiClient: { get: (...a: unknown[]) => mockGet(...a), patch: (...a: unknown[]) => mockPatch(...a) } }))
+const mockGet = jest.fn(); const mockPatch = jest.fn(); const mockPut = jest.fn()
+jest.mock('../../../../lib/api-client', () => ({ apiClient: { get: (...a: unknown[]) => mockGet(...a), patch: (...a: unknown[]) => mockPatch(...a), put: (...a: unknown[]) => mockPut(...a) } }))
 jest.mock('expo-router', () => {
   const { useEffect } = jest.requireActual('react')
   return { useFocusEffect: (e: () => void) => useEffect(e, [e]) }
@@ -31,6 +31,7 @@ beforeEach(() => {
   jest.clearAllMocks()
   jest.spyOn(console, 'error').mockImplementation(() => {})
   mockPatch.mockResolvedValue({})
+  mockPut.mockResolvedValue([])
   serve(org())
 })
 
