@@ -102,6 +102,7 @@ function linkFor(n: Notification, isAdmin: boolean): string {
   if (n.type === 'tutorial_thanked' && n.tutorial_id) return `/tutorials/${n.tutorial_id}`
   if (n.type === 'tutorial_noted' && n.tutorial_id) return `/tutorials/${n.tutorial_id}`
   if (n.type === 'challenge_guide_published' && n.tutorial_id) return `/tutorials/${n.tutorial_id}`
+  if ((n.type === 'backing_accepted' || n.type === 'backing_declined') && n.tutorial_id) return `/tutorials/${n.tutorial_id}`
   if (n.tutorial_id) return `/tutorials/${n.tutorial_id}/edit`
   // A rejected idea has no public page. Not because of RLS — 037 also grants
   // "Authors see their own ideas at any status", so an author's own rejected
@@ -125,6 +126,7 @@ function linkFor(n: Notification, isAdmin: boolean): string {
   // 117: a showcase thanks opens the showcase, where the count it added shows.
   // A thanks for an exchange, print or build left through toy_transaction_id above.
   if (n.type === 'profile_thanked' && n.profile_id) return `/contributors/${n.profile_id}`
+  if (n.type === 'report_resolved') return '/dashboard/reports'
   return '/notifications'
 }
 
