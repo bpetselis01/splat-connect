@@ -102,4 +102,20 @@ describe('ReviewDetailScreen in admin mode', () => {
     fireEvent.press(await screen.findByRole('button', { name: 'Approve' }))
     expect(await screen.findByText('Admins only.')).toBeTruthy()
   })
+
+  it('blocks Unpublish on an approved guide without a note, then sends rejected with it', async () => {
+    mockGet.mockImplementation((path: string) =>
+      path === '/api/tutorials/t1' ? Promise.resolve({ ...detail, status: 'approved' }) : Promise.reject(new Error(`unexpected GET ${path}`))
+    )
+    render(<ReviewDetailScreen tutorialId="t1" admin />)
+    fireEvent.press(await screen.findByRole('button', { name: 'Unpublish' }))
+    expect(await screen.findByText(/Say why you are taking it down/)).toBeTruthy()
+    expect(mockPatch).not.toHaveBeenCalled()
+
+    fireEvent.changeText(screen.getByLabelText('Why are you taking it down?'), ' Battery cover is unsafe ')
+    fireEvent.press(screen.getByRole('button', { name: 'Unpublish' }))
+    await waitFor(() =>
+      expect(mockPatch).toHaveBeenCalledWith('/api/admin/tutorials/t1/status', { status: 'rejected', rejection_note: 'Battery cover is unsafe' })
+    )
+  })
 })

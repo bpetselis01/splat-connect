@@ -151,6 +151,16 @@ export function ReviewDetailScreen({ tutorialId, admin = false }: { tutorialId: 
     void run(() => decide('rejected', body))
   }
 
+  // Taking a live guide down: the note is the only explanation the contributor gets.
+  function unpublish() {
+    const body = note.trim()
+    if (!body) {
+      setError('Say why you are taking it down. The contributor sees this note.')
+      return
+    }
+    void run(() => decide('rejected', body))
+  }
+
   /** The leader's review POST, or the admin's status PATCH. */
   async function decide(status: 'approved' | 'rejected', rejection_note?: string) {
     if (!admin) {
@@ -303,6 +313,22 @@ export function ReviewDetailScreen({ tutorialId, admin = false }: { tutorialId: 
                 onPress={requestChanges}
               />
             </View>
+          </View>
+        ) : actions.includes('unpublish') ? (
+          <View style={styles.actions}>
+            <Text style={styles.actionHint}>
+              It is live in the library now and a parent may be following it. Unpublishing removes it and shows your note to the
+              contributor, who can edit and resubmit.
+            </Text>
+            <TextField
+              label="Why are you taking it down?"
+              accessibilityLabel="Why are you taking it down?"
+              value={note}
+              onChangeText={setNote}
+              multiline
+              style={styles.noteInput}
+            />
+            <Button label="Unpublish" variant="danger" disabled={busy} onPress={unpublish} />
           </View>
         ) : null}
       </ScrollView>

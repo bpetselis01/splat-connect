@@ -39,22 +39,23 @@ describe('MyAdmin', () => {
     open.mockRestore()
   })
 
-  it("shows the board's six counts, the other five opening their web queue", async () => {
+  it("shows the board's six counts, each opening its queue on the phone", async () => {
     const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(true)
     render(<MyAdmin />)
     expect(await screen.findByText('57')).toBeTruthy()
-    expect(screen.getByText('7')).toBeTruthy()
-    for (const [label, count, path] of [
+    for (const [label, count, route] of [
+      ['Tutorials awaiting review', '7', '/admin/review'],
       ['Reports from members', '2', '/admin/reports'],
       ['Ideas awaiting review', '3', '/admin/ideas'],
       ['Spot-check', '5', '/admin/spot-check'],
-      ['Accounts', '57', '/admin/contributors'],
-      ['Organisations', '14', '/admin/organizations'],
+      ['Accounts', '57', '/admin/accounts'],
+      ['Organisations', '14', '/admin/organisations'],
     ] as const) {
       expect(screen.getByText(count)).toBeTruthy()
       fireEvent.press(screen.getByRole('button', { name: `${label}, ${count}` }))
-      expect(open).toHaveBeenCalledWith(`${process.env.EXPO_PUBLIC_WEB_URL}${path}`)
+      expect(mockPush).toHaveBeenLastCalledWith(route)
     }
+    expect(open).not.toHaveBeenCalled()
     open.mockRestore()
   })
 
