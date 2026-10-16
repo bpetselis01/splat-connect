@@ -40,6 +40,7 @@ export default function RootLayout() {
           <Stack.Screen name="(my)" />
           <Stack.Screen name="(onboarding)" />
           <Stack.Screen name="printing" />
+          <Stack.Screen name="events" />
           {/* No swipe back: the terms gate is where every route sends an
               account that has not accepted, so there is nothing behind it. */}
           <Stack.Screen name="terms" options={{ gestureEnabled: false }} />

@@ -83,7 +83,7 @@ export function itemRoute(i: MapItem): string {
     case 'printer':
       return '/printing'
     case 'event':
-      return `/news/event/${i.id}`
+      return `/events/${i.id}`
     case 'dropoff':
       return '/explore/recycling'
     case 'org':

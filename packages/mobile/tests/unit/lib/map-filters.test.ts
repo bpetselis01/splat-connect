@@ -57,7 +57,7 @@ it('filterCount counts distance, each filament and the date choice', () => {
 
 it('itemRoute and itemMeta', () => {
   expect(itemRoute({ kind: 'toy', id: 't1', title: '', meta: null })).toBe('/toy-library/t1')
-  expect(itemRoute({ kind: 'event', id: 'e1', title: '', meta: null })).toBe('/news/event/e1')
+  expect(itemRoute({ kind: 'event', id: 'e1', title: '', meta: null })).toBe('/events/e1')
   expect(itemRoute({ kind: 'org', id: 'o1', title: '', meta: null })).toBe('/toy-library/organisation/o1')
   expect(itemMeta({ kind: 'printer', id: 'p', title: '', meta: 'PLA, PETG' })).toBe('Printer · PLA, PETG')
   expect(itemMeta({ kind: 'toy', id: 't', title: '', meta: null })).toBe('Toy')

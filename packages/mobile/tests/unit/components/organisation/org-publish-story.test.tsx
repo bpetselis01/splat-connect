@@ -284,13 +284,18 @@ describe('StoryFormScreen', () => {
 })
 
 describe('OrgNewsScreen', () => {
-  it.each([['event', '/api/public/events/x1'], ['story', '/api/public/stories/x1']] as const)(
-    'a %s notification resolves its organisation and replaces itself with that profile', async (kind, path) => {
-      mockGet.mockResolvedValue({ org_id: 'o9' })
-      render(<OrgNewsScreen kind={kind} id="x1" />)
-      await waitFor(() => expect(mockReplace).toHaveBeenCalledWith({ pathname: '/toy-library/organisation/[id]', params: { id: 'o9' } }))
-      expect(mockGet).toHaveBeenCalledWith(path)
-    })
+  it('a story notification resolves its organisation and replaces itself with that profile', async () => {
+    mockGet.mockResolvedValue({ org_id: 'o9' })
+    render(<OrgNewsScreen kind="story" id="x1" />)
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith({ pathname: '/toy-library/organisation/[id]', params: { id: 'o9' } }))
+    expect(mockGet).toHaveBeenCalledWith('/api/public/stories/x1')
+  })
+
+  it('an event link goes straight to the event screen without a lookup', () => {
+    render(<OrgNewsScreen kind="event" id="x1" />)
+    expect(mockReplace).toHaveBeenCalledWith('/events/x1')
+    expect(mockGet).not.toHaveBeenCalled()
+  })
 
   it('an unpublished or deleted item says it is no longer published', async () => {
     mockGet.mockRejectedValue(new Error('Request failed with status 404'))
@@ -301,7 +306,7 @@ describe('OrgNewsScreen', () => {
 
   it('a row with no organisation says the same, rather than navigating to /undefined', async () => {
     mockGet.mockResolvedValue({ org_id: null })
-    render(<OrgNewsScreen kind="event" id="x1" />)
+    render(<OrgNewsScreen kind="story" id="x1" />)
     expect(await screen.findByText('That is no longer published.')).toBeTruthy()
     expect(mockReplace).not.toHaveBeenCalled()
   })

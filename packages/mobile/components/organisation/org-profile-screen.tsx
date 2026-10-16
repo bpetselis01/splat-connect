@@ -161,11 +161,12 @@ export function OrgProfileScreen({ id }: { id: string }) {
     { n: org.counts?.familiesHelped ?? 0, label: 'families helped' },
   ]
   const activity = [
-    ...(org.stories ?? []).map((s) => ({ key: `s-${s.id}`, t: `Published a story — ${s.title}`, when: s.created_at })),
+    ...(org.stories ?? []).map((s) => ({ key: `s-${s.id}`, t: `Published a story — ${s.title}`, when: s.created_at, eventId: null as string | null })),
     ...(org.events ?? []).map((e) => ({
       key: `e-${e.id}`,
       t: `${e.title} — ${e.format === 'online' ? 'Online' : e.location}`,
       when: e.starts_at,
+      eventId: e.id,
     })),
   ].sort((a, b) => (a.when < b.when ? 1 : -1))
   const meta = [org.kind ?? org.description, place, since ? `On SPLAT since ${since}` : null].filter(Boolean).join(' · ')
@@ -375,12 +376,26 @@ export function OrgProfileScreen({ id }: { id: string }) {
 
       {activity.length > 0 ? (
         <Section title="Recent activity">
-          {activity.map((f) => (
-            <Card key={f.key} style={styles.row}>
-              <Text style={styles.rowTitle}>{f.t}</Text>
-              <Text style={styles.rowMeta}>{new Date(f.when).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}</Text>
-            </Card>
-          ))}
+          {activity.map((f) => {
+            const card = (
+              <Card style={styles.row}>
+                <Text style={styles.rowTitle}>{f.t}</Text>
+                <Text style={styles.rowMeta}>{new Date(f.when).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}</Text>
+              </Card>
+            )
+            return f.eventId ? (
+              <Pressable
+                key={f.key}
+                accessibilityRole="button"
+                accessibilityLabel={`Open event: ${f.t}`}
+                onPress={() => router.push(`/events/${f.eventId}` as never)}
+              >
+                {card}
+              </Pressable>
+            ) : (
+              <View key={f.key}>{card}</View>
+            )
+          })}
         </Section>
       ) : null}
 

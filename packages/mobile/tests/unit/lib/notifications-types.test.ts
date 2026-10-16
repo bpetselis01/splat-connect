@@ -67,7 +67,7 @@ const TABLE: Record<NotificationType, Row> = {
   org_event_published: {
     carries: { org_event_id: 'e1', tutorial_title: 'Open day' },
     copy: 'Sam published an event: Open day',
-    link: '/news/event/e1',
+    link: '/events/e1',
   },
   org_story_published: {
     carries: { org_story_id: 's1', tutorial_title: 'A good year' },

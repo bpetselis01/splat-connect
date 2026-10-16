@@ -27,11 +27,11 @@ export function linkFor(n: Notification, isAdmin = false): string {
   if (n.toy_transaction_id) return `/exchanges/${n.toy_transaction_id}`
   // 077. A conversation opens by its own id, for either side. A thanks goes
   // to the organisation profile editor, where each note has Hide / Show again.
-  // A followed org's new event or story: mobile has no screen for either, so
-  // /news reads which organisation it belongs to and opens that profile.
+  // A followed org's new event opens the event; a story has no screen of its
+  // own, so /news reads which organisation it belongs to and opens that profile.
   if (n.org_conversation_id) return `/messages/${n.org_conversation_id}`
   if (n.type === 'org_thanked') return '/organisation/profile'
-  if (n.org_event_id) return `/news/event/${n.org_event_id}`
+  if (n.org_event_id) return `/events/${n.org_event_id}`
   if (n.org_story_id) return `/news/story/${n.org_story_id}`
   // Answered BEFORE the tutorial_id branch, exactly as on web: the recipient
   // of these two is a reviewer, not the author, and /tutorials/:id is the
