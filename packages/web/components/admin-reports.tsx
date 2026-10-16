@@ -25,6 +25,7 @@ import {
 } from '@phosphor-icons/react/dist/ssr'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { formatRelativeTime } from '@/lib/relative-time'
+import { REPORT_CATEGORY as CATEGORY } from '@/lib/report-labels'
 
 export type MemberReport = {
   id: string
@@ -37,15 +38,6 @@ export type MemberReport = {
   note_to_reporter: string | null
   reporter_name: string | null
   created_at: string
-}
-
-const CATEGORY: Record<MemberReport['category'], string> = {
-  safety: 'Safety concern',
-  no_show: 'Didn’t show up',
-  arrived_broken: 'Arrived broken',
-  wrong_info: 'Wrong or missing info',
-  conduct: 'How someone behaved',
-  other: 'Something else',
 }
 
 const CATEGORY_ICON = {

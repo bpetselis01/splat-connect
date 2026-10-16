@@ -41,6 +41,7 @@ import { Screen } from '../ui/Screen'
 import { Card } from '../ui/Card'
 import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
+import { ReportParticipant } from './report-participant'
 import { useFlash, FlashLine } from '../ui/Flash'
 import { Skeleton } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
@@ -647,6 +648,14 @@ export function ChallengeDetailScreen({ id }: { id: string }) {
                     <View key={p.profile_id} style={styles.makerRow}>
                       <Text style={styles.makerName}>{p.profile_id === viewerId ? 'You' : p.name ?? 'Someone'}</Text>
                       <Text style={styles.eventDate}>{meta}</Text>
+                      {canRead && p.profile_id !== viewerId ? (
+                        <ReportParticipant
+                          ideaId={id}
+                          profileId={p.profile_id}
+                          name={p.name ?? 'this person'}
+                          onReported={() => setReloadKey((k) => k + 1)}
+                        />
+                      ) : null}
                     </View>
                   )
                 })}

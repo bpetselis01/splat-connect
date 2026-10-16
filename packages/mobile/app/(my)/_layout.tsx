@@ -77,6 +77,8 @@ export default function MyLayout() {
       <Stack.Screen name="admin/review/[id]" options={{ title: 'Review' }} />
       <Stack.Screen name="admin/reports/index" options={{ title: 'Reports from members' }} />
       <Stack.Screen name="admin/reports/[id]" options={{ title: 'Report' }} />
+      <Stack.Screen name="admin/reports/idea/[id]" options={{ title: 'Idea report' }} />
+      <Stack.Screen name="reports" options={{ title: 'My reports' }} />
       <Stack.Screen name="admin/ideas/index" options={{ title: 'Ideas to review' }} />
       <Stack.Screen name="admin/ideas/[id]" options={{ title: 'Idea' }} />
       <Stack.Screen name="admin/spot-check" options={{ title: 'Spot-check' }} />

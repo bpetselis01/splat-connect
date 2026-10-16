@@ -25,9 +25,9 @@ const TABLE: Record<NotificationType, Row> = {
   tutorial_approved: { carries: GUIDE, copy: '"Bubble machine" was approved and is now published', link: '/tutorials/t1' },
   tutorial_rejected: { carries: GUIDE, copy: '"Bubble machine" was rejected', link: '/tutorials/t1' },
   tutorial_thanked: { carries: GUIDE, copy: 'A family said thanks for "Bubble machine"', link: '/guides/t1' },
-  backing_accepted: { carries: GUIDE, copy: 'Sam agreed to back "Bubble machine"', link: '/tutorials/t1' },
-  backing_declined: { carries: GUIDE, copy: 'Sam can\'t back "Bubble machine" right now', link: '/tutorials/t1' },
-  report_resolved: { carries: { member_report_id: 'r1' }, copy: 'Your report was looked at', link: '/inbox' },
+  backing_accepted: { carries: GUIDE, copy: 'Sam agreed to back "Bubble machine"', link: '/guides/t1' },
+  backing_declined: { carries: GUIDE, copy: 'Sam can\'t back "Bubble machine" right now', link: '/guides/t1' },
+  report_resolved: { carries: { member_report_id: 'r1' }, copy: 'Your report was looked at', link: '/reports' },
   tutorial_noted: { carries: GUIDE, copy: 'Sam added a note to "Bubble machine"', link: '/guides/t1' },
   challenge_guide_published: {
     carries: GUIDE,

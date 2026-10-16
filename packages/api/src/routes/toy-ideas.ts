@@ -481,7 +481,6 @@ toyIdeas.post('/:id/answer', async (c) => {
  * failure class the sibling DELETE route's row-count check already guards
  * against.
  */
-// PENDING(unused-api-routes): no screen starts a participant report; wire one or delete the route.
 toyIdeas.post('/:id/reports', async (c) => {
   const id = c.req.param('id')
   const userId = c.get('userId')

@@ -259,6 +259,9 @@ describe('NotificationsList', () => {
     ['org_message', { org_conversation_id: 'c1', actor_name: 'Priya', tutorial_title: 'Northbank' }, 'Priya messaged Northbank', '/dashboard/messages/c1'],
     ['org_message', { org_conversation_id: 'c1', actor_name: 'Northbank', tutorial_title: 'Northbank' }, 'Northbank replied to your message', '/dashboard/messages/c1'],
     ['org_thanked', { org_id: 'o1', actor_name: 'Sam' }, 'Sam said thanks to your organisation', '/dashboard/organisation/profile#thanks'],
+    ['report_resolved', { member_report_id: 'r1', tutorial_id: null, actor_name: 'SPLAT' }, 'Your report was looked at', '/dashboard/reports'],
+    ['backing_accepted', { tutorial_id: 't9', tutorial_title: 'Spoon Holder', actor_name: 'Northbank' }, 'Northbank agreed to back "Spoon Holder"', '/tutorials/t9'],
+    ['backing_declined', { tutorial_id: 't9', tutorial_title: 'Spoon Holder', actor_name: 'Northbank' }, 'Northbank can\'t back "Spoon Holder" right now', '/tutorials/t9'],
   ] as const)('renders %s and routes it by its subject', async (type, fields, copy, href) => {
     render(
       <NotificationsList

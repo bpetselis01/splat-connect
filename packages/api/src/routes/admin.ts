@@ -500,9 +500,9 @@ admin.get('/spot-check', async (c) => {
  * this table's RLS ever lets read it (041's comment), so this is the only
  * response in the codebase where that column may appear.
  */
-// PENDING(unused-api-routes): nothing calls GET/PATCH /admin/reports or the participant reinstate route; wire a screen or delete.
 admin.get('/reports', async (c) => {
-  const { data, error } = await createAdminClient()
+  const sb = createAdminClient()
+  const { data, error } = await sb
     .from('toy_idea_reports')
     .select(
       'id, idea_id, reported_profile_id, reported_by, reason, created_at, resolved_at, resolved_by, resolution_note, ' +
@@ -513,7 +513,13 @@ admin.get('/reports', async (c) => {
     .order('resolved_at', { ascending: true, nullsFirst: true })
     .order('created_at', { ascending: true })
   if (error) return c.json({ error: error.message }, 500)
-  return c.json(data ?? [])
+  const rows = (data ?? []) as unknown as { idea_id: string; reported_profile_id: string }[]
+  // `removed` lets the screen offer Reinstate only to someone actually out of the challenge.
+  const { data: out } = rows.length
+    ? await sb.from('toy_idea_participants').select('idea_id, profile_id').in('idea_id', [...new Set(rows.map((r) => r.idea_id))]).not('removed_at', 'is', null)
+    : { data: [] }
+  const gone = new Set((out ?? []).map((p) => `${p.idea_id}:${p.profile_id}`))
+  return c.json(rows.map((r) => ({ ...r, removed: gone.has(`${r.idea_id}:${r.reported_profile_id}`) })))
 })
 
 /**
@@ -814,14 +820,21 @@ admin.patch('/member-reports/:id', async (c) => {
     patch.note_to_reporter = note || null
   }
 
-  const { data, error } = await createAdminClient()
-    .from('member_reports')
-    .update(patch)
-    .eq('id', c.req.param('id'))
-    .select(REPORT_COLUMNS)
-    .maybeSingle()
+  const sb = createAdminClient()
+  const id = c.req.param('id')
+  const { data: before } = await sb.from('member_reports').select('status').eq('id', id).maybeSingle()
+  const { data, error } = await sb.from('member_reports').update(patch).eq('id', id).select(REPORT_COLUMNS).maybeSingle()
   if (error) return c.json({ error: error.message }, 500)
   if (!data) return c.json({ error: 'No such report' }, 404)
+
+  // Only the move into 'resolved' tells the reporter; saving a note on an already
+  // resolved report must not. The answer is committed by now, so a failed insert is logged, never returned.
+  if (before && before.status !== 'resolved' && data.status === 'resolved') {
+    const { error: notifyError } = await sb
+      .from('notifications')
+      .insert({ recipient_id: data.reporter_id, type: 'report_resolved', member_report_id: data.id, actor_name: 'SPLAT' })
+    if (notifyError) console.error('[admin] report_resolved insert failed:', notifyError.message)
+  }
   return c.json(data)
 })
 

@@ -77,8 +77,9 @@ describe('ChallengeThread', () => {
     render(<ChallengeThread {...baseProps()} />)
 
     await waitFor(() => expect(screen.getByText('From the author')).toBeInTheDocument())
-    expect(screen.getByText('Robin')).toBeInTheDocument()
-    expect(screen.getByText('Casey')).toBeInTheDocument()
+    // Robin and Casey also head a row in the People list, so match the chat's own labels.
+    expect(screen.getAllByText('Robin').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Casey').length).toBeGreaterThan(0)
     expect(screen.getByText('Someone')).toBeInTheDocument()
   })
 
@@ -187,5 +188,45 @@ describe('ChallengeThread', () => {
     render(<ChallengeThread {...baseProps({ viewerId: 'p1', question: true, answerMessageId: 'm1' })} />)
     expect(await screen.findByText(/marked by the asker/i)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /mark as the answer|unmark/i })).not.toBeInTheDocument()
+  })
+
+  describe('reporting a person', () => {
+    async function openReport() {
+      vi.spyOn(browserApiClient, 'get').mockResolvedValue([])
+      render(<ChallengeThread {...baseProps({ viewerId: 'p1' })} />)
+      fireEvent.click(await screen.findByRole('button', { name: 'Report Casey' }))
+    }
+
+    it('offers Report on everyone but the viewer, and asks for a reason first', async () => {
+      await openReport()
+      expect(screen.queryByRole('button', { name: 'Report Ash' })).not.toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Report Robin' })).toBeInTheDocument()
+      expect(
+        screen.getByText("You won't see them here any more. SPLAT will look at it, and they won't see your name.")
+      ).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Send report' })).toBeDisabled()
+    })
+
+    it('posts the reason and takes the person off the list', async () => {
+      await openReport()
+      const post = vi.spyOn(browserApiClient, 'post').mockResolvedValue({ reported: true })
+      fireEvent.change(screen.getByLabelText('Why are you reporting them?'), { target: { value: ' Rude. ' } })
+      fireEvent.click(screen.getByRole('button', { name: 'Send report' }))
+      await waitFor(() =>
+        expect(post).toHaveBeenCalledWith('/api/ideas/idea-1/reports', { reported_profile_id: 'p2', reason: 'Rude.' })
+      )
+      await waitFor(() => expect(screen.queryByRole('button', { name: 'Report Casey' })).not.toBeInTheDocument())
+    })
+
+    it('shows the server sentence and keeps the person listed when the report fails', async () => {
+      await openReport()
+      vi.spyOn(browserApiClient, 'post').mockRejectedValue(
+        new Error('POST failed with status 404: That person is not part of this challenge')
+      )
+      fireEvent.change(screen.getByLabelText('Why are you reporting them?'), { target: { value: 'Rude.' } })
+      fireEvent.click(screen.getByRole('button', { name: 'Send report' }))
+      expect(await screen.findByRole('alert')).toHaveTextContent('That person is not part of this challenge')
+      expect(screen.getByRole('button', { name: 'Report Casey' })).toBeInTheDocument()
+    })
   })
 })

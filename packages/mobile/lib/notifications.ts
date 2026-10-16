@@ -46,6 +46,7 @@ export function linkFor(n: Notification, isAdmin = false): string {
   if (n.type === 'tutorial_thanked' && n.tutorial_id) return `/guides/${n.tutorial_id}`
   if (n.type === 'tutorial_noted' && n.tutorial_id) return `/guides/${n.tutorial_id}`
   if (n.type === 'challenge_guide_published' && n.tutorial_id) return `/guides/${n.tutorial_id}`
+  if ((n.type === 'backing_accepted' || n.type === 'backing_declined') && n.tutorial_id) return `/guides/${n.tutorial_id}`
   // The invitee is not on the guide yet, so its editor would 403 for them. The
   // inbox is where the invite's Accept / Decline live; the row opens nothing.
   if (n.type === 'collaborator_invited') return '/inbox'
@@ -59,6 +60,7 @@ export function linkFor(n: Notification, isAdmin = false): string {
   }
   // 117: web's showcase-thanks branch. A transaction-tied one left above.
   if (n.type === 'profile_thanked' && n.profile_id) return `/guides/contributor/${n.profile_id}`
+  if (n.type === 'report_resolved') return '/reports'
   return '/inbox'
 }
 
