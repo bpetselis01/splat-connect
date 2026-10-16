@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
   name: { fontFamily: theme.fonts.black, fontSize: theme.type.body, color: theme.colors.ink },
   meta: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, lineHeight: 18, color: theme.colors.muted },
   gap: { gap: theme.spacing(2) },
-  actions: { flexDirection: 'row', justifyContent: 'space-between', gap: theme.spacing(2), marginTop: theme.spacing(2) },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: theme.spacing(2), marginTop: theme.spacing(2) },
   item: { gap: theme.spacing(2) },
   answers: { padding: 15, gap: theme.spacing(3), borderRadius: theme.radii.panel },
   answer: { gap: 2 },
