@@ -6,6 +6,7 @@
  * the foot of the component this renders.
  */
 import { notFound } from 'next/navigation'
+import { actingOrg } from '@/lib/acting-org'
 import { getCapabilities } from '@/lib/capabilities'
 import { apiClient } from '@/lib/api-client'
 import Link from 'next/link'
@@ -23,7 +24,7 @@ export const metadata = { title: 'Events and stories — SPLAT Connect' }
 export default async function OrgPublishPage() {
   const caps = await getCapabilities()
   if (!caps || caps.ledOrgs.length === 0) notFound()
-  const org = caps.ledOrgs[0]
+  const org = await actingOrg(caps)
 
   const [events, stories, inbox] = await Promise.all([
     apiClient.get<OrgEvent[]>(`/api/organizations/${org.id}/events`).catch(() => [] as OrgEvent[]),

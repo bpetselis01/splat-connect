@@ -28,6 +28,7 @@ export default async function OrgMessagesPage() {
     )
   )
   const rows = lists.flat().sort((a, b) => (a.updated_at < b.updated_at ? 1 : -1))
+  const [first] = caps.ledOrgs
   const several = caps.ledOrgs.length > 1
 
   return (
@@ -35,7 +36,7 @@ export default async function OrgMessagesPage() {
       <BackLink href="/dashboard/organisation" label="Organisation" />
       <h1 className="title-hub">Messages</h1>
       <p className="dash-head__lede mb-6 max-w-[60ch]">
-        Families writing to {several ? 'your organisations' : caps.ledOrgs[0].name}. Every leader sees
+        Families writing to {several ? 'your organisations' : first.name}. Every leader sees
         these, and any of you can answer.
       </p>
 

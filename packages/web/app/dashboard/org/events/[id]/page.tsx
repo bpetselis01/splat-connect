@@ -27,6 +27,7 @@ import {
   DownloadSimple,
   Eye,
 } from '@phosphor-icons/react/dist/ssr'
+import { actingOrg } from '@/lib/acting-org'
 import { getCapabilities } from '@/lib/capabilities'
 import { apiClient } from '@/lib/api-client'
 import { longDate } from '@splat-connect/types'
@@ -48,7 +49,7 @@ export default async function ManageEventPage({ params }: { params: Promise<{ id
   const { id } = await params
   const caps = await getCapabilities()
   if (!caps || caps.ledOrgs.length === 0) notFound()
-  const org = caps.ledOrgs[0]
+  const org = await actingOrg(caps)
 
   const [events, questions, registrations, inbox] = await Promise.all([
     apiClient.get<OrgEvent[]>(`/api/organizations/${org.id}/events`).catch(() => [] as OrgEvent[]),

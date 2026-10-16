@@ -9,6 +9,7 @@
  */
 // PENDING(edit-event-story): EventForm takes an event prop; only this create page renders it.
 import { notFound } from 'next/navigation'
+import { actingOrg } from '@/lib/acting-org'
 import { getCapabilities } from '@/lib/capabilities'
 import { EventForm } from '@/components/event-form'
 
@@ -17,7 +18,7 @@ export const metadata = { title: 'Publish an event — SPLAT Connect' }
 export default async function PublishEventPage() {
   const caps = await getCapabilities()
   if (!caps || caps.ledOrgs.length === 0) notFound()
-  const org = caps.ledOrgs[0]
+  const org = await actingOrg(caps)
 
   return (
     <div className="max-w-[760px]">

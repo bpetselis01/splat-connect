@@ -21,6 +21,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Gift, Hammer, Cube, BookOpenText } from '@phosphor-icons/react/dist/ssr'
+import { actingOrg } from '@/lib/acting-org'
 import { getCapabilities } from '@/lib/capabilities'
 import { apiClient } from '@/lib/api-client'
 import { Badge } from '@/components/badge'
@@ -71,20 +72,20 @@ export default async function OrgRequestsPage({
 }) {
   const caps = await getCapabilities()
   if (!caps || caps.ledOrgs.length === 0) notFound()
+  const org = await actingOrg(caps)
   const { tab } = await searchParams
 
   const all = await apiClient
     .get<ToyTransactionSummary[]>('/api/toy-transactions?role=owner')
     .catch(() => [] as ToyTransactionSummary[])
 
-  // The organisation's, not the leader's own. A leader who also gives toys
+  // The acting organisation's, not the leader's own. A leader who also gives toys
   // personally has both in that list, and only one of them is this queue.
   // Finished records leave the queue; they live on in the exchanges list.
-  const ledIds = new Set(caps.ledOrgs.map((o) => o.id))
   const mine = all.filter(
     (t) =>
       t.owner_org_id &&
-      ledIds.has(t.owner_org_id) &&
+      t.owner_org_id === org.id &&
       (t.status === 'requested' || t.status === 'accepted'),
   )
 
@@ -107,7 +108,7 @@ export default async function OrgRequestsPage({
 
   return (
     <div className="max-w-[980px]">
-      <h1 className="title-hub">Requests to {caps.ledOrgs[0].name}</h1>
+      <h1 className="title-hub">Requests to {org.name}</h1>
       <p className="mb-[22px] mt-2 max-w-[64ch] text-[15px] text-muted">
         Everything a family can ask of an organisation, in one place. Say no when you need to: a
         declined family is told straight away, and nothing is left hanging.

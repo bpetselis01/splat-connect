@@ -10,6 +10,7 @@
  * Was a ComingSoon placeholder until 058.
  */
 import { notFound } from 'next/navigation'
+import { actingOrg } from '@/lib/acting-org'
 import { getCapabilities } from '@/lib/capabilities'
 import { PrintOfferScreen } from '@/app/dashboard/printers/page'
 
@@ -24,7 +25,7 @@ export default async function OrgPrintOrdersPage() {
   // One organisation per leader is the shape everywhere else in this tab; a
   // leader of two sees the first, which is the same narrowing
   // /dashboard/organisation already makes.
-  const org = caps.ledOrgs[0]
+  const org = await actingOrg(caps)
 
   return (
     <PrintOfferScreen

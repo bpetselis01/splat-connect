@@ -12,6 +12,8 @@ vi.mock('@/lib/capabilities', () => ({
   }),
 }))
 
+vi.mock('next/headers', () => ({ cookies: async () => ({ get: () => undefined }) }))
+
 vi.mock('@/lib/api-client', () => ({
   apiClient: {
     get: async (path: string) => {
@@ -63,8 +65,15 @@ describe('Organisation tab', () => {
 
   it('names the organisation each row belongs to', async () => {
     render(await Page())
-    expect(screen.getByText('Splat North')).toBeInTheDocument()
+    expect(screen.getAllByText('Splat North').length).toBeGreaterThan(0)
     expect(screen.getByText('Splat South')).toBeInTheDocument()
+  })
+
+  it('offers the acting-org switcher to a leader of two organisations', async () => {
+    render(await Page())
+    expect(
+      screen.getByRole('button', { name: 'Acting for Splat North. Change organisation.' }),
+    ).toBeInTheDocument()
   })
 
   it('excludes work offered to an organisation the user does not lead', async () => {
