@@ -11,7 +11,7 @@ jest.mock('../../../../lib/api-client', () => ({
 const mockBack = jest.fn()
 jest.mock('expo-router', () => {
   const { useEffect } = jest.requireActual('react')
-  return { useRouter: () => ({ push: jest.fn(), back: mockBack }), useFocusEffect: (effect: () => void) => useEffect(effect, []) }
+  return { useRouter: () => ({ push: jest.fn(), back: mockBack }), useFocusEffect: (effect: () => void) => useEffect(effect, [effect]) }
 })
 
 const forbidden = Object.assign(new Error('GET failed with status 403: Forbidden'), { status: 403 })
@@ -53,5 +53,16 @@ describe('ideas review failures', () => {
     render(<IdeaReviewDetailScreen ideaId="i2" />)
     fireEvent.press(await screen.findByRole('button', { name: 'Graduate to draft' }))
     expect(await screen.findByText('Admins only.')).toBeTruthy()
+  })
+
+  it('offline: says so, logs nothing, and Try again fetches it again', async () => {
+    mockGet.mockReset()
+    mockGet.mockRejectedValue(new TypeError('Network request failed'))
+    render(<IdeasReviewScreen />)
+    expect(await screen.findByText("Couldn't load the queue.")).toBeTruthy()
+    expect(console.error).not.toHaveBeenCalled()
+    mockGet.mockResolvedValue([{ ...live, status: 'pending', title: 'Back again' }])
+    fireEvent.press(screen.getByRole('button', { name: 'Try again' }))
+    expect(await screen.findByText('Back again')).toBeTruthy()
   })
 })

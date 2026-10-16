@@ -7,7 +7,7 @@ const mockDelete = jest.fn()
 jest.mock('../../../../lib/api-client', () => ({ apiClient: { get: (...a: unknown[]) => mockGet(...a), delete: (...a: unknown[]) => mockDelete(...a) } }))
 jest.mock('expo-router', () => {
   const { useEffect } = jest.requireActual('react')
-  return { useFocusEffect: (effect: () => void) => useEffect(effect, []) }
+  return { useFocusEffect: (effect: () => void) => useEffect(effect, [effect]) }
 })
 jest.mock('../../../../lib/confirm', () => ({ confirmDestructive: (_t: string, _m: string, _l: string, ok: () => void) => ok() }))
 
@@ -39,5 +39,16 @@ describe('AccountsScreen failures', () => {
     render(<AccountsScreen />)
     fireEvent.press(await screen.findByRole('button', { name: 'Delete Ada' }))
     expect(await screen.findByText('Admins only.')).toBeTruthy()
+  })
+
+  it('offline: says so, logs nothing, and Try again fetches it again', async () => {
+    mockGet.mockReset()
+    mockGet.mockRejectedValue(new TypeError('Network request failed'))
+    render(<AccountsScreen />)
+    expect(await screen.findByText("Couldn't load the queue.")).toBeTruthy()
+    expect(console.error).not.toHaveBeenCalled()
+    mockGet.mockResolvedValue({ accounts: [{ id: 'a9', name: 'Back again', email: 'b@example.com', role: 'contributor', created_at: '2026-03-01T00:00:00Z' }], total: 1 })
+    fireEvent.press(screen.getByRole('button', { name: 'Try again' }))
+    expect(await screen.findByText('Back again')).toBeTruthy()
   })
 })

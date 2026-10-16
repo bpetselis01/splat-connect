@@ -11,7 +11,7 @@ jest.mock('../../../../lib/api-client', () => ({
 const mockBack = jest.fn()
 jest.mock('expo-router', () => {
   const { useEffect } = jest.requireActual('react')
-  return { useRouter: () => ({ push: jest.fn(), back: mockBack }), useFocusEffect: (effect: () => void) => useEffect(effect, []) }
+  return { useRouter: () => ({ push: jest.fn(), back: mockBack }), useFocusEffect: (effect: () => void) => useEffect(effect, [effect]) }
 })
 
 const forbidden = Object.assign(new Error('GET failed with status 403: Forbidden'), { status: 403 })
@@ -38,12 +38,6 @@ describe('member reports failures', () => {
     expect(await screen.findByText('Admins only')).toBeTruthy()
   })
 
-  it('shows a retry when the list cannot load', async () => {
-    mockGet.mockRejectedValue(new Error('network'))
-    render(<MemberReportsScreen />)
-    expect(await screen.findByText("Couldn't load the queue.")).toBeTruthy()
-  })
-
   it('shows the server sentence word for word and stays on the report', async () => {
     mockGet.mockResolvedValue([row])
     mockPatch.mockRejectedValue(new Error('PATCH failed with status 400: That note is too long.'))
@@ -57,5 +51,16 @@ describe('member reports failures', () => {
     mockGet.mockResolvedValue([])
     render(<MemberReportDetailScreen reportId="r1" />)
     expect(await screen.findByText("That report isn't here any more.")).toBeTruthy()
+  })
+
+  it('offline: says so, logs nothing, and Try again fetches it again', async () => {
+    mockGet.mockReset()
+    mockGet.mockRejectedValue(new TypeError('Network request failed'))
+    render(<MemberReportsScreen />)
+    expect(await screen.findByText("Couldn't load the queue.")).toBeTruthy()
+    expect(console.error).not.toHaveBeenCalled()
+    mockGet.mockResolvedValue([{ ...row, subject_label: 'Guide: Back again' }])
+    fireEvent.press(screen.getByRole('button', { name: 'Try again' }))
+    expect(await screen.findByText('Guide: Back again')).toBeTruthy()
   })
 })
