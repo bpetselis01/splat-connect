@@ -73,6 +73,29 @@ describe('GET /api/admin/reports', () => {
   })
 })
 
+describe('GET /api/admin/reports removed flag', () => {
+  let reportId: string
+
+  beforeAll(async () => {
+    const { data } = await adminClient().from('toy_idea_reports')
+      .insert({ idea_id: ideaId, reported_profile_id: target.id, reported_by: author.id, reason: 'Flag check' })
+      .select('id').single()
+    reportId = data!.id
+    await adminClient().from('toy_idea_participants').insert({ idea_id: ideaId, profile_id: target.id, removed_at: new Date().toISOString(), removed_by: admin.id })
+  })
+
+  afterAll(async () => {
+    await adminClient().from('toy_idea_participants').delete().eq('idea_id', ideaId).eq('profile_id', target.id)
+    await adminClient().from('toy_idea_reports').delete().eq('id', reportId)
+  })
+
+  it('is true for a reported person who has been removed from the challenge', async () => {
+    const res = await app.request('/api/admin/reports', authed(admin.token))
+    const rows = (await res.json()) as Array<{ id: string; removed: boolean }>
+    expect(rows.find((r) => r.id === reportId)!.removed).toBe(true)
+  })
+})
+
 describe('PATCH /api/admin/reports/:id', () => {
   let reportId: string
 
