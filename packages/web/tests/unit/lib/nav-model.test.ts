@@ -96,8 +96,8 @@ describe('buildNav', () => {
     // organisation's own three — events and stories, recycling intake, and the
     // profile editor; twenty-one after 077 added the organisation's messages.
     // Still twenty-one after me-rows-structure: Makers wanted in, Recycle plastic out.
-    // Twenty-two once Thank-you notes (117) joined the Account group.
-    expect(rows).toHaveLength(22)
+    // Twenty-three once My reports joined the Account group (Twenty-two with Thank-you notes, 117).
+    expect(rows).toHaveLength(23)
   })
 
   it('includes a Design challenges row for every account', () => {
@@ -182,7 +182,7 @@ describe('buildNav', () => {
    */
   it('puts Saved first in the Account group, then Thank-you notes, ahead of Notifications', () => {
     const account = buildNav(caps()).find((g) => g.heading === 'Account')!
-    expect(account.rows.map((r) => r.label)).toEqual(['Saved', 'Thank-you notes', 'Notifications', 'Account'])
+    expect(account.rows.map((r) => r.label)).toEqual(['Saved', 'Thank-you notes', 'My reports', 'Notifications', 'Account'])
     expect(account.rows[0].href).toBe('/dashboard/saved')
   })
 
