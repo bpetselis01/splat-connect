@@ -17,6 +17,7 @@ import type { Tutorial, TutorialOrg } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { useCapabilities } from '../../lib/capabilities'
+import { useActingOrg } from '../../lib/acting-org'
 import { Screen } from '../ui/Screen'
 import { Button } from '../ui/Button'
 import { EmptyState } from '../ui/EmptyState'
@@ -71,6 +72,7 @@ export function ReviewQueueScreen() {
   const router = useRouter()
   const { caps, loading: capsLoading } = useCapabilities()
   const ledOrgs = caps?.ledOrgs ?? []
+  const { org: actingOrg } = useActingOrg()
   const [tutorials, setTutorials] = useState<Backed[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
@@ -166,8 +168,7 @@ export function ReviewQueueScreen() {
     <Screen>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <ListIntro
-          // PENDING(multi-org-leader-switch): ledOrgs[0], the first organisation, is used silently.
-          lead={`Guides waiting for ${ledOrgs.length === 1 ? ledOrgs[0].name : 'your organisations'}. Oldest first.`}
+          lead={`Guides waiting for ${ledOrgs.length === 1 && actingOrg ? actingOrg.name : 'your organisations'}. Oldest first.`}
           cta={caps?.isAdmin ? 'Guides to review as admin' : undefined}
           onCta={() => router.push('/admin/review')}
         />

@@ -14,7 +14,7 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { useFocusEffect } from 'expo-router'
 import { apiMessage, AU_STATES, isNetworkError, type Organization, type OrgThanks } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
-import { useCapabilities } from '../../lib/capabilities'
+import { useActingOrg } from '../../lib/acting-org'
 import { theme } from '../../lib/theme'
 import { Screen } from '../ui/Screen'
 import { Card } from '../ui/Card'
@@ -42,8 +42,8 @@ const FIELDS = [
 type Field = (typeof FIELDS)[number][0] | 'state'
 
 export function OrgProfileEditScreen() {
-  const { caps, refresh } = useCapabilities()
-  const orgId = caps?.ledOrgs[0]?.id
+  const { org: acting, refresh } = useActingOrg()
+  const orgId = acting?.id
   const [form, setForm] = useState<Record<Field, string> | null>(null)
   const [thanks, setThanks] = useState<OrgThanks[]>([])
   const [saving, setSaving] = useState(false)

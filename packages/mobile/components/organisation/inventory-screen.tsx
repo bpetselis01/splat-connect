@@ -17,6 +17,7 @@ import { apiClient } from '../../lib/api-client'
 import { confirmDestructive, notify } from '../../lib/confirm'
 import { theme } from '../../lib/theme'
 import { useCapabilities } from '../../lib/capabilities'
+import { useActingOrg } from '../../lib/acting-org'
 import { Screen } from '../ui/Screen'
 import { Button } from '../ui/Button'
 import { EmptyState } from '../ui/EmptyState'
@@ -65,6 +66,7 @@ export function InventoryScreen() {
   const router = useRouter()
   const { caps, loading: capsLoading } = useCapabilities()
   const ledOrgs = caps?.ledOrgs ?? []
+  const { org: actingOrg } = useActingOrg()
   const [toys, setToys] = useState<ShelfToy[]>([])
   const [flash, setFlash] = useFlash()
   const [loading, setLoading] = useState(true)
@@ -160,8 +162,7 @@ export function InventoryScreen() {
               : `${toys.length} listing${toys.length === 1 ? '' : 's'}, ${units} unit${units === 1 ? '' : 's'} on the shelf.`
           }
           cta="+ Add to inventory"
-          // PENDING(multi-org-leader-switch): ledOrgs[0], the first organisation, is used silently.
-          onCta={() => router.push(`/toys/new?org=${ledOrgs[0]?.id ?? ''}`)}
+          onCta={() => router.push(`/toys/new?org=${actingOrg?.id ?? ''}`)}
         />
         <FlashLine message={flash} />
 

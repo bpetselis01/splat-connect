@@ -14,7 +14,7 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { subjectName, type ToyTransactionSummary } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
-import { useCapabilities } from '../../lib/capabilities'
+import { useActingOrg } from '../../lib/acting-org'
 import { theme } from '../../lib/theme'
 import { Screen } from '../ui/Screen'
 import { Chip } from '../ui/Chip'
@@ -36,7 +36,7 @@ const threadRoute = (t: ToyTransactionSummary) =>
 
 export function OrgRequestsScreen() {
   const router = useRouter()
-  const { caps, loading } = useCapabilities()
+  const { org, loading } = useActingOrg()
   const [all, setAll] = useState<ToyTransactionSummary[] | null>(null)
   const [tab, setTab] = useState<TabKey | null>(null)
 
@@ -64,7 +64,7 @@ export function OrgRequestsScreen() {
   }
 
   // The organisation's, not the leader's own; finished records leave the queue.
-  const led = new Set((caps?.ledOrgs ?? []).map((o) => o.id))
+  const led = new Set(org ? [org.id] : [])
   const mine = all.filter(
     (t) => t.owner_org_id && led.has(t.owner_org_id) && (t.status === 'requested' || t.status === 'accepted')
   )
@@ -87,7 +87,7 @@ export function OrgRequestsScreen() {
     <Screen>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={styles.lede}>
-          Everything a family can ask of {caps?.ledOrgs[0]?.name ?? 'your organisation'}, in one place. A declined
+          Everything a family can ask of {org?.name ?? 'your organisation'}, in one place. A declined
           family is told straight away.
         </Text>
         <View style={styles.tabs} accessibilityRole="radiogroup">

@@ -14,7 +14,7 @@ import { useFocusEffect, useRouter } from 'expo-router'
 import { apiMessage, EVENT_KIND_LABEL, isNetworkError, isPast, STORY_KIND_LABEL, type OrgEvent, type OrgStory } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { confirmDestructive } from '../../lib/confirm'
-import { useCapabilities } from '../../lib/capabilities'
+import { useActingOrg } from '../../lib/acting-org'
 import { theme } from '../../lib/theme'
 import { Screen } from '../ui/Screen'
 import { Card } from '../ui/Card'
@@ -31,8 +31,7 @@ const shortDate = (iso: string) => new Date(iso).toLocaleDateString('en-AU', { d
 
 export function OrgPublishScreen() {
   const router = useRouter()
-  const { caps } = useCapabilities()
-  const org = caps?.ledOrgs[0]
+  const { org } = useActingOrg()
   const [data, setData] = useState<{ events: OrgEvent[]; stories: OrgStory[] } | null>(null)
   const [tab, setTab] = useState<Kind>('events')
   const [busy, setBusy] = useState(false)
