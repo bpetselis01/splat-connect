@@ -1,11 +1,11 @@
 // packages/mobile/components/organisation/org-news-screen.tsx
 /**
- * Where a "followed organisation published" notification lands (077).
+ * Where an older "followed organisation published" link lands (077).
  *
- * Mobile has no event or story screen, and the notification names only the
- * event or story. This reads which organisation it belongs to and replaces
- * itself with that organisation's profile, whose Recent activity lists it — a
- * real destination rather than a row that opens nothing.
+ * An event has its own screen now, so an event link is handed straight to it.
+ * A story still has none and the link names only the story: this reads which
+ * organisation it belongs to and replaces itself with that organisation's
+ * profile, whose Recent activity lists it.
  */
 import { useEffect, useState } from 'react'
 import { useRouter } from 'expo-router'
@@ -19,8 +19,9 @@ export function OrgNewsScreen({ kind, id }: { kind: 'event' | 'story'; id: strin
   const [gone, setGone] = useState(false)
 
   useEffect(() => {
+    if (kind === 'event') return router.replace(`/events/${id}` as never)
     apiClient
-      .get<{ org_id: string | null }>(`/api/public/${kind === 'event' ? 'events' : 'stories'}/${id}`)
+      .get<{ org_id: string | null }>(`/api/public/stories/${id}`)
       .then((row) => {
         if (row.org_id) router.replace({ pathname: '/toy-library/organisation/[id]', params: { id: row.org_id } })
         else setGone(true)

@@ -20,7 +20,6 @@ const UNTESTED = new Set([
   'GET /api/admin/build-requests',
   'GET /api/admin/print-jobs',
   'PATCH /api/toys/:id/publish',
-  'POST /api/toy-transactions/print-at-event',
   'GET /api/organizations/:id/pickup',
   'PATCH /api/organizations/:id/pickup',
   'POST /api/exchange-costs/:transactionId/receipt',

@@ -41,6 +41,7 @@ import { getCapabilities } from '@/lib/capabilities'
 import { safePhotoSrc } from '@/lib/photo-src'
 import { EventRsvpButton } from '@/components/event-rsvp-button'
 import { EventCostPanel } from '@/components/event-cost-panel'
+import { PrintAtEventForm } from '@/components/print-at-event-form'
 import { KIND_TINT } from '@/components/event-card'
 import { ShareButton } from '@/components/share-button'
 import { longDate, formatTimeRange, dateBadge, isPast } from '@splat-connect/types'
@@ -324,6 +325,9 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                     {event.part_sets_max} sets). Ask when you say you are coming, or via Get help on
                     the guide.
                   </p>
+                )}
+                {event.prints_parts && caps && !cancelled && !past && (
+                  <PrintAtEventForm eventId={event.id} maxSets={Math.min(event.part_sets_max ?? 20, 20)} />
                 )}
               </section>
             )}

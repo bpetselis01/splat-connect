@@ -286,6 +286,17 @@ describe('OrgProfileScreen lists', () => {
     expect(titles).toEqual(['Zoom day — Online', 'Build day — Hall', 'Published a story — Leo drum'])
   })
 
+  it('an event row opens the event; a story row is not a button', async () => {
+    serve({
+      stories: [{ id: 's1', title: 'Leo drum', created_at: '2026-01-05T00:00:00Z' }],
+      events: [{ id: 'e7', title: 'Build day', format: 'in_person', location: 'Hall', starts_at: '2026-03-05T00:00:00Z' }],
+    })
+    render(<OrgProfileScreen id="o1" />)
+    fireEvent.press(await screen.findByRole('button', { name: 'Open event: Build day — Hall' }))
+    expect(mockPush).toHaveBeenCalledWith('/events/e7')
+    expect(screen.queryByRole('button', { name: /Leo drum/ })).toBeNull()
+  })
+
   it('"From families" gives two quotes with the same date and source their own rows', async () => {
     serve({ fromFamilies: [{ quote: 'One', by: 'A', source: 'thanks', at: 'd' }, { quote: 'Two', by: 'B', source: 'thanks', at: 'd' }] })
     render(<OrgProfileScreen id="o1" />)

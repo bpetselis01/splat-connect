@@ -2081,7 +2081,6 @@ toyTransactions.post('/print', async (c) => {
  * `owner_org_id` is the event's organisation, so isOwnerSide() already answers
  * "may this leader accept it" correctly with no new branch.
  */
-// PENDING(unused-api-routes): no screen calls print-at-event; wire one or delete.
 toyTransactions.post('/print-at-event', async (c) => {
   const body = await c.req.json().catch(() => null)
   if (body === null || typeof body !== 'object' || Array.isArray(body)) {

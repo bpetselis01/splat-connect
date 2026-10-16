@@ -203,7 +203,7 @@ test('the toggle publishes and unpublishes a story, and Remove keeps it when the
   expect(gone).toEqual([])
 })
 
-test('a published event or story opens its organisation page; an unpublished one is gone', async ({ page }) => {
+test('a published story opens its organisation page and an event its own page; an unpublished one is gone', async ({ page }) => {
   await signInAsNewContributor(page)
   const owner = await createContributor()
   const orgName = uniqueTitle('E2E News Org')
@@ -214,15 +214,14 @@ test('a published event or story opens its organisation page; an unpublished one
   const storyId = await seedStory(orgId, owner.id, { title: storyTitle, status: 'published' })
 
   await page.goto(`/news/event/${eventId}`)
-  await expect(page).toHaveURL(new RegExp(`/toy-library/organisation/${orgId}$`))
-  await expect(page.getByText('Recent activity')).toBeVisible()
-  await expect(page.getByText(new RegExp(`^${eventTitle} — `))).toBeVisible()
+  await expect(page).toHaveURL(new RegExp(`/events/${eventId}$`))
+  await expect(page.getByText(eventTitle)).toBeVisible()
 
   await page.goto(`/news/story/${storyId}`)
   await expect(page).toHaveURL(new RegExp(`/toy-library/organisation/${orgId}$`))
   await expect(page.getByText(`Published a story — ${storyTitle}`)).toBeVisible()
 
   await adminClient().from('org_events').update({ status: 'draft' }).eq('id', eventId)
-  await page.goto(`/news/event/${eventId}`)
-  await expect(page.getByText('That is no longer published.')).toBeVisible()
+  await page.goto(`/events/${eventId}`)
+  await expect(page.getByText('No such event.')).toBeVisible()
 })
