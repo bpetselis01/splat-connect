@@ -665,10 +665,13 @@ async function seedOrgEvent(db, leaderId, orgId) {
   if (error) return null
   // The register form asks the host's questions.
   await swallow(
+    // Every row carries every key: a batched insert nulls a key one row lacks.
     db.from('org_event_questions').insert([
-      { event_id: data.id, position: 1, prompt: 'Which toy are you bringing?', answer_type: 'short', required: true },
-      { event_id: data.id, position: 2, prompt: 'Anything we should know about access?', answer_type: 'paragraph' },
-      { event_id: data.id, position: 3, prompt: 'How many in your group?', answer_type: 'number' },
+      { event_id: data.id, position: 1, prompt: 'Which toy are you bringing?', answer_type: 'short', required: true, options: [] },
+      { event_id: data.id, position: 2, prompt: 'Anything we should know about access?', answer_type: 'paragraph', required: false, options: [] },
+      { event_id: data.id, position: 3, prompt: 'How many in your group?', answer_type: 'number', required: false, options: [] },
+      { event_id: data.id, position: 4, prompt: 'Which switch do you use?', answer_type: 'choice', required: true, options: ['Button', 'Joystick', 'Not sure'] },
+      { event_id: data.id, position: 5, prompt: 'Can we share your photos?', answer_type: 'boolean', required: false, options: [] },
     ])
   )
   // And one already over. Without it every seeded event is in the future, so
@@ -688,6 +691,38 @@ async function seedOrgEvent(db, leaderId, orgId) {
     created_by: leaderId,
   })
   return data.id
+}
+
+/** One registration by a bystander, so the leader's list has a row. Never the parity family, whose own register screen must stay open. */
+async function seedRegistration(db, eventId, userId) {
+  if (!userId) return
+  const { data: q } = await db.from('org_event_questions').select('id, position').eq('event_id', eventId)
+  const byPos = Object.fromEntries((q || []).map((r) => [r.position, r.id]))
+  await swallow(
+    db.from('org_event_registrations').insert({
+      event_id: eventId,
+      user_id: userId,
+      name: 'Parity registrant',
+      email: 'registrant@example.test',
+      answers: { [byPos[1]]: 'A bus toy', [byPos[3]]: 2, [byPos[4]]: 'Button', [byPos[5]]: true },
+    })
+  )
+}
+
+/**
+ * A second organisation the leader also leads, so the phone's acting-org
+ * switcher (drawn only when more than one is led) has something to switch.
+ * Taken back by unseed: cleanup() deletes only the first org.
+ */
+async function seedSecondOrg(db, leaderId) {
+  const { data } = await db
+    .from('organizations')
+    .insert({ name: 'Parity second organisation', status: 'active', suburb: 'Hamilton', state: 'NSW' })
+    .select('id')
+    .single()
+  if (!data) return
+  undo.push((d) => d.from('organizations').delete().eq('id', data.id))
+  await swallow(db.from('org_leaders').insert({ org_id: data.id, user_id: leaderId }))
 }
 
 /**
@@ -901,7 +936,9 @@ async function seed(db, users) {
       routes.org_event_manage = `/dashboard/org/events/${ev}`
       routes.event_detail = `/get-involved/events/${ev}`
       await seedEventParts(db, ev, leader.orgId, family)
+      await seedRegistration(db, ev, await someoneElse(db, family || leader.id))
     }
+    await seedSecondOrg(db, leader.id)
     const queued = await seedOrgQueue(db, leader.id, leader.orgId)
     // The app's org review screen, keyed by its app screen id: the leader's
     // queue is pressables, and no web screen shows this record.
