@@ -168,6 +168,14 @@ export function OrgPublishScreen() {
                 icon={r.shown === 'Draft' ? 'create-outline' : r.shown === 'Past' ? 'time-outline' : 'radio-outline'}
               />
               <View style={styles.actions}>
+                {tab === 'events' ? (
+                  <Button
+                    label="Registrations"
+                    variant="secondary"
+                    accessibilityLabel={`Registrations for ${r.title}`}
+                    onPress={() => router.push(`/organisation/events/${r.id}` as never)}
+                  />
+                ) : null}
                 <Button
                   label={r.status === 'published' ? 'Unpublish' : 'Publish'}
                   variant="secondary"
