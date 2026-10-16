@@ -176,6 +176,63 @@ const { error: noteSeedError } = await admin.from('tutorial_notes').insert({
 })
 if (noteSeedError) throw new Error(`Failed to seed guide note: ${noteSeedError.message}`)
 
+// A published event with one required question, hosted by an organisation the
+// device account does not lead, for the register flow. No cost, so the form has
+// no cost tick box to find. In person needs a place by check constraint.
+const eventTitle = `Device smoke event ${Date.now()}`
+const { data: hostOrg, error: hostError } = await admin
+  .from('organizations')
+  .insert({ name: `Device host org ${Date.now()}`, status: 'active', suburb: 'Newtown', state: 'NSW' })
+  .select('id')
+  .single()
+if (hostError || !hostOrg) throw new Error(`Failed to seed host organisation: ${hostError?.message}`)
+const { data: event, error: eventError } = await admin
+  .from('org_events')
+  .insert({
+    org_id: hostOrg.id,
+    title: eventTitle,
+    summary: 'Seeded by provision-device-parent for the register flow.',
+    starts_at: new Date(Date.now() + 14 * 86400000).toISOString(),
+    format: 'in_person',
+    location: 'Device Hall, 1 Test Street',
+    suburb: 'Newtown',
+    state: 'NSW',
+    status: 'published',
+    created_by: reviewer.user.id,
+  })
+  .select('id')
+  .single()
+if (eventError || !event) throw new Error(`Failed to seed event: ${eventError?.message}`)
+const { error: questionError } = await admin
+  .from('org_event_questions')
+  .insert({ event_id: event.id, position: 1, prompt: 'Which toy are you bringing?', answer_type: 'short', required: true })
+if (questionError) throw new Error(`Failed to seed event question: ${questionError.message}`)
+
+// A guide waiting for an admin, for the admin review flow, and the admin role
+// that opens the queue. Authored by the reviewer so the device account is not
+// reviewing its own work. The role is the only gate the screens use client side;
+// the server's is_admin guard is the real check.
+const reviewTitle = `Device review guide ${Date.now()}`
+const { data: pending, error: pendingError } = await admin
+  .from('tutorials')
+  .insert({
+    title: reviewTitle,
+    description: 'Seeded by provision-device-parent for the admin review flow.',
+    difficulty: 'easy',
+    kind: 'toy_adaptation',
+    status: 'pending',
+    safety_declared_at: new Date().toISOString(),
+  })
+  .select('id')
+  .single()
+if (pendingError || !pending) throw new Error(`Failed to seed pending guide: ${pendingError?.message}`)
+const { error: pendingLinkError } = await admin
+  .from('tutorial_contributors')
+  .insert({ tutorial_id: pending.id, profile_id: reviewer.user.id, role: 'primary' })
+if (pendingLinkError) throw new Error(`Failed to link pending guide author: ${pendingLinkError.message}`)
+const { error: roleError } = await admin.from('profiles').update({ role: 'admin' }).eq('id', data.user.id)
+if (roleError) throw new Error(`Failed to make the device account an admin: ${roleError.message}`)
+
 // Plain KEY=value lines, so callers can `eval $(node …)` or append to
 // $GITHUB_ENV. The first two are what every flow needs; the ids are for the
 // flows that deep link or assert a row, passed on with `maestro test -e`.
@@ -186,3 +243,7 @@ console.log(`DEVICE_GUIDE_ID=${guide.id}`)
 console.log(`DEVICE_GUIDE_TITLE=${guideTitle}`)
 console.log(`DEVICE_LONG_GUIDE_ID=${longGuide.id}`)
 console.log(`DEVICE_LONG_GUIDE_TITLE=${longGuideTitle}`)
+console.log(`DEVICE_EVENT_ID=${event.id}`)
+console.log(`DEVICE_EVENT_TITLE=${eventTitle}`)
+console.log(`DEVICE_REVIEW_GUIDE_ID=${pending.id}`)
+console.log(`DEVICE_REVIEW_GUIDE_TITLE=${reviewTitle}`)
