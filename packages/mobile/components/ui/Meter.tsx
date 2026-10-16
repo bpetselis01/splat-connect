@@ -1,5 +1,5 @@
 // packages/mobile/components/ui/Meter.tsx
-import { View, StyleSheet } from 'react-native'
+import { View, StyleSheet, type DimensionValue } from 'react-native'
 import { theme } from '../../lib/theme'
 
 /**
@@ -7,11 +7,11 @@ import { theme } from '../../lib/theme'
  * progress rows in Phase 4. `value/max` drives the fill width as a
  * percentage, so the bar never needs to know its own pixel width.
  */
-export function Meter({ value, max = 10, width = 50 }: { value: number; max?: number; width?: number }) {
+export function Meter({ value, max = 10, width = 50, label = `${value} of ${max}` }: { value: number; max?: number; width?: DimensionValue; label?: string }) {
   const pct = Math.max(0, Math.min(1, max === 0 ? 0 : value / max)) * 100
 
   return (
-    <View accessibilityLabel={`${value} of ${max}`} style={[styles.track, { width }]}>
+    <View accessibilityLabel={label} style={[styles.track, { width }]}>
       <View testID="meter-fill" style={[styles.fill, { width: `${pct}%` }]} />
     </View>
   )
