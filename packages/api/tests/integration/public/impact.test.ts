@@ -42,7 +42,7 @@ describe('GET /api/public/impact', () => {
     await deleteTestUser(hidden.id)
   })
 
-  it('Q14 WH06 counts approved tutorials and shared toys, and excludes opted-out people', async () => {
+  it('Q14 WH06 WS01 counts approved tutorials and shared toys, and excludes opted-out people', async () => {
     const res = await app.request(`${BASE}/api/public/impact`)
     expect(res.status).toBe(200)
     const body = (await res.json()) as any
