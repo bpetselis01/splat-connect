@@ -20,6 +20,7 @@ const read = (f: string) => fs.readFileSync(f, 'utf8')
 // Screen file -> a test that is not named *-failure but does the same job.
 const COVERED_ELSEWHERE: Record<string, string> = {
   'components/inbox/inbox-screen.tsx': 'tests/unit/components/inbox/inbox-edges.test.tsx',
+  'components/admin/use-admin-load.tsx': 'tests/unit/components/admin/accounts-failure.test.tsx',
 }
 // Screen file -> why it needs no failure test of its own.
 // Their GET is a secondary lookup; the test proves the screen still works and logs nothing.
@@ -27,12 +28,20 @@ const EXEMPT: Record<string, string> = {
   'app/(tabs)/guides/new.tsx': 'GET only runs after the draft exists; the editor opens regardless',
   'components/organisation/org-invites.tsx': 'a failed GET just hides the invites card',
   'components/profile/child-done.tsx': 'a failed GET drops the match sentence; heading and button stay',
+  'components/challenges/submit-idea-screen.tsx': 'GET only prefills a revised idea; the blank form opens regardless',
+  'components/explore/learn-hub.tsx': "a failed course GET keeps the app's own title and intro; the articles are bundled",
+  'components/my-tutorials/hub.tsx': 'the GET is only the backing-orgs lookup; the guide load goes through useDraft with its own Try again',
+  'components/my-tutorials/sections/picks-section.tsx': 'the GET only fills the add-a-pick candidates; a failure shows inline and the picks stay editable',
+  'components/profile-screen.tsx': 'a failed GET just hides the contributor-terms row; the rest of the page works',
+  'app/(my)/admin.tsx': 'a failed counts GET just drops the badge numbers; the review cards still open',
+  'app/(tabs)/me.tsx': 'the page loads from useCapabilities; the money, builds and counts GETs degrade to absent',
 }
 const SECONDARY_TESTS = ['guides-new-failure', 'org-invites-failure', 'child-done-failure']
 
 const screens = ['components', 'app']
   .flatMap((d) => files(path.join(ROOT, d), /\.tsx$/))
-  .filter((f) => /apiClient\.get\b/.test(read(f)))
+  // \s* because a get chained onto the next line (apiClient\n  .get) slipped past.
+  .filter((f) => /apiClient\s*\.get\b/.test(read(f)))
   .map((f) => path.relative(ROOT, f))
 const failureTests = files(path.join(ROOT, 'tests/unit'), /failure.*\.test\.tsx$/).map((f) => ({ f, src: read(f) }))
 
