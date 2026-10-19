@@ -34,6 +34,8 @@ A test case claims a journey by putting the id first in its title: `test('WD03 a
 |---|---|
 | The flow signs in, kills the app, relaunches it and asserts the Member is still on Home | A flow that launches the app and takes a screenshot |
 
+A device cell counts only for a flow the `Maestro Android` job in `ci.yml` runs on every PR that touches the `mobile` path filter. A flow that has only run on a local simulator or phone proves nothing for the rule.
+
 ## Routes
 
 Every web `page.tsx` and every mobile screen file needs a journey row naming it in `route`, or an entry in `scripts/journeys/routes-without-journeys.json` with the reason it has none. The check fails on a route with neither, on an entry whose route is gone or now has a row (delete it), and on a row whose `route` matches no file. A reason starting `TODO:` is a placeholder; the list only shrinks.
