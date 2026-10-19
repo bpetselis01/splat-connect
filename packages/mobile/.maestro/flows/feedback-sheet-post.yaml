@@ -1,4 +1,3 @@
-# journeys: B04
 # Posting feedback from build mode's done screen. The FeedbackSheet is a
 # transparent Modal presented over build mode, itself a fullScreenModal: a modal
 # over a modal, which react-native-web draws as one layer and which iOS drops if
@@ -9,6 +8,7 @@
 # The guide is seeded by scripts/provision-device-parent.mjs. DEVICE_EMAIL,
 # DEVICE_PASSWORD and DEVICE_GUIDE_ID come from `maestro test --env` — see
 # sign-out-clears-session.yaml for why they carry no env: defaults here.
+name: "B04 G23 Post feedback from the done screen and see the note on the guide"
 appId: com.splatconnect.mobile
 ---
 - clearState

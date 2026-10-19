@@ -1,4 +1,3 @@
-# journeys: B04 G23
 # The "Which step?" field and its list sheet on a guide longer than five steps:
 # a second Modal stacked on the feedback sheet's Modal, with a search box that
 # must stay above the keyboard. react-native-web draws both as one layer and
@@ -8,6 +7,7 @@
 # The guide has eight steps, seeded by scripts/provision-device-parent.mjs.
 # DEVICE_EMAIL, DEVICE_PASSWORD, DEVICE_LONG_GUIDE_TITLE and DEVICE_LONG_GUIDE_ID
 # come from `maestro test --env`, as in feedback-sheet-post.yaml.
+name: "G23 Pick a step from the list sheet on a long guide and post the note"
 appId: com.splatconnect.mobile
 ---
 - clearState

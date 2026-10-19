@@ -7,7 +7,7 @@
 #
 # Same fixture and env as every-tab-renders.yaml: the provisioned contributor
 # has exactly one unread notification.
-# journeys: H01 H02 H03 H05
+name: "H01 H02 H03 H05 Home on a real phone: inbox chip, Edit and Done, shortcut tiles, Add a shortcut sheet"
 appId: com.splatconnect.mobile
 ---
 - clearState
