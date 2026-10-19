@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-=======
 import { AGREEMENT_VERSIONS } from '@splat-connect/types'
-// journeys: A11
->>>>>>> 9c2fea05 (test: read agreement versions from AGREEMENT_VERSIONS, not a literal)
 import { describe, it, expect, afterAll } from 'vitest'
 import { adminClient } from '../../helpers/auth.js'
 
