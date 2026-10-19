@@ -99,7 +99,7 @@ describe('the printer answering (R13, R14)', () => {
 })
 
 describe('the job under way (R05, R06, R07, R08)', () => {
-  it('R05 R06 R07 R08 WR12 WR15 WR17 WR18 started and ready tell the family; messages go both ways; the family withdrawing tells the printer', async () => {
+  it('R05 R06 R07 R08 WR12 WR15 WR17 WR18 started and ready tell the family; messages go both ways; the family withdrawing tells the printer (print_started, print_ready)', async () => {
     const id = await ask()
     await post(`/${id}/accept`, printer.token, PICKUP)
 

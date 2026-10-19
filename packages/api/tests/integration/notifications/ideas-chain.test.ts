@@ -55,7 +55,7 @@ afterAll(async () => {
 })
 
 describe('the review of a submitted idea (C12)', () => {
-  it('C12 publishing tells the author, in SPLAT’s name', async () => {
+  it('C12 publishing tells the author, in SPLAT’s name (idea_approved)', async () => {
     const id = await submitIdea()
     await publish(id)
     expect(await notes(id)).toEqual([
@@ -63,7 +63,7 @@ describe('the review of a submitted idea (C12)', () => {
     ])
   })
 
-  it('C12 declining tells the author, with the reviewer’s note as the body', async () => {
+  it('C12 declining tells the author, with the reviewer’s note as the body (idea_rejected)', async () => {
     const id = await submitIdea()
     const res = await call(admin.token, 'PATCH', `/admin/ideas/${id}/status`, { status: 'rejected', review_note: 'Too close to one we have' })
     expect(res.status).toBe(200)
@@ -74,7 +74,7 @@ describe('the review of a submitted idea (C12)', () => {
 })
 
 describe('joining and leaving (C03, C04)', () => {
-  it('C03 C04 WI16 WI19 joining tells the author; leaving tells the author; the author removing tells the maker', async () => {
+  it('C03 C04 WI16 WI19 joining tells the author; leaving tells the author; the author removing tells the maker (challenge_joined, challenge_left, challenge_removed)', async () => {
     const id = await submitIdea()
     await publish(id)
 

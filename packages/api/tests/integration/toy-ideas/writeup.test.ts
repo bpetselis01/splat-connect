@@ -81,7 +81,7 @@ describe('109 challenge guide published', () => {
     expect(await saveCount()).toBe(2)
   })
 
-  it('WI21 tells the saver once the guide is approved, and not the contributor who saved it', async () => {
+  it('WI21 tells the saver once the guide is approved, and not the contributor who saved it (challenge_guide_published)', async () => {
     expect((await approve('approved')).status).toBe(200)
     expect(await told(saver)).toEqual([expect.objectContaining({ tutorial_title: 'Bubble guide' })])
     expect(await told(contributorSaver)).toEqual([])
