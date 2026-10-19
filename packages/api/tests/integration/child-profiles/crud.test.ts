@@ -1,4 +1,3 @@
-// journeys: Z06 Z07 Z08 Z09
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createClient } from '@supabase/supabase-js'
 import app from '../../../src/app.js'
@@ -40,7 +39,7 @@ describe('child profiles collection', () => {
     expect(await res.json()).toEqual([])
   })
 
-  it('creates children and returns them in created_at order', async () => {
+  it('Z06 creates children and returns them in created_at order', async () => {
     const first = await app.request('/api/child-profiles', authed(parent.token, {
       method: 'POST',
       body: JSON.stringify({ age: 7 }),
@@ -73,7 +72,7 @@ describe('child profiles collection', () => {
     expect(((await res.json()) as { parent_id: string }).parent_id).toBe(parent.id)
   })
 
-  it('patches only whitelisted columns', async () => {
+  it('Z07 Z09 patches only whitelisted columns', async () => {
     const created = await app.request('/api/child-profiles', authed(parent.token, {
       method: 'POST',
       body: JSON.stringify({}),
@@ -116,7 +115,7 @@ describe('child profiles collection', () => {
     expect((data as { name?: string | null }).name ?? null).toBeNull()
   })
 
-  it('deletes a child', async () => {
+  it('Z08 deletes a child', async () => {
     const created = await app.request('/api/child-profiles', authed(parent.token, {
       method: 'POST',
       body: JSON.stringify({}),
@@ -206,7 +205,7 @@ describe('child profiles collection', () => {
     expect(patch.status).toBe(400)
   })
 
-  it('round-trips the four child questions and de-duplicates the lists', async () => {
+  it('Z07 round-trips the four child questions and de-duplicates the lists', async () => {
     const created = await app.request('/api/child-profiles', authed(parent.token, {
       method: 'POST',
       body: JSON.stringify({

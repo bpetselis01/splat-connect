@@ -1,5 +1,4 @@
 /** 118: exchanges and builds can be reported; a reporter writes only their own columns. */
-// journeys: S03
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createClient } from '@supabase/supabase-js'
 import app from '../../../src/app.js'
@@ -34,7 +33,7 @@ describe('118 member report kinds', () => {
     expect((await file(kind)).status).toBe(201)
   })
 
-  it('files a report about one note, keeping the note id (132)', async () => {
+  it('G27 files a report about one note, keeping the note id (132)', async () => {
     const subject_id = crypto.randomUUID()
     const res = await file('note', 'wrong_info', { subject_id, subject_label: "Sam R's note on Switch toy guide" })
     expect(res.status).toBe(201)
@@ -54,7 +53,7 @@ describe('118 member report kinds', () => {
     expect((await file('guide', 'rude')).status).toBe(400)
   })
 
-  it('stores the new kinds, read back through the admin client', async () => {
+  it('X14 stores the new kinds, read back through the admin client', async () => {
     const { data, error } = await adminClient()
       .from('member_reports')
       .select('subject_kind')

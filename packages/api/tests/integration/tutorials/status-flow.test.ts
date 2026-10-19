@@ -1,4 +1,3 @@
-// journeys: T05 T22
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -46,7 +45,7 @@ afterAll(async () => {
 })
 
 describe('tutorial status flow', () => {
-  it('owner can submit draft -> pending', async () => {
+  it('T05 owner can submit draft -> pending', async () => {
     const { data: current } = await adminClient().from('tutorials').select('updated_at').eq('id', tutorialId).single()
     const res = await app.request(
       `/api/tutorials/${tutorialId}`,

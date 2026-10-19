@@ -1,4 +1,3 @@
-// journeys: C01
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
 import app from '../../../src/app.js'
@@ -37,7 +36,7 @@ afterAll(async () => {
 })
 
 describe('GET /api/public/challenges', () => {
-  it('lists published challenges and never pending ones', async () => {
+  it('C01 lists published challenges and never pending ones', async () => {
     const res = await app.request('/api/public/challenges')
     const body = (await res.json()) as { id: string }[]
     expect(body.some((i) => i.id === publishedId)).toBe(true)

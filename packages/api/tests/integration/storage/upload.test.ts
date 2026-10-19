@@ -1,4 +1,3 @@
-// journeys: N03 T13 T14 T15
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -56,7 +55,7 @@ afterAll(async () => {
 })
 
 describe('storage uploads', () => {
-  it('uploads a PDF to the tutorial-pdfs bucket and returns its path', async () => {
+  it('T14 uploads a PDF to the tutorial-pdfs bucket and returns its path', async () => {
     const res = await uploadRequest(
       '/api/upload/pdf',
       user.token,
@@ -75,7 +74,7 @@ describe('storage uploads', () => {
   // Why:   this route appended-only since a4359f7c; it used to delete every
   //        existing object before writing, which capped a guide at one photo.
   // How:   uploads two and expects both, which is the inverse of the old assertion.
-  it('appends each photo, so a guide can carry a gallery', async () => {
+  it('N03 T13 appends each photo, so a guide can carry a gallery', async () => {
     const first = await uploadRequest(
       '/api/upload/photo',
       user.token,
@@ -94,7 +93,7 @@ describe('storage uploads', () => {
     expect(files?.length).toBe(2)
   })
 
-  it('uploads an STL to the stl-files bucket and returns path + filename', async () => {
+  it('T15 uploads an STL to the stl-files bucket and returns path + filename', async () => {
     const res = await uploadRequest(
       '/api/upload/stl',
       user.token,

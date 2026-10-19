@@ -3,7 +3,6 @@
  * the API. The table is column-granted (028's profiles pattern), so the anon
  * and user keys cannot select it — and every reader of printers must still work.
  */
-// journeys: R01 Z03
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createClient } from '@supabase/supabase-js'
 import app from '../../../src/app.js'
@@ -69,7 +68,7 @@ describe('the readers of printers still read', () => {
     expect(res.status).toBe(200)
     expect(((await res.json()) as { printer: { id: string; name: string } | null }).printer).toMatchObject({ id: printerId, name: 'Grant printer' })
   })
-  it('the list, the owner’s list and one printer still carry stats and verified', async () => {
+  it('R01 the list, the owner’s list and one printer still carry stats and verified', async () => {
     const list = (await (await app.request('/api/printers', as(family))).json()) as Array<Record<string, unknown>>
     expect(list.find((r) => r.id === printerId)).toMatchObject({ verified: false, printer_stats: expect.any(Object) })
     const mine = (await (await app.request('/api/printers/mine', as(owner))).json()) as Array<Record<string, unknown>>

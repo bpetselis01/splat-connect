@@ -4,7 +4,6 @@
  * only an admin passes or fails it. The photo is a storage path pinned to the
  * printer's own folder, never a URL.
  */
-// journeys: R15
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createClient } from '@supabase/supabase-js'
 import { VERIFIED_MIN_JOBS } from '@splat-connect/types'
@@ -84,7 +83,7 @@ describe('098 verified printers', () => {
     expect((await app.request(`/api/printers/${printerId}/test-prints`, photo(owner, 'text/html'))).status).toBe(400)
   })
 
-  it('lets only the owner submit a test print, one at a time', async () => {
+  it('R15 lets only the owner submit a test print, one at a time', async () => {
     expect((await app.request(`/api/printers/${printerId}/test-prints`, photo(outsider))).status).toBe(404)
     expect((await app.request('/api/printers/not-a-uuid/test-prints', photo(owner))).status).toBe(404)
     const res = await app.request(`/api/printers/${printerId}/test-prints`, photo(owner))
@@ -95,7 +94,7 @@ describe('098 verified printers', () => {
     expect(mine.find((p) => p.id === printerId)!.test_print.verdict).toBeNull()
   })
 
-  it('stores the path the server built, never the client filename', async () => {
+  it('R15 stores the path the server built, never the client filename', async () => {
     const { data } = await adminClient().from('printer_test_prints').select('photo_path').eq('printer_id', printerId).single()
     expect(data!.photo_path).toMatch(new RegExp(`^${printerId}/[0-9a-f-]{36}\\.png$`))
   })

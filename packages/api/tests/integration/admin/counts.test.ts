@@ -1,5 +1,4 @@
 /** admin-counts: the board's six numbers in one admin-only call. */
-// journeys: Q17
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -23,7 +22,7 @@ describe('GET /api/admin/counts', () => {
     expect((await counts(member.token)).status).toBe(403)
   })
 
-  it('counts an open member report under reports, and returns all six', async () => {
+  it('Q17 counts an open member report under reports, and returns all six', async () => {
     const before = (await (await counts(admin.token)).json()) as Record<string, number>
     expect(Object.keys(before).sort()).toEqual(['accounts', 'ideas', 'organisations', 'reports', 'spotCheck', 'tutorials'])
     await adminClient().from('member_reports').insert({

@@ -2,7 +2,6 @@
  * 113: what a recycler takes, on the organisation, public by design. Limits
  * twice — a sentence from the API and a CHECK — and the booking honours them.
  */
-// journeys: L15
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createClient } from '@supabase/supabase-js'
 import app from '../../../src/app.js'
@@ -50,7 +49,7 @@ afterAll(async () => {
 })
 
 describe('113 recycling details', () => {
-  it('lets a leader publish them, and anyone read them', async () => {
+  it('L15 lets a leader publish them, and anyone read them', async () => {
     const res = await patch(DETAILS)
     expect(res.status).toBe(200)
     expect(await res.json()).toMatchObject(DETAILS)

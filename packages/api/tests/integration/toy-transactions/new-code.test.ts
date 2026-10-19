@@ -4,7 +4,6 @@
  * the OTHER to type (confirm handler), so the counterparty's code must never
  * change here and never come back in the response.
  */
-// journeys: X01 X08
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -66,7 +65,7 @@ afterAll(async () => {
 })
 
 describe('POST /api/toy-transactions/:id/new-code', () => {
-  it("replaces the requester's code and leaves the owner's alone", async () => {
+  it("X08 replaces the requester's code and leaves the owner's alone", async () => {
     const id = await tx()
     const res = await newCode(requester, id)
     expect(res.status).toBe(200)
@@ -78,7 +77,7 @@ describe('POST /api/toy-transactions/:id/new-code', () => {
     expect(after.requester_code).toBe(body.requester_code)
   })
 
-  it("replaces the owner's code and never returns the requester's", async () => {
+  it("X08 replaces the owner's code and never returns the requester's", async () => {
     const id = await tx()
     const res = await newCode(owner, id)
     expect(res.status).toBe(200)

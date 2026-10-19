@@ -5,7 +5,6 @@
  * row someone else changed since is refused (409), never laid over theirs.
  * Writes the real key, so it restores what was there.
  */
-// journeys: Q13 Q15
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -48,13 +47,13 @@ afterAll(async () => {
 })
 
 describe('GET /api/public/learn-course', () => {
-  it("serves the code's course when nothing is saved", async () => {
+  it("Q15 serves the code's course when nothing is saved", async () => {
     const c = await read()
     expect(c.units).toHaveLength(6)
     expect(c).toMatchObject({ title: null, outcome: null, shown_as: 'free' })
   })
 
-  it('serves a saved outline merged over the default', async () => {
+  it('Q15 serves a saved outline merged over the default', async () => {
     const res = await put(
       {
         title: 'Toy adaptation, start to finish',

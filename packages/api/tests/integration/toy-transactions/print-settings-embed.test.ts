@@ -3,7 +3,6 @@
  * print job. When the database lacked those columns the whole exchanges list
  * was a 500, so this pins the embed on both routes against the real schema.
  */
-// journeys: R04 X01
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -44,14 +43,14 @@ afterAll(async () => {
 })
 
 describe('print settings on a print job', () => {
-  it('the exchanges list carries the guide\'s four settings', async () => {
+  it('X01 the exchanges list carries the guide\'s four settings', async () => {
     const res = await app.request('/api/toy-transactions', { headers: { Authorization: `Bearer ${family.token}` } })
     expect(res.status).toBe(200)
     const rows = (await res.json()) as { id: string; tutorial: Record<string, unknown> }[]
     expect(rows.find((r) => r.id === job)!.tutorial).toMatchObject({ title: 'Embed fixture', ...settings })
   })
 
-  it('the job detail carries them too', async () => {
+  it('R04 the job detail carries them too', async () => {
     const res = await app.request(`/api/toy-transactions/${job}`, { headers: { Authorization: `Bearer ${maker.token}` } })
     expect(res.status).toBe(200)
     expect(((await res.json()) as { tutorial: Record<string, unknown> }).tutorial).toMatchObject(settings)

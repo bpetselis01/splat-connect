@@ -4,7 +4,6 @@
  * stepping down never leaves the organisation leaderless — not even when two
  * leaders try at once.
  */
-// journeys: L25 L26 L27 L31
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -47,7 +46,7 @@ describe('organisation leaders', () => {
     expect(res.status).toBe(404)
   })
 
-  it('lets a leader cancel an invitation, and nobody else', async () => {
+  it('L26 lets a leader cancel an invitation, and nobody else', async () => {
     const invite = async () =>
       (await adminClient().from('org_leader_invites').select('id').eq('org_id', orgId)).data ?? []
     expect((await app.request(`/api/organizations/${orgId}/leaders`, req(leader.token, 'POST', { email: outsider.email }))).status).toBe(201)
@@ -65,7 +64,7 @@ describe('organisation leaders', () => {
     expect(mine).toHaveLength(0)
   })
 
-  it('invites rather than adds: the invitee is not a leader until they accept', async () => {
+  it('L25 invites rather than adds: the invitee is not a leader until they accept', async () => {
     const res = await app.request(`/api/organizations/${orgId}/leaders`, req(leader.token, 'POST', { email: colleague.email.toUpperCase() }))
     expect(res.status).toBe(201)
     expect(await leadersOf()).toEqual([leader.id])
@@ -76,7 +75,7 @@ describe('organisation leaders', () => {
     expect(list.invites.map((i) => i.email)).toEqual([colleague.email])
   })
 
-  it('lets only the invitee accept', async () => {
+  it('L31 lets only the invitee accept', async () => {
     const mine = (await (await app.request('/api/organizations/invites/mine', req(colleague.token, 'GET'))).json()) as { id: string }[]
     expect(mine).toHaveLength(1)
     expect((await app.request(`/api/organizations/invites/${mine[0]!.id}/accept`, req(outsider.token, 'POST'))).status).toBe(404)
@@ -84,7 +83,7 @@ describe('organisation leaders', () => {
     expect(await leadersOf()).toEqual([leader.id, colleague.id].sort())
   })
 
-  it('never leaves the organisation leaderless when both step down at once', async () => {
+  it('L27 never leaves the organisation leaderless when both step down at once', async () => {
     const results = await Promise.all([
       app.request(`/api/organizations/${orgId}/leaders/me`, req(leader.token, 'DELETE')),
       app.request(`/api/organizations/${orgId}/leaders/me`, req(colleague.token, 'DELETE')),

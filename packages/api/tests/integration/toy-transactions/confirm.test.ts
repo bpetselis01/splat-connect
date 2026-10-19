@@ -1,4 +1,3 @@
-// journeys: X01 X07
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, type TestUser } from '../../helpers/auth.js'
@@ -65,7 +64,7 @@ describe('POST /api/toy-transactions/:id/confirm', () => {
     rival = await createTestUser('contributor')
   })
 
-  it('completes a donation on the owner confirming the requester code alone', async () => {
+  it('X07 completes a donation on the owner confirming the requester code alone', async () => {
     const toyId = await createPublishedToy(owner.token, 'Scooter', 'donation')
     const created = await txReq('/', requester.token, { method: 'POST', body: JSON.stringify({ toy_id: toyId, type: 'donation' }) })
     const txId = ((await created.json()) as { id: string }).id
@@ -138,7 +137,7 @@ describe('POST /api/toy-transactions/:id/confirm', () => {
     expect(ownerGot?.archived_at ?? null).toBeNull()
   })
 
-  it('rejects the rival request only once the handoff completes', async () => {
+  it('X07 rejects the rival request only once the handoff completes', async () => {
     const toyId = await createPublishedToy(owner.token, 'Rocking horse', 'donation')
     const wanted = JSON.stringify({ toy_id: toyId, type: 'donation' })
     const created = await txReq('/', requester.token, { method: 'POST', body: wanted })

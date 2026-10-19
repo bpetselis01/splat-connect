@@ -7,7 +7,6 @@
  * route filtered by payer_id and RLS were off, so it asserts on an outsider's
  * own view, where only RLS can be doing the work.
  */
-// journeys: X12
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -200,7 +199,7 @@ describe('the cost panel', () => {
    * and so the one who knows. The payee settling their own claim is the case
    * that would break if this had been gated on payer_id.
    */
-  it('lets either party settle a line, and records who did', async () => {
+  it('X12 lets either party settle a line, and records who did', async () => {
     const res = await app.request(`/api/exchange-costs/${transactionId}`, authed(payer.token))
     const { lines } = (await res.json()) as { lines: Array<{ id: string; settled_at: string | null }> }
     const open = lines.find((l) => !l.settled_at)!

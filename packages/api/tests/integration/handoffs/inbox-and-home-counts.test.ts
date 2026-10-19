@@ -1,4 +1,3 @@
-// journeys: H01 Q07 Q10
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -42,7 +41,7 @@ afterAll(async () => {
 })
 
 describe('H01 the Today card reads', () => {
-  it('shows who I am, no organisation, no action, no unread, until something happens', async () => {
+  it('H01 shows who I am, no organisation, no action, no unread, until something happens', async () => {
     const me = (await (await app.request('/api/contributors/me', authed(user))).json()) as { id: string }
     expect(me.id).toBe(user.id)
     expect(await (await app.request('/api/organizations/mine', authed(user))).json()).toEqual([])
@@ -50,7 +49,7 @@ describe('H01 the Today card reads', () => {
     expect(await unread(user)).toEqual({ tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 })
   })
 
-  it('then leading an organisation and a new notification show up on the next read', async () => {
+  it('H01 then leading an organisation and a new notification show up on the next read', async () => {
     orgId = await createOrg({ createdBy: user.id, name: `Today ${Date.now()}` })
     await addLeader(orgId, user.id)
     const orgs = (await (await app.request('/api/organizations/mine', authed(user))).json()) as { id: string }[]
@@ -63,7 +62,7 @@ describe('H01 the Today card reads', () => {
 })
 
 describe('Q07 a bucket Mark read', () => {
-  it('clears that bucket and its share of the total, leaves the others and other people alone', async () => {
+  it('Q07 clears that bucket and its share of the total, leaves the others and other people alone', async () => {
     await seed(user.id, 'idea_approved')
     await seed(other.id, 'tutorial_approved')
     expect(await unread(user)).toMatchObject({ tutorials: 1, challenges: 1, exchanges: 1, total: 3 })
@@ -82,7 +81,7 @@ describe('Q07 a bucket Mark read', () => {
 })
 
 describe('Q10 opening an exchange thread card', () => {
-  it("marking each of the thread's notifications read drops the exchanges count by exactly that many", async () => {
+  it("Q10 marking each of the thread's notifications read drops the exchanges count by exactly that many", async () => {
     const before = (await unread(user)).exchanges
     const ids = [await seed(user.id, 'toy_message'), await seed(user.id, 'toy_message')]
     expect((await unread(user)).exchanges).toBe(before + 2)

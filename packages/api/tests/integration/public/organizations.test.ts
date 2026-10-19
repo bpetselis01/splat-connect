@@ -1,4 +1,3 @@
-// journeys: Q13 Y09
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, type TestUser } from '../../helpers/auth.js'
@@ -29,7 +28,7 @@ describe('GET /api/public/organizations', () => {
   //        /get-involved/recycling and its booking form both filter on "who can
   //        take what" — all four are granted public by 059. The street address
   //        is NOT among them and stays on the pickup columns.
-  it('returns an organisation with only its public fields', async () => {
+  it('Y09 returns an organisation with only its public fields', async () => {
     const orgId = await createOrg({ createdBy: owner.id, name: `Public Org ${Date.now()}` })
     orgIds.push(orgId)
 

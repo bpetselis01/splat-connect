@@ -5,7 +5,6 @@
  * loses author_id as well, and every policy that tested it reads
  * is_idea_author() instead. The thread must keep working through that.
  */
-// journeys: C03 C04 C05 C14
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createClient } from '@supabase/supabase-js'
 import app from '../../../src/app.js'
@@ -55,7 +54,7 @@ describe('108 idea anonymous', () => {
     expect(await res.json()).toEqual({ error: 'Post anonymously must be on or off.' })
   })
 
-  it('never puts the author on the public brief or the public list', async () => {
+  it('C14 never puts the author on the public brief or the public list', async () => {
     const detail = await (await app.request(`/api/public/challenges/${ideaId}`)).text()
     expect(JSON.parse(detail)).toMatchObject({ author_name: null, author_id: null, anonymous: true })
     const list = await (await app.request('/api/public/challenges')).text()
@@ -99,7 +98,7 @@ describe('108 idea anonymous', () => {
 })
 
 describe('108 the thread still works without author_id (is_idea_author)', () => {
-  it('lets a maker join, both post and read, and the author remove them', async () => {
+  it('C03 C04 C05 lets a maker join, both post and read, and the author remove them', async () => {
     expect((await as(maker, `/api/ideas/${ideaId}/join`, { method: 'POST', body: {} })).status).toBe(201)
     // The join notification still reaches the hidden author.
     const { data: note } = await adminClient()

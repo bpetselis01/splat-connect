@@ -2,7 +2,6 @@
  * A quantity per part (058's print_job_files.quantity, 1–20). `files` carries
  * it; the old `stl_file_ids` still means one of each.
  */
-// journeys: R03
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -58,7 +57,7 @@ afterAll(async () => {
 })
 
 describe('POST /print quantities', () => {
-  it('stores a quantity per part', async () => {
+  it('R03 stores a quantity per part', async () => {
     const res = await post({
       printer_ids: [printerId],
       tutorial_id: tutorialId,

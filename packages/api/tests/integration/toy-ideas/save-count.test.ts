@@ -1,5 +1,4 @@
 /** 105: how many accounts saved a challenge — a number, never who. */
-// journeys: C11
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -31,7 +30,7 @@ describe('105 challenge save count', () => {
     expect(data!.save_count).toBe(1)
   })
 
-  it('rides on the public brief as a number, with no saver in it', async () => {
+  it('C11 rides on the public brief as a number, with no saver in it', async () => {
     const res = await app.request(`/api/public/challenges/${ideaId}`)
     const text = await res.text()
     expect(JSON.parse(text).save_count).toBe(1)

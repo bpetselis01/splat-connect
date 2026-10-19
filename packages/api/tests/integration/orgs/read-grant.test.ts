@@ -1,4 +1,3 @@
-// journeys: L01
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createTestUser, deleteTestUser, type TestUser } from '../../helpers/auth.js'
 import { createUserClient } from '../../../src/supabase/client.js'
@@ -36,7 +35,7 @@ afterAll(async () => {
 })
 
 describe('the leader read grant', () => {
-  it('reads a draft their org was asked to back', async () => {
+  it('L01 reads a draft their org was asked to back', async () => {
     const { data } = await createUserClient(leader.token)
       .from('tutorials').select('id').eq('id', offered)
     expect((data ?? []).map((t) => t.id)).toContain(offered)
@@ -48,7 +47,7 @@ describe('the leader read grant', () => {
     expect(data ?? []).toHaveLength(0)
   })
 
-  it('reads the contributor rows too, so the inner join in GET /api/tutorials holds', async () => {
+  it('L01 reads the contributor rows too, so the inner join in GET /api/tutorials holds', async () => {
     // GET /api/tutorials embeds tutorial_contributors!inner. An inner join over
     // rows RLS hides drops the parent, so without a contributor read grant the
     // leader's queue is silently empty even though the tutorial itself is visible.

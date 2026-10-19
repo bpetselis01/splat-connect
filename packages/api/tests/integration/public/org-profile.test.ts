@@ -1,4 +1,3 @@
-// journeys: P01 Q13 S04
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -94,7 +93,7 @@ describe('GET /api/public/organizations/:id', () => {
     await deleteTestUser(requester.id)
   })
 
-  it('returns only the public projection for a contributing org', async () => {
+  it('P01 returns only the public projection for a contributing org', async () => {
     const res = await app.request(`${BASE}/api/public/organizations/${contributorOrg}`)
     expect(res.status).toBe(200)
     const body = (await res.json()) as any

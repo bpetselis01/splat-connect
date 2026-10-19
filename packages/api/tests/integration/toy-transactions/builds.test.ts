@@ -1,4 +1,3 @@
-// journeys: G19 K05 K06 K07 K08 K09 K11 X01
 /**
  * Build requests: the whole loop, and the three rules that make the extra stage
  * worth having.
@@ -78,7 +77,7 @@ afterAll(async () => {
 })
 
 describe('asking for a build', () => {
-  it('creates a transaction with a guide for a subject and no toy', async () => {
+  it('K05 creates a transaction with a guide for a subject and no toy', async () => {
     const res = await app.request(
       '/api/toy-transactions/build',
       json(family.token, {
@@ -154,7 +153,7 @@ describe('asking for a build', () => {
 })
 
 describe('the extra stage', () => {
-  it('lets the maker accept, which 033 used to answer "missing" for', async () => {
+  it('K06 lets the maker accept, which 033 used to answer "missing" for', async () => {
     const res = await app.request(
       `/api/toy-transactions/${transactionId}/accept`,
       json(maker.token, {
@@ -199,7 +198,7 @@ describe('the extra stage', () => {
     expect(byMaker.status).toBe(403)
   })
 
-  it('lets the family approve, and refuses approving twice', async () => {
+  it('K09 lets the family approve, and refuses approving twice', async () => {
     const res = await app.request(
       `/api/toy-transactions/${transactionId}/approve-work`,
       json(family.token, {})
@@ -218,7 +217,7 @@ describe('the extra stage', () => {
    * Why: an approval carried onto a different photo closes the stage with
    * nobody having looked at what is now on the record.
    */
-  it('clears the approval when a new shot replaces the old one', async () => {
+  it('K08 clears the approval when a new shot replaces the old one', async () => {
     const res = await app.request(
       `/api/toy-transactions/${transactionId}/working-shot`,
       photo(maker.token)
@@ -237,7 +236,7 @@ describe('the extra stage', () => {
 })
 
 describe('closing a build', () => {
-  it('completes on both codes and transfers no toy, because there is none', async () => {
+  it('K11 completes on both codes and transfers no toy, because there is none', async () => {
     const admin = adminClient()
     const { data: row } = await admin
       .from('toy_transactions')

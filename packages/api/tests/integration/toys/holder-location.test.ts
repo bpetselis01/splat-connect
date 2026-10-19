@@ -3,7 +3,6 @@
  * their pickup columns through the admin client; an organisation's from its
  * public suburb (059). The street and postcode never leave the API.
  */
-// journeys: Y04
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -64,7 +63,7 @@ const withoutIdsOrTimes = (text: string) =>
     .replace(/\d{4}-\d{2}-\d{2}T[\d:.]+(?:Z|[+-]\d{2}:\d{2})?/g, '')
 
 describe('holder location on a public toy', () => {
-  it("gives a person's suburb and state, never their street or postcode", async () => {
+  it("Y04 gives a person's suburb and state, never their street or postcode", async () => {
     const res = await app.request(`/api/public/toys/${personToy}`)
     const text = await res.text()
     const body = JSON.parse(text) as { holder_suburb: string; holder_state: string }

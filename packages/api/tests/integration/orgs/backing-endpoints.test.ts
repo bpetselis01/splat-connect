@@ -1,4 +1,3 @@
-// journeys: L04 L05 T18 T19
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -37,7 +36,7 @@ afterAll(async () => {
 })
 
 describe('POST /api/tutorials/:id/orgs', () => {
-  it('records the request as pending', async () => {
+  it('T18 records the request as pending', async () => {
     const res = await app.request(`/api/tutorials/${draft}/orgs`, authed(author.token, {
       method: 'POST',
       body: JSON.stringify({ org_id: orgId }),
@@ -72,7 +71,7 @@ describe('POST /api/tutorials/:id/orgs', () => {
 })
 
 describe('answering', () => {
-  it('a leader of the asked org can accept', async () => {
+  it('L04 a leader of the asked org can accept', async () => {
     const res = await app.request(`/api/tutorials/${draft}/orgs/${orgId}/accept`, authed(leader.token, {
       method: 'POST',
     }))
@@ -99,7 +98,7 @@ describe('answering', () => {
 })
 
 describe('DELETE /api/tutorials/:id/orgs/:orgId', () => {
-  it('the author can withdraw before publication', async () => {
+  it('T19 the author can withdraw before publication', async () => {
     const res = await app.request(`/api/tutorials/${draft}/orgs/${orgId}`, authed(author.token, {
       method: 'DELETE',
     }))

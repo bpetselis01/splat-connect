@@ -4,7 +4,6 @@
  * that stops being public drops out of the public read, and the picks reset
  * when the toy changes hands.
  */
-// journeys: W11 Y04
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -80,7 +79,7 @@ describe('102 toy picks', () => {
     expect((await admin.from('toy_picks').select('toy_id, position, entity_type, entity_id').limit(1)).error).toBeNull()
   })
 
-  it("shows the holder's other listed toys, newest first, by default", async () => {
+  it("Y04 shows the holder's other listed toys, newest first, by default", async () => {
     const picks = await publicPicks(t.a)
     expect(picks.map((p) => p.id)).toEqual([t.d, t.c, t.b])
     expect(picks[0]).toMatchObject({ kind: 'toy', title: 'Lights', meta: 'Good' })
@@ -114,7 +113,7 @@ describe('102 toy picks', () => {
     expect((await call(other, `/api/toys/${t.a}/picks`, 'PUT', { picks: [] })).status).toBe(404)
   })
 
-  it('shows the hand-picked ones in order, and drops one that stops being public', async () => {
+  it('W11 shows the hand-picked ones in order, and drops one that stops being public', async () => {
     const res = await call(holder, `/api/toys/${t.a}/picks`, 'PUT', {
       picks: [{ entity_type: 'tutorial', entity_id: guide }, { entity_type: 'toy', entity_id: t.b }],
     })
