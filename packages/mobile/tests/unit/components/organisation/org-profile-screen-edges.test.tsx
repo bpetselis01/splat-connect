@@ -3,7 +3,6 @@
 // the doors, "From families", and the three buttons — a leader sees none of
 // them, a signed-out visitor goes to sign-in, and a thanks is signed with a
 // first name unless they type something else.
-// journeys: P01
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { OrgProfileScreen } from '../../../../components/organisation/org-profile-screen'
 import { doorRoute, sinceYear } from '../../../../lib/org-profile'
@@ -74,7 +73,7 @@ const guide = (id: string, over: object = {}) => ({ id, title: `Guide ${id}`, di
 beforeEach(() => jest.spyOn(console, 'error').mockImplementation(() => {}))
 
 describe('OrgProfileScreen load and failure', () => {
-  it('a failed load offers Try again, and a retry shows the organisation', async () => {
+  it('P01 a failed load offers Try again, and a retry shows the organisation', async () => {
     mockGet.mockRejectedValueOnce(new Error('500'))
     serve()
     mockGet.mockReset()
@@ -242,7 +241,7 @@ describe('OrgProfileScreen lists', () => {
     expect(screen.queryByRole('button', { name: 'See all →' })).toBeNull()
   })
 
-  it('opens a guide and a toy by id', async () => {
+  it('P08 opens a guide and a toy by id', async () => {
     serve({ tutorialsBacked: [guide('g9')], toysShared: [{ id: 't9', name: 'Drum', condition: 8, offer_type: null, quantity: 1, cover_photo_url: null }] })
     render(<OrgProfileScreen id="o1" />)
     fireEvent.press(await screen.findByLabelText('Guide g9'))
@@ -344,7 +343,7 @@ describe('OrgProfileScreen rates and recycling', () => {
     expect(screen.queryByText('They print — you cover the filament')).toBeNull()
   })
 
-  it('recycling with no declared "gives" reads as print credit, and Book a drop-off opens recycling', async () => {
+  it('P06 recycling with no declared "gives" reads as print credit, and Book a drop-off opens recycling', async () => {
     serve({ recycling_materials: ['PLA'], recycling_gives: undefined })
     render(<OrgProfileScreen id="o1" />)
     expect(await screen.findByText('Print credit on their machines')).toBeTruthy()
@@ -387,7 +386,7 @@ describe('OrgProfileScreen buttons', () => {
     expect(screen.getByText('Follow')).toBeTruthy()
   })
 
-  it('Message goes to this organisation\'s conversation with its name, signed in; to sign-in when signed out', async () => {
+  it('P03 Message goes to this organisation\'s conversation with its name, signed in; to sign-in when signed out', async () => {
     serve()
     const a = render(<OrgProfileScreen id="o1" />)
     fireEvent.press(await screen.findByText('Message'))

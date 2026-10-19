@@ -1,5 +1,4 @@
 // A failed events+stories load says so, retries on Try again, and never hits console.error.
-// journeys: L18
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { OrgPublishScreen } from '../../../../components/organisation/org-publish-screen'
 

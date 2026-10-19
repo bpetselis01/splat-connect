@@ -1,4 +1,3 @@
-// journeys: L18 L20 L21 L22 L30
 import { CLEARANCE, scrollPaddings } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { TextInput } from 'react-native'
@@ -36,7 +35,7 @@ describe('OrgPublishScreen', () => {
       return v instanceof Error ? Promise.reject(v) : Promise.resolve(v)
     })
 
-  it('counts events and stories in the chips and starts on events', async () => {
+  it('L18 counts events and stories in the chips and starts on events', async () => {
     serve([ev(), ev({ id: 'e2', title: 'Second' })], [st()])
     render(<OrgPublishScreen />)
     expect(await screen.findByRole('radio', { name: 'Events · 2' })).toBeTruthy()
@@ -91,7 +90,7 @@ describe('OrgPublishScreen', () => {
     expect(screen.getAllByText(/consent not confirmed/)).toHaveLength(1)
   })
 
-  it('Unpublish moves a live item to draft, Publish moves a draft to published, then reloads', async () => {
+  it('L21 Unpublish moves a live item to draft, Publish moves a draft to published, then reloads', async () => {
     serve([ev()], [st()])
     render(<OrgPublishScreen />)
     fireEvent.press(await screen.findByRole('button', { name: 'Unpublish' }))
@@ -122,7 +121,7 @@ describe('OrgPublishScreen', () => {
     expect(await screen.findByText('That did not save. Check your connection and try again.')).toBeTruthy()
   })
 
-  it('Remove deletes through the confirm and reloads', async () => {
+  it('L22 Remove deletes through the confirm and reloads', async () => {
     serve([ev()], [])
     render(<OrgPublishScreen />)
     fireEvent.press(await screen.findByRole('button', { name: 'Remove Build day' }))
@@ -213,7 +212,7 @@ describe('StoryFormScreen', () => {
     expect(screen.getByText(/^4 words/)).toBeTruthy()
   })
 
-  it('posts trimmed fields, null for blank quote parts, the chosen kind, and goes back', async () => {
+  it('L20 posts trimmed fields, null for blank quote parts, the chosen kind, and goes back', async () => {
     render(<StoryFormScreen />)
     fireEvent.press(screen.getByRole('radio', { name: 'Maker story' }))
     fill('  Leo drum  ', '  Works  ', '  Para one.\n\nPara two.  '); consent()
@@ -230,7 +229,7 @@ describe('StoryFormScreen', () => {
     expect(screen.queryByRole('radio', { name: /Announcement/i })).toBeNull()
   })
 
-  it('a draft can be saved without consent, and says draft', async () => {
+  it('L20 a draft can be saved without consent, and says draft', async () => {
     render(<StoryFormScreen />)
     fill()
     fireEvent.press(screen.getByRole('button', { name: 'Save as draft' }))
@@ -284,14 +283,14 @@ describe('StoryFormScreen', () => {
 })
 
 describe('OrgNewsScreen', () => {
-  it('a story notification resolves its organisation and replaces itself with that profile', async () => {
+  it('L30 a story notification resolves its organisation and replaces itself with that profile', async () => {
     mockGet.mockResolvedValue({ org_id: 'o9' })
     render(<OrgNewsScreen kind="story" id="x1" />)
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith({ pathname: '/toy-library/organisation/[id]', params: { id: 'o9' } }))
     expect(mockGet).toHaveBeenCalledWith('/api/public/stories/x1')
   })
 
-  it('an event link goes straight to the event screen without a lookup', () => {
+  it('L30 an event link goes straight to the event screen without a lookup', () => {
     render(<OrgNewsScreen kind="event" id="x1" />)
     expect(mockReplace).toHaveBeenCalledWith('/events/x1')
     expect(mockGet).not.toHaveBeenCalled()

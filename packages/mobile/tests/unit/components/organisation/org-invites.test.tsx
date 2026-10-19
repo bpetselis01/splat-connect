@@ -1,4 +1,3 @@
-// journeys: L31
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { OrgInvites } from '../../../../components/organisation/org-invites'
 
@@ -25,7 +24,7 @@ describe('OrgInvites', () => {
     expect(screen.queryByText('Accept')).toBeNull()
   })
 
-  it('accepts an invitation and refreshes what the account leads', async () => {
+  it('L31 accepts an invitation and refreshes what the account leads', async () => {
     mockGet.mockResolvedValueOnce([{ id: 'i1', org_id: 'o1', org_name: 'Northbank' }]).mockResolvedValue([])
     mockPost.mockResolvedValue({ org_id: 'o1' })
     render(<OrgInvites />)
@@ -34,7 +33,7 @@ describe('OrgInvites', () => {
     expect(mockPost).toHaveBeenCalledWith('/api/organizations/invites/i1/accept', {})
   })
 
-  it('declines an invitation', async () => {
+  it('L31 declines an invitation', async () => {
     mockGet.mockResolvedValueOnce([{ id: 'i1', org_id: 'o1', org_name: 'Northbank' }]).mockResolvedValue([])
     mockDelete.mockResolvedValue(undefined)
     render(<OrgInvites />)

@@ -1,4 +1,3 @@
-// journeys: L19
 import { CLEARANCE, scrollPaddings } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { EventFormScreen } from '../../../../components/organisation/event-form-screen'
@@ -117,7 +116,7 @@ describe('EventFormScreen publish gate', () => {
 })
 
 describe('EventFormScreen saving', () => {
-  it('Save as draft needs nothing, posts what there is, and goes back', async () => {
+  it('L19 Save as draft needs nothing, posts what there is, and goes back', async () => {
     render(<EventFormScreen />)
     fireEvent.press(draft())
     await waitFor(() => expect(mockPost).toHaveBeenCalled())
@@ -126,7 +125,7 @@ describe('EventFormScreen saving', () => {
     await waitFor(() => expect(mockBack).toHaveBeenCalled())
   })
 
-  it('posts times as ISO instants, trimmed text, cents, a number capacity, and then the questions in order', async () => {
+  it('L19 posts times as ISO instants, trimmed text, cents, a number capacity, and then the questions in order', async () => {
     render(<EventFormScreen />)
     fillValid()
     type('Switch-adaptation build day', '  Build day  ')
@@ -153,7 +152,7 @@ describe('EventFormScreen saving', () => {
     expect(mockPost.mock.calls[0][1].ends_at).toBeNull()
   })
 
-  it('printing parts sends the set cap; turning it off sends null', async () => {
+  it('L19 printing parts sends the set cap; turning it off sends null', async () => {
     render(<EventFormScreen />)
     fillValid()
     fireEvent.press(screen.getByRole('radio', { name: 'Yes, on request' }))
