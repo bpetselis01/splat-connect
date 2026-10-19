@@ -6,26 +6,32 @@ import { seedCollaboratorInvite, seedMapOrg, seedMoneyThread } from './family-fi
 // buttons, the Map's list view, and the About links. Each test seeds its own
 // rows and asserts only on them.
 
-test.describe('money line on Me opens its own thread', () => {
-  const cases = [
-    { type: 'donation', path: (id: string) => `/exchanges/${id}` },
-    { type: 'build', path: (id: string) => `/exchanges/build/${id}` },
-    { type: 'print', path: (id: string) => `/printing/jobs/${id}` },
-  ] as const
-  for (const c of cases) {
-    test(`a ${c.type} line goes to ${c.type === 'donation' ? 'the exchange' : c.type === 'build' ? 'the build thread' : 'the print job'}`, async ({ page }) => {
-      const what = `E2E Cost ${c.type} ${Date.now()}`
-      const thread = await seedMoneyThread(c.type, what)
-      await signIn(page, thread.payer.email, thread.payer.password)
-      await page.waitForURL(/\/home$/)
+async function openMoneyLine(page: Page, type: 'donation' | 'build' | 'print') {
+  const what = `E2E Cost ${type} ${Date.now()}`
+  const thread = await seedMoneyThread(type, what)
+  await signIn(page, thread.payer.email, thread.payer.password)
+  await page.waitForURL(/\/home$/)
 
-      await page.goto('/me')
-      const line = page.getByRole('button', { name: new RegExp(`^${what},`) })
-      await expect(line).toHaveAccessibleName(/\$4\.50, to settle$/)
-      await line.click()
-      await expect(page).toHaveURL(new RegExp(`${c.path(thread.id)}$`))
-    })
-  }
+  await page.goto('/me')
+  const line = page.getByRole('button', { name: new RegExp(`^${what},`) })
+  await expect(line).toHaveAccessibleName(/\$4\.50, to settle$/)
+  await line.click()
+  return thread.id
+}
+
+test('Q03 a donation line on Me goes to the exchange', async ({ page }) => {
+  const id = await openMoneyLine(page, 'donation')
+  await expect(page).toHaveURL(new RegExp(`/exchanges/${id}$`))
+})
+
+test('Q03 a build line on Me goes to the build thread', async ({ page }) => {
+  const id = await openMoneyLine(page, 'build')
+  await expect(page).toHaveURL(new RegExp(`/exchanges/build/${id}$`))
+})
+
+test('Q03 a print line on Me goes to the print job', async ({ page }) => {
+  const id = await openMoneyLine(page, 'print')
+  await expect(page).toHaveURL(new RegExp(`/printing/jobs/${id}$`))
 })
 
 test('Q04 How badges are earned opens the rules and closes again', async ({ page }) => {
