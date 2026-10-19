@@ -1,4 +1,3 @@
-// journeys: H01 H02 H03 H06
 import { test, expect } from '@playwright/test'
 import {
   createChallenge,
@@ -15,7 +14,7 @@ import {
  * .maestro/flows/home-shell.yaml.
  */
 
-test('Pick up where you left off is absent until a guide is opened, then reopens it with no tab bar and the ✕ goes Home', async ({ page }) => {
+test('H06 Pick up where you left off is absent until a guide is opened, then reopens it with no tab bar and the ✕ goes Home', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const title = uniqueTitle('E2E Recent Guide')
   await createTutorial(contributor.id, { title, status: 'approved' })
@@ -44,7 +43,7 @@ test('Pick up where you left off is absent until a guide is opened, then reopens
   await expect(page.getByRole('tab')).toHaveCount(4)
 })
 
-test('the Request a print shortcut opens the finder', async ({ page }) => {
+test('H03 the Request a print shortcut opens the finder', async ({ page }) => {
   await signInAsNewContributor(page)
   await page.goto('/home')
   await page.getByRole('button', { name: 'Request a print', exact: true }).click()
@@ -52,7 +51,7 @@ test('the Request a print shortcut opens the finder', async ({ page }) => {
   await expect(page.getByText('Find a printer').first()).toBeVisible()
 })
 
-test('tapping empty space on Home leaves edit mode', async ({ page }) => {
+test('H02 tapping empty space on Home leaves edit mode', async ({ page }) => {
   await signInAsNewContributor(page)
   await page.goto('/home')
   await page.getByRole('button', { name: 'Edit' }).click()
@@ -64,7 +63,7 @@ test('tapping empty space on Home leaves edit mode', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Done' })).toBeHidden()
 })
 
-test('the Inbox badge and the Today card drop by the rows read', async ({ page }) => {
+test('H01 the Inbox badge and the Today card drop by the rows read', async ({ page }) => {
   const viewer = await signInAsNewContributor(page)
   const author = await createContributor()
   const ideaId = await createChallenge(author.id, { title: uniqueTitle('E2E Badge Challenge') })

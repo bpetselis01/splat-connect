@@ -1,8 +1,7 @@
-// journeys: A14 H03 H07
 import { test, expect } from '@playwright/test'
 import { signUpNewAccount, uniqueSignupEmail, openChildProfile } from './helpers'
 
-test('a signed-out visitor is sent to Welcome from any tab', async ({ page }) => {
+test('A14 a signed-out visitor is sent to Welcome from any tab', async ({ page }) => {
   await page.goto('/guides')
   await expect(page).toHaveURL(/\/welcome$/)
   await expect(page.getByTestId('welcome-sign-in')).toBeVisible()
@@ -19,7 +18,7 @@ test('Account shows the child profiles and the profile detail on one page', asyn
   await expect(page.getByText('Open Web Dashboard')).toBeVisible()
 })
 
-test('the tab bar reaches every tab', async ({ page }) => {
+test('H07 the tab bar reaches every tab', async ({ page }) => {
   await signUpNewAccount(page, uniqueSignupEmail())
 
   for (const [label, path] of [
@@ -34,7 +33,7 @@ test('the tab bar reaches every tab', async ({ page }) => {
   await expect(page.getByRole('tab')).toHaveCount(4)
 })
 
-test('Guides and Toys are default shortcuts on Home, and the bar stays to take you back', async ({ page }) => {
+test('H03 Guides and Toys are default shortcuts on Home, and the bar stays to take you back', async ({ page }) => {
   await signUpNewAccount(page, uniqueSignupEmail())
   await page.getByRole('tab', { name: 'Home' }).click()
 
