@@ -37,3 +37,7 @@ A test case claims a journey by putting the id first in its title: `test('WD03 a
 ## Routes
 
 Every web `page.tsx` and every mobile screen file needs a journey row naming it in `route`, or an entry in `scripts/journeys/routes-without-journeys.json` with the reason it has none. The check fails on a route with neither, on an entry whose route is gone or now has a row (delete it), and on a row whose `route` matches no file. A reason starting `TODO:` is a placeholder; the list only shrinks.
+
+## Required layers and waivers
+
+`check.mjs` rejects a row whose `required` is under-set. `kind` sets the minimum: a `static` row needs its platform's unit layer, a `nav` row adds the platform's e2e layer, and a `write` row adds `api`. A row may require more. Any `notifies` entry written as a notification type (snake_case, such as `toy_rejected`) needs `api`, because only the server stores the notification; prose entries such as `OTP mail` do not count. A row with an `api` call needs `api`. A `counts` entry sets no layer: a count read from the server is proven through its `api` call, and a count with no API call (step progress, filter counts, a tab badge) is proven at unit or e2e. `device: true` and a `device` entry in `required` go together in both directions. A waiver is `"waived": { "<layer>": { "reason": "...", "date": "YYYY-MM-DD" } }` on a layer the row requires; the reason is non-empty and the date is real and not in the future.

@@ -4,7 +4,7 @@ import { parseTags, fileClaims, legacyErrors, coverage, renderDoc, validateRows,
 
 const J = [
   { id: 'G23', platform: 'mobile', route: 'r', kind: 'write', device: false, required: ['mobile-unit', 'mobile-e2e', 'api'], seat: 'P', screen: 's', element: 'e', api: ['POST /x'], db: [], notifies: [], counts: [], setter: 'n/a' },
-  { id: 'B05', platform: 'mobile', route: 'r', kind: 'nav', device: true, required: ['mobile-unit', 'device'], seat: 'P', screen: 's', element: 'e', api: [], db: [], notifies: [], counts: [], setter: 'n/a', waived: { device: 'simulator only' } },
+  { id: 'B05', platform: 'mobile', route: 'r', kind: 'nav', device: true, required: ['mobile-unit', 'device'], seat: 'P', screen: 's', element: 'e', api: [], db: [], notifies: [], counts: [], setter: 'n/a', waived: { device: { reason: 'simulator only', date: '2026-10-07' } } },
 ]
 
 test('parseTags reads one tag line within the first 10 lines', () => {
@@ -97,27 +97,62 @@ test('validateRows names the id, rule and message for each broken field', () => 
   assert.deepEqual(errorsFor({ route: '' }), [{ id: 'G23', rule: 'route', message: 'route is missing' }])
   assert.deepEqual(errorsFor({ kind: undefined }), [{ id: 'G23', rule: 'kind', message: 'kind is missing' }])
   assert.deepEqual(errorsFor({ kind: 'read' }), [{ id: 'G23', rule: 'kind', message: 'unknown kind "read"' }])
-  assert.deepEqual(errorsFor({ required: ['mobile-unit', 'mobile-smoke', 'api'] }), [{ id: 'G23', rule: 'layer-known', message: 'unknown layer "mobile-smoke"' }])
+  assert.deepEqual(errorsFor({ required: ['mobile-unit', 'mobile-e2e', 'mobile-smoke', 'api'] }), [{ id: 'G23', rule: 'layer-known', message: 'unknown layer "mobile-smoke"' }])
 })
 
 test('validateRows rejects a layer from the other platform', () => {
-  assert.deepEqual(errorsFor({ required: ['mobile-unit', 'web-e2e', 'api'] }), [{ id: 'G23', rule: 'layer-legal', message: 'layer "web-e2e" is not legal for platform "mobile"' }])
-  assert.deepEqual(errorsFor({ platform: 'web', required: ['web-unit', 'mobile-unit', 'api'] }), [{ id: 'G23', rule: 'layer-legal', message: 'layer "mobile-unit" is not legal for platform "web"' }])
+  assert.deepEqual(errorsFor({ required: ['mobile-unit', 'mobile-e2e', 'web-e2e', 'api'] }), [{ id: 'G23', rule: 'layer-legal', message: 'layer "web-e2e" is not legal for platform "mobile"' }])
+  assert.deepEqual(errorsFor({ platform: 'web', required: ['web-unit', 'web-e2e', 'mobile-unit', 'api'] }), [{ id: 'G23', rule: 'layer-legal', message: 'layer "mobile-unit" is not legal for platform "web"' }])
 })
 
 test('validateRows checks the id shape, the seat and setter vocabulary, and that unit and api are required when due', () => {
   assert.deepEqual(errorsFor({ id: 'g23' }), [{ id: 'g23', rule: 'id', message: 'id must match /^W?[A-Z]\\d{2}$/' }])
-  assert.deepEqual(validateRows([{ ...ok, id: 'WD03', platform: 'web', required: ['web-unit', 'api'] }]), [])
+  assert.deepEqual(validateRows([{ ...ok, id: 'WD03', platform: 'web', required: ['web-unit', 'web-e2e', 'api'] }]), [])
   assert.deepEqual(errorsFor({ seat: 'parent' }), [{ id: 'G23', rule: 'seat', message: 'unknown seat "parent"' }])
   assert.deepEqual(errorsFor({ setter: 'admin' }), [{ id: 'G23', rule: 'setter', message: 'unknown setter "admin"' }])
-  assert.deepEqual(errorsFor({ required: ['mobile-e2e', 'api'] }), [{ id: 'G23', rule: 'unit-required', message: 'required must include mobile-unit' }])
-  assert.deepEqual(errorsFor({ required: ['mobile-unit', 'mobile-e2e'] }), [{ id: 'G23', rule: 'api-required', message: 'a row with an api call must require api' }])
-  assert.deepEqual(errorsFor({ api: [], required: ['mobile-unit'] }), [])
+  assert.deepEqual(errorsFor({ required: ['mobile-e2e', 'api'] }).filter((e) => e.rule === 'unit-required'), [{ id: 'G23', rule: 'unit-required', message: 'required must include mobile-unit' }])
+  assert.deepEqual(errorsFor({ kind: 'nav', required: ['mobile-unit', 'mobile-e2e'] }), [{ id: 'G23', rule: 'api-required', message: 'a row with an api call must require api' }])
+  assert.deepEqual(errorsFor({ api: [], kind: 'static', required: ['mobile-unit'] }), [])
 })
 
 test('validateRows rejects a duplicate id and a waiver for a layer that is not required', () => {
   assert.deepEqual(validateRows([ok, ok]), [{ id: 'G23', rule: 'duplicate-id', message: 'id appears more than once' }])
-  assert.deepEqual(errorsFor({ waived: { device: 'no phone' } }), [{ id: 'G23', rule: 'waiver', message: 'waived layer "device" is not required' }])
+  assert.deepEqual(errorsFor({ waived: { device: { reason: 'no phone', date: '2026-10-07' } } }), [{ id: 'G23', rule: 'waiver', message: 'waived layer "device" is not required' }])
+})
+
+test('kind sets the minimum layers; extra layers are fine', () => {
+  assert.deepEqual(errorsFor({ kind: 'static', api: [], required: ['mobile-unit'] }), [])
+  assert.deepEqual(errorsFor({ kind: 'static', api: [], required: ['mobile-unit', 'mobile-e2e'] }), [])
+  assert.deepEqual(errorsFor({ kind: 'nav', api: [], required: ['mobile-unit', 'mobile-e2e'] }), [])
+  assert.deepEqual(errorsFor({ kind: 'write', required: ['mobile-unit', 'mobile-e2e', 'api', 'device'], device: true }), [])
+  assert.deepEqual(errorsFor({ kind: 'nav', api: [], required: ['mobile-unit'] }), [{ id: 'G23', rule: 'kind-layers', message: 'nav requires mobile-e2e' }])
+  assert.deepEqual(errorsFor({ kind: 'write', api: [], required: ['mobile-unit', 'mobile-e2e'] }), [{ id: 'G23', rule: 'kind-layers', message: 'write requires api' }])
+})
+
+test('a notification type requires api; prose in notifies does not', () => {
+  const nav = { kind: 'nav', api: [], required: ['mobile-unit', 'mobile-e2e'] }
+  assert.deepEqual(errorsFor({ ...nav, notifies: ['toy_rejected'] }), [{ id: 'G23', rule: 'notifies-api', message: 'a row that notifies must require api' }])
+  assert.deepEqual(errorsFor({ ...nav, notifies: ['OTP mail', 'recovery mail'] }), [])
+  assert.deepEqual(errorsFor({ notifies: ['toy_rejected'] }), [])
+})
+
+test('device: true and a device layer go together', () => {
+  assert.deepEqual(errorsFor({ device: true }), [{ id: 'G23', rule: 'device-required', message: 'device: true requires device' }])
+  assert.deepEqual(errorsFor({ required: ['mobile-unit', 'mobile-e2e', 'api', 'device'] }), [{ id: 'G23', rule: 'device-required', message: 'required device needs device: true' }])
+})
+
+test('a waiver is { reason, date } with a real past or present date on a required layer', () => {
+  const shapeError = (waived) => errorsFor({ waived }).filter((e) => e.rule === 'waiver-shape')
+  const msg = 'waived "api" must be { reason, date: YYYY-MM-DD, not in the future }'
+  const bad = { id: 'G23', rule: 'waiver-shape', message: msg }
+  assert.deepEqual(shapeError({ api: { reason: 'no token', date: '2026-10-07' } }), [])
+  assert.deepEqual(shapeError({ api: { reason: 'no token' } }), [bad])
+  assert.deepEqual(shapeError({ api: { reason: 'no token', date: '2026-13-40' } }), [bad])
+  assert.deepEqual(shapeError({ api: { reason: 'no token', date: '2999-01-01' } }), [bad])
+  assert.deepEqual(shapeError({ api: { date: '2026-10-07' } }), [bad])
+  assert.deepEqual(shapeError({ api: { reason: ' ', date: '2026-10-07' } }), [bad])
+  assert.deepEqual(shapeError({ api: 'no token' }), [bad])
+  assert.deepEqual(errorsFor({ waived: { device: { reason: 'r', date: '2026-10-07' } } }).map((e) => e.rule), ['waiver'])
 })
 
 const legacy = new Set(['old.test.ts'])

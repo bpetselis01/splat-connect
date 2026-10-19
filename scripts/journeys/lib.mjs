@@ -64,6 +64,13 @@ export function legacyErrors(list, readText) {
   return errors
 }
 
+const NOTIFICATION_TYPE = /^[a-z][a-z0-9_]*$/
+const validWaiver = (w) => {
+  if (typeof w?.reason !== 'string' || !w.reason.trim() || !/^\d{4}-\d{2}-\d{2}$/.test(w.date ?? '')) return false
+  const t = new Date(`${w.date}T00:00:00Z`)
+  return !Number.isNaN(t.getTime()) && t.toISOString().startsWith(w.date) && w.date <= new Date().toISOString().slice(0, 10)
+}
+
 const RULES = [
   { name: 'id', fails: (r) => ID.test(r.id) ? null : `id must match ${ID}` },
   { name: 'platform', fails: (r) => PLATFORMS.includes(r.platform) ? null : r.platform === undefined ? 'platform is missing' : `unknown platform "${r.platform}"` },
@@ -81,6 +88,21 @@ const RULES = [
   } },
   { name: 'unit-required', fails: (r) => !PLATFORMS.includes(r.platform) || (r.required ?? []).includes(`${r.platform}-unit`) ? null : `required must include ${r.platform}-unit` },
   { name: 'api-required', fails: (r) => !(r.api ?? []).length || (r.required ?? []).includes('api') ? null : 'a row with an api call must require api' },
+  { name: 'kind-layers', fails: (r) => {
+    if (!PLATFORMS.includes(r.platform) || !KINDS.includes(r.kind)) return null
+    const need = r.kind === 'static' ? [`${r.platform}-unit`] : r.kind === 'nav' ? [`${r.platform}-unit`, `${r.platform}-e2e`] : [`${r.platform}-unit`, `${r.platform}-e2e`, 'api']
+    const missing = need.find((l) => !(r.required ?? []).includes(l))
+    return missing === undefined ? null : `${r.kind} requires ${missing}`
+  } },
+  { name: 'notifies-api', fails: (r) => !(r.notifies ?? []).some((n) => NOTIFICATION_TYPE.test(n)) || (r.required ?? []).includes('api') ? null : 'a row that notifies must require api' },
+  { name: 'device-required', fails: (r) => {
+    const has = (r.required ?? []).includes('device')
+    return r.device === true && !has ? 'device: true requires device' : has && r.device !== true ? 'required device needs device: true' : null
+  } },
+  { name: 'waiver-shape', fails: (r) => {
+    const bad = Object.entries(r.waived ?? {}).find(([, w]) => !validWaiver(w))
+    return bad === undefined ? null : `waived "${bad[0]}" must be { reason, date: YYYY-MM-DD, not in the future }`
+  } },
   { name: 'waiver', fails: (r) => { const bad = Object.keys(r.waived ?? {}).find((l) => !(r.required ?? []).includes(l)); return bad === undefined ? null : `waived layer "${bad}" is not required` } },
 ]
 
@@ -112,7 +134,7 @@ export function coverage(journeys, filesByLayer) {
   for (const j of [...journeys].sort((a, b) => a.id.localeCompare(b.id))) {
     for (const layer of j.required) {
       if (covered[layer]?.has(j.id)) continue
-      const reason = j.waived?.[layer]
+      const reason = j.waived?.[layer]?.reason
       if (reason) waived.push({ id: j.id, layer, reason })
       else gaps.push({ id: j.id, layer })
     }
@@ -168,7 +190,7 @@ export function renderDoc(journeys, cov, legacyCount, routesWithout) {
     const ids = new Set(g.rows.map((r) => r.id))
     return { rows: g.rows.length, gaps: cov.gaps.filter((x) => ids.has(x.id)).length, waived: cov.waived.filter((x) => ids.has(x.id)).length }
   }
-  const mark = (j, layer) => (!j.required.includes(layer) ? '–' : cov.covered[layer]?.has(j.id) ? '✅' : j.waived?.[layer] ? `⚠️ ${cell(j.waived[layer])}` : '❌')
+  const mark = (j, layer) => (!j.required.includes(layer) ? '–' : cov.covered[layer]?.has(j.id) ? '✅' : j.waived?.[layer] ? `⚠️ ${cell(j.waived[layer].reason)}` : '❌')
   const table = (g) => {
     const layers = legalFor(g.platform)
     return [

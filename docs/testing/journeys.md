@@ -86,7 +86,7 @@ Gaps: 0 · Waived: 1 · Legacy-tagged files: 389 · Routes without rows: 156
 | C11 | write | `(tabs)/explore/challenges/[id]` | P | Save heart | – | "N saves" tile | n/a | ✅ | ✅ | ✅ | – |
 | C12 | write | `(tabs)/explore/challenges/new` | P | "Submit idea" | idea_approved, idea_rejected | My challenges "Awaiting review" | web | ✅ | ✅ | ✅ | – |
 | C13 | write | `(tabs)/explore/challenges/new` | P | idea photo | – | – | n/a | ✅ | ✅ | ✅ | – |
-| C14 | write | `(tabs)/explore/challenges/new` | P | "Post anonymously" | – | – | n/a | ✅ | ✅ | – | – |
+| C14 | write | `(tabs)/explore/challenges/new` | P | "Post anonymously" | – | – | n/a | ✅ | ✅ | ✅ | – |
 | C15 | write | `(my)/challenges/index` | P | My challenges list / stage filter | – | – | n/a | ✅ | ✅ | ✅ | – |
 
 </details>
