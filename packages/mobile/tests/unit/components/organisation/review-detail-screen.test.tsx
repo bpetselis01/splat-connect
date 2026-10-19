@@ -22,9 +22,9 @@ jest.mock('expo-router', () => {
 
 // The preview signs storage paths through the live supabase client; stubbed
 // the same way guides' own tests stub it.
-jest.mock('../../../../lib/supabase', () => ({
-  supabase: { storage: { from: () => ({ createSignedUrl: jest.fn().mockResolvedValue({ data: { signedUrl: 'https://signed' }, error: null }) }) } },
-}))
+const mockSign = jest.fn()
+const mockFrom = jest.fn(() => ({ createSignedUrl: mockSign }))
+jest.mock('../../../../lib/supabase', () => ({ supabase: { storage: { from: (...a: unknown[]) => mockFrom(...(a as [])) } } }))
 
 const mockUseCapabilities = jest.fn()
 jest.mock('../../../../lib/capabilities', () => ({ useCapabilities: () => mockUseCapabilities() }))
@@ -77,6 +77,7 @@ beforeEach(() => {
   mockUseCapabilities.mockReturnValue(leader([{ id: 'org1', name: 'Riverside Therapy' }]))
   respond(detail(), [pendingBacking])
   mockPost.mockResolvedValue({})
+  mockSign.mockResolvedValue({ data: { signedUrl: 'https://signed' }, error: null })
 })
 
 describe('ReviewDetailScreen', () => {
@@ -90,6 +91,25 @@ describe('ReviewDetailScreen', () => {
     expect(screen.getByText('6 sections, 5 complete.')).toBeTruthy()
     expect(screen.getByText('2 parts, 2 without a price')).toBeTruthy()
     expect(mockGet).toHaveBeenCalledWith('/api/tutorials/t1')
+  })
+
+  it('L03 Open the tutorial PDF signs the stored path for a minute and opens the preview with that link', async () => {
+    render(<ReviewDetailScreen tutorialId="t1" />)
+    fireEvent.press(await screen.findByRole('button', { name: 'Open the tutorial PDF' }))
+    await waitFor(() =>
+      expect(mockPush).toHaveBeenCalledWith({ pathname: '/guides/[id]/preview', params: { id: 't1', pdfUrl: 'https://signed' } }),
+    )
+    expect(mockFrom).toHaveBeenCalledWith('tutorial-pdfs')
+    expect(mockSign).toHaveBeenCalledWith('t1/tutorial.pdf', 60)
+  })
+
+  it('L03 a signing failure opens the preview with no link, so it says no PDF', async () => {
+    mockSign.mockResolvedValue({ data: null, error: new Error('nope') })
+    render(<ReviewDetailScreen tutorialId="t1" />)
+    fireEvent.press(await screen.findByRole('button', { name: 'Open the tutorial PDF' }))
+    await waitFor(() =>
+      expect(mockPush).toHaveBeenCalledWith({ pathname: '/guides/[id]/preview', params: { id: 't1', pdfUrl: '' } }),
+    )
   })
 
   it('L04 offers Back and Decline on a pending backing request', async () => {

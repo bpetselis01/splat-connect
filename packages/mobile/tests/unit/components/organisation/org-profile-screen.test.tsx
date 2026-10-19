@@ -187,6 +187,31 @@ describe('OrgProfileScreen', () => {
   })
 })
 
+describe('OrgProfileScreen report', () => {
+  it('P09 Report a problem files an organisation report naming this organisation', async () => {
+    mockPost.mockResolvedValue({})
+    load(relationship())
+    render(<OrgProfileScreen id="o1" />)
+    await screen.findByText('Northbank Makerspace')
+    fireEvent.press(screen.getByRole('button', { name: /Report a problem$/ }))
+    expect(screen.getByText('About Northbank Makerspace profile. Goes to the SPLAT team only.')).toBeTruthy()
+    fireEvent.press(screen.getByRole('radio', { name: 'Wrong or missing info' }))
+    fireEvent.changeText(screen.getByLabelText('What happened?'), 'Wrong opening hours.')
+    fireEvent.press(screen.getByRole('button', { name: 'Send report' }))
+    await waitFor(() =>
+      expect(mockPost).toHaveBeenCalledWith('/api/reports', {
+        subject_kind: 'organisation',
+        subject_id: 'o1',
+        subject_label: 'Northbank Makerspace',
+        category: 'wrong_info',
+        body: 'Wrong opening hours.',
+        ok_to_contact: true,
+      })
+    )
+    expect(await screen.findByText('Sent to SPLAT. You will hear back within two days.')).toBeTruthy()
+  })
+})
+
 describe('org-profile helpers', () => {
   it('P07 routes a message door to the conversation and leaves events unlinked', () => {
     expect(doorRoute('message', 'o1')).toBe('/messages/org/o1')
