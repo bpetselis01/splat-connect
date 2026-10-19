@@ -184,6 +184,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # The free runner has ~14 GB free; the Android SDK, Gradle, node_modules and
+      # Supabase's images do not fit beside the preinstalled toolchains this job never
+      # uses. The first run died of "No space left on device" in the release build.
+      - name: Free disk space
+        run: |
+          df -h / | tail -1
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/share/swift \
+            /usr/local/share/boost /usr/local/lib/node_modules "$AGENT_TOOLSDIRECTORY/CodeQL" \
+            /usr/local/share/chromium /usr/local/share/powershell
+          docker image prune -af >/dev/null 2>&1 || true
+          df -h / | tail -1
+
       - uses: ./.github/actions/setup
 
       - uses: ./.github/actions/supabase-start
@@ -311,17 +323,18 @@ jobs:
         run: supabase stop --no-backup
 
   web-e2e:
-    name: Web E2E Tests (${{ matrix.shard }}/3)
+    name: Web E2E Tests (${{ matrix.shard }}/4)
     needs: [changes, check, test]
     if: needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
-    # 383 tests take 18.5 min at the single worker GoTrue's port budget allows, so
-    # the suite runs as three legs, each with its own runner and local Supabase.
-    timeout-minutes: 30
+    # 383 tests take 18.5 min locally at the single worker GoTrue's port budget allows,
+    # and the 2-core runner is about four times slower (three legs hit a 30 min cap),
+    # so the suite runs as four legs, each with its own runner and local Supabase.
+    timeout-minutes: 50
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3]
+        shard: [1, 2, 3, 4]
 
     steps:
       - uses: actions/checkout@v4
@@ -337,7 +350,7 @@ jobs:
         run: pnpm --filter @splat-connect/web exec playwright install --with-deps chromium
 
       - name: Run web E2E tests
-        run: pnpm --filter @splat-connect/web test:e2e -- --shard=${{ matrix.shard }}/3
+        run: pnpm --filter @splat-connect/web test:e2e -- --shard=${{ matrix.shard }}/4
 
       # Traces and page snapshots of what failed; without them a CI-only
       # failure is a test name and a timeout.
