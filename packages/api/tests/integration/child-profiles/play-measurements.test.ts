@@ -4,7 +4,6 @@
  * the API, a CHECK in the table. The measurements are the child's private
  * data (APP 3): only the parent reads them back.
  */
-// journeys: Z07
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createClient } from '@supabase/supabase-js'
 import app from '../../../src/app.js'
@@ -51,7 +50,7 @@ describe('120 child profile play and measurements', () => {
     expect(await res.json()).toMatchObject({ enjoys: ['light', 'calm'], palm_width_mm: 62, reach_cm: 30, tray_mm: 15 })
   })
 
-  it('PATCH edits and clears them', async () => {
+  it('Z07 PATCH edits and clears them', async () => {
     const created = (await (await app.request('/api/child-profiles', authed(parent.token, {
       method: 'POST',
       body: JSON.stringify({ enjoys: ['sound'], reach_cm: 30 }),

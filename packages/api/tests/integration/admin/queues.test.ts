@@ -1,4 +1,3 @@
-// journeys: G10 G27 P09 X14
 /**
  * The three 065 queues, and who may see what.
  *
@@ -123,7 +122,7 @@ describe('the contact form', () => {
 })
 
 describe('member reports', () => {
-  it('files one as the caller, whatever the body claims', async () => {
+  it('G10 files one as the caller, whatever the body claims', async () => {
     const res = await app.request(
       '/api/reports',
       json(member.token, 'POST', {

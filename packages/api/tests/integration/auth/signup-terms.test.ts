@@ -1,4 +1,3 @@
-// journeys: A11
 import { describe, it, expect, afterAll } from 'vitest'
 import { adminClient } from '../../helpers/auth.js'
 

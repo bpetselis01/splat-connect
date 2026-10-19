@@ -3,7 +3,6 @@
  * and the thanked person's; a hide is the thanked person's and the thanker can
  * never undo it.
  */
-// journeys: R11 S02 X13 Y07
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createClient } from '@supabase/supabase-js'
 import app from '../../../src/app.js'
@@ -85,7 +84,7 @@ describe('117 profile thanks', () => {
     expect(data!.transaction_id).toBe(orgTxId)
   })
 
-  it('takes one thanks per person, tied to the build, and tells the maker on the build', async () => {
+  it('R11 S02 takes one thanks per person, tied to the build, and tells the maker on the build', async () => {
     const res = await post(family.token, maker.id, { note: 'Leo loves it.', byline: 'Sam', transaction_id: txId })
     expect(res.status).toBe(201)
     expect(((await res.json()) as { thanks_count: number }).thanks_count).toBe(1)
@@ -96,7 +95,7 @@ describe('117 profile thanks', () => {
     expect(n![0]).toMatchObject({ toy_transaction_id: txId, profile_id: null, actor_name: 'Sam' })
   })
 
-  it('a showcase thanks carries the person as its subject', async () => {
+  it('X13 a showcase thanks carries the person as its subject', async () => {
     expect((await post(stranger.token, maker.id)).status).toBe(201)
     const { data: n } = await adminClient()
       .from('notifications')
@@ -107,7 +106,7 @@ describe('117 profile thanks', () => {
     expect(n![0]).toMatchObject({ profile_id: maker.id, actor_name: 'A family' })
   })
 
-  it('lets nobody but the two read the note; anon reads the count only', async () => {
+  it('S02 lets nobody but the two read the note; anon reads the count only', async () => {
     const third = await userClient(stranger.token).from('profile_thanks').select('note').eq('thanker_id', family.id)
     expect(third.data ?? []).toEqual([])
     const own = await userClient(family.token).from('profile_thanks').select('note').eq('thanker_id', family.id)
