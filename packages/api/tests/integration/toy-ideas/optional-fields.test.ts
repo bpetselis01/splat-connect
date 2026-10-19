@@ -2,7 +2,6 @@
  * 103: an idea needs a title and a summary, nothing else. Old ideas keep their
  * intended use and primary user; new ones may leave every other field out.
  */
-// journeys: C12
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -38,7 +37,7 @@ describe('103 idea optional fields', () => {
     expect(data).toMatchObject({ description: null, intended_use: null, primary_user: null })
   })
 
-  it('takes an idea with only a title and a summary, and stores a blank why-it-matters as nothing', async () => {
+  it('C12 takes an idea with only a title and a summary, and stores a blank why-it-matters as nothing', async () => {
     const res = await post({ title: '  Bubble machine  ', summary: 'One switch.', description: '   ' })
     expect(res.status).toBe(201)
     const row = (await res.json()) as { id: string; title: string; description: string | null }

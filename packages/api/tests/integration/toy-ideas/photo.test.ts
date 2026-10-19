@@ -4,7 +4,6 @@
  * read builds photo_url. Only a path in the author's own ideas/ folder is
  * taken — by the API (400) and by toy_ideas_photo_path_check (23514).
  */
-// journeys: C13
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createClient } from '@supabase/supabase-js'
 import app from '../../../src/app.js'
@@ -56,7 +55,7 @@ describe('106 idea photo', () => {
   let path: string
   let ideaId: string
 
-  it('uploads into the author’s folder, naming the file from its type, never its filename', async () => {
+  it('C13 uploads into the author’s folder, naming the file from its type, never its filename', async () => {
     const res = await upload(author)
     expect(res.status).toBe(200)
     const body = (await res.json()) as { path: string; url: string }
@@ -71,7 +70,7 @@ describe('106 idea photo', () => {
     expect(res.status).toBe(400)
   })
 
-  it('keeps the path on the idea and reads it back as a URL, to the author and to an admin', async () => {
+  it('C13 keeps the path on the idea and reads it back as a URL, to the author and to an admin', async () => {
     const res = await post(author, { title: 'T', summary: 'S', photo_path: path })
     expect(res.status).toBe(201)
     const row = (await res.json()) as { id: string; photo_path: string; photo_url: string }

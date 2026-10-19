@@ -2,7 +2,6 @@
  * Maker rows on a public brief: each participant's role, and who is writing
  * the guide up once the challenge graduates.
  */
-// journeys: C02
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -42,7 +41,7 @@ afterAll(async () => {
 })
 
 describe('GET /api/public/challenges/:id — maker meta', () => {
-  it('gives each participant their role, and names who is writing it up', async () => {
+  it('C02 gives each participant their role, and names who is writing it up', async () => {
     const res = await app.request(`/api/public/challenges/${ideaId}`)
     expect(res.status).toBe(200)
     const body = (await res.json()) as {
