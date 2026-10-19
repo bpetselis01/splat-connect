@@ -71,6 +71,13 @@ describe('IdeaReviewDetailScreen', () => {
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/admin/ideas/i2/graduate', {}))
   })
 
+  it('Q31 a graduated idea offers View the draft guide, which opens /admin/review/:tutorialId', async () => {
+    mockGet.mockResolvedValue([idea({ id: 'g1', status: 'graduated', tutorial_id: 'tut9' })])
+    render(<IdeaReviewDetailScreen ideaId="g1" />)
+    fireEvent.press(await screen.findByRole('button', { name: /View the draft guide/ }))
+    expect(mockPush).toHaveBeenCalledWith('/admin/review/tut9')
+  })
+
   it('offers no graduate on a question', async () => {
     mockGet.mockResolvedValue([idea({ id: 'q1', status: 'challenge', kind: 'question' })])
     render(<IdeaReviewDetailScreen ideaId="q1" />)
