@@ -1,5 +1,4 @@
 // packages/mobile/tests/unit/components/organisation/review-detail-screen.test.tsx
-// journeys: L03 L04 L05 L06 L07
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { ReviewDetailScreen } from '../../../../components/organisation/review-detail-screen'
 
@@ -93,7 +92,7 @@ describe('ReviewDetailScreen', () => {
     expect(mockGet).toHaveBeenCalledWith('/api/tutorials/t1')
   })
 
-  it('offers Back and Decline on a pending backing request', async () => {
+  it('L04 offers Back and Decline on a pending backing request', async () => {
     render(<ReviewDetailScreen tutorialId="t1" />)
 
     fireEvent.press(await screen.findByRole('button', { name: 'Back this guide' }))
@@ -102,7 +101,7 @@ describe('ReviewDetailScreen', () => {
     )
   })
 
-  it('declines through its own route', async () => {
+  it('L05 declines through its own route', async () => {
     render(<ReviewDetailScreen tutorialId="t1" />)
 
     fireEvent.press(await screen.findByRole('button', { name: 'Decline' }))
@@ -111,7 +110,7 @@ describe('ReviewDetailScreen', () => {
     )
   })
 
-  it('offers Approve and Request changes once backing is accepted and the guide is submitted', async () => {
+  it('L06 offers Approve and Request changes once backing is accepted and the guide is submitted', async () => {
     respond(detail({ status: 'pending' }), [acceptedBacking])
     render(<ReviewDetailScreen tutorialId="t1" />)
 
@@ -141,7 +140,7 @@ describe('ReviewDetailScreen', () => {
     expect(mockPost).not.toHaveBeenCalled()
   })
 
-  it('sends the note with a rejection', async () => {
+  it('L07 sends the note with a rejection', async () => {
     respond(detail({ status: 'pending' }), [acceptedBacking])
     render(<ReviewDetailScreen tutorialId="t1" />)
 

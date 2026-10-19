@@ -1,5 +1,4 @@
 // The guide editor's Backing section when its read fails: says so, Try again re-reads, nothing hits console.error.
-// journeys: T18 T19
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { BackingSection } from '../../../../components/my-tutorials/sections/backing-section'
 

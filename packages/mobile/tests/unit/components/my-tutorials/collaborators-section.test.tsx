@@ -1,4 +1,3 @@
-// journeys: T20
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { CollaboratorsSection } from '../../../../components/my-tutorials/sections/collaborators-section'
 

@@ -1,4 +1,3 @@
-// journeys: T09
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { ItemsSection } from '../../../../components/my-tutorials/sections/items-section'
 
@@ -59,7 +58,7 @@ it('seeds its rows from the tutorial', () => {
   expect(screen.getByLabelText('Part 1 name').props.value).toBe('Switch')
 })
 
-it('saves a renamed row through the replace-set', () => {
+it('T09 saves a renamed row through the replace-set', () => {
   render(<ItemsSection noun="parts" />)
   fireEvent.changeText(screen.getByLabelText('Part 1 name'), 'Micro switch')
   expect(mockDraft.replaceItems).toHaveBeenCalledWith('parts', [
@@ -78,7 +77,7 @@ it('adds and removes rows', () => {
   ])
 })
 
-it('steps a part quantity but never below one', () => {
+it('T09 steps a part quantity but never below one', () => {
   render(<ItemsSection noun="parts" />)
   fireEvent.press(screen.getByTestId('item-qty-up-0'))
   expect(mockDraft.replaceItems).toHaveBeenLastCalledWith('parts', [
@@ -92,7 +91,7 @@ it('steps a part quantity but never below one', () => {
   expect(last[0].quantity).toBe(1)
 })
 
-it('toggles optional', () => {
+it('T09 toggles optional', () => {
   render(<ItemsSection noun="parts" />)
   fireEvent.press(screen.getByTestId('item-optional-0'))
   expect(mockDraft.replaceItems).toHaveBeenLastCalledWith('parts', [
@@ -135,7 +134,7 @@ it('says the guide did not load, and retries, when the draft fails', () => {
   mockDraft.loadError = false
 })
 
-it('edits a part\u2019s buy links on the phone', () => {
+it('T09 edits a part\u2019s buy links on the phone', () => {
   render(<ItemsSection noun="parts" />)
   fireEvent.press(screen.getByRole('button', { name: 'Buy links for part 1' }))
   fireEvent.press(screen.getByRole('button', { name: '+ Add a buy link' }))
@@ -155,7 +154,7 @@ it('keeps a tool’s note through a rename and sets how to get it', () => {
   expect(mockDraft.replaceItems).toHaveBeenLastCalledWith('tools', [expect.objectContaining({ get_by: 'borrow' })])
 })
 
-it('takes a part’s price in dollars and keeps it through a rename', () => {
+it('T09 takes a part’s price in dollars and keeps it through a rename', () => {
   mockDraft.tutorial = { ...mockDraft.tutorial, parts: [{ id: 'p1', name: 'Switch', quantity: 2, is_optional: false, buy_links: [], price_cents: 600 }] }
   render(<ItemsSection noun="parts" />)
   fireEvent.changeText(screen.getByLabelText('Part 1 name'), 'Big switch')

@@ -1,4 +1,3 @@
-// journeys: B04 G23 G25
 import { useState } from 'react'
 import { FlatList } from 'react-native'
 import { render, screen, fireEvent, within } from '@testing-library/react-native'

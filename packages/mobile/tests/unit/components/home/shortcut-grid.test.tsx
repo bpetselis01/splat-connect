@@ -1,5 +1,4 @@
 // packages/mobile/tests/unit/components/home/shortcut-grid.test.tsx
-// journeys: H03 H04
 import { useState } from 'react'
 import { PixelRatio, StyleSheet } from 'react-native'
 import { render, screen, fireEvent } from '@testing-library/react-native'
@@ -116,7 +115,7 @@ describe('ShortcutGrid at rest', () => {
     expect(glyph.width).toBeLessThanOrEqual(67.5)
   })
 
-  it('opens a shortcut on press and the add sheet on Add', () => {
+  it('H03 opens a shortcut on press and the add sheet on Add', () => {
     const h = setup()
     fireEvent.press(screen.getByLabelText('Toys'))
     expect(h.onOpen).toHaveBeenCalledWith(features[1])
@@ -158,7 +157,7 @@ describe('ShortcutGrid editing', () => {
     expect(h.onRemove).toHaveBeenCalledWith('c')
   })
 
-  it('opens the manage menu on a tap and wires its three items', () => {
+  it('H04 opens the manage menu on a tap and wires its three items', () => {
     const h = setup(true)
     fireEvent.press(screen.getByLabelText('Toys'))
     expect(h.onOpen).not.toHaveBeenCalled()

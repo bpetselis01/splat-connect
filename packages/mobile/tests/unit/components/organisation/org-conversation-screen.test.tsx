@@ -3,7 +3,6 @@
 // message exists it posts to the 'mine' route, which creates it; once it
 // exists every message goes to the conversation. The family sees a leader's
 // reply signed with the organisation.
-// journeys: L29 P10
 import { CLEARANCE, paddingBottomOf } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { OrgConversationScreen } from '../../../../components/organisation/org-conversation-screen'
@@ -36,7 +35,7 @@ const THREAD = {
 
 beforeEach(() => jest.clearAllMocks())
 
-it('starts the conversation through the mine route before one exists', async () => {
+it('P10 starts the conversation through the mine route before one exists', async () => {
   mockGet.mockResolvedValueOnce(null).mockResolvedValue(THREAD)
   mockPost.mockResolvedValue({})
   render(<OrgConversationScreen orgId="o1" orgName="Northbank" />)
@@ -50,7 +49,7 @@ it('starts the conversation through the mine route before one exists', async () 
   )
 })
 
-it('signs a leader’s reply with the organisation, on the family’s side', async () => {
+it('L29 signs a leader’s reply with the organisation, on the family’s side', async () => {
   mockGet.mockResolvedValue(THREAD)
   mockPost.mockResolvedValue({})
   render(<OrgConversationScreen cid="c1" />)

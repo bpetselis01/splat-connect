@@ -1,4 +1,3 @@
-// journeys: T04 T07
 import { CLEARANCE, paddingBottomOf } from '../../bottom-spacing'
 import { Alert } from 'react-native'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
@@ -101,7 +100,7 @@ it('omits the STL row for a toy adaptation', () => {
   expect(screen.getByTestId('hub-row-files')).toBeTruthy()
 })
 
-it('opens a section when its row is tapped', () => {
+it('T04 opens a section when its row is tapped', () => {
   render(<TutorialHub id="t1" />)
   fireEvent.press(screen.getByTestId('hub-row-parts'))
   expect(mockPush).toHaveBeenCalledWith('/tutorials/t1/parts')
@@ -125,7 +124,7 @@ it('disables submit while anything is missing and enables it when nothing is', (
   expect(screen.getByTestId('hub-submit')).toBeEnabled()
 })
 
-it('submits for review through the draft hook', async () => {
+it('T05 submits for review through the draft hook', async () => {
   mockDraft.tutorial = complete()
   render(<TutorialHub id="t1" />)
   fireEvent.press(screen.getByTestId('hub-submit'))
@@ -151,7 +150,7 @@ it.each(['pending', 'approved', 'rejected'] as const)(
   }
 )
 
-it('deletes a draft after confirmation and returns to the list', async () => {
+it('T06 deletes a draft after confirmation and returns to the list', async () => {
   const spy = jest.spyOn(Alert, 'alert')
   mockDelete.mockResolvedValue(undefined)
   render(<TutorialHub id="t1" />)
@@ -232,7 +231,7 @@ it('checks a complete section, marks empty steps as optional, and fills the bar 
   expect(screen.getByTestId('hub-progress-fill')).toHaveStyle({ width: '100%' })
 })
 
-it('previews the guide as a reader from beside Submit', () => {
+it('T07 previews the guide as a reader from beside Submit', () => {
   render(<TutorialHub id="t1" />)
   fireEvent.press(screen.getByTestId('hub-preview'))
   expect(mockPush).toHaveBeenCalledWith({ pathname: '/guides/[id]', params: { id: 't1' } })

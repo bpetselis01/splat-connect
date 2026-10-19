@@ -1,4 +1,3 @@
-// journeys: T18 T19
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { BackingSection } from '../../../../components/my-tutorials/sections/backing-section'
 
@@ -34,14 +33,14 @@ beforeEach(() => {
   mockDelete.mockResolvedValue(undefined)
 })
 
-it('lists who was asked and asks another organisation', async () => {
+it('T18 lists who was asked and asks another organisation', async () => {
   render(<BackingSection />)
   expect(await screen.findByText('Deciding')).toBeTruthy()
   fireEvent.press(screen.getByRole('button', { name: 'Ask Riverside Makers' }))
   await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/tutorials/t1/orgs', { org_id: 'o2' }))
 })
 
-it('withdraws a request', async () => {
+it('T19 withdraws a request', async () => {
   render(<BackingSection />)
   fireEvent.press(await screen.findByRole('button', { name: 'Withdraw from Northside Therapy' }))
   await waitFor(() => expect(mockDelete).toHaveBeenCalledWith('/api/tutorials/t1/orgs/o1'))

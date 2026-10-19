@@ -1,5 +1,4 @@
 // packages/mobile/tests/unit/components/home/home-screen.test.tsx
-// journeys: H01 H02
 import { ScrollView, StyleSheet, Text } from 'react-native'
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { HomeScreen } from '../../../../components/home/home-screen'
@@ -119,7 +118,7 @@ describe('HomeScreen', () => {
   })
 
   describe('Today card', () => {
-    it('counts the unread messages and opens the Inbox', () => {
+    it('H01 counts the unread messages and opens the Inbox', () => {
       setup()
       expect(screen.getByText('2 new messages')).toBeTruthy()
       fireEvent.press(screen.getByLabelText(/2 new messages/))
@@ -141,7 +140,7 @@ describe('HomeScreen', () => {
   })
 
   describe('edit mode', () => {
-    it('toggles Edit and Done, with the hint and without the Today card', () => {
+    it('H02 toggles Edit and Done, with the hint and without the Today card', () => {
       setup()
       expect(screen.queryByText('Drag to reorder. Let go and a menu appears.')).toBeNull()
       fireEvent.press(screen.getByLabelText('Edit'))

@@ -1,4 +1,3 @@
-// journeys: L23
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { OrgProfileEditScreen } from '../../../../components/organisation/org-profile-edit-screen'
 

@@ -1,4 +1,3 @@
-// journeys: T15
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { CustomizationFields } from '../../../../components/my-tutorials/sections/customization-fields'
 

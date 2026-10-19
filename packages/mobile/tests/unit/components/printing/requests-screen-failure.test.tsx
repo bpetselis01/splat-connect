@@ -1,5 +1,4 @@
 // A failed print-requests load says so, retries on Try again, and never hits console.error.
-// journeys: R18
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { PrintRequestsScreen } from '../../../../components/printing/requests-screen'
 

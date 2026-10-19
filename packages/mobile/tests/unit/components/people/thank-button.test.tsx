@@ -1,4 +1,3 @@
-// journeys: P04 S02 X13
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { ThankButton } from '../../../../components/people/thank-button'
 
@@ -15,7 +14,7 @@ beforeEach(() => {
 })
 
 describe('ThankButton', () => {
-  it('thanks a person, tied to the exchange, and says so', async () => {
+  it('S02 X13 thanks a person, tied to the exchange, and says so', async () => {
     mockPost.mockResolvedValue({ thanks_count: 1 })
     render(<ThankButton label="Say thanks to Sam" to={{ profileId: 'p1' }} transactionId="tx1" />)
     fireEvent.press(screen.getByRole('button', { name: 'Say thanks to Sam' }))
@@ -25,7 +24,7 @@ describe('ThankButton', () => {
     expect(screen.getByRole('button', { name: 'Say thanks to Sam' })).toBeDisabled()
   })
 
-  it('sends the typed note, trimmed, and says only they will see it', async () => {
+  it('S02 sends the typed note, trimmed, and says only they will see it', async () => {
     mockPost.mockResolvedValue({ thanks_count: 1 })
     render(<ThankButton label="Say thanks" to={{ profileId: 'p1' }} />)
     fireEvent.press(screen.getByRole('button', { name: 'Say thanks' }))
@@ -35,7 +34,7 @@ describe('ThankButton', () => {
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/contributors/p1/thanks', { note: 'You fixed our switch.' }))
   })
 
-  it('thanks an organisation through its own route, with no transaction', async () => {
+  it('P04 thanks an organisation through its own route, with no transaction', async () => {
     mockPost.mockResolvedValue({ thanks_count: 3 })
     render(<ThankButton label="Say thanks to Northside" to={{ orgId: 'o1' }} transactionId="tx1" />)
     fireEvent.press(screen.getByRole('button', { name: 'Say thanks to Northside' }))

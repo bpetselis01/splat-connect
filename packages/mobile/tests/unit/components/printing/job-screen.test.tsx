@@ -2,7 +2,6 @@
 //
 // The job page shows only the card for where the job is, and which side is
 // looking decides what that card asks of them.
-// journeys: R04 R09 R10 R11
 import { CLEARANCE, paddingBottomOf } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { PrintJobScreen } from '../../../../components/printing/job-screen'
@@ -77,7 +76,7 @@ it('tells the family how many printers they asked while it waits', async () => {
   expect(screen.getByLabelText('Progress: Requested')).toBeTruthy()
 })
 
-it('shows the family the pickup card with their code once it is ready, and collects', async () => {
+it('R09 shows the family the pickup card with their code once it is ready, and collects', async () => {
   serve(job({ status: 'accepted', printing_started_at: 'x', ready_at: 'y', pickup_suburb: 'Newtown' }))
   mockPost.mockResolvedValue(job({ status: 'accepted', requester_confirmed_at: 'z' }))
   render(<PrintJobScreen id="j1" />)
@@ -107,7 +106,7 @@ it('tells the family when the printer has to answer by, and says Expired after i
   expect(await screen.findByText(/^This request expired on .+; ask again\.$/)).toBeTruthy()
   expect(screen.getAllByText('Expired').length).toBeGreaterThan(0)
 })
-it('asks the family whether it fitted once collected', async () => {
+it('R10 asks the family whether it fitted once collected', async () => {
   serve(job({ status: 'completed' }))
   mockPost.mockResolvedValue(job({ status: 'completed', print_fit: 'fitted' }))
   render(<PrintJobScreen id="j1" />)
@@ -119,7 +118,7 @@ it('asks the family whether it fitted once collected', async () => {
   await waitFor(() => expect(mockInvalidate).toHaveBeenCalledTimes(1))
 })
 
-it('shows the family the printer’s record on the printer card', async () => {
+it('R04 shows the family the printer’s record on the printer card', async () => {
   mockGet.mockImplementation((path: string) =>
     path === '/api/toy-transactions/j1'
       ? Promise.resolve(job({ status: 'accepted', printer_id: 'p1' }))

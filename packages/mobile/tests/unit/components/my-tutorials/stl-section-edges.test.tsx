@@ -1,4 +1,3 @@
-// journeys: T15
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { StlSection } from '../../../../components/my-tutorials/sections/stl-section'
 import { apiClient } from '../../../../lib/api-client'
@@ -81,7 +80,7 @@ beforeEach(() => {
 afterEach(() => jest.restoreAllMocks())
 
 describe('picking an STL', () => {
-  it.each(['model.stl', 'MODEL.STL', 'Part 🧸 <1> & "2".stl', 'a.b.c.stl'])('accepts %s', async (name) => {
+  it.each(['model.stl', 'MODEL.STL', 'Part 🧸 <1> & "2".stl', 'a.b.c.stl'])('T15 accepts %s', async (name) => {
     mockGetDocument.mockResolvedValue(asset(name))
     mockUploadFile.mockResolvedValue({ url: 'stl/x', filename: name })
     mockPost.mockResolvedValue([stl(1)])
@@ -155,7 +154,7 @@ describe('part sizes', () => {
     expect(screen.queryByText('Save sizes')).toBeNull()
   })
 
-  it('sends blank sizes as null and shows saved ones to the millimetre', async () => {
+  it('T15 sends blank sizes as null and shows saved ones to the millimetre', async () => {
     open([stl(1, { size_x_mm: 40 })])
     ;(apiClient.patch as jest.Mock).mockResolvedValue(stl(1, { size_x_mm: 40 }))
     render(<StlSection />)
@@ -183,7 +182,7 @@ describe('part sizes', () => {
     expect(await screen.findByText(/Size must be under 1000 mm|Could not save the sizes/)).toBeTruthy()
   })
 
-  it('saves each file’s sizes on its own, leaving the other untouched', async () => {
+  it('T15 saves each file’s sizes on its own, leaving the other untouched', async () => {
     open([stl(1), stl(2)])
     ;(apiClient.patch as jest.Mock).mockResolvedValue(stl(2))
     render(<StlSection />)
