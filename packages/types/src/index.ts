@@ -1774,6 +1774,8 @@ export type NotificationType =
   | 'print_started'
   | 'print_ready'
   | 'org_event_published'
+  | 'org_event_changed'
+  | 'org_event_cancelled'
   | 'org_story_published'
   | 'org_message'
   | 'org_thanked'
@@ -1843,6 +1845,8 @@ const NOTIFICATION_BUCKET = {
   challenge_removed: 'challenges',
   org_message: 'exchanges',
   org_event_published: 'organisations',
+  org_event_changed: 'organisations',
+  org_event_cancelled: 'organisations',
   org_story_published: 'organisations',
   org_thanked: 'organisations',
 } satisfies Record<NotificationType, NotificationBucket>
@@ -1919,6 +1923,9 @@ export const COPY: Record<NotificationType, (n: Notification) => string> = {
   // tutorial_title; for a message, the organisation's name does.
   org_event_published: (n) => `${n.actor_name} published an event: ${n.tutorial_title ?? 'a new one'}`,
   org_story_published: (n) => `${n.actor_name} published a story: ${n.tutorial_title ?? 'a new one'}`,
+  // 138: sent to the people registered for it.
+  org_event_changed: (n) => `${n.actor_name} changed the time or place of ${n.tutorial_title ?? 'an event you registered for'}`,
+  org_event_cancelled: (n) => `${n.actor_name} cancelled ${n.tutorial_title ?? 'an event you registered for'}`,
   org_message: (n) =>
     n.actor_name === n.tutorial_title
       ? `${n.actor_name} replied to your message`

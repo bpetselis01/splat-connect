@@ -596,6 +596,53 @@ async function notifyFollowers(
   )
 }
 
+/** The columns a family plans around: a change to any of them is news to the registered. */
+const EVENT_WHEN_WHERE = ['starts_at', 'ends_at', 'format', 'location', 'suburb', 'state', 'online_url'] as const
+type EventWhenWhere = Partial<Record<(typeof EVENT_WHEN_WHERE)[number], unknown>>
+
+/** Timestamps compare as instants: Postgres hands back +00:00 where the client sent Z. */
+function movedOrRelocated(before: EventWhenWhere, after: EventWhenWhere): boolean {
+  return EVENT_WHEN_WHERE.some((k) => {
+    const [a, b] = [before[k] ?? null, after[k] ?? null]
+    if (k === 'starts_at' || k === 'ends_at') {
+      return (a === null ? null : Date.parse(a as string)) !== (b === null ? null : Date.parse(b as string))
+    }
+    return a !== b
+  })
+}
+
+/**
+ * The people registered for an event, told it moved or was cancelled (138).
+ * Only registrations with an account and not themselves cancelled; the leader
+ * who made the change is left out.
+ */
+async function notifyRegistrants(
+  event: { id: string; org_id: string; title: string },
+  actorId: string,
+  type: 'org_event_changed' | 'org_event_cancelled'
+) {
+  const [{ data }, name] = await Promise.all([
+    createAdminClient()
+      .from('org_event_registrations')
+      .select('user_id')
+      .eq('event_id', event.id)
+      .is('cancelled_at', null)
+      .not('user_id', 'is', null),
+    orgName(event.org_id),
+  ])
+  const recipients = [...new Set((data ?? []).map((r) => r.user_id as string))].filter((id) => id !== actorId)
+  await notify(
+    recipients.map((recipient_id) => ({
+      recipient_id,
+      type,
+      org_event_id: event.id,
+      tutorial_title: event.title,
+      actor_name: name ?? 'An organisation',
+    })),
+    type
+  )
+}
+
 /** The status a row had before this request, for the publish edge. */
 async function statusBefore(table: 'org_events' | 'org_stories', id: string): Promise<string | null> {
   const { data } = await createAdminClient().from(table).select('status').eq('id', id).maybeSingle()
@@ -1178,7 +1225,12 @@ organizations.patch('/:orgId/events/:id', async (c) => {
     patch.ends_at = typeof body.ends_at === 'string' && body.ends_at ? body.ends_at : null
   }
 
-  const before = patch.status === 'published' ? await statusBefore('org_events', c.req.param('id')) : null
+  // Read before the write: the publish edge, and what the registered planned around.
+  const { data: before } = await createAdminClient()
+    .from('org_events')
+    .select(`status, cancelled_at, ${EVENT_WHEN_WHERE.join(', ')}`)
+    .eq('id', c.req.param('id'))
+    .maybeSingle()
   const { data, error } = await supabase
     .from('org_events')
     .update(patch)
@@ -1188,8 +1240,14 @@ organizations.patch('/:orgId/events/:id', async (c) => {
     .maybeSingle()
   if (error) return c.json({ error: error.message }, 500)
   if (!data) return c.json({ error: 'No such event of yours.' }, 404)
-  if (before === 'draft' && data.status === 'published') {
+  const was = before as (EventWhenWhere & { status: string; cancelled_at: string | null }) | null
+  if (was?.status === 'draft' && data.status === 'published') {
     await notifyFollowers(data.org_id, c.get('userId'), { org_event_id: data.id }, data.title)
+  }
+  if (was && !was.cancelled_at && data.cancelled_at) {
+    await notifyRegistrants(data, c.get('userId'), 'org_event_cancelled')
+  } else if (was?.status === 'published' && data.status === 'published' && !data.cancelled_at && movedOrRelocated(was, data)) {
+    await notifyRegistrants(data, c.get('userId'), 'org_event_changed')
   }
   return c.json(data)
 })

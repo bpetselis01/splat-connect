@@ -68,6 +68,7 @@ const TYPE_TILE: Partial<Record<NotificationType, { icon: IconName; tint: string
   backing_accepted: { icon: 'checkmark-circle-outline', tint: theme.colors.successSoft },
   backing_declined: { icon: 'return-up-back', tint: theme.colors.dangerSoft },
   report_resolved: { icon: 'checkmark-circle-outline', tint: theme.colors.successSoft },
+  org_event_cancelled: { icon: 'close-circle-outline', tint: theme.colors.dangerSoft },
   tutorial_noted: { icon: 'chatbubbles-outline', tint: theme.colors.honeySoft },
 }
 const EXCHANGE_TINTS = [theme.colors.mintSoft, theme.colors.apricotSoft, theme.colors.violetSoft]

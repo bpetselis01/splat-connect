@@ -714,6 +714,15 @@ select * from (values
      where conname = 'notifications_type_check'
        and conrelid = 'public.notifications'::regclass)),
 
+  -- 138. Until this is on the remote every org_event_changed and
+  -- org_event_cancelled insert fails the CHECK and is only logged.
+  ('138 notifications_type_check permits the two event-change types',
+   (select pg_get_constraintdef(oid) like '%org_event_changed%'
+       and pg_get_constraintdef(oid) like '%org_event_cancelled%'
+      from pg_constraint
+     where conname = 'notifications_type_check'
+       and conrelid = 'public.notifications'::regclass)),
+
   ('137 notifications.member_report_id exists and is a counted subject',
    (select count(*) = 1 from information_schema.columns
       where table_schema = 'public' and table_name = 'notifications'

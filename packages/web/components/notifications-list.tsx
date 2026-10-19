@@ -55,6 +55,8 @@ const ICON: Record<NotificationType, [Glyph, string]> = {
   print_started: [Box, 'var(--tcoral)'],
   print_ready: [Check, 'var(--tok)'],
   org_event_published: [Building, 'var(--b100)'],
+  org_event_changed: [Building, 'var(--tamber)'],
+  org_event_cancelled: [Undo, 'var(--tbad)'],
   org_story_published: [FileText, 'var(--tcoral)'],
   org_message: [Inbox, 'var(--tmint)'],
   org_thanked: [Handshake, 'var(--tamber)'],

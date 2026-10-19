@@ -255,6 +255,8 @@ describe('NotificationsList', () => {
   // 077: the four organisation types, each routed by its own subject column.
   it.each([
     ['org_event_published', { org_event_id: 'e1', actor_name: 'Northbank', tutorial_title: 'Build day' }, 'Northbank published an event: Build day', '/get-involved/events/e1'],
+    ['org_event_changed', { org_event_id: 'e1', actor_name: 'Northbank', tutorial_title: 'Build day' }, 'Northbank changed the time or place of Build day', '/get-involved/events/e1'],
+    ['org_event_cancelled', { org_event_id: 'e1', actor_name: 'Northbank', tutorial_title: 'Build day' }, 'Northbank cancelled Build day', '/get-involved/events/e1'],
     ['org_story_published', { org_story_id: 's1', actor_name: 'Northbank', tutorial_title: 'Arlo' }, 'Northbank published a story: Arlo', '/about/stories/s1'],
     ['org_message', { org_conversation_id: 'c1', actor_name: 'Priya', tutorial_title: 'Northbank' }, 'Priya messaged Northbank', '/dashboard/messages/c1'],
     ['org_message', { org_conversation_id: 'c1', actor_name: 'Northbank', tutorial_title: 'Northbank' }, 'Northbank replied to your message', '/dashboard/messages/c1'],
