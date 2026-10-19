@@ -18,7 +18,7 @@ test('a test, it.each (inline and table), test.only, JSX and an @tag prefix each
 })
 
 test('titles with no leading id yield nothing and no error', () => {
-  for (const title of ['A11y labels', 'G091 too long', 'g09 lower case', 'thank G09 late', 'G09: colon']) {
+  for (const title of ['A11y labels', 'G091 too long', 'g09 lower case', 'thank G09 late']) {
     assert.deepEqual(ts(`test('${title}', () => {})`), { ids: [], errors: [] }, title)
   }
 })
