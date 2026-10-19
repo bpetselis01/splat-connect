@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test'
 import { adminClient, createContributor, createTutorial, makeLeader, uniqueTitle } from './helpers'
-import { cardCount, signInAdmin } from './admin-fixtures'
+import { cardCount, expectCard, signInAdmin } from './admin-fixtures'
 
 const SPOT_CARD = 'Spot-check'
 const madeOrgs: string[] = []
@@ -53,11 +53,8 @@ test('Q48 a Spot-check row opens that guide on /admin/review/:id', async ({ page
 
 test('Q49 Unpublish needs a note, then rejects the live guide, tells its writer and drops the Spot-check card', async ({ page }) => {
   const guide = await leaderApprovedGuide()
-  const eligible = async () =>
-    (await adminClient().from('tutorials').select('id', { count: 'exact', head: true }).eq('status', 'approved').not('reviewed_by', 'is', null)).count!
-  await signInAdmin(page)
+  const admin = await signInAdmin(page)
   await openSample(page, guide.title)
-  const before = await eligible()
   await row(page, guide.title).click()
 
   await page.getByRole('button', { name: 'Unpublish', exact: true }).click()
@@ -73,6 +70,5 @@ test('Q49 Unpublish needs a note, then rejects the live guide, tells its writer 
     .toEqual({ status: 'rejected', rejection_note: 'The battery cover is unsafe' })
   expect((await adminClient().from('notifications').select('type, actor_name, body').eq('recipient_id', guide.authorId).eq('tutorial_id', guide.id)).data)
     .toEqual([{ type: 'tutorial_rejected', actor_name: 'SPLAT', body: 'The battery cover is unsafe' }])
-  expect(await eligible()).toBe(before - 1)
-  expect(await cardCount(page, SPOT_CARD)).toBe(Math.min(before - 1, 10))
+  await expectCard(page, SPOT_CARD, admin.id)
 })

@@ -17,11 +17,33 @@ export async function cardCount(page: Page, label: string) {
   return Number((await card.getAttribute('aria-label'))!.split(', ').pop())
 }
 
-/** Re-reads a card until it shows `n`; the count comes from one GET on focus, so a goto is a fresh read. */
-export async function expectCard(page: Page, label: string, n: number) {
-  await expect(async () => {
-    expect(await cardCount(page, label)).toBe(n)
-  }).toPass()
+const head = { count: 'exact', head: true } as const
+
+/** What GET /api/admin/counts counts for each card, read straight from the table. */
+const LIVE: Record<string, (adminId: string) => PromiseLike<{ count: number | null }>> = {
+  'Reports from members': () => adminClient().from('member_reports').select('id', head).neq('status', 'resolved'),
+  'Ideas awaiting review': () => adminClient().from('toy_ideas').select('id', head).eq('status', 'pending'),
+  Accounts: () => adminClient().from('profiles').select('id', head).neq('role', 'admin'),
+  Organisations: () => adminClient().from('organizations').select('id', head),
+  'Spot-check': (adminId) =>
+    adminClient().from('tutorials').select('id', head).eq('status', 'approved').not('reviewed_by', 'is', null).neq('reviewed_by', adminId),
+}
+
+/**
+ * Polls until the card shows what its table holds. Other specs write the same
+ * tables at the same time, so the card is compared with a table read, never
+ * with a number taken before the action. `adminId` is needed for Spot-check only.
+ */
+export async function expectCard(page: Page, label: string, adminId = '') {
+  await expect
+    .poll(
+      async () => {
+        const live = Math.min((await LIVE[label](adminId)).count ?? 0, label === 'Spot-check' ? 10 : Infinity)
+        return (await cardCount(page, label)) - live
+      },
+      { timeout: 30_000 }
+    )
+    .toBe(0)
 }
 
 /** A toy idea in the given state, written by a fresh contributor with a name only this spec knows. */
