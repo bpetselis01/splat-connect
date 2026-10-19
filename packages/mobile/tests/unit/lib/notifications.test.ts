@@ -143,7 +143,7 @@ describe('linkFor', () => {
         idea_id: bucket === 'challenges' ? 'i1' : null,
         // 077's four each carry their own subject.
         org_conversation_id: type === 'org_message' ? 'c1' : null,
-        org_event_id: type === 'org_event_published' ? 'e1' : null,
+        org_event_id: type.startsWith('org_event_') ? 'e1' : null,
         org_story_id: type === 'org_story_published' ? 's1' : null,
         org_id: type === 'org_thanked' ? 'o1' : null,
       })
