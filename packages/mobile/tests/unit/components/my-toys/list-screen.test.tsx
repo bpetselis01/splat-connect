@@ -1,5 +1,4 @@
 // packages/mobile/tests/unit/components/my-toys/list-screen.test.tsx
-// journeys: W01
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { MyToysListScreen } from '../../../../components/my-toys/list-screen'
 
@@ -107,7 +106,7 @@ beforeEach(() => {
 })
 
 describe('MyToysListScreen', () => {
-  it('fetches the caller\'s toys and transactions', async () => {
+  it('W01 fetches the caller\'s toys and transactions', async () => {
     mockEndpoints({ toys: Promise.resolve([toy({})]) })
     render(<MyToysListScreen />)
     expect(await screen.findByText('Bubble machine')).toBeTruthy()
@@ -152,7 +151,7 @@ describe('MyToysListScreen', () => {
     ).toBeTruthy()
   })
 
-  it('shows the waiting count as a chip only for owner-side requested transactions, grouped by toy', async () => {
+  it('W01 shows the waiting count as a chip only for owner-side requested transactions, grouped by toy', async () => {
     mockEndpoints({
       toys: Promise.resolve([toy({ id: 't1', name: 'Bubble machine' }), toy({ id: 't2', name: 'Switch puzzle' })]),
       transactions: Promise.resolve([
@@ -192,7 +191,7 @@ describe('MyToysListScreen', () => {
     expect(screen.getByLabelText('Bubble machine').props.accessibilityHint).toContain('1 request waiting.')
   })
 
-  it('counts each stage in the filter and narrows the list to the one picked', async () => {
+  it('W01 counts each stage in the filter and narrows the list to the one picked', async () => {
     mockEndpoints({
       toys: Promise.resolve([
         toy({ id: 't1', name: 'Bubble machine', status: 'published' }),

@@ -1,5 +1,4 @@
 // packages/mobile/tests/unit/components/profile/child-editor-home.test.tsx
-// journeys: Z07 Z08
 import { CLEARANCE, scrollPaddings } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { Alert } from 'react-native'
@@ -87,7 +86,7 @@ describe('ChildEditorHome', () => {
     expect(screen.getByRole('button', { name: 'Quiet toys only', selected: false })).toBeTruthy()
   })
 
-  it('saves a Helps with chip and the one-hand chip against this child', async () => {
+  it('Z07 saves a Helps with chip and the one-hand chip against this child', async () => {
     mockPatch.mockResolvedValue({})
     jest.useFakeTimers()
     try {
@@ -104,7 +103,7 @@ describe('ChildEditorHome', () => {
     }
   })
 
-  it('saves only the field a chip changed, against this child', async () => {
+  it('Z07 saves only the field a chip changed, against this child', async () => {
     mockPatch.mockResolvedValue({})
     jest.useFakeTimers()
     try {
@@ -124,7 +123,7 @@ describe('ChildEditorHome', () => {
     }
   })
 
-  it('confirms before deleting, then deletes and goes back', async () => {
+  it('Z08 confirms before deleting, then deletes and goes back', async () => {
     mockDelete.mockResolvedValue(null)
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => {
       buttons?.find((b) => b.style === 'destructive')?.onPress?.()
@@ -138,7 +137,7 @@ describe('ChildEditorHome', () => {
     alertSpy.mockRestore()
   })
 
-  it('deletes nothing when the confirm is dismissed', async () => {
+  it('Z08 deletes nothing when the confirm is dismissed', async () => {
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {})
     render(<ChildEditorHome childId="cp1" />)
 
@@ -158,7 +157,7 @@ describe('ChildEditorHome', () => {
     expect(screen.getByDisplayValue('15')).toBeTruthy()
   })
 
-  it('saves a Play chip against this child', async () => {
+  it('Z07 saves a Play chip against this child', async () => {
     mockPatch.mockResolvedValue({})
     jest.useFakeTimers()
     try {
@@ -175,7 +174,7 @@ describe('ChildEditorHome', () => {
     }
   })
 
-  it('saves a measurement in range, clears a blank one, and says the range of one that is not', async () => {
+  it('Z07 saves a measurement in range, clears a blank one, and says the range of one that is not', async () => {
     mockGet.mockResolvedValue([child({ tray_mm: 15 })])
     mockPatch.mockResolvedValue({})
     jest.useFakeTimers()

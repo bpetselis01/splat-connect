@@ -1,4 +1,3 @@
-// journeys: L12 L15
 import { CLEARANCE, scrollPaddings } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { IntakeScreen } from '../../../../components/recycling/intake-screen'
@@ -116,7 +115,7 @@ it('turns one away without sending any grams', async () => {
   )
 })
 
-it('settled drop-offs get a pill and no actions', async () => {
+it('L12 settled drop-offs get a pill and no actions', async () => {
   route([drop({ id: 'd2', status: 'received', weighed_grams: 3200, credit_grams: 2400 }), drop({ id: 'd3', contributor_id: 'anon', contributor_name: null, status: 'declined' })])
   render(<IntakeScreen />)
   expect(await screen.findByText('Credited')).toBeTruthy()
@@ -133,7 +132,7 @@ it('shows the leader the photo the contributor booked with', async () => {
   expect(photo.props.source).toEqual({ uri: 'https://signed/x.jpg' })
 })
 
-it('publishes what the machines take, in one PATCH', async () => {
+it('L15 publishes what the machines take, in one PATCH', async () => {
   route([])
   render(<IntakeScreen />)
   fireEvent.press(await screen.findByLabelText('Shredder'))

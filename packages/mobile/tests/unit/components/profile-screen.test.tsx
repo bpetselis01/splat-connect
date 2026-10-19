@@ -1,4 +1,3 @@
-// journeys: Z01 Z02 Z04 Z10
 import { CLEARANCE, scrollPaddings } from '../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { Linking } from 'react-native'
@@ -104,7 +103,7 @@ describe('ProfileScreen', () => {
   })
 
   describe('the account panel additions', () => {
-    it('saves a display-name change when editing ends', async () => {
+    it('Z01 saves a display-name change when editing ends', async () => {
       mockUseAuth.mockReturnValue(auth({}))
       render(<ProfileScreen />)
 
@@ -117,7 +116,7 @@ describe('ProfileScreen', () => {
     })
 
     // react-native-web never fires endEditing, so on web only Return saves.
-    it('saves a name and a postcode on Return too', async () => {
+    it('Z01 saves a name and a postcode on Return too', async () => {
       mockUseAuth.mockReturnValue(auth({}))
       mockGet.mockResolvedValue([])
       mockPatch.mockResolvedValue({})
@@ -137,7 +136,7 @@ describe('ProfileScreen', () => {
       await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/api/contributors/me', { pickup_postcode: '2042' }))
     })
 
-    it('saves what you do, the line under your name on your public profile', async () => {
+    it('Z02 saves what you do, the line under your name on your public profile', async () => {
       mockUseAuth.mockReturnValue(auth({}))
       mockGet.mockResolvedValue([])
       mockPatch.mockResolvedValue({})
@@ -176,7 +175,7 @@ describe('ProfileScreen', () => {
     })
   })
 
-  it('opens the web dashboard and the privacy policy in the browser', () => {
+  it('Z10 opens the web dashboard and the privacy policy in the browser', () => {
     mockUseAuth.mockReturnValue(auth({}))
     const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(true)
     render(<ProfileScreen />)

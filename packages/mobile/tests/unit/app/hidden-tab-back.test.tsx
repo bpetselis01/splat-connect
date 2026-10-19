@@ -1,4 +1,3 @@
-// journeys: B05
 import { View, Text } from 'react-native'
 import { Stack } from 'expo-router'
 import { stackScreenOptions } from '../../../lib/nav-options'

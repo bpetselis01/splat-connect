@@ -1,4 +1,3 @@
-// journeys: T20
 import { fireEvent, render, screen } from '@testing-library/react-native'
 import { InfoHint } from '../../../../components/ui/InfoHint'
 

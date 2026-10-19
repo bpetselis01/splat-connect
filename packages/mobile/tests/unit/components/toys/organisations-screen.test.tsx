@@ -1,5 +1,4 @@
 // packages/mobile/tests/unit/components/toys/organisations-screen.test.tsx
-// journeys: Y09
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { OrganisationsScreen } from '../../../../components/toys/organisations-screen'
 
@@ -37,7 +36,7 @@ beforeEach(() => {
 })
 
 describe('OrganisationsScreen', () => {
-  it('renders org names from the public organizations endpoint', async () => {
+  it('Y09 renders org names from the public organizations endpoint', async () => {
     mockGet.mockResolvedValue([org({ id: 'o1', name: 'TAD Australia' }), org({ id: 'o2', name: 'Riverside Therapy' })])
     render(<OrganisationsScreen />)
     expect(await screen.findByText('TAD Australia')).toBeTruthy()
@@ -45,7 +44,7 @@ describe('OrganisationsScreen', () => {
     expect(mockGet).toHaveBeenCalledWith('/api/public/organizations')
   })
 
-  it('excludes suspended organisations', async () => {
+  it('Y09 excludes suspended organisations', async () => {
     mockGet.mockResolvedValue([
       org({ id: 'o1', name: 'TAD Australia', status: 'active' }),
       org({ id: 'o2', name: 'Old Org', status: 'suspended' }),
@@ -63,7 +62,7 @@ describe('OrganisationsScreen', () => {
     expect(mockPush).toHaveBeenCalledWith('/toy-library/organisation/o1')
   })
 
-  it('shows an error message when apiClient.get rejects, and retries', async () => {
+  it('Y09 shows an error message when apiClient.get rejects, and retries', async () => {
     mockGet.mockRejectedValueOnce(new Error('API GET failed with status 500'))
     render(<OrganisationsScreen />)
     expect(await screen.findByText("Couldn't load organisations.")).toBeTruthy()

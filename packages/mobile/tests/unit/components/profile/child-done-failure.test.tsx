@@ -1,7 +1,6 @@
 // The matches read is a secondary lookup on the wizard's last screen: when it
 // rejects offline the heading and button stay, the sentence drops, and nothing
 // reaches console.error.
-// journeys: Z09
 import { render, screen, waitFor } from '@testing-library/react-native'
 import { ChildDone } from '../../../../components/profile/child-done'
 

@@ -1,4 +1,3 @@
-// journeys: T08 T22
 import { Text } from 'react-native'
 import { render, screen, act, waitFor } from '@testing-library/react-native'
 import { TutorialDraftProvider, useDraft, type TutorialDraft } from '../../../lib/use-tutorial-draft'
@@ -56,7 +55,7 @@ it('loads the tutorial once', async () => {
   expect(mockGet).toHaveBeenCalledWith('/api/tutorials/t1')
 })
 
-it('debounces a save and sends the updated_at it last saw', async () => {
+it('T08 debounces a save and sends the updated_at it last saw', async () => {
   mount()
   await waitFor(() => expect(draft.tutorial).toBeTruthy())
   mockPatch.mockResolvedValue({ ...loaded, title: 'Renamed', updated_at: 'v2' })
@@ -79,7 +78,7 @@ it('debounces a save and sends the updated_at it last saw', async () => {
   })
 })
 
-it('carries the fresh updated_at into the next save', async () => {
+it('T08 carries the fresh updated_at into the next save', async () => {
   mount()
   await waitFor(() => expect(draft.tutorial).toBeTruthy())
   mockPatch.mockResolvedValue({ ...loaded, updated_at: 'v2' })
@@ -100,7 +99,7 @@ it('carries the fresh updated_at into the next save', async () => {
 })
 
 it.each(['approved', 'rejected'] as const)(
-  're-queues a %s tutorial to pending on save',
+  'T22 re-queues a %s tutorial to pending on save',
   async (status) => {
     mockGet.mockResolvedValue({ ...loaded, status })
     mount()
@@ -223,7 +222,7 @@ it('puts the steps, skipping a step with no instructions', async () => {
   expect(draft.tutorial?.steps).toEqual(saved)
 })
 
-it('flush sends a pending save immediately', async () => {
+it('T08 flush sends a pending save immediately', async () => {
   mount()
   await waitFor(() => expect(draft.tutorial).toBeTruthy())
   mockPatch.mockResolvedValue({ ...loaded, updated_at: 'v2' })

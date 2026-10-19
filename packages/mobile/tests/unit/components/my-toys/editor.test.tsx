@@ -1,5 +1,4 @@
 // packages/mobile/tests/unit/components/my-toys/editor.test.tsx
-// journeys: W06 W07 W08 W09 W10 W12
 import { CLEARANCE, paddingBottomOf } from '../../bottom-spacing'
 import { Alert } from 'react-native'
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
@@ -154,7 +153,7 @@ describe('Editor', () => {
     expect(screen.getByTestId('step-pill-dot-photos', { includeHiddenElements: true })).toBeTruthy()
   })
 
-  it('saves the four detail fields on Save details, and updates local state from the response', async () => {
+  it('W06 saves the four detail fields on Save details, and updates local state from the response', async () => {
     mockGetRouting([toy({})])
     mockPatch.mockResolvedValue(toy({ name: 'New name', condition: 9, switch_adapted: true }))
     render(<Editor id="toy1" />)
@@ -186,7 +185,7 @@ describe('Editor', () => {
     )
   })
 
-  it('saves the facts and the guide it was built from', async () => {
+  it('W06 saves the facts and the guide it was built from', async () => {
     mockGetRouting([toy({ volume: 'Loud' })])
     mockPatch.mockResolvedValue(toy({}))
     render(<Editor id="toy1" />)
@@ -208,7 +207,7 @@ describe('Editor', () => {
   })
 
   describe('Photos', () => {
-    it('takes a photo, uploads through the one toy route, then appends it', async () => {
+    it('W07 takes a photo, uploads through the one toy route, then appends it', async () => {
       mockGetRouting([toy({ photo_urls: [] })])
       mockRequestCameraPermissions.mockResolvedValue({ granted: true })
       mockLaunchCamera.mockResolvedValue({
@@ -269,7 +268,7 @@ describe('Editor', () => {
       expect(await screen.findByText(/That is all 5/)).toBeTruthy()
     })
 
-    it('promotes a photo to the cover, keeping the others in order', async () => {
+    it('W07 promotes a photo to the cover, keeping the others in order', async () => {
       mockGetRouting([toy({ photo_urls: ['a', 'b', 'c'] })])
       mockPatch.mockResolvedValue(toy({ photo_urls: ['b', 'a', 'c'] }))
       render(<Editor id="toy1" />)
@@ -285,7 +284,7 @@ describe('Editor', () => {
 
     // A removed photo cannot go on being the one that shows the switch: 053's
     // toys_switch_photo_member would reject the save outright.
-    it('clears the switch tag when the tagged photo is removed', async () => {
+    it('W07 clears the switch tag when the tagged photo is removed', async () => {
       mockGetRouting([
         toy({ photo_urls: ['a', 'b'], switch_adapted: true, switch_photo_url: 'b' }),
       ])
@@ -362,7 +361,7 @@ describe('Editor', () => {
       expect(await screen.findByText('Shows the switch')).toBeTruthy()
     })
 
-    it('tags a photo as the one showing the switch', async () => {
+    it('W07 tags a photo as the one showing the switch', async () => {
       mockGetRouting([
         toy({ photo_urls: ['a', 'b'], switch_adapted: true, switch_photo_url: null }),
       ])
@@ -395,7 +394,7 @@ describe('Editor', () => {
   })
 
   describe('Review', () => {
-    it('PATCHes offer_type immediately when an offer chip is pressed', async () => {
+    it('W08 PATCHes offer_type immediately when an offer chip is pressed', async () => {
       mockGetRouting([toy({})])
       mockPatch.mockResolvedValue(toy({ offer_type: 'exchange' }))
       render(<Editor id="toy1" />)
@@ -432,7 +431,7 @@ describe('Editor', () => {
       expect(screen.getByLabelText('Publish to the Toy Library').props.accessibilityState.disabled).toBe(true)
     })
 
-    it('publishes a gapless draft with a PATCH to /publish, and shows the published state', async () => {
+    it('W09 publishes a gapless draft with a PATCH to /publish, and shows the published state', async () => {
       const gapless = toy({ photo_urls: ['toy1/cover.jpg'], offer_type: 'donation' })
       mockGetRouting([gapless])
       mockPatch.mockResolvedValue({ ...gapless, status: 'published' })
@@ -466,7 +465,7 @@ describe('Editor', () => {
       expect(screen.queryByText(/Take off the shelf/i)).toBeNull()
     })
 
-    it('shows the offers row only for an owner-side requested transaction on this toy', async () => {
+    it('W12 shows the offers row only for an owner-side requested transaction on this toy', async () => {
       mockGetRouting(
         [toy({})],
         [
@@ -508,7 +507,7 @@ describe('Editor', () => {
       expect(screen.queryByText(/offer(s)? on this toy/)).toBeNull()
     })
 
-    it('pushes to /exchanges?toy=<id> when the offers row is pressed', async () => {
+    it('W12 pushes to /exchanges?toy=<id> when the offers row is pressed', async () => {
       mockGetRouting([toy({})], [tx({})])
       render(<Editor id="toy1" />)
 
@@ -521,7 +520,7 @@ describe('Editor', () => {
   })
 
   describe('Delete', () => {
-    it('deletes the toy after the confirm alert, and goes back', async () => {
+    it('W10 deletes the toy after the confirm alert, and goes back', async () => {
       mockGetRouting([toy({})])
       mockDelete.mockResolvedValue(null)
       const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => {
@@ -537,7 +536,7 @@ describe('Editor', () => {
       expect(mockDismissTo).toHaveBeenCalledWith('/toys')
     })
 
-    it('surfaces a failed delete instead of silently staying put', async () => {
+    it('W10 surfaces a failed delete instead of silently staying put', async () => {
       mockGetRouting([toy({})])
       mockDelete.mockRejectedValue(new Error('API DELETE failed with status 500'))
       const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => {

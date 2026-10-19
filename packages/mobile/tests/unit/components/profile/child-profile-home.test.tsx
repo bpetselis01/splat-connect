@@ -1,5 +1,4 @@
 // packages/mobile/tests/unit/components/profile/child-profile-home.test.tsx
-// journeys: Z06
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { ChildProfileHome } from '../../../../components/profile/child-profile-home'
 
@@ -86,7 +85,7 @@ describe('ChildProfileHome', () => {
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/account/child/[id]', params: { id: 'cp7' } })
   })
 
-  it('creates an empty profile and goes straight into it', async () => {
+  it('Z06 creates an empty profile and goes straight into it', async () => {
     mockPost.mockResolvedValue(child({ id: 'fresh' }))
     render(<ChildProfileHome />)
 

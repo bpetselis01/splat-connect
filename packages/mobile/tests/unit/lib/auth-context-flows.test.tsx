@@ -1,7 +1,6 @@
 // The auth provider's session lifecycle and the less-travelled transactions:
 // expiry, a switch of account, a slow fetch landing after sign-out, reset's
 // "resetting" hold, social sign-in failures and a rejected save.
-// journeys: A05
 import { renderHook, act, waitFor } from '@testing-library/react-native'
 import type { ReactNode } from 'react'
 import { AuthProvider, useAuth } from '../../../lib/auth-context'

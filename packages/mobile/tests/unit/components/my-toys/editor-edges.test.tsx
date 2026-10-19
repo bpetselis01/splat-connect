@@ -1,7 +1,6 @@
 // Editing a toy with awkward input and failures: ages, text, photos that fail
 // or are too big, a second tap on Save or Publish. The ordinary journeys live
 // in editor.test.tsx.
-// journeys: W06
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { Editor } from '../../../../components/my-toys/editor'
 import { NAMES } from '../../../special-strings'
@@ -80,7 +79,7 @@ describe('details with awkward input', () => {
     expect(screen.getByLabelText('From age').props.value).toBe(kept)
   })
 
-  it('sends no age, never NaN, when the age box holds nothing numeric', async () => {
+  it('W06 sends no age, never NaN, when the age box holds nothing numeric', async () => {
     await open()
     fireEvent.changeText(screen.getByLabelText('From age'), 'ab')
     fireEvent.changeText(screen.getByLabelText('To age'), '  ')
@@ -89,7 +88,7 @@ describe('details with awkward input', () => {
     expect(mockPatch.mock.calls[0][1]).toMatchObject({ age_min: null, age_max: null })
   })
 
-  it('sends age zero as the number zero, not as no answer', async () => {
+  it('W06 sends age zero as the number zero, not as no answer', async () => {
     await open()
     fireEvent.changeText(screen.getByLabelText('From age'), '0')
     fireEvent.changeText(screen.getByLabelText('To age'), '07')
@@ -98,7 +97,7 @@ describe('details with awkward input', () => {
     expect(mockPatch.mock.calls[0][1]).toMatchObject({ age_min: 0, age_max: 7 })
   })
 
-  it('sends a whitespace-only description and facts as null', async () => {
+  it('W06 sends a whitespace-only description and facts as null', async () => {
     await open()
     fireEvent.changeText(screen.getByPlaceholderText('Description'), '  \n ')
     fireEvent.changeText(screen.getByPlaceholderText('e.g. 2 × AA, included'), '   ')
@@ -107,7 +106,7 @@ describe('details with awkward input', () => {
     expect(mockPatch.mock.calls[0][1]).toMatchObject({ description: null, batteries: null })
   })
 
-  it.each(NAMES.filter((n) => !/spaces|long/.test(n.label)))('saves a name with $label text as typed', async ({ value }) => {
+  it.each(NAMES.filter((n) => !/spaces|long/.test(n.label)))('W06 saves a name with $label text as typed', async ({ value }) => {
     await open()
     fireEvent.changeText(screen.getByPlaceholderText('Name'), value)
     fireEvent.changeText(screen.getByPlaceholderText('Description'), value)
@@ -116,21 +115,21 @@ describe('details with awkward input', () => {
     expect(mockPatch.mock.calls[0][1]).toMatchObject({ name: value, description: value })
   })
 
-  it('saves the name without the spaces around it', async () => {
+  it('W06 saves the name without the spaces around it', async () => {
     await open()
     fireEvent.changeText(screen.getByPlaceholderText('Name'), '  Bubble machine \n')
     fireEvent.press(screen.getByLabelText('Save details'))
     await waitFor(() => expect(mockPatch.mock.calls[0][1].name).toBe('Bubble machine'))
   })
 
-  it.each([1, 10])('saves condition %i', async (c) => {
+  it.each([1, 10])('W06 saves condition %i', async (c) => {
     await open()
     fireEvent.press(screen.getByLabelText(String(c)))
     fireEvent.press(screen.getByLabelText('Save details'))
     await waitFor(() => expect(mockPatch.mock.calls[0][1]).toMatchObject({ condition: c }))
   })
 
-  it('saves once when Save details is pressed twice before the answer', async () => {
+  it('W06 saves once when Save details is pressed twice before the answer', async () => {
     mockPatch.mockReturnValue(new Promise(() => {}))
     await open()
     fireEvent.press(screen.getByLabelText('Save details'))
@@ -138,7 +137,7 @@ describe('details with awkward input', () => {
     expect(mockPatch).toHaveBeenCalledTimes(1)
   })
 
-  it('shows the API reason, and keeps what was typed, when the save is refused', async () => {
+  it('W06 shows the API reason, and keeps what was typed, when the save is refused', async () => {
     mockPatch.mockRejectedValue(new Error('API PATCH /x failed with status 400: Name must be 1 to 120 characters'))
     await open()
     fireEvent.changeText(screen.getByPlaceholderText('Name'), '')
@@ -147,7 +146,7 @@ describe('details with awkward input', () => {
     expect(screen.getByPlaceholderText('Name').props.value).toBe('')
   })
 
-  it('falls back to a plain sentence on a server error, and offline says so', async () => {
+  it('W06 falls back to a plain sentence on a server error, and offline says so', async () => {
     mockPatch.mockRejectedValueOnce(new Error('API PATCH /x failed with status 500: pg boom')).mockRejectedValueOnce(new TypeError('Network request failed'))
     await open()
     fireEvent.press(screen.getByLabelText('Save details'))

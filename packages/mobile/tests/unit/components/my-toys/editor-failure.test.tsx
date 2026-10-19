@@ -1,5 +1,4 @@
 // A failed toy load says so, retries on Try again, and never hits console.error.
-// journeys: W06
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { Editor } from '../../../../components/my-toys/editor'
 
