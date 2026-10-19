@@ -36,7 +36,7 @@ afterAll(async () => {
 })
 
 describe('POST /api/tutorials/:id/orgs', () => {
-  it('T18 records the request as pending', async () => {
+  it('T18 WT31 records the request as pending', async () => {
     const res = await app.request(`/api/tutorials/${draft}/orgs`, authed(author.token, {
       method: 'POST',
       body: JSON.stringify({ org_id: orgId }),
@@ -98,7 +98,7 @@ describe('answering', () => {
 })
 
 describe('DELETE /api/tutorials/:id/orgs/:orgId', () => {
-  it('T19 the author can withdraw before publication', async () => {
+  it('T19 WT31 the author can withdraw before publication', async () => {
     const res = await app.request(`/api/tutorials/${draft}/orgs/${orgId}`, authed(author.token, {
       method: 'DELETE',
     }))

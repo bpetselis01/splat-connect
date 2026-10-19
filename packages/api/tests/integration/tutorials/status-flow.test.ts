@@ -45,7 +45,7 @@ afterAll(async () => {
 })
 
 describe('tutorial status flow', () => {
-  it('T05 owner can submit draft -> pending', async () => {
+  it('T05 WT32 owner can submit draft -> pending', async () => {
     const { data: current } = await adminClient().from('tutorials').select('updated_at').eq('id', tutorialId).single()
     const res = await app.request(
       `/api/tutorials/${tutorialId}`,

@@ -22,7 +22,7 @@ describe('CreatedToast', () => {
   // Chain: /upload and the editor draw the same pills and the same panel, so
   //        the redirect between them changed almost nothing on screen. A correct
   //        redirect that announces nothing reads as being thrown somewhere else
-  it('announces the create when it arrives from the new-tutorial form', async () => {
+  it('WT33 announces the create when it arrives from the new-tutorial form', async () => {
     searchParamsValue = 'step=details&created=1'
     render(
       <ToastProvider>

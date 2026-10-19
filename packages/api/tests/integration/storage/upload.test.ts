@@ -55,7 +55,7 @@ afterAll(async () => {
 })
 
 describe('storage uploads', () => {
-  it('T14 uploads a PDF to the tutorial-pdfs bucket and returns its path', async () => {
+  it('T14 WT24 uploads a PDF to the tutorial-pdfs bucket and returns its path', async () => {
     const res = await uploadRequest(
       '/api/upload/pdf',
       user.token,
@@ -93,7 +93,7 @@ describe('storage uploads', () => {
     expect(files?.length).toBe(2)
   })
 
-  it('T15 uploads an STL to the stl-files bucket and returns path + filename', async () => {
+  it('T15 WT27 uploads an STL to the stl-files bucket and returns path + filename', async () => {
     const res = await uploadRequest(
       '/api/upload/stl',
       user.token,

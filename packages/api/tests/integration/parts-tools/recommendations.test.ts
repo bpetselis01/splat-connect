@@ -49,7 +49,7 @@ describe('tutorial recommendations', () => {
     expect((await post([ownerTutorial])).status).toBe(400)
   })
 
-  it('T16 shows a parent only the approved targets, in position order', async () => {
+  it('T16 WT29 shows a parent only the approved targets, in position order', async () => {
     expect((await post([pending, approved[1], approved[0]])).status).toBe(201)
     const res = await app.request(`/api/public/tutorials/${ownerTutorial}`)
     expect(res.status).toBe(200)

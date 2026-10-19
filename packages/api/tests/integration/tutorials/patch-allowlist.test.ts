@@ -39,7 +39,7 @@ afterAll(async () => {
 
 describe('PATCH /api/tutorials/:id', () => {
   // 128: who it's for round-trips, and a value that is not an answer is a 400.
-  it('T17 applies the tags and 400s a value that is not an answer', async () => {
+  it('T17 WT20 applies the tags and 400s a value that is not an answer', async () => {
     let { data: current } = await adminClient().from('tutorials').select('updated_at').eq('id', draft).single()
     const ok = await app.request(`/api/tutorials/${draft}`, authed(author.token, {
       method: 'PATCH',
@@ -56,7 +56,7 @@ describe('PATCH /api/tutorials/:id', () => {
     expect(((await bad.json()) as { error: string }).error).toMatch(/^play must be a list of/)
   })
 
-  it('T08 applies the editable fields', async () => {
+  it('T08 WT18 applies the editable fields', async () => {
     const { data: current } = await adminClient().from('tutorials').select('updated_at').eq('id', draft).single()
     const res = await app.request(`/api/tutorials/${draft}`, authed(author.token, {
       method: 'PATCH',

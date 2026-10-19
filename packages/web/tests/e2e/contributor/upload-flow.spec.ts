@@ -72,7 +72,7 @@ test('WT17 a signed-out visitor is sent to log in, and a contributor without acc
   await page.waitForURL(/\/onboarding\/contributor-terms\?next=%2Fupload$/)
 })
 
-test('a contributor builds a tutorial from creation through to pending', async ({ page }) => {
+test('WT32 a contributor builds a tutorial from creation through to pending', async ({ page }) => {
   const contributor = await createContributor()
   await acceptTerms(contributor.id)
   await signIn(page, contributor.email, contributor.password)

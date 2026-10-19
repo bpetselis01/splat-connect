@@ -27,7 +27,7 @@ describe('085 tool notes', () => {
     expect(error).toBeNull()
   })
 
-  it('T25 replaces the whole tool list with the posted rows: name, optional, note, get-by', async () => {
+  it('T25 WT26 replaces the whole tool list with the posted rows: name, optional, note, get-by', async () => {
     await post([{ name: 'Old tool', is_optional: false, buy_links: [] }])
     const res = await post([
       { name: 'Hot glue gun', is_optional: true, buy_links: [], note: 'Low-temp is fine', get_by: 'buy' },

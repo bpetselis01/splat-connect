@@ -6,11 +6,31 @@ import type { TutorialStep } from '@splat-connect/types'
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }))
 vi.mock('next/image', () => ({ default: () => null }))
+vi.mock('@/lib/browser-api-client', () => ({ browserApiClient: { postFormData: vi.fn() } }))
+
+import { browserApiClient } from '@/lib/browser-api-client'
 
 const step: TutorialStep = { id: 's1', tutorial_id: 't', position: 1, title: null, body: 'Do it', photo_url: null }
 
 describe('EditStepsSection', () => {
-  it('saves each step with its tip and minutes, blank becoming null', async () => {
+  it('WT22 uploads a step photo for this guide and saves its url with the step', async () => {
+    vi.mocked(browserApiClient.postFormData).mockResolvedValue({ url: 't/steps/s1.jpg' })
+    const onSave = vi.fn().mockResolvedValue(undefined)
+    render(
+      <ToastProvider>
+        <EditStepsSection tutorialId="t" steps={[step]} onSave={onSave} />
+      </ToastProvider>
+    )
+    fireEvent.change(screen.getByLabelText('Photo for step 1'), { target: { files: [new File(['x'], 'a.jpg', { type: 'image/jpeg' })] } })
+    await waitFor(() => expect(browserApiClient.postFormData).toHaveBeenCalledWith('/api/upload/step-photo', expect.any(FormData)))
+    const sent = vi.mocked(browserApiClient.postFormData).mock.calls[0][1] as FormData
+    expect(sent.get('tutorialId')).toBe('t')
+    expect((sent.get('file') as File).name).toBe('a.jpg')
+    fireEvent.click(screen.getByText('Save steps'))
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith([expect.objectContaining({ body: 'Do it', photo_url: 't/steps/s1.jpg' })]))
+  })
+
+  it('WT21 saves each step with its tip and minutes, blank becoming null', async () => {
     const onSave = vi.fn().mockResolvedValue(undefined)
     render(
       <ToastProvider>

@@ -45,7 +45,7 @@ afterAll(async () => {
 })
 
 describe('GET /api/tutorials/mine', () => {
-  it('T01 carries what the row needs to count its sections', async () => {
+  it('T01 WT36 carries what the row needs to count its sections', async () => {
     const res = await app.request('/api/tutorials/mine', { headers: { Authorization: `Bearer ${author.token}` } })
     const row = ((await res.json()) as Record<string, unknown[]>[]).find((r) => (r as unknown as { id: string }).id === guide)!
     expect(row.parts).toHaveLength(1)
