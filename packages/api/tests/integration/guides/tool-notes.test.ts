@@ -27,6 +27,20 @@ describe('085 tool notes', () => {
     expect(error).toBeNull()
   })
 
+  it('T25 replaces the whole tool list with the posted rows: name, optional, note, get-by', async () => {
+    await post([{ name: 'Old tool', is_optional: false, buy_links: [] }])
+    const res = await post([
+      { name: 'Hot glue gun', is_optional: true, buy_links: [], note: 'Low-temp is fine', get_by: 'buy' },
+      { name: 'Pliers', is_optional: false, buy_links: [], note: null, get_by: null },
+    ])
+    expect(res.status).toBe(201)
+    const { data } = await adminClient().from('tools').select('name, is_optional, note, get_by').eq('tutorial_id', guide).order('name')
+    expect(data).toEqual([
+      { name: 'Hot glue gun', is_optional: true, note: 'Low-temp is fine', get_by: 'buy' },
+      { name: 'Pliers', is_optional: false, note: null, get_by: null },
+    ])
+  })
+
   it('saves a note and how to get the tool', async () => {
     const res = await post([{ name: 'Soldering iron', is_optional: false, buy_links: [], note: 'Borrow from a library or makerspace', get_by: 'borrow' }])
     expect(res.status).toBe(201)

@@ -97,6 +97,14 @@ describe('LibraryScreen', () => {
     expect(clears(screen.UNSAFE_getAllByType(FlatList))).toBe(true)
   })
 
+  it('G07 Add a guide in the Guide actions menu opens the new-guide screen', async () => {
+    render(<LibraryScreen />)
+    await screen.findByText('Build a Robot Arm')
+    fireEvent.press(screen.getByLabelText('Guide actions'))
+    fireEvent.press(screen.getByLabelText('Add a guide'))
+    expect(mockPush).toHaveBeenCalledWith('/guides/new')
+  })
+
   it('offers Request a print in the Guide actions menu', async () => {
     render(<LibraryScreen />)
     await screen.findByText('Build a Robot Arm')

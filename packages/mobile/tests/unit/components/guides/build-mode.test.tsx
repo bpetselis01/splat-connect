@@ -260,3 +260,19 @@ it('the notes link on a step opens the guide’s Feedback tab by hand-off, not a
   expect(mockBack).toHaveBeenCalled()
   expect(mockReplace).not.toHaveBeenCalled()
 })
+
+it('B05 the header ✕ and the done screen’s Back to the guide both pop back to the guide, keeping the ticked steps', async () => {
+  render(<BuildMode id="g" />)
+  fireEvent.press(await screen.findByText('Start step 1'))
+  fireEvent.press(screen.getByText('Next'))
+  fireEvent.press(screen.getByLabelText('Close build mode'))
+  expect(mockBack).toHaveBeenCalledTimes(1)
+  expect(mockSetItem).toHaveBeenLastCalledWith('guide-steps.g.signed-out', '["s1"]')
+  expect(mockReplace).not.toHaveBeenCalled()
+
+  fireEvent.press(screen.getByText('Done'))
+  await screen.findByText('All 2 steps done')
+  fireEvent.press(screen.getByRole('button', { name: 'Back to the guide' }))
+  expect(mockBack).toHaveBeenCalledTimes(2)
+  expect(mockReplace).not.toHaveBeenCalled()
+})

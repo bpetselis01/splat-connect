@@ -33,7 +33,7 @@ beforeEach(() => {
   mockDelete.mockResolvedValue(undefined)
 })
 
-it('lists the team, and the owner can invite by email', async () => {
+it('T23 lists the team, and the owner invites by email, which empties the box and reloads the team', async () => {
   setDraft([owner], 'a')
   render(<CollaboratorsSection />)
   expect(screen.getByText('Ada')).toBeTruthy()
@@ -42,6 +42,16 @@ it('lists the team, and the owner can invite by email', async () => {
   fireEvent.press(screen.getByText('Invite'))
   await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/tutorials/t1/collaborators/invite', { email: 'bo@example.com' }))
   expect(mockReload).toHaveBeenCalled()
+  expect(screen.getByLabelText('Their email').props.value).toBe('')
+})
+
+it('T23 shows a person who was invited and has not answered as PENDING, with no Remove', () => {
+  setDraft([owner], 'a')
+  mockDraft.tutorial.tutorial_collaborator_invites = [{ invited_profile_id: 'b', status: 'pending', profiles: profile('b', 'Bo') }]
+  render(<CollaboratorsSection />)
+  expect(screen.getByText('PENDING')).toBeTruthy()
+  expect(screen.getByText('Bo')).toBeTruthy()
+  expect(screen.queryByLabelText('Remove Bo')).toBeNull()
 })
 
 it('shows the API error when the email has no account', async () => {
@@ -54,7 +64,7 @@ it('shows the API error when the email has no account', async () => {
   expect(mockReload).not.toHaveBeenCalled()
 })
 
-it('lets the owner remove a member, and a member leave', async () => {
+it('T24 lets the owner remove a member, and a member leave, back to the list', async () => {
   setDraft([owner, member], 'a')
   const view = render(<CollaboratorsSection />)
   fireEvent.press(screen.getByLabelText('Remove Bo'))

@@ -154,6 +154,25 @@ it('keeps a tool’s note through a rename and sets how to get it', () => {
   expect(mockDraft.replaceItems).toHaveBeenLastCalledWith('tools', [expect.objectContaining({ get_by: 'borrow' })])
 })
 
+it('T25 hands every edit of a tool row (name, optional, note, get-by; no buy links on a phone) to the tools replace-set', () => {
+  mockDraft.tutorial = { ...mockDraft.tutorial, tools: [{ id: 't', name: 'Iron', is_optional: false, buy_links: [], note: null, get_by: null }] }
+  render(<ItemsSection noun="tools" />)
+  const lastSent = () => mockDraft.replaceItems.mock.calls.at(-1)
+
+  fireEvent.changeText(screen.getByLabelText('Tool 1 name'), 'Soldering iron')
+  expect(lastSent()).toEqual(['tools', [{ name: 'Soldering iron', quantity: undefined, is_optional: false, buy_links: [], note: null, get_by: null }]])
+  fireEvent.press(screen.getByTestId('item-optional-0'))
+  expect(lastSent()![1]).toEqual([expect.objectContaining({ name: 'Soldering iron', is_optional: true })])
+  expect(screen.queryByRole('button', { name: /Buy links/ })).toBeNull()
+  fireEvent.changeText(screen.getByLabelText('Tool 1 note'), 'Any 40W one')
+  fireEvent.press(screen.getByText('Borrow'))
+  expect(lastSent()).toEqual(['tools', [{
+    name: 'Soldering iron', quantity: undefined, is_optional: true,
+    buy_links: [], note: 'Any 40W one', get_by: 'borrow',
+  }]])
+  expect(mockDraft.replaceItems.mock.calls.every(([noun]) => noun === 'tools')).toBe(true)
+})
+
 it('T09 takes a part’s price in dollars and keeps it through a rename', () => {
   mockDraft.tutorial = { ...mockDraft.tutorial, parts: [{ id: 'p1', name: 'Switch', quantity: 2, is_optional: false, buy_links: [], price_cents: 600 }] }
   render(<ItemsSection noun="parts" />)
