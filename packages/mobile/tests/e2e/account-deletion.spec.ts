@@ -1,10 +1,9 @@
-// journeys: Z05
 import { test, expect } from '@playwright/test'
 import { adminClient, createContributor, latestCode, signIn } from './helpers'
 
 // Spec B end to end: the delete screen, the real emailed code, DELETE /api/me,
 // and an account that no longer exists afterwards.
-test('a member deletes their own account with the emailed code', async ({ page }) => {
+test('Z05 a member deletes their own account with the emailed code', async ({ page }) => {
   const { id, email, password } = await createContributor()
   await signIn(page, email, password)
   await expect(page).toHaveURL(/\/home$/)
