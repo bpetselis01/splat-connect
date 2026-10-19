@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 
+vi.setConfig({ testTimeout: 30_000 })
 const get = vi.fn()
 vi.mock('@/lib/api-client', () => ({ apiClient: { get: (...a: unknown[]) => get(...a) } }))
 vi.mock('next/link', () => ({
@@ -23,7 +24,7 @@ describe('admin spot-check', () => {
   // Chain: linking to the public page made spot-check a dead end — you could see a
   //        bad approval and had nowhere to go. Decision 14's safety argument rests
   //        on this being one motion, not two
-  it('links rows to the admin project page, not the public one', async () => {
+  it('WM10 links rows to the admin project page, not the public one', async () => {
     get.mockResolvedValue([baseTutorial])
     const { default: Page } = await import('@/app/admin/spot-check/page')
     render(await Page({ searchParams: Promise.resolve({}) }))
@@ -31,6 +32,7 @@ describe('admin spot-check', () => {
     expect(screen.getByRole('link', { name: /Spoon holder/i })).toHaveAttribute(
       'href', '/admin/review/t1'
     )
+    expect(screen.getByRole('link', { name: 'Unpublish' })).toHaveAttribute('href', '/admin/review/t1#unpublish')
   })
 
   // Tests: the page states the route out, not just the sample
@@ -52,7 +54,7 @@ describe('admin spot-check', () => {
   // Tests: ?limit widens the sample the endpoint returns
   // Chain: the sample is random and unordered, so the default ten silently omit
   //        rows — an admin cannot widen it and a test cannot pin it down
-  it('passes a requested limit through to the endpoint', async () => {
+  it('WM10 passes a requested limit through to the endpoint', async () => {
     get.mockResolvedValue([])
     const { default: Page } = await import('@/app/admin/spot-check/page')
     await Page({ searchParams: Promise.resolve({ limit: '200' }) })

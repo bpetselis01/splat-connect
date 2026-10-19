@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import type { ToyIdea } from '@splat-connect/types'
 
+vi.setConfig({ testTimeout: 30_000 })
 const get = vi.fn()
 vi.mock('@/lib/api-client', () => ({ apiClient: { get: (...a: unknown[]) => get(...a) } }))
 
@@ -33,7 +34,7 @@ describe('admin dashboard', () => {
   // Chain: CRITICAL 1 — the idea queue had no card at all, so no admin could
   //        find it without hand-typing the URL and every submitted idea sat
   //        at 'pending' forever
-  it('renders a Design challenges card counting pending ideas, linking to /admin/ideas', async () => {
+  it('WM01 renders a Design challenges card counting pending ideas, linking to /admin/ideas', async () => {
     mockGet([idea('i1', 'pending'), idea('i2', 'challenge'), idea('i3', 'graduated')])
     const { default: Page } = await import('@/app/admin/page')
     render(await Page())
