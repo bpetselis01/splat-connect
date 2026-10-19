@@ -57,7 +57,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 ### `admin-remove-confirm` — Removing an account as admin
 
-**Question:** Admin "Remove account" is one unconfirmed danger button; member self-delete needs a code and a typed phrase. Add the typed-phrase confirm?
+**Question:** Add the typed-phrase confirm to admin account removal? (requirements doc Q7)
 
 - Platforms: web
 - Needs: Whether admin removal gets the typed-phrase confirm.
@@ -81,7 +81,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 ### `dead-routes-and-handlers` — Code nobody can reach
 
-**Question:** `/not-built/[id]` has no inbound web link; `NotifyForm` and `POST /api/public/notify` are unreachable; `DELETE /tutorials/:id/build` has no web caller; `GET /api/public/map` has no web consumer; `exchangeActions` is fetched but never rendered; `POST /ideas/:id/constraints` and `GET /exchange-costs/mine` have no caller on either client. Delete or wire?
+**Question:** Delete or wire each unreachable route and handler? (requirements doc Q10)
 
 - Platforms: web, api
 - Needs: Per item, delete it with its tests or wire it to a screen.
@@ -89,7 +89,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 ### `admin-in-member-threads` — Admins inside member threads
 
-**Question:** Admin queues open member thread pages as a third party; accept/decline/confirm visibility for an admin is untested, and the `/dashboard` terms gate bounces an admin without terms. Hide the buttons and exempt admins?
+**Question:** What may an admin do inside a member's Exchange thread? (requirements doc Q11)
 
 - Platforms: web
 - Needs: Whether to hide the party buttons from admins and exempt admins from the terms gate.
@@ -97,7 +97,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 ### `admin-status-validation` — Guide status from the admin route
 
-**Question:** `PATCH /api/admin/tutorials/:id/status` accepts any status and notifies "rejected" for anything not `approved`. Validate to the two values?
+**Question:** Validate the admin guide-status route to its two values? (requirements doc Q12)
 
 - Platforms: api
 - Needs: Whether to validate the status to `approved` and `rejected`.
@@ -105,7 +105,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 ### `terms-gate-fails-open` — Terms gate when the check fails
 
-**Question:** The terms middleware fails open on a read error; only `POST /tutorials` re-checks at the API. Fail closed? Add API-side checks to toy, exchange and printer writes?
+**Question:** Should the terms gate fail closed, and which API writes re-check it? (requirements doc Q13)
 
 - Platforms: web, api
 - Needs: Whether the middleware fails closed, and whether toy, exchange and printer writes check terms in the API.
