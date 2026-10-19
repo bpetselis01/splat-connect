@@ -41,7 +41,7 @@ describe('EventRegisterScreen', () => {
     expect(screen.getByText('Northside Makers asks nothing else. Your name and email are enough.')).toBeTruthy()
   })
 
-  it('draws a control for every question type and submits the right answers shape', async () => {
+  it('V16 draws a control for every question type and submits the right answers shape', async () => {
     serve({ questions: QUESTIONS })
     render(<EventRegisterScreen id="e1" />)
     await screen.findByText('Questions from Northside Makers')
@@ -82,7 +82,7 @@ describe('EventRegisterScreen', () => {
     expect(screen.getByText('1 required question still to answer.')).toBeTruthy()
   })
 
-  it('a costed event needs the cost box ticked and sends the acknowledgement', async () => {
+  it('V16 a costed event needs the cost box ticked and sends the acknowledgement', async () => {
     serve({ cost_cents: 1200, cost_note: 'Filament and morning tea.' })
     render(<EventRegisterScreen id="e1" />)
     const box = await screen.findByRole('checkbox', { name: 'I know this costs $12.00' })
@@ -106,7 +106,7 @@ describe('EventRegisterScreen', () => {
     expect(mockPost.mock.calls[0][1]).not.toHaveProperty('cost_acknowledged')
   })
 
-  it('shows the server\'s full sentence inline and stays on the form', async () => {
+  it('V16 shows the server\'s full sentence inline and stays on the form', async () => {
     serve()
     mockPost.mockRejectedValue(new Error('Request failed with status 409: This one is full. The host may open more seats.'))
     render(<EventRegisterScreen id="e1" />)
