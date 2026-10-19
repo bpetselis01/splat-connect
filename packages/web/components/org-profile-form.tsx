@@ -441,6 +441,7 @@ export function OrgProfileForm({ org }: { org: Organization }) {
           </span>
           <input
             name="website_url"
+            type="url"
             defaultValue={org.website_url ?? ''}
             className="field"
             maxLength={300}
