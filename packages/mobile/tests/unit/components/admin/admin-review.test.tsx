@@ -102,7 +102,7 @@ describe('ReviewDetailScreen in admin mode', () => {
     expect(await screen.findByText('Admins only.')).toBeTruthy()
   })
 
-  it('blocks Unpublish on an approved guide without a note, then sends rejected with it', async () => {
+  it('Q49 blocks Unpublish on an approved guide without a note, then sends rejected with it', async () => {
     mockGet.mockImplementation((path: string) =>
       path === '/api/tutorials/t1' ? Promise.resolve({ ...detail, status: 'approved' }) : Promise.reject(new Error(`unexpected GET ${path}`))
     )
