@@ -4,7 +4,6 @@
  * printer accepts — in the same database call as the accept, re-checking the
  * balance, once per job.
  */
-// journeys: L13 R03 V04
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createUserClient } from '../../../src/supabase/client.js'
@@ -134,7 +133,7 @@ describe('asking with credit', () => {
     expect(((await res.json()) as { error: string }).error).toBe('This guide does not say how much filament its parts take, so credit cannot be used on it.')
   })
 
-  it('stores the credit only on that organisation’s rows, and the database refuses it elsewhere', async () => {
+  it('R03 stores the credit only on that organisation’s rows, and the database refuses it elsewhere', async () => {
     const res = await ask(0, [printers.a1, printers.maker], { print_credit: { org_id: orgA, grams: 100 } })
     expect(res.status).toBe(201)
     expect((await jobOn(0, printers.a1)).print_credit_grams).toBe(100)

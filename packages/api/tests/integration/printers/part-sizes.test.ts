@@ -1,5 +1,4 @@
 /** 097. Part sizes per STL file, backed by a CHECK. */
-// journeys: T15
 import { describe, it, expect } from 'vitest'
 import app from '../../../src/app.js'
 import { adminClient, createTestUser, deleteTestUser } from '../../helpers/auth.js'
@@ -26,7 +25,7 @@ describe('097 stl part sizes', () => {
 // Fix: the PATCH writes only the settings it is sent. The phone's Save sizes
 // sends the three sizes; before this it nulled the grams, minutes and material.
 describe('PATCH an STL file with only a size', () => {
-  it('leaves the other settings as they were', async () => {
+  it('T15 leaves the other settings as they were', async () => {
     const author = await createTestUser('contributor')
     const admin = adminClient()
     const { data: t } = await admin

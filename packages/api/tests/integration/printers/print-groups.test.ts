@@ -1,4 +1,3 @@
-// journeys: R03 R06 R18
 /**
  * One request, up to three printers (074).
  *
@@ -84,7 +83,7 @@ describe('asking several printers', () => {
     expect(res.status).toBe(400)
   })
 
-  it('sends one job per printer, sharing a group, with colour and delivery on each', async () => {
+  it('R03 sends one job per printer, sharing a group, with colour and delivery on each', async () => {
     const res = await ask([printers.a, printers.b], { colour: 'Blue', delivery: 'post' })
     expect(res.status).toBe(201)
     const body = (await res.json()) as { print_group_id: string; transactions: Array<Record<string, any>> }
@@ -142,7 +141,7 @@ describe('asking several printers', () => {
 })
 
 describe('the family withdrawing', () => {
-  it('withdraws the whole request, and the list says how many were asked', async () => {
+  it('R06 R18 withdraws the whole request, and the list says how many were asked', async () => {
     const admin = adminClient()
     // Free a and b from the earlier accepted job so they can be asked again.
     await admin.from('toy_transactions').update({ status: 'completed' }).eq('tutorial_id', tutorialId).eq('status', 'accepted')
