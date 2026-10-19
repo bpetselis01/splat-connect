@@ -49,7 +49,7 @@ afterAll(async () => {
 })
 
 describe('113 recycling details', () => {
-  it('L15 lets a leader publish them, and anyone read them', async () => {
+  it('L15 WB29 lets a leader publish them, and anyone read them', async () => {
     const res = await patch(DETAILS)
     expect(res.status).toBe(200)
     expect(await res.json()).toMatchObject(DETAILS)

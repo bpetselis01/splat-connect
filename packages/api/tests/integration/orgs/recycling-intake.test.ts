@@ -48,7 +48,7 @@ describe('weighing in', () => {
     expect(((await res.json()) as { error: string }).error).toBe('Under the 2 kg minimum — log it as a donation or hand it back.')
   })
 
-  it('L13 stores the credit the leader entered, not three quarters', async () => {
+  it('L13 WB27 stores the credit the leader entered, not three quarters', async () => {
     const res = await app.request(
       `/api/organizations/${orgId}/recycling/${dropId}`,
       json(leader.token, 'PATCH', { status: 'received', weighed_grams: 2600, credit_grams: 2100 })

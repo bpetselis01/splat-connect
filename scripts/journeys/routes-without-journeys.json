@@ -11,8 +11,6 @@
   "web /auth/confirmed": "TODO: not yet inventoried",
   "web /code-of-conduct": "TODO: not yet inventoried",
   "web /contact": "TODO: not yet inventoried",
-  "web /dashboard/organisation/profile": "TODO: not yet inventoried",
-  "web /dashboard/organisation/recycling": "TODO: not yet inventoried",
   "web /delete-account": "TODO: not yet inventoried",
   "web /design-system": "internal component gallery, not a user journey",
   "web /design-system/states": "internal component gallery, not a user journey",

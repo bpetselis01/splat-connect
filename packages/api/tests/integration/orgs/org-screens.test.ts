@@ -269,7 +269,7 @@ describe('recycling intake', () => {
     expect(res.status).toBe(400)
   })
 
-  it('lets the leader weigh it in', async () => {
+  it('WB27 lets the leader weigh it in', async () => {
     const res = await app.request(
       `/api/organizations/${orgId}/recycling/${dropoffId}`,
       json(leader.token, 'PATCH', {

@@ -63,7 +63,7 @@ afterAll(async () => {
 })
 
 describe('the profile, doors and breakdown', () => {
-  it('L23 lets a leader write the 076 fields and shows them publicly', async () => {
+  it('L23 WB30 lets a leader write the 076 fields and shows them publicly', async () => {
     const res = await app.request(
       `/api/organizations/${orgId}/profile`,
       json(leader.token, 'PATCH', {
@@ -135,7 +135,7 @@ describe('the profile, doors and breakdown', () => {
     expect(after!.verified_at).not.toBeNull()
   })
 
-  it('L23 replaces doors and rate lines for a leader only, at most six doors', async () => {
+  it('L23 WB30 replaces doors and rate lines for a leader only, at most six doors', async () => {
     const doors = [
       { title: 'Borrow a toy', body: 'From the shelf.', target: 'toy_library' },
       { title: 'Have a part printed', target: 'print' },
@@ -167,7 +167,7 @@ describe('the profile, doors and breakdown', () => {
     expect(pub.kind).toBe('Paediatric OT service')
   })
 
-  it('uploads a logo for a leader only, and only an image', async () => {
+  it('WB31 uploads a logo for a leader only, and only an image', async () => {
     const send = (token: string, type = 'image/png') => {
       const fd = new FormData()
       fd.append('file', new File(['png-bytes'], 'logo.png', { type }))
@@ -216,7 +216,7 @@ describe('say thanks', () => {
     expect(raw).not.toContain('Private word')
   })
 
-  it('L24 lets a leader hide a note, and nobody else', async () => {
+  it('L24 WB32 lets a leader hide a note, and nobody else', async () => {
     const byOther = await app.request(
       `/api/organizations/${orgId}/thanks/${family.id}`,
       json(stranger.token, 'PATCH', { hidden: true })
