@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-=======
 import { AGREEMENT_VERSIONS } from '@splat-connect/types'
-// journeys: Z01 Z02 Z04 Z10
->>>>>>> 9c2fea05 (test: read agreement versions from AGREEMENT_VERSIONS, not a literal)
 import { CLEARANCE, scrollPaddings } from '../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { Linking } from 'react-native'
