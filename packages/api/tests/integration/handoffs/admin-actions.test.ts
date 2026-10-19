@@ -1,4 +1,3 @@
-// journeys: C01 C10 C12 R01 R15
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { VERIFIED_MIN_JOBS } from '@splat-connect/types'
 import app from '../../../src/app.js'

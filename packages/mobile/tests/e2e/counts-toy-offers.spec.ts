@@ -1,4 +1,3 @@
-// journeys: W03 W04 W09 W12
 import { test, expect } from '@playwright/test'
 import {
   adminClient,
