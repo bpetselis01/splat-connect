@@ -1,4 +1,3 @@
-// journeys: T12
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -30,7 +29,7 @@ describe('090 tutorial_safety_notes', () => {
     expect((await adminClient().from('tutorial_safety_notes').select('id, position, title, detail').limit(1)).error).toBeNull()
   })
 
-  it('saves the list in order and serves it in both detail reads', async () => {
+  it('T12 saves the list in order and serves it in both detail reads', async () => {
     const res = await post(author.token, [
       { title: 'Fluid and electronics share the enclosure', detail: 'The relay must sit above the waterline.' },
       { title: 'Battery door must be screwed shut' },

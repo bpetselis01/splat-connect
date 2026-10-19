@@ -1,4 +1,3 @@
-// journeys: T09
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -29,7 +28,7 @@ describe('086 part prices', () => {
     expect((await adminClient().from('tutorials').select('prices_checked_on').limit(1)).error).toBeNull()
   })
 
-  it('saves a line price in cents, and no price as null', async () => {
+  it('T09 saves a line price in cents, and no price as null', async () => {
     const res = await postParts([
       { name: 'Relay module', quantity: 1, is_optional: false, buy_links: [], price_cents: 600 },
       { name: 'Big button', quantity: 1, is_optional: false, buy_links: [] },

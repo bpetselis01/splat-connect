@@ -1,4 +1,3 @@
-// journeys: B04 G23 G24 G26 G28
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -37,7 +36,7 @@ afterAll(async () => {
 describe('093 tutorial_notes', () => {
   let noteId: string
 
-  it('takes a note against a step, notifies the authors and leaves the guide’s token alone', async () => {
+  it('B04 G23 takes a note against a step, notifies the authors and leaves the guide’s token alone', async () => {
     const before = await stamp()
     const res = await send('POST', `/api/tutorials/${guide}/notes`, parent.token, { step_position: 2, body: 'Step 2 needs a second zip tie.' })
     expect(res.status).toBe(201)
@@ -60,7 +59,7 @@ describe('093 tutorial_notes', () => {
     expect((await send('POST', `/api/tutorials/${draft}/notes`, parent.token, { step_position: null, body: 'x' })).status).toBe(404)
   })
 
-  it('lets only a contributor pin, and pinning names who did it', async () => {
+  it('G26 lets only a contributor pin, and pinning names who did it', async () => {
     expect((await send('POST', `/api/tutorials/${guide}/notes/${noteId}/pin`, parent.token)).status).toBe(403)
     expect((await send('POST', `/api/tutorials/${guide}/notes/${noteId}/pin`, author.token)).status).toBe(200)
     const notes = (await (await app.request(`/api/public/tutorials/${guide}/notes`)).json()) as { pinned_by: string; pinned_at: string | null }[]
@@ -68,7 +67,7 @@ describe('093 tutorial_notes', () => {
     expect((await send('POST', `/api/tutorials/${guide}/notes/${noteId}/unpin`, author.token)).status).toBe(200)
   })
 
-  it('lets only the note’s author delete it', async () => {
+  it('G28 lets only the note’s author delete it', async () => {
     expect((await send('DELETE', `/api/tutorials/${guide}/notes/${noteId}`, author.token)).status).toBe(404)
     expect((await send('DELETE', `/api/tutorials/${guide}/notes/${noteId}`, parent.token)).status).toBe(204)
   })
@@ -118,7 +117,7 @@ describe('093 review fixes', () => {
     await adminClient().from('tutorial_notes').delete().eq('id', data!.id)
   })
 
-  it('stores a note photo under the published guide’s notes folder, and reads it back as a working URL', async () => {
+  it('G24 stores a note photo under the published guide’s notes folder, and reads it back as a working URL', async () => {
     const png = new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47])], '../../evil.svg', { type: 'image/png' })
     expect((await upload(draft, png)).status).toBe(404)
     const res = await upload(guide, png)
