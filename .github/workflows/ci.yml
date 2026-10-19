@@ -147,6 +147,16 @@ jobs:
       - name: Run mobile E2E tests
         run: pnpm --filter @splat-connect/mobile test:e2e
 
+      # Traces and page snapshots of what failed; without them a CI-only
+      # failure is a test name and a timeout.
+      - name: Upload mobile E2E failures
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-e2e-test-results
+          path: packages/mobile/test-results
+          retention-days: 7
+
       - name: Stop local Supabase
         if: always()
         run: supabase stop --no-backup
@@ -172,6 +182,16 @@ jobs:
 
       - name: Run web E2E tests
         run: pnpm --filter @splat-connect/web test:e2e
+
+      # Traces and page snapshots of what failed; without them a CI-only
+      # failure is a test name and a timeout.
+      - name: Upload web E2E failures
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-e2e-test-results
+          path: packages/web/test-results
+          retention-days: 7
 
       - name: Stop local Supabase
         if: always()
