@@ -1,5 +1,4 @@
 // A failed toy-library load says so, retries on Try again, and never hits console.error.
-// journeys: Y01
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { ToyLibraryScreen } from '../../../../components/toys/toy-library-screen'
 
@@ -12,7 +11,7 @@ jest.mock('../../../../lib/saves', () => ({
 }))
 jest.mock('../../../../lib/capabilities', () => ({ useCapabilities: () => ({ caps: null, loading: false, refresh: jest.fn() }) }))
 
-it('offline: says so, Try again re-fetches and shows the toys', async () => {
+it('Y01 offline: says so, Try again re-fetches and shows the toys', async () => {
   const errSpy = jest.spyOn(console, 'error')
   let down = true
   mockGet.mockImplementation((p: string) =>
