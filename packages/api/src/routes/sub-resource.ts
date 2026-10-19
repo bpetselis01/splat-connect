@@ -30,6 +30,9 @@ export function subResourceRoutes<Item>(opts: {
   /** Checked before the old list is deleted, so a refused list changes nothing.
    *  Returns the 400's sentence, or null. */
   validate?: (items: Item[]) => string | null
+  /** 23503 on the insert means no such guide, unless a row's own foreign key
+   *  (a recommended guide) could be the one that failed. */
+  unknownGuideIs404?: boolean
 }) {
   const router = new Hono<{ Variables: AuthVariables }>()
 
@@ -48,6 +51,7 @@ export function subResourceRoutes<Item>(opts: {
 
     const { data, error } = await supabase.from(opts.table).insert(rows).select()
     // 23514: a CHECK refused a value. 42501: RLS refused — not this guide's contributor.
+    if (error?.code === '23503' && opts.unknownGuideIs404) return c.json({ error: 'Not found' }, 404)
     if (error) return c.json({ error: error.message }, error.code === '23514' ? 400 : error.code === '42501' ? 403 : 500)
     return c.json(data, 201)
   })

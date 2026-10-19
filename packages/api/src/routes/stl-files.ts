@@ -24,6 +24,7 @@ const router = subResourceRoutes<StlFileInput>({
   path: 'stl-files',
   table: 'stl_files',
   bodyKey: 'stl_files',
+  unknownGuideIs404: true,
   mapRow: (f, tutorialId) => ({
     tutorial_id: tutorialId,
     filename: f.filename,

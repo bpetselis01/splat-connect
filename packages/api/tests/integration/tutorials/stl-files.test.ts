@@ -66,11 +66,10 @@ describe('POST /api/tutorials/:id/stl-files', () => {
     expect(await filenames(guide)).toEqual(['c.stl'])
   })
 
-  // Current behaviour: the insert trips the tutorial_id foreign key, which the route reports as a 500, not a 404.
-  it('answers 500 for a Guide that does not exist', async () => {
+  it('answers 404 for a Guide that does not exist, as the other Guide routes do', async () => {
     const res = await call('POST', crypto.randomUUID(), owner.token, { stl_files: [{ filename: 'x.stl', file_url: 'x/x.stl' }] })
-    expect(res.status).toBe(500)
-    expect(await res.json()).toEqual({ error: 'insert or update on table "stl_files" violates foreign key constraint "stl_files_tutorial_id_fkey"' })
+    expect(res.status).toBe(404)
+    expect(await res.json()).toEqual({ error: 'Not found' })
   })
 })
 
