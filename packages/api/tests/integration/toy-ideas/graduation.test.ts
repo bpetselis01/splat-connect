@@ -41,7 +41,7 @@ function asAdmin() {
 }
 
 describe('POST /api/admin/ideas/:id/graduate', () => {
-  it('creates a draft tutorial with the author primary and joiners as collaborators', async () => {
+  it('Q30 creates a draft tutorial with the author primary and joiners as collaborators', async () => {
     const res = await app.request(`/api/admin/ideas/${ideaId}/graduate`, asAdmin())
     expect(res.status).toBe(201)
     tutorialId = ((await res.json()) as { tutorial_id: string }).tutorial_id
@@ -174,7 +174,7 @@ describe('POST /api/admin/ideas/:id/graduate', () => {
   //        participant with idea_graduated, using the same removed_at is
   //        null filter as Fix 2 so a removed participant is not notified
   //        about the guide they were excluded from either.
-  it('notifies the author and current participants with idea_graduated, excluding a removed participant', async () => {
+  it('Q30 notifies the author and current participants with idea_graduated, excluding a removed participant', async () => {
     const { data: notifications } = await adminClient()
       .from('notifications')
       .select('recipient_id, type, idea_id')
