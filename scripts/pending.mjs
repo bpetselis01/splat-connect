@@ -45,8 +45,13 @@ export function references() {
   return refs
 }
 
+// An open decision with a question is Byron's call to make before any code
+// exists, so it needs no code reference. The drift test shares this rule.
+export const needsNoCodeSite = (i) => !i.shipped && i.kind === 'decision' && !!i.question
+
 const KINDS = [
   ['decision', 'Decisions — Byron’s calls, asked first in sub-project 4'],
+  ['decision-no-code', 'Decisions with no code site yet — Byron’s calls, nothing in the code to change until he answers'],
   ['setup', 'Setup — needs Byron’s accounts'],
   ['content', 'Content — needs words or facts from a person'],
   ['build', 'Build — code only'],
@@ -64,7 +69,11 @@ export function render() {
     'Finishing one: do the work at each reference, delete the references, set `shipped: true`, re-run the script.',
   ]
   for (const [kind, heading] of KINDS) {
-    const items = open.filter(([, i]) => i.kind === kind)
+    const items = open.filter(([id, i]) =>
+      kind === 'decision-no-code'
+        ? needsNoCodeSite(i) && !refs.has(id)
+        : i.kind === kind && !(kind === 'decision' && needsNoCodeSite(i) && !refs.has(id)),
+    )
     if (!items.length) continue
     lines.push('', `## ${heading}`, '')
     for (const [id, i] of items) {
