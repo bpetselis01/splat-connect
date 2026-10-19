@@ -55,6 +55,7 @@ Once an event or story is saved, a leader cannot open it again — on web or the
 - Web unit/e2e as the repo has them for the forms; mobile jest for the two screens in edit mode (fills from the loaded row, PATCHes, consent unticked).
 - Full `npx jest` in packages/mobile; `scripts/verify-plan.sh --run`.
 
-## Follow-ups (not built)
-- Tell registered families when a posted event's time, place or cancellation changes (new notification type).
-- `tests/unit/lib/failure-state-guard.test.ts` matches `apiClient.get` on one line only; `apiClient\n  .get` slips past. Widening the regex flags ~30 existing mobile screens with no failure test.
+## Follow-ups
+- Done 2026-10-19 (623e6326): registered families are told when a published event's time or place changes, or it is cancelled — migration 138, which hosted still needs (`supabase db push`).
+- Done 2026-10-19 (02079800 and the eight fix commits before it): the failure-state guard sees a chained `apiClient\n  .get`; the 29 screens it then found each have a failure test or a reasoned exemption, and eight gained a Try again they lacked.
+- Done 2026-10-19 (e89b86ac): web e2e for both edit pages.
