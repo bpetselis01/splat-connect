@@ -298,7 +298,7 @@ describe('useAuth', () => {
     mockGetSession.mockResolvedValue({ data: { session: { access_token: 't', user: { id: 'u1' } } } })
     mockApiGet.mockImplementation((path: string) =>
       path === '/api/agreements/me'
-        ? Promise.resolve([{ agreement_type: 'contributor_terms', version: 'v0-todo' }])
+        ? Promise.resolve([{ agreement_type: 'contributor_terms', version: AGREEMENT_VERSIONS.contributor_terms }])
         : Promise.resolve({ id: 'u1', name: 'Ada', role: 'contributor' })
     )
 

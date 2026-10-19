@@ -1,3 +1,4 @@
+import { AGREEMENT_VERSIONS } from '@splat-connect/types'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 
@@ -47,7 +48,7 @@ const route = (mine: unknown[]) => (path: string) =>
   Promise.resolve(
     path === '/api/organizations/mine' ? mine
       : path === '/api/tutorials' ? tutorials
-      : path === '/api/agreements/me' ? [{ id: 'a', user_id: 'u', agreement_type: 'org_leader_terms', version: 'v0-todo', accepted_at: '' }]
+      : path === '/api/agreements/me' ? [{ id: 'a', user_id: 'u', agreement_type: 'org_leader_terms', version: AGREEMENT_VERSIONS.org_leader_terms, accepted_at: '' }]
       : theOrg
   )
 

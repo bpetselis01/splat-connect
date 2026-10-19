@@ -1,3 +1,4 @@
+import { AGREEMENT_VERSIONS } from '@splat-connect/types'
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 
@@ -45,7 +46,7 @@ vi.mock('@/lib/api-client', () => ({
           },
         ]
       }
-      if (path === '/api/agreements/me') return [{ agreement_type: 'org_leader_terms', version: 'v0-todo' }]
+      if (path === '/api/agreements/me') return [{ agreement_type: 'org_leader_terms', version: AGREEMENT_VERSIONS.org_leader_terms }]
       throw new Error(`unexpected ${path}`)
     },
   },

@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+=======
+import { AGREEMENT_VERSIONS } from '@splat-connect/types'
+// journeys: A11
+>>>>>>> 9c2fea05 (test: read agreement versions from AGREEMENT_VERSIONS, not a literal)
 import { describe, it, expect, afterAll } from 'vitest'
 import { adminClient } from '../../helpers/auth.js'
 
@@ -27,7 +32,7 @@ describe('signup-time contributor terms acceptance', () => {
       email,
       password: 'Test1234!',
       email_confirm: true,
-      user_metadata: { contributor_terms_version: 'v0-todo' },
+      user_metadata: { contributor_terms_version: AGREEMENT_VERSIONS.contributor_terms },
     })
     expect(error).toBeNull()
     userId = data.user?.id
@@ -39,7 +44,7 @@ describe('signup-time contributor terms acceptance', () => {
       .eq('user_id', userId!)
 
     expect(agreementsError).toBeNull()
-    expect(agreements).toEqual([{ agreement_type: 'contributor_terms', version: 'v0-todo' }])
+    expect(agreements).toEqual([{ agreement_type: 'contributor_terms', version: AGREEMENT_VERSIONS.contributor_terms }])
   })
 
   it('records nothing when the metadata key is absent (existing accounts, admin-created users)', async () => {

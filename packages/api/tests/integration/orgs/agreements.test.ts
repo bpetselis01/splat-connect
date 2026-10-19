@@ -33,7 +33,7 @@ describe('POST /api/agreements', () => {
     const row = (await res.json()) as { user_id: string; version: string }
     // The forged version in the body is ignored — the server picks it, so a
     // client cannot claim acceptance of terms that were never published.
-    expect(row.version).toBe('v0-todo')
+    expect(row.version).toBe(AGREEMENT_VERSIONS.contributor_terms)
     expect(row.user_id).toBe(user.id)
   })
 
@@ -64,7 +64,7 @@ describe('version-aware acceptance (139)', () => {
     for (const type of Object.keys(AGREEMENT_VERSIONS) as AgreementType[]) {
       const { data, error } = await adminClient().rpc('current_agreement_version', { p_agreement_type: type })
       expect(error).toBeNull()
-      expect(data, type).toBe(AGREEMENT_VERSIONS[type])
+      expect(data, type).toBe(AGREEMENT_VERSIONS.contributor_terms)
     }
   })
 
