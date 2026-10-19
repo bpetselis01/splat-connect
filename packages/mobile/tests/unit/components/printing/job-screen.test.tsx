@@ -118,6 +118,27 @@ it('R10 asks the family whether it fitted once collected', async () => {
   await waitFor(() => expect(mockInvalidate).toHaveBeenCalledTimes(1))
 })
 
+it('R11 thanks the printer through the contributor route, naming the job and carrying the note', async () => {
+  serve(job({ status: 'completed' }))
+  mockPost.mockResolvedValue({ thanks_count: 1 })
+  render(<PrintJobScreen id="j1" />)
+  fireEvent.press(await screen.findByText('Say thanks to the printer'))
+  fireEvent.changeText(screen.getByLabelText('Thank-you note'), 'It fits perfectly')
+  fireEvent.press(screen.getByText('Send thanks'))
+  await waitFor(() =>
+    expect(mockPost).toHaveBeenCalledWith('/api/contributors/maker/thanks', { note: 'It fits perfectly', transaction_id: 'j1' })
+  )
+  expect(await screen.findByText('Thanks sent — they will see it in their notifications')).toBeTruthy()
+})
+
+it('R11 thanks an organisation printer through the organisation route', async () => {
+  serve(job({ status: 'completed', owner_id: 'leader', owner_org_id: 'org1' }))
+  mockPost.mockResolvedValue({ thanks_count: 1 })
+  render(<PrintJobScreen id="j1" />)
+  fireEvent.press(await screen.findByText('Say thanks to the printer'))
+  await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/organizations/org1/thanks', {}))
+})
+
 it('R04 shows the family the printer’s record on the printer card', async () => {
   mockGet.mockImplementation((path: string) =>
     path === '/api/toy-transactions/j1'
