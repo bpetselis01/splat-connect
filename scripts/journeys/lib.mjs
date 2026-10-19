@@ -225,3 +225,44 @@ export function renderDoc(journeys, cov, legacyCount, routesWithout) {
     ]),
   ].join('\n')
 }
+
+// Every route the API serves, as '/api/<mount>/<path>' with each :param collapsed to ':'.
+// readSrc(repo-relative path) returns the file's text or null. A mount is an
+// `app.route('/api/x', ident)` line in app.ts; the shared sub-resource routers take their
+// segment from the `path: '...'` option that fills `${opts.path}`.
+export function apiRoutes(readSrc) {
+  const app = readSrc('packages/api/src/app.ts') ?? ''
+  const files = Object.fromEntries([...app.matchAll(/import (\w+) from '\.\/routes\/([\w-]+)\.js'/g)].map((m) => [m[1], m[2]]))
+  const routes = new Set()
+  for (const [, prefix, ident] of app.matchAll(/app\.route\('(\/api(?:\/[\w-]+)?)', (\w+)\)/g)) {
+    const own = readSrc(`packages/api/src/routes/${files[ident]}.ts`) ?? ''
+    const text = own.includes('subResourceRoutes') ? own + (readSrc('packages/api/src/routes/sub-resource.ts') ?? '') : own
+    const segment = text.match(/\bpath: '([\w-]+)'/)?.[1] ?? ''
+    for (const [, raw] of text.matchAll(/\b\w+\.(?:get|post|put|patch|delete|all)\(\s*[`'"]([^`'"]*)[`'"]/g)) {
+      const path = raw.replace('${opts.path}', segment).replace(/:\w+(\{[^}]*\})?/g, ':')
+      routes.add(prefix + (path === '/' ? '' : path.replace(/\/$/, '')))
+    }
+  }
+  return routes
+}
+
+// shortcut: a path that is a whole-segment prefix of a real route passes, so rows may abbreviate
+// ("/api/organizations/:orgId/events" for ".../events|stories/:id"); an entry with no "/api" token
+// (relative "…/accept" shorthand) is not checked. Tighten when the rows are all spelled out.
+export function apiPathsExist(rows, readSrc) {
+  const routes = [...apiRoutes(readSrc)].map((r) => r.split('/'))
+  const same = (a, b) => a === b || a === ':' || b === ':'
+  const errors = []
+  for (const row of rows) {
+    for (const entry of row.api ?? []) {
+      if (/^Supabase\b/.test(entry)) continue
+      for (const [token] of entry.matchAll(/\/api(?:\/[\w:-]+)+/g)) {
+        const want = token.replace(/:\w+/g, ':').split('/')
+        if (!routes.some((have) => want.every((seg, i) => have[i] !== undefined && same(seg, have[i])))) {
+          errors.push(`${row.id}: api path ${token} matches no route in packages/api/src/routes`)
+        }
+      }
+    }
+  }
+  return errors
+}

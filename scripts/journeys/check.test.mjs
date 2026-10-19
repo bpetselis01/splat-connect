@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { parseTags, fileClaims, legacyErrors, coverage, renderDoc, validateRows, routesFromFiles, routeTripwire } from './lib.mjs'
+import { parseTags, fileClaims, legacyErrors, coverage, renderDoc, validateRows, routesFromFiles, routeTripwire, apiPathsExist } from './lib.mjs'
 
 const J = [
   { id: 'G23', platform: 'mobile', route: 'r', kind: 'write', device: false, required: ['mobile-unit', 'mobile-e2e', 'api'], seat: 'P', screen: 's', element: 'e', api: ['POST /x'], db: [], notifies: [], counts: [], setter: 'n/a' },
@@ -243,4 +243,24 @@ test('routeTripwire flags unsorted opt-out keys and empty reasons', () => {
   const routes = { web: ['/a', '/b'], mobile: [] }
   assert.deepEqual(routeTripwire([], routes, { 'web /b': 'x', 'web /a': 'x' }), ['routes-without-journeys.json: web /a is out of order'])
   assert.deepEqual(routeTripwire([], { web: ['/a'], mobile: [] }, { 'web /a': ' ' }), ['routes-without-journeys.json: web /a needs a reason'])
+})
+
+const SRC = {
+  'packages/api/src/app.ts': "import admin from './routes/admin.js'\nimport parts from './routes/parts.js'\napp.route('/api/admin', admin)\napp.route('/api/tutorials', parts)",
+  'packages/api/src/routes/admin.ts': "admin.get('/tutorials', h)\nadmin.patch('/ideas/:id/status', h)",
+  'packages/api/src/routes/parts.ts': "export default subResourceRoutes({ path: 'parts' })",
+  'packages/api/src/routes/sub-resource.ts': 'router.post(`/:id/${opts.path}`, h)',
+}
+const readSrc = (file) => SRC[file] ?? null
+const withApi = (...api) => [{ id: 'Q99', api }]
+
+test('apiPathsExist accepts a mounted route, a sub-resource route, a renamed param and Supabase entries', () => {
+  assert.deepEqual(apiPathsExist(withApi('GET /api/admin/tutorials?status=pending', 'PATCH /api/admin/ideas/:ideaId/status', 'POST /api/tutorials/:id/parts', 'Supabase auth', 'POST …/accept'), readSrc), [])
+})
+
+test('apiPathsExist names a path that no route serves, with its row', () => {
+  assert.deepEqual(apiPathsExist(withApi('GET /api/recycling/credit', 'PATCH /api/admin/ideas/:id/state'), readSrc), [
+    'Q99: api path /api/recycling/credit matches no route in packages/api/src/routes',
+    'Q99: api path /api/admin/ideas/:id/state matches no route in packages/api/src/routes',
+  ])
 })

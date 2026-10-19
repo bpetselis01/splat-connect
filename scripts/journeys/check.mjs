@@ -5,7 +5,7 @@
 import { readFileSync, writeFileSync, globSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { LAYERS, fileClaims, legacyErrors, coverage, renderDoc, validateRows, routesFromFiles, routeTripwire } from './lib.mjs'
+import { LAYERS, fileClaims, legacyErrors, coverage, renderDoc, validateRows, routesFromFiles, routeTripwire, apiPathsExist } from './lib.mjs'
 import { yamlName } from './titles.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
@@ -20,6 +20,11 @@ const routes = routesFromFiles(globSync('packages/{web,mobile}/app/**/*.tsx', { 
 const routeErrors = routeTripwire(journeys, routes, optOuts)
 if (routeErrors.length) {
   for (const e of routeErrors) console.error(e)
+  process.exit(1)
+}
+const apiErrors = apiPathsExist(journeys, (file) => { try { return readFileSync(resolve(root, file), 'utf8') } catch { return null } })
+if (apiErrors.length) {
+  for (const e of apiErrors) console.error(e)
   process.exit(1)
 }
 const placeholders = Object.values(optOuts).filter((r) => r.startsWith('TODO:')).length
