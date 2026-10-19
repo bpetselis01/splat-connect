@@ -45,7 +45,7 @@ vi.mock('@/lib/api-client', () => ({
           },
         ]
       }
-      if (path === '/api/agreements/me') return [{ agreement_type: 'org_leader_terms' }]
+      if (path === '/api/agreements/me') return [{ agreement_type: 'org_leader_terms', version: 'v0-todo' }]
       throw new Error(`unexpected ${path}`)
     },
   },

@@ -1102,9 +1102,17 @@ export type AgreementType = 'contributor_terms' | 'org_leader_terms'
 // the spec's §6). Any acceptance recorded at this version is void and its rows
 // should be discarded when real terms land.
 // PENDING(terms-version): contributor_terms is still 'v0-todo' until the final terms ship.
+// Bump with a migration that changes public.current_agreement_version to match.
 export const AGREEMENT_VERSIONS: Record<AgreementType, string> = {
   contributor_terms: 'v0-todo',
   org_leader_terms: 'v0-todo',
+}
+
+/** True when `rows` hold an acceptance of the CURRENT version of `type`. An
+ *  older version does not count, so bumping AGREEMENT_VERSIONS asks everyone
+ *  again. SQL's has_accepted (139) applies the same rule. */
+export function hasCurrentAgreement(rows: Pick<UserAgreement, 'agreement_type' | 'version'>[], type: AgreementType) {
+  return rows.some((r) => r.agreement_type === type && r.version === AGREEMENT_VERSIONS[type])
 }
 
 export interface Organization {

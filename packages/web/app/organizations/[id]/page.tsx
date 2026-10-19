@@ -30,6 +30,7 @@ import { OrgReviewBanner } from '@/components/org-review-banner'
 import { Badge } from '@/components/badge'
 import { BackingBadge } from '@/components/backing-state'
 import { BookOpen, Tray } from '@phosphor-icons/react/dist/ssr'
+import { hasCurrentAgreement } from '@splat-connect/types'
 import type { Tutorial, TutorialOrg, UserAgreement, Organization, OrgLeader } from '@splat-connect/types'
 
 type Backed = Tutorial & { tutorial_orgs?: TutorialOrg[] }
@@ -64,7 +65,7 @@ export default async function OrganizationPage({
     apiClient.get<Backed[]>('/api/tutorials').catch(() => [] as Backed[]),
     apiClient.get<UserAgreement[]>('/api/agreements/me').catch(() => [] as UserAgreement[]),
   ])
-  const hasTerms = agreements.some((a) => a.agreement_type === 'org_leader_terms')
+  const hasTerms = hasCurrentAgreement(agreements, 'org_leader_terms')
   const rowFor = (t: Backed) => t.tutorial_orgs?.find((b) => b.org_id === orgId)
 
   // ONE queue, oldest first. Two sections put the leader in the position of

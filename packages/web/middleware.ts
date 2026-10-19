@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
+import { AGREEMENT_VERSIONS } from '@splat-connect/types'
 
 /**
  * The root layout decides whether to render the app shell, and a server layout
@@ -99,6 +100,7 @@ export async function middleware(request: NextRequest) {
       .select('id')
       .eq('user_id', user.id)
       .eq('agreement_type', 'contributor_terms')
+      .eq('version', AGREEMENT_VERSIONS.contributor_terms)
       .limit(1)
 
     // Err open on failure. This gate is UX; packages/api/src/routes/tutorials.ts:132

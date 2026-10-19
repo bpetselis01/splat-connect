@@ -23,7 +23,7 @@ import { ActingOrgSwitcher } from '@/components/acting-org-switcher'
 import { actingOrg } from '@/lib/acting-org'
 import { OrgReviewBanner } from '@/components/org-review-banner'
 import { BoundaryLink } from '@/components/boundary-link'
-import { shortDate } from '@splat-connect/types'
+import { shortDate, hasCurrentAgreement } from '@splat-connect/types'
 import {
   BookOpen,
   Check,
@@ -47,7 +47,7 @@ export default async function OrganisationTabPage() {
     apiClient.get<Backed[]>('/api/tutorials').catch(() => [] as Backed[]),
     apiClient.get<UserAgreement[]>('/api/agreements/me').catch(() => [] as UserAgreement[]),
   ])
-  const hasTerms = agreements.some((a) => a.agreement_type === 'org_leader_terms')
+  const hasTerms = hasCurrentAgreement(agreements, 'org_leader_terms')
   const acting = await actingOrg(caps)
   const byId = new Map(caps.ledOrgs.map((o) => [o.id, o]))
 

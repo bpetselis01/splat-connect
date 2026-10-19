@@ -2,6 +2,8 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
+import { createUserClient } from '../../../src/supabase/client.js'
+import { AGREEMENT_VERSIONS, type AgreementType } from '@splat-connect/types'
 
 let user: TestUser
 let other: TestUser
@@ -17,7 +19,7 @@ beforeAll(async () => {
 })
 
 afterAll(async () => {
-  await adminClient().from('user_agreements').delete().eq('user_id', user.id)
+  await adminClient().from('user_agreements').delete().in('user_id', [user.id, other.id])
   await deleteTestUser(user.id)
   await deleteTestUser(other.id)
 })
@@ -52,5 +54,27 @@ describe('GET /api/agreements/me', () => {
 
     const theirs = await app.request('/api/agreements/me', authed(other.token))
     expect(((await theirs.json()) as unknown[]).length).toBe(0)
+  })
+})
+
+describe('version-aware acceptance (139)', () => {
+  it('SQL names the same current version as AGREEMENT_VERSIONS', async () => {
+    // The API writes AGREEMENT_VERSIONS; the RLS policies read
+    // current_agreement_version. Bump one without the other and every
+    // fresh acceptance stops counting.
+    for (const type of Object.keys(AGREEMENT_VERSIONS) as AgreementType[]) {
+      const { data, error } = await adminClient().rpc('current_agreement_version', { p_agreement_type: type })
+      expect(error).toBeNull()
+      expect(data, type).toBe(AGREEMENT_VERSIONS[type])
+    }
+  })
+
+  it('has_accepted ignores an acceptance of an older version', async () => {
+    await adminClient().from('user_agreements').insert({ user_id: other.id, agreement_type: 'org_leader_terms', version: 'v-older' })
+    const asOther = createUserClient(other.token)
+    expect((await asOther.rpc('has_accepted', { p_agreement_type: 'org_leader_terms' })).data).toBe(false)
+
+    await adminClient().from('user_agreements').insert({ user_id: other.id, agreement_type: 'org_leader_terms', version: AGREEMENT_VERSIONS.org_leader_terms })
+    expect((await asOther.rpc('has_accepted', { p_agreement_type: 'org_leader_terms' })).data).toBe(true)
   })
 })

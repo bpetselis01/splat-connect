@@ -730,7 +730,14 @@ select * from (values
    and (select pg_get_constraintdef(oid) like '%member_report_id%'
       from pg_constraint
      where conname = 'notifications_one_subject'
-       and conrelid = 'public.notifications'::regclass))
+       and conrelid = 'public.notifications'::regclass)),
+
+  -- 139. Without it has_accepted counts any version, so a terms bump re-asks
+  -- nobody and void v0-todo acceptances keep their review grants.
+  ('139 has_accepted compares the current agreement version',
+   (select count(*) = 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+      where n.nspname = 'public' and p.proname = 'has_accepted'
+        and p.prosrc like '%current_agreement_version%'))
 ) as t(guard, ok)
 where not ok;
 EOSQL

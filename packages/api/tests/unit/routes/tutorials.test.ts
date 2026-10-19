@@ -29,7 +29,9 @@ function withTerms(accepted: boolean, otherTables: unknown = {}) {
       ? {
           select: () => ({
             eq: () => ({
-              eq: () => ({ limit: () => ({ data: accepted ? [{ id: 'a' }] : [], error: null }) }),
+              eq: () => ({
+                eq: () => ({ limit: () => ({ data: accepted ? [{ id: 'a' }] : [], error: null }) }),
+              }),
             }),
           }),
         }

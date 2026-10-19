@@ -11,7 +11,7 @@ import { nameFormerContributors } from '../former-contributor.js'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { pickEditable } from './pick-editable.js'
 import { notifyTutorialSubmitted } from '../review-notifications.js'
-import { readSuits, realignCaptions, GUIDE_SUITS_FIELDS, fieldKey, customizationFieldsProblem } from '@splat-connect/types'
+import { readSuits, realignCaptions, GUIDE_SUITS_FIELDS, fieldKey, customizationFieldsProblem, AGREEMENT_VERSIONS } from '@splat-connect/types'
 import { removeDroppedPhotos } from '../photo-storage.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
@@ -201,6 +201,7 @@ async function hasAcceptedContributorTerms(token: string, userId: string) {
     .select('id')
     .eq('user_id', userId)
     .eq('agreement_type', 'contributor_terms')
+    .eq('version', AGREEMENT_VERSIONS.contributor_terms)
     .limit(1)
   return (data ?? []).length > 0
 }
