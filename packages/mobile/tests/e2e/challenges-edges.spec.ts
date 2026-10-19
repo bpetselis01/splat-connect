@@ -1,4 +1,3 @@
-// journeys: C02 C10 C12 C14
 import { test, expect } from '@playwright/test'
 import { adminClient, createChallenge, createContributor, signInAsNewContributor, uniqueTitle } from './helpers'
 
@@ -10,7 +9,7 @@ import { adminClient, createChallenge, createContributor, signInAsNewContributor
  * Imports from helpers only, never from components.
  */
 
-test('an idea with awkward characters, posted anonymously, shows as typed and carries no author name', async ({ page }) => {
+test('C12 C14 an idea with awkward characters, posted anonymously, shows as typed and carries no author name', async ({ page }) => {
   const me = await signInAsNewContributor(page)
   const title = `O'Brien <b>idea</b> & "quotes" ${Date.now()}`
 
@@ -42,7 +41,7 @@ test('the idea form refuses a title or summary of spaces, keeps what was typed, 
   expect(data).toEqual([])
 })
 
-test('a challenge that has become a guide offers Follow the write-up and no join', async ({ page }) => {
+test('C10 a challenge that has become a guide offers Follow the write-up and no join', async ({ page }) => {
   await signInAsNewContributor(page)
   const author = await createContributor()
   const title = uniqueTitle('E2E Ended Challenge')

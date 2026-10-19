@@ -1,4 +1,3 @@
-// journeys: C01 C02 C03 C05 C12 C15
 import { test, expect } from '@playwright/test'
 import {
   createChallenge,
@@ -24,7 +23,7 @@ import {
  * two branches are covered at unit level instead, with the Alert spied.
  */
 
-test('the board lists open challenges and the ones that became guides', async ({ page }) => {
+test('C01 the board lists open challenges and the ones that became guides', async ({ page }) => {
   await signInAsNewContributor(page)
   const author = await createContributor()
   const open = uniqueTitle('E2E Open Challenge')
@@ -38,7 +37,7 @@ test('the board lists open challenges and the ones that became guides', async ({
   await expect(page.getByRole('button', { name: solved })).toBeVisible()
 })
 
-test('joining unlocks the thread, and a message posted there comes back', async ({ page }) => {
+test('C01 C03 C05 joining unlocks the thread, and a message posted there comes back', async ({ page }) => {
   await signInAsNewContributor(page)
   const author = await createContributor()
   const title = uniqueTitle('E2E Joinable Challenge')
@@ -70,7 +69,7 @@ test('joining unlocks the thread, and a message posted there comes back', async 
   await expect(page.getByText("YOU'RE IN")).toBeVisible()
 })
 
-test('a submitted idea lands in My challenges, awaiting review', async ({ page }) => {
+test('C12 C15 a submitted idea lands in My challenges, awaiting review', async ({ page }) => {
   await signInAsNewContributor(page)
   const title = uniqueTitle('E2E Submitted Idea')
 
@@ -92,7 +91,7 @@ test('a submitted idea lands in My challenges, awaiting review', async ({ page }
   await expect(page.getByRole('button', { name: title })).toBeVisible()
 })
 
-test('My challenges reaches the public brief, across the modal boundary', async ({ page }) => {
+test('C02 C15 My challenges reaches the public brief, across the modal boundary', async ({ page }) => {
   // The one navigation in this phase with no precedent anywhere in the app:
   // My challenges lives in the (my) modal group and its rows push into (tabs).
   // Nothing else crosses that boundary, so it is asserted rather than assumed.
