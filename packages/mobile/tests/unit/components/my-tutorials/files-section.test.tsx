@@ -1,4 +1,3 @@
-// journeys: T13 T14
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { FilesSection } from '../../../../components/my-tutorials/sections/files-section'
 import { PhotosSection } from '../../../../components/my-tutorials/sections/photos-section'
@@ -82,7 +81,7 @@ beforeEach(() => {
   }
 })
 
-it('uploads a chosen photo and appends it to the guide immediately', async () => {
+it('T13 uploads a chosen photo and appends it to the guide immediately', async () => {
   mockRequestMedia.mockResolvedValue({ granted: true })
   mockLaunchLibrary.mockResolvedValue({
     canceled: false,
@@ -98,7 +97,7 @@ it('uploads a chosen photo and appends it to the guide immediately', async () =>
   )
 })
 
-it('captions a photo, and the caption follows it to the cover', async () => {
+it('T13 captions a photo, and the caption follows it to the cover', async () => {
   mockDraft.tutorial = { ...mockDraft.tutorial, photo_urls: ['a', 'b'], photo_captions: [null, 'The jack'] }
   mockDraft.save.mockImplementation((f: Record<string, unknown>) => {
     mockDraft.tutorial = { ...mockDraft.tutorial, ...f }
@@ -125,7 +124,7 @@ it('does not call it optional when there are no steps', () => {
   expect(screen.getByText('Guide PDF')).toBeTruthy()
 })
 
-it('uploads a chosen PDF', async () => {
+it('T14 uploads a chosen PDF', async () => {
   mockGetDocument.mockResolvedValue({
     canceled: false,
     assets: [{ uri: 'file://g.pdf', name: 'g.pdf', mimeType: 'application/pdf' }],

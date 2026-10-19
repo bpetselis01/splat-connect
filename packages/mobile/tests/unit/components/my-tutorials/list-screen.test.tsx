@@ -1,5 +1,4 @@
 // packages/mobile/tests/unit/components/my-tutorials/list-screen.test.tsx
-// journeys: T01 T02 T03
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { MyTutorialsListScreen } from '../../../../components/my-tutorials/list-screen'
 
@@ -51,7 +50,7 @@ describe('MyTutorialsListScreen', () => {
     expect(await screen.findByText('890 views · 12 of 14 prints fitted')).toBeTruthy()
   })
 
-  it('lists the caller\'s tutorials with their status, and pushes to the editor on tap', async () => {
+  it('T01 T03 lists the caller\'s tutorials with their status, and pushes to the editor on tap', async () => {
     mockGet.mockResolvedValue([tutorial({ id: 't1', title: 'Bubble machine switch', status: 'draft' })])
     render(<MyTutorialsListScreen />)
 
@@ -87,7 +86,7 @@ describe('MyTutorialsListScreen', () => {
     expect(screen.getByText('With Northside Therapy since 28 Aug')).toBeTruthy()
   })
 
-  it('counts each stage in the filter, and narrows to the one picked', async () => {
+  it('T01 counts each stage in the filter, and narrows to the one picked', async () => {
     mockGet.mockResolvedValue([
       tutorial({ id: 't1', title: 'Drum', status: 'approved' }),
       tutorial({ id: 't2', title: 'Fan', status: 'rejected' }),
@@ -109,7 +108,7 @@ describe('MyTutorialsListScreen', () => {
     expect(screen.queryByText('Fan')).toBeNull()
   })
 
-  it('links to Add a tutorial', async () => {
+  it('T02 links to Add a tutorial', async () => {
     mockGet.mockResolvedValue([tutorial({ id: 't1', title: 'Bubble machine switch' })])
     render(<MyTutorialsListScreen />)
 
