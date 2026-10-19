@@ -47,7 +47,7 @@ describe('POST /api/toy-transactions', () => {
     await deleteTestUser(requester.id)
   })
 
-  it('Y05 creates a donation request and a system message', async () => {
+  it('Y05 WY10 creates a donation request and a system message', async () => {
     const res = await txReq('/', requester.token, {
       method: 'POST',
       body: JSON.stringify({ toy_id: toyId, type: 'donation' }),

@@ -51,7 +51,7 @@ afterAll(async () => {
 })
 
 describe('asking for a toy (Y05, Y06)', () => {
-  it('Y05 a donation request tells the owner, naming the toy and the asker', async () => {
+  it('Y05 WY10 a donation request tells the owner, naming the toy and the asker', async () => {
     const toyId = await publishedToy(owner.token, 'Fire truck', 'donation')
     const id = await ask(toyId)
     expect(await notesAbout(owner.id, id)).toEqual([
@@ -60,7 +60,7 @@ describe('asking for a toy (Y05, Y06)', () => {
     expect(await notesAbout(family.id, id)).toEqual([])
   })
 
-  it('Y06 an offer of the family’s own toy tells the owner the same way', async () => {
+  it('Y06 WY10 an offer of the family’s own toy tells the owner the same way', async () => {
     const wanted = await publishedToy(owner.token, 'Kite', 'exchange')
     const offered = await publishedToy(family.token, 'Yo-yo', 'exchange')
     const res = await post('/toy-transactions', family.token, { toy_id: wanted, type: 'exchange', offered_toy_id: offered })

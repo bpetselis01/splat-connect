@@ -42,7 +42,7 @@ async function askForToy(page: Page, toyId: string) {
 }
 
 test.describe('Toy donation and exchange', () => {
-  test('a requester can complete a donation handoff end to end', async ({ page }) => {
+  test('WY06 WY10 WY15 a requester can complete a donation handoff end to end', async ({ page }) => {
     const owner = await createContributor()
     await acceptTerms(owner.id)
     const requester = await createContributor()

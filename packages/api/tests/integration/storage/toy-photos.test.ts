@@ -41,7 +41,7 @@ describe('toy photo uploads', () => {
   // Why:   a4359f7c made this route append-only. The route it replaced deleted
   //        every existing file first, so a toy could only ever hold one photo.
   // How:   uploads two photos and expects both to survive.
-  it('W07 appends each photo instead of replacing the last one', async () => {
+  it('W07 WY19 appends each photo instead of replacing the last one', async () => {
     const first = await uploadRequest(
       user.token,
       new File(['jpg-bytes'], 'a.jpg', { type: 'image/jpeg' })

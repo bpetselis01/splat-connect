@@ -55,7 +55,7 @@ describe('ToyPhotosSection', () => {
   // How:   picks a file; checks the endpoint and the toyId field of the form
   // Chain: /toy-cover and /toy-switch-photo were two routes because this step
   //        had two upload boxes; one box means one route
-  it('uploads through /api/upload/toy-photo with the toy id', async () => {
+  it('WY19 uploads through /api/upload/toy-photo with the toy id', async () => {
     mockPostFormData.mockResolvedValue({ url: 'https://test.supabase.co/storage/v1/object/public/photos/new.png' })
     const { addInput, onSave } = setup()
     fireEvent.change(addInput(), {

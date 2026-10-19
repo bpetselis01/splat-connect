@@ -36,7 +36,7 @@ describe('toys CRUD', () => {
     expect(await res.json()).toEqual([])
   })
 
-  it('W01 W02 W06 creates, lists newest first, ignores spoofed fields, and enforces the whitelist on PATCH', async () => {
+  it('W01 W02 W06 WY16 WY17 creates, lists newest first, ignores spoofed fields, and enforces the whitelist on PATCH', async () => {
     const create1 = await req('/', owner.token, {
       method: 'POST',
       body: JSON.stringify({ name: 'Fire truck', condition: 8, owner_id: other.id, status: 'published' }),
@@ -69,7 +69,7 @@ describe('toys CRUD', () => {
 
   // 128: who it's for round-trips on a toy, a value that is not an answer is a
   // 400, and device_types (guides only) is never written.
-  it('saves the tags and refuses a value that is not an answer', async () => {
+  it('WY18 saves the tags and refuses a value that is not an answer', async () => {
     const created = (await (await req('/', owner.token, { method: 'POST', body: JSON.stringify({ name: 'Penguins', condition: 7 }) })).json()) as { id: string }
     const ok = await req(`/${created.id}`, owner.token, {
       method: 'PATCH',
@@ -106,7 +106,7 @@ describe('toys CRUD', () => {
     expect(malformed.status).toBe(404)
   })
 
-  it('W08 W09 rejects publish until the cover photo is set, then publishes', async () => {
+  it('W08 W09 WY20 WY21 rejects publish until the cover photo is set, then publishes', async () => {
     const create = await req('/', owner.token, {
       method: 'POST',
       body: JSON.stringify({ name: 'Robot', condition: 9 }),
@@ -129,7 +129,7 @@ describe('toys CRUD', () => {
     expect(((await published.json()) as { status: string }).status).toBe('published')
   })
 
-  it('W10 deletes a toy', async () => {
+  it('W10 WY24 deletes a toy', async () => {
     const create = await req('/', owner.token, {
       method: 'POST',
       body: JSON.stringify({ name: 'Kazoo', condition: 3 }),

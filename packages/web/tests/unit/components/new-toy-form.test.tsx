@@ -16,7 +16,7 @@ describe('NewToyForm', () => {
     vi.mocked(browserApiClient.patch).mockResolvedValue({})
   })
 
-  it('creates the toy, marks it switch-adapted, and opens the listing editor', async () => {
+  it('WY16 creates the toy, marks it switch-adapted, and opens the listing editor', async () => {
     vi.mocked(browserApiClient.post).mockResolvedValue({ id: 't1' })
     render(<NewToyForm />)
 

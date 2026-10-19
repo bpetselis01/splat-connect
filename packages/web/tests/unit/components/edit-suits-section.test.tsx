@@ -27,7 +27,7 @@ describe('EditSuitsSection', () => {
     expect(screen.getByText(/None of these are required/)).toBeInTheDocument()
   })
 
-  it('toggles chips and sends lists, with null for empty ones and one_hand as a boolean', async () => {
+  it('WY18 toggles chips and sends lists, with null for empty ones and one_hand as a boolean', async () => {
     render(<EditSuitsSection endpoint="/api/toys/t1" suits={{ helps_with: ['seeing'] }} />)
     fireEvent.click(screen.getByRole('button', { name: 'Light touch' }))
     expect(screen.getByRole('button', { name: 'Light touch' })).toHaveAttribute('aria-pressed', 'true')
