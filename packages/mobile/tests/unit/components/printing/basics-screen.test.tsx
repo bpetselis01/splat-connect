@@ -1,4 +1,3 @@
-// journeys: R19
 import { CLEARANCE, scrollPaddings } from '../../bottom-spacing'
 import { render, screen } from '@testing-library/react-native'
 import { PrintingBasicsScreen } from '../../../../components/printing/basics-screen'

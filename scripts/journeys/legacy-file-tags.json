@@ -1,18 +1,1 @@
-[
-  "packages/mobile/tests/unit/components/printing/actions.test.ts",
-  "packages/mobile/tests/unit/components/printing/add-printer-screen.test.tsx",
-  "packages/mobile/tests/unit/components/printing/basics-screen.test.tsx",
-  "packages/mobile/tests/unit/components/printing/find-screen-failure.test.tsx",
-  "packages/mobile/tests/unit/components/printing/find-screen.test.tsx",
-  "packages/mobile/tests/unit/components/printing/job-screen-edges.test.tsx",
-  "packages/mobile/tests/unit/components/printing/job-screen-failure.test.tsx",
-  "packages/mobile/tests/unit/components/printing/job-screen-message.test.tsx",
-  "packages/mobile/tests/unit/components/printing/job-screen.test.tsx",
-  "packages/mobile/tests/unit/components/printing/offer-screen-edges.test.tsx",
-  "packages/mobile/tests/unit/components/printing/offer-screen-failure.test.tsx",
-  "packages/mobile/tests/unit/components/printing/offer-screen.test.tsx",
-  "packages/mobile/tests/unit/components/printing/request-screen-failure.test.tsx",
-  "packages/mobile/tests/unit/components/printing/request-screen.test.tsx",
-  "packages/mobile/tests/unit/components/printing/requests-screen-failure.test.tsx",
-  "packages/mobile/tests/unit/components/printing/requests-screen.test.tsx"
-]
+[]

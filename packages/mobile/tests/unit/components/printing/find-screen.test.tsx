@@ -1,5 +1,4 @@
 // packages/mobile/tests/unit/components/printing/find-screen.test.tsx
-// journeys: R01 R02
 import { CLEARANCE, paddingBottomOf } from '../../bottom-spacing'
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { FindPrinterScreen } from '../../../../components/printing/find-screen'
@@ -50,7 +49,7 @@ beforeEach(() => {
   )
 })
 
-it('picks up to three printers, then sends them to the request form', async () => {
+it('R02 picks up to three printers, then sends them to the request form', async () => {
   render(<FindPrinterScreen guideId="g1" />)
   await screen.findByText('Switch mount')
 
@@ -111,7 +110,7 @@ it('says no printer matches, not nobody listed, when the only printer is too sma
   expect(screen.queryByText('Nobody has listed a printer yet')).toBeNull()
 })
 
-it('filters to verified printers and marks them', async () => {
+it('R01 filters to verified printers and marks them', async () => {
   mockGet.mockImplementation((path: string) =>
     Promise.resolve(path === '/api/printers' ? [printer('a', { verified: true }), printer('b')] : GUIDE)
   )
@@ -130,7 +129,7 @@ it('asks for a postcode before it can say what is within 10 km', async () => {
   expect(mockPush).toHaveBeenCalledWith('/account')
 })
 
-it('measures from the profile postcode and keeps what is within 10 km', async () => {
+it('R01 measures from the profile postcode and keeps what is within 10 km', async () => {
   mockCaps.profile.pickup_postcode = '2000'
   mockGet.mockImplementation((path: string) =>
     Promise.resolve(
