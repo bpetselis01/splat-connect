@@ -38,7 +38,7 @@ describe('declining an invitation to lead', () => {
     expect(await invites()).toEqual([inviteId])
   })
 
-  it('L31 removes the invitation without making the invitee a leader', async () => {
+  it('L31 WD09 removes the invitation without making the invitee a leader', async () => {
     const res = await decline(inviteId, invitee.token)
     expect(res.status).toBe(204)
     expect(await invites()).toEqual([])

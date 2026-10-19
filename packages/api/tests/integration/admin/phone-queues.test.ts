@@ -248,7 +248,7 @@ describe('Reports', () => {
     expect(ideas.find((r) => r.id === idea!.id)).toMatchObject({ resolved_at: null, toy_ideas: { title: 'Switch train' } })
   })
 
-  it('Q21 My reports lists the reporter’s own reports with their status and SPLAT’s reply, and nobody else’s', async () => {
+  it('Q21 WD28 My reports lists the reporter’s own reports with their status and SPLAT’s reply, and nobody else’s', async () => {
     const reportId = await seedMemberReport('Reply toy')
     const fetchMine = async (token: string) =>
       (await (await call(token, 'GET', '/reports')).json()) as { id: string; status: string; note_to_reporter: string | null }[]

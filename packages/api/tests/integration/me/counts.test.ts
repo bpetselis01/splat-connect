@@ -58,7 +58,7 @@ afterAll(async () => {
 })
 
 describe('GET /api/me/counts', () => {
-  it("Q01 counts what is waiting on this account and nobody else's", async () => {
+  it("Q01 WD01 counts what is waiting on this account and nobody else's", async () => {
     // A query that fails reads 0 and logs; none of these may have.
     const logged = vi.spyOn(console, 'error')
     expect(await counts(me.token)).toMatchObject({ tutorials: 1, challenges: 1, printRequests: 0, printJobs: 1, review: 0, intake: 0, orgOrders: 0 })

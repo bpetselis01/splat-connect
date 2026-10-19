@@ -33,7 +33,7 @@ afterAll(async () => {
 })
 
 describe('GET /api/contributors/me/thanks', () => {
-  it('Q22 lists the thanks given to the caller, newest first, with the hidden flag', async () => {
+  it('Q22 WD29 lists the thanks given to the caller, newest first, with the hidden flag', async () => {
     const res = await mine(maker.token)
     expect(res.status).toBe(200)
     const rows = (await res.json()) as Array<{ thanker_id: string; note: string; byline: string; show_note: boolean; hidden_at: string | null }>
@@ -70,7 +70,7 @@ describe('PATCH /api/contributors/me/thanks/:thankerId', () => {
   const hiddenAt = async (thankerId: string) =>
     (await adminClient().from('profile_thanks').select('hidden_at').eq('profile_id', maker.id).eq('thanker_id', thankerId).single()).data!.hidden_at
 
-  it('Q23 Hide stamps hidden_at on the note, the list flags it, and Show clears it again', async () => {
+  it('Q23 WD30 Hide stamps hidden_at on the note, the list flags it, and Show clears it again', async () => {
     expect(await hiddenAt(alice.id)).toBeNull()
     expect((await setHidden(alice.id, true)).status).toBe(200)
     expect(await hiddenAt(alice.id)).not.toBeNull()

@@ -39,7 +39,7 @@ describe('child profiles collection', () => {
     expect(await res.json()).toEqual([])
   })
 
-  it('Z06 creates children and returns them in created_at order', async () => {
+  it('Z06 WD13 WD15 creates children and returns them in created_at order', async () => {
     const first = await app.request('/api/child-profiles', authed(parent.token, {
       method: 'POST',
       body: JSON.stringify({ age: 7 }),
@@ -72,7 +72,7 @@ describe('child profiles collection', () => {
     expect(((await res.json()) as { parent_id: string }).parent_id).toBe(parent.id)
   })
 
-  it('Z07 Z09 patches only whitelisted columns', async () => {
+  it('Z07 Z09 WD16 patches only whitelisted columns', async () => {
     const created = await app.request('/api/child-profiles', authed(parent.token, {
       method: 'POST',
       body: JSON.stringify({}),
@@ -115,7 +115,7 @@ describe('child profiles collection', () => {
     expect((data as { name?: string | null }).name ?? null).toBeNull()
   })
 
-  it('Z08 deletes a child', async () => {
+  it('Z08 WD17 deletes a child', async () => {
     const created = await app.request('/api/child-profiles', authed(parent.token, {
       method: 'POST',
       body: JSON.stringify({}),

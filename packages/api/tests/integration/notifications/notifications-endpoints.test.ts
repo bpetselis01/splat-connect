@@ -34,7 +34,7 @@ function authed(token: string) {
 }
 
 describe('GET /api/notifications/me', () => {
-  it('Q05 lists my notifications, newest first', async () => {
+  it('Q05 WD37 lists my notifications, newest first', async () => {
     const res = await app.request('/api/notifications/me', authed(user.token))
     const body = (await res.json()) as { id: string }[]
     expect(body.some((n) => n.id === notificationId)).toBe(true)

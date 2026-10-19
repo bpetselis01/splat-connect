@@ -62,7 +62,7 @@ describe('H01 the Today card reads', () => {
 })
 
 describe('Q07 a bucket Mark read', () => {
-  it('Q07 clears that bucket and its share of the total, leaves the others and other people alone', async () => {
+  it('Q07 WD22 clears that bucket and its share of the total, leaves the others and other people alone', async () => {
     await seed(user.id, 'idea_approved')
     await seed(other.id, 'tutorial_approved')
     expect(await unread(user)).toMatchObject({ tutorials: 1, challenges: 1, exchanges: 1, total: 3 })
@@ -81,7 +81,7 @@ describe('Q07 a bucket Mark read', () => {
 })
 
 describe('Q10 opening an exchange thread card', () => {
-  it("Q10 marking each of the thread's notifications read drops the exchanges count by exactly that many", async () => {
+  it("Q10 WD38 WD39 marking each of the thread's notifications read drops the exchanges count by exactly that many", async () => {
     const before = (await unread(user)).exchanges
     const ids = [await seed(user.id, 'toy_message'), await seed(user.id, 'toy_message')]
     expect((await unread(user)).exchanges).toBe(before + 2)
