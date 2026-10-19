@@ -1,0 +1,13 @@
+import { describe, it, expect } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import DeleteAccountInfoPage from '@/app/delete-account/page'
+
+describe('/delete-account', () => {
+  it('WA22 explains deletion and sends the visitor to sign in, then to the delete page, or to contact', () => {
+    render(<DeleteAccountInfoPage />)
+    expect(screen.getByRole('heading', { level: 1, name: 'Delete your SPLAT Connect account' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: 'Deleted' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Sign in to delete' })).toHaveAttribute('href', '/login?next=/dashboard/profile/delete')
+    expect(screen.getByRole('link', { name: 'Contact us' })).toHaveAttribute('href', '/contact')
+  })
+})

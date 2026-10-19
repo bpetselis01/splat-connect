@@ -16,6 +16,29 @@ test('WA27 an account without accepted terms is sent to the catch-up screen', as
   await expect(page).toHaveURL(/\/onboarding\/contributor-terms/)
 })
 
+test('WA17 Accept and continue stays disabled until the box is ticked', async ({ page }) => {
+  const contributor = await createContributor()
+  await signIn(page, contributor.email, contributor.password)
+  await page.waitForURL(/\/onboarding\/contributor-terms/)
+
+  const accept = page.getByRole('button', { name: 'Accept and continue' })
+  await expect(accept).toBeDisabled()
+  await page.getByRole('checkbox').check()
+  await expect(accept).toBeEnabled()
+})
+
+test('WA18 Sign out on the terms gate returns to the home page, signed out', async ({ page }) => {
+  const contributor = await createContributor()
+  await signIn(page, contributor.email, contributor.password)
+  await page.waitForURL(/\/onboarding\/contributor-terms/)
+
+  await page.getByRole('button', { name: 'Sign out' }).click()
+  await page.waitForURL(/localhost:\d+\/$/)
+  await expect(page.getByRole('link', { name: 'Sign in' })).toBeVisible()
+  await page.goto('/dashboard')
+  await expect(page).toHaveURL(/\/login$/)
+})
+
 test('WA29 browsing stays open without accepted terms', async ({ page }) => {
   const contributor = await createContributor()
   const tutorialId = await createTutorial(contributor.id, {
@@ -43,7 +66,7 @@ test('WA29 browsing stays open without accepted terms', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
 })
 
-test('accepting on first login lands on the dashboard with its real header, not the bare layout', async ({ page }) => {
+test('WA17 accepting on first login lands on the dashboard with its real header, not the bare layout', async ({ page }) => {
   const contributor = await createContributor()
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL(/\/onboarding\/contributor-terms/)
@@ -59,7 +82,7 @@ test('accepting on first login lands on the dashboard with its real header, not 
   await expect(page.getByRole('heading', { name: /^Welcome back,/, level: 1 })).toBeVisible()
 })
 
-test('accepting returns the user to where they were blocked and unblocks editing', async ({ page }) => {
+test('WA17 accepting returns the user to where they were blocked and unblocks editing', async ({ page }) => {
   const contributor = await createContributor()
   const tutorialId = await createTutorial(contributor.id, {
     title: uniqueTitle('E2E Terms Unblocks Edit'),
