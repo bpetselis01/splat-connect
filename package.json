@@ -9,7 +9,7 @@
     "typecheck": "pnpm -r typecheck",
     "db:check": "bash scripts/check-migration-drift.sh",
     "db:guards": "bash scripts/check-schema-guards.sh",
-    "test:journeys": "node scripts/journeys/check.mjs",
+    "test:journeys": "node scripts/journeys/notifications.mjs && node scripts/journeys/check.mjs",
     "test:journeys:write": "node scripts/journeys/render.mjs",
     "test:journeys:unit": "node --test 'scripts/journeys/*.test.mjs'",
     "test:parity:unit": "node --test 'scripts/parity/*.test.js'"

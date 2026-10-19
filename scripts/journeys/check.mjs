@@ -7,6 +7,7 @@ import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { LAYERS, fileClaims, legacyErrors, coverage, renderDoc, validateRows, routesFromFiles, routeTripwire, apiPathsExist } from './lib.mjs'
 import { yamlName } from './titles.mjs'
+import { buildMatrix, loadSources } from './notifications.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 const journeys = JSON.parse(readFileSync(resolve(root, 'scripts/journeys/journeys.json'), 'utf8'))
@@ -45,7 +46,7 @@ for (const [layer, { glob: pattern }] of Object.entries(LAYERS)) {
   }
 }
 const cov = coverage(journeys, filesByLayer)
-const doc = renderDoc(journeys, cov, legacy.size, Object.keys(optOuts).length)
+const doc = renderDoc(journeys, cov, legacy.size, Object.keys(optOuts).length, buildMatrix(loadSources(root)))
 const docPath = resolve(root, 'docs/testing/journeys.md')
 if (process.argv.includes('--write')) {
   writeFileSync(docPath, doc)
