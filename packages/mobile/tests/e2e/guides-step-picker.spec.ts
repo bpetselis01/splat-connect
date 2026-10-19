@@ -1,4 +1,3 @@
-// journeys: G23 G25
 import { test, expect } from '@playwright/test'
 import { adminClient, createContributor, renameProfile, signInAsNewContributor, createTutorial, uniqueTitle } from './helpers'
 import { addNote, addSteps } from './guides-fixtures'
@@ -8,7 +7,7 @@ import { addNote, addSteps } from './guides-fixtures'
  * sheet (search "17", tap the row), the post lands on step 17, and the
  * Feedback tab filters to it through the same picker.
  */
-test('feedback on step 17 of a 20-step guide: picked by search, posted, filtered', async ({ page }) => {
+test('G23 G25 feedback on step 17 of a 20-step guide: picked by search, posted, filtered', async ({ page }) => {
   const reader = await signInAsNewContributor(page)
   const author = await createContributor()
   await renameProfile(author.id, 'Mei Author')

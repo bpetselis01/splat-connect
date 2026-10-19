@@ -1,4 +1,3 @@
-// journeys: T02 T07 T11 T16 T17 T19 T21
 import { test, expect } from '@playwright/test'
 import { adminClient, createContributor, createTutorial, makeOrgLeader, requestBacking, selectPill, signInAsNewContributor, uniqueTitle } from './helpers'
 import { addSteps } from './guides-fixtures'
@@ -8,7 +7,7 @@ import { chooseFile, PHOTO_FIXTURE } from './family-fixtures'
 // a step photo, the three picks controls, the suits chips, withdrawing a
 // backing request, and the footer's Next. Each test seeds its own guide.
 
-test('"+ Add a tutorial" on My tutorials opens the new-guide screen', async ({ page }) => {
+test('T02 "+ Add a tutorial" on My tutorials opens the new-guide screen', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   await createTutorial(contributor.id, { title: uniqueTitle('E2E Add Row'), status: 'draft' })
 
@@ -18,7 +17,7 @@ test('"+ Add a tutorial" on My tutorials opens the new-guide screen', async ({ p
   await expect(page.getByPlaceholder('Title')).toBeVisible()
 })
 
-test('Preview on the hub opens the guide as a reader sees it', async ({ page }) => {
+test('T07 Preview on the hub opens the guide as a reader sees it', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const title = uniqueTitle('E2E Preview Guide')
   const id = await createTutorial(contributor.id, { title })
@@ -30,7 +29,7 @@ test('Preview on the hub opens the guide as a reader sees it', async ({ page }) 
   await expect(page.getByText(title).last()).toBeVisible()
 })
 
-test('a step photo uploads, shows, and is stored on the step row', async ({ page }) => {
+test('T11 a step photo uploads, shows, and is stored on the step row', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Step Photo'), status: 'draft' })
   await addSteps(id, [{ body: 'Open the lid.' }])
@@ -45,7 +44,7 @@ test('a step photo uploads, shows, and is stored on the step row', async ({ page
   expect(data?.photo_url).toBeTruthy()
 })
 
-test('picks: Add, Required first and Remove each write the recommendation rows', async ({ page }) => {
+test('T16 picks: Add, Required first and Remove each write the recommendation rows', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Picks Host'), status: 'draft' })
   const otherTitle = uniqueTitle('E2E Pick Target')
@@ -75,7 +74,7 @@ test('picks: Add, Required first and Remove each write the recommendation rows',
   expect(await rows()).toEqual([])
 })
 
-test('the suits chips save to the guide row', async ({ page }) => {
+test('T17 the suits chips save to the guide row', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Suits'), status: 'draft' })
 
@@ -93,7 +92,7 @@ test('the suits chips save to the guide row', async ({ page }) => {
   expect(data?.helps_with).toEqual(['communicating'])
 })
 
-test('Withdraw drops the backing request and offers the organisation again', async ({ page }) => {
+test('T19 Withdraw drops the backing request and offers the organisation again', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Withdraw'), status: 'draft' })
   const leader = (await createContributor()).id
@@ -112,7 +111,7 @@ test('Withdraw drops the backing request and offers the organisation again', asy
   expect(data).toEqual([])
 })
 
-test('the section footer\'s Next goes to the next gap and Checklist returns to the hub', async ({ page }) => {
+test('T21 the section footer\'s Next goes to the next gap and Checklist returns to the hub', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Footer'), status: 'draft', withPdf: false, withSteps: false })
 

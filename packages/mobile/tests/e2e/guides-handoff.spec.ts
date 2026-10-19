@@ -1,4 +1,3 @@
-// journeys: G18 G19 K05 R03
 import { test, expect } from '@playwright/test'
 import { adminClient, createContributor, createTutorial, renameProfile, signInAsNewContributor, uniqueTitle } from './helpers'
 
@@ -27,7 +26,7 @@ async function addPart(tutorialId: string) {
   if (error) throw new Error(`addPart failed: ${error.message}`)
 }
 
-test('Ask someone to print opens the printer finder for this guide, and the request that goes out carries it', async ({ page }) => {
+test('G18 R03 Ask someone to print opens the printer finder for this guide, and the request that goes out carries it', async ({ page }) => {
   const family = await signInAsNewContributor(page)
   const maker = await createContributor()
   const makerName = uniqueTitle('E2E Handoff Maker')
@@ -72,7 +71,7 @@ test('a guide with no printable files offers no printing, and says so', async ({
   await expect(page.getByRole('button', { name: 'Ask someone to print' })).toHaveCount(0)
 })
 
-test("Can't build it? opens the ask form with this guide chosen, and posting files a build request for it", async ({ page }) => {
+test("G19 K05 Can't build it? opens the ask form with this guide chosen, and posting files a build request for it", async ({ page }) => {
   const family = await signInAsNewContributor(page)
   const author = await createContributor()
   const title = uniqueTitle('E2E Ask A Maker Guide')

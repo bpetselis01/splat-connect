@@ -1,4 +1,3 @@
-// journeys: G08
 import { test, expect, type Page } from '@playwright/test'
 import { adminClient, createContributor, createTutorial, signInAsNewContributor, uniqueTitle } from './helpers'
 
@@ -19,7 +18,7 @@ async function shelfHolds(page: Page, title: string) {
   await expect(page.getByRole('button', { name: title })).toBeVisible()
 }
 
-test('Save raises a toast, Undo takes it back, and Save again puts it on the shelf', async ({ page }) => {
+test('G08 Save raises a toast, Undo takes it back, and Save again puts it on the shelf', async ({ page }) => {
   const reader = await signInAsNewContributor(page)
   const author = await createContributor()
   const title = uniqueTitle('E2E Undo Save Guide')
@@ -53,7 +52,7 @@ test('Save raises a toast, Undo takes it back, and Save again puts it on the she
   await shelfHolds(page, title)
 })
 
-test('unsaving from the heart says Removed, and its Undo saves the guide again', async ({ page }) => {
+test('G08 unsaving from the heart says Removed, and its Undo saves the guide again', async ({ page }) => {
   const reader = await signInAsNewContributor(page)
   const author = await createContributor()
   const id = await createTutorial(author.id, { title: uniqueTitle('E2E Unsave Undo Guide') })

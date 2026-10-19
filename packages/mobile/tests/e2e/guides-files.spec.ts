@@ -1,4 +1,3 @@
-// journeys: G30 G31
 import { test, expect } from '@playwright/test'
 import { adminClient, createContributor, createTutorial, signInAsNewContributor, uniqueTitle } from './helpers'
 import { stlName } from '../../lib/guide-files'
@@ -42,7 +41,7 @@ test('lists the PDF and parts with a single pill each, and links downloads to th
   expect(opened[0]).toMatch(new RegExp(`/tutorials/${g.id}$`))
 })
 
-test('a 3D pill opens the viewer for that part with its facts, and ✕ returns to Files', async ({ page }) => {
+test('G30 a 3D pill opens the viewer for that part with its facts, and ✕ returns to Files', async ({ page }) => {
   await signInAsNewContributor(page)
   const g = await guideWithParts()
   await page.goto(`/guides/${g.id}`)
