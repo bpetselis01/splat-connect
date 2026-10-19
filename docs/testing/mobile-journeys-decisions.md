@@ -1,5 +1,7 @@
 # Mobile journeys: web-only setters and open decisions
 
+> Update 2026-10-20: the journey run that followed this audit is finished. Its plan is `docs/plans/journey-coverage-plan.md`; the product decisions and bugs it surfaced are entries in `packages/types/src/pending.ts` (rendered in `docs/PENDING.md`).
+
 Written 2026-10-07 by the coverage audit (SP5). Source rows: `packages/mobile/tests/journeys.json`, rows whose `setter` is `web` or `none`.
 
 A "setter" is whoever can put the data into the state the phone shows. The phone often shows something only an admin, a leader on the website, or nobody can set. This file says which, and what is tested.
