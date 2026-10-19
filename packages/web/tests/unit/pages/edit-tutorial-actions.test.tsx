@@ -31,7 +31,7 @@ vi.mock('@/components/edit-files-section', () => ({ EditFilesSection: stub('file
 vi.mock('@/components/add-stl-form', () => ({ AddStlForm: stub('addStl') }))
 vi.mock('@/components/stl-settings-form', () => ({ StlSettingsForm: stub('stlSettings') }))
 vi.mock('@/components/customization-fields-form', () => ({ CustomizationFieldsForm: stub('customization') }))
-vi.mock('@/components/edit-items-section', () => ({ EditItemsSection: (p: Props) => stub(p.noun as string)(p) }))
+vi.mock('@/components/edit-items-section', () => ({ EditItemsSection: (p: Props) => stub(p.noun as unknown as string)(p) }))
 vi.mock('@/components/prices-checked-field', () => ({ PricesCheckedField: stub('prices') }))
 vi.mock('@/components/edit-details-section', () => ({ EditDetailsSection: stub('details') }))
 vi.mock('@/components/edit-safety-notes-section', () => ({ EditSafetyNotesSection: stub('safety') }))
