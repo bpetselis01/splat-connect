@@ -1,4 +1,3 @@
-// journeys: G16 G17
 import { CLEARANCE, paddingBottomOf } from '../../bottom-spacing'
 import { Linking } from 'react-native'
 import { render, screen, fireEvent } from '@testing-library/react-native'
@@ -28,7 +27,7 @@ describe('PreviewScreen', () => {
     expect(screen.getByText('No PDF is available for this tutorial yet.')).toBeTruthy()
   })
 
-  it('the footer opens the guide on the website, never the file', () => {
+  it('G17 the footer opens the guide on the website, never the file', () => {
     process.env.EXPO_PUBLIC_WEB_URL = 'https://splat.example'
     const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(true)
     render(<PreviewScreen pdfUrl="https://example.com/robot-arm.pdf" tutorialId="abc" />)

@@ -1,5 +1,4 @@
 // packages/mobile/tests/unit/components/guides/showcase-screen.test.tsx
-// journeys: S01 S04
 import { fireEvent, render, screen } from '@testing-library/react-native'
 import { ShowcaseScreen } from '../../../../components/guides/showcase-screen'
 
@@ -66,7 +65,7 @@ describe('ShowcaseScreen', () => {
     expect(screen.queryByText('9 more guides for 10 guides')).toBeNull()
   })
 
-  it('renders a contributor profile with their guides and no toys section', async () => {
+  it('S01 renders a contributor profile with their guides and no toys section', async () => {
     mockGet.mockResolvedValue(PERSON)
     render(<ShowcaseScreen kind="person" id="c1" />)
     expect(await screen.findByText('Sam Taylor')).toBeTruthy()
@@ -85,7 +84,7 @@ describe('ShowcaseScreen', () => {
     expect(screen.getByLabelText('Build a Robot Arm').props.accessibilityHint).toContain('Toy adaptation')
   })
 
-  it('renders an organisation profile with the guides it backs and its toy shelf', async () => {
+  it('S01 renders an organisation profile with the guides it backs and its toy shelf', async () => {
     mockGet.mockResolvedValue(ORG)
     render(<ShowcaseScreen kind="org" id="o1" />)
     expect(await screen.findByText('TAD Australia')).toBeTruthy()
@@ -116,7 +115,7 @@ describe('ShowcaseScreen', () => {
     expect(screen.queryByLabelText(/^Organisation:/)).toBeNull()
   })
 
-  it('says what they do and chips the organisation they lead', async () => {
+  it('S04 says what they do and chips the organisation they lead', async () => {
     mockGet.mockResolvedValue({ ...PERSON, occupation: 'Occupational therapist', org: { id: 'o1', name: 'TAD Australia' } })
     render(<ShowcaseScreen kind="person" id="c1" />)
     expect(await screen.findByText('Occupational therapist')).toBeTruthy()

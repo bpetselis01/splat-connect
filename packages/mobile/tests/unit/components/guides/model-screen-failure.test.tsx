@@ -1,5 +1,4 @@
 // A failed guide load says so, retries on Try again, and never hits console.error.
-// journeys: G31
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { ModelScreen } from '../../../../components/guides/model-screen'
 

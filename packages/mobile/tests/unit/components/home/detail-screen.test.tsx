@@ -1,4 +1,3 @@
-// journeys: G13 G14 G15 G18 G19 G29 G30
 import { CLEARANCE, paddingBottomOf } from '../../bottom-spacing'
 import { Linking, ScrollView } from 'react-native'
 import { act, render, screen, fireEvent, waitFor } from '@testing-library/react-native'
@@ -145,7 +144,7 @@ describe('DetailScreen', () => {
     expect(apiClient.get).toHaveBeenCalledWith('/api/tutorials/1')
   })
 
-  it('non-network failure keeps the old message and Try again reloads the guide', async () => {
+  it('G29 non-network failure keeps the old message and Try again reloads the guide', async () => {
     jest.spyOn(console, 'error').mockImplementation(() => {})
     mockEndpoints({ detail: Promise.reject(new Error('API GET failed with status 500')) })
     render(<DetailScreen id="1" />)
@@ -155,7 +154,7 @@ describe('DetailScreen', () => {
     expect(await screen.findByText('Build a Robot Arm')).toBeTruthy()
   })
 
-  it('offline: says so without a console error, and Try again reloads the guide', async () => {
+  it('G29 offline: says so without a console error, and Try again reloads the guide', async () => {
     const error = jest.spyOn(console, 'error').mockImplementation(() => {})
     jest.spyOn(console, 'debug').mockImplementation(() => {})
     mockEndpoints({ detail: Promise.reject(new TypeError('Network request failed')) })
@@ -169,7 +168,7 @@ describe('DetailScreen', () => {
     expect(screen.queryByText('You seem to be offline.')).toBeNull()
   })
 
-  it('signs the pdf path and pushes the preview route with the signed URL', async () => {
+  it('G16 signs the pdf path and pushes the preview route with the signed URL', async () => {
     render(<DetailScreen id="1" />)
     await screen.findByText('Build a Robot Arm')
 
@@ -238,7 +237,7 @@ describe('DetailScreen', () => {
     expect(screen.queryByLabelText('Show photo 1: The finished drum')).toBeNull()
   })
 
-  it('opens Find a printer for this guide when it has printable parts', async () => {
+  it('G18 opens Find a printer for this guide when it has printable parts', async () => {
     mockEndpoints({
       detail: Promise.resolve({
         ...DETAIL,
@@ -254,7 +253,7 @@ describe('DetailScreen', () => {
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/printing', params: { guide: '1' } })
   })
 
-  it('passes on the organisation it was opened to print with', async () => {
+  it('G18 passes on the organisation it was opened to print with', async () => {
     mockEndpoints({
       detail: Promise.resolve({
         ...DETAIL,
@@ -266,7 +265,7 @@ describe('DetailScreen', () => {
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/printing', params: { guide: '1', printWith: 'o1' } })
   })
 
-  it('asks a maker nearby with this guide already picked', async () => {
+  it('G19 asks a maker nearby with this guide already picked', async () => {
     render(<DetailScreen id="1" />)
     fireEvent.press(await screen.findByRole('button', { name: "Can't build it? Ask a maker nearby" }))
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/explore/makers-wanted/new', params: { guide: '1' } })
@@ -301,7 +300,7 @@ describe('DetailScreen', () => {
       expect(open).toHaveBeenCalledWith('https://splat.example/tutorials/1')
     })
 
-    it('a 3D pill opens the model route for that file', async () => {
+    it('G30 a 3D pill opens the model route for that file', async () => {
       mockEndpoints({ detail: Promise.resolve({ ...DETAIL, stl_files: STL }) })
       render(<DetailScreen id="1" />)
       await screen.findByText('Build a Robot Arm')
@@ -355,7 +354,7 @@ describe('DetailScreen', () => {
       expect(screen.queryByTestId('need-print')).toBeNull()
     })
 
-    it('the print row opens Files and rings the print card, then the ring goes', async () => {
+    it('G13 the print row opens Files and rings the print card, then the ring goes', async () => {
       jest.useFakeTimers()
       mockEndpoints({ detail: Promise.resolve({ ...DETAIL, stl_files: [{ id: 'f1', tutorial_id: '1', filename: 'base.stl', file_url: '1/base.stl', print_minutes: null, filament_grams: null, material: null }] }) })
       render(<DetailScreen id="1" />)
@@ -380,7 +379,7 @@ describe('DetailScreen', () => {
       jest.useRealTimers()
     })
 
-    it('the parts row opens Supplies', async () => {
+    it('G13 the parts row opens Supplies', async () => {
       render(<DetailScreen id="1" />)
       await screen.findByText('Build a Robot Arm')
       fireEvent.press(screen.getByTestId('need-parts'))
@@ -452,7 +451,7 @@ describe('DetailScreen thanks', () => {
     expect(await screen.findByRole('button', { name: 'Thank Sam' })).toBeTruthy()
   })
 
-  it('says so in a toast when the thanks is sent, and the button becomes Thanked', async () => {
+  it('G09 says so in a toast when the thanks is sent, and the button becomes Thanked', async () => {
     withThanks({ thanked: false, own: false })
     ;(apiClient.post as jest.Mock).mockResolvedValue({})
     render(<DetailScreen id="1" />)
@@ -512,7 +511,7 @@ describe('DetailScreen redesigned page', () => {
     mockEndpoints({ detail: Promise.resolve(full) })
   })
 
-  it('Start building opens the build route', async () => {
+  it('G15 Start building opens the build route', async () => {
     render(<DetailScreen id="1" />)
     fireEvent.press(await screen.findByText('Start building'))
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/guides/[id]/build', params: { id: '1' } })
@@ -589,7 +588,7 @@ describe('DetailScreen combined layout', () => {
     expect(screen.getByText('2 things left to gather')).toBeTruthy()
   })
 
-  it('opens build mode on the step you tap, and marks where you are', async () => {
+  it('G14 opens build mode on the step you tap, and marks where you are', async () => {
     mockTicks = '["s1"]'
     mockEndpoints({ detail: Promise.resolve(guide) })
     render(<DetailScreen id="1" />)

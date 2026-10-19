@@ -1,4 +1,3 @@
-// journeys: G21
 import { Linking } from 'react-native'
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { GuideParts } from '../../../../components/guides/guide-parts'
@@ -21,7 +20,7 @@ const parts = [
   { id: 'p2', tutorial_id: 'g', name: 'Glue', quantity: 1, is_optional: true, price_cents: 500, buy_links: [] },
 ]
 
-it('ticks a part and keeps it on the device', async () => {
+it('G21 ticks a part and keeps it on the device', async () => {
   render(<Parts parts={parts} pricesCheckedOn={null} />)
   expect(await screen.findByText('0 of 2 gathered')).toBeTruthy()
   fireEvent.press(screen.getByLabelText('Glue: gathered'))
@@ -37,7 +36,7 @@ it('totals the prices and says when they were checked', async () => {
   expect(screen.getByText('Glue ×1 (optional)')).toBeTruthy()
 })
 
-it('opens a buy link in the browser', async () => {
+it('G21 opens a buy link in the browser', async () => {
   const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(true)
   render(<Parts parts={parts} pricesCheckedOn={null} />)
   fireEvent.press(await screen.findByText('Jaycar'))

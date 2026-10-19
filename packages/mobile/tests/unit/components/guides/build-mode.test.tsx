@@ -1,4 +1,3 @@
-// journeys: B01 B02 B03 B04 B06 B07
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { BuildMode } from '../../../../components/guides/build-mode'
 import { apiClient } from '../../../../lib/api-client'
@@ -53,7 +52,7 @@ it('opens on Get ready with the safety notes, and the author checklist behind Sh
   expect(mockKeepAwake).toHaveBeenCalled()
 })
 
-it('walks the steps and ticks each one as you go', async () => {
+it('B01 walks the steps and ticks each one as you go', async () => {
   render(<BuildMode id="g" />)
   fireEvent.press(await screen.findByText('Start step 1'))
   expect(screen.getByText('Open it')).toBeTruthy()
@@ -89,7 +88,7 @@ it('shows a pinned note on its step only', async () => {
   expect(screen.queryByText(/Use a longer screw/)).toBeNull()
 })
 
-it('logs the build once from the done screen, then offers feedback', async () => {
+it('B03 logs the build once from the done screen, then offers feedback', async () => {
   ;(apiClient.post as jest.Mock).mockResolvedValue({ built: true })
   render(<BuildMode id="g" />)
   fireEvent.press(await screen.findByText('Start step 1'))
@@ -133,7 +132,7 @@ it('ignores a step that is not in the guide and resumes as usual', async () => {
   expect(await screen.findByText('Start step 1')).toBeTruthy()
 })
 
-it('jumps to any step from All steps, and Start over clears the ticks', async () => {
+it('B02 jumps to any step from All steps, and Start over clears the ticks', async () => {
   mockStored = '["s1"]'
   render(<BuildMode id="g" />)
   expect(await screen.findByText('Step 2 of 2')).toBeTruthy()
@@ -157,7 +156,7 @@ it('shows a step of several sentences as a lettered list, word for word', async 
   expect(screen.getByText('Test it with a toy you know works.')).toBeTruthy()
 })
 
-it('ticks parts from Get ready without leaving build mode', async () => {
+it('B06 ticks parts from Get ready without leaving build mode', async () => {
   const withParts = { ...GUIDE, parts: [{ id: 'p1', tutorial_id: 'g', name: 'Servo', quantity: 1, is_optional: false, buy_links: [] }], tools: [] }
   ;(apiClient.get as jest.Mock).mockImplementation((p: string) => (p.endsWith('/notes') ? Promise.resolve([]) : Promise.resolve(withParts)))
   render(<BuildMode id="g" />)
@@ -168,7 +167,7 @@ it('ticks parts from Get ready without leaving build mode', async () => {
   expect(screen.getByText('1/1 parts · 0/0 tools')).toBeTruthy()
 })
 
-it('opens a step photo full screen and comes back to the same step', async () => {
+it('B07 opens a step photo full screen and comes back to the same step', async () => {
   const withPhoto = { ...GUIDE, steps: [{ ...GUIDE.steps[0], photo_url: 'https://x.test/s1.jpg' }, GUIDE.steps[1]] }
   ;(apiClient.get as jest.Mock).mockImplementation((p: string) => (p.endsWith('/notes') ? Promise.resolve([]) : Promise.resolve(withPhoto)))
   render(<BuildMode id="g" step="1" />)
@@ -200,7 +199,7 @@ async function reachDone() {
   await screen.findByText('All 2 steps done')
 }
 
-it('the done screen offers Leave feedback, which opens the sheet on the last step viewed', async () => {
+it('B04 the done screen offers Leave feedback, which opens the sheet on the last step viewed', async () => {
   await reachDone()
   fireEvent.press(screen.getByRole('button', { name: 'Leave feedback' }))
   expect(screen.getByText('How did it go?')).toBeTruthy()

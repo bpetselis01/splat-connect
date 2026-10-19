@@ -1,4 +1,3 @@
-// journeys: G12
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { Provenance } from '../../../../components/guides/provenance'
 
@@ -21,7 +20,7 @@ it('orders the byline primary-first and truncates at two names', () => {
   expect(screen.getByText('+ 2')).toBeTruthy()
 })
 
-it('shows the mint backed-by chip for an accepted org and fires onOrg on press', () => {
+it('G12 shows the mint backed-by chip for an accepted org and fires onOrg on press', () => {
   const onOrg = jest.fn()
   render(
     <Provenance

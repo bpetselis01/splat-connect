@@ -1,4 +1,3 @@
-// journeys: H05
 import { Platform, StyleSheet } from 'react-native'
 import { act, render, screen, fireEvent } from '@testing-library/react-native'
 import { AddShortcutSheet, claimsSheetDrag, shouldCloseSheet } from '../../../../components/home/add-shortcut-sheet'
@@ -50,7 +49,7 @@ it('groups features in the board order under uppercase headings', () => {
   })
 })
 
-it('a row not on Home reads Add and adds on press; one on Home reads Remove and removes', () => {
+it('H05 a row not on Home reads Add and adds on press; one on Home reads Remove and removes', () => {
   open()
   const add = screen.getByLabelText('Add Toy library to Home')
   expect(add.props.accessibilityState.selected).toBe(false)
@@ -69,7 +68,7 @@ it('the trailing control is a plus on accentLight, or a tick on mintSoft', () =>
   expect(circle('Remove Guides from Home')).toMatchObject({ backgroundColor: theme.colors.mintSoft })
 })
 
-it('filters by name and says so when nothing matches', () => {
+it('H05 filters by name and says so when nothing matches', () => {
   open()
   fireEvent.changeText(screen.getByPlaceholderText('Search features'), 'toy')
   expect(screen.getByText('Toy library')).toBeTruthy()
