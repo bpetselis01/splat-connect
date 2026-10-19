@@ -1,5 +1,4 @@
 // packages/mobile/tests/unit/components/explore/explore-screen.test.tsx
-// journeys: Q13 Q14
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { ExploreScreen } from '../../../../components/explore/explore-screen'
 import { LEARN_ARTICLES } from '../../../../lib/learn-content'
@@ -46,7 +45,7 @@ describe('ExploreScreen', () => {
     expect(screen.queryByLabelText('Guides')).toBeNull()
   })
 
-  it('fetches every source once on mount', async () => {
+  it('Q13 fetches every source once on mount', async () => {
     render(<ExploreScreen />)
     await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(4))
     expect(mockGet).toHaveBeenCalledWith('/api/public/tutorials')
@@ -55,7 +54,7 @@ describe('ExploreScreen', () => {
     expect(mockGet).toHaveBeenCalledWith('/api/public/impact')
   })
 
-  it("renders the board's seven doors with the Learn progress chip, and routes on press", async () => {
+  it("Q14 renders the board's seven doors with the Learn progress chip, and routes on press", async () => {
     render(<ExploreScreen />)
     await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(4))
     expect(screen.getByText(`2/${LEARN_ARTICLES.length}`)).toBeTruthy()
@@ -88,7 +87,7 @@ describe('ExploreScreen', () => {
     expect(screen.queryByText('TAD Australia')).toBeNull()
   })
 
-  it('filters across guides, toys and organisations as you type, grouped under eyebrows', async () => {
+  it('Q13 filters across guides, toys and organisations as you type, grouped under eyebrows', async () => {
     render(<ExploreScreen />)
     await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(4))
     await screen.findByText('This community so far')
@@ -105,7 +104,7 @@ describe('ExploreScreen', () => {
     expect(screen.getAllByText('Organisations')).toHaveLength(2)
   })
 
-  it('routes a search result to its detail screen on press', async () => {
+  it('Q13 routes a search result to its detail screen on press', async () => {
     render(<ExploreScreen />)
     await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(4))
 
@@ -126,7 +125,7 @@ describe('ExploreScreen', () => {
     expect(screen.queryByText('Switch car')).toBeNull()
   })
 
-  it('still lists results from the sources that succeeded when one source fails, and shows a retry', async () => {
+  it('Q13 still lists results from the sources that succeeded when one source fails, and shows a retry', async () => {
     mockGet.mockImplementation((path: string) => {
       if (path === '/api/public/tutorials') return Promise.reject(new Error('API GET failed with status 500'))
       if (path === '/api/public/toys') return Promise.resolve([{ id: 't1', name: 'Switch car' }])
@@ -144,7 +143,7 @@ describe('ExploreScreen', () => {
     expect(screen.queryByText('Guides')).toBeNull()
   })
 
-  it('retrying refetches all three sources and clears the error once they all succeed', async () => {
+  it('Q13 retrying refetches all three sources and clears the error once they all succeed', async () => {
     mockGet.mockImplementation((path: string) => {
       if (path === '/api/public/tutorials') return Promise.reject(new Error('API GET failed with status 500'))
       if (path === '/api/public/toys') return Promise.resolve([{ id: 't1', name: 'Switch car' }])

@@ -1,4 +1,3 @@
-// journeys: W11
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { PicksEditor } from '../../../../components/my-toys/picks-editor'
 
@@ -18,7 +17,7 @@ const toy = (over: object = {}) => ({
 
 beforeEach(() => jest.clearAllMocks())
 
-it('picks up to three and saves them in order', async () => {
+it('W11 picks up to three and saves them in order', async () => {
   mockPut.mockResolvedValue({ picks: [] })
   const onSaved = jest.fn()
   render(
@@ -45,7 +44,7 @@ it('picks up to three and saves them in order', async () => {
   expect(onSaved).toHaveBeenCalled()
 })
 
-it('switches the mode', async () => {
+it('W11 switches the mode', async () => {
   mockPatch.mockResolvedValue(toy({ picks_mode: 'picked' }))
   const onSaved = jest.fn()
   render(<PicksEditor toy={toy({ picks_mode: 'auto' })} ownToys={[]} guides={[]} onSaved={onSaved} />)
