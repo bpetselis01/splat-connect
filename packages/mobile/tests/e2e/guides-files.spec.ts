@@ -57,6 +57,23 @@ test('G30 a 3D pill opens the viewer for that part with its facts, and ✕ retur
   await expect(page.getByRole('tab', { name: 'Files', selected: true })).toBeVisible()
 })
 
+test('G31 the 3D view’s ✕ goes back to Files, and Ask someone to print opens the printer finder for this guide', async ({ page }) => {
+  await signInAsNewContributor(page)
+  const g = await guideWithParts()
+  await page.goto(`/guides/${g.id}`)
+  await page.getByRole('tab', { name: 'Files' }).click()
+  await page.getByRole('button', { name: `3D view of ${stlName('lts_base.stl')}` }).click()
+  await page.getByRole('button', { name: 'Close 3D view' }).click()
+  await expect(page).toHaveURL(new RegExp(`/guides/${g.id}$`))
+  await expect(page.getByRole('tab', { name: 'Files', selected: true })).toBeVisible()
+
+  await page.getByRole('button', { name: `3D view of ${stlName('lts_base.stl')}` }).click()
+  await expect(page).toHaveURL(new RegExp(`/guides/${g.id}/model\\?file=${g.files[0]}`))
+  await page.getByRole('button', { name: 'Ask someone to print' }).click()
+  await expect(page).toHaveURL(new RegExp(`/printing\\?guide=${g.id}`))
+  await expect(page).not.toHaveURL(/\/model/)
+})
+
 test('a guide with nothing to download says so', async ({ page }) => {
   await signInAsNewContributor(page)
   const author = await createContributor()
