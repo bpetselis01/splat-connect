@@ -1,12 +1,12 @@
 import { test, expect } from '@playwright/test'
-import { createContributor, makeLeader, signIn, uniqueTitle } from './helpers'
+import { adminClient, createContributor, makeLeader, signIn, uniqueTitle } from './helpers'
 
 test('Q20 the Acting-for pill opens the sheet, a pick is kept across a reload and the leader screens follow it', async ({ page }) => {
   const leader = await createContributor()
   const north = uniqueTitle('E2E North Org')
   const west = uniqueTitle('E2E West Org')
-  await makeLeader(leader.id, north)
-  await makeLeader(leader.id, west)
+  const orgIds = [await makeLeader(leader.id, north), await makeLeader(leader.id, west)]
+  test.info().annotations.push({ type: 'orgs', description: orgIds.join(',') })
   await signIn(page, leader.email, leader.password)
   await expect(page).toHaveURL(/\/home$/)
 
@@ -29,4 +29,9 @@ test('Q20 the Acting-for pill opens the sheet, a pick is kept across a reload an
   await page.reload()
   await page.goto('/me')
   await expect(page.getByRole('button', { name: `Acting for ${other}. Change organisation.` })).toBeVisible()
+})
+
+test.afterEach(async () => {
+  const ids = test.info().annotations.find((a) => a.type === 'orgs')?.description?.split(',') ?? []
+  await adminClient().from('organizations').delete().in('id', ids)
 })
