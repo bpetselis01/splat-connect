@@ -93,7 +93,7 @@ describe('GET /api/public/organizations/:id', () => {
     await deleteTestUser(requester.id)
   })
 
-  it('P01 returns only the public projection for a contributing org', async () => {
+  it('P01 WN06 returns only the public projection for a contributing org', async () => {
     const res = await app.request(`${BASE}/api/public/organizations/${contributorOrg}`)
     expect(res.status).toBe(200)
     const body = (await res.json()) as any
