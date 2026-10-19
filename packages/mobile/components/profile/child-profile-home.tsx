@@ -105,6 +105,9 @@ export function ChildProfileHome() {
       </Text>
 
       <ErrorRow message={error} />
+      {error && !loading && children.length === 0 ? (
+        <Button label="Try again" variant="secondary" onPress={() => { setLoading(true); setReloadKey((k) => k + 1) }} />
+      ) : null}
       {loading ? <ActivityIndicator color={theme.colors.primary} /> : null}
 
       {!loading && !error && children.length === 0 ? (
