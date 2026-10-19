@@ -49,3 +49,29 @@ Every web `page.tsx` and every mobile screen file needs a journey row naming it 
 `node scripts/journeys/notifications.mjs` (part of `pnpm test:journeys`) holds two lists to this rule. It reads the `NotificationType` union from `packages/types/src/index.ts` and fails on a type with no creator in `packages/api/src` or in a migration that inserts into `notifications` (a dead type: delete it, or allow-list it in the script with a dated reason), on a type with no asserting test, and on a row whose `notifies` names a type no longer in the union. A type's asserting test is an `it`/`test` in `packages/api/tests/integration/**` with the type's name in its title; it drives the real route as the real seat and asserts the notification row (type, recipient, link). `describe` titles do not count.
 
 Server-side counts are a fixed list in the same script (`COUNTS`), one entry per number, keyed by the route that computes it. A count's test carries `counts:<name>` in its title, for example `counts:admin-counts.reports`, performs the action that moves the number through its route, reads the count before and after, and undoes the action. A test that reads a seeded fixture does not count. A new count is added to `COUNTS` in the commit that adds it; the generated `docs/testing/journeys.md` lists both tables.
+
+## How to add a journey
+
+1. Add a row to `scripts/journeys/journeys.json`. Pick the next free id: a letter plus two digits on mobile (`Q50`), `W` plus a letter plus two digits on web (`WM40`). Fill `platform`, `route` (the screen file or page route, which the route check matches against real files), `kind` (`static`, `nav` or `write`), `seat` (`anon`, `P`, `L` or `A`), `setter` (who puts the data in the state the screen shows: `n/a`, `P`, `L`, `A`, `web`, `mobile` or `none`), `screen`, `element`, `api`, `db`, `notifies`, `counts`, `device`, and `required`. Set `required` to the layers the row's `kind`, `api` and `notifies` demand (see "Required layers and waivers").
+2. Put the id first in the title of each test that asserts the row's outcome, at every required layer: `test('Q50 approving a request tells the family', …)`. One test may carry several ids when it asserts all of them.
+3. Run `pnpm test:journeys`, then `pnpm test:journeys:write` to regenerate `docs/testing/journeys.md`, and commit the regenerated file with the row.
+
+If you forget something, the check says so. A route with no row prints `no journey row: web /foo`. A row with a layer lint failure prints the rule, for example `a row with an api call must require api` or `write requires api`. A required layer with no tagged test prints `Q50 api` under "Required layers with no tagged test". A file-level `// journeys:` line with ids prints `file-level tag: put the id in the test title`, and a dynamic `${id}` title prints `dynamic id in title`. A `notifies` type no test asserts, or a count with no `counts:<name>` test, fails `notifications.mjs`. A stale `docs/testing/journeys.md` prints `run pnpm test:journeys:write`. The notification matrix and the coverage map are both generated, so never edit them by hand.
+
+A screen with no journey needs an entry in `routes-without-journeys.json` with a real reason; a reason that starts with `TODO:` fails the check.
+
+## Re-audit 2026-10-20
+
+After the ratchets closed, 100 rows (50 mobile, 50 web, at least 2 per id group, biased to rows with `api`, `notifies` or `counts`) were re-read against the tests that carry their ids. The full table is in `docs/testing/journeys-reaudit-2026-10-20.md`.
+
+| Platform | Layer | Cells | OUTCOME | INTERACTION | RENDER | WRONG |
+|---|---|---|---|---|---|---|
+| mobile | mobile-unit | 50 | 48 | 1 | 1 | 0 |
+| mobile | mobile-e2e | 50 | 48 | 2 | 0 | 0 |
+| mobile | api | 45 | 44 | 1 | 0 | 0 |
+| mobile | device | 3 | 3 | 0 | 0 | 0 |
+| web | web-unit | 50 | 49 | 0 | 1 | 0 |
+| web | web-e2e | 47 | 46 | 1 | 0 | 0 |
+| web | api | 40 | 40 | 0 | 0 | 0 |
+
+285 cells: 278 OUTCOME, 5 INTERACTION, 2 RENDER, 0 WRONG. The seven cells below OUTCOME are listed with their fixes in the re-audit file.
