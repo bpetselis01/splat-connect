@@ -1,4 +1,4 @@
-> Snapshot of the mobile map audit, 2026-10-20, against HEAD cea425f2 vs a518a327. Source for the mobile re-base (drift table, stale rows, wrong and loose tags, fan-out files).
+> Snapshot of the mobile map audit, 2026-10-20, against HEAD cea425f2 vs a518a327. Source for the mobile re-base (drift table, stale rows, wrong and loose tags, fan-out files). The living map is docs/testing/journeys.md, generated from scripts/journeys/journeys.json.
 
 # Mobile journey map audit ("0 gaps"), HEAD vs a518a327
 
