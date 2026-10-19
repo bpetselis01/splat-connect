@@ -356,7 +356,9 @@ jobs:
         run: pnpm --filter @splat-connect/web exec playwright install --with-deps chromium
 
       - name: Run web E2E tests
-        run: pnpm --filter @splat-connect/web test:e2e -- --shard=${{ matrix.shard }}/4
+        # No "--": pnpm forwards it to Playwright, which then ignores the shard
+        # flag and every leg runs the whole suite.
+        run: pnpm --filter @splat-connect/web test:e2e --shard=${{ matrix.shard }}/4
 
       # Traces and page snapshots of what failed; without them a CI-only
       # failure is a test name and a timeout.
