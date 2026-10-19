@@ -74,6 +74,7 @@ export function DeleteAccountScreen() {
   const [busy, setBusy] = useState(false)
   const [apple, setApple] = useState(false)
   const [emailed, setEmailed] = useState(false)
+  const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
     apiClient
@@ -81,7 +82,7 @@ export function DeleteAccountScreen() {
       .then(setPreview)
       .catch(() => setError({ kind: 'other', message: 'Could not load your account. Check your connection and try again.' }))
     if (usesApple) appleAvailable().then(setApple)
-  }, [usesApple])
+  }, [usesApple, attempt])
 
   async function remove(appleAuthorizationCode?: string) {
     try {
@@ -166,6 +167,9 @@ export function DeleteAccountScreen() {
       <AuthStage foot={false}>
         <Heading>Delete your account</Heading>
         {error ? <AuthError error={error} /> : <Lede>Loading…</Lede>}
+        {error ? (
+          <Button label="Try again" variant="secondary" style={pill} onPress={() => { setError(null); setAttempt((n) => n + 1) }} />
+        ) : null}
       </AuthStage>
     )
   }
