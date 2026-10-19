@@ -4,7 +4,7 @@ import { signIn, createContributor, createTutorial, uniqueTitle } from '../helpe
 // No acceptTerms() anywhere in this file, deliberately. Seeding acceptance in setup
 // is what kept the contributor-terms 403 invisible to the suite.
 
-test('an account without accepted terms is sent to the catch-up screen', async ({ page }) => {
+test('WA27 an account without accepted terms is sent to the catch-up screen', async ({ page }) => {
   const contributor = await createContributor()
   await signIn(page, contributor.email, contributor.password)
   // signIn() only clicks the button; the login page's own redirect (which
@@ -16,7 +16,7 @@ test('an account without accepted terms is sent to the catch-up screen', async (
   await expect(page).toHaveURL(/\/onboarding\/contributor-terms/)
 })
 
-test('browsing stays open without accepted terms', async ({ page }) => {
+test('WA29 browsing stays open without accepted terms', async ({ page }) => {
   const contributor = await createContributor()
   const tutorialId = await createTutorial(contributor.id, {
     title: uniqueTitle('E2E Terms Browsing'),
@@ -36,6 +36,11 @@ test('browsing stays open without accepted terms', async ({ page }) => {
   // The public detail page must not be caught by the /tutorials gate.
   await page.goto(`/tutorials/${tutorialId}`)
   await expect(page).toHaveURL(new RegExp(`/tutorials/${tutorialId}$`))
+
+  // An account page that is signed-in only, not terms-gated.
+  await page.goto('/notifications')
+  await expect(page).toHaveURL(/\/notifications$/)
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
 })
 
 test('accepting on first login lands on the dashboard with its real header, not the bare layout', async ({ page }) => {

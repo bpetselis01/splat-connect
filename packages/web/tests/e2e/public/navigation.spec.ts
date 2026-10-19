@@ -107,7 +107,7 @@ test.describe('public navigation', () => {
     await expect(current).toHaveAttribute('href', '/learn')
   })
 
-  test('the organisations directory is reachable with no session', async ({ page }) => {
+  test('WA28 the organisations directory is reachable with no session', async ({ page }) => {
     const res = await page.goto('/organizations')
     expect(res?.status()).toBeLessThan(400)
     expect(page.url()).not.toContain('/login')
