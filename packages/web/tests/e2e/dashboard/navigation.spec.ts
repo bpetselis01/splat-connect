@@ -112,13 +112,32 @@ test.describe('signed-in navigation', () => {
     await expect(page).toHaveURL(/\/dashboard$/)
   })
 
+  test('WD06 the hub offers the Admin card, linked to /admin, to an admin and to nobody else', async ({ page }) => {
+    const contributor = await createContributor()
+    await acceptTerms(contributor.id)
+    await signIn(page, contributor.email, contributor.password)
+    await page.waitForURL('**/dashboard')
+    await expect(page.getByRole('main').getByRole('link', { name: /^Admin/ })).toHaveCount(0)
+    await page.context().clearCookies()
+
+    const admin = await createAdmin()
+    await acceptTerms(admin.id)
+    await signIn(page, admin.email, admin.password)
+    await page.waitForURL('**/admin')
+    await page.goto('/dashboard')
+    const card = page.getByRole('main').getByRole('link', { name: /^Admin/ })
+    await expect(card).toHaveAttribute('href', '/admin')
+    await card.click()
+    await expect(page).toHaveURL('/admin')
+  })
+
   // Tests: the empty saved list's way out lands on the public library
   // How:   a signed-in contributor with nothing saved clicks "Browse the guide
   //        library"
   // Chain: the reported defect. app/dashboard/saved/[type]/page.tsx used a
   //        plain next/link, so the root layout never re-ran and /library
   //        rendered inside the account chrome until the next hard navigation
-  test('the empty saved list\'s browse link lands on the public library', async ({ page }) => {
+  test('WD34 the empty saved list\'s browse link lands on the public library', async ({ page }) => {
     const contributor = await createContributor()
     await acceptTerms(contributor.id)
     await signIn(page, contributor.email, contributor.password)

@@ -1,7 +1,10 @@
 import { test, expect } from '@playwright/test'
 import {
   signIn,
+  adminClient,
   createContributor,
+  createNotification,
+  createPublishedToy,
   createTutorial,
   createOrgWithLeader,
   seedBackingRequest,
@@ -46,7 +49,7 @@ test('a contributor sees no Organisation group', async ({ page }) => {
   }
 })
 
-test('a leader sees the Organisation group, and the queue merges across two organisations with no picker', async ({
+test('WD03 a leader sees the Organisation group, and the queue merges across two organisations with no picker', async ({
   page,
 }) => {
   const leader = await createContributor()
@@ -80,6 +83,11 @@ test('a leader sees the Organisation group, and the queue merges across two orga
     await expect(page.getByRole('heading', { name: titleA })).toBeVisible()
     await expect(page.getByRole('heading', { name: titleB })).toBeVisible()
     await expect(page.getByRole('combobox')).toHaveCount(0)
+
+    // WD03: the hub's header button counts the same queue and opens it.
+    await page.goto('/dashboard')
+    await page.getByRole('link', { name: '2 guides to review' }).click()
+    await expect(page).toHaveURL('/dashboard/organisation')
   } finally {
     await deleteOrg(orgA)
     await deleteOrg(orgB)
@@ -136,7 +144,7 @@ test('a leader reaches the existing review screen from the tab and approves a tu
   }
 })
 
-test('a contributor adds two children, edits one, and deletes one', async ({ page }) => {
+test('WD13 WD15 WD16 WD17 a contributor adds two children, edits one, and deletes one', async ({ page }) => {
   const contributor = await createContributor()
   await acceptTerms(contributor.id)
 
@@ -219,10 +227,12 @@ test('a contributor adds two children, edits one, and deletes one', async ({ pag
  * same tab, and read the field back — not a nav element that was never
  * wired to the name.
  */
-test('a user renames themselves on the Account tab and the change persists', async ({ page }) => {
+test('WD10 a user renames themselves on Account and the new name shows on their public profile', async ({ page }) => {
   const contributor = await createContributor()
   await acceptTerms(contributor.id)
   const newName = uniqueTitle('Renamed Contributor')
+  // A public profile exists once the Member has something public to show.
+  await createTutorial(contributor.id, { title: uniqueTitle('Public guide'), status: 'approved' })
 
   try {
     await signIn(page, contributor.email, contributor.password)
@@ -242,6 +252,9 @@ test('a user renames themselves on the Account tab and the change persists', asy
 
     await page.reload()
     await expect(page.locator('#name')).toHaveValue(newName)
+
+    await page.goto(`/contributors/${contributor.id}`)
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(newName)
   } finally {
     await deleteUser(contributor.id)
   }
@@ -373,4 +386,56 @@ test('the onboarding gate renders without site navigation', async ({ page }) => 
   }
 })
 
+test('WD01 a hub card carries its unread count and opens its page', async ({ page }) => {
+  const contributor = await createContributor()
+  await acceptTerms(contributor.id)
+  for (const t of ['One', 'Two']) {
+    const title = uniqueTitle(t)
+    const tutorialId = await createTutorial(contributor.id, { title, status: 'approved' })
+    await createNotification(contributor.id, { type: 'tutorial_approved', tutorial_id: tutorialId, tutorial_title: title })
+  }
+
+  try {
+    await signIn(page, contributor.email, contributor.password)
+    await page.waitForURL('**/dashboard')
+
+    const hub = page.getByRole('main')
+    await expect(hub.getByRole('link', { name: /^2 My tutorials/ })).toBeVisible()
+    await expect(hub.getByRole('link', { name: /^2 Notifications/ })).toBeVisible()
+
+    await hub.getByRole('link', { name: /^2 Notifications/ }).click()
+    await expect(page).toHaveURL('/notifications')
+    await expect(page.getByRole('heading', { name: 'Notifications' })).toBeVisible()
+  } finally {
+    await deleteUser(contributor.id)
+  }
+})
+
+test('WD02 the hub says how many exchanges need you and opens My exchanges', async ({ page }) => {
+  const owner = await createContributor()
+  await acceptTerms(owner.id)
+  const asker = await createContributor()
+  const toyId = await createPublishedToy(owner.id)
+  const { data: tx, error } = await adminClient()
+    .from('toy_transactions')
+    .insert({ type: 'donation', status: 'requested', toy_id: toyId, owner_id: owner.id, requester_id: asker.id })
+    .select('id')
+    .single()
+  if (error) throw new Error(error.message)
+
+  try {
+    await signIn(page, owner.email, owner.password)
+    await page.waitForURL('**/dashboard')
+    const button = page.getByRole('main').getByRole('link', { name: /^1 exchange/ })
+    await expect(button).toBeVisible()
+    await expect(page.getByText(/One thing is waiting\./)).toBeVisible()
+
+    await button.click()
+    await expect(page).toHaveURL('/dashboard/exchanges')
+  } finally {
+    await adminClient().from('toy_transactions').delete().eq('id', tx!.id)
+    await deleteUser(owner.id)
+    await deleteUser(asker.id)
+  }
+})
 
