@@ -1,4 +1,3 @@
-// journeys: V07 V08 V09
 import { test, expect } from '@playwright/test'
 import { createTutorial, signInAsNewContributor, uniqueTitle } from './helpers'
 
@@ -6,7 +5,7 @@ import { createTutorial, signInAsNewContributor, uniqueTitle } from './helpers'
  * The Saved shelf end to end: bookmark a guide in the library, find it under
  * Saved, unsave it in place, watch the shelf agree.
  */
-test('a saved guide reaches the shelf, and unsaving clears it', async ({ page }) => {
+test('V07 V08 a saved guide reaches the shelf, and unsaving clears it', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const title = uniqueTitle('E2E Saveable Guide')
   await createTutorial(contributor.id, { title })

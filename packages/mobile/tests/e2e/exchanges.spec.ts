@@ -1,4 +1,3 @@
-// journeys: X01 X02 X04 X06 X07 Y05 Y06
 import { test, expect, type Browser, type Page } from '@playwright/test'
 import {
   createContributor,
@@ -59,7 +58,7 @@ async function requestPickup(page: Page, toyId: string): Promise<string> {
   return page.url().split('/exchanges/')[1]
 }
 
-test('a donation runs from request to handoff, and the toy changes hands', async ({ browser, baseURL }) => {
+test('X02 X04 X07 Y05 a donation runs from request to handoff, and the toy changes hands', async ({ browser, baseURL }) => {
   const owner = await createContributor()
   // The saved address the accept form pre-fills from (caps.profile.pickup_*).
   await setPickupAddress(owner.id, PICKUP)
@@ -138,7 +137,7 @@ test('a donation runs from request to handoff, and the toy changes hands', async
   }
 })
 
-test('either side can withdraw while the handoff is still open', async ({ browser, baseURL }) => {
+test('X06 either side can withdraw while the handoff is still open', async ({ browser, baseURL }) => {
   const owner = await createContributor()
   const requester = await createContributor()
   const toyName = uniqueTitle('E2E Withdraw Toy')
@@ -183,7 +182,7 @@ test('either side can withdraw while the handoff is still open', async ({ browse
   }
 })
 
-test('an exchange request names both toys in the thread', async ({ page }) => {
+test('Y06 an exchange request names both toys in the thread', async ({ page }) => {
   const requester = await signInAsNewContributor(page)
   const owner = await createContributor()
   const ownerName = uniqueTitle('E2E Swap Owner')

@@ -1,4 +1,3 @@
-// journeys: G11
 import { test, expect } from '@playwright/test'
 import { adminClient, createContributor, createTutorial, signInAsNewContributor, uniqueTitle } from './helpers'
 
@@ -17,7 +16,7 @@ async function guideWithPhotos(n: number, captions: string[] | null = ['Front', 
   return id
 }
 
-test('the hero counts its photos, opens one full screen at its own number, and ✕ returns to the guide', async ({ page }) => {
+test('G11 the hero counts its photos, opens one full screen at its own number, and ✕ returns to the guide', async ({ page }) => {
   await signInAsNewContributor(page)
   const id = await guideWithPhotos(3)
 
@@ -38,7 +37,7 @@ test('the hero counts its photos, opens one full screen at its own number, and �
   await expect(page.getByRole('button', { name: 'Report a problem', exact: true })).toBeVisible()
 })
 
-test('the viewer opens on the first photo, and a guide with one photo shows no counter in it', async ({ page }) => {
+test('G11 the viewer opens on the first photo, and a guide with one photo shows no counter in it', async ({ page }) => {
   await signInAsNewContributor(page)
   const many = await guideWithPhotos(3)
   const single = await guideWithPhotos(1, ['Only'])

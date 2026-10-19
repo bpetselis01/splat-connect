@@ -1,8 +1,7 @@
-// journeys: P01 P08 S01 S04
 import { test, expect } from '@playwright/test'
 import { signInAsNewContributor, createTutorial, uniqueTitle, adminClient } from './helpers'
 
-test("the contributor page lists that contributor's guides and opens one", async ({ page }) => {
+test("S01 the contributor page lists that contributor's guides and opens one", async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const author = uniqueTitle('E2E Showcase Author')
   const title = uniqueTitle('E2E Showcase Guide')

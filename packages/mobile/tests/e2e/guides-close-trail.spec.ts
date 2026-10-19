@@ -1,4 +1,3 @@
-// journeys: B05
 import { test, expect } from '@playwright/test'
 import { createTutorial, signInAsNewContributor, uniqueTitle } from './helpers'
 import { addSteps } from './guides-fixtures'
@@ -7,7 +6,7 @@ import { addSteps } from './guides-fixtures'
 // native pager): Guides from Home, a guide, build mode and its own ✕, then the
 // header ✕ closing the whole trail back to the library with the tab bar.
 
-test('build mode\'s ✕ returns to the guide at Pick up, and the header ✕ closes the trail to the library with the tab bar', async ({ page }) => {
+test('B05 build mode\'s ✕ returns to the guide at Pick up, and the header ✕ closes the trail to the library with the tab bar', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const title = uniqueTitle('E2E Close Trail')
   const id = await createTutorial(contributor.id, { title })

@@ -1,4 +1,3 @@
-// journeys: W05 W06 W07 W08 W10 W11
 import { test, expect, type Page } from '@playwright/test'
 import { adminClient, createContributor, createPublishedToy, makeOrgLeader, signInAsNewContributor, uniqueTitle } from './helpers'
 import { acceptNextConfirm } from './family-toys-fixtures'
@@ -40,7 +39,7 @@ async function addLibraryPhoto(page: Page, expectedCount: number, id: string) {
   await expect.poll(async () => (await toyRow(id)).photo_urls.length).toBe(expectedCount)
 }
 
-test('details, photos, offer type and publish: each step saves to the toy row', async ({ page }) => {
+test('W06 W07 W08 details, photos, offer type and publish: each step saves to the toy row', async ({ page }) => {
   const me = await signInAsNewContributor(page)
   const name = uniqueTitle('E2E Editor Toy')
   const id = await draftToy(me.id, name)
@@ -110,7 +109,7 @@ test('details, photos, offer type and publish: each step saves to the toy row', 
   await expect(page.getByRole('button', { name: 'Remove photo 1 — add another photo first' })).toBeDisabled()
 })
 
-test('hand-picked picks save to toy_picks, and Automatic puts the mode back', async ({ page }) => {
+test('W11 hand-picked picks save to toy_picks, and Automatic puts the mode back', async ({ page }) => {
   const me = await signInAsNewContributor(page)
   const name = uniqueTitle('E2E Picks Toy')
   const otherName = uniqueTitle('E2E Pick Target')
@@ -137,7 +136,7 @@ test('hand-picked picks save to toy_picks, and Automatic puts the mode back', as
   await expect.poll(async () => (await toyRow(id)).picks_mode).toBe('auto')
 })
 
-test('Delete toy asks first, then removes the row and returns to My toys', async ({ page }) => {
+test('W10 Delete toy asks first, then removes the row and returns to My toys', async ({ page }) => {
   const me = await signInAsNewContributor(page)
   const name = uniqueTitle('E2E Delete Toy')
   const id = await createPublishedToy(me.id, { name })
@@ -162,7 +161,7 @@ test('a dismissed Delete toy confirm leaves the toy alone', async ({ page }) => 
   expect((await toyRow(id)).status).toBe('published')
 })
 
-test("an organisation's toy is retired with a reason, and the row records both", async ({ page }) => {
+test("W05 an organisation's toy is retired with a reason, and the row records both", async ({ page }) => {
   const leader = await signInAsNewContributor(page)
   const orgId = await makeOrgLeader(leader.id)
   const name = uniqueTitle('E2E Retire Bear')

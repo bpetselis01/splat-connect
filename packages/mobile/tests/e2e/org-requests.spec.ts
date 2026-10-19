@@ -1,4 +1,3 @@
-// journeys: L16 L17
 import { test, expect } from '@playwright/test'
 import {
   adminClient,
@@ -32,7 +31,7 @@ async function seedRequest(
   return data.id
 }
 
-test('three tabs, the waiting count on each, finished requests left out, and each row opens its own thread', async ({ page }) => {
+test('L16 L17 three tabs, the waiting count on each, finished requests left out, and each row opens its own thread', async ({ page }) => {
   const leader = await signInAsNewContributor(page)
   const orgId = await makeOrgLeader(leader.id, uniqueTitle('E2E Requests Org'))
   const family = await createContributor()

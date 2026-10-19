@@ -1,4 +1,3 @@
-// journeys: Q03 Q04 Q08 Q09 Q11 Q12 Q16
 import { test, expect, type Page } from '@playwright/test'
 import { adminClient, createContributor, createTutorial, signIn, signInAsNewContributor, uniqueTitle } from './helpers'
 import { seedCollaboratorInvite, seedMapOrg, seedMoneyThread } from './family-fixtures'
@@ -29,7 +28,7 @@ test.describe('money line on Me opens its own thread', () => {
   }
 })
 
-test('How badges are earned opens the rules and closes again', async ({ page }) => {
+test('Q04 How badges are earned opens the rules and closes again', async ({ page }) => {
   await signInAsNewContributor(page)
   await page.goto('/me')
   const row = page.getByRole('button', { name: 'How badges are earned', exact: true })
@@ -48,7 +47,7 @@ async function inviteFixture() {
   return { author, title, tutorialId }
 }
 
-test('Accept on a collaborator invite gives the seat and tells the author', async ({ page }) => {
+test('Q08 Accept on a collaborator invite gives the seat and tells the author', async ({ page }) => {
   const { author, title, tutorialId } = await inviteFixture()
   const invitee = await signInAsNewContributor(page)
   const inviteId = await seedCollaboratorInvite(tutorialId, title, invitee.id, author.id)
@@ -68,7 +67,7 @@ test('Accept on a collaborator invite gives the seat and tells the author', asyn
   expect(told?.map((n) => n.type)).toContain('collaborator_accepted')
 })
 
-test('Decline on a collaborator invite leaves no seat and tells the author', async ({ page }) => {
+test('Q09 Decline on a collaborator invite leaves no seat and tells the author', async ({ page }) => {
   const { author, title, tutorialId } = await inviteFixture()
   const invitee = await signInAsNewContributor(page)
   const inviteId = await seedCollaboratorInvite(tutorialId, title, invitee.id, author.id)
@@ -90,7 +89,7 @@ test('Decline on a collaborator invite leaves no seat and tells the author', asy
 
 const placeRow = (page: Page, org: string, kind: string) => page.getByRole('button', { name: new RegExp(`^${org}, ${kind}`) })
 
-test('the Map lists a seeded organisation and its drop-off, narrowed by search, layer chip and filament filter', async ({ page }) => {
+test('Q11 Q12 the Map lists a seeded organisation and its drop-off, narrowed by search, layer chip and filament filter', async ({ page }) => {
   await signInAsNewContributor(page)
   const name = uniqueTitle('E2E Map Org')
   const orgId = await seedMapOrg(name)
@@ -120,7 +119,7 @@ test('the Map lists a seeded organisation and its drop-off, narrowed by search, 
   await expect(page).toHaveURL(new RegExp(`/toy-library/organisation/${orgId}$`))
 })
 
-test('a map drop-off row opens the recycling screen', async ({ page }) => {
+test('Q12 a map drop-off row opens the recycling screen', async ({ page }) => {
   await signInAsNewContributor(page)
   const name = uniqueTitle('E2E Map Dropoff')
   await seedMapOrg(name)
@@ -132,7 +131,7 @@ test('a map drop-off row opens the recycling screen', async ({ page }) => {
   await expect(page).toHaveURL(/\/explore\/recycling$/)
 })
 
-test('About SPLAT links open the matching web pages', async ({ page }) => {
+test('Q16 About SPLAT links open the matching web pages', async ({ page }) => {
   await signInAsNewContributor(page)
   await page.goto('/explore/about')
   await page.evaluate(() => {

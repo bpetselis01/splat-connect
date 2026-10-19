@@ -1,4 +1,3 @@
-// journeys: A04 A07 A08 A09 A10 A14 Z09
 import { test, expect } from '@playwright/test'
 import { createContributor, latestCode, signIn, uniqueSignupEmail } from './helpers'
 
@@ -14,7 +13,7 @@ async function openCodeScreen(page: import('@playwright/test').Page, email: stri
   return sent
 }
 
-test('a pasted code with spaces between its digits signs in', async ({ page }) => {
+test('A07 a pasted code with spaces between its digits signs in', async ({ page }) => {
   const { email } = await createContributor()
   const sent = await openCodeScreen(page, email)
   const code = await latestCode(email, sent)
@@ -22,7 +21,7 @@ test('a pasted code with spaces between its digits signs in', async ({ page }) =
   await expect(page).toHaveURL(/\/home$/)
 })
 
-test('letters in the code box are dropped, and the digits around them still sign in', async ({ page }) => {
+test('A07 letters in the code box are dropped, and the digits around them still sign in', async ({ page }) => {
   const { email } = await createContributor()
   const sent = await openCodeScreen(page, email)
   const code = await latestCode(email, sent)
@@ -30,7 +29,7 @@ test('letters in the code box are dropped, and the digits around them still sign
   await expect(page).toHaveURL(/\/home$/)
 })
 
-test('a wrong code says so and empties the boxes for another try', async ({ page }) => {
+test('A07 a wrong code says so and empties the boxes for another try', async ({ page }) => {
   const { email } = await createContributor()
   await openCodeScreen(page, email)
   await page.getByTestId('code-input').fill('000000')
@@ -47,14 +46,14 @@ test('five digits is not enough to be checked', async ({ page }) => {
   await expect(page.getByText('Check your email')).toBeVisible()
 })
 
-test('the resend link waits out a minute behind a countdown', async ({ page }) => {
+test('A08 the resend link waits out a minute behind a countdown', async ({ page }) => {
   const { email } = await createContributor()
   await openCodeScreen(page, email)
   await expect(page.getByText(/Resend code in 0:\d\d/)).toBeVisible()
   await expect(page.getByTestId('resend-code')).toHaveCount(0)
 })
 
-test('the Create button stays off until the terms are ticked, and the return key cannot get round it', async ({ page }) => {
+test('A04 the Create button stays off until the terms are ticked, and the return key cannot get round it', async ({ page }) => {
   await page.goto('/create-account')
   await page.getByLabel('Your name', { exact: true }).fill('Return Key')
   await page.getByLabel('Email', { exact: true }).fill(uniqueSignupEmail())
@@ -65,7 +64,7 @@ test('the Create button stays off until the terms are ticked, and the return key
   await expect(page.getByText('Check your email')).toHaveCount(0)
 })
 
-test('a five-character password is refused on the screen before any request', async ({ page }) => {
+test('A04 a five-character password is refused on the screen before any request', async ({ page }) => {
   await page.goto('/create-account')
   await page.getByLabel('Your name', { exact: true }).fill('Short Pass')
   await page.getByLabel('Email', { exact: true }).fill(uniqueSignupEmail())
@@ -80,7 +79,7 @@ test('signing in with an email nobody registered gets the same sentence as a wro
   await expect(page.getByText("That email and password don't match.")).toBeVisible()
 })
 
-test('a reset with a too-short new password is refused before the code is spent', async ({ page }) => {
+test('A09 A10 a reset with a too-short new password is refused before the code is spent', async ({ page }) => {
   const { email } = await createContributor()
   await page.goto('/sign-in')
   await page.getByLabel('Email', { exact: true }).fill(email)
@@ -95,14 +94,14 @@ test('a reset with a too-short new password is refused before the code is spent'
   await expect(page).not.toHaveURL(/\/home$/)
 })
 
-test('a signed-out visitor following a deep link to a signed-in screen lands on Welcome', async ({ page }) => {
+test('A14 a signed-out visitor following a deep link to a signed-in screen lands on Welcome', async ({ page }) => {
   for (const path of ['/account', '/home', '/child']) {
     await page.goto(path)
     await expect(page).toHaveURL(/\/welcome$/)
   }
 })
 
-test('a session that disappears from storage sends the next load to Welcome', async ({ page }) => {
+test('A14 a session that disappears from storage sends the next load to Welcome', async ({ page }) => {
   const { email, password } = await createContributor()
   await signIn(page, email, password)
   await expect(page).toHaveURL(/\/home$/)
@@ -111,7 +110,7 @@ test('a session that disappears from storage sends the next load to Welcome', as
   await expect(page).toHaveURL(/\/welcome$/)
 })
 
-test('after signing out, going to a signed-in screen lands on Welcome, not the screen', async ({ page }) => {
+test('A14 after signing out, going to a signed-in screen lands on Welcome, not the screen', async ({ page }) => {
   const { email, password } = await createContributor()
   await signIn(page, email, password)
   await expect(page).toHaveURL(/\/home$/)
@@ -134,7 +133,7 @@ test.skip('a postcode that is not four digits is refused inline on the account p
   await expect(page.getByText('A postcode is four digits.')).toBeVisible()
 })
 
-test('the child wizard keeps letters out of the age and walks to its done screen on Skip', async ({ page }) => {
+test('Z09 the child wizard keeps letters out of the age and walks to its done screen on Skip', async ({ page }) => {
   const { email, password } = await createContributor()
   await signIn(page, email, password)
   await expect(page).toHaveURL(/\/home$/)

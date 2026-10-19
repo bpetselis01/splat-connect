@@ -1,4 +1,3 @@
-// journeys: Y01 Y02 Y03 Y04 Y05
 import { test, expect } from '@playwright/test'
 import {
   createContributor,
@@ -20,7 +19,7 @@ import {
  * gating below is not about.
  */
 
-test('a card carries its holder, its condition and its switch-adapted badge', async ({ page }) => {
+test('Y01 a card carries its holder, its condition and its switch-adapted badge', async ({ page }) => {
   await signInAsNewContributor(page)
   const owner = await createContributor()
   const holder = uniqueTitle('E2E Holder')
@@ -42,7 +41,7 @@ test('a card carries its holder, its condition and its switch-adapted badge', as
   await expect(card.getByText('Switch-adapted', { exact: true })).toBeVisible()
 })
 
-test('the condition buckets keep only the toys that fall in them', async ({ page }) => {
+test('Y01 the condition buckets keep only the toys that fall in them', async ({ page }) => {
   await signInAsNewContributor(page)
   const owner = await createContributor()
   // One search token, two toys: the bucket is then the only thing that can
@@ -73,7 +72,7 @@ test('the condition buckets keep only the toys that fall in them', async ({ page
   await expect(page.getByText(wellLoved)).toHaveCount(0)
 })
 
-test('tapping Save on a toy card flips the bookmark and the flip survives a reload', async ({ page }) => {
+test('Y02 tapping Save on a toy card flips the bookmark and the flip survives a reload', async ({ page }) => {
   await signInAsNewContributor(page)
   const owner = await createContributor()
   const name = uniqueTitle('E2E Toy Save')
@@ -98,7 +97,7 @@ test('tapping Save on a toy card flips the bookmark and the flip survives a relo
   await expect(page.getByLabel('Saved', { exact: true })).toBeVisible()
 })
 
-test("the request block offers only what the toy's offer_type allows", async ({ page }) => {
+test("Y04 the request block offers only what the toy's offer_type allows", async ({ page }) => {
   await signInAsNewContributor(page)
   const owner = await createContributor()
   const holder = uniqueTitle('E2E Detail Holder')

@@ -1,4 +1,3 @@
-// journeys: H06
 import { test, expect, type Page } from '@playwright/test'
 import { createTutorial, signInAsNewContributor, signIn, uniqueTitle } from './helpers'
 
@@ -33,7 +32,7 @@ async function signOutKeepingDeviceData(page: Page) {
   })
 }
 
-test('newest first, and re-opening something moves it to the top without a second row', async ({ page }) => {
+test('H06 newest first, and re-opening something moves it to the top without a second row', async ({ page }) => {
   const member = await signInAsNewContributor(page)
   const prefix = uniqueTitle('E2E Recent Order')
   const [a, b, c] = await Promise.all([1, 2, 3].map((n) => createTutorial(member.id, { title: `${prefix} ${n}`, status: 'approved' })))
@@ -47,7 +46,7 @@ test('newest first, and re-opening something moves it to the top without a secon
   expect(await recentTitles(page, prefix)).toEqual([`${prefix} 1`, `${prefix} 3`, `${prefix} 2`])
 })
 
-test('at most ten rows: the eleventh opened pushes the oldest out', async ({ page }) => {
+test('H06 at most ten rows: the eleventh opened pushes the oldest out', async ({ page }) => {
   test.setTimeout(120_000)
   const member = await signInAsNewContributor(page)
   const prefix = uniqueTitle('E2E Recent Cap')

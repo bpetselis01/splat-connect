@@ -1,4 +1,3 @@
-// journeys: L18 Q17
 import { test, expect, type Page } from '@playwright/test'
 import { adminClient, createContributor, makeOrgLeader, signIn, signInAsNewContributor, uniqueTitle } from './helpers'
 import { futureDate } from './org-fixtures'
@@ -24,7 +23,7 @@ async function fillStoryForm(page: Page, title: string) {
   await page.getByRole('checkbox', { name: 'Everyone named or pictured has agreed to appear' }).click()
 }
 
-test('the Events and Stories chip counts move as items are added and removed', async ({ page }) => {
+test('L18 the Events and Stories chip counts move as items are added and removed', async ({ page }) => {
   const leader = await signInAsNewContributor(page)
   const orgId = await makeOrgLeader(leader.id)
   const rows = async (table: 'org_events' | 'org_stories') =>
@@ -57,7 +56,7 @@ test('the Events and Stories chip counts move as items are added and removed', a
   await expect.poll(() => rows('org_events')).toBe(0)
 })
 
-test('an admin card count rises after a report lands and the admin returns to the screen', async ({ page }) => {
+test('Q17 an admin card count rises after a report lands and the admin returns to the screen', async ({ page }) => {
   const admin = await createContributor()
   const { error } = await adminClient().from('profiles').update({ role: 'admin' }).eq('id', admin.id)
   expect(error).toBeNull()
