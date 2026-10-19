@@ -71,21 +71,23 @@ beforeEach(() => {
 })
 
 describe('SavedList', () => {
-  it('renders saved parts, linking to their guide', async () => {
+  it('WD32 renders saved parts, linking to their guide', async () => {
     listed.current = [{ id: 'f1', filename: 'cradle-65mm.stl', material: 'PETG', filament_grams: 12, print_minutes: null, tutorial_id: 'g1', tutorials: { id: 'g1', title: 'Switch mount', status: 'approved' } }]
     render(await SavedList({ params: Promise.resolve({ type: 'parts' }) }))
     expect(screen.getByText('cradle-65mm.stl')).toBeInTheDocument()
     expect(screen.getByText('Switch mount')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /cradle-65mm\.stl/ })).toHaveAttribute('href', '/tutorials/g1')
   })
 
-  it('renders a live slug that was switched on', async () => {
+  it('WD32 renders a live slug that was switched on', async () => {
     listed.current = [{ id: 'org-1', name: 'Northside Therapy', description: null }]
     const ui = await SavedList({ params: Promise.resolve({ type: 'organisations' }) })
     render(ui)
     expect(screen.getByText('Northside Therapy')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Northside Therapy/ })).toHaveAttribute('href', '/organizations/org-1/public')
   })
 
-  it('404s a slug that is not a save type at all', async () => {
+  it('WD34 404s a slug that is not a save type at all', async () => {
     await expect(SavedList({ params: Promise.resolve({ type: 'bananas' }) })).rejects.toThrow(
       'NEXT_NOT_FOUND'
     )
@@ -107,14 +109,14 @@ describe('SavedList', () => {
    * The filled control IS the unsave affordance — there is no separate delete
    * UI, which is why this assertion matters more than it looks.
    */
-  it('renders each saved item with its control already filled', async () => {
+  it('WD33 renders each saved item with its control already filled', async () => {
     listed.current = [tutorial]
     render(await SavedList({ params: Promise.resolve({ type: 'tutorials' }) }))
     expect(screen.getByText('Switch-adapting a cash register')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Saved' })).toHaveAttribute('aria-pressed', 'true')
   })
 
-  it('says so when nothing is saved, and points at the right library', async () => {
+  it('WD34 says so when nothing is saved, and points at the right library', async () => {
     render(await SavedList({ params: Promise.resolve({ type: 'challenges' }) }))
     expect(screen.getByText(/Nothing saved yet/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Browse design challenges/ })).toHaveAttribute(

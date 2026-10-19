@@ -18,7 +18,7 @@ describe('MyReportsList', () => {
     expect(screen.getByText('No reports yet')).toBeInTheDocument()
   })
 
-  it('shows each report with its status and the note SPLAT sent back', () => {
+  it('WD28 shows each report with its status and the note SPLAT sent back', () => {
     render(
       <MyReportsList
         reports={[report({ status: 'resolved', note_to_reporter: 'We added a screw-down cover.' }), report({ id: 'r2', subject_label: 'Toy: Frog', status: 'looking' })]}

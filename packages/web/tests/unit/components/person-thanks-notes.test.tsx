@@ -21,12 +21,12 @@ const note = (over: Partial<PersonThanks> = {}): PersonThanks => ({
 })
 
 describe('PersonThanksNotes', () => {
-  it('shows an empty state when nobody left a note', () => {
+  it('WD29 shows an empty state when nobody left a note', () => {
     render(<PersonThanksNotes thanks={[note({ note: null })]} />)
     expect(screen.getByText('No notes yet')).toBeInTheDocument()
   })
 
-  it('hides a note, then shows it again', async () => {
+  it('WD30 hides a note, then shows it again', async () => {
     patch.mockResolvedValueOnce(note({ hidden_at: '2026-10-02T00:00:00Z' }))
     render(<PersonThanksNotes thanks={[note()]} />)
     fireEvent.click(screen.getByRole('button', { name: 'Hide the note from Wren' }))
@@ -37,7 +37,7 @@ describe('PersonThanksNotes', () => {
     await waitFor(() => expect(patch).toHaveBeenLastCalledWith('/api/contributors/me/thanks/u1', { hidden: false }))
   })
 
-  it('a failed PATCH shows an error and does not flip the row', async () => {
+  it('WD30 a failed PATCH shows an error and does not flip the row', async () => {
     patch.mockRejectedValue(Object.assign(new Error('404'), { status: 404 }))
     render(<PersonThanksNotes thanks={[note()]} />)
     fireEvent.click(screen.getByRole('button', { name: 'Hide the note from Wren' }))

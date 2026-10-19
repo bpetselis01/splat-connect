@@ -55,7 +55,7 @@ describe('SavedHub', () => {
     await expect(SavedHub()).rejects.toThrow('NEXT_REDIRECT')
   })
 
-  it('leads each type to its own list', async () => {
+  it('WD31 leads each type to its own list', async () => {
     render(await SavedHub())
     expect(screen.getByText('Printable parts')).toBeInTheDocument()
     for (const [name, slug] of [
@@ -68,7 +68,7 @@ describe('SavedHub', () => {
     }
   })
 
-  it('counts what is kept of each type', async () => {
+  it('WD31 counts what is kept of each type', async () => {
     render(await SavedHub())
     expect(screen.getByRole('link', { name: /Tutorials/ })).toHaveTextContent('2')
     expect(screen.getByRole('link', { name: /Design challenges/ })).toHaveTextContent('1')
