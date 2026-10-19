@@ -11,6 +11,9 @@ export const LAYERS = {
 }
 export const KINDS = ['static', 'nav', 'write']
 const PLATFORMS = ['web', 'mobile']
+const SEATS = ['anon', 'P', 'L', 'A']
+const SETTERS = ['n/a', 'P', 'L', 'A', 'web', 'mobile', 'none']
+const ID = /^W?[A-Z]\d{2}$/
 const legalFor = (platform) => Object.entries(LAYERS).filter(([, l]) => !l.platform || l.platform === platform).map(([name]) => name)
 const TAG = /^(?:\/\/|#)\s*journeys:\s*(.*)$/
 
@@ -29,7 +32,10 @@ export function parseTags(text) {
 }
 
 const RULES = [
+  { name: 'id', fails: (r) => ID.test(r.id) ? null : `id must match ${ID}` },
   { name: 'platform', fails: (r) => PLATFORMS.includes(r.platform) ? null : r.platform === undefined ? 'platform is missing' : `unknown platform "${r.platform}"` },
+  { name: 'seat', fails: (r) => SEATS.includes(r.seat) ? null : `unknown seat "${r.seat}"` },
+  { name: 'setter', fails: (r) => SETTERS.includes(r.setter) ? null : `unknown setter "${r.setter}"` },
   { name: 'route', fails: (r) => typeof r.route === 'string' && r.route ? null : 'route is missing' },
   { name: 'kind', fails: (r) => KINDS.includes(r.kind) ? null : r.kind === undefined ? 'kind is missing' : `unknown kind "${r.kind}"` },
   { name: 'device', fails: (r) => typeof r.device === 'boolean' ? null : 'device must be true or false' },
@@ -40,6 +46,8 @@ const RULES = [
     const bad = (r.required ?? []).find((l) => l in LAYERS && !legalFor(r.platform).includes(l))
     return bad === undefined ? null : `layer "${bad}" is not legal for platform "${r.platform}"`
   } },
+  { name: 'unit-required', fails: (r) => !PLATFORMS.includes(r.platform) || (r.required ?? []).includes(`${r.platform}-unit`) ? null : `required must include ${r.platform}-unit` },
+  { name: 'api-required', fails: (r) => !(r.api ?? []).length || (r.required ?? []).includes('api') ? null : 'a row with an api call must require api' },
   { name: 'waiver', fails: (r) => { const bad = Object.keys(r.waived ?? {}).find((l) => !(r.required ?? []).includes(l)); return bad === undefined ? null : `waived layer "${bad}" is not required` } },
 ]
 
