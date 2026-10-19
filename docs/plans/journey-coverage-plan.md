@@ -411,7 +411,7 @@ Branch `journey-coverage` off `development`. One commit per fix (a row set, a sp
 
 **Verification:** checker gaps for Q18, Q19, C14 and the six new admin groups are 0.
 
-**Planning-time unknowns:** Deferred — whether `(my)/admin` needs a screen guard (Q11-adjacent; register if missing); whether the Expo web sign-in form accepts the admin seat without extra steps (the first spec answers it).
+**Planning-time unknowns:** Deferred — whether `(my)/admin` needs a screen guard (Q11-adjacent; register if missing). Resolved 2026-10-20: the admin seat needs no extra sign-in steps — `signIn` (`packages/mobile/tests/e2e/helpers.ts:273`) is a plain email/password form and the session carries no role (`lib/auth-context.tsx:80`); the Me tab reads `profile.role` after sign-in.
 
 ---
 
@@ -482,15 +482,15 @@ Branch `journey-coverage` off `development`. One commit per fix (a row set, a sp
 **Dependencies:** U8 (flow `name:` ids), U10
 
 **Files:**
-- `.github/workflows/ci.yml` — new job `maestro-android` after `mobile-e2e`, `needs: [changes]`, `if: needs.changes.outputs.mobile == 'true'`, no `continue-on-error`, `timeout-minutes: 90` for the first runs, tightened to 45 once the AVD snapshot cache is warm
-- `.github/workflows/maestro-android.yml` — replaced by `maestro-cache.yml`: `workflow_dispatch` only, builds and saves the AVD snapshot + Gradle cache that the PR job restores (a cold run is 45–60 min; the cache is what makes 25 min steady-state possible)
+- `.github/workflows/ci.yml` — new job `maestro-android` after `mobile-e2e`, `needs: [changes]`, `if: needs.changes.outputs.mobile == 'true'` (job-level `if:`, never a workflow-level `paths:` filter — a skipped job satisfies a required check, a path-filtered workflow leaves it pending and blocks merge), no `continue-on-error`, `timeout-minutes: 90` for the first runs, tightened to 45 once the cache is warm; `maestro test --format=JUNIT --output` for the report artifact
+- `.github/workflows/maestro-android.yml` — deleted. No separate warm-up workflow: an `actions/cache` entry is restorable only from the same branch or a PR's base branch, so a warm-up dispatched on a feature branch helps no PR. Instead the job's AVD-snapshot and Gradle `actions/cache` steps save on every push to `development` (which `ci.yml` already runs on), so each merge refreshes the cache that the next PR restores. The very first warm run is a manual `workflow_dispatch` of `ci.yml` on `development`.
 - `packages/mobile/.maestro/flows/*.yaml` — top-level `name:` with ids; the four flows never run anywhere (`feedback-sheet-post`, `note-report`, `inbox-badge-live`, `deep-link-cold-start`) fixed until they pass on the emulator
 - `packages/mobile/package.json` — `device:fixture` / `device:test` scripts confirmed to work headless
 - `docs/testing/journey-coverage-rule.md` — device paragraph: a device cell counts only for flows in this job
 
-**Approach:** Run the cache workflow by hand first, then the PR job (neither has ever run). Fix in this order: emulator boots → Release build installs → `device:fixture` seeds → `every-tab-renders` passes → the other 12. A skipped job (web-only PR) satisfies a required check in GitHub branch protection, so the path filter costs nothing on those PRs. Byron's memory notes iOS gotchas; Android is immune to the stale-prebuild issue.
+**Approach:** Dispatch `ci.yml` on `development` by hand first so the cache exists, then open the PR. Fix in this order: KVM enabled (udev rule step, still required on `ubuntu-latest`) → emulator boots → Release build installs → `device:fixture` seeds → `every-tab-renders` passes → the other 12. Byron's memory notes iOS gotchas; Android is immune to the stale-prebuild issue. Budget (research 2026-10-20, estimates not benchmarks): prebuild + `assembleRelease` 15–30 min cold / 6–12 warm; emulator 3–6 min cold / under 90 s from snapshot; 13 flows 8–20 min; whole job ≈ 30–50 cold, 15–25 warm. The 10 GB repo cache cap and 7-day eviction mean a quiet fortnight makes the next run cold again; that is acceptable, not a reason for a schedule.
 
-**Patterns:** `mobile-e2e` job for Supabase start/stop and artifact upload; `reactivecircus/android-emulator-runner` with `force-avd-creation: false` and an `actions/cache` keyed on the AVD config.
+**Patterns:** `mobile-e2e` job for Supabase start/stop and artifact upload; `reactivecircus/android-emulator-runner` README snapshot recipe: a cache-miss step with `force-avd-creation: false` and no `-no-snapshot`, then the run step with `-no-snapshot-save`; `emulator-options` replaces the defaults entirely, so copy them.
 
 **Test scenarios:**
 - [ ] Happy path: a mobile-only PR runs the job and it passes
@@ -500,7 +500,7 @@ Branch `journey-coverage` off `development`. One commit per fix (a row set, a sp
 
 **Verification:** job green on `journey-coverage` with the cache warm; branch protection on `development` lists it as required (Byron sets this in GitHub; the plan cannot).
 
-**Planning-time unknowns:** Deferred — the real cold and warm runtimes on the free runner (if warm > 45 min, split the 13 flows across two matrix legs).
+**Planning-time unknowns:** Deferred — the real cold and warm runtimes on the free runner (if warm > 45 min, split the 13 flows across two matrix legs). Research notes with sources: `docs/testing/maestro-ci-research-2026-10-20.md`.
 
 ---
 
@@ -837,7 +837,7 @@ Branch `journey-coverage` off `development`. One commit per fix (a row set, a sp
 
 **Verification:** CI run duration visible in the Actions summary before U13 starts.
 
-**Planning-time unknowns:** Deferred — the measured duration and the leg count.
+**Planning-time unknowns:** Deferred — the measured duration and the leg count. Resolved 2026-10-20: `fullyParallel: true, workers: 1` (`playwright.config.ts:31,52`) means `--shard` splits at test level with no spec changes, and each leg starts its own `webServer` pair, so legs are independent.
 
 ---
 
