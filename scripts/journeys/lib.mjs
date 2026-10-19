@@ -9,6 +9,9 @@ export const LAYERS = {
   api: { glob: 'packages/api/tests/integration/**/*.test.ts' },
   device: { glob: 'packages/mobile/.maestro/flows/*.yaml' },
 }
+export const KINDS = ['static', 'nav', 'write']
+const PLATFORMS = ['web', 'mobile']
+const legalFor = (platform) => Object.entries(LAYERS).filter(([, l]) => !l.platform || l.platform === platform).map(([name]) => name)
 const TAG = /^(?:\/\/|#)\s*journeys:\s*(.*)$/
 
 export function parseTags(text) {
@@ -25,14 +28,43 @@ export function parseTags(text) {
   return { ids, errors }
 }
 
+const RULES = [
+  { name: 'platform', fails: (r) => PLATFORMS.includes(r.platform) ? null : r.platform === undefined ? 'platform is missing' : `unknown platform "${r.platform}"` },
+  { name: 'route', fails: (r) => typeof r.route === 'string' && r.route ? null : 'route is missing' },
+  { name: 'kind', fails: (r) => KINDS.includes(r.kind) ? null : r.kind === undefined ? 'kind is missing' : `unknown kind "${r.kind}"` },
+  { name: 'device', fails: (r) => typeof r.device === 'boolean' ? null : 'device must be true or false' },
+  { name: 'required', fails: (r) => Array.isArray(r.required) && r.required.length ? null : 'required is empty' },
+  { name: 'layer-known', fails: (r) => { const bad = (r.required ?? []).find((l) => !(l in LAYERS)); return bad === undefined ? null : `unknown layer "${bad}"` } },
+  { name: 'layer-legal', fails: (r) => {
+    if (!PLATFORMS.includes(r.platform)) return null
+    const bad = (r.required ?? []).find((l) => l in LAYERS && !legalFor(r.platform).includes(l))
+    return bad === undefined ? null : `layer "${bad}" is not legal for platform "${r.platform}"`
+  } },
+  { name: 'waiver', fails: (r) => { const bad = Object.keys(r.waived ?? {}).find((l) => !(r.required ?? []).includes(l)); return bad === undefined ? null : `waived layer "${bad}" is not required` } },
+]
+
+export function validateRows(rows) {
+  const errors = rows.flatMap((row) => RULES.flatMap(({ name, fails }) => { const message = fails(row); return message ? [{ id: row.id, rule: name, message }] : [] }))
+  const seen = new Set()
+  for (const { id } of rows) {
+    if (seen.has(id)) errors.push({ id, rule: 'duplicate-id', message: 'id appears more than once' })
+    seen.add(id)
+  }
+  return errors
+}
+
 export function coverage(journeys, filesByLayer) {
-  const known = new Set(journeys.map((j) => j.id))
+  const byId = new Map(journeys.map((j) => [j.id, j]))
   const covered = {}
   const unknown = []
   for (const [layer, files] of Object.entries(filesByLayer)) {
     covered[layer] = new Set()
     for (const [file, ids] of Object.entries(files)) {
-      for (const id of ids) (known.has(id) ? covered[layer].add(id) : unknown.push({ file, id }))
+      for (const id of ids) {
+        const legal = byId.has(id) && (!LAYERS[layer].platform || LAYERS[layer].platform === byId.get(id).platform)
+        if (legal) covered[layer].add(id)
+        else unknown.push({ file, id })
+      }
     }
   }
   const gaps = [], waived = []
