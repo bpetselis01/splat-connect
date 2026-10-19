@@ -18,12 +18,12 @@ async function leaderApprovedGuide() {
   madeOrgs.push(orgId)
   const title = uniqueTitle('E2E Spot Guide')
   const id = await createTutorial(author.id, { title, status: 'approved' })
-  await adminClient().from('tutorials').update({ reviewed_by: leader.id, reviewed_for_org_id: orgId }).eq('id', id)
+  await adminClient().from('tutorials').update({ reviewed_by: leader.id, reviewed_for_org_id: orgId, reviewed_at: new Date().toISOString() }).eq('id', id)
   return { id, title, authorId: author.id }
 }
 
-// The API samples the first ten eligible guides, so these specs assume fewer than ten other
-// leader-approved guides exist at the moment they run.
+// The API samples the ten most recently reviewed eligible guides, so a guide approved during the
+// test is in the sample unless ten others are approved in the same moment.
 async function openSample(page: Page, title: string) {
   await expect(async () => {
     await page.goto('/admin/spot-check')
