@@ -184,6 +184,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # The free runner has ~14 GB free; the Android SDK, Gradle, node_modules and
+      # Supabase's images do not fit beside the preinstalled toolchains this job never
+      # uses. The first run died of "No space left on device" in the release build.
+      - name: Free disk space
+        run: |
+          df -h / | tail -1
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/share/swift \
+            /usr/local/share/boost /usr/local/lib/node_modules "$AGENT_TOOLSDIRECTORY/CodeQL" \
+            /usr/local/share/chromium /usr/local/share/powershell
+          docker image prune -af >/dev/null 2>&1 || true
+          df -h / | tail -1
+
       - uses: ./.github/actions/setup
 
       - uses: ./.github/actions/supabase-start
