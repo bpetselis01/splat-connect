@@ -97,12 +97,22 @@ test('validateRows names the id, rule and message for each broken field', () => 
   assert.deepEqual(errorsFor({ route: '' }), [{ id: 'G23', rule: 'route', message: 'route is missing' }])
   assert.deepEqual(errorsFor({ kind: undefined }), [{ id: 'G23', rule: 'kind', message: 'kind is missing' }])
   assert.deepEqual(errorsFor({ kind: 'read' }), [{ id: 'G23', rule: 'kind', message: 'unknown kind "read"' }])
-  assert.deepEqual(errorsFor({ required: ['mobile-unit', 'mobile-smoke'] }), [{ id: 'G23', rule: 'layer-known', message: 'unknown layer "mobile-smoke"' }])
+  assert.deepEqual(errorsFor({ required: ['mobile-unit', 'mobile-smoke', 'api'] }), [{ id: 'G23', rule: 'layer-known', message: 'unknown layer "mobile-smoke"' }])
 })
 
 test('validateRows rejects a layer from the other platform', () => {
-  assert.deepEqual(errorsFor({ required: ['web-e2e'] }), [{ id: 'G23', rule: 'layer-legal', message: 'layer "web-e2e" is not legal for platform "mobile"' }])
-  assert.deepEqual(errorsFor({ platform: 'web', required: ['mobile-unit'] }), [{ id: 'G23', rule: 'layer-legal', message: 'layer "mobile-unit" is not legal for platform "web"' }])
+  assert.deepEqual(errorsFor({ required: ['mobile-unit', 'web-e2e', 'api'] }), [{ id: 'G23', rule: 'layer-legal', message: 'layer "web-e2e" is not legal for platform "mobile"' }])
+  assert.deepEqual(errorsFor({ platform: 'web', required: ['web-unit', 'mobile-unit', 'api'] }), [{ id: 'G23', rule: 'layer-legal', message: 'layer "mobile-unit" is not legal for platform "web"' }])
+})
+
+test('validateRows checks the id shape, the seat and setter vocabulary, and that unit and api are required when due', () => {
+  assert.deepEqual(errorsFor({ id: 'g23' }), [{ id: 'g23', rule: 'id', message: 'id must match /^W?[A-Z]\\d{2}$/' }])
+  assert.deepEqual(validateRows([{ ...ok, id: 'WD03', platform: 'web', required: ['web-unit', 'api'] }]), [])
+  assert.deepEqual(errorsFor({ seat: 'parent' }), [{ id: 'G23', rule: 'seat', message: 'unknown seat "parent"' }])
+  assert.deepEqual(errorsFor({ setter: 'admin' }), [{ id: 'G23', rule: 'setter', message: 'unknown setter "admin"' }])
+  assert.deepEqual(errorsFor({ required: ['mobile-e2e', 'api'] }), [{ id: 'G23', rule: 'unit-required', message: 'required must include mobile-unit' }])
+  assert.deepEqual(errorsFor({ required: ['mobile-unit', 'mobile-e2e'] }), [{ id: 'G23', rule: 'api-required', message: 'a row with an api call must require api' }])
+  assert.deepEqual(errorsFor({ api: [], required: ['mobile-unit'] }), [])
 })
 
 test('validateRows rejects a duplicate id and a waiver for a layer that is not required', () => {
