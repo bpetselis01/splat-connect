@@ -71,6 +71,6 @@ describe('guide thanks against the real database', () => {
   })
 
   it('needs a signed-in member', async () => {
-    expect((await app.request(thanks(guide), { method: 'POST' })).status).toBe(401)
+    expect((await app.request(`/api/tutorials/${guide}/thanks`, { method: 'POST' })).status).toBe(401)
   })
 })
