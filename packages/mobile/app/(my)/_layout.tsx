@@ -65,7 +65,9 @@ export default function MyLayout() {
       <Stack.Screen name="organisation/publish" options={{ title: 'Events and stories' }} />
       <Stack.Screen name="organisation/events/new" options={{ title: 'Publish an event' }} />
       <Stack.Screen name="organisation/events/[id]" options={{ title: 'Manage event' }} />
+      <Stack.Screen name="organisation/events/[id]/edit" options={{ title: 'Edit an event' }} />
       <Stack.Screen name="organisation/stories/new" options={{ title: 'Publish a story' }} />
+      <Stack.Screen name="organisation/stories/[id]/edit" options={{ title: 'Edit a story' }} />
       <Stack.Screen name="organisation/profile"options={{ title: 'Organisation profile' }} />
       <Stack.Screen name="events" options={{ title: 'My events' }} />
       {/* 077: a conversation with an organisation, from either side. */}

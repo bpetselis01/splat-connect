@@ -178,6 +178,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["mobile", "web"],
     needs: "Edit mode for events and stories on both platforms; web's EventForm already takes an event prop, only events/new renders it.",
+    shipped: true,
   },
 } satisfies Record<string, PendingItem>
 

@@ -5,7 +5,8 @@
  * each takes effect on the public page at once, with no review.
  *
  * New ones are written on their own screens (organisation/events/new and
- * stories/new), linked from the top of the list.
+ * stories/new), linked from the top of the list; every row's Edit opens the
+ * same form at [id]/edit.
  */
 import { logFailure } from '../../lib/log'
 import { useCallback, useState } from 'react'
@@ -176,6 +177,12 @@ export function OrgPublishScreen() {
                     onPress={() => router.push(`/organisation/events/${r.id}` as never)}
                   />
                 ) : null}
+                <Button
+                  label="Edit"
+                  variant="secondary"
+                  accessibilityLabel={`Edit ${r.title}`}
+                  onPress={() => router.push(`/organisation/${tab}/${r.id}/edit` as never)}
+                />
                 <Button
                   label={r.status === 'published' ? 'Unpublish' : 'Publish'}
                   variant="secondary"
