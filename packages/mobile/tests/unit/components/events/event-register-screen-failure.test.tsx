@@ -1,5 +1,4 @@
 // A failed event load says so, retries on Try again, and never reaches console.error.
-// journeys: V01
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { EventRegisterScreen } from '../../../../components/events/event-register-screen'
 import { event } from './event-fixtures'

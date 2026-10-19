@@ -1,4 +1,3 @@
-// journeys: V01 V02 V03
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { MyEventsScreen } from '../../../../components/events/my-events-screen'
 
@@ -29,12 +28,12 @@ beforeEach(() => {
 })
 
 describe('MyEventsScreen', () => {
-  it('says nothing is booked when there are no registrations', async () => {
+  it('V01 says nothing is booked when there are no registrations', async () => {
     render(<MyEventsScreen />)
     expect(await screen.findByText('Nothing booked yet')).toBeTruthy()
   })
 
-  it('a failed load says so and retries, instead of claiming nothing is booked', async () => {
+  it('V01 a failed load says so and retries, instead of claiming nothing is booked', async () => {
     mockGet.mockRejectedValueOnce(new Error('offline'))
     render(<MyEventsScreen />)
     expect(await screen.findByText('Could not load your events.')).toBeTruthy()
@@ -45,7 +44,7 @@ describe('MyEventsScreen', () => {
     expect(screen.queryByText('Could not load your events.')).toBeNull()
   })
 
-  it('splits upcoming from been-and-gone, upcoming first, and offers Can\'t make it only on upcoming', async () => {
+  it('V01 splits upcoming from been-and-gone, upcoming first, and offers Can\'t make it only on upcoming', async () => {
     serve([
       row({ id: 'old', reg: 'r0', event: { title: 'Last year', starts_at: '2020-01-01T10:00:00Z', ends_at: '2020-01-01T12:00:00Z' } }),
       row({ id: 'new' }),
@@ -56,14 +55,14 @@ describe('MyEventsScreen', () => {
     expect(screen.getAllByRole('button', { name: "Can't make it" })).toHaveLength(1)
   })
 
-  it('no "Been and gone" heading when nothing is past', async () => {
+  it('V01 no "Been and gone" heading when nothing is past', async () => {
     serve([row()])
     render(<MyEventsScreen />)
     await screen.findByText('Build day')
     expect(screen.queryByText('Been and gone')).toBeNull()
   })
 
-  it('Can\'t make it deletes that event\'s registration and reloads the list', async () => {
+  it('V02 Can\'t make it deletes that event\'s registration and reloads the list', async () => {
     serve([row({ id: 'e9' })])
     render(<MyEventsScreen />)
     fireEvent.press(await screen.findByRole('button', { name: "Can't make it" }))
@@ -71,7 +70,7 @@ describe('MyEventsScreen', () => {
     await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(2))
   })
 
-  it('a failed Can\'t make it says so, keeps the row, and can be retried', async () => {
+  it('V02 a failed Can\'t make it says so, keeps the row, and can be retried', async () => {
     serve([row()])
     mockDelete.mockRejectedValueOnce(new Error('offline'))
     render(<MyEventsScreen />)
@@ -119,7 +118,7 @@ describe('MyEventsScreen', () => {
       render(<MyEventsScreen />)
       expect(await screen.findByText('Parts pending')).toBeTruthy()
     })
-    it('declined says why and offers Pick a printer, which goes to Printing', async () => {
+    it('V03 declined says why and offers Pick a printer, which goes to Printing', async () => {
       serve([row({ part: { status: 'rejected', decline_reason: 'Out of filament' } })])
       render(<MyEventsScreen />)
       expect(await screen.findByText('Parts declined')).toBeTruthy()
@@ -133,7 +132,7 @@ describe('MyEventsScreen', () => {
       const t = await screen.findByText(/cannot print your parts/)
       expect(t.props.children.join ? t.props.children.join('') : t.props.children).not.toMatch(/—\s*$/)
     })
-    it('a past event whose parts were declined still offers a printer but not a leave button', async () => {
+    it('V03 a past event whose parts were declined still offers a printer but not a leave button', async () => {
       serve([row({ event: { starts_at: '2020-01-01T10:00:00Z', ends_at: null }, part: { status: 'rejected', decline_reason: null } })])
       render(<MyEventsScreen />)
       expect(await screen.findByRole('button', { name: 'Pick a printer' })).toBeTruthy()
@@ -155,7 +154,7 @@ describe('MyEventsScreen', () => {
     expect(screen.getAllByRole('button', { name: "Can't make it" })).toHaveLength(50)
   })
 
-  it('a double tap on Can\'t make it for two different events leaves each deleted once', async () => {
+  it('V02 a double tap on Can\'t make it for two different events leaves each deleted once', async () => {
     serve([row({ id: 'a', reg: 'ra', event: { title: 'A' } }), row({ id: 'b', reg: 'rb', event: { title: 'B' } })])
     render(<MyEventsScreen />)
     const [first, second] = await screen.findAllByRole('button', { name: "Can't make it" })

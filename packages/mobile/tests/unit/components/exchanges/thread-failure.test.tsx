@@ -1,5 +1,4 @@
 // The exchange thread when its first read fails: says so, Try again re-reads, nothing hits console.error.
-// journeys: X03
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { ExchangeThreadScreen } from '../../../../components/exchanges/thread-screen'
 
@@ -33,7 +32,7 @@ const detail = {
 
 afterEach(() => jest.restoreAllMocks())
 
-it('says the exchange could not load offline, and Try again loads it', async () => {
+it('X02 says the exchange could not load offline, and Try again loads it', async () => {
   const err = jest.spyOn(console, 'error')
   mockGet.mockReset().mockRejectedValueOnce(new Error('Network request failed')).mockResolvedValue(detail)
   render(<ExchangeThreadScreen id="tx1" />)

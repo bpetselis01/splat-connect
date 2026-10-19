@@ -1,4 +1,3 @@
-// journeys: V01 V02 V03
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { EventDetailScreen } from '../../../../components/events/event-detail-screen'
 import { setReturnTo } from '../../../../lib/return-to'

@@ -1,4 +1,3 @@
-// journeys: V01 V03
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { PrintAtEventScreen } from '../../../../components/events/print-at-event-screen'
 import { event } from './event-fixtures'

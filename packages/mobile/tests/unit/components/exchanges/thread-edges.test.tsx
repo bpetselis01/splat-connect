@@ -1,7 +1,6 @@
 // Outlier input and failure paths on the exchange thread: what is typed into
 // the composer and the code box, what a second tap does, and what a flaky
 // network leaves on screen. The happy paths live in thread-screen.test.tsx.
-// journeys: X03
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { ExchangeThreadScreen } from '../../../../components/exchanges/thread-screen'
 import { NAMES } from '../../../special-strings'
@@ -70,7 +69,7 @@ describe('the composer', () => {
     expect(mockPost).not.toHaveBeenCalled()
   })
 
-  it('sends the message without the spaces and newlines around it', async () => {
+  it('X03 sends the message without the spaces and newlines around it', async () => {
     mockPost.mockResolvedValue(message({ id: 'm9', sender_id: 'viewer1', body: 'See you at 3' }))
     await open()
     type('  \nSee you at 3\n  ')
@@ -79,7 +78,7 @@ describe('the composer', () => {
   })
 
   it.each([...NAMES.filter((n) => !/spaces/.test(n.label)), { label: 'quotes and brackets', value: `He said "<a href='x'>&amp;</a>" \\ 50%` }])(
-    'sends and draws $label text exactly as typed',
+    'X03 sends and draws $label text exactly as typed',
     async ({ value }) => {
       mockPost.mockResolvedValue(message({ id: 'm9', sender_id: 'viewer1', body: value }))
       await open()
@@ -90,7 +89,7 @@ describe('the composer', () => {
     }
   )
 
-  it('sends a very long message whole rather than cutting it', async () => {
+  it('X03 sends a very long message whole rather than cutting it', async () => {
     const long = 'word '.repeat(2000).trim()
     mockPost.mockResolvedValue(message({ id: 'm9', sender_id: 'viewer1', body: long }))
     await open()
@@ -99,7 +98,7 @@ describe('the composer', () => {
     await waitFor(() => expect(mockPost.mock.calls[0][1].body).toHaveLength(long.length))
   })
 
-  it('posts once when Send is pressed twice before the first answer', async () => {
+  it('X03 posts once when Send is pressed twice before the first answer', async () => {
     let resolve!: (m: object) => void
     mockPost.mockReturnValue(new Promise((r) => (resolve = r)))
     await open()
@@ -111,7 +110,7 @@ describe('the composer', () => {
     expect(screen.getAllByText('Hi there')).toHaveLength(1)
   })
 
-  it('keeps what was typed when the send fails, says so, and sends it on retry', async () => {
+  it('X03 keeps what was typed when the send fails, says so, and sends it on retry', async () => {
     mockPost.mockRejectedValueOnce(new Error('API POST /x failed with status 500: relation does not exist'))
     mockPost.mockResolvedValueOnce(message({ id: 'm9', sender_id: 'viewer1', body: 'Still on' }))
     await open()

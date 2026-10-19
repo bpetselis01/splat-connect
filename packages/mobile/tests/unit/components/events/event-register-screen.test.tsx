@@ -1,4 +1,3 @@
-// journeys: V01 V02
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { EventRegisterScreen } from '../../../../components/events/event-register-screen'
 import { event, question } from './event-fixtures'
