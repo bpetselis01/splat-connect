@@ -2,20 +2,6 @@
   "mobile (my)/notifications": "same screen as (tabs)/inbox, opened on its notifications segment; rows Q05, Q06, Q07, Q10",
   "mobile (tabs)/explore/learn/index": "same screen as (tabs)/explore/learn/[slug]: the Learn hub; row Q15",
   "mobile (tabs)/guides/organisation/[id]": "same screen as (tabs)/toy-library/organisation/[id] (OrgProfileScreen); rows P01-P09",
-  "web /auth/confirmed": "TODO: not yet inventoried",
-  "web /code-of-conduct": "TODO: not yet inventoried",
-  "web /delete-account": "TODO: not yet inventoried",
   "web /design-system": "internal component gallery, not a user journey",
-  "web /design-system/states": "internal component gallery, not a user journey",
-  "web /legal/contributor-terms": "TODO: not yet inventoried",
-  "web /legal/intended-purpose": "TODO: not yet inventoried",
-  "web /legal/org-leader-terms": "TODO: not yet inventoried",
-  "web /login": "TODO: not yet inventoried",
-  "web /not-built/[id]": "TODO: not yet inventoried",
-  "web /onboarding/child": "TODO: not yet inventoried",
-  "web /onboarding/contributor-terms": "TODO: not yet inventoried",
-  "web /privacy": "TODO: not yet inventoried",
-  "web /safety": "TODO: not yet inventoried",
-  "web /signup": "TODO: not yet inventoried",
-  "web /terms": "TODO: not yet inventoried"
+  "web /design-system/states": "internal component gallery, not a user journey"
 }
