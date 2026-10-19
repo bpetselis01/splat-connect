@@ -78,7 +78,7 @@ afterAll(async () => {
 })
 
 describe('Accounts', () => {
-  it('Q24 lists every non-admin account newest first, with an exact total the Accounts card shows', async () => {
+  it('Q24 WM16 lists every non-admin account newest first, with an exact total the Accounts card shows', async () => {
     const newest = await seedUser()
     const res = await asAdmin('GET', '/admin/contributors')
     expect(res.status).toBe(200)
@@ -90,7 +90,7 @@ describe('Accounts', () => {
     expect(body.total).toBe((await counts()).accounts)
   })
 
-  it('Q25 deleting an account removes the profile and the sign-in, and the Accounts card drops by one', async () => {
+  it('Q25 WM17 deleting an account removes the profile and the sign-in, and the Accounts card drops by one', async () => {
     const target = await seedUser()
     const before = (await counts()).accounts
     const res = await asAdmin('DELETE', `/admin/contributors/${target.id}`)
@@ -100,7 +100,7 @@ describe('Accounts', () => {
     expect((await counts()).accounts).toBe(before - 1)
   })
 
-  it('Q25 refuses the sole leader of an organisation with 409 and leaves the account and the card alone', async () => {
+  it('Q25 WM17 refuses the sole leader of an organisation with 409 and leaves the account and the card alone', async () => {
     const sole = await seedUser()
     const orgId = await seedOrg()
     await addLeader(orgId, sole.id)
@@ -114,7 +114,7 @@ describe('Accounts', () => {
 })
 
 describe('Ideas', () => {
-  it('Q26 lists every idea newest first with its status and author name, and the card counts the pending ones', async () => {
+  it('Q26 WM11 lists every idea newest first with its status and author name, and the card counts the pending ones', async () => {
     await adminClient().from('profiles').update({ name: 'Ida Author' }).eq('id', author.id)
     const pending = await seedIdea('pending')
     const live = await seedIdea('challenge')
@@ -127,7 +127,7 @@ describe('Ideas', () => {
     expect((await counts()).ideas).toBe(rows.filter((r) => r.status === 'pending').length)
   })
 
-  it('Q28 publishing a pending idea makes it a challenge, tells the author, lists it publicly and drops the card by one', async () => {
+  it('Q28 WM12 publishing a pending idea makes it a challenge, tells the author, lists it publicly and drops the card by one', async () => {
     const id = await seedIdea('pending')
     const before = (await counts()).ideas
     expect((await asAdmin('PATCH', `/admin/ideas/${id}/status`, { status: 'challenge' })).status).toBe(200)
@@ -139,7 +139,7 @@ describe('Ideas', () => {
     expect((await counts()).ideas).toBe(before - 1)
   })
 
-  it('Q29 rejecting a pending idea keeps the reason, tells the author with it, and drops the card by one', async () => {
+  it('Q29 WM13 rejecting a pending idea keeps the reason, tells the author with it, and drops the card by one', async () => {
     const id = await seedIdea('pending')
     const before = (await counts()).ideas
     expect((await asAdmin('PATCH', `/admin/ideas/${id}/status`, { status: 'rejected', review_note: 'Too close to one we have' })).status).toBe(200)
@@ -149,7 +149,7 @@ describe('Ideas', () => {
     expect((await counts()).ideas).toBe(before - 1)
   })
 
-  it('Q29 unpublishing a live challenge with a reason takes it off the public list and tells the author', async () => {
+  it('Q29 WM13 unpublishing a live challenge with a reason takes it off the public list and tells the author', async () => {
     const id = await seedIdea('challenge')
     expect((await asAdmin('PATCH', `/admin/ideas/${id}/status`, { status: 'rejected', review_note: 'Withdrawn after publication' })).status).toBe(200)
     const { data } = await adminClient().from('toy_ideas').select('status, review_note').eq('id', id).single()
@@ -175,7 +175,7 @@ describe('Organisations', () => {
     expect(accounts.map((a) => a.id)).toContain(leader.id)
   })
 
-  it('Q34 creating an organisation stores it active with its first leader, and the Organisations card rises by one', async () => {
+  it('Q34 WM18 creating an organisation stores it active with its first leader, and the Organisations card rises by one', async () => {
     const before = (await counts()).organisations
     const res = await asAdmin('POST', '/admin/organizations', { name: 'Phone Queue Org', description: 'Made on a phone', leader_user_id: leader.id })
     expect(res.status).toBe(201)
@@ -195,7 +195,7 @@ describe('Organisations', () => {
       .toEqual({ name: 'Renamed Org', description: 'New words' })
   })
 
-  it('Q36 adding a leader from the account picker writes the org_leaders row, and adding again is a no-op', async () => {
+  it('Q36 WM19 adding a leader from the account picker writes the org_leaders row, and adding again is a no-op', async () => {
     const orgId = await seedOrg()
     const second = await seedUser()
     expect((await asAdmin('POST', `/admin/organizations/${orgId}/leaders`, { user_id: second.id })).status).toBe(201)
@@ -203,7 +203,7 @@ describe('Organisations', () => {
     expect((await adminClient().from('org_leaders').select('user_id').eq('org_id', orgId)).data).toEqual([{ user_id: second.id }])
   })
 
-  it('Q37 removing a leader deletes the row, and a non-leader is 404', async () => {
+  it('Q37 WM20 removing a leader deletes the row, and a non-leader is 404', async () => {
     const orgId = await seedOrg()
     const second = await seedUser()
     await addLeader(orgId, second.id)
@@ -212,7 +212,7 @@ describe('Organisations', () => {
     expect((await asAdmin('DELETE', `/admin/organizations/${orgId}/leaders/${second.id}`)).status).toBe(404)
   })
 
-  it('Q38 suspending stores the standing and reactivating restores it', async () => {
+  it('Q38 WM22 suspending stores the standing and reactivating restores it', async () => {
     const orgId = await seedOrg()
     const standing = async () => (await adminClient().from('organizations').select('status').eq('id', orgId).single()).data
     expect((await asAdmin('PATCH', `/admin/organizations/${orgId}`, { status: 'suspended' })).status).toBe(200)
@@ -221,7 +221,7 @@ describe('Organisations', () => {
     expect(await standing()).toEqual({ status: 'active' })
   })
 
-  it('Q39 marking verified stamps verified_at, the organisation list shows it, and removing it clears it', async () => {
+  it('Q39 WM21 marking verified stamps verified_at, the organisation list shows it, and removing it clears it', async () => {
     const orgId = await seedOrg()
     const stamp = async () => (await adminClient().from('organizations').select('verified_at').eq('id', orgId).single()).data!.verified_at
     expect((await asAdmin('PATCH', `/admin/organizations/${orgId}`, { verified: true })).status).toBe(200)
@@ -259,7 +259,7 @@ describe('Reports', () => {
     expect((await fetchMine(author.token)).map((r) => r.id)).not.toContain(reportId)
   })
 
-  it('Q42 Looking into it and a note are stored with the handler, tell nobody, and reach the reporter', async () => {
+  it('Q42 WM27 WM29 Looking into it and a note are stored with the handler, tell nobody, and reach the reporter', async () => {
     const reportId = await seedMemberReport()
     const before = (await counts()).reports
     expect((await asAdmin('PATCH', `/admin/member-reports/${reportId}`, { status: 'looking', note_to_reporter: 'We are on it.' })).status).toBe(200)
@@ -271,7 +271,7 @@ describe('Reports', () => {
     expect((await counts()).reports).toBe(before)
   })
 
-  it('Q43 Resolve closes the report, tells the reporter once, shows Resolved on My reports and drops the card by one', async () => {
+  it('Q43 WM28 Resolve closes the report, tells the reporter once, shows Resolved on My reports and drops the card by one', async () => {
     const reportId = await seedMemberReport()
     const before = (await counts()).reports
     expect((await asAdmin('PATCH', `/admin/member-reports/${reportId}`, { status: 'resolved' })).status).toBe(200)
@@ -303,7 +303,7 @@ describe('Reports', () => {
       await adminClient().from('toy_idea_participants').insert({ idea_id: ideaId, profile_id: target.id })
     })
 
-    it('Q44 Dismiss resolves the report with the note and leaves the person in the challenge, unnotified', async () => {
+    it('Q44 WM30 Dismiss resolves the report with the note and leaves the person in the challenge, unnotified', async () => {
       const reportId = await fileReport()
       const res = await asAdmin('PATCH', `/admin/reports/${reportId}`, { action: 'dismiss', resolution_note: 'Nothing found' })
       expect(res.status).toBe(200)
@@ -313,7 +313,7 @@ describe('Reports', () => {
       expect(await notices(target.id, 'idea_id', ideaId)).toEqual([])
     })
 
-    it('Q45 Remove resolves the report, takes the person out of the challenge and tells them in SPLAT’s name', async () => {
+    it('Q45 WM30 Remove resolves the report, takes the person out of the challenge and tells them in SPLAT’s name', async () => {
       const reportId = await fileReport()
       const res = await asAdmin('PATCH', `/admin/reports/${reportId}`, { action: 'remove', resolution_note: 'Removed and warned' })
       expect(res.status).toBe(200)
@@ -323,7 +323,7 @@ describe('Reports', () => {
       expect(await notices(target.id, 'idea_id', ideaId)).toEqual([{ type: 'challenge_removed', actor_name: 'SPLAT', body: null }])
     })
 
-    it('Q46 Reinstate clears the removal, so the person is a participant again', async () => {
+    it('Q46 WM31 Reinstate clears the removal, so the person is a participant again', async () => {
       expect((await participant()).removed_at).not.toBeNull()
       expect((await asAdmin('DELETE', `/admin/ideas/${ideaId}/participants/${target.id}/removal`)).status).toBe(204)
       expect((await participant()).removed_at).toBeNull()
@@ -332,7 +332,7 @@ describe('Reports', () => {
 })
 
 describe('Spot-check and unpublishing', () => {
-  it('Q47 lists approved guides an organisation leader approved, not the admin’s own, and the card counts them', async () => {
+  it('Q47 WM10 lists approved guides an organisation leader approved, not the admin’s own, and the card counts them', async () => {
     const mineId = await createProject({ authorId: author.id, status: 'approved' })
     const theirsId = await createProject({ authorId: author.id, status: 'approved' })
     tutorialIds.push(mineId, theirsId)
@@ -344,7 +344,7 @@ describe('Spot-check and unpublishing', () => {
     expect((await counts()).spotCheck).toBeGreaterThanOrEqual(1)
   })
 
-  it('Q49 unpublishing a live guide stores the note, tells its writer, and the Spot-check card drops by one', async () => {
+  it('Q49 WM09 unpublishing a live guide stores the note, tells its writer, and the Spot-check card drops by one', async () => {
     const id = await createProject({ authorId: author.id, status: 'approved', title: 'Unsafe glue gun guide' })
     tutorialIds.push(id)
     await adminClient().from('tutorials').update({ reviewed_by: leader.id }).eq('id', id)

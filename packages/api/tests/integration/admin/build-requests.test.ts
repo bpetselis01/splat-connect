@@ -51,7 +51,7 @@ describe('admin build-request queue', () => {
     expect((await app.request('/api/admin/build-requests')).status).toBe(401)
   })
 
-  it('lists open requests oldest first with the guide title, and leaves out a finished build', async () => {
+  it('WM32 lists open requests oldest first with the guide title, and leaves out a finished build', async () => {
     const rows = await queue()
     expect(rows.map((r) => r.id)).toEqual([tx.claimed, tx.stale, tx.fresh])
     expect(rows.every((r) => r.tutorial_title === 'Queue Fixture Guide')).toBe(true)

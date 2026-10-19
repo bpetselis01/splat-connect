@@ -30,7 +30,7 @@ function authed(token: string) {
 }
 
 describe('admin review notifies every contributor', () => {
-  it('approving notifies both the primary and the collaborator', async () => {
+  it('WM06 approving notifies both the primary and the collaborator', async () => {
     const res = await app.request(`/api/admin/tutorials/${tutorialId}/status`, {
       ...authed(admin.token),
       method: 'PATCH',
@@ -44,7 +44,7 @@ describe('admin review notifies every contributor', () => {
     expect(notifs.data?.every((n) => n.type === 'tutorial_approved')).toBe(true)
   })
 
-  it('rejecting notifies every contributor', async () => {
+  it('WM07 rejecting notifies every contributor', async () => {
     const res = await app.request(`/api/admin/tutorials/${tutorialId}/status`, {
       ...authed(admin.token),
       method: 'PATCH',

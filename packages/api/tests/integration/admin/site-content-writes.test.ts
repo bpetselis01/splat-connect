@@ -46,7 +46,7 @@ describe('site_content writes (122)', () => {
     expect(read.data!.value).toEqual({ a: 1 })
   })
 
-  it('still saves through the admin API', async () => {
+  it('WM35 still saves through the admin API', async () => {
     const res = await app.request(`/api/admin/content/${KEY}`, {
       method: 'PUT',
       headers: { Authorization: `Bearer ${admin.token}`, 'Content-Type': 'application/json' },

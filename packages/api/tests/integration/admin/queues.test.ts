@@ -104,7 +104,7 @@ describe('the contact form', () => {
     expect(ours[0].topic).toBe('safety')
   })
 
-  it('records who handled it, and clears that on reopen', async () => {
+  it('WM25 records who handled it, and clears that on reopen', async () => {
     const rows = (await (
       await app.request('/api/admin/inbox', authed(admin.token))
     ).json()) as Array<{ id: string; email: string }>

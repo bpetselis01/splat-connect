@@ -88,7 +88,7 @@ describe('an idea reviewed on the web, as the phone reads it', () => {
     expect(inbox.some((n) => n.type === 'idea_rejected' && n.idea_id === id)).toBe(true)
   })
 
-  it('C10: a graduated challenge points the phone at its write-up', async () => {
+  it('C10 WM14: a graduated challenge points the phone at its write-up', async () => {
     const id = await submit('Graduating idea')
     await send(`/api/admin/ideas/${id}/status`, staff, 'PATCH', { status: 'challenge' })
     const res = await send(`/api/admin/ideas/${id}/graduate`, staff, 'POST')
@@ -107,7 +107,7 @@ describe('a printer verified on the web, as the phone reads it', () => {
   const shield = async () =>
     (await get<{ id: string; verified: boolean }[]>('/api/printers', family)).find((p) => p.id === printerId)!.verified
 
-  it('R15/R01: the shield appears on the finder only after a passed test print and enough finished jobs', async () => {
+  it('R15 R01 WM34: the shield appears on the finder only after a passed test print and enough finished jobs', async () => {
     const form = new FormData()
     form.append('file', new File([new Uint8Array([1, 2, 3])], 'benchy.png', { type: 'image/png' }))
     const submitted = await app.request(`/api/printers/${printerId}/test-prints`, {

@@ -56,7 +56,7 @@ describe('admin print-job list', () => {
     expect((await get()).status).toBe(401)
   })
 
-  it('puts the stalled job first, then the rest newest first, with guide and printer names', async () => {
+  it('WM33 puts the stalled job first, then the rest newest first, with guide and printer names', async () => {
     const res = await get(admin.token)
     expect(res.status).toBe(200)
     const rows = ((await res.json()) as Array<Record<string, unknown> & { id: string; tutorial_id: string }>).filter((r) => r.tutorial_id === guide)
