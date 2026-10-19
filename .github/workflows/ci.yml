@@ -80,6 +80,11 @@ jobs:
       # The parity harness itself needs seeded stacks and cannot run here, but
       # its pure parts can: comparison maths, fingerprints, and the app-map
       # drift check (every board route must be a file in packages/mobile/app).
+      # fingerprint.test.js runs collectFingerprint in a real page, so this job
+      # needs the browser the e2e jobs install.
+      - name: Install Playwright Chromium
+        run: pnpm --filter @splat-connect/web exec playwright install --with-deps chromium
+
       - name: Parity harness unit tests
         run: pnpm test:parity:unit
 
