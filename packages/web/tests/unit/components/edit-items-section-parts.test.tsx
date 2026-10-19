@@ -96,7 +96,7 @@ describe('EditItemsSection (parts)', () => {
   //        onSave was called with savedParts[0].name === 'Solder Wire Thick'
   // Chain: the parent component receives the updated array and calls the API to persist it →
   //        the tutorial detail page shows the new part name after the save
-  it('clicking Save calls onSave with the updated part', async () => {
+  it('WT25 clicking Save calls onSave with the updated part', async () => {
     const onSave = vi.fn().mockResolvedValue(undefined)
     setup(onSave)
     fireEvent.click(screen.getByRole('button', { name: /Solder Wire/ }))
@@ -160,7 +160,7 @@ describe('EditItemsSection (parts)', () => {
     )
   })
 
-  it('saves a line price in cents and keeps it through a rename', async () => {
+  it('WT25 saves a line price in cents and keeps it through a rename', async () => {
     const onSave = vi.fn().mockResolvedValue(undefined)
     render(
       <EditItemsSection noun="part" withQuantity initialItems={[{ id: 'p1', name: 'Relay', quantity: 1, is_optional: false, buy_links: [], price_cents: 600 }]} onSave={onSave} />

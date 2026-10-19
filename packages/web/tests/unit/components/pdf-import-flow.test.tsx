@@ -70,7 +70,7 @@ describe('Start from a PDF', () => {
     expect(api.post).not.toHaveBeenCalled()
   })
 
-  it('creates the guide, stores the PDF once, fills every section, and opens the editor', async () => {
+  it('WT16 creates the guide, stores the PDF once, fills every section, and opens the editor', async () => {
     await readPdf()
     fireEvent.click(screen.getByRole('button', { name: /Create draft/ }))
     await waitFor(() => expect(push).toHaveBeenCalled())

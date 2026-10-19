@@ -42,7 +42,7 @@ afterAll(async () => {
 })
 
 describe('parts and tools RLS', () => {
-  it('T09 owner can write parts on their own tutorial', async () => {
+  it('T09 WT25 owner can write parts on their own tutorial', async () => {
     const res = await app.request(
       `/api/tutorials/${tutorialId}/parts`,
       authed(owner.token, {

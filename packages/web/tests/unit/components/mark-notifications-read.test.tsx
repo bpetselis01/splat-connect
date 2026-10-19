@@ -13,7 +13,7 @@ describe('MarkNotificationsRead', () => {
     post.mockResolvedValue(undefined)
   })
 
-  it('WD22 clears its bucket on mount', async () => {
+  it('WD22 WT37 clears its bucket on mount', async () => {
     render(<MarkNotificationsRead bucket="tutorials" />)
     await waitFor(() =>
       expect(post).toHaveBeenCalledWith('/api/notifications/me/read', { bucket: 'tutorials' })

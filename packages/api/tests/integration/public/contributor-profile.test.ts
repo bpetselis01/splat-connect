@@ -74,7 +74,7 @@ describe('GET /api/public/contributors/:id', () => {
     await deleteTestUser(empty.id)
   })
 
-  it('S01 404s for opted-out and zero-contribution people, 200 for eligible', async () => {
+  it('S01 WP01 404s for opted-out and zero-contribution people, 200 for eligible', async () => {
     const ok = await app.request(`${BASE}/api/public/contributors/${maker.id}`)
     expect(ok.status).toBe(200)
     const body = (await ok.json()) as any

@@ -129,7 +129,7 @@ describe('Stepper: the tutorial editor', () => {
   // Chain: the bar used to read "Add At least one part, At least one tool to submit"
   //        — the validator's own field names, and nothing you could act on. Naming
   //        the gap and handing over the fix are the same gesture now
-  it('names what is left and jumps to the step that fixes it', () => {
+  it('WT33 names what is left and jumps to the step that fixes it', () => {
     renderStepper(makeFinish({ missing: [{ step: 'files', label: 'The guide PDF' }] }))
     expect(screen.getByText('1 thing left')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Submit for review' })).toBeDisabled()

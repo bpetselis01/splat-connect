@@ -50,7 +50,7 @@ describe('EditSuitsSection', () => {
     )
   })
 
-  it('reads updated_at first for a guide and sends it', async () => {
+  it('WT20 reads updated_at first for a guide and sends it', async () => {
     vi.mocked(browserApiClient.get).mockResolvedValue({ updated_at: 'T1' })
     render(<EditSuitsSection endpoint="/api/tutorials/g1" guide lock suits={{}} />)
     fireEvent.click(screen.getByRole('button', { name: 'Lights' }))

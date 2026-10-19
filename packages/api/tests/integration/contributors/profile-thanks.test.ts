@@ -95,7 +95,7 @@ describe('117 profile thanks', () => {
     expect(n![0]).toMatchObject({ toy_transaction_id: txId, profile_id: null, actor_name: 'Sam' })
   })
 
-  it('X13 a showcase thanks carries the person as its subject', async () => {
+  it('X13 WP04 a showcase thanks carries the person as its subject', async () => {
     expect((await post(stranger.token, maker.id)).status).toBe(201)
     const { data: n } = await adminClient()
       .from('notifications')
@@ -106,7 +106,7 @@ describe('117 profile thanks', () => {
     expect(n![0]).toMatchObject({ profile_id: maker.id, actor_name: 'A family' })
   })
 
-  it('S02 lets nobody but the two read the note; anon reads the count only', async () => {
+  it('S02 WP04 lets nobody but the two read the note; anon reads the count only', async () => {
     const third = await userClient(stranger.token).from('profile_thanks').select('note').eq('thanker_id', family.id)
     expect(third.data ?? []).toEqual([])
     const own = await userClient(family.token).from('profile_thanks').select('note').eq('thanker_id', family.id)

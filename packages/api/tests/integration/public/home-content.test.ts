@@ -27,7 +27,7 @@ describe('GET /api/public/content/home', () => {
     if (before.length) await admin.from('site_content').insert(before)
   })
 
-  it('gives a guest the saved home sections, and null for one never saved', async () => {
+  it('WH06 gives a guest the saved home sections, and null for one never saved', async () => {
     const res = await app.request(`${BASE}/api/public/content/home`)
     expect(res.status).toBe(200)
     expect(await res.json()).toEqual({

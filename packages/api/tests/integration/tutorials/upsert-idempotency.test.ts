@@ -28,7 +28,7 @@ afterAll(async () => {
 })
 
 describe('submit retry idempotency', () => {
-  it('N06 re-POSTing the same tutorial id returns 200 without a duplicate row', async () => {
+  it('N06 WT14 re-POSTing the same tutorial id returns 200 without a duplicate row', async () => {
     const body = JSON.stringify({ id: tutorialId, title: 'Retry Me', difficulty: 'easy' })
 
     const first = await app.request('/api/tutorials', authed(owner.token, { method: 'POST', body }))
@@ -45,7 +45,7 @@ describe('submit retry idempotency', () => {
     expect(count).toBe(1)
   })
 
-  it('N06 re-linking the same contributor returns 200 without a duplicate link', async () => {
+  it('N06 WT14 re-linking the same contributor returns 200 without a duplicate link', async () => {
     const first = await app.request(
       `/api/contributors/me/tutorials/${tutorialId}`,
       authed(owner.token, { method: 'POST' })

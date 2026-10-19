@@ -27,7 +27,7 @@ afterAll(async () => {
 })
 
 describe('library stats', () => {
-  it('counts an approved guide, both credited people and an accepted backer, and nothing else', async () => {
+  it('WG01 counts an approved guide, both credited people and an accepted backer, and nothing else', async () => {
     const before = await stats()
     const approved = await createProject({ authorId: author.id, status: 'approved' })
     guides.push(approved)

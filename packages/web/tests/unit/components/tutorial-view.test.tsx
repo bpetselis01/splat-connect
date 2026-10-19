@@ -120,6 +120,14 @@ describe('TutorialView', () => {
     expect(screen.getByText(/Not yet approved/)).toBeInTheDocument()
   })
 
+  it('WT06 the rail leads to the build-help form and the toy library, and the Files tab to a print request, all for this guide', () => {
+    render(<TutorialView tutorial={tutorial({ kind: 'assistive_tech', stl_files: stl, tutorial_recommendations: [rec('a', 1)] })} signedIn={false} />)
+    expect(screen.getByRole('link', { name: 'Get help with this build' })).toHaveAttribute('href', '/get-involved/requests/new?guide=t1')
+    expect(screen.getByRole('link', { name: 'Toy library →' })).toHaveAttribute('href', '/toy-library')
+    expect(screen.getByRole('link', { name: 'Request a print →' })).toHaveAttribute('href', '/printing/requests?guide=t1')
+    expect(screen.getByTestId('rec-card')).toHaveAttribute('href', '/tutorials/a')
+  })
+
   it('draws no section when there are no recommendations', () => {
     render(<TutorialView tutorial={tutorial()} signedIn={false} />)
     expect(screen.queryByText('Also worth a look')).toBeNull()
@@ -130,7 +138,7 @@ describe('TutorialView', () => {
   // The link is the gate the visitor sees. Same <a>, a different destination
   // — no client JavaScript, the way save-button.tsx sends a signed-out saver
   // to signup.
-  it('sends a signed-out visitor to sign up from the PDF and each STL', () => {
+  it('WT04 WT05 sends a signed-out visitor to sign up from the PDF and each STL', () => {
     render(<TutorialView tutorial={tutorial(files)} signedIn={false} />)
     const detour = '/signup?next=%2Ftutorials%2Ft1&reason=download'
     expect(screen.getByRole('link', { name: 'Sign in to download' })).toHaveAttribute('href', detour)
@@ -138,7 +146,7 @@ describe('TutorialView', () => {
     expect(screen.getByRole('link', { name: 'Sign in to download' })).not.toHaveAttribute('target')
   })
 
-  it('links a signed-in visitor through /files, which signs on click', () => {
+  it('WT04 WT05 links a signed-in visitor through /files, which signs on click', () => {
     render(<TutorialView tutorial={tutorial(files)} signedIn />)
     expect(screen.getByRole('link', { name: 'Download guide (PDF)' })).toHaveAttribute(
       'href',
@@ -151,10 +159,13 @@ describe('TutorialView', () => {
 
   // Parts sourcing is open in both states: it is someone else's shop, and a
   // parent pricing a build should not need an account to do it.
-  it('leaves buy links open either way', () => {
+  it('WT03 leaves buy links open either way, each in a new tab', () => {
     const parts = [{ id: 'p1', tutorial_id: 't1', name: 'Switch', quantity: 1, is_optional: false, buy_links: [{ label: 'Jaycar', url: 'https://shop.test/switch' }] }]
     render(<TutorialView tutorial={tutorial({ parts })} signedIn={false} />)
-    expect(screen.getByRole('link', { name: 'Buy Switch from Jaycar' })).toHaveAttribute('href', 'https://shop.test/switch')
+    const buy = screen.getByRole('link', { name: 'Buy Switch from Jaycar' })
+    expect(buy).toHaveAttribute('href', 'https://shop.test/switch')
+    expect(buy).toHaveAttribute('target', '_blank')
+    expect(buy).toHaveAttribute('rel', 'noopener noreferrer')
   })
 
   it('never makes a buy link that is not a web address', () => {
@@ -181,7 +192,7 @@ describe('TutorialView tabs', () => {
 
   // Only the sections the data can fill get a tab; the board's Steps and
   // Community notes have nothing behind them in this schema.
-  it('draws a tab per filled section and keeps the rest in the DOM', () => {
+  it('WT02 draws a tab per filled section and keeps the rest in the DOM', () => {
     render(
       <TutorialView
         tutorial={tutorial({ kind: 'assistive_tech', parts, stl_files: stl, safety_declared_at: '2026-08-01T00:00:00Z' })}
@@ -236,7 +247,7 @@ describe('safety notes', () => {
 })
 
 describe('community notes', () => {
-  it('warns of pinned revisions and lists them, read only', () => {
+  it('WT12 warns of pinned revisions and lists them, read only', () => {
     const pinned = { id: 'n', step_position: 2, author_id: 'p', author_name: 'Priya', body: 'Use two zip ties.', photo_url: null, photo_caption: null, pinned_at: '2026-09-02T00:00:00Z', pinned_by: 'a', pinned_by_name: 'Sam', created_at: '2026-09-01T00:00:00Z' }
     render(<TutorialView signedIn tutorial={tutorial()} notes={[pinned, { ...pinned, id: 'o', pinned_at: null }]} />)
     expect(screen.getByText(/1 pinned revision/)).toBeInTheDocument()
@@ -286,7 +297,7 @@ describe('pinning community notes', () => {
     expect(screen.queryByText('Use two zip ties.')).toBeNull()
   })
 
-  it('pins an unpinned note and unpins a pinned one through the api', async () => {
+  it('WT11 pins an unpinned note and unpins a pinned one through the api', async () => {
     render(<TutorialView signedIn canPin tutorial={tutorial()} notes={[note, pinnedNote]} />)
     fireEvent.click(screen.getByRole('button', { name: 'Pin as revision' }))
     await waitFor(() => expect(browserApiClient.post).toHaveBeenCalledWith('/api/tutorials/t1/notes/n/pin', {}))

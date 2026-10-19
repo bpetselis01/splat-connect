@@ -26,7 +26,7 @@ afterAll(async () => {
 })
 
 describe('087 photo captions', () => {
-  it('T13 saves captions beside the photos', async () => {
+  it('T13 WT23 saves captions beside the photos', async () => {
     expect((await patch({ photo_captions: ['The finished drum', null, 'The jack'] })).status).toBe(200)
     expect((await row()).photo_captions).toEqual(['The finished drum', null, 'The jack'])
   })

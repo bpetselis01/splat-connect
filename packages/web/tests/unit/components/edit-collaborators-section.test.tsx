@@ -81,7 +81,7 @@ describe('EditCollaboratorsSection', () => {
     expect(screen.queryByLabelText(/invite/i)).not.toBeInTheDocument()
   })
 
-  it('the primary can invite by email', async () => {
+  it('WT30 the primary can invite by email', async () => {
     const onInvite = vi.fn().mockResolvedValue(undefined)
     render(
       <EditCollaboratorsSection

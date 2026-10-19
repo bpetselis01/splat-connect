@@ -30,7 +30,7 @@ afterAll(async () => {
 })
 
 describe('PUT /api/tutorials/:id/steps', () => {
-  it('T10 saves the steps in order, numbered 1..n', async () => {
+  it('T10 WT21 saves the steps in order, numbered 1..n', async () => {
     const res = await put(author.token, [{ title: 'Open it', body: 'Unscrew the back.' }, { body: '  Solder the leads.  ' }])
     expect(res.status).toBe(200)
     const steps = (await res.json()) as Array<{ position: number; title: string | null; body: string }>
@@ -88,7 +88,7 @@ describe('PUT /api/tutorials/:id/steps', () => {
 })
 
 describe('POST /api/upload/step-photo', () => {
-  it('T11 stores under <id>/steps/ without counting toward the five-photo gallery', async () => {
+  it('T11 WT22 stores under <id>/steps/ without counting toward the five-photo gallery', async () => {
     await adminClient()
       .from('tutorials')
       .update({ photo_urls: ['a', 'b', 'c', 'd', 'e'] })

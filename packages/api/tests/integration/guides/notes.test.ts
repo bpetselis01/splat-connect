@@ -59,7 +59,7 @@ describe('093 tutorial_notes', () => {
     expect((await send('POST', `/api/tutorials/${draft}/notes`, parent.token, { step_position: null, body: 'x' })).status).toBe(404)
   })
 
-  it('G26 lets only a contributor pin, and pinning names who did it', async () => {
+  it('G26 WT11 lets only a contributor pin, and pinning names who did it', async () => {
     expect((await send('POST', `/api/tutorials/${guide}/notes/${noteId}/pin`, parent.token)).status).toBe(403)
     expect((await send('POST', `/api/tutorials/${guide}/notes/${noteId}/pin`, author.token)).status).toBe(200)
     const notes = (await (await app.request(`/api/public/tutorials/${guide}/notes`)).json()) as { pinned_by: string; pinned_at: string | null }[]

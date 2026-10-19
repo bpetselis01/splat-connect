@@ -26,7 +26,7 @@ const exists = async (id: string) => {
 }
 
 describe('DELETE /api/tutorials/:id', () => {
-  it('T06 deletes a draft', async () => {
+  it('T06 WT34 deletes a draft', async () => {
     const id = await createProject({ authorId: author.id, status: 'draft' })
     const res = await del(id)
     expect(res.status).toBe(204)

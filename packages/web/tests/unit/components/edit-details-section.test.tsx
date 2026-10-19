@@ -58,7 +58,7 @@ describe('EditDetailsSection', () => {
     )
   })
 
-  it('submits the loaded updated_at alongside the edited fields', async () => {
+  it('WT18 submits the loaded updated_at alongside the edited fields', async () => {
     const onSave = vi.fn().mockResolvedValue(undefined)
     render(<EditDetailsSection tutorial={tutorial} onSave={onSave} />)
     fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'New Title' } })
