@@ -85,13 +85,13 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 ### `learn-article-hero` — Article pictures
 
 - Platforms: mobile
-- Needs: Hero image per Learn article (each article shows To be completed until then)
+- Needs: Hero image per Learn article, Byron's own photos (no stock, 2026-10-19); shot list in docs/plans/2026-10-19-content-handoff.md. Each article shows To be completed until then
 - In code: `packages/mobile/components/explore/article-screen.tsx`
 
 ### `printing-basics-hero` — Printing basics picture
 
 - Platforms: mobile
-- Needs: Printing basics hero photo (the screen shows To be completed until then)
+- Needs: Printing basics hero photo, Byron's own (shot list in docs/plans/2026-10-19-content-handoff.md); the screen shows To be completed until then
 - In code: `packages/mobile/components/printing/basics-screen.tsx`
 
 

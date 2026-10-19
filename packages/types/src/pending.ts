@@ -111,14 +111,14 @@ export const PENDING = {
     blurb: "Pictures for Learn articles will appear here.",
     kind: "content",
     platforms: ["mobile"],
-    needs: "Hero image per Learn article (each article shows To be completed until then)",
+    needs: "Hero image per Learn article, Byron's own photos (no stock, 2026-10-19); shot list in docs/plans/2026-10-19-content-handoff.md. Each article shows To be completed until then",
   },
   'printing-basics-hero': {
     title: "Printing basics picture",
     blurb: "A picture for Printing basics will appear here.",
     kind: "content",
     platforms: ["mobile"],
-    needs: "Printing basics hero photo (the screen shows To be completed until then)",
+    needs: "Printing basics hero photo, Byron's own (shot list in docs/plans/2026-10-19-content-handoff.md); the screen shows To be completed until then",
   },
   'admin-guide-review-screen': {
     title: "Reviewing a guide on the phone",
