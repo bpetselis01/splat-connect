@@ -58,6 +58,9 @@ export async function createProject(opts: {
     title: opts.title ?? 'Backing Fixture',
     difficulty: 'easy',
     status: opts.status ?? 'pending',
+    // A guide needs steps or a PDF to be submitted or kept live (3361fc2a), so
+    // every fixture carries a PDF path; a test about the empty case clears it.
+    tutorial_pdf_url: `${id}/fixture.pdf`,
   })
   if (error) throw new Error(`createProject failed: ${error.message}`)
 

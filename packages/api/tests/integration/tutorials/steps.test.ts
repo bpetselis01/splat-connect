@@ -75,7 +75,13 @@ describe('PUT /api/tutorials/:id/steps', () => {
     expect((await put(author.token, [{ body: 'ok', photo_url: elsewhere }])).status).toBe(400)
   })
 
-  it('clears every step with an empty list', async () => {
+  it('clears every step with an empty list, unless that leaves a live guide with nothing', async () => {
+    await adminClient().from('tutorials').update({ tutorial_pdf_url: null }).eq('id', guide)
+    const refused = await put(author.token, [])
+    expect(refused.status).toBe(400)
+    expect(((await refused.json()) as { error: string }).error).toMatch(/steps or a PDF/)
+
+    await adminClient().from('tutorials').update({ tutorial_pdf_url: `${guide}/fixture.pdf` }).eq('id', guide)
     const res = await put(author.token, [])
     expect(res.status).toBe(200)
     expect(await res.json()).toEqual([])

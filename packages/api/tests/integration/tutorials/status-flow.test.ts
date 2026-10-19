@@ -35,6 +35,8 @@ beforeAll(async () => {
     `/api/contributors/me/tutorials/${tutorialId}`,
     authed(owner.token, { method: 'POST' })
   )
+  // Submitting needs steps or a PDF (3361fc2a).
+  await adminClient().from('tutorials').update({ tutorial_pdf_url: `${tutorialId}/fixture.pdf` }).eq('id', tutorialId)
 })
 
 afterAll(async () => {
