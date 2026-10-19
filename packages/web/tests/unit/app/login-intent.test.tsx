@@ -39,21 +39,21 @@ describe('login landing by sign-up intent', () => {
   it.each([
     ['family', '/onboarding/child'],
     ['maker', '/dashboard/tutorials'],
-  ])('lands a first-time %s on %s, and spends the intent', async (intent, path) => {
+  ])('WA05 lands a first-time %s on %s, and spends the intent', async (intent, path) => {
     meta = { intent }
     await signIn()
     await waitFor(() => expect(window.location.href).toBe(path))
     expect(updateUser).toHaveBeenCalledWith({ data: { intent_landed: true } })
   })
 
-  it('lands on the dashboard once the intent is spent', async () => {
+  it('WA05 lands on the dashboard once the intent is spent', async () => {
     meta = { intent: 'family', intent_landed: true }
     await signIn()
     await waitFor(() => expect(window.location.href).toBe('/dashboard'))
     expect(updateUser).not.toHaveBeenCalled()
   })
 
-  it('lets ?next= win, but still spends the intent', async () => {
+  it('WA04 lets ?next= win, but still spends the intent', async () => {
     meta = { intent: 'maker' }
     search = new URLSearchParams('next=/toy-library')
     await signIn()
