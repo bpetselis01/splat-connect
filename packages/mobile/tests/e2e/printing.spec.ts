@@ -4,9 +4,11 @@ import {
   createContributor,
   createTutorial,
   renameProfile,
+  signIn,
   signInAsNewContributor,
   uniqueTitle,
 } from './helpers'
+import { seedPrintJob } from './maker-fixtures'
 
 /**
  * Printing end to end: the teaching screens, adding a printer (and the ways the
@@ -109,7 +111,7 @@ test('the add-printer form refuses a blank name and a rate that is not dollars, 
   expect(data).toEqual([])
 })
 
-test('R03 R04 R06 a family picks a printer, sends the request, sees it waiting, and withdraws it', async ({ page }) => {
+test('R03 R06 a family picks a printer, sends the request, sees it waiting, and withdraws it', async ({ page }) => {
   const family = await signInAsNewContributor(page)
   const maker = await createContributor()
   const makerName = uniqueTitle('E2E Printer Owner')
@@ -144,6 +146,25 @@ test('R03 R04 R06 a family picks a printer, sends the request, sees it waiting, 
   await expect(page.getByLabel('Progress: Withdrawn')).toBeVisible()
   const { data: after } = await adminClient().from('toy_transactions').select('status').eq('id', rows![0]!.id).single()
   expect(after).toEqual({ status: 'withdrawn' })
+})
+
+test('R04 the job screen loads the job, the printer and what it costs the family', async ({ page }) => {
+  const job = await seedPrintJob('accepted')
+  const { data: machine } = await adminClient()
+    .from('printers')
+    .update({ filament_cents_per_g: 8, rate_note: 'Covers PETG and my time on the spool' })
+    .eq('owner_id', job.printer.id)
+    .select('name')
+    .single()
+  await signIn(page, job.requester.email, job.requester.password)
+  await expect(page).toHaveURL(/\/home$/)
+  await page.goto(`/printing/jobs/${job.id}`)
+
+  await expect(page.getByText(job.guideTitle, { exact: true })).toBeVisible()
+  await expect(page.getByText(`On ${machine!.name}`)).toBeVisible()
+  await expect(page.getByText('What this print costs you')).toBeVisible()
+  await expect(page.getByText('About $0.08 / g of filament, settled between you')).toBeVisible()
+  await expect(page.getByText('“Covers PETG and my time on the spool”')).toBeVisible()
 })
 
 test('R02 a family cannot pick a fourth printer, and a full or paused one cannot be picked at all', async ({ page }) => {

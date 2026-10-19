@@ -85,6 +85,9 @@ describe('Nav', () => {
     pathname.current = '/printing/requests'
     render(<Nav caps={null} />)
     expect(screen.getByRole('link', { name: '3D Printing' })).toHaveAttribute('aria-current', 'page')
+    for (const other of ['Guides', 'Toy Library', 'Get Involved', 'About']) {
+      expect(screen.getByRole('link', { name: other })).not.toHaveAttribute('aria-current')
+    }
   })
 
   // Tests: a page that lives behind More marks both More and its item

@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
-import { createTutorial, signInAsNewContributor, uniqueTitle } from './helpers'
+import { adminClient, createTutorial, signInAsNewContributor, uniqueTitle } from './helpers'
 import { addSteps, rejectWithNote } from './guides-fixtures'
 
 // The editor around its edges: autosave and recovery, steps, deleting a draft,
@@ -232,7 +232,7 @@ test('choosing a PDF as the guide photo is refused and no photo is added', async
   await expect(page.getByText('Could not upload the photo. Please try again.')).toBeVisible()
 })
 
-test('T13 a photo upload that drops mid-way shows the error, and trying again works', async ({ page }) => {
+test('a photo upload that drops mid-way shows the error, and trying again works', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile DropUpload'), status: 'draft' })
 
@@ -245,6 +245,33 @@ test('T13 a photo upload that drops mid-way shows the error, and trying again wo
   await chooseFile(page, 'Choose from library', PHOTO_FIXTURE)
   await expect(page.getByText('Could not upload the photo. Please try again.')).toHaveCount(0)
   await expect(page.getByLabel('Caption for photo 2')).toBeVisible()
+})
+
+test('T13 a guide author adds a photo, captions it, makes it the cover, and removes the old cover', async ({ page }) => {
+  const contributor = await signInAsNewContributor(page)
+  const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile Photos'), status: 'draft' })
+  const stored = async () => {
+    const { data } = await adminClient().from('tutorials').select('photo_urls, photo_captions').eq('id', id).single()
+    return data as { photo_urls: string[]; photo_captions: (string | null)[] | null }
+  }
+  const [seeded] = (await stored()).photo_urls
+
+  await page.goto(`/tutorials/${id}/photos`)
+  await chooseFile(page, 'Choose from library', PHOTO_FIXTURE)
+  await expect(page.getByLabel('Caption for photo 2')).toBeVisible()
+  await expect.poll(async () => (await stored()).photo_urls).toHaveLength(2)
+  const added = (await stored()).photo_urls[1]!
+  expect(added).toContain(`/${id}/`)
+
+  await page.getByLabel('Caption for photo 2').fill('Switch close-up')
+  await expect.poll(async () => (await stored()).photo_captions?.[1]).toBe('Switch close-up')
+
+  await page.getByRole('button', { name: 'Make photo 2 the cover' }).click()
+  await expect.poll(async () => (await stored()).photo_urls).toEqual([added, seeded])
+  expect((await stored()).photo_captions?.[0]).toBe('Switch close-up')
+
+  await page.getByRole('button', { name: 'Remove photo 2' }).click()
+  await expect.poll(async () => (await stored()).photo_urls).toEqual([added])
 })
 
 test('T04 T15 an assistive-tech guide opens its 3D print files section and refuses a non-STL file', async ({ page }) => {

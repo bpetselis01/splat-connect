@@ -115,7 +115,7 @@ describe('ShortcutGrid at rest', () => {
     expect(glyph.width).toBeLessThanOrEqual(67.5)
   })
 
-  it('H03 opens a shortcut on press and the add sheet on Add', () => {
+  it('opens a shortcut on press and the add sheet on Add', () => {
     const h = setup()
     fireEvent.press(screen.getByLabelText('Toys'))
     expect(h.onOpen).toHaveBeenCalledWith(features[1])

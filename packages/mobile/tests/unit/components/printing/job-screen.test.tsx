@@ -139,16 +139,24 @@ it('R11 thanks an organisation printer through the organisation route', async ()
   await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/organizations/org1/thanks', {}))
 })
 
-it('R04 shows the family the printer’s record on the printer card', async () => {
+it('R04 shows the family the job, the printer and what it costs', async () => {
   mockGet.mockImplementation((path: string) =>
     path === '/api/toy-transactions/j1'
-      ? Promise.resolve(job({ status: 'accepted', printer_id: 'p1' }))
+      ? Promise.resolve(job({ status: 'accepted', printer_id: 'p1', printer: { id: 'p1', name: 'Prusa MK4' } }))
       : path === '/api/printers/p1'
-        ? Promise.resolve({ id: 'p1', filament_cents_per_g: null, rate_note: null, printer_stats: { jobs: 4, median_days: 6, fitted: 0, fit_answers: 0, colours: [] } })
-        : Promise.reject(new Error('n/a'))
+        ? Promise.resolve({ id: 'p1', filament_cents_per_g: 5, rate_note: 'PLA only', printer_stats: { jobs: 4, median_days: 6, fitted: 0, fit_answers: 0, colours: [] } })
+        : path === '/api/exchange-costs/j1'
+          ? Promise.resolve({ total_cents: 350 })
+          : Promise.reject(new Error('n/a'))
   )
   render(<PrintJobScreen id="j1" />)
+  expect(await screen.findByText('Switch mount')).toBeTruthy()
+  expect(screen.getByText('1 part · asked today')).toBeTruthy()
+  expect(await screen.findByText('On Prusa MK4')).toBeTruthy()
   expect(await screen.findByText('4 jobs · ~6 days')).toBeTruthy()
+  expect(await screen.findByText('About $0.05 / g of filament, settled between you')).toBeTruthy()
+  expect(screen.getByText('“PLA only”')).toBeTruthy()
+  expect(await screen.findByText('$3.50')).toBeTruthy()
 })
 
 it('puts the spent recycling credit on the family’s cost card', async () => {
