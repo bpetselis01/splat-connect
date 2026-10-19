@@ -100,11 +100,10 @@ export function buildMatrix({ unionSource, srcFiles, migrationFiles, testFiles, 
 export function loadSources(root) {
   const read = (f) => readFileSync(resolve(root, f), 'utf8')
   const files = (pattern) => Object.fromEntries(globSync(pattern, { cwd: root }).sort().map((f) => [f, read(f)]))
-  const legacy = new Set(JSON.parse(read('scripts/journeys/legacy-file-tags.json')))
   const e2e = (layer) => {
     const out = {}
     for (const f of globSync(LAYERS[layer].glob, { cwd: root }).sort()) {
-      const ids = fileClaims(f, read(f), legacy).ids
+      const ids = fileClaims(f, read(f)).ids
       if (ids.length) out[f] = ids
     }
     return out

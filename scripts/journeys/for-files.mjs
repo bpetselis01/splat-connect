@@ -54,12 +54,11 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const changed = process.argv.length > 2 ? process.argv.slice(2) : read('/dev/stdin').split('\n').filter(Boolean)
   const rows = JSON.parse(read('scripts/journeys/journeys.json'))
   const optOuts = JSON.parse(read('scripts/journeys/routes-without-journeys.json'))
-  const legacy = new Set(JSON.parse(read('scripts/journeys/legacy-file-tags.json')))
   const filesByLayer = {}
   for (const [layer, { glob: pattern }] of Object.entries(LAYERS)) {
     filesByLayer[layer] = {}
     for (const file of globSync(pattern, { cwd: root }).sort()) {
-      const { ids } = fileClaims(file, read(file), legacy)
+      const { ids } = fileClaims(file, read(file))
       if (ids.length) filesByLayer[layer][file] = ids
     }
   }
