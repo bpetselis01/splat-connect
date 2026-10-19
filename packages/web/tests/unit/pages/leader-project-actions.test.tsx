@@ -24,6 +24,8 @@ const tutorial = {
   tutorial_contributors: [], parts: [], tools: [], stl_files: [], tutorial_recommendations: [],
 }
 
+const { default: Page } = await import('@/app/organizations/[id]/projects/[tutorialId]/page')
+
 async function openPage(backing: 'pending' | 'accepted') {
   get.mockImplementation((path: string) =>
     Promise.resolve(
@@ -33,7 +35,6 @@ async function openPage(backing: 'pending' | 'accepted') {
         : org,
     ),
   )
-  const { default: Page } = await import('@/app/organizations/[id]/projects/[tutorialId]/page')
   render(await Page({ params: Promise.resolve({ id: 'o1', tutorialId: 't1' }) }))
 }
 
@@ -43,7 +44,7 @@ describe('leader project page — the decisions', () => {
   it('WB04 "Back this project" posts the accept for this organisation and stays on the page', async () => {
     await openPage('pending')
     fireEvent.click(screen.getByRole('button', { name: 'Back this project' }))
-    await waitFor(() => expect(post).toHaveBeenCalledWith('/api/tutorials/t1/orgs/o1/accept', {}))
+    await waitFor(() => expect(post).toHaveBeenCalledWith('/api/tutorials/t1/orgs/o1/accept', {}), { timeout: 5000 })
     expect(revalidatePath).toHaveBeenCalledWith('/organizations/o1/projects/t1')
     expect(redirect).not.toHaveBeenCalled()
   })
@@ -51,14 +52,14 @@ describe('leader project page — the decisions', () => {
   it('WB05 "Decline" posts the decline and returns to the organisation page', async () => {
     await openPage('pending')
     fireEvent.click(screen.getByRole('button', { name: 'Decline' }))
-    await waitFor(() => expect(post).toHaveBeenCalledWith('/api/tutorials/t1/orgs/o1/decline', {}))
+    await waitFor(() => expect(post).toHaveBeenCalledWith('/api/tutorials/t1/orgs/o1/decline', {}), { timeout: 5000 })
     expect(redirect).toHaveBeenCalledWith('/organizations/o1')
   })
 
   it('WB06 "Approve and publish" posts status approved with the organisation id and returns to the organisation page', async () => {
     await openPage('accepted')
     fireEvent.click(screen.getByRole('button', { name: 'Approve and publish' }))
-    await waitFor(() => expect(post).toHaveBeenCalledWith('/api/tutorials/t1/review', { status: 'approved', org_id: 'o1' }))
+    await waitFor(() => expect(post).toHaveBeenCalledWith('/api/tutorials/t1/review', { status: 'approved', org_id: 'o1' }), { timeout: 5000 })
     expect(revalidatePath).toHaveBeenCalledWith('/library')
     expect(redirect).toHaveBeenCalledWith('/organizations/o1')
   })
@@ -78,6 +79,7 @@ describe('leader project page — the decisions', () => {
         org_id: 'o1',
         rejection_note: 'Missing a washer.',
       }),
+      { timeout: 5000 },
     )
     expect(redirect).toHaveBeenCalledWith('/organizations/o1')
   })

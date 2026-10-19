@@ -292,7 +292,7 @@ describe('message', () => {
 })
 
 describe('follow', () => {
-  it('P02 tells followers once when the org publishes an event or a story', async () => {
+  it('P02 WB16 WB19 WB26 tells followers once when the org publishes an event or a story', async () => {
     expect((await app.request(`/api/organizations/${orgId}/follow`, json(family.token, 'POST'))).status).toBe(200)
     const me = (await (await app.request(`/api/organizations/${orgId}/me`, get(family.token))).json()) as {
       following: boolean

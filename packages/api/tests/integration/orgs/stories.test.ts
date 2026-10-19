@@ -69,7 +69,7 @@ describe('publishing a story', () => {
     expect(((await res.json()) as { error: string }).error).toMatch(/consent/i)
   })
 
-  it('L20 saves a draft with no consent, because a draft is not published', async () => {
+  it('L20 WB25 saves a draft with no consent, because a draft is not published', async () => {
     const res = await app.request(
       `/api/organizations/${orgId}/stories`,
       json(leader.token, 'POST', story({ consent_confirmed: false }))
@@ -80,7 +80,7 @@ describe('publishing a story', () => {
     expect(row.published_at).toBeNull()
   })
 
-  it('L20 stamps published_at on the way out, not from created_at', async () => {
+  it('L20 WB25 stamps published_at on the way out, not from created_at', async () => {
     const res = await app.request(
       `/api/organizations/${orgId}/stories`,
       json(leader.token, 'POST', story({ status: 'published' }))
@@ -135,7 +135,7 @@ describe('the public list', () => {
     expect(res.status).toBe(404)
   })
 
-  it('L21 clears published_at when a story is unpublished', async () => {
+  it('L21 WB26 clears published_at when a story is unpublished', async () => {
     const res = await app.request(
       `/api/organizations/${orgId}/stories/${publishedId}`,
       json(leader.token, 'PATCH', { status: 'draft' })
@@ -162,7 +162,7 @@ describe('editing a story', () => {
     liveAt = row.published_at
   })
 
-  it('rewrites a published story and keeps it published, under its first date', async () => {
+  it('WB26 rewrites a published story and keeps it published, under its first date', async () => {
     const res = await app.request(
       `/api/organizations/${orgId}/stories/${liveId}`,
       json(leader.token, 'PATCH', story({ title: 'Fixed the typo', status: 'published' }))

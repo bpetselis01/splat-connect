@@ -50,7 +50,7 @@ describe('deleting an organisation event', () => {
     expect(await res.json()).toEqual({ error: 'No such event of yours.' })
   })
 
-  it('L22 deletes the leader’s event and its questions and returns the id', async () => {
+  it('L22 WB17 deletes the leader’s event and its questions and returns the id', async () => {
     const res = await remove(orgId, eventId, leader.token)
     expect(res.status).toBe(200)
     expect(await res.json()).toEqual({ id: eventId })

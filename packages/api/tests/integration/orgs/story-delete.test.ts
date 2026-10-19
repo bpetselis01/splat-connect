@@ -49,7 +49,7 @@ describe('deleting an organisation story', () => {
     expect(await res.json()).toEqual({ error: 'No such story of yours.' })
   })
 
-  it('L22 deletes the leader’s story and returns its id', async () => {
+  it('L22 WB17 deletes the leader’s story and returns its id', async () => {
     const res = await remove(orgId, storyId, leader.token)
     expect(res.status).toBe(200)
     expect(await res.json()).toEqual({ id: storyId })

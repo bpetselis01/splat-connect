@@ -163,7 +163,7 @@ describe('events and stories', () => {
     expect(withConsent.status).toBe(201)
   })
 
-  it('shows a leader their drafts and the public nothing', async () => {
+  it('WB15 shows a leader their drafts and the public nothing', async () => {
     const created = await app.request(
       `/api/organizations/${orgId}/events`,
       json(leader.token, 'POST', {

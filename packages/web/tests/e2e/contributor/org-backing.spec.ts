@@ -19,7 +19,7 @@ import {
  * them — that a contributor can reach an organisation, a leader can answer, and a
  * parent sees the result.
  */
-test('a project is backed by an organisation and published by its leader', async ({ page }) => {
+test('WB04 WB06 a project is backed by an organisation and published by its leader', async ({ page }) => {
   const author = await createContributor()
   const leader = await createContributor()
   const admin = await createAdmin()

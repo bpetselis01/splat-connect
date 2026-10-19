@@ -273,7 +273,7 @@ describe('who may read an answer', () => {
     expect(JSON.stringify(detail)).not.toContain('family@example.com')
   })
 
-  it('gives the leader the answers', async () => {
+  it('WB15 WB24 gives the leader the answers', async () => {
     const res = await app.request(
       `/api/organizations/${orgId}/events/${eventId}/registrations`,
       authed(leader.token)
@@ -298,7 +298,7 @@ describe('who may read an answer', () => {
 })
 
 describe('closing and cancelling', () => {
-  it('refuses a registration once registrations are closed, and says which', async () => {
+  it('WB21 refuses a registration once registrations are closed, and says which', async () => {
     const closed = await app.request(
       `/api/organizations/${orgId}/events/${onlineEventId}`,
       json(leader.token, 'PATCH', { registrations_closed: true })
@@ -321,7 +321,7 @@ describe('closing and cancelling', () => {
   // Chain: closing and cancelling are separate promises. Closing leaves the
   //        event on the public list with its date and address, for the people
   //        already coming; cancelling takes it off.
-  it('takes a cancelled event off the public list but not a closed one', async () => {
+  it('WB21 takes a cancelled event off the public list but not a closed one', async () => {
     await app.request(
       `/api/organizations/${orgId}/events/${onlineEventId}`,
       json(leader.token, 'PATCH', { registrations_closed: true })
@@ -346,7 +346,7 @@ describe('closing and cancelling', () => {
 })
 
 describe('the question form', () => {
-  it('L19 replaces the whole list, keeping ids for the questions that survive', async () => {
+  it('L19 WB19 replaces the whole list, keeping ids for the questions that survive', async () => {
     const res = await app.request(
       `/api/organizations/${orgId}/events/${eventId}/questions`,
       json(leader.token, 'PUT', {
@@ -392,7 +392,7 @@ describe('publishing a new event', () => {
   // only title, time, format, venue and audience, so a published in-person
   // event failed 061's suburb-and-state check, and a draft lost its tools,
   // seats and cost with no error.
-  it('L19 keeps the whole form, place included, and publishes an in-person event', async () => {
+  it('L19 WB19 keeps the whole form, place included, and publishes an in-person event', async () => {
     const res = await app.request(
       `/api/organizations/${orgId}/events`,
       json(leader.token, 'POST', {

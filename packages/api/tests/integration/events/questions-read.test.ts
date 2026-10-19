@@ -1,4 +1,3 @@
-// journeys: (none — route coverage; no journey row names this route yet)
 /**
  * GET /api/organizations/:orgId/events/:id/questions returns an event's
  * registration questions in order. A published event's form is public to any
@@ -45,7 +44,7 @@ afterAll(async () => {
 })
 
 describe('reading an event’s registration questions', () => {
-  it('lists a published event’s questions in position order for any member', async () => {
+  it('WB24 lists a published event’s questions in position order for any member', async () => {
     const res = await read(published, member.token)
     expect(res.status).toBe(200)
     expect(await asked(res)).toEqual([
@@ -54,7 +53,7 @@ describe('reading an event’s registration questions', () => {
     ])
   })
 
-  it('shows a draft’s questions to its leader and an empty list to everyone else', async () => {
+  it('WB24 shows a draft’s questions to its leader and an empty list to everyone else', async () => {
     expect(await asked(await read(draft, leader.token))).toEqual([
       [1, 'How many are coming?', 'number', true],
       [2, 'Anything else?', 'paragraph', false],
