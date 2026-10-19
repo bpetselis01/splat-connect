@@ -40,7 +40,7 @@ async function shot(page: Page, name: string) {
 }
 
 test.describe('saving things', () => {
-  test('a signed-out visitor is offered the island and sent to sign up', async ({ page }) => {
+  test('WG09 a signed-out visitor is offered the island and sent to sign up', async ({ page }) => {
     const contributor = await createContributor()
     const title = uniqueTitle('Saveable guide')
     await createTutorial(contributor.id, { title, status: 'approved' })
@@ -62,7 +62,7 @@ test.describe('saving things', () => {
     }
   })
 
-  test('a signed-in visitor saves from the library and finds it under Saved', async ({ page }) => {
+  test('WG08 a signed-in visitor saves from the library, finds it under Saved, and unsaves it', async ({ page }) => {
     const contributor = await createContributor()
     await acceptTerms(contributor.id)
     const title = uniqueTitle('Kept guide')
@@ -152,7 +152,7 @@ test.describe('saving things', () => {
     }
   })
 
-  test('the destination button skips the hub and lands on its own list', async ({ page }) => {
+  test('WT38 the Saved tutorials button skips the hub and lands on its own list', async ({ page }) => {
     const contributor = await createContributor()
     await acceptTerms(contributor.id)
 

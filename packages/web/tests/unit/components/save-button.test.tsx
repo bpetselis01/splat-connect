@@ -38,7 +38,7 @@ beforeEach(() => {
 })
 
 describe('SaveButton', () => {
-  it('sends a signed-out visitor to sign up, carrying where they were and why', async () => {
+  it('WG09 sends a signed-out visitor to sign up, carrying where they were and why', async () => {
     render(<SaveButton slug="tutorials" id="abc" saved={false} signedIn={false} />)
     fireEvent.click(screen.getByRole('button'))
 
@@ -72,7 +72,14 @@ describe('SaveButton', () => {
     })
   })
 
-  it('WD33 unsaves an already-saved item through the plural slug', async () => {
+  it('WG08 WT08 saves a guide as a tutorial, and the labelled rail button flips to Saved', async () => {
+    render(<SaveButton slug="tutorials" id="abc" saved={false} signedIn withLabel />)
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    expect(post).toHaveBeenCalledWith('/api/saves', { entity_type: 'tutorial', entity_id: 'abc' })
+    expect(screen.getByRole('button', { name: 'Saved' })).toHaveTextContent('Saved')
+  })
+
+  it('WD33 WG08 WT08 unsaves an already-saved item through the plural slug', async () => {
     render(<SaveButton slug="tutorials" id="abc" saved signedIn />)
     fireEvent.click(screen.getByRole('button'))
 

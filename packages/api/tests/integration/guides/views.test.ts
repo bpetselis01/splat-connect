@@ -17,7 +17,7 @@ afterAll(async () => {
 })
 
 describe('092 tutorial_view_counts', () => {
-  it('counts every public read without touching the guide', async () => {
+  it('WT01 counts every public read without touching the guide', async () => {
     const before = (await adminClient().from('tutorials').select('updated_at').eq('id', guide).single()).data!.updated_at
     await app.request(`/api/public/tutorials/${guide}`)
     await app.request(`/api/public/tutorials/${guide}`)

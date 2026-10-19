@@ -6,7 +6,7 @@ const mockPost = vi.fn()
 vi.mock('@/lib/browser-api-client', () => ({ browserApiClient: { post: (...a: unknown[]) => mockPost(...a) } }))
 
 describe('MarkBuildDoneButton', () => {
-  it('logs the build and says so', async () => {
+  it('WT10 logs the build and says so', async () => {
     mockPost.mockResolvedValueOnce({ built: true })
     render(<MarkBuildDoneButton tutorialId="t1" />)
     fireEvent.click(screen.getByRole('button', { name: 'Mark this build done' }))

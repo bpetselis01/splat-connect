@@ -23,7 +23,7 @@ afterAll(async () => {
 })
 
 describe('091 tutorial_builds', () => {
-  it('B03 logs a build once, however many taps, and counts it without touching the guide', async () => {
+  it('B03 WT10 logs a build once, however many taps, and counts it without touching the guide', async () => {
     const before = await stamp()
     expect((await call('POST', `/api/tutorials/${guide}/build`, parent.token)).status).toBe(201)
     expect((await call('POST', `/api/tutorials/${guide}/build`, parent.token)).status).toBe(201)
