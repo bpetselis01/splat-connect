@@ -25,8 +25,6 @@ const UNTESTED = new Set([
   'PATCH /api/organizations/:id/pickup',
   'POST /api/exchange-costs/:transactionId/receipt',
   // Hidden by the path-only match; the stricter mentioned() (unit 5a, commit 1) found them.
-  'POST /api/tutorials/:id/stl-files',
-  'DELETE /api/tutorials/:id/stl-files',
   'GET /api/admin/organization-requests',
   'GET /api/contributors/me/thanks',
   // Also found by commit 1, beyond the four: only another method on the same path is tested.
