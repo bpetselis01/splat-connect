@@ -1,6 +1,5 @@
 // The create-time extras lookup (GET after the draft exists) is secondary: when
 // it rejects offline the editor still opens and nothing reaches console.error.
-// journeys: N02
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import NewGuideRoute from '../../../app/(tabs)/guides/new'
 

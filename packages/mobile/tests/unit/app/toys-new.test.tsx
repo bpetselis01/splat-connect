@@ -1,5 +1,4 @@
 // packages/mobile/tests/unit/app/toys-new.test.tsx
-// journeys: W02
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import NewToyRoute from '../../../app/(my)/toys/new'
 
@@ -43,7 +42,7 @@ describe('NewToyRoute', () => {
     expect(screen.getByLabelText('Create').props.accessibilityState.disabled).toBe(false)
   })
 
-  it('defaults condition to 5, and posts the name and condition on Create', async () => {
+  it('W02 defaults condition to 5, and posts the name and condition on Create', async () => {
     mockPost.mockResolvedValue({ id: 'toy1' })
     render(<NewToyRoute />)
     fireEvent.changeText(screen.getByPlaceholderText('Name'), 'Bubble machine')
@@ -53,7 +52,7 @@ describe('NewToyRoute', () => {
     )
   })
 
-  it('posts the picked condition chip', async () => {
+  it('W02 posts the picked condition chip', async () => {
     mockPost.mockResolvedValue({ id: 'toy1' })
     render(<NewToyRoute />)
     fireEvent.changeText(screen.getByPlaceholderText('Name'), 'Bubble machine')
@@ -86,7 +85,7 @@ describe('NewToyRoute', () => {
     expect(screen.queryByText('Who holds this toy')).toBeNull()
   })
 
-  it('arrives from inventory holding the org, and posts owner and quantity', async () => {
+  it('W02 arrives from inventory holding the org, and posts owner and quantity', async () => {
     mockLedOrgs = [{ id: 'org1', name: 'Toy Shed' }]
     mockParams = { org: 'org1' }
     mockPost.mockResolvedValue({ id: 'toy1' })
@@ -104,7 +103,7 @@ describe('NewToyRoute', () => {
     )
   })
 
-  it('lets a leader switch back to a personal toy, which carries no stock', async () => {
+  it('W02 lets a leader switch back to a personal toy, which carries no stock', async () => {
     mockLedOrgs = [{ id: 'org1', name: 'Toy Shed' }]
     mockParams = { org: 'org1' }
     mockPost.mockResolvedValue({ id: 'toy1' })

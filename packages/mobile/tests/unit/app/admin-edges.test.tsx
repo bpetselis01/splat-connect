@@ -1,4 +1,3 @@
-// journeys: Q17
 import { render, screen } from '@testing-library/react-native'
 import MyAdmin from '../../../app/(my)/admin'
 
@@ -15,20 +14,20 @@ beforeEach(() => {
 })
 
 describe('MyAdmin counts', () => {
-  it('shows a genuine zero as 0, not as nothing', async () => {
+  it('Q17 shows a genuine zero as 0, not as nothing', async () => {
     mockGet.mockResolvedValue({ ...six, reports: 0 })
     render(<MyAdmin />)
     expect(await screen.findByRole('button', { name: 'Reports from members, 0' })).toBeTruthy()
     expect(screen.getByText('0')).toBeTruthy()
   })
 
-  it('shows five-figure counts whole', async () => {
+  it('Q17 shows five-figure counts whole', async () => {
     mockGet.mockResolvedValue({ ...six, accounts: 12345 })
     render(<MyAdmin />)
     expect(await screen.findByText('12345')).toBeTruthy()
   })
 
-  it('leaves a card uncounted, never reading "undefined" or "null", when the API omits or nulls its count', async () => {
+  it('Q17 leaves a card uncounted, never reading "undefined" or "null", when the API omits or nulls its count', async () => {
     mockGet.mockResolvedValue({ ...six, spotCheck: undefined, ideas: null })
     render(<MyAdmin />)
     expect(await screen.findByText('57')).toBeTruthy()

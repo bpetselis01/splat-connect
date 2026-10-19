@@ -2,7 +2,6 @@
 // Jest has no text layout, so real frames are checked on the simulator. This
 // pins what keeps those frames apart: a flow column inside a ScrollView that
 // clears both safe-area insets, and text that cannot outgrow a 320pt screen.
-// journeys: A13
 import { ScrollView, StyleSheet, type ViewStyle } from 'react-native'
 import { render, screen } from '@testing-library/react-native'
 import NotBuilt from '../../../app/not-built'
