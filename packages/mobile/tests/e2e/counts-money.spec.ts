@@ -1,4 +1,3 @@
-// journeys: X10 X11 X12
 import { test, expect } from '@playwright/test'
 import { adminClient } from './helpers'
 import { partyPage, seedBuild } from './maker-fixtures'
@@ -23,7 +22,7 @@ async function costRows(transactionId: string) {
   return data ?? []
 }
 
-test('adding, removing and settling cost lines moves the Me money panel without a reload', async ({ browser, baseURL }) => {
+test('X10 X11 X12 adding, removing and settling cost lines moves the Me money panel without a reload', async ({ browser, baseURL }) => {
   const build = await seedBuild({ status: 'accepted' })
   const { error: seedError } = await adminClient().from('exchange_costs').insert({
     transaction_id: build.id,

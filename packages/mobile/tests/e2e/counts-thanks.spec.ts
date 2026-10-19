@@ -1,4 +1,3 @@
-// journeys: P04 L24 C11
 import { test, expect } from '@playwright/test'
 import {
   adminClient,
@@ -20,7 +19,7 @@ async function seedThanks(orgId: string, profileId: string, over: Record<string,
   if (error) throw new Error(`seedThanks failed: ${error.message}`)
 }
 
-test('sending thanks moves "Thanked N times" on the org page without a reload', async ({ page }) => {
+test('P04 sending thanks moves "Thanked N times" on the org page without a reload', async ({ page }) => {
   const family = await signInAsNewContributor(page)
   const leader = await createContributor()
   const orgId = await makeOrgLeader(leader.id, uniqueTitle('E2E Thanked Org'))
@@ -42,7 +41,7 @@ test('sending thanks moves "Thanked N times" on the org page without a reload', 
   expect(data?.map((r) => r.profile_id).sort()).toEqual([earlier.id, family.id].sort())
 })
 
-test('hiding a thanks note flips it to Hidden and Show again, and the counts stay put', async ({ page, browser, baseURL }) => {
+test('L24 hiding a thanks note flips it to Hidden and Show again, and the counts stay put', async ({ page, browser, baseURL }) => {
   const leader = await signInAsNewContributor(page)
   const orgId = await makeOrgLeader(leader.id, uniqueTitle('E2E Hide Org'))
   const author = await createContributor()
@@ -76,7 +75,7 @@ test('hiding a thanks note flips it to Hidden and Show again, and the counts sta
   expect((await row()).data?.hidden_at).toBeNull()
 })
 
-test('saving a challenge moves the "N saves" tile without a reload, and unsaving moves it back', async ({ page }) => {
+test('C11 saving a challenge moves the "N saves" tile without a reload, and unsaving moves it back', async ({ page }) => {
   const viewer = await signInAsNewContributor(page)
   const author = await createContributor()
   const id = await createChallenge(author.id)
