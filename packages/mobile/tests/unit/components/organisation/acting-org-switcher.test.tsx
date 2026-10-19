@@ -17,7 +17,7 @@ describe('ActingOrgSwitcher', () => {
     expect(screen.getByLabelText('Acting for Westside Printers. Change organisation.')).toBeTruthy()
   })
 
-  it('lists both organisations with the current one checked, and picks the other', () => {
+  it('Q20 lists both organisations with the current one checked, and picks the other', () => {
     const onPick = jest.fn()
     render(<ActingOrgSwitcher orgs={ORGS} current="a" onPick={onPick} />)
     fireEvent.press(screen.getByLabelText(/Acting for Northside Makers/))
