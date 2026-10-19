@@ -149,7 +149,6 @@
   "packages/mobile/tests/e2e/child-profile.spec.ts",
   "packages/mobile/tests/e2e/counts-account.spec.ts",
   "packages/mobile/tests/e2e/counts-guide-notes.spec.ts",
-  "packages/mobile/tests/e2e/counts-inbox-badges.spec.ts",
   "packages/mobile/tests/e2e/counts-money.spec.ts",
   "packages/mobile/tests/e2e/counts-org-publish.spec.ts",
   "packages/mobile/tests/e2e/counts-printing.spec.ts",

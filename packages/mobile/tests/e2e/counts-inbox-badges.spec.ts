@@ -1,4 +1,3 @@
-// journeys: Q10 L16 L31 L29 P10
 import { test, expect } from '@playwright/test'
 import {
   adminClient,
@@ -140,7 +139,7 @@ test('L31: accepting a leader invitation adds the Organisation group to Me; decl
   await expect(page.getByRole('button', { name: 'Review queue', exact: true })).toBeVisible()
 })
 
-test('P10 and L29: each message adds one to the other side\'s Inbox, and opening it clears it', async ({
+test('P10 L29 each message adds one to the other side\'s Inbox, and opening it clears it', async ({
   page,
   browser,
   baseURL,
