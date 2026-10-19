@@ -46,7 +46,7 @@ Gaps: 0 · Waived: 1 · Legacy-tagged files: n/a · Routes without rows: n/a
 | A10 | nav | `(auth)/reset-password` | P | reset-password Save and sign in → verifyOtp(recovery) + updateUser | – | – | n/a | ✅ | ✅ | ✅ | – |
 | A11 | write | `terms` | P | terms "Accept and continue" → acceptContributorTerms (+ name) | – | – | n/a | ✅ | ✅ | ✅ | – |
 | A12 | nav | `terms` | P | terms "Sign out" | – | – | n/a | ✅ | ✅ | ✅ | – |
-| A13 | static | `not-built` | P | not-built "Go back" | – | – | n/a | ✅ | ✅ | – | – |
+| A13 | nav | `not-built` | P | not-built "Go back" | – | – | n/a | ✅ | ✅ | – | – |
 | A14 | write | `index` | P | session gate on load | – | – | n/a | ✅ | ✅ | ✅ | ✅ |
 
 </details>
@@ -57,11 +57,11 @@ Gaps: 0 · Waived: 1 · Legacy-tagged files: n/a · Routes without rows: n/a
 
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | mobile-unit | mobile-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| B01 | static | `(tabs)/guides/[id]/build` | P | Start step 1 / Next / Previous | – | progress bar | n/a | ✅ | ✅ | – | – |
-| B02 | static | `(tabs)/guides/[id]/build` | P | "All steps" sheet jump / "Start over and clear ticks" | – | – | n/a | ✅ | ✅ | – | – |
+| B01 | nav | `(tabs)/guides/[id]/build` | P | Start step 1 / Next / Previous | – | progress bar | n/a | ✅ | ✅ | – | – |
+| B02 | nav | `(tabs)/guides/[id]/build` | P | "All steps" sheet jump / "Start over and clear ticks" | – | – | n/a | ✅ | ✅ | – | – |
 | B03 | write | `(tabs)/guides/[id]/build` | P | last step "Add to My SPLAT" (build-mode:306) | – | builds_count on guide, Me "N builds logged" | n/a | ✅ | ✅ | ✅ | – |
 | B04 | write | `(tabs)/guides/[id]/build` | P | "Leave feedback" → FeedbackSheet | tutorial_noted | – | n/a | ✅ | ✅ | ✅ | ✅ |
-| B05 | static | `(tabs)/guides/[id]/build` | P | ✕ / "Back to the guide" | – | – | n/a | ✅ | ✅ | – | ✅ |
+| B05 | nav | `(tabs)/guides/[id]/build` | P | ✕ / "Back to the guide" | – | – | n/a | ✅ | ✅ | – | ✅ |
 | B06 | static | `(tabs)/guides/[id]/build` | P | Gather sheet ticks | – | – | n/a | ✅ | – | – | – |
 | B07 | nav | `(tabs)/guides/[id]/build` | P | step photo → viewer | – | – | n/a | ✅ | ✅ | – | – |
 
@@ -81,8 +81,8 @@ Gaps: 0 · Waived: 1 · Legacy-tagged files: n/a · Routes without rows: n/a
 | C06 | write | `(tabs)/explore/challenges/[id]` | P | "Mark as the answer" / "Unmark" | – | – | mobile | ✅ | ✅ | ✅ | – |
 | C07 | write | `(tabs)/explore/challenges/[id]` | P | "Add a constraint" | – | – | mobile | ✅ | ✅ | ✅ | – |
 | C08 | write | `(tabs)/explore/challenges/[id]` | P | "Withdraw the idea" | – | – | mobile | ✅ | ✅ | ✅ | – |
-| C09 | static | `(tabs)/explore/challenges/[id]` | P | "Submit a revised idea" | – | – | n/a | ✅ | ✅ | – | – |
-| C10 | static | `(tabs)/explore/challenges/[id]` | P | "Read the guide" / "Follow the write-up" | – | – | web | ✅ | ✅ | – | – |
+| C09 | nav | `(tabs)/explore/challenges/[id]` | P | "Submit a revised idea" | – | – | n/a | ✅ | ✅ | – | – |
+| C10 | nav | `(tabs)/explore/challenges/[id]` | P | "Read the guide" / "Follow the write-up" | – | – | web | ✅ | ✅ | – | – |
 | C11 | write | `(tabs)/explore/challenges/[id]` | P | Save heart | – | "N saves" tile | n/a | ✅ | ✅ | ✅ | – |
 | C12 | write | `(tabs)/explore/challenges/new` | P | "Submit idea" | idea_approved, idea_rejected | My challenges "Awaiting review" | web | ✅ | ✅ | ✅ | – |
 | C13 | write | `(tabs)/explore/challenges/new` | P | idea photo | – | – | n/a | ✅ | ✅ | ✅ | – |
@@ -98,9 +98,9 @@ Gaps: 0 · Waived: 1 · Legacy-tagged files: n/a · Routes without rows: n/a
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | mobile-unit | mobile-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | G01 | write | `(tabs)/guides/index` | P | library load + pull-to-refresh (library-screen:81) | – | – | n/a | ✅ | ✅ | ✅ | – |
-| G02 | static | `(tabs)/guides/index` | P | search field | – | – | n/a | ✅ | ✅ | – | – |
+| G02 | nav | `(tabs)/guides/index` | P | search field | – | – | n/a | ✅ | ✅ | – | – |
 | G03 | nav | `(tabs)/guides/index` | P | Filters → filter-page (pill/radio, Show N, Reset, ✕) | – | "Show N" | n/a | ✅ | ✅ | – | – |
-| G04 | static | `(tabs)/guides/index` | P | "Clear filters" / "Try again" | – | – | n/a | ✅ | ✅ | – | – |
+| G04 | nav | `(tabs)/guides/index` | P | "Clear filters" / "Try again" | – | – | n/a | ✅ | ✅ | – | – |
 | G05 | nav | `(tabs)/guides/index` | P | card tap → /guides/[id] | – | – | n/a | ✅ | ✅ | – | – |
 | G06 | write | `(tabs)/guides/index` | P | card Save heart (SaveButton) | – | Saved hub counts | n/a | ✅ | ✅ | ✅ | – |
 | G07 | nav | `(tabs)/guides/index` | P | "Add a guide" → /guides/new | – | – | n/a | ✅ | ✅ | – | – |
@@ -118,14 +118,14 @@ Gaps: 0 · Waived: 1 · Legacy-tagged files: n/a · Routes without rows: n/a
 | G19 | nav | `(tabs)/guides/[id]/index` | P | "Can't build it?" → /explore/makers-wanted/new?guide= | – | – | n/a | ✅ | ✅ | – | – |
 | G20 | nav | `(tabs)/guides/[id]/index` | P | picks row → open guide/toy | – | – | mobile | ✅ | ✅ | – | – |
 | G21 | static | `(tabs)/guides/[id]/index` | P | part "gathered" tick / buy link | – | – | n/a | ✅ | – | – | – |
-| G22 | static | `(tabs)/guides/[id]/index` | P | tool "I already have" tick | – | – | n/a | ✅ | ✅ | – | – |
+| G22 | nav | `(tabs)/guides/[id]/index` | P | tool "I already have" tick | – | – | n/a | ✅ | ✅ | – | – |
 | G23 | write | `(tabs)/guides/[id]/index` | P | Feedback: composer → FeedbackSheet Post | tutorial_noted | notes list, Feedback badge | n/a | ✅ | ✅ | ✅ | – |
 | G24 | write | `(tabs)/guides/[id]/index` | P | note "Add a photo" | – | – | n/a | ✅ | ✅ | ✅ | – |
-| G25 | static | `(tabs)/guides/[id]/index` | P | note filter chips (All/Fixes/Step N/Missing) | – | chip counts | n/a | ✅ | ✅ | – | – |
+| G25 | nav | `(tabs)/guides/[id]/index` | P | note filter chips (All/Fixes/Step N/Missing) | – | chip counts | n/a | ✅ | ✅ | – | – |
 | G26 | write | `(tabs)/guides/[id]/index` | P | note menu Pin / Unpin | – | "Fixes N" chip | mobile | ✅ | ✅ | ✅ | – |
 | G27 | write | `(tabs)/guides/[id]/index` | P | note menu Report | – | – | web | ✅ | ✅ | ✅ | ✅ |
 | G28 | write | `(tabs)/guides/[id]/index` | P | note menu Delete (own) | – | – | n/a | ✅ | ✅ | ✅ | – |
-| G29 | static | `(tabs)/guides/[id]/index` | P | detail "Try again" | – | – | n/a | ✅ | ✅ | – | – |
+| G29 | nav | `(tabs)/guides/[id]/index` | P | detail "Try again" | – | – | n/a | ✅ | ✅ | – | – |
 
 </details>
 
@@ -156,12 +156,12 @@ Gaps: 0 · Waived: 1 · Legacy-tagged files: n/a · Routes without rows: n/a
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | mobile-unit | mobile-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | H01 | write | `(tabs)/home/index` | P | Today card / inbox chip (home-screen:31) → push /inbox | – | inbox badge unread.total, Today counts | n/a | ✅ | ✅ | ✅ | – |
-| H02 | static | `(tabs)/home/index` | P | Edit/Done toggle | – | – | n/a | ✅ | ✅ | – | – |
+| H02 | nav | `(tabs)/home/index` | P | Edit/Done toggle | – | – | n/a | ✅ | ✅ | – | – |
 | H03 | nav | `(tabs)/home/index` | P | shortcut tile → push href | – | – | n/a | ✅ | ✅ | – | – |
 | H04 | nav | `(tabs)/home/index` | P | shortcut menu: Open / Move to top / Remove | – | – | n/a | ✅ | ✅ | – | – |
-| H05 | static | `(tabs)/home/index` | P | "Add a shortcut" sheet: search, add/remove | – | – | n/a | ✅ | ✅ | – | – |
-| H06 | static | `(tabs)/home/index` | P | "Pick up where you left off" rows (recent-rows) | – | – | n/a | ✅ | ✅ | – | – |
-| H07 | static | `(tabs)/home/index` | P | tab bar tap (Home/Map/Inbox/Me) | – | inbox=unread.total, Me=exchangeActions | n/a | ✅ | ✅ | – | ✅ |
+| H05 | nav | `(tabs)/home/index` | P | "Add a shortcut" sheet: search, add/remove | – | – | n/a | ✅ | ✅ | – | – |
+| H06 | nav | `(tabs)/home/index` | P | "Pick up where you left off" rows (recent-rows) | – | – | n/a | ✅ | ✅ | – | – |
+| H07 | nav | `(tabs)/home/index` | P | tab bar tap (Home/Map/Inbox/Me) | – | inbox=unread.total, Me=exchangeActions | n/a | ✅ | ✅ | – | ✅ |
 
 </details>
 
@@ -180,11 +180,11 @@ Gaps: 0 · Waived: 1 · Legacy-tagged files: n/a · Routes without rows: n/a
 | K07 | write | `(my)/exchanges/build/[id]` | P | "Decline" | toy_rejected | – | n/a | ✅ | ✅ | ✅ | – |
 | K08 | write | `(my)/exchanges/build/[id]` | P | "Post the working shot" | build_shot_posted | – | mobile | ✅ | ✅ | ✅ | – |
 | K09 | write | `(my)/exchanges/build/[id]` | P | "Looks right — arrange pickup" | build_approved | – | mobile | ✅ | ✅ | ✅ | – |
-| K10 | static | `(my)/exchanges/build/[id]` | P | "Ask for a change" | – | – | n/a | ✅ | ✅ | – | – |
+| K10 | nav | `(my)/exchanges/build/[id]` | P | "Ask for a change" | – | – | n/a | ✅ | ✅ | – | – |
 | K11 | write | `(my)/exchanges/build/[id]` | P | "Confirm handover" | – | – | mobile | ✅ | ✅ | ✅ | – |
 | K12 | write | `(my)/exchanges/build/[id]` | P | "Withdraw" | toy_withdrawn | – | n/a | ✅ | ✅ | ✅ | – |
 | K13 | write | `(my)/exchanges/build/[id]` | P | message Send | toy_message | – | n/a | ✅ | ✅ | ✅ | – |
-| K14 | static | `(tabs)/explore/makers-wanted/index` | P | "Track" / "Thread" | – | – | n/a | ✅ | ✅ | – | – |
+| K14 | nav | `(tabs)/explore/makers-wanted/index` | P | "Track" / "Thread" | – | – | n/a | ✅ | ✅ | – | – |
 
 </details>
 
@@ -234,10 +234,10 @@ Gaps: 0 · Waived: 1 · Legacy-tagged files: n/a · Routes without rows: n/a
 
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | mobile-unit | mobile-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| N01 | static | `(tabs)/guides/new` | P | "Start blank / from a PDF" chips | – | – | n/a | ✅ | ✅ | – | – |
+| N01 | nav | `(tabs)/guides/new` | P | "Start blank / from a PDF" chips | – | – | n/a | ✅ | ✅ | – | – |
 | N02 | write | `(tabs)/guides/new` | P | "Choose PDF" → uploadFile('/api/tutorials/import-pdf') | – | – | n/a | ✅ | ✅ | ✅ | – |
 | N03 | write | `(tabs)/guides/new` | P | "Add a cover photo" (uploaded after create) | – | – | n/a | ✅ | ✅ | ✅ | – |
-| N04 | static | `(tabs)/guides/new` | P | kind / difficulty chips, ages | – | – | n/a | ✅ | ✅ | – | – |
+| N04 | nav | `(tabs)/guides/new` | P | kind / difficulty chips, ages | – | – | n/a | ✅ | ✅ | – | – |
 | N05 | write | `(tabs)/guides/new` | P | terms checkbox + "Accept and continue" | – | – | n/a | ✅ | ✅ | ✅ | – |
 | N06 | write | `(tabs)/guides/new` | P | "Create draft" (new.tsx:132-141) | – | My tutorials list | n/a | ✅ | ✅ | ✅ | – |
 
@@ -255,8 +255,8 @@ Gaps: 0 · Waived: 1 · Legacy-tagged files: n/a · Routes without rows: n/a
 | P04 | write | `(tabs)/toy-library/organisation/[id]` | P | "Send thanks" | org_thanked | thanks_count | mobile | ✅ | ✅ | ✅ | – |
 | P05 | nav | `(tabs)/toy-library/organisation/[id]` | P | "Ask them to print" → /printing?printWith= | – | – | n/a | ✅ | ✅ | – | – |
 | P06 | nav | `(tabs)/toy-library/organisation/[id]` | P | "Book a drop-off" → /explore/recycling | – | – | n/a | ✅ | ✅ | – | – |
-| P07 | static | `(tabs)/toy-library/organisation/[id]` | P | door rows | – | – | n/a | ✅ | ✅ | – | – |
-| P08 | static | `(tabs)/toy-library/organisation/[id]` | P | guides / toys "See all", row taps | – | – | n/a | ✅ | ✅ | – | – |
+| P07 | nav | `(tabs)/toy-library/organisation/[id]` | P | door rows | – | – | n/a | ✅ | ✅ | – | – |
+| P08 | nav | `(tabs)/toy-library/organisation/[id]` | P | guides / toys "See all", row taps | – | – | n/a | ✅ | ✅ | – | – |
 | P09 | write | `(tabs)/toy-library/organisation/[id]` | P | Report org | – | – | web | ✅ | ✅ | ✅ | – |
 | P10 | write | `(my)/messages/org/[orgId]` | P | family conversation Send | org_message | Me "Messages" | n/a | ✅ | ✅ | ✅ | – |
 
@@ -271,7 +271,7 @@ Gaps: 0 · Waived: 1 · Legacy-tagged files: n/a · Routes without rows: n/a
 | Q01 | nav | `(tabs)/me` | P | Me load | – | row counts, money panel | n/a | ✅ | ✅ | ✅ | – |
 | Q02 | nav | `(tabs)/me` | P | Me row → myRoute() | – | – | n/a | ✅ | ✅ | – | – |
 | Q03 | nav | `(tabs)/me` | P | money line → thread | – | – | n/a | ✅ | ✅ | – | – |
-| Q04 | static | `(tabs)/me` | P | "How badges are earned" | – | – | n/a | ✅ | ✅ | – | – |
+| Q04 | nav | `(tabs)/me` | P | "How badges are earned" | – | – | n/a | ✅ | ✅ | – | – |
 | Q05 | write | `(tabs)/inbox` | P | inbox load / pull / segment | – | – | n/a | ✅ | ✅ | ✅ | – |
 | Q06 | write | `(tabs)/inbox` | P | notification row tap (open) | – | inbox + Today count | n/a | ✅ | ✅ | ✅ | – |
 | Q07 | write | `(tabs)/inbox` | P | bucket "Mark read" | – | bucket + tab badge | n/a | ✅ | ✅ | ✅ | – |
@@ -281,11 +281,11 @@ Gaps: 0 · Waived: 1 · Legacy-tagged files: n/a · Routes without rows: n/a
 | Q11 | write | `(tabs)/map` | P | map load / search / layer chips / filters | – | – | n/a | ✅ | ✅ | ✅ | – |
 | Q12 | nav | `(tabs)/map` | P | map row → route | – | – | n/a | ✅ | ✅ | – | – |
 | Q13 | nav | `(tabs)/explore/index` | P | Explore search | – | – | n/a | ✅ | ✅ | ✅ | – |
-| Q14 | static | `(tabs)/explore/index` | P | Explore doors | – | impact stats | n/a | ✅ | ✅ | – | – |
+| Q14 | nav | `(tabs)/explore/index` | P | Explore doors | – | impact stats | n/a | ✅ | ✅ | – | – |
 | Q15 | write | `(tabs)/explore/learn/[slug]` | P | Learn hub / article "Next" (tick) | – | "Continue" card | web | ✅ | ✅ | ✅ | – |
 | Q16 | nav | `(tabs)/explore/about` | P | About LinkRows → web | – | – | n/a | ✅ | ✅ | – | – |
 | Q17 | nav | `(my)/admin` | A | Admin cards → web | – | six counts | web | ✅ | ✅ | ✅ | – |
-| Q18 | nav | `(my)/admin/review/index` | A | Admin review queue → open a pending guide | – | – | n/a | ✅ | – | – | – |
+| Q18 | static | `(my)/admin/review/index` | A | Admin review queue → open a pending guide | – | – | n/a | ✅ | – | – | – |
 | Q19 | static | `(my)/admin/review/[id]` | A | Admin Approve / Request changes (note required) | – | – | n/a | ✅ | – | – | – |
 
 </details>
@@ -297,7 +297,7 @@ Gaps: 0 · Waived: 1 · Legacy-tagged files: n/a · Routes without rows: n/a
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | mobile-unit | mobile-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | R01 | write | `printing/index` | P | finder filters: Open now/material/10 km/Verified | – | – | web | ✅ | ✅ | ✅ | – |
-| R02 | static | `printing/index` | P | Pick / Unpick (max 3) | – | – | n/a | ✅ | ✅ | – | – |
+| R02 | nav | `printing/index` | P | Pick / Unpick (max 3) | – | – | n/a | ✅ | ✅ | – | – |
 | R03 | write | `printing/request` | P | "Send request" (parts, qty, colour, delivery, credit) | toy_request | printer's "Print for others" count | mobile | ✅ | ✅ | ✅ | – |
 | R04 | write | `printing/jobs/[id]` | P | job load | – | – | n/a | ✅ | ✅ | ✅ | – |
 | R05 | write | `printing/jobs/[id]` | P | job message | toy_message | – | n/a | ✅ | ✅ | ✅ | – |
@@ -338,9 +338,9 @@ Gaps: 0 · Waived: 1 · Legacy-tagged files: n/a · Routes without rows: n/a
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | mobile-unit | mobile-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | T01 | write | `(my)/tutorials/index` | P | list load / pull / stage filter | – | Me "My tutorials" count | n/a | ✅ | ✅ | ✅ | – |
-| T02 | static | `(my)/tutorials/index` | P | "+ Add a tutorial" | – | – | n/a | ✅ | ✅ | – | – |
+| T02 | nav | `(my)/tutorials/index` | P | "+ Add a tutorial" | – | – | n/a | ✅ | ✅ | – | – |
 | T03 | nav | `(my)/tutorials/index` | P | row → hub | – | – | n/a | ✅ | ✅ | – | – |
-| T04 | static | `(my)/tutorials/[id]/index` | P | hub section row / Backing row | – | "Empty"/ready pills | n/a | ✅ | ✅ | – | – |
+| T04 | nav | `(my)/tutorials/[id]/index` | P | hub section row / Backing row | – | "Empty"/ready pills | n/a | ✅ | ✅ | – | – |
 | T05 | write | `(my)/tutorials/[id]/index` | P | Submit (hub:handleSubmit → saveNow({status:'pending'})) | tutorial_submitted | leaders' Me "Review queue" + inbox | mobile | ✅ | ✅ | ✅ | – |
 | T06 | write | `(my)/tutorials/[id]/index` | P | "Delete draft" (More actions) | – | list | n/a | ✅ | ✅ | ✅ | – |
 | T07 | nav | `(my)/tutorials/[id]/index` | P | "Preview" → /guides/[id] | – | – | n/a | ✅ | ✅ | – | – |
@@ -356,8 +356,8 @@ Gaps: 0 · Waived: 1 · Legacy-tagged files: n/a · Routes without rows: n/a
 | T17 | write | `(my)/tutorials/[id]/suits` | P | suits fields | – | – | n/a | ✅ | ✅ | ✅ | – |
 | T18 | write | `(my)/tutorials/[id]/backing` | P | backing "Ask <org>" | backing_requested | leaders' Review count | mobile | ✅ | ✅ | ✅ | – |
 | T19 | write | `(my)/tutorials/[id]/backing` | P | backing "Withdraw" | – | – | n/a | ✅ | ✅ | ✅ | – |
-| T20 | static | `(my)/tutorials/[id]/details` | P | save chip "Try again" | – | – | n/a | ✅ | ✅ | – | – |
-| T21 | static | `(my)/tutorials/[id]/details` | P | section footer Next / Checklist | – | – | n/a | ✅ | ✅ | – | – |
+| T20 | nav | `(my)/tutorials/[id]/details` | P | save chip "Try again" | – | – | n/a | ✅ | ✅ | – | – |
+| T21 | nav | `(my)/tutorials/[id]/details` | P | section footer Next / Checklist | – | – | n/a | ✅ | ✅ | – | – |
 | T22 | write | `(my)/tutorials/[id]/details` | P | edit an approved or rejected guide (auto re-submit) | tutorial_submitted | – | n/a | ✅ | ✅ | ✅ | – |
 
 </details>
@@ -405,7 +405,7 @@ Gaps: 0 · Waived: 1 · Legacy-tagged files: n/a · Routes without rows: n/a
 | Y05 | write | `(tabs)/toy-library/[id]` | P | "Ask to collect it" | toy_request | owner's "My exchanges" count | mobile | ✅ | ✅ | ✅ | – |
 | Y06 | write | `(tabs)/toy-library/[id]` | P | "Arrange exchange" (offer own toy) | toy_request | owner's "My exchanges" count | mobile | ✅ | ✅ | ✅ | – |
 | Y07 | write | `(tabs)/toy-library/[id]` | P | Save / Thank owner / Report | profile_thanked, org_thanked | – | web | ✅ | ✅ | ✅ | – |
-| Y08 | static | `(tabs)/toy-library/[id]` | P | org / guide / picks links | – | – | n/a | ✅ | ✅ | – | – |
+| Y08 | nav | `(tabs)/toy-library/[id]` | P | org / guide / picks links | – | – | n/a | ✅ | ✅ | – | – |
 | Y09 | write | `(tabs)/toy-library/organisations` | P | Organisations list | – | – | n/a | ✅ | ✅ | ✅ | – |
 
 </details>
