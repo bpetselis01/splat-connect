@@ -80,7 +80,7 @@ describe('POST /api/saves', () => {
 })
 
 describe('GET /api/saves/:slug', () => {
-  it('V09 returns the saved entity in the public list shape', async () => {
+  it('V09 WD32 returns the saved entity in the public list shape', async () => {
     const res = await app.request('/api/saves/tutorials', as(owner))
     expect(res.status).toBe(200)
     const rows = (await res.json()) as { id: string; title: string }[]
@@ -147,7 +147,7 @@ describe('GET /api/saves/:slug', () => {
 })
 
 describe('GET /api/saves/ids', () => {
-  it('V07 groups ids by slug, including ones the list would hide', async () => {
+  it('V07 WD31 groups ids by slug, including ones the list would hide', async () => {
     const res = await app.request('/api/saves/ids', as(owner))
     expect(res.status).toBe(200)
     const ids = (await res.json()) as { tutorials: string[]; toys: string[]; challenges: string[] }
@@ -165,7 +165,7 @@ describe('GET /api/saves/ids', () => {
 })
 
 describe('DELETE /api/saves/:slug/:id', () => {
-  it('G06 G08 V08 Y02 removes your own save', async () => {
+  it('G06 G08 V08 Y02 WD33 removes your own save', async () => {
     const res = await app.request(`/api/saves/tutorials/${approvedId}`, as(owner, 'DELETE'))
     expect(res.status).toBe(204)
     const { count } = await adminClient()

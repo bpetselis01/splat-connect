@@ -242,7 +242,7 @@ describe('say thanks', () => {
 describe('message', () => {
   let conversationId: string
 
-  it('P10 opens one conversation per person and tells every leader', async () => {
+  it('P10 WD35 opens one conversation per person and tells every leader', async () => {
     const first = await app.request(
       `/api/organizations/${orgId}/conversations/mine/messages`,
       json(family.token, 'POST', { body: 'Can we come on Thursday?' })
@@ -260,7 +260,7 @@ describe('message', () => {
     expect(notes[0].org_conversation_id).toBe(conversationId)
   })
 
-  it('L28 L29 lets the leader read and reply, and tells the family', async () => {
+  it('L28 L29 WD35 lets the leader read and reply, and tells the family', async () => {
     const list = await app.request(`/api/organizations/${orgId}/conversations`, get(leader.token))
     const rows = (await list.json()) as Array<{ id: string; last_message: { body: string } }>
     expect(rows[0].id).toBe(conversationId)
@@ -279,7 +279,7 @@ describe('message', () => {
     expect(thread.messages.map((m) => m.from_org)).toEqual([false, false, true])
   })
 
-  it('keeps a third account out of it', async () => {
+  it('WD36 keeps a third account out of it', async () => {
     const read = await app.request(`/api/organizations/conversations/${conversationId}`, get(stranger.token))
     expect(read.status).toBe(404)
     const write = await app.request(

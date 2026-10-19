@@ -45,7 +45,7 @@ describe('GET /api/ideas/mine/:id', () => {
 })
 
 describe('107 DELETE /api/ideas/:id', () => {
-  it('C08 withdraws the author’s pending idea', async () => {
+  it('C08 WD24 withdraws the author’s pending idea', async () => {
     const id = await idea('pending')
     expect((await call(author, `/api/ideas/${id}`, 'DELETE')).status).toBe(204)
     expect(await exists(id)).toBe(false)

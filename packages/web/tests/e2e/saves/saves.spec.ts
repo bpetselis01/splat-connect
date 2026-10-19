@@ -5,6 +5,7 @@ import {
   createContributor,
   createTutorial,
   acceptTerms,
+  adminClient,
   deleteUser,
   uniqueTitle,
 } from '../helpers'
@@ -105,6 +106,47 @@ test.describe('saving things', () => {
       await page.getByRole('button', { name: 'Saved' }).click()
       await expect(page.getByText(/Nothing saved yet/)).toBeVisible()
       await shot(page, 'saved-tutorials-empty')
+    } finally {
+      await deleteUser(contributor.id)
+    }
+  })
+
+  // Dashboard half only (the Saved hub and list); saving from the library is the guide rows' test above.
+  test('WD31 WD32 WD33 the Saved hub counts a kept guide, its list opens the guide, and the bookmark takes it off the list', async ({ page }) => {
+    const contributor = await createContributor()
+    await acceptTerms(contributor.id)
+    const title = uniqueTitle('Kept for later')
+    const otherTitle = uniqueTitle('Kept too')
+    const [kept, other] = [
+      await createTutorial(contributor.id, { title, status: 'approved' }),
+      await createTutorial(contributor.id, { title: otherTitle, status: 'approved' }),
+    ]
+    await adminClient()
+      .from('saves')
+      .insert([kept, other].map((id) => ({ profile_id: contributor.id, entity_type: 'tutorial', entity_id: id })))
+
+    try {
+      await signIn(page, contributor.email, contributor.password)
+      await page.goto('/dashboard/saved')
+      const card = page.getByRole('main').getByRole('link', { name: /^2\s*Tutorials/ })
+      await expect(card).toHaveAttribute('href', '/dashboard/saved/tutorials')
+      await card.click()
+      await expect(page).toHaveURL('/dashboard/saved/tutorials')
+
+      await page.locator('.save-host', { hasText: title }).getByRole('link').first().click()
+      await expect(page).toHaveURL(`/tutorials/${kept}`)
+
+      await page.goto('/dashboard/saved/tutorials')
+      await page.locator('.save-host', { hasText: title }).getByRole('button', { name: 'Saved' }).click()
+      await expect(page.getByText(title)).toHaveCount(0)
+      await expect(page.getByText(otherTitle)).toBeVisible()
+      await page.reload()
+      await expect(page.getByText(title)).toHaveCount(0)
+      const { data } = await adminClient().from('saves').select('entity_id').eq('profile_id', contributor.id)
+      expect(data).toEqual([{ entity_id: other }])
+
+      await page.goto('/dashboard/saved')
+      await expect(page.getByRole('main').getByRole('link', { name: /^1\s*Tutorials/ })).toBeVisible()
     } finally {
       await deleteUser(contributor.id)
     }

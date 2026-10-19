@@ -23,7 +23,7 @@ vi.mock('next/link', () => ({
   ),
 }))
 vi.mock('@/components/mark-notifications-read', () => ({
-  MarkNotificationsRead: () => null,
+  MarkNotificationsRead: ({ bucket }: { bucket: string }) => <span data-testid="mark-read">{bucket}</span>,
 }))
 vi.mock('@/components/idea-author-actions', () => ({
   IdeaAuthorActions: ({ status }: { status: string }) => <span>actions:{status}</span>,
@@ -148,7 +148,7 @@ describe('DashboardChallengesPage', () => {
     expect(link).toHaveTextContent('Open the thread')
   })
 
-  it('filters by ?stage and counts each option', async () => {
+  it('WD23 filters by ?stage and counts each option', async () => {
     mockLists({
       mine: [idea({ id: 'a', status: 'pending' }), idea({ id: 'b', title: 'Kazoo', status: 'rejected' })],
       joined: [idea({ id: 'c', title: 'Jar opener', status: 'challenge' })],
@@ -167,7 +167,7 @@ describe('DashboardChallengesPage', () => {
    * only route to the idea form from inside the account area — and it has to
    * survive having ideas already, which the empty-state button does not.
    */
-  it('offers the idea form even when ideas already exist', async () => {
+  it('WD25 offers the idea form even when ideas already exist', async () => {
     mockLists({ mine: [idea({ status: 'pending' })] })
     render(await DashboardChallengesPage())
     expect(screen.getAllByRole('link', { name: /submit an idea/i })[0]).toHaveAttribute(
@@ -176,10 +176,23 @@ describe('DashboardChallengesPage', () => {
     )
   })
 
-  it('puts the author’s actions on their own pending and rejected ideas', async () => {
+  it('WD24 puts the author’s actions on their own pending and rejected ideas', async () => {
     mockLists({ mine: [idea({ id: 'a', status: 'pending' }), idea({ id: 'b', title: 'Kazoo', status: 'rejected' })] })
     render(await DashboardChallengesPage())
     expect(screen.getByText('actions:pending')).toBeInTheDocument()
     expect(screen.getByText('actions:rejected')).toBeInTheDocument()
+  })
+
+  it('WD22 clears the challenges notifications when the page opens', async () => {
+    mockLists({ mine: [idea()] })
+    render(await DashboardChallengesPage())
+    expect(screen.getByTestId('mark-read')).toHaveTextContent('challenges')
+  })
+
+  it('WD25 links to the design challenges, the saved challenges and the idea form', async () => {
+    mockLists({ mine: [idea()] })
+    render(await DashboardChallengesPage())
+    expect(screen.getByRole('link', { name: 'Saved challenges' })).toHaveAttribute('href', '/dashboard/saved/challenges')
+    expect(screen.getByRole('link', { name: 'Browse challenges' })).toHaveAttribute('href', '/get-involved/design-challenges')
   })
 })

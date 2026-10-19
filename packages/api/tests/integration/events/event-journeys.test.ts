@@ -110,7 +110,7 @@ describe('the event detail, registering and cancelling', () => {
     await admin.from('org_events').update({ cancelled_at: null }).eq('id', freeEventId)
   })
 
-  it('V11 registers with empty answers, raises the going count and lists it under My events', async () => {
+  it('V11 WD27 registers with empty answers, raises the going count and lists it under My events', async () => {
     const res = await app.request(`/api/events/${freeEventId}/registrations`, send(family.token, 'POST', { name: 'Priya Nair', email: 'priya@example.com', answers: {} }))
     expect(res.status).toBe(201)
     expect(await res.json()).toMatchObject({ event_id: freeEventId, user_id: family.id, name: 'Priya Nair', email: 'priya@example.com', answers: {}, cancelled_at: null })
@@ -118,7 +118,7 @@ describe('the event detail, registering and cancelling', () => {
     expect(await mine(family.token)).toContain(freeEventId)
   })
 
-  it('V13 cancelling stamps cancelled_at, drops the going count and leaves My events', async () => {
+  it('V13 WD26 cancelling stamps cancelled_at, drops the going count and leaves My events', async () => {
     const res = await app.request(`/api/events/${freeEventId}/registrations`, { method: 'DELETE', ...authed(family.token) })
     expect(res.status).toBe(200)
     const { data } = await adminClient().from('org_event_registrations').select('cancelled_at').eq('event_id', freeEventId).eq('user_id', family.id).single()

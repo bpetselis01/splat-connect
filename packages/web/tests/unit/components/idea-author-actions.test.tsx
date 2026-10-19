@@ -10,7 +10,7 @@ vi.mock('@/components/toast', () => ({ useToast: () => toast }))
 vi.mock('@/lib/browser-api-client', () => ({ browserApiClient: { delete: vi.fn() } }))
 
 describe('IdeaAuthorActions', () => {
-  it('withdraws a pending idea and says nothing was published', async () => {
+  it('WD24 withdraws a pending idea and says nothing was published', async () => {
     vi.mocked(browserApiClient.delete).mockResolvedValue(undefined)
     render(<IdeaAuthorActions id="i1" status="pending" />)
     fireEvent.click(screen.getByRole('button', { name: 'Withdraw the idea' }))
@@ -19,7 +19,7 @@ describe('IdeaAuthorActions', () => {
     expect(refresh).toHaveBeenCalled()
   })
 
-  it('says so when the withdraw fails', async () => {
+  it('WD24 says so when the withdraw fails', async () => {
     vi.mocked(browserApiClient.delete).mockRejectedValue(new Error('409'))
     render(<IdeaAuthorActions id="i1" status="pending" />)
     fireEvent.click(screen.getByRole('button', { name: 'Withdraw the idea' }))

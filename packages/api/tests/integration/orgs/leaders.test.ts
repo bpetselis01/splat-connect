@@ -75,7 +75,7 @@ describe('organisation leaders', () => {
     expect(list.invites.map((i) => i.email)).toEqual([colleague.email])
   })
 
-  it('L31 lets only the invitee accept', async () => {
+  it('L31 WD08 lets only the invitee accept', async () => {
     const mine = (await (await app.request('/api/organizations/invites/mine', req(colleague.token, 'GET'))).json()) as { id: string }[]
     expect(mine).toHaveLength(1)
     expect((await app.request(`/api/organizations/invites/${mine[0]!.id}/accept`, req(outsider.token, 'POST'))).status).toBe(404)

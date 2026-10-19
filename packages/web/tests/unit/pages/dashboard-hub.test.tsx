@@ -45,6 +45,7 @@ const money = vi.hoisted(() => ({
 const meCounts = vi.hoisted(() => ({
   current: { tutorials: 0, challenges: 0, makers: 4, printRequests: 0, printJobs: 0, review: 0, intake: 0, orgOrders: 0 },
 }))
+const builds = vi.hoisted(() => ({ current: { builds: 0 } }))
 vi.mock('@/lib/api-client', () => ({
   // Every other fetch is a list the hub counts badges from; empty by default.
   apiClient: {
@@ -53,7 +54,9 @@ vi.mock('@/lib/api-client', () => ({
         ? money.current
         : path === '/api/me/counts'
           ? meCounts.current
-          : [],
+          : path === '/api/me/builds'
+            ? builds.current
+            : [],
   },
 }))
 // Real redirect() throws a special digest error rather than returning; the
@@ -83,6 +86,8 @@ describe('DashboardHub', () => {
   beforeEach(() => {
     caps.current = baseCaps
     pathname.current = '/dashboard'
+    meCounts.current = { ...meCounts.current, review: 0 }
+    builds.current = { builds: 0 }
     vi.clearAllMocks()
   })
 
@@ -105,7 +110,7 @@ describe('DashboardHub', () => {
   // Chain: crossesAccountBoundary('/dashboard', '/dashboard/tutorials') went
   //        false when the rail was retired, so BoundaryLink resolves these
   //        tiles to next/link again
-  it('renders an account-internal tile as a soft link', async () => {
+  it('WD01 renders an account-internal tile as a soft link', async () => {
     const ui = await DashboardHub()
     render(ui)
     const tutorials = screen.getByRole('link', { name: /My tutorials/ })
@@ -148,7 +153,7 @@ describe('DashboardHub', () => {
    * only "3 waiting on you" and lost its description exactly when it mattered
    * most. The count moved to a badge so both survive.
    */
-  it('badges the unread count without eating the description', async () => {
+  it('WD01 badges the unread count without eating the description', async () => {
     caps.current = {
       ...baseCaps,
       unread: { tutorials: 2, exchanges: 3, challenges: 0, organisations: 0, total: 5 },
@@ -263,7 +268,7 @@ describe('DashboardHub', () => {
     expect(screen.queryByText(/Money you have agreed to/i)).not.toBeInTheDocument()
   })
 
-  it('totals what is outstanding and counts exchanges, not lines', async () => {
+  it('WD04 totals what is outstanding and counts exchanges, not lines', async () => {
     caps.current = baseCaps
     money.current = {
       lines: [
@@ -331,5 +336,50 @@ describe('DashboardHub', () => {
   it('badges Build for a family from the counts call', async () => {
     render(await DashboardHub())
     expect(screen.getByRole('link', { name: /Build for a family/ })).toHaveTextContent('4')
+  })
+
+  it('WD02 offers "4 exchanges need you" as a link to My exchanges, and nothing when none wait', async () => {
+    caps.current = { ...baseCaps, exchangeActions: 4 }
+    const { unmount } = render(await DashboardHub())
+    expect(screen.getByRole('link', { name: '4 exchanges need you' })).toHaveAttribute('href', '/dashboard/exchanges')
+    expect(screen.getByText(/Four things are waiting\./)).toBeInTheDocument()
+    unmount()
+
+    caps.current = baseCaps
+    render(await DashboardHub())
+    expect(screen.queryByRole('link', { name: /need you|needs you/ })).toBeNull()
+  })
+
+  it('WD03 offers "2 guides to review" as a link to the organisation queue, and nothing at zero', async () => {
+    meCounts.current = { ...meCounts.current, review: 2 }
+    const { unmount } = render(await DashboardHub())
+    expect(screen.getByRole('link', { name: '2 guides to review' })).toHaveAttribute('href', '/dashboard/organisation')
+    unmount()
+
+    meCounts.current = { ...meCounts.current, review: 0 }
+    render(await DashboardHub())
+    expect(screen.queryByRole('link', { name: /to review/ })).toBeNull()
+  })
+
+  it('WD05 says how many builds are logged, and says nothing at zero', async () => {
+    builds.current = { builds: 3 }
+    const { unmount } = render(await DashboardHub())
+    expect(screen.getByText('3 builds logged')).toBeInTheDocument()
+    unmount()
+
+    builds.current = { builds: 0 }
+    render(await DashboardHub())
+    expect(screen.queryByText(/builds logged/)).toBeNull()
+  })
+
+  it('WD06 shows the Admin card, linked to /admin, to an admin only', async () => {
+    caps.current = { ...baseCaps, isAdmin: true }
+    const { unmount } = render(await DashboardHub())
+    expect(screen.getByRole('link', { name: /Admin/ })).toHaveAttribute('href', '/admin')
+    unmount()
+
+    caps.current = baseCaps
+    render(await DashboardHub())
+    expect(screen.queryByRole('link', { name: /^Admin/ })).toBeNull()
   })
 })
