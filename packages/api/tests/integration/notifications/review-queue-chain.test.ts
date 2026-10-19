@@ -64,7 +64,7 @@ afterAll(async () => {
 })
 
 describe('asking an organisation to back a guide (T18)', () => {
-  it('T18 WT31 tells its leader once, naming the guide and the author; asking again tells nobody', async () => {
+  it('T18 WT31 tells its leader once, naming the guide and the author; asking again tells nobody (backing_requested)', async () => {
     const id = await project('draft', false)
     const ask = () => app.request(`/api/tutorials/${id}/orgs`, authed(author.token, { method: 'POST', body: JSON.stringify({ org_id: orgId }) }))
     expect((await ask()).status).toBe(201)
@@ -78,7 +78,7 @@ describe('asking an organisation to back a guide (T18)', () => {
 })
 
 describe('handing a guide over for review (T05, T22)', () => {
-  it('T05 WT32 a backed guide tells the backing organisation’s leader, not the admins', async () => {
+  it('T05 WT32 a backed guide tells the backing organisation’s leader, not the admins (tutorial_submitted)', async () => {
     const id = await project('draft', true)
     expect((await submit(id)).status).toBe(200)
     expect(await notesFor(leader.id, id, 'tutorial_submitted')).toEqual([

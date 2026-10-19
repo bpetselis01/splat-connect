@@ -53,7 +53,7 @@ afterAll(async () => {
 })
 
 describe('111 build request questions', () => {
-  it('K03 WX24 lets a maker ask, tells the family, and the family answer in that thread', async () => {
+  it('K03 WX24 lets a maker ask, tells the family, and the family answer in that thread (build_question)', async () => {
     expect((await ask(makerA, { body: 'Which switch do you have?' })).status).toBe(201)
     const { data: told } = await adminClient().from('notifications').select('type').eq('recipient_id', family.id).eq('toy_transaction_id', txId)
     expect(told).toEqual([{ type: 'build_question' }])

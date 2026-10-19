@@ -125,7 +125,7 @@ describe('declining (K07)', () => {
 })
 
 describe('the working shot and the handover (K08, K09, K13)', () => {
-  it('K08 K09 K13 WX20 WX21 WX15 the maker’s shot tells the family; the family’s approval tells the maker; messages go both ways', async () => {
+  it('K08 K09 K13 WX20 WX21 WX15 the maker’s shot tells the family; the family’s approval tells the maker; messages go both ways (build_shot_posted, build_approved)', async () => {
     const id = await postOpen()
     await post(`/${id}/claim`, maker.token)
 

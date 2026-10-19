@@ -36,7 +36,7 @@ afterAll(async () => {
 describe('093 tutorial_notes', () => {
   let noteId: string
 
-  it('B04 G23 takes a note against a step, notifies the authors and leaves the guide’s token alone', async () => {
+  it('B04 G23 takes a note against a step, notifies the authors and leaves the guide’s token alone (tutorial_noted)', async () => {
     const before = await stamp()
     const res = await send('POST', `/api/tutorials/${guide}/notes`, parent.token, { step_position: 2, body: 'Step 2 needs a second zip tie.' })
     expect(res.status).toBe(201)

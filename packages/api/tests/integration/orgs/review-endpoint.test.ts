@@ -203,7 +203,7 @@ describe('POST /api/tutorials/:id/review notifies the contributors (S1)', () => 
     return { project, rows: data ?? [] }
   }
 
-  it('L06 WB06 approving tells the author, naming the guide and the organisation', async () => {
+  it('L06 WB06 approving tells the author, naming the guide and the organisation (tutorial_approved)', async () => {
     const { project, rows } = await reviewed('approved')
     expect(rows).toEqual([
       { recipient_id: author.id, type: 'tutorial_approved', tutorial_id: project,
@@ -211,7 +211,7 @@ describe('POST /api/tutorials/:id/review notifies the contributors (S1)', () => 
     ])
   })
 
-  it("L07 WB07 rejecting tells the author, with the leader's reason as the body", async () => {
+  it("L07 WB07 rejecting tells the author, with the leader's reason as the body (tutorial_rejected)", async () => {
     const { rows } = await reviewed('rejected', 'Step 4 is unsafe as written')
     expect(rows).toHaveLength(1)
     expect(rows[0]).toMatchObject({

@@ -33,7 +33,7 @@ describe('guide thanks against the real database', () => {
     expect(await res.json()).toEqual({ thanked: false, own: false })
   })
 
-  it('G09 WT09 records a thank, bumps the count, and notifies every credited contributor anonymously', async () => {
+  it('G09 WT09 records a thank, bumps the count, and notifies every credited contributor anonymously (tutorial_thanked)', async () => {
     const res = await call('POST', thanks(guide), family.token)
     expect(res.status).toBe(201)
     expect(await res.json()).toEqual({ thanks_count: 1 })

@@ -84,7 +84,7 @@ describe('117 profile thanks', () => {
     expect(data!.transaction_id).toBe(orgTxId)
   })
 
-  it('R11 S02 takes one thanks per person, tied to the build, and tells the maker on the build', async () => {
+  it('R11 S02 takes one thanks per person, tied to the build, and tells the maker on the build (profile_thanked)', async () => {
     const res = await post(family.token, maker.id, { note: 'Leo loves it.', byline: 'Sam', transaction_id: txId })
     expect(res.status).toBe(201)
     expect(((await res.json()) as { thanks_count: number }).thanks_count).toBe(1)

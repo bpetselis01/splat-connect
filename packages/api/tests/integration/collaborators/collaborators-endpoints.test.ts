@@ -29,7 +29,7 @@ function authed(token: string, init: RequestInit = {}) {
 }
 
 describe('POST /api/tutorials/:id/collaborators/invite', () => {
-  it('T23 WT30 the primary contributor can invite by email, leaving a pending invite and telling the invitee', async () => {
+  it('T23 WT30 the primary contributor can invite by email, leaving a pending invite and telling the invitee (collaborator_invited)', async () => {
     const res = await app.request(
       `/api/tutorials/${tutorialId}/collaborators/invite`,
       authed(primary.token, { method: 'POST', body: JSON.stringify({ email: invitee.email }) })
@@ -66,7 +66,7 @@ describe('DELETE /api/tutorials/:id/collaborators/:profileId', () => {
     await adminClient().from('tutorial_contributors').insert({ tutorial_id: tutorialId, profile_id: invitee.id, role: 'collaborator' })
   })
 
-  it('T24 WT30 the primary can remove a collaborator, who loses the seat and gets notified', async () => {
+  it('T24 WT30 the primary can remove a collaborator, who loses the seat and gets notified (collaborator_removed)', async () => {
     const res = await app.request(`/api/tutorials/${tutorialId}/collaborators/${invitee.id}`, authed(primary.token, { method: 'DELETE' }))
     expect(res.status).toBe(204)
     const seat = await adminClient().from('tutorial_contributors').select('profile_id').eq('tutorial_id', tutorialId).eq('profile_id', invitee.id)
@@ -78,7 +78,7 @@ describe('DELETE /api/tutorials/:id/collaborators/:profileId', () => {
     expect(notif.data?.[0]?.tutorial_title).toBe('Backing Fixture')
   })
 
-  it('T24 WT30 a collaborator can remove themself, and the primary gets notified', async () => {
+  it('T24 WT30 a collaborator can remove themself, and the primary gets notified (collaborator_left)', async () => {
     const res = await app.request(`/api/tutorials/${tutorialId}/collaborators/${invitee.id}`, authed(invitee.token, { method: 'DELETE' }))
     expect(res.status).toBe(204)
     const seat = await adminClient().from('tutorial_contributors').select('profile_id').eq('tutorial_id', tutorialId).eq('profile_id', invitee.id)
