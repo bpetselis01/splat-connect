@@ -12,6 +12,7 @@ import { singleRowStatus } from '../single-row.js'
 import { randomUUID } from 'node:crypto'
 import { Hono, type Context } from 'hono'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
+import { chunk } from '../chunk.js'
 import { ledOrgIds } from '../toy-access.js'
 import { profileName } from '../profile-name.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
@@ -66,17 +67,17 @@ export const ORG_COLUMNS =
 const ORG_EXTRA_COLUMNS =
   'id, kind, logo_url, cover_url, verified_at, visit_hours, service_area, payment_methods, org_thanks_count, org_follower_count'
 
-async function withExtras<T extends { id: string }>(rows: T[]): Promise<T[]> {
-  if (!rows.length) return rows
-  const { data } = await createAdminClient()
-    .from('organizations')
-    .select(ORG_EXTRA_COLUMNS)
-    .in(
-      'id',
-      rows.map((r) => r.id)
-    )
-  const byId = new Map((data ?? []).map((r) => [r.id as string, r]))
-  return rows.map((r) => ({ ...r, ...byId.get(r.id) }))
+async function withExtras<T extends { id: string }>(
+  rows: T[]
+): Promise<{ rows: T[]; error?: string }> {
+  const admin = createAdminClient()
+  const byId = new Map<string, object>()
+  for (const ids of chunk(rows.map((r) => r.id))) {
+    const { data, error } = await admin.from('organizations').select(ORG_EXTRA_COLUMNS).in('id', ids)
+    if (error) return { rows, error: error.message }
+    for (const r of data ?? []) byId.set(r.id as string, r)
+  }
+  return { rows: rows.map((r) => ({ ...r, ...byId.get(r.id) })) }
 }
 
 organizations.get('/', async (c) => {
@@ -89,7 +90,9 @@ organizations.get('/', async (c) => {
     .select(`${ORG_COLUMNS}, org_leaders(user_id, created_at)`)
     .order('name', { ascending: true })
   if (error) return c.json({ error: error.message }, 500)
-  return c.json(await withExtras(data ?? []))
+  const extras = await withExtras(data ?? [])
+  if (extras.error) return c.json({ error: extras.error }, 500)
+  return c.json(extras.rows)
 })
 
 // Declared before '/:id' so 'mine' is not swallowed as an id.
@@ -467,7 +470,9 @@ organizations.patch('/:id/profile', async (c) => {
   }
   if (error) return c.json({ error: error.message }, 500)
   if (!data) return c.json({ error: 'Not found' }, 404)
-  return c.json((await withExtras([data]))[0])
+  const extras = await withExtras([data])
+  if (extras.error) return c.json({ error: extras.error }, 500)
+  return c.json(extras.rows[0])
 })
 
 /* --------------------------------- doors and rate lines, replaced wholesale --
@@ -1917,7 +1922,9 @@ organizations.get('/:id', async (c) => {
     .order('position', { referencedTable: 'org_rate_lines' })
     .single()
   if (error) return c.json({ error: error.message }, singleRowStatus(error))
-  return c.json((await withExtras([data]))[0])
+  const extras = await withExtras([data])
+  if (extras.error) return c.json({ error: extras.error }, 500)
+  return c.json(extras.rows[0])
 })
 
 export default organizations
