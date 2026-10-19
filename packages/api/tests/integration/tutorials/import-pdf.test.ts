@@ -55,7 +55,7 @@ const inProcess: PdfDraftApi = Object.fromEntries(
 ) as unknown as PdfDraftApi
 
 describe('POST /api/tutorials/import-pdf', () => {
-  it('N02 answers with the draft read from the PDF, and creates no tutorial', async () => {
+  it('N02 WT16 answers with the draft read from the PDF, and creates no tutorial', async () => {
     const admin = adminClient()
     const { count: before } = await admin.from('tutorials').select('id', { count: 'exact', head: true })
 
@@ -105,7 +105,7 @@ describe('POST /api/tutorials/import-pdf', () => {
     expect((await post(new File([mid], 'mid.pdf', { type: 'application/pdf' }))).status).toBe(422)
   })
 
-  it('N02 turns into a real draft through the ordinary routes: PDF stored once, parts, tools and steps saved', async () => {
+  it('N02 WT16 turns into a real draft through the ordinary routes: PDF stored once, parts, tools and steps saved', async () => {
     const read = await post(new File([fixture], 'guide.pdf', { type: 'application/pdf' }))
     const draft = (await read.json()) as PdfImportDraft
     const id = crypto.randomUUID()

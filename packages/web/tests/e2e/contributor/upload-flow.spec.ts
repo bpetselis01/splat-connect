@@ -12,8 +12,9 @@ import { signIn, createContributor, uniqueTitle, adminClient, acceptTerms } from
 
 const PDF_FIXTURE = path.join(__dirname, '..', 'fixtures', 'test.pdf')
 const PHOTO_FIXTURE = path.join(__dirname, '..', 'fixtures', 'test.jpg')
+const IMPORT_FIXTURE = path.join(__dirname, '..', '..', '..', '..', 'api', 'tests', 'fixtures', 'pdf-import', 'Low_Profile_Switch_Assembly_Guide_v1.0.pdf')
 
-test('creating a tutorial hands straight over to the editor', async ({ page }) => {
+test('WT14 creating a tutorial hands straight over to the editor', async ({ page }) => {
   const contributor = await createContributor()
   await acceptTerms(contributor.id)
   await signIn(page, contributor.email, contributor.password)
@@ -38,7 +39,7 @@ test('creating a tutorial hands straight over to the editor', async ({ page }) =
   expect(data?.kind).toBe('toy_adaptation')
 })
 
-test('the kind is chosen on the form, and ?kind preselects it', async ({ page }) => {
+test('WT13 the start and kind cards are chosen on the form, and ?kind preselects the kind', async ({ page }) => {
   const contributor = await createContributor()
   await acceptTerms(contributor.id)
   await signIn(page, contributor.email, contributor.password)
@@ -48,9 +49,17 @@ test('the kind is chosen on the form, and ?kind preselects it', async ({ page })
   await expect(page.getByRole('radio', { name: /Assistive tech/ })).toHaveAttribute('aria-checked', 'true')
   await page.getByRole('radio', { name: /Toy adaptation/ }).click()
   await expect(page.getByRole('radio', { name: /Toy adaptation/ })).toHaveAttribute('aria-checked', 'true')
+
+  await expect(page.getByRole('radio', { name: /Start blank/ })).toHaveAttribute('aria-checked', 'true')
+  await page.getByRole('radio', { name: /Start from a PDF/ }).click()
+  await expect(page.getByLabel('Your guide as a PDF')).toBeAttached()
+  await expect(page.getByLabel('Title')).toHaveCount(0)
 })
 
-test('a contributor without accepted terms never reaches the page', async ({ page }) => {
+test('WT17 a signed-out visitor is sent to log in, and a contributor without accepted terms never reaches the page', async ({ page }) => {
+  await page.goto('/upload')
+  await expect(page).toHaveURL(/\/login$/)
+
   const contributor = await createContributor()
   // Deliberately no acceptTerms. The page carries no gate of its own because
   // middleware turns this away first, and POST /api/tutorials refuses too.
@@ -135,4 +144,50 @@ test('a contributor builds a tutorial from creation through to pending', async (
   await expect(card).toBeVisible()
   // The board's stage word for pending (ac7791e2).
   await expect(card.getByText('Waiting', { exact: true })).toBeVisible()
+})
+
+test('WT15 a cover chosen on the form becomes the first photo on the editor\'s Files step', async ({ page }) => {
+  const contributor = await createContributor()
+  await acceptTerms(contributor.id)
+  await signIn(page, contributor.email, contributor.password)
+  await page.waitForURL('**/dashboard')
+
+  const title = uniqueTitle('E2E Create Cover')
+  await page.goto('/upload?kind=toy_adaptation')
+  await page.getByLabel('Title').fill(title)
+  await page.getByLabel('Cover photo').setInputFiles(PHOTO_FIXTURE)
+  await page.getByRole('button', { name: /Create draft/ }).click()
+  await page.waitForURL(/\/tutorials\/[0-9a-f-]{36}\/edit\?step=files$/)
+
+  await expect(page.getByText('Cover', { exact: true })).toBeVisible({ timeout: 30_000 })
+  const { data } = await adminClient().from('tutorials').select('photo_urls').eq('title', title).single()
+  expect(data?.photo_urls).toEqual([expect.stringContaining('/toy-photos/')])
+})
+
+test('WT16 a PDF is read into a draft the contributor reviews, then becomes a guide with its PDF, parts and steps', async ({ page }) => {
+  const contributor = await createContributor()
+  await acceptTerms(contributor.id)
+  await signIn(page, contributor.email, contributor.password)
+  await page.waitForURL('**/dashboard')
+
+  await page.goto('/upload')
+  await page.getByRole('radio', { name: /Start from a PDF/ }).click()
+  await page.getByLabel('Your guide as a PDF').setInputFiles(IMPORT_FIXTURE)
+
+  // Reviewed before anything is saved.
+  await expect(page.getByLabel('Title')).toHaveValue('Low Profile Switch', { timeout: 30_000 })
+  await expect(page.getByRole('list', { name: 'What was found' })).toContainText('part')
+  const before = await adminClient().from('tutorials').select('id').eq('title', 'Low Profile Switch')
+  const ids = new Set((before.data ?? []).map((r) => r.id))
+
+  const title = uniqueTitle('E2E Imported')
+  await page.getByLabel('Title').fill(title)
+  await page.getByRole('button', { name: /Create draft/ }).click()
+  await page.waitForURL(/\/tutorials\/[0-9a-f-]{36}\/edit/, { timeout: 60_000 })
+
+  const { data } = await adminClient().from('tutorials').select('id, status, tutorial_pdf_url').eq('title', title).single()
+  expect(data).toMatchObject({ status: 'draft', tutorial_pdf_url: expect.stringMatching(/\/tutorial\.pdf$/) })
+  expect(ids.has(data!.id)).toBe(false)
+  const { data: steps } = await adminClient().from('tutorial_steps').select('id').eq('tutorial_id', data!.id)
+  expect(steps!.length).toBeGreaterThan(0)
 })
