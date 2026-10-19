@@ -219,7 +219,7 @@ describe('recycling intake', () => {
     expect(stale.status).toBe(409)
   })
 
-  it('V05 books one in', async () => {
+  it('V05 WI37 books one in', async () => {
     const res = await app.request(
       `/api/organizations/${orgId}/recycling`,
       json(contributor.token, 'POST', {
