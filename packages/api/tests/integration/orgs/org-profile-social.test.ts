@@ -1,4 +1,3 @@
-// journeys: L23 L24 L28 L29 P02 P03 P04 P07 P10
 /**
  * The board's organisation profile (076) and its three buttons (077).
  *
@@ -64,7 +63,7 @@ afterAll(async () => {
 })
 
 describe('the profile, doors and breakdown', () => {
-  it('lets a leader write the 076 fields and shows them publicly', async () => {
+  it('L23 lets a leader write the 076 fields and shows them publicly', async () => {
     const res = await app.request(
       `/api/organizations/${orgId}/profile`,
       json(leader.token, 'PATCH', {
@@ -136,7 +135,7 @@ describe('the profile, doors and breakdown', () => {
     expect(after!.verified_at).not.toBeNull()
   })
 
-  it('replaces doors and rate lines for a leader only, at most six doors', async () => {
+  it('L23 replaces doors and rate lines for a leader only, at most six doors', async () => {
     const doors = [
       { title: 'Borrow a toy', body: 'From the shelf.', target: 'toy_library' },
       { title: 'Have a part printed', target: 'print' },
@@ -188,7 +187,7 @@ describe('the profile, doors and breakdown', () => {
 })
 
 describe('say thanks', () => {
-  it('takes one thanks per person, and tells the leaders', async () => {
+  it('P04 takes one thanks per person, and tells the leaders', async () => {
     const first = await app.request(
       `/api/organizations/${orgId}/thanks`,
       json(family.token, 'POST', { note: 'The switch clinic changed our Thursdays.', byline: 'Sam', show_note: true })
@@ -217,7 +216,7 @@ describe('say thanks', () => {
     expect(raw).not.toContain('Private word')
   })
 
-  it('lets a leader hide a note, and nobody else', async () => {
+  it('L24 lets a leader hide a note, and nobody else', async () => {
     const byOther = await app.request(
       `/api/organizations/${orgId}/thanks/${family.id}`,
       json(stranger.token, 'PATCH', { hidden: true })
@@ -243,7 +242,7 @@ describe('say thanks', () => {
 describe('message', () => {
   let conversationId: string
 
-  it('opens one conversation per person and tells every leader', async () => {
+  it('P10 opens one conversation per person and tells every leader', async () => {
     const first = await app.request(
       `/api/organizations/${orgId}/conversations/mine/messages`,
       json(family.token, 'POST', { body: 'Can we come on Thursday?' })
@@ -261,7 +260,7 @@ describe('message', () => {
     expect(notes[0].org_conversation_id).toBe(conversationId)
   })
 
-  it('lets the leader read and reply, and tells the family', async () => {
+  it('L28 L29 lets the leader read and reply, and tells the family', async () => {
     const list = await app.request(`/api/organizations/${orgId}/conversations`, get(leader.token))
     const rows = (await list.json()) as Array<{ id: string; last_message: { body: string } }>
     expect(rows[0].id).toBe(conversationId)
@@ -293,7 +292,7 @@ describe('message', () => {
 })
 
 describe('follow', () => {
-  it('tells followers once when the org publishes an event or a story', async () => {
+  it('P02 tells followers once when the org publishes an event or a story', async () => {
     expect((await app.request(`/api/organizations/${orgId}/follow`, json(family.token, 'POST'))).status).toBe(200)
     const me = (await (await app.request(`/api/organizations/${orgId}/me`, get(family.token))).json()) as {
       following: boolean

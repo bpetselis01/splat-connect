@@ -1,4 +1,3 @@
-// journeys: L06 L07
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -53,7 +52,7 @@ afterAll(async () => {
 })
 
 describe('POST /api/tutorials/:id/review', () => {
-  it('approves and writes the whole audit trail', async () => {
+  it('L06 approves and writes the whole audit trail', async () => {
     const res = await app.request(`/api/tutorials/${single}/review`, authed(leader.token, {
       method: 'POST',
       body: JSON.stringify({ status: 'approved' }),
@@ -111,7 +110,7 @@ describe('POST /api/tutorials/:id/review', () => {
     expect(res.status).toBe(400)
   })
 
-  it('rejects with a note', async () => {
+  it('L07 rejects with a note', async () => {
     const res = await app.request(`/api/tutorials/${single}/review`, authed(leader.token, {
       method: 'POST',
       body: JSON.stringify({ status: 'rejected', rejection_note: 'Step 4 is unsafe as written' }),
@@ -204,7 +203,7 @@ describe('POST /api/tutorials/:id/review notifies the contributors (S1)', () => 
     return { project, rows: data ?? [] }
   }
 
-  it('approving tells the author, naming the guide and the organisation', async () => {
+  it('L06 approving tells the author, naming the guide and the organisation', async () => {
     const { project, rows } = await reviewed('approved')
     expect(rows).toEqual([
       { recipient_id: author.id, type: 'tutorial_approved', tutorial_id: project,
@@ -212,7 +211,7 @@ describe('POST /api/tutorials/:id/review notifies the contributors (S1)', () => 
     ])
   })
 
-  it("rejecting tells the author, with the leader's reason as the body", async () => {
+  it("L07 rejecting tells the author, with the leader's reason as the body", async () => {
     const { rows } = await reviewed('rejected', 'Step 4 is unsafe as written')
     expect(rows).toHaveLength(1)
     expect(rows[0]).toMatchObject({

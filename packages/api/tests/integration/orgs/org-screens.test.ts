@@ -1,4 +1,3 @@
-// journeys: V04 V05 V06
 /**
  * The organisation's own screens (059) and the queue that creates one (060).
  *
@@ -220,7 +219,7 @@ describe('recycling intake', () => {
     expect(stale.status).toBe(409)
   })
 
-  it('books one in', async () => {
+  it('V05 books one in', async () => {
     const res = await app.request(
       `/api/organizations/${orgId}/recycling`,
       json(contributor.token, 'POST', {
@@ -297,7 +296,7 @@ describe('recycling intake', () => {
     expect(asContributor[0].contributor_name).toBeUndefined()
   })
 
-  it("lists a contributor's own drop-offs across organisations, and cancels one still booked", async () => {
+  it("V04 V06 lists a contributor's own drop-offs across organisations, and cancels one still booked", async () => {
     const booked = (await (
       await app.request(
         `/api/organizations/${orgId}/recycling`,

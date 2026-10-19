@@ -1,4 +1,3 @@
-// journeys: A14 N05
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -25,7 +24,7 @@ afterAll(async () => {
 })
 
 describe('POST /api/agreements', () => {
-  it('records an acceptance at the server-chosen version', async () => {
+  it('N05 records an acceptance at the server-chosen version', async () => {
     const res = await app.request('/api/agreements', authed(user.token, {
       method: 'POST',
       body: JSON.stringify({ agreement_type: 'contributor_terms', version: 'v99-forged' }),
@@ -48,7 +47,7 @@ describe('POST /api/agreements', () => {
 })
 
 describe('GET /api/agreements/me', () => {
-  it("returns only the caller's acceptances", async () => {
+  it("A14 returns only the caller's acceptances", async () => {
     const mine = await app.request('/api/agreements/me', authed(user.token))
     expect(((await mine.json()) as unknown[]).length).toBe(1)
 
