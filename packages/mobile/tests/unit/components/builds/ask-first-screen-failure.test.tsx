@@ -1,5 +1,4 @@
 // A failed questions load says so, retries on Try again, and never hits console.error.
-// journeys: K04
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { AskFirstScreen } from '../../../../components/builds/ask-first-screen'
 

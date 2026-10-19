@@ -1,5 +1,4 @@
 // The build thread when its first read fails: says so, Try again re-reads, nothing hits console.error.
-// journeys: K06 K07 K08 K09 K10 K11 K12 K13
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { BuildThreadScreen } from '../../../../components/builds/build-thread-screen'
 
