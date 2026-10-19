@@ -1,4 +1,3 @@
-// journeys: S02
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { ThanksNotesScreen } from '../../../../components/me/thanks-notes-screen'
 

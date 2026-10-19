@@ -1,4 +1,3 @@
-// journeys: Q18 Q19
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { AdminReviewQueueScreen } from '../../../../components/admin/admin-review-queue-screen'
 import { ReviewDetailScreen } from '../../../../components/organisation/review-detail-screen'
@@ -42,7 +41,7 @@ beforeEach(() => {
 })
 
 describe('AdminReviewQueueScreen', () => {
-  it('lists pending guides and opens one on /admin/review/:id', async () => {
+  it('Q18 lists pending guides and opens one on /admin/review/:id', async () => {
     mockGet.mockResolvedValue([
       { ...detail, tutorial_orgs: [{ status: 'accepted', organizations: { id: 'o1', name: 'Riverside' } }] },
     ])
@@ -67,7 +66,7 @@ describe('AdminReviewQueueScreen', () => {
 })
 
 describe('ReviewDetailScreen in admin mode', () => {
-  it('approve PATCHes the admin status route with approved', async () => {
+  it('Q19 approve PATCHes the admin status route with approved', async () => {
     render(<ReviewDetailScreen tutorialId="t1" admin />)
     fireEvent.press(await screen.findByRole('button', { name: 'Approve' }))
     await waitFor(() =>
@@ -77,7 +76,7 @@ describe('ReviewDetailScreen in admin mode', () => {
     expect(mockGet).not.toHaveBeenCalledWith('/api/tutorials/t1/orgs')
   })
 
-  it('blocks Request changes without a note, then sends rejected with it', async () => {
+  it('Q19 blocks Request changes without a note, then sends rejected with it', async () => {
     render(<ReviewDetailScreen tutorialId="t1" admin />)
     fireEvent.press(await screen.findByRole('button', { name: 'Request changes' }))
     expect(await screen.findByText(/Say what needs to change/)).toBeTruthy()

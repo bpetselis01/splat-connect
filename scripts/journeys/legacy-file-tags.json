@@ -1,9 +1,4 @@
 [
-  "packages/mobile/tests/unit/components/admin/admin-review.test.tsx",
-  "packages/mobile/tests/unit/components/auth/parts-behaviour.test.tsx",
-  "packages/mobile/tests/unit/components/inbox/inbox-screen.test.tsx",
-  "packages/mobile/tests/unit/components/library/filter-page.test.tsx",
-  "packages/mobile/tests/unit/components/me/thanks-notes-screen.test.tsx",
   "packages/mobile/tests/unit/components/my-tutorials/backing-section-failure.test.tsx",
   "packages/mobile/tests/unit/components/my-tutorials/backing-section.test.tsx",
   "packages/mobile/tests/unit/components/my-tutorials/collaborators-section.test.tsx",
@@ -42,7 +37,6 @@
   "packages/mobile/tests/unit/components/organisation/review-detail-screen-failure.test.tsx",
   "packages/mobile/tests/unit/components/organisation/review-detail-screen.test.tsx",
   "packages/mobile/tests/unit/components/organisation/review-queue-screen.test.tsx",
-  "packages/mobile/tests/unit/components/people/thank-button.test.tsx",
   "packages/mobile/tests/unit/components/printing/actions.test.ts",
   "packages/mobile/tests/unit/components/printing/add-printer-screen.test.tsx",
   "packages/mobile/tests/unit/components/printing/basics-screen.test.tsx",
@@ -58,6 +52,5 @@
   "packages/mobile/tests/unit/components/printing/request-screen-failure.test.tsx",
   "packages/mobile/tests/unit/components/printing/request-screen.test.tsx",
   "packages/mobile/tests/unit/components/printing/requests-screen-failure.test.tsx",
-  "packages/mobile/tests/unit/components/printing/requests-screen.test.tsx",
-  "packages/mobile/tests/unit/components/reports/report-problem.test.tsx"
+  "packages/mobile/tests/unit/components/printing/requests-screen.test.tsx"
 ]
