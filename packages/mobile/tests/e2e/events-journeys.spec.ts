@@ -26,12 +26,18 @@ async function somebodyElseGoing(eventId: string) {
   return other
 }
 
-/** Opens the event once the signed-in profile has loaded: before then the page can read as a guest and flip. */
+/**
+ * Opens the event once the signed-in profile has loaded: before then the page can read as a guest and flip.
+ * The screen keeps no ready marker, so wait for every request the capabilities load makes (it commits the
+ * profile only when all of them settle) and the event fetch that carries the viewer id, then for two frames so React has rendered the commit.
+ */
 async function openEventSignedIn(page: import('@playwright/test').Page, path: string) {
-  const loaded = page.waitForResponse((r) => r.url().includes('/api/toy-transactions/action-count'))
+  const loaded = ['/api/contributors/me', '/api/organizations/mine', '/api/notifications/me/unread-counts', '/api/toy-transactions/action-count', '?viewer='].map(
+    (api) => page.waitForResponse((r) => r.url().includes(api)),
+  )
   await page.goto(path)
-  await loaded
-  await page.waitForTimeout(500)
+  await Promise.all(loaded)
+  await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))))
 }
 
 test('V10 the event page shows kind, when, where, cost, seats left and who is going, then full, closed, cancelled and past', async ({ page }) => {
