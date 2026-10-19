@@ -19,7 +19,6 @@ const UNTESTED = new Set([
   'GET /api/organizations/:orgId/events/:id/questions',
   'GET /api/organizations/:id/stories',
   'DELETE /api/organizations/:orgId/stories/:id',
-  'GET /api/organizations/requests',
 ])
 
 const walk = (d: string): string[] =>
