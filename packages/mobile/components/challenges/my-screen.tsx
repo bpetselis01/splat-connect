@@ -89,6 +89,7 @@ function Group({
   failureCopy,
   empty,
   onOpen,
+  onRetry,
   stage,
   joined,
 }: {
@@ -100,6 +101,7 @@ function Group({
   failureCopy: string
   empty: { title: string; hint: string; label: string; onPress: () => void; icon: React.ComponentProps<typeof Ionicons>['name'] }
   onOpen: (id: string) => void
+  onRetry: () => void
 }) {
   const shown = stage === 'all' ? loaded.items : loaded.items.filter((i) => IDEA_STAGE[i.status] === stage)
   // A filtered-out group says nothing rather than an empty state that would
@@ -118,7 +120,9 @@ function Group({
           icon="cloud-offline-outline"
           title={failureCopy}
           hint="Something has gone wrong on our end. Try again in a moment."
-        />
+        >
+          <Button label="Try again" variant="secondary" onPress={onRetry} style={styles.emptyButton} />
+        </EmptyState>
       ) : loaded.items.length === 0 ? (
         <EmptyState icon={empty.icon} title={empty.title} hint={empty.hint}>
           <Button label={empty.label} variant="accent" onPress={empty.onPress} style={styles.emptyButton} />
@@ -208,6 +212,7 @@ export function MyChallengesScreen() {
             onPress: () => router.push('/explore/challenges/new'),
           }}
           onOpen={openChallenge}
+          onRetry={() => setReloadKey((k) => k + 1)}
           stage={stage}
           joined={false}
         />
@@ -225,6 +230,7 @@ export function MyChallengesScreen() {
             onPress: () => router.push('/explore/challenges'),
           }}
           onOpen={openChallenge}
+          onRetry={() => setReloadKey((k) => k + 1)}
           stage={stage}
           joined
         />
