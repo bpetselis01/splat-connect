@@ -74,7 +74,7 @@ describe('the review of a submitted idea (C12)', () => {
 })
 
 describe('joining and leaving (C03, C04)', () => {
-  it('C03 C04 joining tells the author; leaving tells the author; the author removing tells the maker', async () => {
+  it('C03 C04 WI16 WI19 joining tells the author; leaving tells the author; the author removing tells the maker', async () => {
     const id = await submitIdea()
     await publish(id)
 
