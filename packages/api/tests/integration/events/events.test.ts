@@ -1,4 +1,3 @@
-// journeys: L18 L19 L21 L22 L30 V02
 /**
  * Events: who may read a registration, and what the form actually enforces.
  *
@@ -130,7 +129,7 @@ describe('the public event surface', () => {
   // Chain: a joining link on a public page is a link in a search index, and
   //        .ics files get forwarded. Checked on both routes because they build
   //        their responses separately.
-  it('never returns an online event\'s joining link', async () => {
+  it('L30 never returns an online event\'s joining link', async () => {
     const list = (await (await app.request('/api/public/events')).json()) as Array<
       Record<string, unknown>
     >
@@ -228,7 +227,7 @@ describe('registering', () => {
     expect(((await res.json()) as { error: string }).error).toMatch(/full/i)
   })
 
-  it('lets somebody cancel and come back without a duplicate', async () => {
+  it('V02 lets somebody cancel and come back without a duplicate', async () => {
     const admin = adminClient()
     const cancel = await app.request(`/api/events/${eventId}/registrations`, {
       method: 'DELETE',
@@ -262,7 +261,7 @@ describe('who may read an answer', () => {
   // Chain: "Answers are shown to leaders only." This is the whole reason
   //        061's policies are narrow and the guard script asserts no anon
   //        policy exists on the table.
-  it('gives the public a count and initials, never a name or an answer', async () => {
+  it('L30 gives the public a count and initials, never a name or an answer', async () => {
     const detail = (await (await app.request(`/api/public/events/${eventId}`)).json()) as {
       going_count: number
       attendee_initials: string[]
@@ -347,7 +346,7 @@ describe('closing and cancelling', () => {
 })
 
 describe('the question form', () => {
-  it('replaces the whole list, keeping ids for the questions that survive', async () => {
+  it('L19 replaces the whole list, keeping ids for the questions that survive', async () => {
     const res = await app.request(
       `/api/organizations/${orgId}/events/${eventId}/questions`,
       json(leader.token, 'PUT', {
@@ -393,7 +392,7 @@ describe('publishing a new event', () => {
   // only title, time, format, venue and audience, so a published in-person
   // event failed 061's suburb-and-state check, and a draft lost its tools,
   // seats and cost with no error.
-  it('keeps the whole form, place included, and publishes an in-person event', async () => {
+  it('L19 keeps the whole form, place included, and publishes an in-person event', async () => {
     const res = await app.request(
       `/api/organizations/${orgId}/events`,
       json(leader.token, 'POST', {
