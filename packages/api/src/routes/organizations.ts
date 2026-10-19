@@ -1345,11 +1345,11 @@ organizations.get('/:id/stories', async (c) => {
   return c.json(data ?? [])
 })
 
-organizations.post('/:id/stories', async (c) => {
-  const supabase = createUserClient(c.get('token'))
-  const body = (await c.req.json().catch(() => null)) as Record<string, unknown> | null
-  if (!body) return c.json({ error: 'Body must be an object' }, 400)
-
+/**
+ * The content of a story, read and refused the same way by the first save and
+ * every edit after it.
+ */
+function storyShape(body: Record<string, unknown>) {
   const read = (field: string, max: number) => {
     const value = typeof body[field] === 'string' ? (body[field] as string).trim() : ''
     return value && value.length <= max ? value : null
@@ -1359,49 +1359,55 @@ organizations.post('/:id/stories', async (c) => {
   const storyBody = read('body', 20000)
   const byline = read('byline', 120)
   if (!title || !summary || !storyBody || !byline) {
-    return c.json({ error: 'A story needs a title, a one-sentence summary, a body and a byline.' }, 400)
-  }
-
-  const consent = body.consent_confirmed === true
-  const status = body.status === 'published' ? 'published' : 'draft'
-  // 059 refuses this with a check constraint; saying it here makes the refusal
-  // a sentence rather than a constraint violation.
-  if (status === 'published' && !consent) {
-    return c.json(
-      { error: 'Confirm consent for everyone named or pictured before publishing.' },
-      400
-    )
+    return { error: 'A story needs a title, a one-sentence summary, a body and a byline.' }
   }
 
   const kind =
     typeof body.kind === 'string' && body.kind in STORY_KINDS ? body.kind : 'org_update'
   // An announcement speaks for SPLAT and has no organisation behind it. 062
   // makes it admin-only at the policy level; refusing it here is the sentence.
-  if (kind === 'announcement') {
-    return c.json({ error: 'Only SPLAT publishes an announcement.' }, 400)
-  }
+  if (kind === 'announcement') return { error: 'Only SPLAT publishes an announcement.' }
 
   const pullQuote = read('pull_quote', 400)
   const pullQuoteBy = read('pull_quote_by', 120)
   // 062 refuses an unattributed quote with a check constraint, for the reason
   // recorded there: it reads as the platform's voice in a family's mouth.
-  if (pullQuote && !pullQuoteBy) {
-    return c.json({ error: 'Say who the pull quote is from.' }, 400)
+  if (pullQuote && !pullQuoteBy) return { error: 'Say who the pull quote is from.' }
+
+  return {
+    kind,
+    title,
+    summary,
+    body: storyBody,
+    byline,
+    consent_confirmed: body.consent_confirmed === true,
+    pull_quote: pullQuote,
+    pull_quote_by: pullQuote ? pullQuoteBy : null,
+    link_tutorial_id: typeof body.link_tutorial_id === 'string' ? body.link_tutorial_id : null,
+  }
+}
+
+const CONSENT_REFUSAL = 'Confirm consent for everyone named or pictured before publishing.'
+
+organizations.post('/:id/stories', async (c) => {
+  const supabase = createUserClient(c.get('token'))
+  const body = (await c.req.json().catch(() => null)) as Record<string, unknown> | null
+  if (!body) return c.json({ error: 'Body must be an object' }, 400)
+
+  const shape = storyShape(body)
+  if ('error' in shape) return c.json({ error: shape.error }, 400)
+  const status = body.status === 'published' ? 'published' : 'draft'
+  // 059 refuses this with a check constraint; saying it here makes the refusal
+  // a sentence rather than a constraint violation.
+  if (status === 'published' && !shape.consent_confirmed) {
+    return c.json({ error: CONSENT_REFUSAL }, 400)
   }
 
   const { data, error } = await supabase
     .from('org_stories')
     .insert({
+      ...shape,
       org_id: c.req.param('id'),
-      kind,
-      title,
-      summary,
-      body: storyBody,
-      byline,
-      consent_confirmed: consent,
-      pull_quote: pullQuote,
-      pull_quote_by: pullQuote ? pullQuoteBy : null,
-      link_tutorial_id: typeof body.link_tutorial_id === 'string' ? body.link_tutorial_id : null,
       status,
       // Set when it goes public, and never earlier: a story written on Monday
       // and published on Thursday is dated Thursday. 062 requires it on a
@@ -1420,33 +1426,50 @@ organizations.post('/:id/stories', async (c) => {
   return c.json(data, 201)
 })
 
+/**
+ * Publish, unpublish, or edit the whole story.
+ *
+ * A full edit only when the body carries a title, the event PATCH's rule; the
+ * status only when the body sends one, so a content save cannot take a story
+ * off the site by leaving it out.
+ */
 organizations.patch('/:orgId/stories/:id', async (c) => {
   const supabase = createUserClient(c.get('token'))
-  const body = (await c.req.json().catch(() => ({}))) as { status?: unknown }
-  const status = body.status === 'published' ? 'published' : 'draft'
+  const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>
   const now = new Date().toISOString()
-  const before = status === 'published' ? await statusBefore('org_stories', c.req.param('id')) : null
+  const patch: Record<string, unknown> = { updated_at: now }
+
+  if (typeof body.title === 'string') {
+    const shape = storyShape(body)
+    if ('error' in shape) return c.json({ error: shape.error }, 400)
+    Object.assign(patch, shape)
+  }
+
+  const before = await statusBefore('org_stories', c.req.param('id'))
+  if ('status' in body) {
+    const status = body.status === 'published' ? 'published' : 'draft'
+    patch.status = status
+    // published_at is stamped on the way out and cleared on the way back in;
+    // an edit to a story already out keeps its date. 062 requires a published
+    // row to carry one; unpublishing and republishing re-dates the story,
+    // which is the honest answer — it was off the site in between.
+    if (status === 'draft') patch.published_at = null
+    else if (before !== 'published') patch.published_at = now
+  }
 
   const { data, error } = await supabase
     .from('org_stories')
-    // published_at is stamped on the way out and cleared on the way back in.
-    // 062 requires a published row to carry one; unpublishing and republishing
-    // re-dates the story, which is the honest answer — it was off the site in
-    // between.
-    .update({ status, published_at: status === 'published' ? now : null, updated_at: now })
+    .update(patch)
     .eq('id', c.req.param('id'))
     .eq('org_id', c.req.param('orgId'))
     .select(STORY_COLUMNS)
     .maybeSingle()
   if (error) {
-    // The one constraint a publish can trip: consent was never confirmed.
-    return c.json(
-      { error: 'Confirm consent for everyone named or pictured before publishing.' },
-      400
-    )
+    // The one constraint a save can trip: a published row without consent.
+    return c.json({ error: CONSENT_REFUSAL }, 400)
   }
   if (!data) return c.json({ error: 'No such story of yours.' }, 404)
-  if (before === 'draft') {
+  if (before === 'draft' && data.status === 'published') {
     await notifyFollowers(data.org_id as string, c.get('userId'), { org_story_id: data.id }, data.title)
   }
   return c.json(data)

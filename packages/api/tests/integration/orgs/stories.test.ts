@@ -148,3 +148,76 @@ describe('the public list', () => {
     expect(list.map((r) => r.id)).not.toContain(publishedId)
   })
 })
+
+describe('editing a story', () => {
+  let liveId: string
+  let liveAt: string
+
+  beforeAll(async () => {
+    const res = await app.request(
+      `/api/organizations/${orgId}/stories`,
+      json(leader.token, 'POST', story({ status: 'published' }))
+    )
+    const row = (await res.json()) as { id: string; published_at: string }
+    liveId = row.id
+    liveAt = row.published_at
+  })
+
+  it('rewrites a published story and keeps it published, under its first date', async () => {
+    const res = await app.request(
+      `/api/organizations/${orgId}/stories/${liveId}`,
+      json(leader.token, 'PATCH', story({ title: 'Fixed the typo', status: 'published' }))
+    )
+    expect(res.status).toBe(200)
+    const row = (await res.json()) as { title: string; status: string; published_at: string }
+    expect(row.title).toBe('Fixed the typo')
+    expect(row.status).toBe('published')
+    expect(row.published_at).toBe(liveAt)
+  })
+
+  // Chain: the status-only handler read a missing status as 'draft', so a
+  //        content save that forgot it took the story off the site.
+  it('leaves the status alone when the body does not send one', async () => {
+    const res = await app.request(
+      `/api/organizations/${orgId}/stories/${liveId}`,
+      json(leader.token, 'PATCH', story({ title: 'No status sent' }))
+    )
+    expect(res.status).toBe(200)
+    expect(((await res.json()) as { status: string }).status).toBe('published')
+  })
+
+  it('refuses an edit that drops consent on a published story', async () => {
+    const res = await app.request(
+      `/api/organizations/${orgId}/stories/${liveId}`,
+      json(leader.token, 'PATCH', story({ consent_confirmed: false, status: 'published' }))
+    )
+    expect(res.status).toBe(400)
+    expect(((await res.json()) as { error: string }).error).toMatch(/consent/i)
+  })
+
+  it('refuses the same things the first save refuses', async () => {
+    const quote = await app.request(
+      `/api/organizations/${orgId}/stories/${liveId}`,
+      json(leader.token, 'PATCH', story({ pull_quote: 'He looked at us.', pull_quote_by: '' }))
+    )
+    expect(quote.status).toBe(400)
+    const announcement = await app.request(
+      `/api/organizations/${orgId}/stories/${liveId}`,
+      json(leader.token, 'PATCH', story({ kind: 'announcement' }))
+    )
+    expect(announcement.status).toBe(400)
+  })
+
+  it('404s a story that is not theirs', async () => {
+    const outsider = await createTestUser('contributor')
+    try {
+      const res = await app.request(
+        `/api/organizations/${orgId}/stories/${liveId}`,
+        json(outsider.token, 'PATCH', story({ title: 'Hijacked' }))
+      )
+      expect(res.status).toBe(404)
+    } finally {
+      await deleteTestUser(outsider.id)
+    }
+  })
+})
