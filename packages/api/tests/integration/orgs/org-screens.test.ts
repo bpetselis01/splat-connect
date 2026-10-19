@@ -335,7 +335,7 @@ describe('recycling intake', () => {
 })
 
 describe('asking for an organisation', () => {
-  it('files one, and refuses a second open ask for the same name', async () => {
+  it('WI08 files one as pending for its requester, and refuses a second open ask for the same name', async () => {
     const res = await app.request(
       '/api/organizations/requests',
       json(contributor.token, 'POST', {
@@ -346,6 +346,18 @@ describe('asking for an organisation', () => {
     )
     expect(res.status).toBe(201)
     requestId = ((await res.json()) as { id: string }).id
+    const { data: stored } = await adminClient()
+      .from('organization_requests')
+      .select('org_name, what_they_do, verification, status, requester_id')
+      .eq('id', requestId)
+      .single()
+    expect(stored).toEqual({
+      org_name: 'Eastside Therapy',
+      what_they_do: 'Paediatric OT, twelve therapists.',
+      verification: 'My work email is on eastside.example.',
+      status: 'pending',
+      requester_id: contributor.id,
+    })
 
     const again = await app.request(
       '/api/organizations/requests',
