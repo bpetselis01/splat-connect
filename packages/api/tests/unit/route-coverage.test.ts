@@ -3,19 +3,17 @@
  * with a mocked Supabase cannot see RLS, grants or column drift, so a route with
  * no integration test is a route nothing real has ever called.
  *
- * It is a ratchet: UNTESTED lists the routes that predate the guard (found
- * 2026-10-08). A new route must come with an integration test; when one of
- * these gains one, delete it from the list (the second test insists).
- * The match is on method and path: the method token must sit in the same call
- * as the path or in the two lines before it.
+ * UNTESTED is the exemption list and is empty: a new route comes with an
+ * integration test, and the last test here fails if anything is put back.
+ * The match is on method and path: the method must be named in the statement
+ * that holds the path, or fixed by a helper that statement calls.
  */
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, it, expect } from 'vitest'
 import app from '../../src/app.js'
 
-const UNTESTED = new Set([
-])
+const UNTESTED = new Set<string>()
 
 const walk = (d: string): string[] =>
   readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(join(d, e.name)) : [join(d, e.name)]))
@@ -101,8 +99,7 @@ describe('integration coverage of the API surface', () => {
   it('every route outside the known list is named in an integration test', () => {
     expect(routes.filter((r) => !mentioned(key(r)) && !UNTESTED.has(key(r))).map(key)).toEqual([])
   })
-  it('the known list holds only routes that are still untested', () => {
-    const live = new Set(routes.map(key))
-    expect([...UNTESTED].filter((k) => !live.has(k) || mentioned(k))).toEqual([])
+  it('keeps the exemption list empty', () => {
+    expect([...UNTESTED]).toEqual([])
   })
 })
