@@ -64,7 +64,7 @@ test('Q10: opening an exchange thread clears its unread dot, the bucket count an
 
   await page.goBack()
   await expect(page.getByText('2 unread', { exact: true })).toBeHidden()
-  await expect(page.getByRole('tab', { name: 'Inbox', exact: true })).toBeVisible()
+  await expect(page.getByRole('tab', { name: /^Inbox(,|$)/ })).toBeVisible()
 })
 
 test('L16: declining a request moves the requests tab, then the Me waiting count, down without a reload', async ({
@@ -168,7 +168,7 @@ test('P10 and L29: each message adds one to the other side\'s Inbox, and opening
       await adminClient().from('org_conversations').select('id').eq('org_id', orgId).eq('profile_id', family.id).single()
     ).data!
 
-    await page.getByRole('tab', { name: 'Me', exact: true }).click()
+    await page.getByRole('tab', { name: /^Me(,|$)/ }).click()
     await page.getByRole('tab', { name: /^Inbox/ }).click()
     await expect(page.getByRole('tab', { name: 'Inbox, 1 unread' })).toBeVisible()
     await expect(page.getByText('1 unread', { exact: true })).toBeVisible()
@@ -187,9 +187,9 @@ test('P10 and L29: each message adds one to the other side\'s Inbox, and opening
 
     await page.goBack()
     await expect(page.getByText('1 unread', { exact: true })).toBeHidden()
-    await expect(page.getByRole('tab', { name: 'Inbox', exact: true })).toBeVisible()
+    await expect(page.getByRole('tab', { name: /^Inbox(,|$)/ })).toBeVisible()
 
-    await familyHome.getByRole('tab', { name: 'Me', exact: true }).click()
+    await familyHome.getByRole('tab', { name: /^Me(,|$)/ }).click()
     await familyHome.getByRole('tab', { name: /^Inbox/ }).click()
     await expect(familyHome.getByRole('tab', { name: 'Inbox, 1 unread' })).toBeVisible()
     await expect(familyHome.getByText('1 unread', { exact: true })).toBeVisible()

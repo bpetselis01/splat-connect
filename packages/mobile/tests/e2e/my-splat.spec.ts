@@ -5,7 +5,7 @@ import { signUpNewAccount, uniqueSignupEmail } from './helpers'
 test('the Me tab is the hub: every group, a row opens its screen, Explore is at the bottom', async ({ page }) => {
   await signUpNewAccount(page, uniqueSignupEmail())
   await page.goto('/guides')
-  await page.getByRole('tab', { name: 'Me', exact: true }).click()
+  await page.getByRole('tab', { name: /^Me(,|$)/ }).click()
   await expect(page).toHaveURL(/\/me$/)
   for (const h of ['Add a tutorial', 'Exchange a toy', 'Give us a challenge', 'Account', 'Explore']) await expect(page.getByText(h).first()).toBeVisible()
 

@@ -20,7 +20,7 @@ test('renaming on Account changes the greeting on Me', async ({ page }) => {
   await renameProfile(user.id, 'Alba Quokka')
   await signIn(page, user.email, user.password)
   await expect(page).toHaveURL(/\/home$/)
-  await page.getByRole('tab', { name: 'Me', exact: true }).click()
+  await page.getByRole('tab', { name: /^Me(,|$)/ }).click()
   await expect(page.getByText('Hi, Alba', { exact: true })).toBeVisible()
 
   await page.getByRole('button', { name: 'Account', exact: true }).click()
@@ -52,7 +52,7 @@ test('a postcode on Account puts a distance on the toy card, and a new postcode 
   await expect(card0.getByText(/ km$/)).toHaveCount(0)
 
   const setPostcode = async (postcode: string) => {
-    await page.getByRole('tab', { name: 'Me', exact: true }).click()
+    await page.getByRole('tab', { name: /^Me(,|$)/ }).click()
     await page.getByRole('button', { name: 'Account', exact: true }).click()
     await expect(page).toHaveURL(/\/account$/)
     const field = page.getByLabel('Postcode', { exact: true })

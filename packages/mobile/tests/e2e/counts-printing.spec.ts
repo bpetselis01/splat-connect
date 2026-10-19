@@ -72,7 +72,7 @@ test('an organisationâ€™s print orders: Me counts the waiting order, the familyâ
   const familyPage = await partyPage(browser, baseURL, family)
   try {
     // L11: one order waiting, so Me says 1 and the screen's Requests tab says 1.
-    await page.getByRole('tab', { name: 'Me', exact: true }).click()
+    await page.getByRole('tab', { name: /^Me(,|$)/ }).click()
     await expect(meRow).toHaveText(/Print orders1$/)
     await meRow.click()
     await expect(page.getByRole('tab', { name: 'Requests, 1' })).toBeVisible()
@@ -111,7 +111,7 @@ test('Get verified posts the test print, and once an admin passes it the printer
   const machine = await seedPrinter({ profileId: owner.id })
   const admin = adminClient()
 
-  await page.getByRole('tab', { name: 'Me', exact: true }).click()
+  await page.getByRole('tab', { name: /^Me(,|$)/ }).click()
   await page.getByRole('button', { name: 'Print for others', exact: true }).click()
   await page.getByRole('tab', { name: 'My printers' }).click()
   const card = page.getByText(machine.name, { exact: true })
