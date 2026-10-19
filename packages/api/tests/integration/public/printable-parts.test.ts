@@ -1,5 +1,4 @@
 /** The parts catalogue: STL files from approved guides only, searched by filename and guide title. */
-// journeys: Q13
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { adminClient } from '../../helpers/auth.js'
