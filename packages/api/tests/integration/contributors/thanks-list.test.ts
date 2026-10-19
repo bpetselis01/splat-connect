@@ -1,4 +1,4 @@
-// journeys: S02
+// journeys: (none — route coverage; no journey row names this route yet)
 /**
  * GET /api/contributors/me/thanks lists the thanks you were given, newest
  * first, with the hidden flag so the owner can hide or unhide a note. It is

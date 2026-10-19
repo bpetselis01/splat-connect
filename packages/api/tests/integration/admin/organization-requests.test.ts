@@ -1,4 +1,4 @@
-// journeys: G10
+// journeys: (none — route coverage; no journey row names this route yet)
 /**
  * GET /api/admin/organization-requests is the admin's queue of asks to make an
  * organisation. It lists every status, oldest first, and names the requester

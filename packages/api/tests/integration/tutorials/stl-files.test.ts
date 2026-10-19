@@ -1,4 +1,4 @@
-// journeys: T09
+// journeys: (none — route coverage; no journey row names this route yet)
 /**
  * POST and DELETE /api/tutorials/:id/stl-files replace and clear a Guide's STL
  * files. The seat is the Guide's contributor; RLS on stl_files refuses anyone
