@@ -49,7 +49,7 @@ describe('PrinterDirectory', () => {
 
   // A full machine is shown and marked, not hidden — until somebody asks for
   // open ones only.
-  it('filters on what a printer row stores', () => {
+  it('WR03 filters on what a printer row stores', () => {
     render(<PrinterDirectory printers={printers} gate={null} />)
     expect(screen.getByText('2 printers')).toBeInTheDocument()
     expect(screen.getByText('Not taking requests right now')).toBeInTheDocument()

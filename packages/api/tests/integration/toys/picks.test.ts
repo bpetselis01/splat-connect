@@ -113,7 +113,7 @@ describe('102 toy picks', () => {
     expect((await call(other, `/api/toys/${t.a}/picks`, 'PUT', { picks: [] })).status).toBe(404)
   })
 
-  it('W11 shows the hand-picked ones in order, and drops one that stops being public', async () => {
+  it('W11 WY23 shows the hand-picked ones in order, and drops one that stops being public', async () => {
     const res = await call(holder, `/api/toys/${t.a}/picks`, 'PUT', {
       picks: [{ entity_type: 'tutorial', entity_id: guide }, { entity_type: 'toy', entity_id: t.b }],
     })

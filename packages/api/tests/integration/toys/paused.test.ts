@@ -47,7 +47,7 @@ describe('100 toy paused', () => {
     expect(error).toBeNull()
   })
 
-  it('W04 Y04 refuses requests while paused, stays readable, and takes them again once resumed', async () => {
+  it('W04 Y04 WY22 refuses requests while paused, stays readable, and takes them again once resumed', async () => {
     const id = await publishedToy(owner.id)
     const paused = await call(owner, `/api/toys/${id}`, 'PATCH', { paused_at: new Date().toISOString() })
     expect(paused.status).toBe(200)

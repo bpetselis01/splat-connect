@@ -75,7 +75,7 @@ describe('LiveTransaction', () => {
   // How:   fires the captured postgres_changes handler
   // Chain: this is the whole feature — without it the other party's reply sits
   //        in the database until the reader reloads
-  it('refreshes when a message arrives', () => {
+  it('WX04 refreshes when a message arrives', () => {
     render(<LiveTransaction transactionId="tx-1" />)
     mockRefresh.mockClear()
 

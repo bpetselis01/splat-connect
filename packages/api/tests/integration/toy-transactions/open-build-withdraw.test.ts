@@ -52,7 +52,7 @@ afterAll(async () => {
 })
 
 describe('withdrawing an unclaimed build post', () => {
-  it('K12 lets its author withdraw it, once', async () => {
+  it('K12 WX18 lets its author withdraw it, once', async () => {
     const id = await openRequest()
     const res = await post(family.token, `/${id}/withdraw`)
     expect(res.status).toBe(200)

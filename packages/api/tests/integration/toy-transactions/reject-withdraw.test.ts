@@ -46,7 +46,7 @@ describe('POST /api/toy-transactions/:id/reject and /withdraw', () => {
     await deleteTestUser(stranger.id)
   })
 
-  it('X05 lets the owner reject an open request', async () => {
+  it('X05 WX07 lets the owner reject an open request', async () => {
     const txId = await requestDonation(owner.token, requester.token, 'Ball')
     const res = await txReq(`/${txId}/reject`, owner.token, { method: 'POST' })
     expect(res.status).toBe(200)
@@ -65,7 +65,7 @@ describe('POST /api/toy-transactions/:id/reject and /withdraw', () => {
     expect(res.status).toBe(404)
   })
 
-  it('X06 lets either party withdraw an open request', async () => {
+  it('X06 WX08 lets either party withdraw an open request', async () => {
     const txId = await requestDonation(owner.token, requester.token, 'Puzzle')
     const res = await txReq(`/${txId}/withdraw`, requester.token, { method: 'POST' })
     expect(res.status).toBe(200)

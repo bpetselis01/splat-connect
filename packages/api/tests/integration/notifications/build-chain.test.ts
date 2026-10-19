@@ -91,7 +91,7 @@ describe('taking a build on (K02, K04, K06)', () => {
     await post(`/${id}/withdraw`, family.token)
   })
 
-  it('K04 claiming after asking first notifies the same way (the question is copied into the thread)', async () => {
+  it('K04 WX25 claiming after asking first notifies the same way (the question is copied into the thread)', async () => {
     const id = await postOpen()
     expect((await post(`/${id}/questions`, maker.token, { body: 'Is the switch 100 mm?' })).status).toBeLessThan(300)
     expect((await post(`/${id}/claim`, maker.token)).status).toBe(200)
@@ -101,7 +101,7 @@ describe('taking a build on (K02, K04, K06)', () => {
     await post(`/${id}/withdraw`, family.token)
   })
 
-  it('K06 accepting a directed ask tells the family', async () => {
+  it('K06 WX16 accepting a directed ask tells the family', async () => {
     const id = await askMaker()
     const res = await post(`/${id}/accept`, maker.token, {
       pickup_line1: '1 Test St', pickup_suburb: 'Testville', pickup_state: 'VIC', pickup_postcode: '3000',
@@ -115,7 +115,7 @@ describe('taking a build on (K02, K04, K06)', () => {
 })
 
 describe('declining (K07)', () => {
-  it('K07 tells the family, with the maker’s reason as the body', async () => {
+  it('K07 WX17 tells the family, with the maker’s reason as the body', async () => {
     const id = await askMaker()
     expect((await post(`/${id}/reject`, maker.token, { reason: 'No time this month' })).status).toBe(200)
     expect(await notesAbout(family.id, id)).toEqual([
@@ -125,7 +125,7 @@ describe('declining (K07)', () => {
 })
 
 describe('the working shot and the handover (K08, K09, K13)', () => {
-  it('K08 K09 K13 the maker’s shot tells the family; the family’s approval tells the maker; messages go both ways', async () => {
+  it('K08 K09 K13 WX20 WX21 WX15 the maker’s shot tells the family; the family’s approval tells the maker; messages go both ways', async () => {
     const id = await postOpen()
     await post(`/${id}/claim`, maker.token)
 
@@ -148,7 +148,7 @@ describe('the working shot and the handover (K08, K09, K13)', () => {
 })
 
 describe('withdrawing (K12)', () => {
-  it('K12 the family withdrawing tells the maker', async () => {
+  it('K12 WX18 the family withdrawing tells the maker', async () => {
     const id = await askMaker()
     expect((await post(`/${id}/withdraw`, family.token)).status).toBe(200)
     expect(await only(maker, id, 'toy_withdrawn')).toEqual([
@@ -156,7 +156,7 @@ describe('withdrawing (K12)', () => {
     ])
   })
 
-  it('K12 the maker withdrawing tells the family', async () => {
+  it('K12 WX18 the maker withdrawing tells the family', async () => {
     const id = await postOpen()
     await post(`/${id}/claim`, maker.token)
     expect((await post(`/${id}/withdraw`, maker.token)).status).toBe(200)

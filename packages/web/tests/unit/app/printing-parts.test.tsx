@@ -14,7 +14,7 @@ describe('/printing/parts', () => {
     saved.current = null
   })
 
-  it('lists parts with their guide, material, grams and time, and keeps the board’s steps', async () => {
+  it('WR06 lists parts with their guide, material, grams and time, and keeps the board’s steps', async () => {
     get.mockResolvedValue({
       items: [{ id: 'f1', filename: 'cradle-65mm.stl', material: 'PETG', filament_grams: 12, print_minutes: 45, tutorial_id: 'g1', tutorials: { id: 'g1', title: 'Switch mount', status: 'approved' } }],
       page: 1, pages: 1, total: 1,
@@ -33,7 +33,7 @@ describe('/printing/parts', () => {
     expect(screen.getByText('Nothing matches "zzz". Try a different word, or clear the search.')).toBeInTheDocument()
   })
 
-  it('puts a filled save control on a part already saved', async () => {
+  it('WR07 puts a filled save control on a part already saved', async () => {
     get.mockResolvedValue({
       items: [{ id: 'f1', filename: 'cradle-65mm.stl', material: null, filament_grams: null, print_minutes: null, tutorial_id: 'g1', tutorials: { id: 'g1', title: 'Switch mount', status: 'approved' } }],
       page: 1, pages: 1, total: 1,
