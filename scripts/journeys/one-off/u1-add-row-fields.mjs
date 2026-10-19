@@ -100,9 +100,8 @@ const ROUTES = {
 }
 
 const WRITE_VERB = /^(POST|PATCH|PUT|DELETE)/
-const NAV_VERB = /→|push|open|redirect/i
 const kind = (r) =>
-  r.api.some((a) => WRITE_VERB.test(a)) || r.db.length ? 'write' : !r.api.length && !NAV_VERB.test(r.element) ? 'static' : 'nav'
+  r.api.some((a) => WRITE_VERB.test(a)) || r.db.length ? 'write' : !r.api.length && r.required.length === 1 ? 'static' : 'nav'
 
 const rows = JSON.parse(readFileSync(path, 'utf8'))
 const problems = []
@@ -116,7 +115,7 @@ if (problems.length) { console.error(problems.join('\n')); process.exit(1) }
 
 const out = rows
   .map(({ id, seat, screen, element, api, db, notifies, counts, setter, required, waived }) =>
-    ({ id, platform: 'mobile', route: ROUTES[id], kind: kind({ api, db, element }), device: required.includes('device'),
+    ({ id, platform: 'mobile', route: ROUTES[id], kind: kind({ api, db, required }), device: required.includes('device'),
       seat, screen, element, api, db, notifies, counts, setter, required, ...(waived && { waived }) }))
   .sort((a, b) => a.id.localeCompare(b.id))
 writeFileSync(path, '[\n' + out.map((r) => '  ' + JSON.stringify(r)).join(',\n') + '\n]\n')
