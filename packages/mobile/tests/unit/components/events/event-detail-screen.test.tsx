@@ -35,7 +35,7 @@ beforeEach(() => {
 })
 
 describe('EventDetailScreen', () => {
-  it('an open event shows the seat count, the going count and I\'m going', async () => {
+  it('V10 an open event shows the seat count, the going count and I\'m going', async () => {
     render(<EventDetailScreen id="e1" />)
     expect(await screen.findByText('Switch-adapted toy build day')).toBeTruthy()
     expect(screen.getByText('4 seats left')).toBeTruthy()
@@ -52,7 +52,7 @@ describe('EventDetailScreen', () => {
     expect(mockGet).toHaveBeenCalledWith('/api/public/events/e1')
   })
 
-  it('a guest\'s I\'m going remembers the event and goes to sign-in', async () => {
+  it('V12 a guest\'s I\'m going remembers the event and goes to sign-in', async () => {
     mockUseAuth.mockReturnValue({ session: null })
     mockCaps = null
     render(<EventDetailScreen id="e1" />)
@@ -62,7 +62,7 @@ describe('EventDetailScreen', () => {
     expect(mockPost).not.toHaveBeenCalled()
   })
 
-  it('an event with no questions and no cost posts the registration directly, then reloads', async () => {
+  it('V11 an event with no questions and no cost posts the registration directly, then reloads', async () => {
     render(<EventDetailScreen id="e1" />)
     fireEvent.press(await screen.findByRole('button', { name: "I'm going" }))
     await waitFor(() =>
@@ -74,7 +74,7 @@ describe('EventDetailScreen', () => {
   it.each([
     ['has questions', { questions: [{ id: 'q', prompt: 'x', answer_type: 'short', required: true, options: [] }] }],
     ['has a cost', { cost_cents: 1200 }],
-  ])('an event that %s opens the register screen instead of posting', async (_l, over) => {
+  ])('V12 an event that %s opens the register screen instead of posting', async (_l, over) => {
     serve(over)
     render(<EventDetailScreen id="e1" />)
     fireEvent.press(await screen.findByRole('button', { name: "I'm going" }))
@@ -82,7 +82,7 @@ describe('EventDetailScreen', () => {
     expect(mockPost).not.toHaveBeenCalled()
   })
 
-  it('shows the cost and its breakdown, or says free', async () => {
+  it('V10 shows the cost and its breakdown, or says free', async () => {
     serve({ cost_cents: 1200, cost_note: 'Filament and morning tea.' })
     const { unmount } = render(<EventDetailScreen id="e1" />)
     expect(await screen.findByText('$12.00 towards materials')).toBeTruthy()
@@ -93,28 +93,28 @@ describe('EventDetailScreen', () => {
     expect(await screen.findByText('Free to attend')).toBeTruthy()
   })
 
-  it('a full event says so and offers no I\'m going', async () => {
+  it('V10 a full event says so and offers no I\'m going', async () => {
     serve({ seats_left: 0, going_count: 20 })
     render(<EventDetailScreen id="e1" />)
     expect((await screen.findAllByText('This one is full')).length).toBeGreaterThan(0)
     expect(screen.queryByRole('button', { name: "I'm going" })).toBeNull()
   })
 
-  it('a closed event says the host closed it and offers no I\'m going', async () => {
+  it('V10 a closed event says the host closed it and offers no I\'m going', async () => {
     serve({ registrations_closed_at: '2099-01-01T00:00:00Z' })
     render(<EventDetailScreen id="e1" />)
     expect(await screen.findByText('The host has closed registrations for this one.')).toBeTruthy()
     expect(screen.queryByRole('button', { name: "I'm going" })).toBeNull()
   })
 
-  it('a cancelled event says so and has no footer', async () => {
+  it('V10 a cancelled event says so and has no footer', async () => {
     serve({ cancelled_at: '2099-01-01T00:00:00Z' })
     render(<EventDetailScreen id="e1" />)
     expect(await screen.findByText('Cancelled by the host')).toBeTruthy()
     expect(screen.queryByRole('button', { name: "I'm going" })).toBeNull()
   })
 
-  it('a past event says it has happened and has no footer', async () => {
+  it('V10 a past event says it has happened and has no footer', async () => {
     serve({ starts_at: '2020-01-01T00:00:00Z', ends_at: '2020-01-01T04:00:00Z' })
     render(<EventDetailScreen id="e1" />)
     expect(await screen.findByText('This one has already happened.')).toBeTruthy()
@@ -127,7 +127,7 @@ describe('EventDetailScreen', () => {
     expect(await screen.findByText('No such event.')).toBeTruthy()
   })
 
-  it('someone already going sees Can\'t make it, which deletes the registration', async () => {
+  it('V13 someone already going sees Can\'t make it, which deletes the registration', async () => {
     serve({ viewer_going: true })
     render(<EventDetailScreen id="e1" />)
     expect(await screen.findByText("You're going")).toBeTruthy()
@@ -149,13 +149,13 @@ describe('EventDetailScreen', () => {
     expect(await screen.findByText('This one is full. The host may open more seats.')).toBeTruthy()
   })
 
-  it('the host row opens the organisation page', async () => {
+  it('V14 the host row opens the organisation page', async () => {
     render(<EventDetailScreen id="e1" />)
     fireEvent.press(await screen.findByRole('button', { name: /Hosted by Northside Makers/ }))
     expect(mockPush).toHaveBeenCalledWith('/toy-library/organisation/o1')
   })
 
-  it('Print parts here shows only when the event prints parts and the viewer is signed in', async () => {
+  it('V15 Print parts here shows only when the event prints parts and the viewer is signed in', async () => {
     serve({ prints_parts: true, part_sets_max: 4 })
     const { unmount } = render(<EventDetailScreen id="e1" />)
     fireEvent.press(await screen.findByRole('button', { name: 'Print parts here' }))

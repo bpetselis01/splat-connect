@@ -3,6 +3,10 @@ import { adminClient, createContributor, createTutorial, makeLeader, uniqueTitle
 import { cardCount, signInAdmin } from './admin-fixtures'
 
 const SPOT_CARD = 'Spot-check'
+const madeOrgs: string[] = []
+test.afterEach(async () => {
+  await adminClient().from('organizations').delete().in('id', madeOrgs.splice(0))
+})
 const row = (page: Page, title: string) => page.getByRole('button', { name: new RegExp(title) })
 
 /** A live guide an organisation leader approved, so it is eligible for the sample. */
@@ -11,6 +15,7 @@ async function leaderApprovedGuide() {
   const leader = await createContributor()
   const orgName = uniqueTitle('E2E Spot Org')
   const orgId = await makeLeader(leader.id, orgName)
+  madeOrgs.push(orgId)
   const title = uniqueTitle('E2E Spot Guide')
   const id = await createTutorial(author.id, { title, status: 'approved' })
   await adminClient().from('tutorials').update({ reviewed_by: leader.id, reviewed_for_org_id: orgId }).eq('id', id)

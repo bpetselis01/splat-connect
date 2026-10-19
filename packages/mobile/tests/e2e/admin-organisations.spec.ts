@@ -3,6 +3,13 @@ import { addLeader, adminClient, createContributor, createOrg, renameProfile, un
 import { cardCount, expectCard, signInAdmin } from './admin-fixtures'
 
 const ORGS_CARD = 'Organisations'
+// GET /api/organizations merges its extra columns with one .in(ids) read that stops working
+// at a couple of hundred organisations, so a spec that leaves its rows behind eventually
+// turns the Verified pill off for everyone.
+const madeOrgs: string[] = []
+test.afterEach(async () => {
+  await adminClient().from('organizations').delete().in('id', madeOrgs.splice(0))
+})
 const orgRow = (page: Page, name: string) => page.getByRole('button', { name: new RegExp(name) })
 
 /** A contributor whose name this spec alone answers to, so the account picker and the leader rows can be found. */
@@ -17,6 +24,7 @@ async function namedPerson(label: string) {
 async function seedOrg(over: { leader?: string; verified?: boolean; suspended?: boolean } = {}) {
   const name = uniqueTitle('E2E Admin Org')
   const id = await createOrg(name)
+  madeOrgs.push(id)
   if (over.leader) await addLeader(id, over.leader)
   const patch = {
     ...(over.verified ? { verified_at: new Date().toISOString() } : {}),
@@ -80,6 +88,7 @@ test('Q34 Create organisation needs a name and a first leader, then adds it with
   await expect(orgRow(page, name)).toContainText(new RegExp(`${lead.name}.*Active`))
 
   const { data } = await adminClient().from('organizations').select('id, description, status').eq('name', name).single()
+  madeOrgs.push(data!.id)
   expect(data).toMatchObject({ description: 'Made from the phone', status: 'active' })
   expect(await leadersDb(data!.id)).toEqual([lead.id])
   await expectCard(page, ORGS_CARD, before + 1)
