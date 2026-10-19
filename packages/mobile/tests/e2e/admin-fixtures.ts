@@ -39,3 +39,45 @@ export async function seedIdea(status: 'pending' | 'challenge' | 'graduated', ov
   if (error || !data) throw new Error(`seedIdea failed: ${error?.message}`)
   return { id: data.id as string, title, authorId }
 }
+
+/** A member report in the given state, filed by `reporterId` about a subject only this spec knows. */
+export async function seedMemberReport(
+  reporterId: string,
+  over: Partial<{ status: 'new' | 'looking' | 'resolved'; note: string; label: string }> = {}
+) {
+  const label = over.label ?? uniqueTitle('E2E Reported Toy')
+  const { data, error } = await adminClient()
+    .from('member_reports')
+    .insert({
+      reporter_id: reporterId, subject_kind: 'toy', subject_label: label, category: 'other', body: 'The skin is loose.',
+      status: over.status ?? 'new', note_to_reporter: over.note ?? null,
+    })
+    .select('id')
+    .single()
+  if (error || !data) throw new Error(`seedMemberReport failed: ${error?.message}`)
+  return { id: data.id as string, label }
+}
+
+/** A report against `targetId` inside a live challenge, with the target already a participant. */
+export async function seedIdeaReport(over: Partial<{ resolved: boolean; removed: boolean }> = {}) {
+  const author = await createContributor()
+  const target = await createContributor()
+  const reporter = await createContributor()
+  const targetName = uniqueTitle('Reported Maker')
+  await adminClient().from('profiles').update({ name: targetName }).eq('id', target.id)
+  const idea = await seedIdea('challenge', { authorId: author.id })
+  await adminClient().from('toy_idea_participants').insert({
+    idea_id: idea.id, profile_id: target.id,
+    ...(over.removed ? { removed_at: new Date().toISOString(), removed_by: author.id } : {}),
+  })
+  const { data, error } = await adminClient()
+    .from('toy_idea_reports')
+    .insert({
+      idea_id: idea.id, reported_profile_id: target.id, reported_by: reporter.id, reason: 'Rude in the thread',
+      ...(over.resolved ? { resolved_at: new Date().toISOString(), resolved_by: author.id, resolution_note: 'Handled' } : {}),
+    })
+    .select('id')
+    .single()
+  if (error || !data) throw new Error(`seedIdeaReport failed: ${error?.message}`)
+  return { id: data.id as string, ideaId: idea.id, ideaTitle: idea.title, targetId: target.id, targetName, rowTitle: `${targetName} in ${idea.title}` }
+}
