@@ -1,7 +1,10 @@
 import { type Page, expect } from '@playwright/test'
 import { PASSWORD, acceptTerms, adminClient, makeLeader, uniqueEmail as seedEmail, uniqueTitle } from '../../../../supabase/e2e-seed'
 
-export * from '../../../../supabase/e2e-seed'
+export {
+  PASSWORD, acceptTerms, addLeader, adminClient, createAdmin, createEvent, createNotification, createOrg,
+  makeLeader, uniqueTitle, type EventQuestion,
+} from '../../../../supabase/e2e-seed'
 
 function uniqueEmail(prefix: string) {
   return seedEmail(prefix, 'mobile-e2e.local')
