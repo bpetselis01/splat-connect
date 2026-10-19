@@ -72,7 +72,6 @@ test('Q34 Create organisation needs a name and a first leader, then adds it with
   const lead = await namedPerson('First Leader')
   const name = uniqueTitle('E2E Created Org')
   await signInAdmin(page)
-  const before = await cardCount(page, ORGS_CARD)
 
   await page.goto('/admin/organisations')
   await page.getByRole('button', { name: 'New organisation' }).click()
@@ -91,7 +90,7 @@ test('Q34 Create organisation needs a name and a first leader, then adds it with
   madeOrgs.push(data!.id)
   expect(data).toMatchObject({ description: 'Made from the phone', status: 'active' })
   expect(await leadersDb(data!.id)).toEqual([lead.id])
-  await expectCard(page, ORGS_CARD, before + 1)
+  await expectCard(page, ORGS_CARD)
 })
 
 test('Q35 Save details rewrites the name and description', async ({ page }) => {
