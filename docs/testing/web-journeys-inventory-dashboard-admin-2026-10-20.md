@@ -2,7 +2,7 @@
 
 # Web journey inventory: signed-in routes (dashboard, organisation, admin)
 
-Scout output, read-only, 2026-10-20, HEAD cea425f2 on development. Grep + file reads; nothing was run. Shape follows `packages/mobile/tests/journeys.json` and `docs/testing/mobile-journeys-inventory-2026-10-07.md` section 2. Ids are provisional.
+Scout output, read-only, 2026-10-20, HEAD cea425f2 on development. Grep + file reads; nothing was run. Shape follows `scripts/journeys/journeys.json` and `docs/testing/mobile-journeys-inventory-2026-10-07.md` section 2. Ids are provisional.
 
 Seats: **P** member, **L** org leader (`caps.ledOrgs.length>0`), **A** admin (`profiles.role='admin'`). Setter: who can put the data into the state the screen shows (n/a, P, L, A, mobile, none).
 

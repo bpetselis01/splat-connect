@@ -2,7 +2,7 @@
 
 # Web journeys: public and member-facing routes (non-dashboard, non-admin)
 
-Scout read, 2026-10-20, HEAD cea425f2 on development. Nothing in the repo was modified. Format mirrors packages/mobile/tests/journeys.json.
+Scout read, 2026-10-20, HEAD cea425f2 on development. Nothing in the repo was modified. Format mirrors scripts/journeys/journeys.json.
 
 ## Legend
 
