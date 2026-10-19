@@ -57,7 +57,7 @@ describe('IncomingPrintCard, grouped requests', () => {
     expect(screen.getByText('2 other printers were asked — first to accept wins')).toBeTruthy()
   })
 
-  it('preselects the machine that fits and accepts onto the one chosen', async () => {
+  it('WR25 preselects the machine that fits and accepts onto the one chosen', async () => {
     const post = vi.mocked(browserApiClient.post).mockResolvedValue({})
     const machines = [machine('x1c', 'Bambu X1C', { materials: ['PLA'] }), machine('mk4', 'Prusa MK4')]
     render(<IncomingPrintCard tx={orgTx} defaultAddress={null} machines={machines} />)

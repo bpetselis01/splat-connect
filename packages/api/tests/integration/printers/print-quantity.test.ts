@@ -57,7 +57,7 @@ afterAll(async () => {
 })
 
 describe('POST /print quantities', () => {
-  it('R03 stores a quantity per part', async () => {
+  it('R03 WR09 stores a quantity per part', async () => {
     const res = await post({
       printer_ids: [printerId],
       tutorial_id: tutorialId,

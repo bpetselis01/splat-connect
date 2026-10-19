@@ -51,7 +51,7 @@ const as = (u: TestUser, method = 'GET', body?: unknown) => ({
 })
 
 describe('POST /api/saves', () => {
-  it('G06 G08 Y02 WY03 WY08 saves, and saving the same thing twice is not an error', async () => {
+  it('G06 G08 Y02 WY03 WY08 WR07 saves, and saving the same thing twice is not an error', async () => {
     const body = { entity_type: 'tutorial', entity_id: approvedId }
     const first = await app.request('/api/saves', as(owner, 'POST', body))
     expect(first.status).toBe(201)
@@ -165,7 +165,7 @@ describe('GET /api/saves/ids', () => {
 })
 
 describe('DELETE /api/saves/:slug/:id', () => {
-  it('G06 G08 V08 Y02 WD33 WY03 WY08 removes your own save', async () => {
+  it('G06 G08 V08 Y02 WD33 WY03 WY08 WR07 removes your own save', async () => {
     const res = await app.request(`/api/saves/tutorials/${approvedId}`, as(owner, 'DELETE'))
     expect(res.status).toBe(204)
     const { count } = await adminClient()

@@ -7,7 +7,7 @@ vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn(), refresh: 
 vi.mock('@/lib/browser-api-client', () => ({ browserApiClient: { post: vi.fn() } }))
 
 describe('PrinterForm', () => {
-  it('sends the postcode, starting from the profile’s', async () => {
+  it('WR22 sends the postcode, starting from the profile’s', async () => {
     const post = vi.mocked(browserApiClient.post).mockResolvedValue({})
     const { container } = render(<PrinterForm ledOrgs={[]} defaultPostcode="2042" />)
     fireEvent.change(container.querySelector('input[name="name"]')!, { target: { value: 'Garage Bambu' } })

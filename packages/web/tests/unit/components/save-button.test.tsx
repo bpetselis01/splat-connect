@@ -122,4 +122,15 @@ describe('SaveButton', () => {
     expect(push).toHaveBeenCalledWith('/signup?next=%2Flibrary&reason=save')
     expect(post).not.toHaveBeenCalled()
   })
+
+  it('WR07 saves a printable part as entity_type printable_part, and unsaves it through the plural slug', () => {
+    const { unmount } = render(<SaveButton slug="parts" id="stl-1" saved={false} signedIn />)
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    expect(post).toHaveBeenCalledWith('/api/saves', { entity_type: 'printable_part', entity_id: 'stl-1' })
+    unmount()
+
+    render(<SaveButton slug="parts" id="stl-1" saved signedIn />)
+    fireEvent.click(screen.getByRole('button', { name: 'Saved' }))
+    expect(del).toHaveBeenCalledWith('/api/saves/parts/stl-1')
+  })
 })
