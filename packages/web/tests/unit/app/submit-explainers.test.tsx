@@ -17,7 +17,7 @@ describe('submit explainers', () => {
     expect(screen.getByRole('heading', { level: 1, name: /submit an idea/i })).toBeInTheDocument()
   })
 
-  it('sends a signed-out visitor to sign in', async () => {
+  it('WI10 sends a signed-out visitor to sign in, returning to the idea form', async () => {
     mockGetCapabilities.mockResolvedValue(null)
     const { container } = render(await SubmitAnIdea({ searchParams: Promise.resolve({}) }))
     expect(screen.getByRole('link', { name: /sign in/i })).toHaveAttribute(

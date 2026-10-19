@@ -55,7 +55,7 @@ describe('106 idea photo', () => {
   let path: string
   let ideaId: string
 
-  it('C13 uploads into the author’s folder, naming the file from its type, never its filename', async () => {
+  it('C13 WI12 uploads into the author’s folder, naming the file from its type, never its filename', async () => {
     const res = await upload(author)
     expect(res.status).toBe(200)
     const body = (await res.json()) as { path: string; url: string }
@@ -70,7 +70,7 @@ describe('106 idea photo', () => {
     expect(res.status).toBe(400)
   })
 
-  it('C13 keeps the path on the idea and reads it back as a URL, to the author and to an admin', async () => {
+  it('C13 WI12 keeps the path on the idea and reads it back as a URL, to the author and to an admin', async () => {
     const res = await post(author, { title: 'T', summary: 'S', photo_path: path })
     expect(res.status).toBe(201)
     const row = (await res.json()) as { id: string; photo_path: string; photo_url: string }
