@@ -15,7 +15,6 @@ import { describe, it, expect } from 'vitest'
 import app from '../../src/app.js'
 
 const UNTESTED = new Set([
-  'PATCH /api/organizations/:id/pickup',
   'POST /api/exchange-costs/:transactionId/receipt',
   'DELETE /api/tutorials/:id/parts',
   'DELETE /api/tutorials/:id/tools',
