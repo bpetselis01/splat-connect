@@ -1,9 +1,9 @@
-# journeys: Z04
 # DEVICE_EMAIL / DEVICE_PASSWORD come from `maestro test --env`, fed by
 # scripts/provision-device-parent.mjs. Deliberately NOT declared in an `env:`
 # block here: a flow-level `env:` default WINS over --env (measured 2026-07-26 —
 # both flows typed the literal placeholder and failed with "Invalid login
 # credentials"). With no default, an unset variable fails loudly instead.
+name: "Z04 Sign Out ends the session across a cold start"
 appId: com.splatconnect.mobile
 ---
 # Establishes a signed-out precondition at flow start: both flows run in one

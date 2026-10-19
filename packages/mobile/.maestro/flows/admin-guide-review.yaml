@@ -1,4 +1,3 @@
-# journeys: Q18
 # The admin review queue on a phone: the Admin hub, its guide queue, and the
 # review screen's decision buttons, as an account the provisioner made an admin.
 # Nothing is approved or sent back, so the guide stays in the queue for the next
@@ -9,6 +8,7 @@
 # DEVICE_EMAIL, DEVICE_PASSWORD and DEVICE_REVIEW_GUIDE_TITLE come from
 # `maestro test --env`, fed by scripts/provision-device-parent.mjs (see
 # sign-out-clears-session.yaml for why they carry no env: defaults here).
+name: "Q18 Admin opens the guide review queue and a guide's decision screen"
 appId: com.splatconnect.mobile
 ---
 - clearState
