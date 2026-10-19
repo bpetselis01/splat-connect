@@ -98,7 +98,7 @@ describe('108 idea anonymous', () => {
 })
 
 describe('108 the thread still works without author_id (is_idea_author)', () => {
-  it('C03 C04 C05 lets a maker join, both post and read, and the author remove them', async () => {
+  it('C03 C04 C05 WI16 WI17 WI19 lets a maker join, both post and read, and the author remove them', async () => {
     expect((await as(maker, `/api/ideas/${ideaId}/join`, { method: 'POST', body: {} })).status).toBe(201)
     // The join notification still reaches the hidden author.
     const { data: note } = await adminClient()

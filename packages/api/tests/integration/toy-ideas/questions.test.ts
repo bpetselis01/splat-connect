@@ -90,7 +90,7 @@ describe('POST /api/ideas/:id/answer', () => {
     expect((await post(`/api/ideas/${questionId}/answer`, asker, { message_id: crypto.randomUUID() })).status).toBe(404)
   })
 
-  it('C06 marks a reply, shows as answered publicly, then clears with null', async () => {
+  it('C06 WI18 marks a reply, shows as answered publicly, then clears with null', async () => {
     const res = await post(`/api/ideas/${questionId}/answer`, asker, { message_id: replyId })
     expect(res.status).toBe(200)
     const detail = (await (await app.request(`/api/public/challenges/${questionId}`)).json()) as Record<string, unknown>

@@ -37,6 +37,24 @@ describe('POST /api/agreements', () => {
     expect(row.user_id).toBe(user.id)
   })
 
+  it('WN05 records the organisation leader terms at their own server-chosen version', async () => {
+    const leader = await createTestUser('contributor')
+    try {
+      const res = await app.request('/api/agreements', authed(leader.token, {
+        method: 'POST',
+        body: JSON.stringify({ agreement_type: 'org_leader_terms', version: 'v99-forged' }),
+      }))
+      expect(res.status).toBe(201)
+      const row = (await res.json()) as { user_id: string; agreement_type: string; version: string }
+      expect(row).toMatchObject({ user_id: leader.id, agreement_type: 'org_leader_terms', version: AGREEMENT_VERSIONS.org_leader_terms })
+      const { data } = await adminClient().from('user_agreements').select('version').eq('user_id', leader.id).eq('agreement_type', 'org_leader_terms')
+      expect(data).toEqual([{ version: AGREEMENT_VERSIONS.org_leader_terms }])
+    } finally {
+      await adminClient().from('user_agreements').delete().eq('user_id', leader.id)
+      await deleteTestUser(leader.id)
+    }
+  })
+
   it('refuses an unknown agreement type', async () => {
     const res = await app.request('/api/agreements', authed(user.token, {
       method: 'POST',

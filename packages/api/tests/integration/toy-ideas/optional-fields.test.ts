@@ -37,7 +37,7 @@ describe('103 idea optional fields', () => {
     expect(data).toMatchObject({ description: null, intended_use: null, primary_user: null })
   })
 
-  it('C12 takes an idea with only a title and a summary, and stores a blank why-it-matters as nothing', async () => {
+  it('C12 WI11 takes an idea with only a title and a summary, and stores a blank why-it-matters as nothing', async () => {
     const res = await post({ title: '  Bubble machine  ', summary: 'One switch.', description: '   ' })
     expect(res.status).toBe(201)
     const row = (await res.json()) as { id: string; title: string; description: string | null }

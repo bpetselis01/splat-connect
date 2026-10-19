@@ -9,6 +9,7 @@ import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../.
 let author: TestUser
 let saver: TestUser
 let contributorSaver: TestUser
+let follower: TestUser
 let admin: TestUser
 let ideaId: string
 let tutorialId: string
@@ -30,8 +31,8 @@ const approve = (status: string) =>
   })
 
 beforeAll(async () => {
-  ;[author, saver, contributorSaver, admin] = await Promise.all([
-    createTestUser('contributor'), createTestUser('contributor'), createTestUser('contributor'), createTestUser('admin'),
+  ;[author, saver, contributorSaver, follower, admin] = await Promise.all([
+    createTestUser('contributor'), createTestUser('contributor'), createTestUser('contributor'), createTestUser('contributor'), createTestUser('admin'),
   ])
   const db = adminClient()
   tutorialId = (await db.from('tutorials').insert({ title: 'Bubble guide', description: 'D', difficulty: 'easy', status: 'pending' }).select('id').single()).data!.id
@@ -51,7 +52,7 @@ afterAll(async () => {
   await db.from('toy_ideas').delete().eq('id', ideaId)
   await db.from('notifications').delete().eq('tutorial_id', tutorialId)
   await db.from('tutorials').delete().eq('id', tutorialId)
-  await Promise.all([author, saver, contributorSaver, admin].map((u) => deleteTestUser(u.id)))
+  await Promise.all([author, saver, contributorSaver, follower, admin].map((u) => deleteTestUser(u.id)))
 })
 
 describe('109 challenge guide published', () => {
@@ -60,7 +61,27 @@ describe('109 challenge guide published', () => {
     expect(((await res.json()) as { id: string }[]).map((c) => c.id)).toContain(ideaId)
   })
 
-  it('tells the saver once the guide is approved, and not the contributor who saved it', async () => {
+  it('WI15 WI21 saves a challenge through POST /api/saves, counts it on the brief, and DELETE takes it back', async () => {
+    const as = (method: string, path: string, body?: unknown) =>
+      app.request(path, {
+        method,
+        headers: { Authorization: `Bearer ${follower.token}`, 'Content-Type': 'application/json' },
+        body: body === undefined ? undefined : JSON.stringify(body),
+      })
+    const saveCount = async () =>
+      ((await (await app.request(`/api/public/challenges/${ideaId}`)).json()) as { save_count: number }).save_count
+
+    expect(await saveCount()).toBe(2)
+    expect((await as('POST', '/api/saves', { entity_type: 'challenge', entity_id: ideaId })).status).toBe(201)
+    const { data: row } = await adminClient().from('saves').select('profile_id, entity_type').eq('entity_id', ideaId).eq('profile_id', follower.id)
+    expect(row).toEqual([{ profile_id: follower.id, entity_type: 'challenge' }])
+    expect(await saveCount()).toBe(3)
+
+    expect((await as('DELETE', `/api/saves/challenges/${ideaId}`)).status).toBe(204)
+    expect(await saveCount()).toBe(2)
+  })
+
+  it('WI21 tells the saver once the guide is approved, and not the contributor who saved it', async () => {
     expect((await approve('approved')).status).toBe(200)
     expect(await told(saver)).toEqual([expect.objectContaining({ tutorial_title: 'Bubble guide' })])
     expect(await told(contributorSaver)).toEqual([])

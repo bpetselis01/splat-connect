@@ -71,7 +71,7 @@ afterAll(async () => {
 })
 
 describe('GET /api/toy-transactions/builds-board', () => {
-  it('K01 lists a claimed board build under Live with its maker, and never the family', async () => {
+  it('K01 WI24 lists a claimed board build under Live with its maker, and never the family', async () => {
     const res = await board(onlooker, 'tab=live')
     expect(res.status).toBe(200)
     const text = await res.text()
@@ -97,7 +97,7 @@ describe('GET /api/toy-transactions/builds-board', () => {
     expect(forFamily).toMatchObject({ party: true, mine: true, ...own })
   })
 
-  it('K01 lists a handed-over board build under Done with the guide, maker and date only', async () => {
+  it('K01 WI24 lists a handed-over board build under Done with the guide, maker and date only', async () => {
     const res = await board(onlooker, 'tab=done')
     const text = await res.text()
     const rows = (JSON.parse(text) as Row[]).filter((r) => r.maker_name === MAKER)

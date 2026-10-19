@@ -63,7 +63,7 @@ afterAll(async () => {
 })
 
 describe('asking for a build (K05)', () => {
-  it('a directed ask tells the maker, naming the guide', async () => {
+  it('WI28 a directed ask tells the maker, naming the guide', async () => {
     const id = await askMaker()
     expect(await notesAbout(maker.id, id)).toEqual([
       { recipient_id: maker.id, type: 'toy_request', toy_transaction_id: id, toy_name: TITLE, actor_name: 'Fern Family', body: null },
@@ -71,7 +71,7 @@ describe('asking for a build (K05)', () => {
     await post(`/${id}/withdraw`, family.token)
   })
 
-  it('K05 an open post on Makers wanted tells nobody: the board is the notice', async () => {
+  it('K05 WI26 an open post on Makers wanted tells nobody: the board is the notice', async () => {
     const id = await postOpen()
     const { data } = await adminClient().from('notifications').select('id').eq('toy_transaction_id', id)
     expect(data).toEqual([])
@@ -82,7 +82,7 @@ describe('asking for a build (K05)', () => {
 })
 
 describe('taking a build on (K02, K04, K06)', () => {
-  it('K02 claiming an open post tells the family, in the maker’s name', async () => {
+  it('K02 WI25 claiming an open post tells the family, in the maker’s name', async () => {
     const id = await postOpen()
     expect((await post(`/${id}/claim`, maker.token)).status).toBe(200)
     expect(await notesAbout(family.id, id)).toEqual([

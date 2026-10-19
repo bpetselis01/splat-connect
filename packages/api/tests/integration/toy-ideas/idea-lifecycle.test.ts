@@ -36,7 +36,7 @@ afterAll(async () => {
 })
 
 describe('GET /api/public/challenges', () => {
-  it('C01 lists published challenges and never pending ones', async () => {
+  it('C01 WI13 lists published challenges and never pending ones', async () => {
     const res = await app.request('/api/public/challenges')
     const body = (await res.json()) as { id: string }[]
     expect(body.some((i) => i.id === publishedId)).toBe(true)

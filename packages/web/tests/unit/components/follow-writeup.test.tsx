@@ -8,7 +8,7 @@ vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }))
 vi.mock('@/lib/browser-api-client', () => ({ browserApiClient: { post: vi.fn() } }))
 
 describe('FollowWriteup', () => {
-  it('saves the challenge and says what happens next, on the page', async () => {
+  it('WI21 saves the challenge and says what happens next, on the page', async () => {
     vi.mocked(browserApiClient.post).mockResolvedValue(undefined)
     render(<FollowWriteup id="c1" signedIn next="/get-involved/design-challenges/c1" />)
     fireEvent.click(screen.getByRole('button', { name: 'Follow the write-up' }))

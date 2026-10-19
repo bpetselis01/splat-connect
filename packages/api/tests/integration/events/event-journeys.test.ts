@@ -110,7 +110,7 @@ describe('the event detail, registering and cancelling', () => {
     await admin.from('org_events').update({ cancelled_at: null }).eq('id', freeEventId)
   })
 
-  it('V11 WD27 registers with empty answers, raises the going count and lists it under My events', async () => {
+  it('V11 WD27 WI31 registers with empty answers, raises the going count and lists it under My events', async () => {
     const res = await app.request(`/api/events/${freeEventId}/registrations`, send(family.token, 'POST', { name: 'Priya Nair', email: 'priya@example.com', answers: {} }))
     expect(res.status).toBe(201)
     expect(await res.json()).toMatchObject({ event_id: freeEventId, user_id: family.id, name: 'Priya Nair', email: 'priya@example.com', answers: {}, cancelled_at: null })
@@ -118,7 +118,7 @@ describe('the event detail, registering and cancelling', () => {
     expect(await mine(family.token)).toContain(freeEventId)
   })
 
-  it('V13 WD26 cancelling stamps cancelled_at, drops the going count and leaves My events', async () => {
+  it('V13 WD26 WI32 cancelling stamps cancelled_at, drops the going count and leaves My events', async () => {
     const res = await app.request(`/api/events/${freeEventId}/registrations`, { method: 'DELETE', ...authed(family.token) })
     expect(res.status).toBe(200)
     const { data } = await adminClient().from('org_event_registrations').select('cancelled_at').eq('event_id', freeEventId).eq('user_id', family.id).single()
@@ -129,7 +129,7 @@ describe('the event detail, registering and cancelling', () => {
     expect(again.status).toBe(404)
   })
 
-  it('V16 a costed event is confirmed only with the cost acknowledged and the organiser question answered', async () => {
+  it('V16 WI35 a costed event is confirmed only with the cost acknowledged and the organiser question answered', async () => {
     const body = { name: 'Priya Nair', email: 'priya@example.com', answers: { [questionId]: 'Light-up penguin' } }
     const unacknowledged = await app.request(`/api/events/${costedEventId}/registrations`, send(family.token, 'POST', body))
     expect(unacknowledged.status).toBe(400)
@@ -145,7 +145,7 @@ describe('the event detail, registering and cancelling', () => {
     expect(await mine(family.token)).toContain(costedEventId)
   })
 
-  it('V16 a full event answers with the server sentence and stores nothing', async () => {
+  it('V16 WI35 a full event answers with the server sentence and stores nothing', async () => {
     const admin = adminClient()
     await admin.from('org_events').update({ capacity: 1 }).eq('id', freeEventId)
     await admin.from('org_event_registrations').insert({ event_id: freeEventId, user_id: second.id, name: 'Sam Lee', email: 's@example.com' })
@@ -160,7 +160,7 @@ describe('the event detail, registering and cancelling', () => {
 describe('part requests at an event', () => {
   let txId: string
 
-  it('V17 sending a request stores the part request with its files and tells the host', async () => {
+  it('V17 WI34 sending a request stores the part request with its files and tells the host', async () => {
     const res = await app.request('/api/toy-transactions/print-at-event', send(family.token, 'POST', {
       event_id: printEventId, tutorial_id: guideId, stl_file_ids: partIds, part_sets: 2, note: 'Blue if you can',
     }))

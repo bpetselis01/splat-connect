@@ -61,7 +61,7 @@ describe('organisation detail', () => {
   //        authMiddleware, so this page cannot render anything for them itself —
   //        it must redirect, and a signed-in non-leader gets the same redirect
   //        rather than a page missing its workspace
-  it('redirects a non-leader to the public profile', async () => {
+  it('WN04 redirects a non-leader to the public profile', async () => {
     get.mockImplementation(route([]))
     const { default: Page } = await import('@/app/organizations/[id]/page')
 
@@ -70,7 +70,7 @@ describe('organisation detail', () => {
     ).rejects.toThrow('REDIRECT:/organizations/o1/public')
   })
 
-  it('adds the workspace for a leader of it', async () => {
+  it('WN04 adds the workspace for a leader of it', async () => {
     get.mockImplementation(route([theOrg]))
     const { default: Page } = await import('@/app/organizations/[id]/page')
     render(await Page({ params: Promise.resolve({ id: 'o1' }) }))

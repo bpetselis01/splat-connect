@@ -187,7 +187,7 @@ describe('the profile, doors and breakdown', () => {
 })
 
 describe('say thanks', () => {
-  it('P04 takes one thanks per person, and tells the leaders', async () => {
+  it('P04 WN09 takes one thanks per person, and tells the leaders', async () => {
     const first = await app.request(
       `/api/organizations/${orgId}/thanks`,
       json(family.token, 'POST', { note: 'The switch clinic changed our Thursdays.', byline: 'Sam', show_note: true })
@@ -242,7 +242,7 @@ describe('say thanks', () => {
 describe('message', () => {
   let conversationId: string
 
-  it('P10 WD35 opens one conversation per person and tells every leader', async () => {
+  it('P10 WD35 WN12 opens one conversation per person and tells every leader', async () => {
     const first = await app.request(
       `/api/organizations/${orgId}/conversations/mine/messages`,
       json(family.token, 'POST', { body: 'Can we come on Thursday?' })
@@ -292,7 +292,7 @@ describe('message', () => {
 })
 
 describe('follow', () => {
-  it('P02 WB16 WB19 WB26 tells followers once when the org publishes an event or a story', async () => {
+  it('P02 WB16 WB19 WB26 WN07 tells followers once when the org publishes an event or a story', async () => {
     expect((await app.request(`/api/organizations/${orgId}/follow`, json(family.token, 'POST'))).status).toBe(200)
     const me = (await (await app.request(`/api/organizations/${orgId}/me`, get(family.token))).json()) as {
       following: boolean
@@ -354,5 +354,7 @@ describe('follow', () => {
     expect(pub.follower_count).toBe(1)
 
     expect((await app.request(`/api/organizations/${orgId}/follow`, json(family.token, 'DELETE'))).status).toBe(200)
+    const after = (await (await app.request(`/api/organizations/${orgId}/me`, get(family.token))).json()) as { following: boolean }
+    expect(after.following).toBe(false)
   })
 })

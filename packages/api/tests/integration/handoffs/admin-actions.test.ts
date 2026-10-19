@@ -65,7 +65,7 @@ afterAll(async () => {
 })
 
 describe('an idea reviewed on the web, as the phone reads it', () => {
-  it('C12/C01: pending until approved, then on /ideas/mine and the public challenge list, with a notification', async () => {
+  it('C12/C01 WI11: pending until approved, then on /ideas/mine and the public challenge list, with a notification', async () => {
     const id = await submit('Approved idea')
     expect((await mineIdeas()).find((i) => i.id === id)!.status).toBe('pending')
     expect((await get<Idea[]>('/api/public/challenges')).some((i) => i.id === id)).toBe(false)

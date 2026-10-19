@@ -90,7 +90,7 @@ describe('posting to the board', () => {
     expect(res.status).toBe(400)
   })
 
-  it('posts one with no maker at all', async () => {
+  it('WI26 posts one with no maker at all', async () => {
     const res = await app.request('/api/toy-transactions/build', json(family.token, 'POST', ask({ child_label: 'Leo, 3' })))
     expect(res.status).toBe(201)
     // A child_label in the body is ignored, and the response carries no name.
@@ -128,7 +128,7 @@ describe('posting to the board', () => {
 })
 
 describe('the board', () => {
-  it('K01 lists the open request without the requester', async () => {
+  it('K01 WI24 lists the open request without the requester', async () => {
     const res = await app.request('/api/toy-transactions/open-builds', authed(makerA.token))
     expect(res.status).toBe(200)
     const rows = (await res.json()) as Array<Record<string, unknown>>
@@ -191,7 +191,7 @@ describe('claiming', () => {
   //        makers in the same second resolve to one winner rather than to
   //        whoever wrote last — which would silently hand the family a
   //        different maker from the one they were told about.
-  it('K02 gives the request to exactly one of two simultaneous claims', async () => {
+  it('K02 WI25 gives the request to exactly one of two simultaneous claims', async () => {
     const [a, b] = await Promise.all([
       app.request(`/api/toy-transactions/${openId}/claim`, json(makerA.token, 'POST', {})),
       app.request(`/api/toy-transactions/${openId}/claim`, json(makerB.token, 'POST', {})),
@@ -213,7 +213,7 @@ describe('claiming', () => {
     expect(data!.requester_code).toBeTruthy()
   })
 
-  it('K01 drops off the board once claimed', async () => {
+  it('K01 WI24 drops off the board once claimed', async () => {
     const rows = (await (
       await app.request('/api/toy-transactions/open-builds', authed(makerB.token))
     ).json()) as Array<{ id: string }>
