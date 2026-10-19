@@ -1,7 +1,10 @@
 import { type Locator, type Page } from '@playwright/test'
 import { PASSWORD, adminClient, createOrg, addLeader, uniqueEmail, uniqueTitle } from '../../../../supabase/e2e-seed'
 
-export * from '../../../../supabase/e2e-seed'
+export {
+  PASSWORD, acceptTerms, addLeader, adminClient, createAdmin, createEvent, createNotification, createOrg,
+  makeLeader, uniqueEmail, uniqueTitle, type EventQuestion,
+} from '../../../../supabase/e2e-seed'
 
 /** Unique contributor email per invocation so runs don't collide (CI does `supabase db reset`). */
 export function uniqueContributorEmail() {
