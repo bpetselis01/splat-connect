@@ -203,6 +203,13 @@ test('WR19 WR23 WR24 WR25 WR26 WR27 a printer answers requests from Print for ot
     await expect(printer.page.getByRole('listitem').filter({ hasText: refusedTitle })).toHaveCount(0)
     await unreadIs(family.page, 1)
     await inboxRow(family.page, /Pat Printer declined your request/)
+    const refusedId = refusedJob.split('/').pop()!
+    expect((await adminClient().from('toy_transactions').select('status, decline_reason').eq('id', refusedId).single()).data).toEqual({
+      status: 'rejected',
+      decline_reason: 'Too big for my bed',
+    })
+    const { data: told } = await adminClient().from('notifications').select('body').eq('toy_transaction_id', refusedId).eq('type', 'toy_rejected')
+    expect(told).toEqual([{ body: expect.stringContaining('Too big for my bed') }])
     await family.page.goto(refusedJob)
     await expect(family.page.getByLabel('Progress', { exact: true }).getByText('Too big for my bed')).toBeVisible()
 
