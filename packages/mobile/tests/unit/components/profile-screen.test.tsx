@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+=======
+import { AGREEMENT_VERSIONS } from '@splat-connect/types'
+// journeys: Z01 Z02 Z04 Z10
+>>>>>>> 9c2fea05 (test: read agreement versions from AGREEMENT_VERSIONS, not a literal)
 import { CLEARANCE, scrollPaddings } from '../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { Linking } from 'react-native'
@@ -165,12 +170,12 @@ describe('ProfileScreen', () => {
     it('shows when the contributor terms were accepted', async () => {
       mockUseAuth.mockReturnValue(auth({}))
       mockGet.mockResolvedValue([
-        { id: 'a1', user_id: 'u1', agreement_type: 'contributor_terms', version: 'v0-todo', accepted_at: '2026-08-12T00:00:00Z' },
+        { id: 'a1', user_id: 'u1', agreement_type: 'contributor_terms', version: AGREEMENT_VERSIONS.contributor_terms, accepted_at: '2026-08-12T00:00:00Z' },
       ])
       render(<ProfileScreen />)
 
       expect(
-        await screen.findByText('Contributor terms · accepted v0-todo · 12 Aug 2026')
+        await screen.findByText(`Contributor terms · accepted ${AGREEMENT_VERSIONS.contributor_terms} · 12 Aug 2026`)
       ).toBeTruthy()
     })
   })
