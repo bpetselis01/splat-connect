@@ -86,6 +86,30 @@ describe('the profile, doors and breakdown', () => {
     expect(bad.status).toBe(400)
   })
 
+  it('stores only http(s) website URLs, so the public page never renders a javascript: href', async () => {
+    const patch = (website_url: string) =>
+      app.request(`/api/organizations/${orgId}/profile`, json(leader.token, 'PATCH', { website_url }))
+    const stored = async () =>
+      (await adminClient().from('organizations').select('website_url').eq('id', orgId).single()).data
+        ?.website_url
+
+    expect((await patch('https://example.org')).status).toBe(200)
+    expect(await stored()).toBe('https://example.org')
+
+    expect((await patch('HTTPS://EXAMPLE.ORG')).status).toBe(200)
+    expect(await stored()).toBe('HTTPS://EXAMPLE.ORG')
+
+    expect((await patch('')).status).toBe(200)
+    expect(await stored()).toBeNull()
+
+    const bad = await patch('javascript:alert(1)')
+    expect(bad.status).toBe(400)
+    expect(((await bad.json()) as { error: string }).error).toBe('website_url must start with http:// or https://')
+
+    expect((await patch('example.org')).status).toBe(400)
+    expect(await stored()).toBeNull()
+  })
+
   it('never lets a leader set verified_at — only the admin route does', async () => {
     // Through the API: the field is not on the allowlist, so it is ignored.
     await app.request(

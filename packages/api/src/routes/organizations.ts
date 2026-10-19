@@ -351,6 +351,11 @@ organizations.patch('/:id/profile', async (c) => {
     if (problem) return c.json({ error: problem }, 400)
   }
 
+  // The public page renders this as an href, so a javascript: URL must never be stored.
+  if (typeof patch.website_url === 'string' && !/^https?:\/\//i.test(patch.website_url)) {
+    return c.json({ error: 'website_url must start with http:// or https://' }, 400)
+  }
+
   // A name change is a real change of identity for a badge that appears on
   // other people's guides, so it is bounded but allowed — a leader correcting a
   // typo should not have to ask an admin.
