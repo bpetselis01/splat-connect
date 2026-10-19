@@ -19,24 +19,30 @@ scripts/journeys/legacy-file-tags.json   ratchet A: files still on file-level ta
 scripts/journeys/routes-without-journeys.json  ratchet B: routes with no row, each with a reason (shrinks to the real opt-outs)
 ```
 
-A journey id is `[A-Z]\d{2}` (mobile, unchanged) or `W[A-Z]\d{2}` (web). A test case claims a journey by putting the id first in its title: `test('WD03 accept a build request', …)`, `it('G09 …')`, Maestro `name: "A14 deep link cold start"`. A file-level `// journeys: (none — reason)` opts a file out. The checker reads titles with one regex per runner (`(test|it)\(\s*['"\`]`, `name:` for YAML); it never executes tests.
+A journey id is `[A-Z]\d{2}` (mobile, unchanged) or `W[A-Z]\d{2}` (web). A test case claims a journey by putting the id first in its title (Playwright `@tags` may come before it): `test('WD03 accept a build request', …)`, `it('G09 G10 thank and note')`, `it.each(rows)('G09 %s')`, Maestro `name: "A14 deep link cold start"`. A file-level `// journeys: (none — reason)` opts a file out. The checker reads titles with a TypeScript AST walk (`ts.createSourceFile`, `typescript` is already a root devDependency): every `CallExpression` whose callee is `test`/`it` or `test.each(...)`/`it.each(...)`/`test.only`, with a static string or no-substitution template as its first argument. `describe` titles do not count; `.skip`/`.fixme`/`.todo` contribute nothing; comments and strings inside fixtures are invisible to the walk; a dynamic id (`` `${id} …` ``) is an error. YAML flows: the top-level `name:` only. It never executes tests.
 
-Layers: `web-unit` (`packages/web/tests/unit/**/*.test.{ts,tsx}`), `web-e2e` (`packages/web/tests/e2e/**/*.spec.ts`), `mobile-unit`, `mobile-e2e`, `api` (`packages/api/tests/**/*.test.ts`, shared by platform), `device` (`packages/mobile/.maestro/flows/*.yaml`). A row's `platform` decides which unit/e2e layers its `required` may name.
+Layers: `web-unit` (`packages/web/tests/unit/**/*.test.{ts,tsx}`), `web-e2e` (`packages/web/tests/e2e/**/*.spec.ts`), `mobile-unit`, `mobile-e2e`, `api` (`packages/api/tests/integration/**/*.test.ts` only — unit tests mock Supabase and cannot prove a journey; no api tag sits on a unit test today, so this costs nothing), `device` (`packages/mobile/.maestro/flows/*.yaml`). A row's `platform` decides which unit/e2e layers its `required` may name.
 
-Row `kind` drives the R8 lint: `static` → unit; `nav` → unit + e2e; `write` → unit + e2e + api; `notifies`/`counts` non-empty → api required; `device: true` → device required.
+Row fields added in U1: `platform`, `route`, `kind`, `device` (boolean). `kind` drives the R8 lint: `static` → unit; `nav` → unit + e2e; `write` → unit + e2e + api; `notifies`/`counts` non-empty → api required; `device: true` → device required. Rows are kept sorted by id, one per line, so two branches adding rows rarely conflict.
 
-Both ratchets start full (every tagged file is legacy; every route without a row is listed) so CI stays green from Unit 1, and each later unit shrinks them. The final unit deletes the ratchets and the legacy parser.
+The rendered doc opens with a header line `Gaps: N · Waived: N · Legacy-tagged files: N · Routes without rows: N`, then a summary table (platform / screen group → rows, gaps, waived), then one table per group. A group with no gaps renders as one line; a platform with no rows fails the renderer.
+
+Both ratchets start full (every tagged file is legacy; every route without a row is listed with a `TODO:` reason) so CI stays green from Unit 1, and each later unit shrinks them. The final unit deletes the ratchets and the legacy parser.
+
+Seed helpers that touch no `Page` (admin client, users, orgs, leaders, events, notifications, guides) live in one Playwright-free module both e2e suites and the device provisioner import (U7b), the way both Playwright configs already share `supabase/local-dev-keys.ts`.
 
 Seat vocabulary: anon, P (Member), L (org leader), A (admin). Content vocabulary per `CONTEXT.md` (Guide, Toy, Exchange: Gift/Swap/Build/Print, Idea/Challenge, Member/Family/Maker).
 
 ## Dependency graph
 
 ```
-U1 → U2 → U3 → U4 ─┬→ U8 (mobile rebase) → U9a, U9b, U9c, U10, U11
+U1 → U2 → U3 → U4 ─┬→ U8 (mobile rebase) → U9a, U9b, U9c, U10 → U11 (device)
                    ├→ U12 … U19 (web groups, independent of each other)
                    ├→ U21 (verify-plan)
-U5a, U5b, U6, U7 (api + register) have no dependencies
-U12…U19 + U9* → U20 (notifications & counts matrix) → U22 (CI budget) → U23 (close ratchets)
+U5a → U5b; U6; U7; U7b (shared seed helpers) have no dependencies
+U7b → U9a, U9b, U9c, U15, U16, U17, U18
+U14 (first web group) → U22 (CI budget, measured early)
+U12…U19 + U9* → U20 (notifications & counts matrix) → U23 (close ratchets)
 ```
 
 Branch `journey-coverage` off `development`. One commit per fix (a row set, a spec, a ratchet shrink), never one per unit.
@@ -52,9 +58,9 @@ Branch `journey-coverage` off `development`. One commit per fix (a row set, a sp
 **Dependencies:** none
 
 **Files:**
-- `scripts/journeys/journeys.json` — moved from `packages/mobile/tests/journeys.json`; every row gains `platform: "mobile"`, `route` (its `packages/mobile/app` path, e.g. `(my)/toys/[id]/index`), `kind` (`static` | `nav` | `write`)
-- `scripts/journeys/lib.mjs` — `LAYERS` becomes the six above; `coverage()` checks `required` names only layers legal for the row's platform (plus `api`, `device`)
-- `scripts/journeys/check.mjs`, `scripts/journeys/render.mjs` — new paths; doc renders grouped by platform then screen
+- `scripts/journeys/journeys.json` — moved from `packages/mobile/tests/journeys.json`; every row gains `platform: "mobile"`, `route` (its `packages/mobile/app` path, e.g. `(my)/toys/[id]/index`), `kind` (`static` | `nav` | `write`), `device` (true for the 13 rows that require the device layer today)
+- `scripts/journeys/lib.mjs` — `LAYERS` becomes the six above (`api` narrowed to `tests/integration`); `coverage()` checks `required` names only layers legal for the row's platform (plus `api`, `device`); `validateRows()` rejects a missing `platform`/`route`/`kind`, an unknown `kind`, an unknown layer, a duplicate id
+- `scripts/journeys/check.mjs`, `scripts/journeys/render.mjs` — new paths; header line with the four counts, summary table, one table per platform/screen group, one-line groups when gap-free; a platform with no rows fails
 - `scripts/journeys/check.test.mjs` — tests for the platform/layer rule and the new doc shape
 - `docs/testing/journeys.md` — replaces `docs/testing/mobile-journeys.md` (deleted)
 - `docs/testing/journey-coverage-rule.md` — the R6 rule: what "covered" means per layer, with one good and one bad example per layer
@@ -66,9 +72,9 @@ Branch `journey-coverage` off `development`. One commit per fix (a row set, a sp
 
 **Test scenarios:**
 - [ ] Happy path: `pnpm test:journeys` passes with 253 rows, 0 gaps, 1 waiver, identical cells to before the move
-- [ ] Nil/empty: a row with no `platform` fails the checker with the row id
-- [ ] Error path: a mobile row requiring `web-e2e` fails with "layer not legal for platform"
-- [ ] Edge case: `render.mjs --write` output is byte-stable across two runs (sorted by platform, then id)
+- [ ] Nil/empty: a row missing `platform`, `route` or `kind` fails the checker with the row id and the field; a platform with no rows fails the renderer
+- [ ] Error path: a mobile row requiring `web-e2e` (and a web row requiring `mobile-unit`) fails with "layer not legal for platform"; an unknown `kind`, an unknown layer and a duplicate id each fail by name
+- [ ] Edge case: `render.mjs --write` output is byte-stable across two runs (sorted by platform, then id); a `|` or non-ASCII in element text renders escaped; a gap-free group renders as one line
 
 **Verification:** CI `check` job green; `docs/testing/journeys.md` exists, `mobile-journeys.md` is gone; `git grep "packages/mobile/tests/journeys.json"` returns nothing.
 
@@ -85,20 +91,21 @@ Branch `journey-coverage` off `development`. One commit per fix (a row set, a sp
 **Dependencies:** U1
 
 **Files:**
-- `scripts/journeys/lib.mjs` — `parseTitles(text, runner)` for vitest/jest (`(test|it)\(`), Playwright (`test(`), Maestro (`name:`); `parseTags` keeps the file-level line but only for files in the legacy list or with a `(none — …)` opt-out
-- `scripts/journeys/legacy-file-tags.json` — generated once: every file that carries a `journeys:` line today (≈ 480 across four layers)
-- `scripts/journeys/check.mjs` — a file-level tag on a file NOT in the legacy list is "malformed: file-level tag; put the id in the test title"
+- `scripts/journeys/titles.mjs` — `parseTitles(source, kind)`: TypeScript AST walk for `.ts`/`.tsx` (jest, vitest, Playwright), YAML top-level `name:` for Maestro; returns `{ ids, errors }`
+- `scripts/journeys/lib.mjs` — `parseTags` keeps the file-level line but only for files in the legacy list or with a `(none — reason)` opt-out; a file with title ids AND a file-level tag is malformed ("remove the file-level line")
+- `scripts/journeys/legacy-file-tags.json` — generated once: every file that carries a `journeys:` line today (395: 183 mobile-unit, 77 mobile-e2e, 122 api, 13 Maestro; web has none)
+- `scripts/journeys/check.mjs` — a file-level tag on a file NOT in the legacy list is "malformed: file-level tag; put the id in the test title"; prints "legacy file-level tags: N" every run
 - `scripts/journeys/check.test.mjs` — title parsing for each runner, legacy-list behaviour, id regex `^W?[A-Z]\d{2}$`
 
-**Approach:** Title regex per runner, first token of the title must be the id (`'WD03 …'`); several ids allowed space-separated before the first lowercase word (`'G09 G10 thank and note'`). Describe blocks do not count (too coarse). The legacy list is written by a throwaway script and committed; from then on it only shrinks.
+**Approach:** AST, not regex — 84 mobile unit files, 11 web and 15 api use `it.each(...)('title')`, and a regex would also count commented-out and `.skip` tests. Ids are the leading tokens of a static title (`'WD03 …'`, `'G09 G10 thank and note'`); Playwright `@tag` tokens may precede them. A title whose first word looks like an id but is not one (`'A11y labels'`) is not an id because the regex is anchored to a whole token. Describe blocks do not count (too coarse). Migration is all-or-nothing per file: the moment a file has a title id, its file-level line must go. The legacy list is written by a throwaway script and committed; from then on it only shrinks.
 
 **Patterns:** `route-coverage.test.ts` UNTESTED ratchet: a list that predates the guard, "when one gains a test, delete it from the list (the second test insists)". Copy its two-test shape: one test that the list is honoured, one that every entry is still needed.
 
 **Test scenarios:**
-- [ ] Happy path: `test('WD03 accepts', …)` covers WD03 at `web-e2e`
-- [ ] Nil/empty: a title with no id contributes nothing and is not an error
-- [ ] Error path: a new file with `// journeys: A01` and no legacy entry → malformed
-- [ ] Edge case: a legacy entry for a file whose file-level tag has been removed → "stale legacy entry, delete it"
+- [ ] Happy path: `test('WD03 accepts', …)`, `it.each(rows)('G09 %s')` (single-line and table form), `test.only('…')`, a `.tsx` file with JSX, and `'@responsive WD03 …'` each cover their id; `'G09 G10 thank and note'` covers both
+- [ ] Nil/empty: a title with no id contributes nothing and is not an error; `'A11y labels'`, `'G091 …'` and a lower-case `'g09 …'` are not ids; `.skip`/`.fixme`/`.todo`, a commented-out test, a `describe` title and a title inside a string fixture all contribute nothing
+- [ ] Error path: a new file with `// journeys: A01` and no legacy entry → malformed; a file with both title ids and a file-level line → malformed; a duplicate id in one title → error; a dynamic id (`` `${id} …` ``) → error; a mobile id in a `web-e2e` file → "wrong platform"; an opt-out with an empty reason → malformed; an invalid or duplicate entry in the legacy JSON → clear error
+- [ ] Edge case: a legacy entry for a file whose file-level tag has been removed, or whose file no longer exists → "stale legacy entry, delete it"; a Maestro flow with `name:` inside a step body but none at top level → contributes nothing and is listed; a flow with two ids in `name:` covers both; the legacy count appears in the output
 
 **Verification:** `pnpm test:journeys` still 0 gaps (legacy list keeps every cell green); the checker reports "legacy file-level tags: N files" on every run.
 
@@ -115,20 +122,20 @@ Branch `journey-coverage` off `development`. One commit per fix (a row set, a sp
 **Dependencies:** U1
 
 **Files:**
-- `scripts/journeys/lib.mjs` — `routeTripwire(rows, routes, optOuts)`; route discovery: `packages/web/app/**/page.tsx` → `/path/[param]` (strip `(group)` segments); `packages/mobile/app/**/*.tsx` → `(group)/path/[param]` (skip `_layout.tsx`)
-- `scripts/journeys/routes-without-journeys.json` — `{ "route": "reason" }`; generated once with every web route (134) and every mobile route with no `route` match, reason `"not yet inventoried (journey-coverage plan)"`
-- `scripts/journeys/check.mjs` — prints the tripwire count; fails on a route with no row and no entry, and on an entry whose route no longer exists
+- `scripts/journeys/lib.mjs` — `routeTripwire(rows, routes, optOuts)`; route discovery: `packages/web/app/**/page.tsx` → `/path/[param]` (strip `(group)` segments; root → `/`; `route.ts` handlers are not routes); `packages/mobile/app/**/*.tsx` → `(group)/path/[param]` (skip `_*.tsx` and `+*.tsx`; `[id].tsx` and `[id]/index.tsx` are distinct keys)
+- `scripts/journeys/routes-without-journeys.json` — `{ "route": "reason" }`; generated once with every web route (134) and every mobile route with no `route` match, reason `"TODO: not yet inventoried"`; a `TODO:` prefix marks a placeholder so U23 can insist none remain
+- `scripts/journeys/check.mjs` — prints the tripwire count; fails on a route with no row and no entry, on an entry whose route no longer exists, on an entry whose route now has a row (the "second test insists" half), and on a row whose `route` matches no real file (typo or rename)
 - `scripts/journeys/check.test.mjs`
 
-**Approach:** Same two-test ratchet shape as U2. Permanent opt-outs get a real reason (`/design-system`, `/design-system/states`: "internal gallery"; pure redirects such as `index.tsx → /home`).
+**Approach:** Same two-test ratchet shape as U2. Permanent opt-outs get a real reason (`/design-system`, `/design-system/states`: "internal gallery"; pure redirects such as `index.tsx → /home`). A row for platform A never satisfies a route on platform B.
 
-**Patterns:** `scripts/parity` app-map drift test already enumerates mobile routes; reuse its route-listing function if it is importable, otherwise copy its glob.
+**Patterns:** `scripts/parity` app-map drift test already enumerates mobile routes but is not importable; copy its glob and the skip rules.
 
 **Test scenarios:**
-- [ ] Happy path: every route either has a row or an entry → pass
-- [ ] Nil/empty: an `app/` with no page files → 0 routes, pass
-- [ ] Error path: new `packages/web/app/foo/page.tsx` with no row → fails naming `/foo`
-- [ ] Edge case: route group `(course)` is stripped so `/learn/(course)/handover` matches a row for `/learn/handover`
+- [ ] Happy path: every route either has a row or an entry → pass; root `page.tsx` → `/`; nested `[id]/request`; `(tabs)/home/index`
+- [ ] Nil/empty: an `app/` with no page files → 0 routes, pass; a non-`.tsx` file under `app/` is ignored
+- [ ] Error path: new `packages/web/app/foo/page.tsx` with no row → fails naming `/foo`; a mobile row does not satisfy a web route of the same name; a row whose `route` matches no file fails
+- [ ] Edge case: route group `(course)` is stripped so `/learn/(course)/handover` matches a row for `/learn/handover`; an opt-out whose route now has a row → "stale opt-out, delete it"; an opt-out whose route is gone → fail; `+not-found.tsx` and `_layout.tsx` are skipped
 
 **Verification:** adding an empty `page.tsx` locally makes `pnpm test:journeys` fail; removing it passes.
 
@@ -145,21 +152,21 @@ Branch `journey-coverage` off `development`. One commit per fix (a row set, a sp
 **Dependencies:** U1
 
 **Files:**
-- `scripts/journeys/lib.mjs` — `lintRequired(row)` returns violations: `kind` vs minimum layers; `notifies`/`counts` ⇒ `api`; `device: true` ⇒ `device`; a `waived` entry must have `reason` and `date` (`YYYY-MM-DD`)
-- `scripts/journeys/journeys.json` — Q18, Q19, C14 get `api` in `required` (the audit's under-required rows); the A03 waiver gains a date
+- `scripts/journeys/lib.mjs` — `lintRequired(row)` returns violations: `kind` vs minimum layers (extra layers allowed); `notifies` (entries that are notification types; `"OTP mail"` is not one) or `counts` non-empty ⇒ `api`; `device: true` ⇒ `device`; a waiver must name a required layer and carry `reason` and a valid past `date` (`YYYY-MM-DD`)
+- `scripts/journeys/journeys.json` — every row the lint names gets `api` in `required` (the audit found Q18, Q19, C14 by hand; the `counts` rule finds about six more); the A03 waiver gains a date
 - `scripts/journeys/check.mjs`, `check.test.mjs`
 
-**Approach:** Lint runs before coverage; a violation is a failure with the row id and the rule. Waivers are listed on every run (already) and in the doc.
+**Approach:** Lint runs before coverage and exits non-zero on its own; a violation is a failure with the row id and the rule. Waivers are listed on every run (already) and in the doc.
 
 **Patterns:** existing `coverage()` returns `{gaps, unknown, waived}`; lint returns the same shape of list.
 
 **Test scenarios:**
-- [ ] Happy path: a `write` row with `mobile-unit, mobile-e2e, api` passes
-- [ ] Nil/empty: `notifies: []` imposes nothing
-- [ ] Error path: `notifies: ["toy_rejected"]` with no `api` in `required` → violation
-- [ ] Edge case: a waiver without a date → violation
+- [ ] Happy path: one passing case per `kind`; a `write` row with an extra layer passes; the six existing client-count rows pass once `api` is added
+- [ ] Nil/empty: `notifies: []` and `counts: []` impose nothing; `notifies: ["OTP mail"]` imposes nothing
+- [ ] Error path: `notifies: ["toy_rejected"]` with no `api` in `required` → violation; `device: true` without `device` → violation; lint failure exits 1 and says so before any gap list
+- [ ] Edge case: a waiver without a date, with `2026-13-40`, with a future date, without a reason, or for a layer the row does not require → violation; a waiver renders in the doc
 
-**Verification:** after the three row edits, `pnpm test:journeys` shows exactly 3 new gaps (Q18, Q19, C14 at `api`) — those are closed in U9b.
+**Verification:** after the row edits, `pnpm test:journeys` shows new `api` gaps only on the rows the lint named — closed in U9b and U10.
 
 **Planning-time unknowns:** none.
 
@@ -269,9 +276,10 @@ Branch `journey-coverage` off `development`. One commit per fix (a row set, a sp
 **Files:**
 - `packages/types/src/pending.ts` — 16 entries, `kind: 'decision'`, one per Outstanding Question Q1–Q16 in the requirements doc; `platforms` per item; `question` is the text from the doc
 - `docs/PENDING.md` — regenerated (`node scripts/pending.mjs`)
-- `packages/api/tests/unit/pending-features.test.ts` — unchanged, must stay green
+- `packages/api/tests/unit/pending-features.test.ts` — "every open item is referenced somewhere in the code" (line 21) exempts `kind: 'decision'` entries that carry a `question`; a new case proves the exemption ends when the entry gains `shipped: true` or loses its `question`
+- `scripts/pending.mjs` — renders unreferenced decisions under their own heading so they stay visible
 
-**Approach:** No `PENDING(...)` code references for decisions that have no code site yet; the drift test allows entries without references for `kind: 'decision'` (check this before writing; if it does not, add the smallest allowance with a test).
+**Approach:** The drift test has no exemption today (verified 2026-10-20), so the 16 entries would turn it red; the allowance is three lines and one test. No `PENDING(...)` code references are added for decisions that have no code site yet.
 
 **Patterns:** existing `decision` entries in `pending.ts` (the 27 answered on 2026-09-30).
 
@@ -282,6 +290,36 @@ Branch `journey-coverage` off `development`. One commit per fix (a row set, a sp
 - [ ] Edge case: `docs/PENDING.md` lists the 16 under Decisions
 
 **Verification:** drift test green; `docs/PENDING.md` diff shows exactly 16 new rows.
+
+**Planning-time unknowns:** none.
+
+---
+
+### Unit 7b: Shared e2e seed helpers
+
+**Goal:** One Playwright-free module seeds users, orgs, leaders, events, notifications and guides for the web e2e suite, the mobile e2e suite and the device provisioner; the five helpers later units need exist once.
+
+**Requirements trace:** R6, R9 (enables U9a–c, U15–U18)
+
+**Dependencies:** none
+
+**Files:**
+- `supabase/e2e-seed.ts` — new, next to `local-dev-keys.ts`: `adminClient`, `uniqueTitle`, `createContributor`, `createAdmin`, `createTutorial`, `createPublishedToy`, `createOrg` + `addLeader`, `makeLeader` (leader row + `org_leader_terms` agreement, versions from `AGREEMENT_VERSIONS` in `@splat-connect/types`, never the `'v0-todo'` literal), `createEvent`, `createNotification`, `acceptTerms`
+- `packages/web/tests/e2e/helpers.ts`, `packages/mobile/tests/e2e/helpers.ts` — re-export from the shared module; keep only the `Page`-touching helpers (`signIn`, `signInAsNewContributor`)
+- `packages/mobile/scripts/provision-device-parent.mjs` (or wherever the provisioner lives — find it by its "keep in sync" comment) — imports the shared module; the comment goes
+- `packages/web/tests/e2e/*.spec.ts`, `packages/mobile/tests/e2e/*.spec.ts` — import paths unchanged (re-exports), so no spec edits
+
+**Approach:** Move, don't rewrite: today web has `createAdmin` and `createOrgWithLeader` (no agreement), mobile has `makeOrgLeader` (org + leader + agreement) and `createNotification`, neither has `createEvent` (specs insert `org_events` inline in three places). Pick the fuller of each pair, give it one name, and have the other package's old name alias it for one unit, then delete the alias.
+
+**Patterns:** `supabase/local-dev-keys.ts` shared by both Playwright configs.
+
+**Test scenarios:**
+- [ ] Happy path: both e2e suites pass unchanged after the move
+- [ ] Nil/empty: `createEvent` with no questions creates an event with `questions: []`
+- [ ] Error path: `makeLeader` for a user who is already a leader is idempotent (no duplicate row)
+- [ ] Edge case: the provisioner builds its fixture through the shared module and `device:fixture` still prints the same env lines
+
+**Verification:** `git grep "v0-todo" packages/*/tests` returns nothing; the three inline `org_events` inserts are gone.
 
 **Planning-time unknowns:** none.
 
@@ -322,7 +360,7 @@ Branch `journey-coverage` off `development`. One commit per fix (a row set, a sp
 
 **Requirements trace:** R6, R9
 
-**Dependencies:** U8
+**Dependencies:** U7b, U8
 
 **Files:**
 - `packages/mobile/tests/e2e/events-detail.spec.ts`, `events-register.spec.ts`, `events-print.spec.ts` — new
@@ -332,7 +370,7 @@ Branch `journey-coverage` off `development`. One commit per fix (a row set, a sp
 - `packages/mobile/tests/unit/components/events/*.test.tsx`, `organisation/*.test.tsx` — add outcome assertions where the existing tests only render
 - `packages/api/tests/integration/events/registrations.test.ts` — extend: register → `org_event_*` notifications, capacity 409, organiser list
 
-**Approach:** One spec per screen, each `test` titled with its ids. Use `helpers.ts` (`createContributor`, `createTutorial`, `createChallenge`, `createNotification`) and add `createEvent`/`createOrg` helpers if missing (check first). E2E asserts the visible result: the "You're going" state, the registrant appearing in the organiser list, the edited title on the org profile.
+**Approach:** One spec per screen, each `test` titled with its ids. Seeds come from `supabase/e2e-seed.ts` (`createEvent`, `makeLeader`, `createNotification`; U7b). E2E asserts the visible result: the "You're going" state, the registrant appearing in the organiser list, the edited title on the org profile.
 
 **Patterns:** `org-publish.spec.ts` for leader-seat e2e; `handoffs/events-mine.test.ts` for the API side.
 
@@ -344,7 +382,7 @@ Branch `journey-coverage` off `development`. One commit per fix (a row set, a sp
 
 **Verification:** checker gaps for V*, L* and the new event/org ids are 0.
 
-**Planning-time unknowns:** Deferred — whether `createEvent` exists in `helpers.ts`.
+**Planning-time unknowns:** none (`createEvent` exists nowhere today; U7b adds it).
 
 ---
 
@@ -354,14 +392,14 @@ Branch `journey-coverage` off `development`. One commit per fix (a row set, a sp
 
 **Requirements trace:** R6, R9
 
-**Dependencies:** U8
+**Dependencies:** U7b, U8
 
 **Files:**
-- `packages/mobile/tests/e2e/admin-accounts.spec.ts`, `admin-organisations.spec.ts`, `admin-ideas.spec.ts`, `admin-member-reports.spec.ts`, `admin-idea-reports.spec.ts`, `admin-spot-check.spec.ts` — new; existing `admin-guide-review` stays
+- `packages/mobile/tests/e2e/admin-guide-review.spec.ts`, `admin-accounts.spec.ts`, `admin-organisations.spec.ts`, `admin-ideas.spec.ts`, `admin-member-reports.spec.ts`, `admin-idea-reports.spec.ts`, `admin-spot-check.spec.ts` — all new: the mobile admin seat has never run under Playwright (the only `admin-guide-review` is a Maestro flow, which stays)
 - `packages/mobile/tests/unit/components/admin/*.test.tsx` — ids in titles; outcome assertions (handler called with id + status)
-- `packages/api/tests/integration/admin/*.test.ts` — Q18, Q19, C14 status PATCHes asserted (row updated, notification to the author)
+- `packages/api/tests/integration/admin/*.test.ts` — the status PATCHes the U4 lint flagged (Q18, Q19, C14 and the count rows) asserted (row updated, notification to the author)
 
-**Approach:** Admin seat via `createAdmin` (add to `helpers.ts` if the mobile helper lacks it; the web one has it). Each queue spec: seed one item, act, assert the item leaves the queue and the count card on `/admin` drops by one (the count assertion is R11's action-then-count form).
+**Approach:** Admin seat via the shared `createAdmin` (U7b) and the existing `signIn` helper on the Expo web build; the first spec proves that path works before the other six are written. Each queue spec: seed one item, act, assert the item leaves the queue and the count card on `/admin` drops by one (the count assertion is R11's action-then-count form).
 
 **Patterns:** `admin-guide-review` e2e; `admin/queues.test.ts` on the API.
 
@@ -373,7 +411,7 @@ Branch `journey-coverage` off `development`. One commit per fix (a row set, a sp
 
 **Verification:** checker gaps for Q18, Q19, C14 and the six new admin groups are 0.
 
-**Planning-time unknowns:** Deferred — whether `(my)/admin` needs a screen guard (Q11-adjacent; register if missing).
+**Planning-time unknowns:** Deferred — whether `(my)/admin` needs a screen guard (Q11-adjacent; register if missing); whether the Expo web sign-in form accepts the admin seat without extra steps (the first spec answers it).
 
 ---
 
@@ -383,7 +421,7 @@ Branch `journey-coverage` off `development`. One commit per fix (a row set, a sp
 
 **Requirements trace:** R6, R9, R11
 
-**Dependencies:** U8
+**Dependencies:** U7b, U8
 
 **Files:**
 - `packages/mobile/tests/e2e/me-reports.spec.ts`, `me-thanks.spec.ts`, `guides-collaborators.spec.ts`, `challenges-report-participant.spec.ts` — new
@@ -437,32 +475,32 @@ Branch `journey-coverage` off `development`. One commit per fix (a row set, a sp
 
 ### Unit 11: Android Maestro as a PR check
 
-**Goal:** The 13 device journeys run on an emulator in CI for every PR that touches `packages/mobile/**` or `packages/types/**`.
+**Goal:** The 13 device journeys run on an emulator in CI as a required check for every PR that matches the `mobile` path filter (`packages/mobile`, `packages/types`, `packages/api`, `supabase`). No nightly.
 
 **Requirements trace:** R12
 
 **Dependencies:** U8 (flow `name:` ids), U10
 
 **Files:**
-- `.github/workflows/ci.yml` — new job `maestro-android` after `mobile-e2e`, `needs: [changes]`, `if: needs.changes.outputs.mobile == 'true'`, no `continue-on-error`, `timeout-minutes: 45`
-- `.github/workflows/maestro-android.yml` — deleted (content moves into `ci.yml`)
-- `packages/mobile/.maestro/flows/*.yaml` — `name:` with ids; the four flows never run anywhere (`feedback-sheet-post`, `note-report`, `inbox-badge-live`, `deep-link-cold-start`) fixed until they pass on the emulator
+- `.github/workflows/ci.yml` — new job `maestro-android` after `mobile-e2e`, `needs: [changes]`, `if: needs.changes.outputs.mobile == 'true'`, no `continue-on-error`, `timeout-minutes: 90` for the first runs, tightened to 45 once the AVD snapshot cache is warm
+- `.github/workflows/maestro-android.yml` — replaced by `maestro-cache.yml`: `workflow_dispatch` only, builds and saves the AVD snapshot + Gradle cache that the PR job restores (a cold run is 45–60 min; the cache is what makes 25 min steady-state possible)
+- `packages/mobile/.maestro/flows/*.yaml` — top-level `name:` with ids; the four flows never run anywhere (`feedback-sheet-post`, `note-report`, `inbox-badge-live`, `deep-link-cold-start`) fixed until they pass on the emulator
 - `packages/mobile/package.json` — `device:fixture` / `device:test` scripts confirmed to work headless
 - `docs/testing/journey-coverage-rule.md` — device paragraph: a device cell counts only for flows in this job
 
-**Approach:** Run the proposed workflow by hand first (it has never run). Fix in this order: emulator boots → Release build installs → `device:fixture` seeds → `every-tab-renders` passes → the other 12. Cache the Gradle and AVD layers (`reactivecircus/android-emulator-runner` AVD snapshot) so steady-state is under 25 min. Byron's memory notes iOS gotchas; Android is immune to the stale-prebuild issue.
+**Approach:** Run the cache workflow by hand first, then the PR job (neither has ever run). Fix in this order: emulator boots → Release build installs → `device:fixture` seeds → `every-tab-renders` passes → the other 12. A skipped job (web-only PR) satisfies a required check in GitHub branch protection, so the path filter costs nothing on those PRs. Byron's memory notes iOS gotchas; Android is immune to the stale-prebuild issue.
 
-**Patterns:** `mobile-e2e` job for Supabase start/stop and artifact upload.
+**Patterns:** `mobile-e2e` job for Supabase start/stop and artifact upload; `reactivecircus/android-emulator-runner` with `force-avd-creation: false` and an `actions/cache` keyed on the AVD config.
 
 **Test scenarios:**
 - [ ] Happy path: a mobile-only PR runs the job and it passes
-- [ ] Nil/empty: a web-only PR skips the job
+- [ ] Nil/empty: a docs-only PR skips the job and the required check reads as satisfied
 - [ ] Error path: a broken flow fails the PR check (not `continue-on-error`)
-- [ ] Edge case: Supabase is stopped in `always()` even when flows fail
+- [ ] Edge case: Supabase is stopped in `always()` even when flows fail; a cold cache still finishes inside 90 min
 
-**Verification:** job green on `journey-coverage`; branch protection on `development` lists it as required (Byron sets this in GitHub; the plan cannot).
+**Verification:** job green on `journey-coverage` with the cache warm; branch protection on `development` lists it as required (Byron sets this in GitHub; the plan cannot).
 
-**Planning-time unknowns:** Resolve Before Planning — none; Deferred — emulator runtime on the free runner (if > 45 min, drop to API 30 image and 2 flows per shard).
+**Planning-time unknowns:** Deferred — the real cold and warm runtimes on the free runner (if warm > 45 min, split the 13 flows across two matrix legs).
 
 ---
 
@@ -566,7 +604,7 @@ Branch `journey-coverage` off `development`. One commit per fix (a row set, a sp
 
 **Requirements trace:** R2, R4, R6, R9, R11
 
-**Dependencies:** U1–U4
+**Dependencies:** U1–U4, U7b
 
 **Files:**
 - `scripts/journeys/journeys.json` — ≈ 46 rows (`WI` get-involved, `WN` organisations) from GI and ORG
@@ -597,7 +635,7 @@ Branch `journey-coverage` off `development`. One commit per fix (a row set, a sp
 
 **Requirements trace:** R2, R4, R6, R9, R11
 
-**Dependencies:** U1–U4
+**Dependencies:** U1–U4, U7b
 
 **Files:**
 - `scripts/journeys/journeys.json` — ≈ 45 rows (`WD` prefix) from W-DASH minus the toys/exchanges/print rows taken by U14, plus NOTIF
@@ -606,9 +644,9 @@ Branch `journey-coverage` off `development`. One commit per fix (a row set, a sp
 - `packages/web/tests/e2e/dashboard/{profile,children,thanks,reports,events,challenges,messages,notifications}.spec.ts` — new; `notifications` asserts per-row mark-read and the badge total; `thanks` the Hide/Show list; `events` My events (one of the 14 untested routes)
 - `packages/web/tests/unit/components/{profile,child,saved,notification}*/**` — ids + handler assertions
 
-**Approach:** The notifications e2e seeds rows with the service role (as mobile's `createNotification`), opens `/notifications`, marks one read and asserts the header badge drops by one. It also records that org-bucket rows cannot be cleared from any dashboard page (Q6) without fixing it.
+**Approach:** The notifications e2e seeds rows with the shared `createNotification` (U7b; web had none), opens `/notifications`, marks one read and asserts the header badge drops by one. It also records that org-bucket rows cannot be cleared from any dashboard page (Q6) without fixing it.
 
-**Patterns:** mobile `inbox` specs; `helpers.ts` needs a `createNotification` (add if missing).
+**Patterns:** mobile `inbox` specs.
 
 **Test scenarios:**
 - [ ] Happy path: edit profile name → shows on `/contributors/[id]`
@@ -628,13 +666,13 @@ Branch `journey-coverage` off `development`. One commit per fix (a row set, a sp
 
 **Requirements trace:** R2, R4, R6, R9, R11
 
-**Dependencies:** U1–U4
+**Dependencies:** U1–U4, U7b
 
 **Files:**
 - `scripts/journeys/journeys.json` — 36 rows (`WB` prefix) from W-ORG
 - `scripts/journeys/routes-without-journeys.json`
 - `packages/web/tests/e2e/contributor/org-backing.spec.ts` — ids
-- `packages/web/tests/e2e/organisation/{review,toys,orders,recycling,requests,messages,publish,profile,events,stories}.spec.ts` — new; leader seat via `createContributor` + a leader row (add `createOrg`/`makeLeader` helpers if absent); `orders` and `org/events/[id]` are among the 14 untested routes
+- `packages/web/tests/e2e/organisation/{review,toys,orders,recycling,requests,messages,publish,profile,events,stories}.spec.ts` — new; leader seat via the shared `makeLeader` (U7b; web's `createOrgWithLeader` never inserted the `org_leader_terms` agreement); `orders` and `org/events/[id]` are among the 14 untested routes
 - `packages/api/tests/integration/orgs/*.test.ts` — assert `backing_accepted`/`backing_declined`, `org_event_published`, `org_story_published`, `org_event_changed`/`cancelled` are created by their routes (the audit found no mobile e2e for four of these; the api test is the shared proof)
 - `packages/web/tests/unit/components/org*/**` — ids + handler assertions
 
@@ -650,7 +688,7 @@ Branch `journey-coverage` off `development`. One commit per fix (a row set, a sp
 
 **Verification:** 0 gaps for `WB*`.
 
-**Planning-time unknowns:** Deferred — whether a `makeLeader` helper exists in web `helpers.ts`.
+**Planning-time unknowns:** none (web has no `makeLeader`; U7b adds it).
 
 ---
 
@@ -660,7 +698,7 @@ Branch `journey-coverage` off `development`. One commit per fix (a row set, a sp
 
 **Requirements trace:** R2, R4, R6, R9, R11
 
-**Dependencies:** U1–U4
+**Dependencies:** U1–U4, U7b
 
 **Files:**
 - `scripts/journeys/journeys.json` — 36 rows (`WM` prefix) from W-ADMIN
@@ -725,19 +763,19 @@ Branch `journey-coverage` off `development`. One commit per fix (a row set, a sp
 **Dependencies:** U9a–c, U12–U19
 
 **Files:**
-- `scripts/journeys/notifications.mjs` — new: reads `NotificationType` from `packages/types/src`, finds each type's creator in `packages/api/src`, and checks a test exists whose title contains `notifies:<type>`; fails on a type with none. Same for a `counts:` list (inbox buckets, six admin queues, saves, challenge counts, printer jobs)
-- `packages/api/tests/integration/**` — the missing `notifies:` tests (the grep found all 38 mentioned; expect ≈ 10–15 that are mentioned but not asserted) and the action-then-count tests
+- `scripts/journeys/notifications.mjs` — new: reads the `NotificationType` union from the source text of `packages/types/src/index.ts` with the same TypeScript AST used in U2 (plain `node` cannot import that file), finds each type's creator in `packages/api/src/**` or `supabase/migrations/**` (SQL triggers), and checks an integration test exists whose title contains the type name; fails on a type with none. Same for a fixed `counts` list (inbox buckets, six admin queues, saves, challenge counts, printer jobs) keyed by the count's API route
+- `packages/api/tests/integration/**` — the missing asserting tests (the grep found all 38 mentioned; expect ≈ 10–15 that are mentioned but not asserted) and the action-then-count tests
 - `package.json` — `test:journeys` also runs `notifications.mjs`
 - `docs/testing/journeys.md` — a second table: type | created by | asserted by | web e2e | mobile e2e
 
-**Approach:** The group units add the client-side e2e for each notification; this unit closes the API side and makes the matrix a CI check so a new type cannot ship untested. `challenge_guide_published` comes from a SQL trigger: its test inserts through the API path that fires it.
+**Approach:** The group units add the client-side e2e for each notification; this unit closes the API side and makes the matrix a CI check so a new type cannot ship untested. `challenge_guide_published` comes from a SQL trigger (migration 109): its creator is found in `supabase/migrations`, and its test inserts through the API path that fires the trigger.
 
 **Patterns:** `route-coverage.test.ts` for "enumerate from source, demand a test".
 
 **Test scenarios:**
-- [ ] Happy path: all 38 types have an asserting test
-- [ ] Nil/empty: a type with no creator in `src` → "dead type" failure (candidate for deletion)
-- [ ] Error path: adding a type to the union without a test fails CI
+- [ ] Happy path: the parser returns exactly 38 types and all 38 have an asserting test; the trigger-created type passes
+- [ ] Nil/empty: a type with no creator in `src` or `migrations` → "dead type" failure (candidate for deletion); a parser that finds 0 types fails loudly (source shape changed)
+- [ ] Error path: adding a type to the union without a test fails CI; a type removed from the union but still named in a row's `notifies` fails as a stale reference
 - [ ] Edge case: inbox unread per bucket drops after mark-read, not just total
 
 **Verification:** `pnpm test:journeys` prints "38 notification types, 0 unasserted; N counts, 0 unasserted".
@@ -777,30 +815,29 @@ Branch `journey-coverage` off `development`. One commit per fix (a row set, a sp
 
 ### Unit 22: CI budget
 
-**Goal:** Web e2e stays under 15 minutes in CI with the new specs; if not, shard by seat.
+**Goal:** Web e2e stays under 15 minutes in CI with the new specs; if not, shard.
 
 **Requirements trace:** R17
 
-**Dependencies:** U12–U19
+**Dependencies:** U14 (the first and largest web group; measure before the other seven are written)
 
 **Files:**
-- `.github/workflows/ci.yml` — `web-e2e` gains `timeout-minutes: 30` and, if needed, a `matrix: shard: [anon, member, leader, admin]` with `--grep @seat`
-- `packages/web/playwright.config.ts` — seat tags (`@anon`, `@member`, `@leader`, `@admin`) if sharding is needed; `reuseExistingServer` stays `!CI`
-- `packages/web/tests/e2e/**/*.spec.ts` — seat tag on each `test.describe` if sharding
+- `.github/workflows/ci.yml` — `web-e2e` gains `timeout-minutes: 30` and, if needed, `strategy.matrix.shard: [1, 2, 3]` with `playwright test --shard=${{ matrix.shard }}/3`; each leg is its own runner with its own `supabase start`, so legs run in parallel
+- `packages/web/playwright.config.ts` — `reuseExistingServer` stays `!CI`; no spec changes (`--shard` splits by file, no tags needed)
 
-**Approach:** Measure first (the config's "1.3 min" note predates 137 tests). Shard only if over budget. Shards run in sequence, not parallel, because they share one Supabase and GoTrue port exhaustion forces 1 worker; sharding helps retries and readability more than wall-clock. If sequence is still over budget, the honest answer is a second Supabase port set per shard (out of scope here; register).
+**Approach:** Measure after U14 lands (the config's "1.3 min" note predates 137 tests). Shard only if over budget. In CI each job already starts its own Supabase, so a matrix leg has no port contention with the others; the 1-worker limit is per leg. Locally nothing changes: `scripts/e2e.sh` still runs one package at a time against the one local Supabase.
 
-**Patterns:** `mobile-e2e` job.
+**Patterns:** `mobile-e2e` job; Playwright's built-in `--shard`.
 
 **Test scenarios:**
-- [ ] Happy path: a web PR's `web-e2e` finishes under 15 min
-- [ ] Nil/empty: a shard with no matching tests passes (Playwright exits 0 with `--pass-with-no-tests`)
-- [ ] Error path: a job over 30 min is killed (not 6 h)
-- [ ] Edge case: `retries: 1` still masks only infra flakes (a real failure fails twice)
+- [ ] Happy path: a web PR's `web-e2e` finishes under 15 min wall-clock across legs
+- [ ] Nil/empty: a leg with no files passes (`--pass-with-no-tests`)
+- [ ] Error path: a leg over 30 min is killed (not 6 h); one failing leg fails the job
+- [ ] Edge case: `retries: 1` still masks only infra flakes (a real failure fails twice); the failure artifact names the leg
 
-**Verification:** CI run duration visible in the Actions summary.
+**Verification:** CI run duration visible in the Actions summary before U13 starts.
 
-**Planning-time unknowns:** Deferred — the measured duration.
+**Planning-time unknowns:** Deferred — the measured duration and the leg count.
 
 ---
 
@@ -814,7 +851,7 @@ Branch `journey-coverage` off `development`. One commit per fix (a row set, a sp
 
 **Files:**
 - `scripts/journeys/legacy-file-tags.json` — deleted; `lib.mjs` loses file-level tag support except `(none — …)`
-- `scripts/journeys/routes-without-journeys.json` — only permanent, reasoned entries remain
+- `scripts/journeys/routes-without-journeys.json` — only permanent, reasoned entries remain; the checker now fails on any `TODO:` reason
 - `scripts/journeys/check.test.mjs` — legacy cases removed
 - `docs/testing/journey-coverage-rule.md` — "how to add a journey" section (row → tests → `test:journeys:write`)
 - `packages/mobile/tests/journeys.json` — confirm gone; `docs/testing/mobile-journeys-decisions.md` — header note pointing at the plan and `pending.ts`
@@ -840,17 +877,18 @@ Branch `journey-coverage` off `development`. One commit per fix (a row set, a sp
 - Every unit has a requirements trace. ✓
 - Dependencies form a DAG (graph above). ✓
 - Every unit has ≥ 3 test scenarios. ✓
-- **File count:** U1–U7, U11, U20–U23 touch ≤ 8 files. U8–U10 and U12–U19 touch more, all test files and the map; they are *series* of one-commit-per-fix changes with no production code except U6. Scope challenge answered: splitting them further would produce units that cannot be verified on their own (a screen group's gaps are only 0 when its rows, tags and specs all land). Accepted as a known exception.
-- New abstractions: U2 (title tags), U3 (tripwire), U4 (lint), U20 (notification matrix). One or two per unit, none elsewhere. ✓
+- **File count:** U1–U7, U11, U20–U23 touch ≤ 8 files. U7b, U8–U10 and U12–U19 touch more, all test files, helpers and the map; they are *series* of one-commit-per-fix changes with no production code except U6. Scope challenge answered: splitting them further would produce units that cannot be verified on their own (a screen group's gaps are only 0 when its rows, tags and specs all land). Accepted as a known exception.
+- New abstractions: U2 (AST title tags), U3 (tripwire), U4 (lint), U7b (shared seed module), U20 (notification matrix). One or two per unit, none elsewhere. ✓
+- Engineering review 2026-10-20: three P0s fixed in place (AST parsing, the pending-drift exemption, R12 aligned with the PR-check decision); P1s folded into U2, U3, U4, U7b, U9b, U11, U20, U22.
 - Planning-time unknowns: all classified; none blocks. ✓
 - Handoff test: an engineer invents no product behaviour. Where current behaviour is in doubt, the test records what the app does and the question is in `pending.ts`. ✓
 
 ## Order of work
 
 1. U1 → U2 → U3 → U4 (mechanism; CI green throughout because the ratchets start full).
-2. U5a, U5b, U6, U7 in any order (api and register; can run alongside 3).
-3. U8 → U9a/b/c and U10 (mobile), U11 (device) once U10 has moved the flow tags.
-4. U12–U19 (web), one at a time, largest first: U14 (exchanges), U13 (guides), U17 (leader), U18 (admin), U16, U15, U12, U19.
-5. U20 → U22 → U21 → U23.
+2. U5a → U5b, U6, U7, U7b in any order (api, register, shared seeds; can run alongside 3).
+3. U8 → U9a/b/c and U10 (mobile), then U11 (device) once U10 has moved the flow tags.
+4. U14 (exchanges) first, then U22 (measure; shard if needed), then U13 (guides), U17 (leader), U18 (admin), U16, U15, U12, U19.
+5. U20 → U21 → U23.
 
 Before any "done": `scripts/verify-plan.sh --run --e2e`, the whole `npx jest` for mobile, `pnpm test:journeys`, and `graphify update .`.
