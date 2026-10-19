@@ -245,12 +245,18 @@ jobs:
 
       # The emulator reaches the runner at 10.0.2.2. EXPO_PUBLIC_* are baked in
       # at build. One ABI instead of four: the emulator is x86_64.
+      # The Expo template's 512m Metaspace ran out in lintVitalAnalyzeRelease
+      # and the daemon then hung to the job timeout; the user-home properties
+      # file outranks the generated android/gradle.properties.
       - name: Build the release APK
         working-directory: packages/mobile
+        timeout-minutes: 45
         env:
           EXPO_PUBLIC_API_URL: http://10.0.2.2:3102
           ORG_GRADLE_PROJECT_reactNativeArchitectures: x86_64
         run: |
+          mkdir -p ~/.gradle
+          echo 'org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g' >> ~/.gradle/gradle.properties
           eval "$(supabase status -o env | sed 's/^/export /')"
           export EXPO_PUBLIC_SUPABASE_URL=http://10.0.2.2:54321 EXPO_PUBLIC_SUPABASE_ANON_KEY="$ANON_KEY"
           pnpm device:build
@@ -350,7 +356,9 @@ jobs:
         run: pnpm --filter @splat-connect/web exec playwright install --with-deps chromium
 
       - name: Run web E2E tests
-        run: pnpm --filter @splat-connect/web test:e2e -- --shard=${{ matrix.shard }}/4
+        # No "--": pnpm forwards it to Playwright, which then ignores the shard
+        # flag and every leg runs the whole suite.
+        run: pnpm --filter @splat-connect/web test:e2e --shard=${{ matrix.shard }}/4
 
       # Traces and page snapshots of what failed; without them a CI-only
       # failure is a test name and a timeout.
