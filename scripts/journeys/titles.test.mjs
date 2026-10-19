@@ -53,3 +53,9 @@ test('yaml reads only a top-level name: above the first ---', () => {
   assert.equal(yamlName('appId: x\n---\n- launchApp'), undefined)
   assert.equal(yamlName('name: A14 x'), 'A14 x')
 })
+
+test('an id may carry a trailing colon or comma, as the repo writes titles', () => {
+  assert.deepEqual(ts("test('Q10: opens the thread', () => {})"), { ids: ['Q10'], errors: [] })
+  assert.deepEqual(ts("test('P10, L29 each message', () => {})"), { ids: ['P10', 'L29'], errors: [] })
+  assert.deepEqual(ts("test('P10 and L29 each message', () => {})"), { ids: ['P10'], errors: [] })
+})
