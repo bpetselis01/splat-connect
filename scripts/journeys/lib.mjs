@@ -9,6 +9,9 @@ export const LAYERS = {
   api: { glob: 'packages/api/tests/integration/**/*.test.ts' },
   device: { glob: 'packages/mobile/.maestro/flows/*.yaml' },
 }
+export const KINDS = ['static', 'nav', 'write']
+const PLATFORMS = ['web', 'mobile']
+const legalFor = (platform) => Object.entries(LAYERS).filter(([, l]) => !l.platform || l.platform === platform).map(([name]) => name)
 const TAG = /^(?:\/\/|#)\s*journeys:\s*(.*)$/
 
 export function parseTags(text) {
@@ -25,14 +28,43 @@ export function parseTags(text) {
   return { ids, errors }
 }
 
+const RULES = [
+  { name: 'platform', fails: (r) => PLATFORMS.includes(r.platform) ? null : r.platform === undefined ? 'platform is missing' : `unknown platform "${r.platform}"` },
+  { name: 'route', fails: (r) => typeof r.route === 'string' && r.route ? null : 'route is missing' },
+  { name: 'kind', fails: (r) => KINDS.includes(r.kind) ? null : r.kind === undefined ? 'kind is missing' : `unknown kind "${r.kind}"` },
+  { name: 'device', fails: (r) => typeof r.device === 'boolean' ? null : 'device must be true or false' },
+  { name: 'required', fails: (r) => Array.isArray(r.required) && r.required.length ? null : 'required is empty' },
+  { name: 'layer-known', fails: (r) => { const bad = (r.required ?? []).find((l) => !(l in LAYERS)); return bad === undefined ? null : `unknown layer "${bad}"` } },
+  { name: 'layer-legal', fails: (r) => {
+    if (!PLATFORMS.includes(r.platform)) return null
+    const bad = (r.required ?? []).find((l) => l in LAYERS && !legalFor(r.platform).includes(l))
+    return bad === undefined ? null : `layer "${bad}" is not legal for platform "${r.platform}"`
+  } },
+  { name: 'waiver', fails: (r) => { const bad = Object.keys(r.waived ?? {}).find((l) => !(r.required ?? []).includes(l)); return bad === undefined ? null : `waived layer "${bad}" is not required` } },
+]
+
+export function validateRows(rows) {
+  const errors = rows.flatMap((row) => RULES.flatMap(({ name, fails }) => { const message = fails(row); return message ? [{ id: row.id, rule: name, message }] : [] }))
+  const seen = new Set()
+  for (const { id } of rows) {
+    if (seen.has(id)) errors.push({ id, rule: 'duplicate-id', message: 'id appears more than once' })
+    seen.add(id)
+  }
+  return errors
+}
+
 export function coverage(journeys, filesByLayer) {
-  const known = new Set(journeys.map((j) => j.id))
+  const byId = new Map(journeys.map((j) => [j.id, j]))
   const covered = {}
   const unknown = []
   for (const [layer, files] of Object.entries(filesByLayer)) {
     covered[layer] = new Set()
     for (const [file, ids] of Object.entries(files)) {
-      for (const id of ids) (known.has(id) ? covered[layer].add(id) : unknown.push({ file, id }))
+      for (const id of ids) {
+        const legal = byId.has(id) && (!LAYERS[layer].platform || LAYERS[layer].platform === byId.get(id).platform)
+        if (legal) covered[layer].add(id)
+        else unknown.push({ file, id })
+      }
     }
   }
   const gaps = [], waived = []
@@ -47,21 +79,53 @@ export function coverage(journeys, filesByLayer) {
   return { gaps, unknown, waived, covered }
 }
 
+const cell = (text) => String(text).replace(/\r?\n/g, ' ').replace(/\|/g, '\\|')
+const byId = (a, b) => a.id.localeCompare(b.id)
+
 export function renderDoc(journeys, cov) {
-  const mark = (j, layer) => (!j.required.includes(layer) ? '–' : cov.covered[layer]?.has(j.id) ? '✅' : j.waived?.[layer] ? `⚠️ ${j.waived[layer]}` : '❌')
-  const rows = [...journeys].sort((a, b) => a.id.localeCompare(b.id)).map((j) =>
-    `| ${j.id} | ${j.seat} | ${j.screen} | ${j.element} | ${j.notifies.join(', ') || '–'} | ${j.counts.join(', ') || '–'} | ${j.setter} | ${mark(j, 'mobile-unit')} | ${mark(j, 'mobile-e2e')} | ${mark(j, 'api')} | ${mark(j, 'device')} |`
-  )
+  if (!journeys.length) throw new Error('journeys.json has no rows')
+  const groups = []
+  for (const j of [...journeys].sort(byId)) {
+    let g = groups.find((x) => x.platform === j.platform && x.screen === j.screen)
+    if (!g) groups.push((g = { platform: j.platform, screen: j.screen, rows: [] }))
+    g.rows.push(j)
+  }
+  const tally = (g) => {
+    const ids = new Set(g.rows.map((r) => r.id))
+    return { rows: g.rows.length, gaps: cov.gaps.filter((x) => ids.has(x.id)).length, waived: cov.waived.filter((x) => ids.has(x.id)).length }
+  }
+  const mark = (j, layer) => (!j.required.includes(layer) ? '–' : cov.covered[layer]?.has(j.id) ? '✅' : j.waived?.[layer] ? `⚠️ ${cell(j.waived[layer])}` : '❌')
+  const table = (g) => {
+    const layers = legalFor(g.platform)
+    return [
+      `| ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | ${layers.join(' | ')} |`,
+      `|${'---|'.repeat(8 + layers.length)}`,
+      ...g.rows.map((j) =>
+        `| ${j.id} | ${j.kind} | \`${cell(j.route)}\` | ${j.seat} | ${cell(j.element)} | ${cell(j.notifies.join(', ') || '–')} | ${cell(j.counts.join(', ') || '–')} | ${cell(j.setter)} | ${layers.map((l) => mark(j, l)).join(' | ')} |`),
+    ]
+  }
+  const platforms = [...new Set(groups.map((g) => g.platform))].sort()
   return [
     '# Journeys — coverage map',
     '',
     'Generated by `scripts/journeys/render.mjs` from `scripts/journeys/journeys.json`; do not edit. ✅ a tagged test covers the layer · ❌ required and missing · ⚠️ waived (reason) · – not required.',
     '',
-    `Gaps: ${cov.gaps.length} · Waived: ${cov.waived.length}`,
+    `Gaps: ${cov.gaps.length} · Waived: ${cov.waived.length} · Legacy-tagged files: n/a · Routes without rows: n/a`,
     '',
-    '| ID | Seat | Screen | Element | Notifies | Counts | Setter | Mobile unit | Mobile E2E | API | Device |',
-    '|---|---|---|---|---|---|---|---|---|---|---|',
-    ...rows,
+    '| Platform | Screen | Rows | Gaps | Waived |',
+    '|---|---|---|---|---|',
+    ...groups.map((g) => { const t = tally(g); return `| ${g.platform} | ${cell(g.screen)} | ${t.rows} | ${t.gaps} | ${t.waived} |` }),
     '',
+    ...platforms.flatMap((platform) => [
+      `## ${platform[0].toUpperCase()}${platform.slice(1)}`,
+      '',
+      ...groups.filter((g) => g.platform === platform).flatMap((g) => {
+        const t = tally(g)
+        const heading = `### ${cell(g.screen)} — ${t.rows} rows · ${t.gaps} gaps · ${t.waived} waived`
+        return t.gaps
+          ? [heading, '', ...table(g), '']
+          : [heading, '', `<details><summary>${t.rows} rows, no gaps</summary>`, '', ...table(g), '', '</details>', '']
+      }),
+    ]),
   ].join('\n')
 }

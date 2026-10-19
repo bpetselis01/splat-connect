@@ -1,14 +1,19 @@
 #!/usr/bin/env node
-// Fails when a journey's required layer has no tagged test, a tag names an
+// Fails when a row is invalid, a journey's required layer has no tagged test, a tag names an
 // unknown journey, a file carries a malformed tag, or the rendered doc is
 // stale. `--write` regenerates docs/testing/journeys.md instead.
 import { readFileSync, writeFileSync, globSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { LAYERS, parseTags, coverage, renderDoc } from './lib.mjs'
+import { LAYERS, parseTags, coverage, renderDoc, validateRows } from './lib.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 const journeys = JSON.parse(readFileSync(resolve(root, 'scripts/journeys/journeys.json'), 'utf8'))
+const invalid = validateRows(journeys)
+if (invalid.length) {
+  for (const e of invalid) console.error(`${e.id}: ${e.rule}: ${e.message}`)
+  process.exit(1)
+}
 const filesByLayer = {}
 const malformed = []
 for (const [layer, { glob: pattern }] of Object.entries(LAYERS)) {
