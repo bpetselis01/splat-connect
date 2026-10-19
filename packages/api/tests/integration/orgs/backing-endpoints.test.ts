@@ -71,7 +71,7 @@ describe('POST /api/tutorials/:id/orgs', () => {
 })
 
 describe('answering', () => {
-  it('L04 a leader of the asked org can accept', async () => {
+  it('L04 WB04 a leader of the asked org can accept', async () => {
     const res = await app.request(`/api/tutorials/${draft}/orgs/${orgId}/accept`, authed(leader.token, {
       method: 'POST',
     }))
