@@ -1,5 +1,4 @@
 // The challenge board when its read fails: says so, Try again re-reads, nothing hits console.error.
-// journeys: C01
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { ChallengesListScreen } from '../../../../components/challenges/list-screen'
 
@@ -19,7 +18,7 @@ const row = {
 
 afterEach(() => jest.restoreAllMocks())
 
-it('says the challenges could not load offline, and Try again loads them', async () => {
+it('C01 says the challenges could not load offline, and Try again loads them', async () => {
   const err = jest.spyOn(console, 'error')
   let offline = true
   mockGet.mockReset().mockImplementation(() => (offline ? Promise.reject(new Error('Network request failed')) : Promise.resolve([row])))

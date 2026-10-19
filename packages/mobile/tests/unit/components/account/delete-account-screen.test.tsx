@@ -1,4 +1,3 @@
-// journeys: Z05
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { DeleteAccountScreen, openSummary } from '../../../../components/account/delete-account-screen'
 
@@ -42,7 +41,7 @@ describe('openSummary', () => {
 })
 
 describe('DeleteAccountScreen', () => {
-  it('lists what will happen and keeps the code button off until DELETE is typed', async () => {
+  it('Z05 lists what will happen and keeps the code button off until DELETE is typed', async () => {
     mockGet.mockResolvedValue(preview)
     render(<DeleteAccountScreen />)
     expect(await screen.findByText('1 exchange, 1 print job in progress')).toBeTruthy()
@@ -52,7 +51,7 @@ describe('DeleteAccountScreen', () => {
     expect(mockAuth.sendSignInCode).not.toHaveBeenCalled()
   })
 
-  it('deletes after the sixth digit, carrying the keep-name choice', async () => {
+  it('Z05 deletes after the sixth digit, carrying the keep-name choice', async () => {
     mockGet.mockResolvedValue(preview)
     mockAuth.sendSignInCode.mockResolvedValue({ problem: null })
     mockAuth.verifyCode.mockResolvedValue({ problem: null })
@@ -79,7 +78,7 @@ describe('DeleteAccountScreen', () => {
     expect(mockPush).toHaveBeenCalledWith('/organisation/profile')
   })
 
-  it('keeps the account and says so when the code is wrong', async () => {
+  it('Z05 keeps the account and says so when the code is wrong', async () => {
     mockGet.mockResolvedValue(preview)
     mockAuth.sendSignInCode.mockResolvedValue({ problem: null })
     mockAuth.verifyCode.mockResolvedValue({ problem: { kind: 'bad-code', message: "That code didn't work." } })

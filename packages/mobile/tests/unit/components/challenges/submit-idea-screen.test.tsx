@@ -1,5 +1,4 @@
 // packages/mobile/tests/unit/components/challenges/submit-idea-screen.test.tsx
-// journeys: C09 C12 C13 C14
 import { CLEARANCE, scrollPaddings } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { SubmitIdeaScreen } from '../../../../components/challenges/submit-idea-screen'
@@ -55,7 +54,7 @@ beforeEach(() => {
 })
 
 describe('SubmitIdeaScreen', () => {
-  it('posts exactly the fields the API reads, trimmed', async () => {
+  it('C12 posts exactly the fields the API reads, trimmed', async () => {
     render(<SubmitIdeaScreen />)
     fillEverything()
     fireEvent.changeText(screen.getByLabelText('Idea name'), '  A switch a toddler can hit  ')
@@ -76,7 +75,7 @@ describe('SubmitIdeaScreen', () => {
   })
 
   // 078: a question is filed as one, so an admin can never graduate it.
-  it('files a question when that choice is picked', async () => {
+  it('C12 files a question when that choice is picked', async () => {
     render(<SubmitIdeaScreen />)
     fillEverything()
     fireEvent.press(screen.getByRole('radio', { name: 'A question for the community' }))
@@ -86,7 +85,7 @@ describe('SubmitIdeaScreen', () => {
     expect(mockPost.mock.calls[0][1]).toMatchObject({ kind: 'question' })
   })
 
-  it('sends no contact prefs when none are picked', async () => {
+  it('C12 sends no contact prefs when none are picked', async () => {
     render(<SubmitIdeaScreen />)
     fillEverything()
     fireEvent.press(screen.getByRole('button', { name: 'Submit idea' }))
@@ -116,7 +115,7 @@ describe('SubmitIdeaScreen', () => {
     expect(mockPost).not.toHaveBeenCalled()
   })
 
-  it('sends an idea with only a title and a summary, and never asks for intended use or primary user', async () => {
+  it('C12 sends an idea with only a title and a summary, and never asks for intended use or primary user', async () => {
     render(<SubmitIdeaScreen />)
     expect(screen.queryByLabelText('Intended use')).toBeNull()
     expect(screen.queryByLabelText('Primary user')).toBeNull()
@@ -138,7 +137,7 @@ describe('SubmitIdeaScreen', () => {
   })
 
   // 106: uploaded before the idea exists; the idea carries the path.
-  it('adds a photo, shows it, and sends its path with the idea', async () => {
+  it('C13 adds a photo, shows it, and sends its path with the idea', async () => {
     mockPick.mockResolvedValue({ path: 'ideas/viewer1/a.jpg', url: 'https://x/toy-photos/ideas/viewer1/a.jpg' })
     render(<SubmitIdeaScreen />)
     fillEverything()
@@ -175,7 +174,7 @@ describe('SubmitIdeaScreen', () => {
     expect(screen.queryByText(/pg boom|status 500/)).toBeNull()
   })
 
-  it('lands on your ideas once it is sent', async () => {
+  it('C12 lands on your ideas once it is sent', async () => {
     render(<SubmitIdeaScreen />)
     fillEverything()
     fireEvent.press(screen.getByRole('button', { name: 'Submit idea' }))
@@ -185,7 +184,7 @@ describe('SubmitIdeaScreen', () => {
     expect(mockReplace).toHaveBeenCalledWith('/challenges')
   })
 
-  it('keeps what was typed when the post fails, and shows the API’s own words', async () => {
+  it('C12 keeps what was typed when the post fails, and shows the API’s own words', async () => {
     mockPost.mockRejectedValue(new Error('API POST /api/ideas failed with status 400: Title is required'))
     render(<SubmitIdeaScreen />)
     fillEverything()
@@ -211,7 +210,7 @@ describe('SubmitIdeaScreen', () => {
     expect(screen.getByText('· Nothing that could be swallowed.')).toBeTruthy()
   })
 
-  it('starts a revised idea from the rejected one', async () => {
+  it('C09 starts a revised idea from the rejected one', async () => {
     mockGet.mockResolvedValue({
       id: 'c1', title: 'Old title', summary: 'Old summary', description: 'Old why', kind: 'challenge',
       contact_prefs: ['co_design'], photo_path: 'ideas/viewer1/p.png', photo_url: 'https://x/p.png', status: 'rejected',
@@ -224,7 +223,7 @@ describe('SubmitIdeaScreen', () => {
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/ideas', expect.objectContaining({ title: 'Old title', photo_path: 'ideas/viewer1/p.png' })))
   })
 
-  it('posts anonymously when asked to', async () => {
+  it('C14 posts anonymously when asked to', async () => {
     render(<SubmitIdeaScreen />)
     fillEverything()
     fireEvent.press(screen.getByRole('checkbox', { name: 'Post anonymously' }))
