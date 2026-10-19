@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { acceptTerms, createContributor, createNotification, createTutorial, deleteUser, signIn, uniqueTitle } from '../helpers'
 
 /**
  * The scaffold rule, enforced rather than remembered.
@@ -30,7 +31,7 @@ const TABS = ['/library', '/toy-library', '/printing', '/get-involved', '/about'
 const BEHIND_MORE = TOP_LEVEL.filter((s) => !TABS.includes(s.href))
 
 test.describe('public navigation', () => {
-  test('every top-level link resolves and none is a placeholder', async ({ page }) => {
+  test('WC02 every top-level link resolves and none is a placeholder', async ({ page }) => {
     for (const section of TOP_LEVEL) {
       const res = await page.goto(section.href)
       expect(res?.status(), `${section.href} should not error`).toBeLessThan(400)
@@ -47,7 +48,7 @@ test.describe('public navigation', () => {
     }
   })
 
-  test('the top bar carries five sections as tabs and the other two behind More', async ({ page }) => {
+  test('WC02 WC03 the top bar carries five sections as tabs and the other two behind More', async ({ page }) => {
     await page.goto('/')
     const header = page.locator('header')
     for (const section of TOP_LEVEL.filter((s) => TABS.includes(s.href))) {
@@ -87,7 +88,7 @@ test.describe('public navigation', () => {
     }
   })
 
-  test('the top bar marks which section you are in', async ({ page }) => {
+  test('WC02 WC03 the top bar marks which section you are in', async ({ page }) => {
     // This is what makes the subnav unnecessary rather than merely absent: the
     // sticky top bar is the wayfinding, and it is one click back to the hub.
     // A tab section: its tab is the current page.
@@ -113,7 +114,7 @@ test.describe('public navigation', () => {
     expect(page.url()).not.toContain('/login')
   })
 
-  test('the homepage reaches all seven sections', async ({ page }) => {
+  test('WC03 the homepage reaches all seven sections', async ({ page }) => {
     // The launcher grid went with the Soft Pop rebuild of / (a23f5dad); the
     // header is what reaches every section now, two of them through More.
     await page.goto('/')
@@ -163,5 +164,182 @@ test.describe('public navigation', () => {
         )
       )
       .toBe(0)
+  })
+})
+
+test.describe('header controls', () => {
+  test('WC01 the brand link goes to the home page', async ({ page }) => {
+    await page.goto('/about')
+    await page.locator('header').getByRole('link', { name: 'SPLAT Connect home' }).click()
+    await expect(page).toHaveURL(/localhost:\d+\/$/)
+  })
+
+  test('WC03 choosing a More item opens its page and closes the menu', async ({ page }) => {
+    await page.goto('/')
+    const header = page.locator('header')
+    await header.getByRole('button', { name: 'More' }).click()
+    const contact = header.getByRole('link', { name: /^Contact/ })
+    await expect(contact).toBeVisible()
+    await contact.click()
+    await expect(page).toHaveURL(/\/contact$/)
+    await expect(header.getByRole('link', { name: /^Contact/ })).toBeHidden()
+  })
+
+  test('WC05 the header search opens the library filtered by the query', async ({ page }) => {
+    await page.goto('/about')
+    await page.locator('header').getByRole('searchbox', { name: 'Search' }).fill('switch')
+    await page.keyboard.press('Enter')
+    await expect(page).toHaveURL(/\/library\?q=switch$/)
+    // The library shows the query as a removable chip.
+    await expect(page.getByRole('button', { name: '“switch”' })).toBeVisible()
+  })
+
+  test('WC06 the dark mode toggle sets the mode and keeps it on reload', async ({ page }) => {
+    await page.goto('/about')
+    await page.locator('header').getByRole('button', { name: 'Dark mode' }).click()
+    await expect(page.locator('body')).toHaveAttribute('data-mode', 'dark')
+
+    await page.reload()
+    await expect(page.locator('body')).toHaveAttribute('data-mode', 'dark')
+    await expect(page.locator('header').getByRole('button', { name: 'Dark mode' })).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  test('WC06 the reduce-motion toggle sets the attribute and keeps it on reload', async ({ page }) => {
+    await page.goto('/about')
+    await page.locator('header').getByRole('button', { name: /motion/i }).click()
+    await expect(page.locator('body')).toHaveAttribute('data-motion', 'reduced')
+
+    await page.reload()
+    await expect(page.locator('body')).toHaveAttribute('data-motion', 'reduced')
+  })
+
+  test('WC11 the skip link is the first Tab stop and moves focus to the main landmark', async ({ page }) => {
+    await page.goto('/about')
+    await page.keyboard.press('Tab')
+    const skip = page.getByRole('link', { name: 'Skip to main content' })
+    await expect(skip).toBeFocused()
+    await page.keyboard.press('Enter')
+    await expect(page).toHaveURL(/\/about#main$/)
+    await expect(page.locator('#main')).toBeFocused()
+  })
+})
+
+test.describe('header on a phone', () => {
+  test.use({ viewport: { width: 390, height: 800 } })
+
+  test('WC04 the Menu button unfolds the tabs and Escape folds them again', async ({ page }) => {
+    await page.goto('/about')
+    const guides = page.locator('header').getByRole('link', { name: 'Guides', exact: true })
+    const menu = page.locator('header').getByRole('button', { name: 'Menu' })
+    await expect(guides).toBeHidden()
+
+    await menu.click()
+    await expect(menu).toHaveAttribute('aria-expanded', 'true')
+    await expect(guides).toBeVisible()
+
+    await page.keyboard.press('Escape')
+    await expect(menu).toHaveAttribute('aria-expanded', 'false')
+    await expect(guides).toBeHidden()
+  })
+})
+
+test.describe('signed-in chrome', () => {
+  test('WC08 the My SPLAT link shows the unread count and opens the dashboard', async ({ page }) => {
+    const member = await createContributor()
+    try {
+      await acceptTerms(member.id)
+      const title = uniqueTitle('Chrome badge')
+      const tutorialId = await createTutorial(member.id, { title, status: 'approved' })
+      await createNotification(member.id, { type: 'tutorial_approved', tutorial_id: tutorialId, tutorial_title: title })
+      await signIn(page, member.email, member.password)
+      await page.waitForURL('**/dashboard')
+
+      await page.goto('/about')
+      const account = page.locator('header').getByRole('link', { name: /My SPLAT/ })
+      await expect(account).toHaveAccessibleName(/1 unread/)
+      await expect(account.locator('.nav-account__badge')).toHaveText('1')
+
+      await account.click()
+      await expect(page).toHaveURL(/\/dashboard$/)
+    } finally {
+      await deleteUser(member.id)
+    }
+  })
+
+  test('WC12 the Back to My SPLAT dock appears on public pages only when signed in', async ({ page }) => {
+    await page.goto('/about')
+    await expect(page.getByRole('link', { name: /Back to My SPLAT/ })).toHaveCount(0)
+
+    const member = await createContributor()
+    try {
+      await acceptTerms(member.id)
+      await signIn(page, member.email, member.password)
+      await page.waitForURL('**/dashboard')
+
+      await page.goto('/about')
+      const dock = page.getByRole('link', { name: /Back to My SPLAT/ })
+      await expect(dock).toHaveAttribute('href', '/dashboard')
+      await dock.click()
+      await expect(page).toHaveURL(/\/dashboard$/)
+      await expect(page.getByRole('link', { name: /Back to My SPLAT/ })).toHaveCount(0)
+    } finally {
+      await deleteUser(member.id)
+    }
+  })
+
+  test('WC13 the dock on /library opens a menu of the page\'s actions', async ({ page }) => {
+    const member = await createContributor()
+    try {
+      await acceptTerms(member.id)
+      await signIn(page, member.email, member.password)
+      await page.waitForURL('**/dashboard')
+
+      await page.goto('/library')
+      await page.getByRole('button', { name: 'Library actions' }).click()
+      await expect(page.getByRole('link', { name: 'Upload a tutorial' })).toHaveAttribute('href', '/upload')
+      await expect(page.getByRole('link', { name: 'My tutorials' })).toHaveAttribute('href', '/dashboard/tutorials')
+      await expect(page.getByRole('link', { name: 'Saved' })).toHaveAttribute('href', '/dashboard/saved')
+      await page.getByRole('link', { name: 'My tutorials' }).click()
+      await expect(page).toHaveURL(/\/dashboard\/tutorials$/)
+    } finally {
+      await deleteUser(member.id)
+    }
+  })
+
+  test('WC13 the dock on /toy-library opens the toy actions', async ({ page }) => {
+    const member = await createContributor()
+    try {
+      await acceptTerms(member.id)
+      await signIn(page, member.email, member.password)
+      await page.waitForURL('**/dashboard')
+
+      await page.goto('/toy-library')
+      await page.getByRole('button', { name: 'Toy library actions' }).click()
+      const item = (name: string) => page.locator('.corner-menu-item').filter({ hasText: name })
+      await expect(item('Give a toy')).toHaveAttribute('href', '/dashboard/toys/new')
+      await expect(item('My exchanges')).toHaveAttribute('href', '/dashboard/exchanges')
+      await item('My toys').click()
+      await expect(page).toHaveURL(/\/dashboard\/toys$/)
+    } finally {
+      await deleteUser(member.id)
+    }
+  })
+
+  test('WC14 the breadcrumb links up through My SPLAT and leaves the page itself unlinked', async ({ page }) => {
+    const member = await createContributor()
+    try {
+      await acceptTerms(member.id)
+      await signIn(page, member.email, member.password)
+      await page.waitForURL('**/dashboard')
+
+      await page.goto('/dashboard/toys/new')
+      const trail = page.getByRole('navigation', { name: 'Breadcrumb' })
+      await expect(trail.getByRole('link', { name: 'My SPLAT' })).toHaveAttribute('href', '/dashboard')
+      await expect(trail.locator('[aria-current="page"]')).toHaveText('Add a toy')
+      await trail.getByRole('link', { name: 'My toys' }).click()
+      await expect(page).toHaveURL(/\/dashboard\/toys$/)
+    } finally {
+      await deleteUser(member.id)
+    }
   })
 })

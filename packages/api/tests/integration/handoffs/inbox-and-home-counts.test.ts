@@ -49,7 +49,7 @@ describe('H01 the Today card reads', () => {
     expect(await unread(user)).toEqual({ tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 })
   })
 
-  it('H01 then leading an organisation and a new notification show up on the next read', async () => {
+  it('H01 WC08 then leading an organisation and a new notification show up on the next read', async () => {
     orgId = await createOrg({ createdBy: user.id, name: `Today ${Date.now()}` })
     await addLeader(orgId, user.id)
     const orgs = (await (await app.request('/api/organizations/mine', authed(user))).json()) as { id: string }[]

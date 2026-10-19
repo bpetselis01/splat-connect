@@ -26,7 +26,7 @@ describe('Breadcrumb', () => {
 
   // The board draws no trail over an ordinary public page — the header says
   // where you are. Only five public child pages get one.
-  it('renders nothing on a public page the board draws no trail over', () => {
+  it('WC14 renders nothing on a public page the board draws no trail over', () => {
     for (const path of ['/about', '/learn', '/get-involved/submit-an-idea']) {
       pathname.current = path
       const { unmount } = render(<Breadcrumb />)
@@ -35,7 +35,7 @@ describe('Breadcrumb', () => {
     }
   })
 
-  it('draws the account trail with the page itself unlinked', () => {
+  it('WC14 draws the account trail with the page itself unlinked', () => {
     pathname.current = '/dashboard/toys/new'
     render(<Breadcrumb />)
     expect(screen.getByRole('link', { name: 'My SPLAT' })).toHaveAttribute('href', '/dashboard')
@@ -43,7 +43,7 @@ describe('Breadcrumb', () => {
     expect(screen.getByText('Add a toy')).toHaveAttribute('aria-current', 'page')
   })
 
-  it('links a registration back to its own event', () => {
+  it('WC14 links a registration back to its own event', () => {
     pathname.current = '/get-involved/events/abc/register'
     render(<Breadcrumb />)
     expect(screen.getByRole('link', { name: 'Events' })).toHaveAttribute('href', '/get-involved/events')
