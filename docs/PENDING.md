@@ -137,7 +137,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 ### `makers-tab-reported-person` — Reported people on the Makers tab
 
-**Question:** Hide a reported person from the Makers tab, or change the sheet copy?
+**Question:** Decide: Whether a reported person should leave the Makers tab, as the report sheet promises.
 
 - Platforms: mobile
 - Needs: Whether to hide a reported person from the Makers tab, or change the sheet copy.
@@ -145,7 +145,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 ### `idea-graduate-duplicate-contributor` — Graduating an idea whose author participated
 
-**Question:** De-duplicate the author on graduation and make the route atomic?
+**Question:** Decide: How a graduated idea builds its contributor list when the author is also a participant.
 
 - Platforms: api
 - Needs: Whether graduation de-duplicates the author, and whether it runs in one transaction.
@@ -153,7 +153,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 ### `org-pages-404-for-non-leader` — Organisation pages for a non-leader
 
-**Question:** Redirect a non-leader from the organisation pages instead of a 404? Where to?
+**Question:** Decide: Whether a non-leader opening an organisation dashboard page sees a 404 or is redirected.
 
 - Platforms: web
 - Needs: Whether a non-leader is redirected (and where) or keeps the 404.
@@ -161,7 +161,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 ### `toy-transactions-role-filter-ignored` — Role filter on the Exchange list
 
-**Question:** Make GET /api/toy-transactions honour ?role, or drop the parameter?
+**Question:** Decide: Whether the exchanges list filters by role on the server or in the browser.
 
 - Platforms: api
 - Needs: Whether the route honours the role filter or the parameter is removed.
@@ -169,7 +169,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 ### `draft-event-story-validation` — Validation on drafts
 
-**Question:** Let drafts skip validation, or change the form copy?
+**Question:** Decide: Which fields a draft event or story must have before it can be saved.
 
 - Platforms: web
 - Needs: Whether drafts skip validation as the form says, or the form copy changes.
@@ -177,7 +177,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 ### `recycling-credit-rounding` — Recycling credit rounding
 
-**Question:** Round the recycling credit half up (1.95 shows 2.0) or keep toFixed?
+**Question:** Decide: How a recycling credit weight is rounded on the Weigh and credit line.
 
 - Platforms: web
 - Needs: Which rounding the credit uses.
@@ -185,7 +185,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 ### `challenge-join-busy-stuck` — Join after Leave on a challenge
 
-**Question:** Fix the stuck Join button after Leave?
+**Question:** Decide: Whether the Join button resets after leaving a challenge.
 
 - Platforms: web
 - Needs: Nothing to decide beyond scheduling the fix.
@@ -193,7 +193,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 ### `event-register-raw-409` — Event registration error copy
 
-**Question:** Show only the full-event copy on a 409?
+**Question:** Decide: What the register form shows when an event is full.
 
 - Platforms: web
 - Needs: Whether to show only the full-event copy.
@@ -201,7 +201,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 ### `public-org-toasts-missing` — Toasts on the public organisation page
 
-**Question:** Add a ToastProvider to the public organisation page?
+**Question:** Decide: Whether Follow and Say thanks confirm with a toast on the public organisation page.
 
 - Platforms: web
 - Needs: Whether the public page gets a ToastProvider.
@@ -209,7 +209,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 ### `guide-share-no-toast` — Share on a Guide page
 
-**Question:** Show a "Link copied" toast after Share on a Guide?
+**Question:** Decide: Whether Share on a guide confirms that the link was copied.
 
 - Platforms: web
 - Needs: Whether Share confirms with a toast.
@@ -217,7 +217,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 ### `guide-patch-without-status-500` — Guide PATCH without status
 
-**Question:** Return a 4xx for a PATCH without status on an approved Guide? Which code?
+**Question:** Decide: What an edit to an approved guide that changes no status should answer.
 
 - Platforms: api
 - Needs: Which 4xx and message a rejected edit returns.
@@ -225,7 +225,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 ### `hub-exchange-count-plural` — Hub Exchange count grammar
 
-**Question:** Fix the plural: "1 exchange needs you"?
+**Question:** Decide: The wording of the hub exchange count for a single exchange.
 
 - Platforms: web
 - Needs: Nothing to decide beyond scheduling the fix.
@@ -233,7 +233,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 ### `impact-map-soon-pill` — Deliveries map card
 
-**Question:** Remove the SOON pill and link the Deliveries card to the map?
+**Question:** Decide: Whether the Deliveries map card should still say SOON.
 
 - Platforms: web
 - Needs: Whether to drop the pill and link the card to the map.
@@ -241,7 +241,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 ### `confirmed-page-bare-layout` — Bare layout after email confirm
 
-**Question:** Fix the layout that stays bare after /auth/confirmed?
+**Question:** Decide: Which layout the sign-in page shows after an email confirmation.
 
 - Platforms: web
 - Needs: Nothing to decide beyond scheduling the fix.
@@ -249,7 +249,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 ### `signup-reason-banners` — Signup reason banners
 
-**Question:** Add banners for ?reason=follow and ?reason=message on /signup? What copy?
+**Question:** Decide: Which sign-up reasons show a banner.
 
 - Platforms: web
 - Needs: Whether the two reasons get a banner, and the copy.
@@ -257,7 +257,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 ### `event-detail-ready-marker` — I'm going before the profile loads
 
-**Question:** Disable I'm going until the profile loads, and add a ready marker for the e2e?
+**Question:** Decide: Whether the event page should expose a ready state before I'm going can be tapped.
 
 - Platforms: mobile
 - Needs: Whether the button waits for the profile (disabled or a ready marker).
