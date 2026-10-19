@@ -1,4 +1,3 @@
-// journeys: W01 W02 W06 W08 W09 W10
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -37,7 +36,7 @@ describe('toys CRUD', () => {
     expect(await res.json()).toEqual([])
   })
 
-  it('creates, lists newest first, ignores spoofed fields, and enforces the whitelist on PATCH', async () => {
+  it('W01 W02 W06 creates, lists newest first, ignores spoofed fields, and enforces the whitelist on PATCH', async () => {
     const create1 = await req('/', owner.token, {
       method: 'POST',
       body: JSON.stringify({ name: 'Fire truck', condition: 8, owner_id: other.id, status: 'published' }),
@@ -107,7 +106,7 @@ describe('toys CRUD', () => {
     expect(malformed.status).toBe(404)
   })
 
-  it('rejects publish until the cover photo is set, then publishes', async () => {
+  it('W08 W09 rejects publish until the cover photo is set, then publishes', async () => {
     const create = await req('/', owner.token, {
       method: 'POST',
       body: JSON.stringify({ name: 'Robot', condition: 9 }),
@@ -130,7 +129,7 @@ describe('toys CRUD', () => {
     expect(((await published.json()) as { status: string }).status).toBe('published')
   })
 
-  it('deletes a toy', async () => {
+  it('W10 deletes a toy', async () => {
     const create = await req('/', owner.token, {
       method: 'POST',
       body: JSON.stringify({ name: 'Kazoo', condition: 3 }),

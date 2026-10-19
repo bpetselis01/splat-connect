@@ -3,7 +3,6 @@
  * on the leader's own shelf with the reason. A person's toy cannot be retired.
  * Remove never erases delivery history: a toy any handover names stays.
  */
-// journeys: L09 W05
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -73,7 +72,7 @@ describe('101 toy retired', () => {
     expect(error).not.toBeNull()
   })
 
-  it('takes a retired toy out of the library and the request flow, and keeps it on the shelf', async () => {
+  it('W05 takes a retired toy out of the library and the request flow, and keeps it on the shelf', async () => {
     const res = await call(leader, `/api/toys/${toyId}`, 'PATCH', { retired_at: new Date().toISOString(), retired_note: 'Broken 12 Aug' })
     expect(res.status).toBe(200)
 
@@ -112,7 +111,7 @@ describe('Remove keeps delivery history', () => {
     expect(((await res.json()) as { error: string }).error).toBe(HISTORY)
   })
 
-  it('deletes a toy with no handovers', async () => {
+  it('L09 deletes a toy with no handovers', async () => {
     const id = await createOrgToy({ orgId })
     const res = await call(leader, `/api/toys/${id}`, 'DELETE')
     expect(res.status).toBe(200)

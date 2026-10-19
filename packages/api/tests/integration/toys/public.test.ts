@@ -1,4 +1,3 @@
-// journeys: Y01 Y04
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -59,7 +58,7 @@ describe('GET /api/public/toys', () => {
     await deleteTestUser(owner.id)
   })
 
-  it('lists only published toys, newest first', async () => {
+  it('Y01 lists only published toys, newest first', async () => {
     const res = await app.request('/api/public/toys')
     expect(res.status).toBe(200)
     const rows = (await res.json()) as Array<{ id: string }>
@@ -76,7 +75,7 @@ describe('GET /api/public/toys', () => {
     expect(missingRes.status).toBe(404)
   })
 
-  it('serves a published toy with its owner name embedded', async () => {
+  it('Y04 serves a published toy with its owner name embedded', async () => {
     const res = await app.request(`/api/public/toys/${published1}`)
     expect(res.status).toBe(200)
     const body = (await res.json()) as { name: string; profiles: { name: string } | null }
@@ -84,7 +83,7 @@ describe('GET /api/public/toys', () => {
     expect(body.profiles).not.toBeNull()
   })
 
-  it('serves the facts, the guide only while approved, and the holder given count', async () => {
+  it('Y04 serves the facts, the guide only while approved, and the holder given count', async () => {
     const guide = await createProject({ authorId: owner.id, status: 'approved', title: 'Guide C' })
     try {
       await req(`/${published1}`, owner.token, {

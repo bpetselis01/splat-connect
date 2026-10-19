@@ -1,4 +1,3 @@
-// journeys: T08
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
 import { createProject } from '../../helpers/orgs.js'
@@ -24,7 +23,7 @@ function authed(token: string) {
 }
 
 describe('PATCH /api/tutorials/:id — optimistic concurrency', () => {
-  it('succeeds and bumps updated_at when the caller has the current version', async () => {
+  it('T08 succeeds and bumps updated_at when the caller has the current version', async () => {
     const { data: current } = await adminClient().from('tutorials').select('updated_at').eq('id', tutorialId).single()
     const res = await app.request(`/api/tutorials/${tutorialId}`, {
       ...authed(author.token),
