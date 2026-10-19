@@ -153,7 +153,7 @@ describe('asking for a build', () => {
 })
 
 describe('the extra stage', () => {
-  it('K06 lets the maker accept, which 033 used to answer "missing" for', async () => {
+  it('K06 WX16 lets the maker accept, which 033 used to answer "missing" for', async () => {
     const res = await app.request(
       `/api/toy-transactions/${transactionId}/accept`,
       json(maker.token, {
@@ -198,7 +198,7 @@ describe('the extra stage', () => {
     expect(byMaker.status).toBe(403)
   })
 
-  it('K09 lets the family approve, and refuses approving twice', async () => {
+  it('K09 WX21 lets the family approve, and refuses approving twice', async () => {
     const res = await app.request(
       `/api/toy-transactions/${transactionId}/approve-work`,
       json(family.token, {})
@@ -217,7 +217,7 @@ describe('the extra stage', () => {
    * Why: an approval carried onto a different photo closes the stage with
    * nobody having looked at what is now on the record.
    */
-  it('K08 clears the approval when a new shot replaces the old one', async () => {
+  it('K08 WX20 clears the approval when a new shot replaces the old one', async () => {
     const res = await app.request(
       `/api/toy-transactions/${transactionId}/working-shot`,
       photo(maker.token)
@@ -236,7 +236,7 @@ describe('the extra stage', () => {
 })
 
 describe('closing a build', () => {
-  it('K11 completes on both codes and transfers no toy, because there is none', async () => {
+  it('K11 WX19 completes on both codes and transfers no toy, because there is none', async () => {
     const admin = adminClient()
     const { data: row } = await admin
       .from('toy_transactions')

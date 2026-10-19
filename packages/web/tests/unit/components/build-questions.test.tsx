@@ -14,7 +14,7 @@ const data = {
 }
 
 describe('BuildQuestionsThread', () => {
-  it('shows the stage card and the family’s reply, and sends a question', async () => {
+  it('WX24 shows the stage card and the family’s reply, and sends a question', async () => {
     vi.mocked(browserApiClient.post).mockResolvedValue({})
     render(<BuildQuestionsThread data={data} viewerId="m1" makerId={null} />)
     expect(screen.getByText('Asking first')).toBeInTheDocument()
@@ -25,5 +25,31 @@ describe('BuildQuestionsThread', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Send' }))
     await waitFor(() => expect(browserApiClient.post).toHaveBeenCalledWith('/api/toy-transactions/b1/questions', { body: 'Batteries?' }))
     expect(refresh).toHaveBeenCalled()
+  })
+
+  it('WX25 claims the build for the maker and opens the build thread', async () => {
+    vi.mocked(browserApiClient.post).mockResolvedValue({})
+    push.mockClear()
+    render(<BuildQuestionsThread data={data} viewerId="m1" makerId={null} />)
+    fireEvent.click(screen.getByRole('button', { name: /I.ll build this/ }))
+    await waitFor(() => expect(browserApiClient.post).toHaveBeenCalledWith('/api/toy-transactions/b1/claim', {}))
+    expect(push).toHaveBeenCalledWith('/dashboard/exchanges/build/b1')
+  })
+
+  it('WX25 shows the maker the refusal and stays on the page when the claim is taken', async () => {
+    vi.mocked(browserApiClient.post).mockRejectedValue(new Error('Already claimed'))
+    push.mockClear()
+    render(<BuildQuestionsThread data={data} viewerId="m1" makerId={null} />)
+    fireEvent.click(screen.getByRole('button', { name: /I.ll build this/ }))
+    expect(await screen.findByText('Already claimed')).toBeInTheDocument()
+    expect(push).not.toHaveBeenCalled()
+  })
+
+  it('WX24 lets the family answer one maker by naming that maker', async () => {
+    vi.mocked(browserApiClient.post).mockResolvedValue({})
+    render(<BuildQuestionsThread data={{ ...data, family: true }} viewerId="fam" makerId="m1" />)
+    fireEvent.change(screen.getByRole('textbox', { name: 'Message' }), { target: { value: 'Two AAs.' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }))
+    await waitFor(() => expect(browserApiClient.post).toHaveBeenCalledWith('/api/toy-transactions/b1/questions', { body: 'Two AAs.', maker_id: 'm1' }))
   })
 })

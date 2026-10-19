@@ -199,7 +199,7 @@ describe('the cost panel', () => {
    * and so the one who knows. The payee settling their own claim is the case
    * that would break if this had been gated on payer_id.
    */
-  it('X12 lets either party settle a line, and records who did', async () => {
+  it('X12 WX12 lets either party settle a line, and records who did', async () => {
     const res = await app.request(`/api/exchange-costs/${transactionId}`, authed(payer.token))
     const { lines } = (await res.json()) as { lines: Array<{ id: string; settled_at: string | null }> }
     const open = lines.find((l) => !l.settled_at)!

@@ -57,4 +57,10 @@ describe('MarkNotificationsRead', () => {
 
     await waitFor(() => expect(caught).toHaveBeenCalled())
   })
+
+  it('WX01 clears the exchanges bucket, and only that one, when My exchanges opens', async () => {
+    render(<MarkNotificationsRead bucket="exchanges" />)
+    await waitFor(() => expect(post).toHaveBeenCalledWith('/api/notifications/me/read', { bucket: 'exchanges' }))
+    expect(post).toHaveBeenCalledTimes(1)
+  })
 })

@@ -51,7 +51,7 @@ describe('POST /api/toy-transactions/:id/messages', () => {
     await deleteTestUser(stranger.id)
   })
 
-  it('X03 lets a party post a message', async () => {
+  it('X03 WX05 lets a party post a message', async () => {
     const res = await txReq(`/${txId}/messages`, requester.token, {
       method: 'POST',
       body: JSON.stringify({ body: 'When works for you?' }),

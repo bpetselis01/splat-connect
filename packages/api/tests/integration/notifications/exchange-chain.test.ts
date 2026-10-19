@@ -73,7 +73,7 @@ describe('asking for a toy (Y05, Y06)', () => {
 })
 
 describe('talking in the thread (X03)', () => {
-  it('X03 each side’s message tells the other, carrying the message as the body', async () => {
+  it('X03 WX05 each side’s message tells the other, carrying the message as the body', async () => {
     const id = await ask(await publishedToy(owner.token, 'Scooter', 'donation'))
     expect((await post(`/toy-transactions/${id}/messages`, owner.token, { body: 'Thursday after three?' })).status).toBe(201)
     expect((await post(`/toy-transactions/${id}/messages`, family.token, { body: 'Works for us' })).status).toBe(201)
@@ -88,7 +88,7 @@ describe('talking in the thread (X03)', () => {
 })
 
 describe('the owner answering (W03, X04, X05)', () => {
-  it('W03 X04 accepting tells the family, in the owner’s name', async () => {
+  it('W03 X04 WX06 accepting tells the family, in the owner’s name', async () => {
     const id = await ask(await publishedToy(owner.token, 'Robot', 'donation'))
     expect((await post(`/toy-transactions/${id}/accept`, owner.token, ADDRESS)).status).toBe(200)
     expect(await notesAbout(family.id, id)).toEqual([
@@ -96,7 +96,7 @@ describe('the owner answering (W03, X04, X05)', () => {
     ])
   })
 
-  it('X05 declining tells the family, with the reason as the body', async () => {
+  it('X05 WX07 declining tells the family, with the reason as the body', async () => {
     const id = await ask(await publishedToy(owner.token, 'Drum', 'donation'))
     expect((await post(`/toy-transactions/${id}/reject`, owner.token, { reason: 'Already promised' })).status).toBe(200)
     expect(await notesAbout(family.id, id)).toEqual([
@@ -106,7 +106,7 @@ describe('the owner answering (W03, X04, X05)', () => {
 })
 
 describe('withdrawing (X06)', () => {
-  it('X06 the family withdrawing tells the owner', async () => {
+  it('X06 WX08 the family withdrawing tells the owner', async () => {
     const id = await ask(await publishedToy(owner.token, 'Train', 'donation'))
     expect((await post(`/toy-transactions/${id}/withdraw`, family.token)).status).toBe(200)
     const rows = (await notesAbout(owner.id, id)).filter((n) => n.type === 'toy_withdrawn')
@@ -116,7 +116,7 @@ describe('withdrawing (X06)', () => {
     expect((await notesAbout(family.id, id)).filter((n) => n.type === 'toy_withdrawn')).toEqual([])
   })
 
-  it('X06 the owner withdrawing tells the family', async () => {
+  it('X06 WX08 the owner withdrawing tells the family', async () => {
     const id = await ask(await publishedToy(owner.token, 'Blocks', 'donation'))
     expect((await post(`/toy-transactions/${id}/withdraw`, owner.token)).status).toBe(200)
     expect(await notesAbout(family.id, id)).toEqual([
@@ -126,7 +126,7 @@ describe('withdrawing (X06)', () => {
 })
 
 describe('confirming the handover (X07)', () => {
-  it('X07 a rival request is told it was declined once the toy has gone', async () => {
+  it('X07 WX09 a rival request is told it was declined once the toy has gone', async () => {
     const toyId = await publishedToy(owner.token, 'Rocking horse', 'donation')
     const id = await ask(toyId)
     const rivalId = await ask(toyId, rival)
