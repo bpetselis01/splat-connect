@@ -46,6 +46,8 @@ export function AskForBuildScreen() {
   const [covers, setCovers] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [loadFailed, setLoadFailed] = useState(false)
+  const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
     apiClient
@@ -53,9 +55,10 @@ export function AskForBuildScreen() {
       .then(setTutorials)
       .catch((err) => {
         logFailure('[AskForBuildScreen] tutorials fetch failed:', err)
-        setError("Couldn't load the guides. Close this and try again.")
+        setError("Couldn't load the guides.")
+        setLoadFailed(true)
       })
-  }, [])
+  }, [attempt])
 
   // Seeded once the profile lands, and never over something already typed.
   const profileSuburb = caps?.profile.pickup_suburb ?? ''
@@ -196,6 +199,17 @@ export function AskForBuildScreen() {
       </Pressable>
 
       <ErrorRow message={error} />
+      {loadFailed ? (
+        <Button
+          label="Try again"
+          variant="secondary"
+          onPress={() => {
+            setError(null)
+            setLoadFailed(false)
+            setAttempt((n) => n + 1)
+          }}
+        />
+      ) : null}
 
       <Button label={busy ? 'Posting…' : 'Post to Makers wanted'} disabled={busy} onPress={submit} />
       <Text style={styles.footnote}>You can withdraw it any time before a maker claims it.</Text>
