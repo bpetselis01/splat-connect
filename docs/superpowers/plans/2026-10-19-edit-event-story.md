@@ -57,3 +57,4 @@ Once an event or story is saved, a leader cannot open it again — on web or the
 
 ## Follow-ups (not built)
 - Tell registered families when a posted event's time, place or cancellation changes (new notification type).
+- `tests/unit/lib/failure-state-guard.test.ts` matches `apiClient.get` on one line only; `apiClient\n  .get` slips past. Widening the regex flags ~30 existing mobile screens with no failure test.
