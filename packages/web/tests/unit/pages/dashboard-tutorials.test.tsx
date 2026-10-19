@@ -23,7 +23,7 @@ vi.mock('next/link', () => ({
   ),
 }))
 vi.mock('@/components/mark-notifications-read', () => ({
-  MarkNotificationsRead: () => null,
+  MarkNotificationsRead: ({ bucket }: { bucket: string }) => <i data-testid="mark-read" data-bucket={bucket} />,
 }))
 
 import { apiClient } from '@/lib/api-client'
@@ -85,7 +85,7 @@ describe('DashboardPage', () => {
   // How:   2 pending + 1 approved + 3 rejected; checks the track's counts, then
   //        asks for ?stage=needsyou and checks only the rejected three render
   // Chain: the stage filter replaced the old pending/approved/rejected strip
-  it('counts each stage in the filter track and filters by ?stage', async () => {
+  it('WT36 counts each stage in the filter track and filters by ?stage', async () => {
     const rows = [
       { ...baseTutorial, id: '1', status: 'pending' },
       { ...baseTutorial, id: '2', status: 'pending' },
@@ -227,8 +227,14 @@ describe('DashboardPage', () => {
     expect(screen.getByText('Riverside Therapy is deciding')).toBeInTheDocument()
   })
 
+  it('WT37 clears the tutorials bucket of notifications when the page opens', async () => {
+    vi.mocked(apiClient.get).mockResolvedValueOnce([])
+    render(await DashboardPage())
+    expect(screen.getByTestId('mark-read')).toHaveAttribute('data-bucket', 'tutorials')
+  })
+
   // Tests: the board's one create action on My tutorials
-  it('keeps the primary action on My tutorials', async () => {
+  it('WT38 keeps the primary action on My tutorials', async () => {
     vi.mocked(apiClient.get)
       .mockResolvedValueOnce([])
     render(await DashboardPage())
@@ -243,7 +249,7 @@ describe('DashboardPage', () => {
   //        /api/saves landed, so the condition it was waiting on is gone.
   //        It skips the saved hub deliberately: the label names a destination,
   //        so it goes to the destination.
-  it('leads to the saved tutorials list', async () => {
+  it('WT38 leads to the saved tutorials list', async () => {
     vi.mocked(apiClient.get)
       .mockResolvedValueOnce([])
     render(await DashboardPage())
