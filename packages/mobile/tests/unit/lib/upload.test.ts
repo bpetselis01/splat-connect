@@ -1,5 +1,4 @@
 // packages/mobile/tests/unit/lib/upload.test.ts
-// journeys: V05
 import { Platform } from 'react-native'
 
 const mockGetToken = jest.fn()

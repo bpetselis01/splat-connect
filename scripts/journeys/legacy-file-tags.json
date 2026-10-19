@@ -89,15 +89,5 @@
   "packages/mobile/tests/unit/components/printing/request-screen.test.tsx",
   "packages/mobile/tests/unit/components/printing/requests-screen-failure.test.tsx",
   "packages/mobile/tests/unit/components/printing/requests-screen.test.tsx",
-  "packages/mobile/tests/unit/components/reports/report-problem.test.tsx",
-  "packages/mobile/tests/unit/lib/auth-context-flows.test.tsx",
-  "packages/mobile/tests/unit/lib/auth-context.test.tsx",
-  "packages/mobile/tests/unit/lib/log.test.ts",
-  "packages/mobile/tests/unit/lib/map-filters.test.ts",
-  "packages/mobile/tests/unit/lib/my-routes.test.ts",
-  "packages/mobile/tests/unit/lib/saves-journey.test.tsx",
-  "packages/mobile/tests/unit/lib/team-state.test.ts",
-  "packages/mobile/tests/unit/lib/upload.test.ts",
-  "packages/mobile/tests/unit/lib/use-child-profile.test.tsx",
-  "packages/mobile/tests/unit/lib/use-tutorial-draft.test.tsx"
+  "packages/mobile/tests/unit/components/reports/report-problem.test.tsx"
 ]

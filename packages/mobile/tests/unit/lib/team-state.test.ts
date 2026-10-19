@@ -1,4 +1,3 @@
-// journeys: T20
 import { teamRows } from '../../../lib/team-state'
 
 const profile = (id: string, name: string) => ({ id, name }) as any

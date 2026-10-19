@@ -1,4 +1,3 @@
-// journeys: G29
 import { isNetworkError } from '@splat-connect/types'
 import { logFailure } from '../../../lib/log'
 
