@@ -29,7 +29,7 @@ function authed(token: string, init: RequestInit = {}) {
 }
 
 describe('POST /api/tutorials/:id/collaborators/invite', () => {
-  it('the primary contributor can invite by email', async () => {
+  it('T23 the primary contributor can invite by email, leaving a pending invite and telling the invitee', async () => {
     const res = await app.request(
       `/api/tutorials/${tutorialId}/collaborators/invite`,
       authed(primary.token, { method: 'POST', body: JSON.stringify({ email: invitee.email }) })
@@ -40,6 +40,8 @@ describe('POST /api/tutorials/:id/collaborators/invite', () => {
     // The invitee isn't a contributor yet, so RLS blocks a live tutorials
     // join — the title has to be denormalized (016) to render at all.
     expect(notif.data?.[0]?.tutorial_title).toBe('Backing Fixture')
+    const invites = await adminClient().from('tutorial_collaborator_invites').select('invited_profile_id, status').eq('tutorial_id', tutorialId)
+    expect(invites.data).toEqual([{ invited_profile_id: invitee.id, status: 'pending' }])
   })
 
   it('a stranger cannot invite', async () => {
@@ -64,9 +66,11 @@ describe('DELETE /api/tutorials/:id/collaborators/:profileId', () => {
     await adminClient().from('tutorial_contributors').insert({ tutorial_id: tutorialId, profile_id: invitee.id, role: 'collaborator' })
   })
 
-  it('the primary can remove a collaborator, who gets notified', async () => {
+  it('T24 the primary can remove a collaborator, who loses the seat and gets notified', async () => {
     const res = await app.request(`/api/tutorials/${tutorialId}/collaborators/${invitee.id}`, authed(primary.token, { method: 'DELETE' }))
     expect(res.status).toBe(204)
+    const seat = await adminClient().from('tutorial_contributors').select('profile_id').eq('tutorial_id', tutorialId).eq('profile_id', invitee.id)
+    expect(seat.data).toEqual([])
     const notif = await adminClient().from('notifications').select('type, tutorial_title').eq('recipient_id', invitee.id).eq('tutorial_id', tutorialId)
     expect(notif.data?.[0]?.type).toBe('collaborator_removed')
     // The removed collaborator loses tutorial_contributors visibility in the
@@ -74,9 +78,11 @@ describe('DELETE /api/tutorials/:id/collaborators/:profileId', () => {
     expect(notif.data?.[0]?.tutorial_title).toBe('Backing Fixture')
   })
 
-  it('a collaborator can remove themself, and the primary gets notified', async () => {
+  it('T24 a collaborator can remove themself, and the primary gets notified', async () => {
     const res = await app.request(`/api/tutorials/${tutorialId}/collaborators/${invitee.id}`, authed(invitee.token, { method: 'DELETE' }))
     expect(res.status).toBe(204)
+    const seat = await adminClient().from('tutorial_contributors').select('profile_id').eq('tutorial_id', tutorialId).eq('profile_id', invitee.id)
+    expect(seat.data).toEqual([])
     const notif = await adminClient().from('notifications').select('type, tutorial_title').eq('recipient_id', primary.id).eq('tutorial_id', tutorialId)
     expect(notif.data?.[0]?.type).toBe('collaborator_left')
     expect(notif.data?.[0]?.tutorial_title).toBe('Backing Fixture')
