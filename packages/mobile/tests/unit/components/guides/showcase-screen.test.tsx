@@ -1,5 +1,5 @@
 // packages/mobile/tests/unit/components/guides/showcase-screen.test.tsx
-import { fireEvent, render, screen } from '@testing-library/react-native'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native'
 import { ShowcaseScreen } from '../../../../components/guides/showcase-screen'
 
 // Ionicons loads its font asynchronously and setStates after the test ends;
@@ -8,7 +8,8 @@ import { ShowcaseScreen } from '../../../../components/guides/showcase-screen'
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 
 const mockGet = jest.fn()
-jest.mock('../../../../lib/api-client', () => ({ apiClient: { get: (...a: unknown[]) => mockGet(...a) } }))
+const mockPost = jest.fn()
+jest.mock('../../../../lib/api-client', () => ({ apiClient: { get: (...a: unknown[]) => mockGet(...a), post: (...a: unknown[]) => mockPost(...a) } }))
 const mockPush = jest.fn()
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }))
 let mockUser: string | null = null
@@ -121,5 +122,21 @@ describe('ShowcaseScreen', () => {
     expect(await screen.findByText('Occupational therapist')).toBeTruthy()
     fireEvent.press(screen.getByLabelText('Organisation: TAD Australia'))
     expect(mockPush).toHaveBeenCalledWith('/guides/organisation/o1')
+  })
+
+  it('S03 Report a problem files a person report naming this member, and says it was sent', async () => {
+    mockGet.mockResolvedValue(PERSON)
+    mockPost.mockResolvedValue({})
+    render(<ShowcaseScreen kind="person" id="c1" />)
+    fireEvent.press(await screen.findByRole('button', { name: /Report a problem/ }))
+    fireEvent.press(screen.getByRole('radio', { name: 'Behaviour' }))
+    fireEvent.changeText(screen.getByLabelText('What happened?'), 'Rude in the thread')
+    fireEvent.press(screen.getByRole('button', { name: 'Send report' }))
+    await waitFor(() =>
+      expect(mockPost).toHaveBeenCalledWith('/api/reports', expect.objectContaining({
+        subject_kind: 'person', subject_id: 'c1', subject_label: 'Sam Taylor', category: 'conduct', body: 'Rude in the thread',
+      }))
+    )
+    expect(await screen.findByText('Sent to SPLAT. You will hear back within two days.')).toBeTruthy()
   })
 })

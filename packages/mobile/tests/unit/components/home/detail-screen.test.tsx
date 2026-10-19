@@ -220,11 +220,12 @@ describe('DetailScreen', () => {
     expect(screen.queryByText('Print time')).toBeNull()
   })
 
-  it('opens a hero photo full screen and closes back to the guide', async () => {
+  it('G11 opens a hero photo full screen at its own number and closes back to the guide', async () => {
     mockEndpoints({ detail: Promise.resolve({ ...DETAIL, photo_urls: ['https://x.test/a.jpg', 'https://x.test/b.jpg'], photo_captions: ['The finished drum'] }) })
     render(<DetailScreen id="1" />)
     fireEvent.press(await screen.findByLabelText('Open photo 2 full screen'))
     expect(screen.getByLabelText('Close photo')).toBeTruthy()
+    expect(screen.UNSAFE_getByProps({ initialScrollIndex: 1 })).toBeTruthy()
     fireEvent.press(screen.getByLabelText('Close photo'))
     expect(screen.queryByLabelText('Close photo')).toBeNull()
     expect(screen.getByText('Build a Robot Arm')).toBeTruthy()
