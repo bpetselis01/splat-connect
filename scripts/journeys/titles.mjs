@@ -5,13 +5,14 @@ const ID = /^W?[A-Z]\d{2}$/
 const RUNNERS = new Set(['test', 'it'])
 
 // Leading `@tag` tokens may precede the ids (Playwright); ids end at the first non-id token.
-// A trailing `:` or `,` on an id is allowed so `'Q10: opens the thread'` reads as the repo writes it.
+// A trailing `:` or `,` on an id is allowed and `/` joins ids, so `'C12/C01: pending'`
+// reads as the repo writes it.
 function leadingIds(title, errors) {
   const ids = []
   const tokens = title.split(/\s+/).filter(Boolean)
   while (tokens[0]?.startsWith('@')) tokens.shift()
-  for (const raw of tokens) {
-    const token = raw.replace(/[:,]$/, '')
+  for (const raw of tokens.flatMap((t) => t.replace(/[:,]$/, '').split('/'))) {
+    const token = raw
     if (!ID.test(token)) break
     if (ids.includes(token)) errors.push(`duplicate id ${token} in title "${title}"`)
     else ids.push(token)
