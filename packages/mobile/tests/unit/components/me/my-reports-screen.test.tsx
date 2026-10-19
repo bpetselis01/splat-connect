@@ -17,7 +17,7 @@ const report = (over: Record<string, unknown> = {}) => ({
 beforeEach(() => jest.clearAllMocks())
 
 describe('MyReportsScreen', () => {
-  it('lists each report with its status and the note SPLAT sent back', async () => {
+  it('Q21 lists each report with its status and the note SPLAT sent back', async () => {
     mockGet.mockResolvedValue([
       report({ status: 'resolved', note_to_reporter: 'We added a screw-down cover.' }),
       report({ id: 'r2', subject_label: 'Toy: Frog', status: 'looking', category: 'other' }),

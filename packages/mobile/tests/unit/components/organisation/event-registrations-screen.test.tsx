@@ -35,7 +35,7 @@ beforeEach(() => {
 
 
 describe('EventRegistrationsScreen', () => {
-  it('shows each registrant answers by question label and says CSV is web-only', async () => {
+  it('L32 shows each registrant answers by question label and says CSV is web-only', async () => {
     render(<EventRegistrationsScreen eventId="e1" />)
     fireEvent.press(await screen.findByRole('button', { name: /Sam Lee/ }))
     expect(screen.getByText('Any allergies?')).toBeTruthy()
@@ -49,13 +49,13 @@ describe('EventRegistrationsScreen', () => {
     expect(await screen.findByText('Nobody has registered yet.')).toBeTruthy()
   })
 
-  it('accepts a part request', async () => {
+  it('L33 accepts a part request', async () => {
     render(<EventRegistrationsScreen eventId="e1" />)
     fireEvent.press(await screen.findByRole('button', { name: "We'll print these for Priya N." }))
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions/t1/accept', {}))
   })
 
-  it('declines with the reason the family will see', async () => {
+  it('L34 declines with the reason the family will see', async () => {
     render(<EventRegistrationsScreen eventId="e1" />)
     fireEvent.press(await screen.findByRole('button', { name: "Can't print these for Priya N." }))
     fireEvent.changeText(screen.getByLabelText('Why can you not print these?'), '  Printer is down.  ')
