@@ -96,7 +96,7 @@ describe('HomeScreen', () => {
     expect(c.paddingBottom).toBe(tabBarClearance(0))
   })
 
-  it('opens the shortcut it is tapped on, and the Add sheet from Add', () => {
+  it('H03 opens the shortcut it is tapped on at its href, and the Add sheet from Add', () => {
     setup()
     fireEvent.press(screen.getByLabelText('Toys'))
     expect(mockPush).toHaveBeenCalledWith('/toy-library')
