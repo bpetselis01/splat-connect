@@ -1,5 +1,5 @@
 import { type Browser, type Page, expect } from '@playwright/test'
-import { adminClient, signIn } from './helpers'
+import { adminClient, createEvent, makeLeader, signIn } from './helpers'
 
 /**
  * Fixtures the organisation-leader specs share and helpers.ts has no answer
@@ -28,13 +28,7 @@ export async function followOrg(orgId: string, profileId: string) {
 
 /** A second leader, org-leader terms accepted. */
 export async function addOrgLeader(orgId: string, userId: string) {
-  const admin = adminClient()
-  const { error } = await admin.from('org_leaders').insert({ org_id: orgId, user_id: userId })
-  if (error) throw new Error(`addOrgLeader failed: ${error.message}`)
-  const { error: termsError } = await admin
-    .from('user_agreements')
-    .insert({ user_id: userId, agreement_type: 'org_leader_terms', version: 'v0-todo' })
-  if (termsError) throw new Error(`addOrgLeader terms failed: ${termsError.message}`)
+  await makeLeader(userId, undefined, orgId)
 }
 
 /** Notification rows of one type addressed to one person. */
@@ -56,30 +50,11 @@ export function futureDate(days = 30) {
 }
 
 /** An in-person event, straight into org_events. */
-export async function seedEvent(
+export const seedEvent = (
   orgId: string,
   createdBy: string,
   overrides: Partial<{ title: string; status: 'draft' | 'published' }> & { title: string }
-): Promise<string> {
-  const { data, error } = await adminClient()
-    .from('org_events')
-    .insert({
-      org_id: orgId,
-      created_by: createdBy,
-      title: overrides.title,
-      status: overrides.status ?? 'draft',
-      starts_at: new Date(Date.now() + 30 * 86_400_000).toISOString(),
-      format: 'in_person',
-      location: 'E2E Hall, 1 Test St',
-      suburb: 'Testville',
-      state: 'NSW',
-      audience: 'Anyone with a toy to adapt.',
-    })
-    .select('id')
-    .single()
-  if (error || !data) throw new Error(`seedEvent failed: ${error?.message}`)
-  return data.id
-}
+) => createEvent(orgId, createdBy, overrides)
 
 /** A story, straight into org_stories (consent ticked so it can be published). */
 export async function seedStory(

@@ -15,6 +15,9 @@
     "test:parity:unit": "node --test 'scripts/parity/*.test.js'"
   },
   "devDependencies": {
+    "@splat-connect/types": "workspace:*",
+    "@supabase/supabase-js": "^2.110.7",
+    "tsx": "^4",
     "typescript": "^5"
   }
 }
