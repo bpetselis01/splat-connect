@@ -1,6 +1,7 @@
 # Journey coverage (web + mobile) — Implementation Plan
 
 **Date:** 2026-10-20
+**Status:** implemented 2026-10-20 on branch `journey-coverage`, PR #88 against `development`; every unit landed (U22 shards the web e2e job instead of measuring at the end). The map is `scripts/journeys/journeys.json`; `pnpm test:journeys` is the check.
 **Requirements:** `docs/plans/journey-coverage-requirements.md` (R1–R18)
 **Sources:** `docs/testing/web-journeys-inventory-public-2026-10-20.md`, `docs/testing/web-journeys-inventory-dashboard-admin-2026-10-20.md`, `docs/testing/web-test-inventory-2026-10-20.md`, `docs/testing/mobile-journeys-audit-2026-10-20.md`
 
