@@ -69,3 +69,37 @@ describe('GET /api/admin/organization-requests', () => {
     expect((await app.request('/api/admin/organization-requests')).status).toBe(401)
   })
 })
+
+describe('POST /api/admin/organization-requests/:id/decline', () => {
+  const decline = (token: string, id: string, body: unknown) =>
+    app.request(`/api/admin/organization-requests/${id}/decline`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+
+  it('WM24 stores the declined status and the note, shows it to the requester, and refuses a second decision', async () => {
+    const { data, error } = await adminClient()
+      .from('organization_requests')
+      .insert({ requester_id: requester.id, org_name: 'Decline Me Org', what_they_do: 'Builds switch toys.', verification: 'Work email.' })
+      .select('id')
+      .single()
+    if (error) throw new Error(error.message)
+    ids.push(data.id)
+
+    expect((await decline(admin.token, data.id, { note: '  ' })).status).toBe(400)
+
+    const res = await decline(admin.token, data.id, { note: ' Please apply from your work address. ' })
+    expect(res.status).toBe(200)
+    expect(await res.json()).toMatchObject({ status: 'declined', review_note: 'Please apply from your work address.' })
+
+    const mine = (await (await app.request('/api/organizations/requests', { headers: { Authorization: `Bearer ${requester.token}` } })).json()) as Array<{
+      id: string
+      status: string
+      review_note: string | null
+    }>
+    expect(mine.find((r) => r.id === data.id)).toMatchObject({ status: 'declined', review_note: 'Please apply from your work address.' })
+
+    expect((await decline(admin.token, data.id, { note: 'Again' })).status).toBe(404)
+  })
+})

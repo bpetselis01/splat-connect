@@ -375,7 +375,7 @@ describe('asking for an organisation', () => {
     expect([401, 403]).toContain(res.status)
   })
 
-  it('creates the organisation and appoints the requester, exactly once', async () => {
+  it('WM23 creates the organisation and appoints the requester, exactly once', async () => {
     const first = await app.request(
       `/api/admin/organization-requests/${requestId}/approve`,
       json(siteAdmin.token, 'POST', {})

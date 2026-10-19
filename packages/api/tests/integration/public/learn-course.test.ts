@@ -120,7 +120,7 @@ describe('two admins editing the course', () => {
     expect(typeof row!.updated_at).toBe('string')
   })
 
-  it("refuses the second save over a version that changed, keeping the first admin's", async () => {
+  it("WM36 refuses the second save over a version that changed, keeping the first admin's", async () => {
     const loaded = await version()
     // Both opened the editor at `loaded`. The other admin saves first.
     const first = await put({ title: 'Saved by the other admin' }, loaded, other)
