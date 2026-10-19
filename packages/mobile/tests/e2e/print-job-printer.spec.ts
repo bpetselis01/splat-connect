@@ -102,6 +102,8 @@ test('both sides confirm the handover with each other’s code, then the family 
 
     // R11: thanks go to the printer's profile.
     await familyPage.getByRole('button', { name: 'Say thanks to the printer' }).click()
+    // Thanking a person opens the optional-note sheet first (74ac01f1).
+    await familyPage.getByRole('button', { name: 'Send thanks', exact: true }).click()
     await expect(familyPage.getByText('Thanks sent')).toBeVisible()
     const { data: thanks } = await adminClient().from('profile_thanks').select('thanker_id, transaction_id').eq('profile_id', job.printer.id)
     expect(thanks).toEqual([{ thanker_id: job.requester.id, transaction_id: job.id }])
