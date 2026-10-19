@@ -1,4 +1,3 @@
-// journeys: K12
 /**
  * Withdrawing a Makers wanted post nobody has claimed. 064 let an ownerless
  * build exist only while `requested`, so the withdraw update tripped
@@ -53,7 +52,7 @@ afterAll(async () => {
 })
 
 describe('withdrawing an unclaimed build post', () => {
-  it('lets its author withdraw it, once', async () => {
+  it('K12 lets its author withdraw it, once', async () => {
     const id = await openRequest()
     const res = await post(family.token, `/${id}/withdraw`)
     expect(res.status).toBe(200)

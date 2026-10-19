@@ -1,4 +1,3 @@
-// journeys: K01 K02 X01
 /**
  * Makers wanted: a build request with nobody on the other end of it.
  *
@@ -129,7 +128,7 @@ describe('posting to the board', () => {
 })
 
 describe('the board', () => {
-  it('lists the open request without the requester', async () => {
+  it('K01 lists the open request without the requester', async () => {
     const res = await app.request('/api/toy-transactions/open-builds', authed(makerA.token))
     expect(res.status).toBe(200)
     const rows = (await res.json()) as Array<Record<string, unknown>>
@@ -159,7 +158,7 @@ describe('the board', () => {
   // route used to return everything RLS allowed — so the family's name and id,
   // which the board above deliberately withholds, sat on every maker's
   // exchange list as if the request were theirs.
-  it('keeps the open request off a maker\'s own exchange list, and on the family\'s', async () => {
+  it('X01 keeps the open request off a maker\'s own exchange list, and on the family\'s', async () => {
     const theirs = (await (
       await app.request('/api/toy-transactions', authed(makerA.token))
     ).json()) as Array<{ tutorial_id: string | null; requester_id: string }>
@@ -192,7 +191,7 @@ describe('claiming', () => {
   //        makers in the same second resolve to one winner rather than to
   //        whoever wrote last — which would silently hand the family a
   //        different maker from the one they were told about.
-  it('gives the request to exactly one of two simultaneous claims', async () => {
+  it('K02 gives the request to exactly one of two simultaneous claims', async () => {
     const [a, b] = await Promise.all([
       app.request(`/api/toy-transactions/${openId}/claim`, json(makerA.token, 'POST', {})),
       app.request(`/api/toy-transactions/${openId}/claim`, json(makerB.token, 'POST', {})),
@@ -214,7 +213,7 @@ describe('claiming', () => {
     expect(data!.requester_code).toBeTruthy()
   })
 
-  it('drops off the board once claimed', async () => {
+  it('K01 drops off the board once claimed', async () => {
     const rows = (await (
       await app.request('/api/toy-transactions/open-builds', authed(makerB.token))
     ).json()) as Array<{ id: string }>
