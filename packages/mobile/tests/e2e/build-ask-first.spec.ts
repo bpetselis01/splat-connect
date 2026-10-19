@@ -1,4 +1,3 @@
-// journeys: K03 K04
 import { test, expect } from '@playwright/test'
 import { adminClient } from './helpers'
 import { notificationsFor, partyPage, seedBuild, sent, txRow } from './maker-fixtures'
@@ -8,7 +7,7 @@ import { notificationsFor, partyPage, seedBuild, sent, txRow } from './maker-fix
  * reads the question and answers, then the maker claims from the same screen
  * and lands in the build thread with the questions carried over.
  */
-test('a maker asks first, the family answers, and the maker then claims from the same screen', async ({ browser, baseURL }) => {
+test('K03 K04 a maker asks first, the family answers, and the maker then claims from the same screen', async ({ browser, baseURL }) => {
   const build = await seedBuild()
   const makerPage = await partyPage(browser, baseURL, build.maker)
   const familyPage = await partyPage(browser, baseURL, build.requester)
