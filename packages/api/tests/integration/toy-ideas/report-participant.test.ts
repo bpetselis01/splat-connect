@@ -51,9 +51,13 @@ afterAll(async () => {
 })
 
 describe('reporting a participant', () => {
-  it('hides them from the reporter only, and removes nobody', async () => {
+  it('C16 stores the report, hides them from the reporter only, and tells nobody', async () => {
     expect(await userSenders(reporter)).toContain(reported.id)
     expect((await fileReport()).status).toBe(201)
+    const stored = (await adminClient().from('toy_idea_reports').select('reason, reported_by, reported_profile_id').eq('idea_id', ideaId).eq('reported_by', reporter.id).eq('reported_profile_id', reported.id)).data!
+    expect(stored).toEqual([{ reason: 'Made me uncomfortable', reported_by: reporter.id, reported_profile_id: reported.id }])
+    const notices = (await adminClient().from('notifications').select('id').eq('idea_id', ideaId).eq('recipient_id', reported.id)).data!
+    expect(notices).toHaveLength(0)
 
     expect(await userSenders(reporter)).not.toContain(reported.id)
     expect(await userSenders(reporter)).toContain(bystander.id)

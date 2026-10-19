@@ -194,7 +194,7 @@ describe('ToyLibraryScreen', () => {
     expect(screen.getByText('Adapted toy')).toBeTruthy()
   })
 
-  it('flips a save by calling toggle with the toys slug and the toy id', async () => {
+  it('Y02 flips a save by calling toggle with the toys slug and the toy id', async () => {
     mockGet.mockResolvedValue([toy({ id: 't1', name: 'Bubble machine' })])
     render(<ToyLibraryScreen />)
     await screen.findByText('Bubble machine')
