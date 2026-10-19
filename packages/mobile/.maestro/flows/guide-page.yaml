@@ -45,6 +45,19 @@ appId: com.splatconnect.mobile
 - assertVisible:
     text: "1/2 · .*"
 
+# G11: a tap on the hero opens the photo viewer (a native modal, so Playwright
+# cannot show it); its own close control puts the guide back.
+- tapOn:
+    text: "Open photo 1 full screen"
+- assertVisible:
+    text: "Close photo"
+- assertVisible:
+    text: "1 of 2"
+- tapOn:
+    text: "Close photo"
+- assertVisible:
+    text: "1/2 · .*"
+
 # Build mode: Get ready, then step 1, then step 2.
 - tapOn:
     text: "Start building"
