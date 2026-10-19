@@ -1,4 +1,3 @@
-// journeys: R01 R02 R03 R04 R06 R12 R17 R18 R19
 import { test, expect } from '@playwright/test'
 import {
   adminClient,
@@ -71,7 +70,7 @@ test('the basics, an empty request list and an empty print queue each teach what
   await expect(page.getByText('Nothing waiting')).toBeVisible()
 })
 
-test('adding a printer saves it, with an awkward name and a standard rate, and lists it under My printers', async ({ page }) => {
+test('R17 adding a printer saves it, with an awkward name and a standard rate, and lists it under My printers', async ({ page }) => {
   const me = await signInAsNewContributor(page)
   const name = `O'Brien <b>P1S</b> & "Co" ${Date.now()}`
 
@@ -110,7 +109,7 @@ test('the add-printer form refuses a blank name and a rate that is not dollars, 
   expect(data).toEqual([])
 })
 
-test('a family picks a printer, sends the request, sees it waiting, and withdraws it', async ({ page }) => {
+test('R03 R04 R06 a family picks a printer, sends the request, sees it waiting, and withdraws it', async ({ page }) => {
   const family = await signInAsNewContributor(page)
   const maker = await createContributor()
   const makerName = uniqueTitle('E2E Printer Owner')
@@ -147,7 +146,7 @@ test('a family picks a printer, sends the request, sees it waiting, and withdraw
   expect(after).toEqual({ status: 'withdrawn' })
 })
 
-test('a family cannot pick a fourth printer, and a full or paused one cannot be picked at all', async ({ page }) => {
+test('R02 a family cannot pick a fourth printer, and a full or paused one cannot be picked at all', async ({ page }) => {
   await signInAsNewContributor(page)
   const owner = await createContributor()
   const names: string[] = []

@@ -1,4 +1,3 @@
-// journeys: R05 R07 R08 R09 R10 R11 R13
 import { test, expect } from '@playwright/test'
 import { adminClient, setPickupAddress } from './helpers'
 import { PICKUP, notificationsFor, partyPage, seedPrintJob, sent, txRow } from './maker-fixtures'
@@ -14,7 +13,7 @@ import { PICKUP, notificationsFor, partyPage, seedPrintJob, sent, txRow } from '
  */
 
 test.setTimeout(180_000)
-test('a printer accepts, starts, posts the ready photo and messages, and the family sees each step', async ({ browser, baseURL }) => {
+test('R05 R07 R08 R13 a printer accepts, starts, posts the ready photo and messages, and the family sees each step', async ({ browser, baseURL }) => {
   const job = await seedPrintJob('requested')
   await setPickupAddress(job.printer.id, PICKUP)
   const printerPage = await partyPage(browser, baseURL, job.printer)
@@ -70,7 +69,7 @@ test('a printer accepts, starts, posts the ready photo and messages, and the fam
   }
 })
 
-test('both sides confirm the handover with each other’s code, then the family says it fitted and thanks the printer', async ({ browser, baseURL }) => {
+test('R09 R10 R11 both sides confirm the handover with each other’s code, then the family says it fitted and thanks the printer', async ({ browser, baseURL }) => {
   const job = await seedPrintJob('ready')
   const printerPage = await partyPage(browser, baseURL, job.printer)
   const familyPage = await partyPage(browser, baseURL, job.requester)
