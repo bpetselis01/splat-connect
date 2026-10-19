@@ -33,7 +33,7 @@ afterAll(async () => {
 })
 
 describe('GET /api/contributors/me/thanks', () => {
-  it('lists the thanks given to the caller, newest first, with the hidden flag', async () => {
+  it('Q22 lists the thanks given to the caller, newest first, with the hidden flag', async () => {
     const res = await mine(maker.token)
     expect(res.status).toBe(200)
     const rows = (await res.json()) as Array<{ thanker_id: string; note: string; byline: string; show_note: boolean; hidden_at: string | null }>
@@ -44,7 +44,7 @@ describe('GET /api/contributors/me/thanks', () => {
     expect(rows.map((r) => r.thanker_id)).toEqual([bob.id, alice.id])
   })
 
-  it('does not show another member the thanks that belong to the maker', async () => {
+  it('Q22 does not show another member the thanks that belong to the maker', async () => {
     const rows = (await (await mine(bystander.token)).json()) as Array<{ note: string }>
     expect(rows.map((r) => r.note)).toEqual(['Not yours'])
   })
@@ -57,5 +57,33 @@ describe('GET /api/contributors/me/thanks', () => {
 
   it('is 401 with no session', async () => {
     expect((await app.request('/api/contributors/me/thanks')).status).toBe(401)
+  })
+})
+
+describe('PATCH /api/contributors/me/thanks/:thankerId', () => {
+  const setHidden = (thankerId: string, hidden: boolean, token = maker.token) =>
+    app.request(`/api/contributors/me/thanks/${thankerId}`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ hidden }),
+    })
+  const hiddenAt = async (thankerId: string) =>
+    (await adminClient().from('profile_thanks').select('hidden_at').eq('profile_id', maker.id).eq('thanker_id', thankerId).single()).data!.hidden_at
+
+  it('Q23 Hide stamps hidden_at on the note, the list flags it, and Show clears it again', async () => {
+    expect(await hiddenAt(alice.id)).toBeNull()
+    expect((await setHidden(alice.id, true)).status).toBe(200)
+    expect(await hiddenAt(alice.id)).not.toBeNull()
+    const listed = (await (await mine(maker.token)).json()) as Array<{ thanker_id: string; hidden_at: string | null }>
+    expect(listed.find((r) => r.thanker_id === alice.id)!.hidden_at).not.toBeNull()
+
+    expect((await setHidden(alice.id, false)).status).toBe(200)
+    expect(await hiddenAt(alice.id)).toBeNull()
+  })
+
+  it('Q23 cannot hide a note that was given to someone else', async () => {
+    const stamped = await hiddenAt(bob.id)
+    expect((await setHidden(bob.id, false, bystander.token)).status).toBe(404)
+    expect(await hiddenAt(bob.id)).toBe(stamped)
   })
 })
