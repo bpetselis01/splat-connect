@@ -23,7 +23,7 @@ describe('PersonThanksButton', () => {
     expect(screen.getByRole('button', { name: 'Thanked' })).toBeDisabled()
   })
 
-  it('posts the trimmed note and says only they will see it', async () => {
+  it('WP04 posts the trimmed note and says only they will see it', async () => {
     post.mockResolvedValue({ thanks_count: 1 })
     render(<PersonThanksButton profileId="p1" name="Sam" signedIn />)
     open()
@@ -34,7 +34,7 @@ describe('PersonThanksButton', () => {
     expect(post).toHaveBeenCalledWith('/api/contributors/p1/thanks', { note: 'Loved it.' })
   })
 
-  it('says you already thanked them on a 409', async () => {
+  it('WP04 says you already thanked them on a 409', async () => {
     post.mockRejectedValue(Object.assign(new Error('409'), { status: 409 }))
     render(<PersonThanksButton profileId="p1" name="Sam" signedIn />)
     open()
@@ -51,7 +51,7 @@ describe('PersonThanksButton', () => {
     expect(screen.getByRole('button', { name: 'Send thanks' })).toBeEnabled()
   })
 
-  it('sends a signed-out visitor to sign up', () => {
+  it('WP05 sends a signed-out visitor to sign up', () => {
     render(<PersonThanksButton profileId="p1" name="Sam" signedIn={false} />)
     open()
     expect(push).toHaveBeenCalledWith('/signup?next=%2Fcontributors%2Fp1&reason=thanks')
