@@ -90,7 +90,7 @@ export const PENDING = {
     blurb: "Accepted terms carry a working version number until the final text is published.",
     kind: "content",
     platforms: ["web", "mobile", "api"],
-    needs: "AGREEMENT_VERSIONS still v0-todo; set at the same time as the lawyer-reviewed terms (acceptances at v0-todo are void)",
+    needs: "AGREEMENT_VERSIONS still v0-todo; set at the same time as the lawyer-reviewed terms (acceptances at v0-todo are void). First make the gates version-aware: has_accepted (007), hasAcceptedContributorTerms (api tutorials.ts) and mobile auth-context accept ANY version today, so a bump alone would re-ask nobody. The lawyer review pack is a private Claude doc Byron holds.",
   },
   'team-page': {
     title: "Our team",

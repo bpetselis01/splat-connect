@@ -67,7 +67,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 ### `terms-version` — Terms version
 
 - Platforms: web, mobile, api
-- Needs: AGREEMENT_VERSIONS still v0-todo; set at the same time as the lawyer-reviewed terms (acceptances at v0-todo are void)
+- Needs: AGREEMENT_VERSIONS still v0-todo; set at the same time as the lawyer-reviewed terms (acceptances at v0-todo are void). First make the gates version-aware: has_accepted (007), hasAcceptedContributorTerms (api tutorials.ts) and mobile auth-context accept ANY version today, so a bump alone would re-ask nobody. The lawyer review pack is a private Claude doc Byron holds.
 - In code: `packages/types/src/index.ts`
 
 ### `team-page` — Our team
