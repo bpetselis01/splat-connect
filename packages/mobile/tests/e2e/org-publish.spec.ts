@@ -1,4 +1,3 @@
-// journeys: L19 L20 L21 L22 L30
 import { test, expect } from '@playwright/test'
 import { adminClient, createContributor, makeOrgLeader, signInAsNewContributor, uniqueTitle } from './helpers'
 import { futureDate, followOrg, notificationsOf, partyPage, seedEvent, seedStory } from './org-fixtures'
@@ -25,7 +24,7 @@ async function fillStoryForm(page: import('@playwright/test').Page, title: strin
   if (consent) await page.getByRole('checkbox', { name: 'Everyone named or pictured has agreed to appear' }).click()
 }
 
-test('publishing an event puts it live, tells a follower, and a draft tells nobody', async ({ page, browser, baseURL }) => {
+test('L19 publishing an event puts it live, tells a follower, and a draft tells nobody', async ({ page, browser, baseURL }) => {
   const leader = await signInAsNewContributor(page)
   const orgName = uniqueTitle('E2E Publishing Org')
   const orgId = await makeOrgLeader(leader.id, orgName)
@@ -78,7 +77,7 @@ test('publishing an event puts it live, tells a follower, and a draft tells nobo
   }
 })
 
-test('publishing a story tells a follower; an unconsented story cannot go live, a draft can be saved', async ({
+test('L20 publishing a story tells a follower; an unconsented story cannot go live, a draft can be saved', async ({
   page,
   browser,
   baseURL,
@@ -134,7 +133,7 @@ test('publishing a story tells a follower; an unconsented story cannot go live, 
   }
 })
 
-test('the toggle publishes a draft event (telling followers once) and takes it down again; Remove deletes it', async ({ page }) => {
+test('L21 L22 the toggle publishes a draft event (telling followers once) and takes it down again; Remove deletes it', async ({ page }) => {
   const leader = await signInAsNewContributor(page)
   const orgId = await makeOrgLeader(leader.id, uniqueTitle('E2E Toggle Org'))
   const follower = await createContributor()
@@ -166,7 +165,7 @@ test('the toggle publishes a draft event (telling followers once) and takes it d
   expect(gone).toEqual([])
 })
 
-test('the toggle publishes and unpublishes a story, and Remove keeps it when the leader says keep it', async ({ page }) => {
+test('L21 L22 the toggle publishes and unpublishes a story, and Remove keeps it when the leader says keep it', async ({ page }) => {
   const leader = await signInAsNewContributor(page)
   const orgId = await makeOrgLeader(leader.id, uniqueTitle('E2E Story Toggle Org'))
   const follower = await createContributor()
@@ -203,7 +202,7 @@ test('the toggle publishes and unpublishes a story, and Remove keeps it when the
   expect(gone).toEqual([])
 })
 
-test('a published story opens its organisation page and an event its own page; an unpublished one is gone', async ({ page }) => {
+test('L30 a published story opens its organisation page and an event its own page; an unpublished one is gone', async ({ page }) => {
   await signInAsNewContributor(page)
   const owner = await createContributor()
   const orgName = uniqueTitle('E2E News Org')
