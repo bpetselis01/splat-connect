@@ -260,7 +260,7 @@ describe('message', () => {
     expect(notes[0].org_conversation_id).toBe(conversationId)
   })
 
-  it('L28 L29 WD35 lets the leader read and reply, and tells the family', async () => {
+  it('L28 L29 WD35 WB36 lets the leader read and reply, and tells the family', async () => {
     const list = await app.request(`/api/organizations/${orgId}/conversations`, get(leader.token))
     const rows = (await list.json()) as Array<{ id: string; last_message: { body: string } }>
     expect(rows[0].id).toBe(conversationId)

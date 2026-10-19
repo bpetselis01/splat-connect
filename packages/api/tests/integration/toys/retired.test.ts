@@ -111,14 +111,14 @@ describe('Remove keeps delivery history', () => {
     expect(((await res.json()) as { error: string }).error).toBe(HISTORY)
   })
 
-  it('L09 deletes a toy with no handovers', async () => {
+  it('L09 WB12 deletes a toy with no handovers', async () => {
     const id = await createOrgToy({ orgId })
     const res = await call(leader, `/api/toys/${id}`, 'DELETE')
     expect(res.status).toBe(200)
     expect((await adminClient().from('toys').select('id').eq('id', id).maybeSingle()).data).toBeNull()
   })
 
-  it('says on the shelf which toys have history', async () => {
+  it('WB11 says on the shelf which toys have history', async () => {
     const fresh = await createOrgToy({ orgId })
     const used = await createOrgToy({ orgId })
     await handover({ toy_id: used })

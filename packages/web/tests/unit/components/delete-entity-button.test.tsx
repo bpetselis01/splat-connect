@@ -139,7 +139,7 @@ describe('DeleteEntityButton', () => {
     expect(push).not.toHaveBeenCalled()
   })
 
-  it('WY24 deletes a toy via its own endpoint and label', async () => {
+  it('WY24 WB12 deletes a toy via its own endpoint and label', async () => {
     vi.mocked(browserApiClient.delete).mockResolvedValue(null)
     openDialog('toy', '/api/toys/t1', '/dashboard/toys')
     fireEvent.change(screen.getByLabelText(/to confirm/i), { target: { value: 'confirm_delete_toy' } })

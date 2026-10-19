@@ -45,7 +45,7 @@ describe("an organisation's toy inventory", () => {
     for (const u of [leader, exLeader, rivalLeader, stranger]) await deleteTestUser(u.id)
   })
 
-  it('L08 creates stock in one write, and keeps it out of the leader’s own toys', async () => {
+  it('L08 WB11 creates stock in one write, and keeps it out of the leader’s own toys', async () => {
     const res = await req('/toys', leader.token, {
       method: 'POST',
       body: JSON.stringify({ name: 'Sensory bear', condition: 9, owner_org_id: orgId, quantity: 5 }),

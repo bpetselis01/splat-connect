@@ -1,5 +1,5 @@
 import { type Page } from '@playwright/test'
-import { acceptTerms, createContributor, deleteOrg, deleteUser, makeLeader, signIn } from '../helpers'
+import { acceptTerms, adminClient, createContributor, deleteOrg, deleteUser, makeLeader, signIn, uniqueTitle } from '../helpers'
 
 export type LeaderSeat = { id: string; email: string; password: string; orgId: string; orgName: string }
 
@@ -20,4 +20,28 @@ export async function signInAs(page: Page, who: { email: string; password: strin
 export async function removeLeaderSeat(seat: LeaderSeat) {
   await deleteOrg(seat.orgId)
   await deleteUser(seat.id)
+}
+
+/** Org stock straight into toys, with a photo so it can be published. */
+export async function createOrgToy(
+  orgId: string,
+  overrides: Record<string, unknown> = {},
+): Promise<string> {
+  const { data, error } = await adminClient()
+    .from('toys')
+    .insert({
+      name: uniqueTitle('Org toy'),
+      condition: 8,
+      owner_id: null,
+      owner_org_id: orgId,
+      quantity: 2,
+      offer_type: 'donation',
+      photo_urls: ['https://placeholder.invalid/toy.jpg'],
+      status: 'published',
+      ...overrides,
+    })
+    .select('id')
+    .single()
+  if (error || !data) throw new Error(`createOrgToy failed: ${error?.message}`)
+  return data.id
 }
