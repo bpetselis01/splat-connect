@@ -47,13 +47,13 @@ afterAll(async () => {
 })
 
 describe('GET /api/public/learn-course', () => {
-  it("Q15 serves the code's course when nothing is saved", async () => {
+  it("Q15 WE01 serves the code's course when nothing is saved", async () => {
     const c = await read()
     expect(c.units).toHaveLength(6)
     expect(c).toMatchObject({ title: null, outcome: null, shown_as: 'free' })
   })
 
-  it('Q15 serves a saved outline merged over the default', async () => {
+  it('Q15 WE02 serves a saved outline merged over the default', async () => {
     const res = await put(
       {
         title: 'Toy adaptation, start to finish',
@@ -86,7 +86,7 @@ describe('GET /api/public/learn-course', () => {
     expect((await read()).title).toBe('Toy adaptation, start to finish')
   })
 
-  it('serves no outline for a hidden course, while the admin read keeps it for the preview', async () => {
+  it('WE01 serves no outline for a hidden course, while the admin read keeps it for the preview', async () => {
     const v = await version()
     const res = await put({ title: 'Toy adaptation, start to finish', shown_as: 'hidden' }, v)
     expect(res.status).toBe(200)

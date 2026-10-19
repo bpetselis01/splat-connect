@@ -116,7 +116,7 @@ describe('publishing a story', () => {
 })
 
 describe('the public list', () => {
-  it('shows the published one and never the draft', async () => {
+  it('WS09 shows the published one and never the draft', async () => {
     const res = await app.request('/api/public/stories')
     expect(res.status).toBe(200)
     const rows = (await res.json()) as Array<{ id: string; read_minutes: number }>
