@@ -14,10 +14,12 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { subjectName, type ToyTransactionSummary } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
+import { logFailure } from '../../lib/log'
 import { useActingOrg } from '../../lib/acting-org'
 import { theme } from '../../lib/theme'
 import { Screen } from '../ui/Screen'
 import { Chip } from '../ui/Chip'
+import { Button } from '../ui/Button'
 import { Badge } from '../ui/Badge'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
@@ -39,19 +41,35 @@ export function OrgRequestsScreen() {
   const { org, loading } = useActingOrg()
   const [all, setAll] = useState<ToyTransactionSummary[] | null>(null)
   const [tab, setTab] = useState<TabKey | null>(null)
+  const [failed, setFailed] = useState(false)
+  const [reloadKey, setReloadKey] = useState(0)
 
   useFocusEffect(
     useCallback(() => {
       let ignore = false
+      setFailed(false)
       apiClient
         .get<ToyTransactionSummary[]>('/api/toy-transactions?role=owner')
-        .catch(() => [] as ToyTransactionSummary[])
         .then((rows) => !ignore && setAll(rows))
+        .catch((err) => {
+          logFailure('[OrgRequestsScreen] load failed:', err)
+          if (!ignore) setFailed(true)
+        })
       return () => {
         ignore = true
       }
-    }, [])
+    }, [reloadKey])
   )
+
+  if (failed && !all) {
+    return (
+      <Screen>
+        <EmptyState icon="cloud-offline-outline" title="Couldn't load the requests." hint="Check your connection and try again.">
+          <Button label="Try again" variant="secondary" onPress={() => setReloadKey((k) => k + 1)} />
+        </EmptyState>
+      </Screen>
+    )
+  }
 
   // Capabilities that failed to load are not a reason to wait forever: no led organisations, no rows.
   if (!all || loading) {

@@ -94,10 +94,10 @@ describe('OrgRequestsScreen', () => {
     expect(screen.queryByText(/Accepted automatically/)).toBeNull()
   })
 
-  it('a failed load shows the empty queue rather than a spinner forever', async () => {
+  it('a failed load says so rather than showing an empty queue or a spinner forever', async () => {
     mockGet.mockRejectedValue(new Error('500'))
     render(<OrgRequestsScreen />)
-    expect(await screen.findByText('No toy requests right now.')).toBeTruthy()
+    expect(await screen.findByText("Couldn't load the requests.")).toBeTruthy()
   })
 
   it('a switch of tab shows that tab\'s empty line', async () => {
