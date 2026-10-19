@@ -39,7 +39,7 @@ afterAll(async () => {
 })
 
 describe('listing an organisation’s stories', () => {
-  it('L18 gives a leader every story of that organisation, newest first, and none of another’s', async () => {
+  it('L18 WB15 gives a leader every story of that organisation, newest first, and none of another’s', async () => {
     expect(await list(leader.token)).toEqual([
       ['Newest draft', 'draft', orgId],
       ['Live story', 'published', orgId],

@@ -1,4 +1,3 @@
-// journeys: (none — route coverage; no journey row names this route yet)
 /** PATCH /api/organizations/:id/pickup sets the fixed pickup point: a leader only, and all four address fields or nothing. */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
@@ -32,7 +31,7 @@ afterAll(async () => {
 })
 
 describe('writing an organisation pickup point', () => {
-  it('stores the trimmed address and returns it', async () => {
+  it('WB13 stores the trimmed address and returns it', async () => {
     const res = await patch(orgId, leader.token, address)
     expect(res.status).toBe(200)
     const expected = { pickup_line1: '9 Dock Rd', pickup_suburb: 'Balmain', pickup_state: 'NSW', pickup_postcode: '2041', pickup_instructions: 'Ring twice' }

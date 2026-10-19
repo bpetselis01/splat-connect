@@ -111,7 +111,7 @@ describe('the organisation toy inventory page', () => {
     expect(screen.queryByRole('button', { name: /Delete toy/ })).not.toBeInTheDocument()
   })
 
-  it('offers removal only on a retired toy no handover names', async () => {
+  it('WB12 offers removal only on a retired toy no handover names', async () => {
     mockFetches([toy({ retired_at: '2026-09-30T00:00:00Z', has_history: false }), toy({ id: 't2', has_history: false })])
     render(await OrgInventoryPage())
     expect(screen.getAllByRole('button', { name: /Delete toy/ })).toHaveLength(1)
@@ -139,6 +139,38 @@ describe('the organisation toy inventory page', () => {
 
     expect(screen.getByTestId('pickup-org-1')).toBeInTheDocument()
     expect(screen.getByTestId('pickup-org-2')).toBeInTheDocument()
+  })
+
+  it('WB10 points "Add to inventory" and the empty-state "Add stock" at the organisation toy form', async () => {
+    mockFetches([toy()])
+    const { unmount } = render(await OrgInventoryPage())
+    expect(screen.getByRole('link', { name: 'Add to inventory' })).toHaveAttribute('href', '/dashboard/toys/new?for=org')
+    unmount()
+    mockFetches([])
+    render(await OrgInventoryPage())
+    expect(screen.getByRole('link', { name: 'Add stock' })).toHaveAttribute('href', '/dashboard/toys/new?for=org')
+  })
+
+  it('WB11 links each card to its editor and public listing, and counts the shelf and what was delivered', async () => {
+    vi.mocked(apiClient.get).mockImplementation(async (path: string) =>
+      path === '/api/toys/inventory'
+        ? [toy({ quantity: 3 }), toy({ id: 't2', name: 'Draft ball', status: 'draft', quantity: 4 })]
+        : path.startsWith('/api/toy-transactions')
+          ? [
+              { id: 'x1', owner_org_id: ORG.id, toy_id: 't1', status: 'completed' },
+              { id: 'x2', owner_org_id: ORG.id, toy_id: 't1', status: 'requested' },
+              { id: 'x3', owner_org_id: 'someone-else', toy_id: 't1', status: 'completed' },
+            ]
+          : PICKUP,
+    )
+    render(await OrgInventoryPage())
+    expect(screen.getAllByRole('link', { name: 'Edit' }).map((a) => a.getAttribute('href'))).toEqual([
+      '/dashboard/toys/t1',
+      '/dashboard/toys/t2',
+    ])
+    expect(screen.getAllByRole('link', { name: 'Listing' }).map((a) => a.getAttribute('href'))).toEqual(['/toy-library/t1'])
+    const chips = Array.from(document.querySelectorAll('.count-chip')).map((c) => c.textContent)
+    expect(chips).toEqual(['3On the shelf', '1Delivered all time'])
   })
 
   it('is not reachable by someone who leads nothing', async () => {

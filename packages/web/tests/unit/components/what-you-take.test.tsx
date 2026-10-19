@@ -16,7 +16,7 @@ const ORG = {
 describe('WhatYouTake', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('publishes every field the board edits, in one PATCH', async () => {
+  it('WB29 publishes every field the board edits, in one PATCH', async () => {
     vi.mocked(browserApiClient.patch).mockResolvedValue({})
     render(<WhatYouTake orgId="o1" org={ORG as never} />)
     expect(screen.getByText('The platform floor is 2 kg. You can ask for more, never less.')).toBeInTheDocument()

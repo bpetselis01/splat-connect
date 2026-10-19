@@ -45,7 +45,7 @@ describe('localParts', () => {
 })
 
 describe('EventForm editing a published event', () => {
-  it('saves in place and keeps the questions it was given', async () => {
+  it('WB20 saves in place and keeps the questions it was given', async () => {
     render(<EventForm orgId="o1" orgName="The club" event={EVENT} questions={[QUESTION]} />)
     expect(screen.queryByRole('button', { name: 'Save as draft' })).toBeNull()
     expect((screen.getByDisplayValue('18:05') as HTMLInputElement).value).toBe('18:05')
@@ -64,7 +64,7 @@ describe('EventForm editing a published event', () => {
 })
 
 describe('StoryForm editing a published story', () => {
-  it('starts with consent unticked and saves only once it is ticked again', async () => {
+  it('WB26 starts with consent unticked and saves only once it is ticked again', async () => {
     render(<StoryForm orgId="o1" orgName="The club" story={STORY} />)
     const save = screen.getByRole('button', { name: /Save changes/ }) as HTMLButtonElement
     expect(save.disabled).toBe(true)

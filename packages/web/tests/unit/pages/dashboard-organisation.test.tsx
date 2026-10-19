@@ -58,7 +58,7 @@ describe('Organisation tab', () => {
   // Chain: this is the assertion that pins the no-picker decision. A
   //        single-organisation fixture would pass whether or not the queue
   //        merges, so two are used deliberately.
-  it('merges the queue across every organisation the user leads', async () => {
+  it('WB02 merges the queue across every organisation the user leads', async () => {
     render(await Page())
     expect(screen.getByText('Older request')).toBeInTheDocument()
     expect(screen.getByText('Newer review')).toBeInTheDocument()
@@ -85,7 +85,7 @@ describe('Organisation tab', () => {
   // Carries forward the coverage lost when Task 3 removed "Organisations you
   // lead" from the dashboard: a leader must still be able to reach their
   // organisation's review screen from somewhere in the dashboard.
-  it('links a row to the existing review screen', async () => {
+  it('WB02 links a row to the existing review screen', async () => {
     render(await Page())
     const links = screen.getAllByRole('link', { name: /Read the guide/ })
     expect(links[0]).toHaveAttribute('href', '/organizations/oA/projects/t1')
@@ -102,7 +102,7 @@ describe('Organisation tab', () => {
   // The board's row names the next step for each kind of request: backing a
   // pending ask, reviewing an accepted one. Both land on the project page,
   // where leaderActions decides what may actually be done.
-  it('names the next step for each kind of request', async () => {
+  it('WB02 names the next step for each kind of request', async () => {
     render(await Page())
     expect(screen.getByRole('link', { name: /Back it/ })).toHaveAttribute(
       'href',

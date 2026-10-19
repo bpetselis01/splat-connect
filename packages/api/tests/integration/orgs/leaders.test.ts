@@ -37,7 +37,7 @@ describe('organisation leaders', () => {
     expect((await app.request(`/api/organizations/${orgId}/leaders`, req(outsider.token, 'GET'))).status).toBe(404)
   })
 
-  it('refuses the last leader stepping down', async () => {
+  it('WB35 refuses the last leader stepping down', async () => {
     expect((await app.request(`/api/organizations/${orgId}/leaders/me`, req(leader.token, 'DELETE'))).status).toBe(409)
   })
 
@@ -46,7 +46,7 @@ describe('organisation leaders', () => {
     expect(res.status).toBe(404)
   })
 
-  it('L26 lets a leader cancel an invitation, and nobody else', async () => {
+  it('L26 WB34 lets a leader cancel an invitation, and nobody else', async () => {
     const invite = async () =>
       (await adminClient().from('org_leader_invites').select('id').eq('org_id', orgId)).data ?? []
     expect((await app.request(`/api/organizations/${orgId}/leaders`, req(leader.token, 'POST', { email: outsider.email }))).status).toBe(201)
@@ -64,7 +64,7 @@ describe('organisation leaders', () => {
     expect(mine).toHaveLength(0)
   })
 
-  it('L25 invites rather than adds: the invitee is not a leader until they accept', async () => {
+  it('L25 WB33 invites rather than adds: the invitee is not a leader until they accept', async () => {
     const res = await app.request(`/api/organizations/${orgId}/leaders`, req(leader.token, 'POST', { email: colleague.email.toUpperCase() }))
     expect(res.status).toBe(201)
     expect(await leadersOf()).toEqual([leader.id])
@@ -83,7 +83,7 @@ describe('organisation leaders', () => {
     expect(await leadersOf()).toEqual([leader.id, colleague.id].sort())
   })
 
-  it('L27 never leaves the organisation leaderless when both step down at once', async () => {
+  it('L27 WB35 never leaves the organisation leaderless when both step down at once', async () => {
     const results = await Promise.all([
       app.request(`/api/organizations/${orgId}/leaders/me`, req(leader.token, 'DELETE')),
       app.request(`/api/organizations/${orgId}/leaders/me`, req(colleague.token, 'DELETE')),

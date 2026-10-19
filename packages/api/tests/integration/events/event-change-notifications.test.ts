@@ -87,7 +87,7 @@ describe('telling the registered', () => {
     expect(await noticesFor(going.id)).toEqual([])
   })
 
-  it('tells someone going when the time moves, and not someone who withdrew or the leader', async () => {
+  it('WB20 tells someone going when the time moves, and not someone who withdrew or the leader', async () => {
     const res = await app.request(
       `/api/organizations/${orgId}/events/${eventId}`,
       json(leader.token, 'PATCH', full({ starts_at: at(15) }))
@@ -100,7 +100,7 @@ describe('telling the registered', () => {
     expect(await noticesFor(leader.id)).toEqual([])
   })
 
-  it('tells them when it is cancelled', async () => {
+  it('WB21 tells them when it is cancelled', async () => {
     const res = await app.request(
       `/api/organizations/${orgId}/events/${eventId}`,
       json(leader.token, 'PATCH', { cancelled: true })

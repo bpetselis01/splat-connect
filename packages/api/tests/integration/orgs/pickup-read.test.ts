@@ -1,4 +1,3 @@
-// journeys: (none — route coverage; no journey row names this route yet)
 /** GET /api/organizations/:id/pickup shows the fixed pickup point to a leader of that organisation only. */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
@@ -24,7 +23,7 @@ afterAll(async () => {
 })
 
 describe('reading an organisation pickup point', () => {
-  it('gives a leader the whole address and the instructions', async () => {
+  it('WB13 gives a leader the whole address and the instructions', async () => {
     const res = await read(orgId, leader.token)
     expect(res.status).toBe(200)
     expect(await res.json()).toEqual({

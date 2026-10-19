@@ -35,7 +35,7 @@ afterAll(async () => {
 })
 
 describe('the leader read grant', () => {
-  it('L01 reads a draft their org was asked to back', async () => {
+  it('L01 WB02 reads a draft their org was asked to back', async () => {
     const { data } = await createUserClient(leader.token)
       .from('tutorials').select('id').eq('id', offered)
     expect((data ?? []).map((t) => t.id)).toContain(offered)
@@ -47,7 +47,7 @@ describe('the leader read grant', () => {
     expect(data ?? []).toHaveLength(0)
   })
 
-  it('L01 reads the contributor rows too, so the inner join in GET /api/tutorials holds', async () => {
+  it('L01 WB02 reads the contributor rows too, so the inner join in GET /api/tutorials holds', async () => {
     // GET /api/tutorials embeds tutorial_contributors!inner. An inner join over
     // rows RLS hides drops the parent, so without a contributor read grant the
     // leader's queue is silently empty even though the tutorial itself is visible.
