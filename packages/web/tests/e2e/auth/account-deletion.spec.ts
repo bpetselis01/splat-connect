@@ -20,10 +20,14 @@ async function latestCode(email: string, after: number): Promise<string> {
   throw new Error(`No code emailed to ${email}`)
 }
 
-test('the public page explains deletion and links to sign in', async ({ page }) => {
+test('WA22 the public page explains deletion; Sign in to delete leads to sign-in and Contact us to /contact', async ({ page }) => {
   await page.goto('/delete-account')
   await expect(page.getByRole('heading', { name: 'Delete your SPLAT Connect account' })).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Sign in to delete' })).toHaveAttribute('href', /\/login\?next=/)
+  await expect(page.getByRole('link', { name: 'Contact us' })).toHaveAttribute('href', '/contact')
+
+  await page.getByRole('link', { name: 'Sign in to delete' }).click()
+  await expect(page).toHaveURL(/\/login\?next=\/dashboard\/profile\/delete$/)
+  await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible()
 })
 
 test('WD14 WD18 WD19 WD20 a member deletes their account from Account with the emailed code', async ({ page }) => {

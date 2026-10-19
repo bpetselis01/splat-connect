@@ -39,7 +39,7 @@ describe('child profiles collection', () => {
     expect(await res.json()).toEqual([])
   })
 
-  it('Z06 WD13 WD15 creates children and returns them in created_at order', async () => {
+  it('Z06 WD13 WD15 WA19 creates children and returns them in created_at order', async () => {
     const first = await app.request('/api/child-profiles', authed(parent.token, {
       method: 'POST',
       body: JSON.stringify({ age: 7 }),
@@ -72,7 +72,7 @@ describe('child profiles collection', () => {
     expect(((await res.json()) as { parent_id: string }).parent_id).toBe(parent.id)
   })
 
-  it('Z07 Z09 WD16 patches only whitelisted columns', async () => {
+  it('Z07 Z09 WD16 WA19 patches only whitelisted columns', async () => {
     const created = await app.request('/api/child-profiles', authed(parent.token, {
       method: 'POST',
       body: JSON.stringify({}),

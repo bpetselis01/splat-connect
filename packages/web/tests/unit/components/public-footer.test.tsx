@@ -28,14 +28,14 @@ describe('PublicFooter', () => {
     pathname.current = '/'
   })
 
-  it('draws the board\'s five column headings', () => {
+  it('WC09 draws the board\'s five column headings', () => {
     render(<PublicFooter />)
     for (const col of FOOTER_COLUMNS) {
       expect(screen.getByRole('heading', { name: col.heading })).toBeInTheDocument()
     }
   })
 
-  it('links every row it lists exactly once with correct href', () => {
+  it('WC09 links every row it lists exactly once with correct href', () => {
     render(<PublicFooter />)
     for (const row of FOOTER_COLUMNS.flatMap((c) => c.rows)) {
       const links = screen.getAllByRole('link', { name: row.label })
@@ -44,7 +44,7 @@ describe('PublicFooter', () => {
     }
   })
 
-  it('links every legal page', () => {
+  it('WC09 links every legal page', () => {
     render(<PublicFooter />)
     for (const legal of FOOTER_LEGAL) {
       expect(screen.getByRole('link', { name: legal.label })).toHaveAttribute('href', legal.href)

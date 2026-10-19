@@ -11,7 +11,7 @@ import { FOOTER_COLUMNS } from '../../../lib/public-nav'
 const ALL_HREFS = FOOTER_COLUMNS.flatMap((c) => c.rows.map((r) => r.href))
 
 test.describe('fat footer', () => {
-  test('renders on a public page with every destination', async ({ page }) => {
+  test('WC09 renders on a public page with every destination', async ({ page }) => {
     await page.goto('/')
     const footer = page.locator('footer')
     await expect(footer).toBeVisible()
@@ -20,7 +20,7 @@ test.describe('fat footer', () => {
     }
   })
 
-  test('every destination it lists actually resolves', async ({ page }) => {
+  test('WC09 every destination it lists actually resolves', async ({ page }) => {
     for (const href of ALL_HREFS) {
       const res = await page.goto(href)
       expect(res?.status(), `${href} should resolve`).toBeLessThan(400)
@@ -36,7 +36,7 @@ test.describe('fat footer', () => {
   // /login and /signup left the bare list on 2026-09-18 (app/layout.tsx,
   // BARE_PREFIXES; landed in 105d3b5d): the board draws the full site chrome on
   // both. The gates under /auth and /onboarding stay bare.
-  test('is absent on the gate pages, which are deliberately bare', async ({ page }) => {
+  test('WC10 is absent on the gate pages, which are deliberately bare', async ({ page }) => {
     await page.goto('/auth/confirmed')
     await expect(page.getByRole('main')).toBeVisible()
     await expect(page.locator('footer')).toHaveCount(0)

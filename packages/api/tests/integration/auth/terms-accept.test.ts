@@ -20,7 +20,7 @@ afterAll(async () => {
 })
 
 describe('the terms screen’s "Accept and continue"', () => {
-  it('A11 records the contributor terms at the current version, saves the name, and refuses an unknown agreement', async () => {
+  it('A11 WA17 records the contributor terms at the current version, saves the name, and refuses an unknown agreement', async () => {
     expect((await send('POST', '/agreements', { agreement_type: 'nonsense' })).status).toBe(400)
     expect((await adminClient().from('user_agreements').select('id').eq('user_id', user.id)).data).toEqual([])
 
