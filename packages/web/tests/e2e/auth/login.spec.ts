@@ -31,7 +31,7 @@ test('WA03 an invalid password shows an error and stays on /login', async ({ pag
   // submitLogin, not signIn: signIn waits to leave /login, which is exactly
   // what must not happen here.
   await submitLogin(page, contributor.email, 'wrong-password')
-  await expect(page.getByRole('alert')).toContainText("That email and password don't match.")
+  await expect(page.getByRole('alert').filter({ hasText: /\S/ })).toContainText("That email and password don't match.")
   await expect(page).toHaveURL(/\/login$/)
 })
 
@@ -102,8 +102,8 @@ test('WA08 an unconfirmed email gets a new code and a link to enter it', async (
   try {
     const before = Date.now()
     await submitLogin(page, email, PASSWORD)
-    await expect(page.getByRole('alert')).toContainText('That email is not confirmed yet. We sent you a new code.')
-    await expect(page.getByRole('alert')).not.toContainText('Email not confirmed')
+    await expect(page.getByRole('alert').filter({ hasText: /\S/ })).toContainText('That email is not confirmed yet. We sent you a new code.')
+    await expect(page.getByRole('alert').filter({ hasText: /\S/ })).not.toContainText('Email not confirmed')
     await expect(page).toHaveURL(/\/login$/)
     await expect(page.getByRole('link', { name: 'Enter the code' })).toHaveAttribute('href', /^\/login\/verify\?email=.+&type=signup$/)
     const mail = await latestMail(email, before)

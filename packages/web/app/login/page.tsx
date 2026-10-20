@@ -3,17 +3,12 @@ import { Suspense, useState } from 'react'
 import { Eye, EyeSlash } from '@phosphor-icons/react/dist/ssr'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { sanitiseNextPath } from '@/lib/safe-next-path'
-import { pendingIntent, toProblem, type AuthProblem, type SignupIntent } from '@splat-connect/types'
+import { authPath, landingAfterSignIn } from '@/lib/auth-landing'
+import { toProblem, type AuthProblem } from '@splat-connect/types'
 
 // PENDING(web-auth-recovery): port all mobile auth screens to web (forgot-password, code sign-in, resend-confirmation, friendly unconfirm...
 // PENDING(confirmed-page-bare-layout): fix it: the sign-in page keeps the normal layout after an email confirmation. Nothing to decide beyond sche...
 
-/** Where the sign-up tile lands someone the first time they sign in. */
-const INTENT_LANDING: Record<SignupIntent, string> = {
-  family: '/onboarding/child',
-  maker: '/dashboard/tutorials',
-}
 import Link from 'next/link'
 import type { Route } from 'next'
 import { AuthError, AuthStage } from '@/components/auth-shell'
@@ -48,37 +43,14 @@ function LoginForm() {
             setError(toProblem(resent.error))
             return
           }
-          setCodeLink(`/login/verify?${new URLSearchParams({ email, type: 'signup', ...(next ? { next } : {}) })}`)
+          setCodeLink(authPath('/login/verify', { email, type: 'signup', next }))
         }
         setError(found)
         return
       }
-      const { data: { user } } = await supabase.auth.getUser()
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user!.id)
-        .single()
-
-      // WHY: router.refresh() + router.push() left the nav showing the logged-out state
-      //      because router.refresh() is not awaitable — the push fires before the
-      //      server re-renders the layout with the new auth session.
-      // HOW: window.location.href forces a full page reload, so the server always
-      //      runs the root layout fresh and the nav reflects the correct role immediately.
-      // Everyone shares one dashboard; only the admin area is separate. The
-      // role column no longer decides what a user may do, so it no longer
-      // decides where they land.
-      // `next` is only honoured once sanitiseNextPath has confirmed it is a
-      // same-origin path — see lib/safe-next-path.ts for why that check
-      // exists. Absent or rejected, it falls back to the role-based default.
-      const fallback = profile?.role === 'admin' ? '/admin' : '/dashboard'
-      // The sign-up tile decides the first landing only. It is spent here
-      // whichever way this sign-in goes, so a ?next= detour (a save, a
-      // download) does not leave it to hijack some later sign-in instead.
-      const intent = pendingIntent(user!.user_metadata)
-      if (intent) await supabase.auth.updateUser({ data: { intent_landed: true } })
-      window.location.href =
-        sanitiseNextPath(next) ?? (intent ? INTENT_LANDING[intent] : fallback)
+      // A full reload, not router.push: the server re-renders the root layout
+      // with the new session, so the nav shows the signed-in state at once.
+      window.location.href = await landingAfterSignIn(supabase, next)
     } finally {
       setLoading(false)
     }
@@ -130,6 +102,11 @@ function LoginForm() {
               {showPassword ? <EyeSlash aria-hidden="true" /> : <Eye aria-hidden="true" />}
             </button>
           </div>
+          <p className="mt-2 text-right text-[13px]">
+            <Link href={authPath('/login/forgot', { email, next }) as Route} className="auth-card__link">
+              Forgot password?
+            </Link>
+          </p>
         </div>
         <AuthError error={error} action={codeLink ? { label: 'Enter the code', href: codeLink } : undefined} />
         <button type="submit" disabled={loading} className="auth-submit">

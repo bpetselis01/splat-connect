@@ -128,4 +128,15 @@ describe('login page', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Too many tries. Wait a minute and try again.')
     expect(screen.queryByRole('link', { name: 'Enter the code' })).not.toBeInTheDocument()
   })
+
+  it('WA31 Forgot password? opens /login/forgot carrying the typed email and ?next=', () => {
+    search = new URLSearchParams({ next: '/toy-library' })
+    render(<LoginPage />)
+    expect(screen.getByRole('link', { name: 'Forgot password?' })).toHaveAttribute('href', '/login/forgot?next=%2Ftoy-library')
+    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'a@b.co' } })
+    expect(screen.getByRole('link', { name: 'Forgot password?' })).toHaveAttribute(
+      'href',
+      '/login/forgot?email=a%40b.co&next=%2Ftoy-library'
+    )
+  })
 })
