@@ -1,7 +1,7 @@
 'use server'
 import { revalidatePath } from 'next/cache'
 import { apiClient } from '@/lib/api-client'
-import type { PickupAddress } from '@splat-connect/types'
+import { apiMessage, type PickupAddress } from '@splat-connect/types'
 
 // All three thread pages are views of one toy_transactions row (ADR 0001); only
 // the page path differs.
@@ -28,8 +28,18 @@ export async function accept(id: string, kind: ThreadKind, address?: PickupAddre
   await post(id, kind, 'accept', address ?? {})
 }
 
-export async function reject(id: string, kind: ThreadKind, reason?: string) {
-  await post(id, kind, 'reject', { reason })
+export type ActionResult = { ok: true } | { ok: false; error: string }
+
+// Returned rather than thrown: Next replaces a thrown server-action error with
+// a generic one in production, which would hide the API's sentence ("This
+// request is no longer open") and leave the decline form unable to show it.
+export async function reject(id: string, kind: ThreadKind, reason?: string): Promise<ActionResult> {
+  try {
+    await post(id, kind, 'reject', { reason })
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: apiMessage(e, 'Could not send the decline. Please try again.') }
+  }
 }
 
 // Withdrawing one job of a grouped print request withdraws the whole request
