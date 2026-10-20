@@ -3,9 +3,9 @@
 // Google or code account, which skipped the sign-up form's checkbox. It sits at
 // the root, outside every gated group, so it is the one signed-in screen the
 // terms check does not guard.
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
-import { Redirect } from 'expo-router'
+import { Redirect, router, useLocalSearchParams } from 'expo-router'
 import { useAuth } from '../lib/auth-context'
 import { useAuthGate } from '../lib/use-auth-gate'
 import { theme } from '../lib/theme'
@@ -41,6 +41,8 @@ const TERMS = [
 
 export default function TermsGate() {
   const gate = useAuthGate(false)
+  // 'back': a write was refused for want of terms and this screen was pushed over it.
+  const { returnTo } = useLocalSearchParams<{ returnTo?: string }>()
   const { profile, pendingName, hasContributorTerms, acceptContributorTerms, setProfileName, signOut } = useAuth()
   const needsName = !profile?.name
   const [name, setName] = useState(pendingName ?? '')
@@ -48,7 +50,12 @@ export default function TermsGate() {
   const [error, setError] = useState<AuthProblem | null>(null)
   const [busy, setBusy] = useState(false)
 
-  if (gate === 'loading') return null
+  const goBack = returnTo === 'back' && hasContributorTerms === true
+  useEffect(() => {
+    if (goBack) router.back()
+  }, [goBack])
+
+  if (gate === 'loading' || goBack) return null
   if (gate !== 'ok') return <Redirect href={gate} />
   if (hasContributorTerms) return <Redirect href="/home" />
 

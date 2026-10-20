@@ -41,3 +41,9 @@ export function authUrl(
   const query = params.toString()
   return query ? `/${kind}?${query}` : `/${kind}`
 }
+
+/** The contributor-terms screen, returning to `pathWithQuery` once accepted. */
+export function termsUrl(pathWithQuery: string | null | undefined): string {
+  const next = sanitiseNextPath(pathWithQuery)
+  return `/onboarding/contributor-terms${next ? `?next=${encodeURIComponent(next)}` : ''}`
+}

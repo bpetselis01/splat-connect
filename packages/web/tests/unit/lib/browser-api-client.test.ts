@@ -136,4 +136,24 @@ describe('browserApiClient', () => {
     const [, opts] = fetchMock.mock.calls[0]
     expect((opts.headers as Record<string, string>)?.Authorization).toBeUndefined()
   })
+
+  it('terms_required — sends the browser to the terms page, returning to the current path and query', async () => {
+    const assign = vi.fn()
+    vi.stubGlobal('location', { pathname: '/dashboard/exchanges/abc', search: '?tab=open', assign })
+    fetchMock.mockResolvedValue(errorResponse(403, { error: 'terms_required' }))
+    await expect(browserApiClient.post('/api/toy-transactions/abc/messages', { body: 'hi' })).rejects.toThrow('terms_required')
+    expect(assign).toHaveBeenCalledWith(
+      '/onboarding/contributor-terms?next=%2Fdashboard%2Fexchanges%2Fabc%3Ftab%3Dopen'
+    )
+    vi.unstubAllGlobals()
+  })
+
+  it('a plain 403 does not navigate', async () => {
+    const assign = vi.fn()
+    vi.stubGlobal('location', { pathname: '/x', search: '', assign })
+    fetchMock.mockResolvedValue(errorResponse(403, { error: 'Forbidden' }))
+    await expect(browserApiClient.post('/api/x', {})).rejects.toThrow('Forbidden')
+    expect(assign).not.toHaveBeenCalled()
+    vi.unstubAllGlobals()
+  })
 })
