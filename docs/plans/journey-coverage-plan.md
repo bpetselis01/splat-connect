@@ -1,7 +1,7 @@
 # Journey coverage (web + mobile) — Implementation Plan
 
 **Date:** 2026-10-20
-**Status:** implemented 2026-10-20 on branch `journey-coverage`, PR #88 against `development`; every unit landed (U22 shards the web e2e job instead of measuring at the end). The map is `scripts/journeys/journeys.json`; `pnpm test:journeys` is the check.
+**Status:** implemented 2026-10-20 on branch `journey-coverage`, PR #88 against `development`; every unit landed (U22 shards the web e2e job instead of measuring at the end); U11's CI job was removed again the same evening (see Unit 11). The map is `scripts/journeys/journeys.json`; `pnpm test:journeys` is the check.
 **Requirements:** `docs/plans/journey-coverage-requirements.md` (R1–R18)
 **Sources:** `docs/testing/web-journeys-inventory-public-2026-10-20.md`, `docs/testing/web-journeys-inventory-dashboard-admin-2026-10-20.md`, `docs/testing/web-test-inventory-2026-10-20.md`, `docs/testing/mobile-journeys-audit-2026-10-20.md`
 
@@ -475,6 +475,8 @@ Branch `journey-coverage` off `development`. One commit per fix (a row set, a sp
 ---
 
 ### Unit 11: Android Maestro as a PR check
+
+**Reverted 2026-10-20 (evening):** the job shipped and ran eight times; the free runner (7.8 GB, 2 cores) never got the 13 flows past the first screen and the runs exhausted the Actions allowance, so Byron had it removed. The flows, their `name:` ids and the device layer stay; they run by hand (`pnpm device:test`). Trail: `docs/sessions/2026-10-20-journey-coverage-run.tsv`.
 
 **Goal:** The 13 device journeys run on an emulator in CI as a required check for every PR that matches the `mobile` path filter (`packages/mobile`, `packages/types`, `packages/api`, `supabase`). No nightly.
 

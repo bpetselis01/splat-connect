@@ -34,7 +34,7 @@ A test case claims a journey by putting the id first in its title: `test('WD03 a
 |---|---|
 | The flow signs in, kills the app, relaunches it and asserts the Member is still on Home | A flow that launches the app and takes a screenshot |
 
-A device cell counts only for a flow the `Maestro Android` job in `ci.yml` runs on every PR that touches the `mobile` path filter. A flow that has only run on a local simulator or phone proves nothing for the rule.
+A device cell counts for a flow under `packages/mobile/.maestro/flows/` that has been run on a phone or emulator with `pnpm device:test` before the change merges; the checker reads the flow files, not a run log, so the run is on the author. CI does not run the flows: the `Maestro Android` job was removed on 2026-10-20 (evening) after eight runs on the free runner (7.8 GB, 2 cores) never got past the first screen and exhausted the Actions allowance. The local recipe is in `docs/testing/maestro-ci-research-2026-10-20.md`.
 
 ## Routes
 
