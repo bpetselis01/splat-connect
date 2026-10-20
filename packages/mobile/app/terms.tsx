@@ -3,7 +3,7 @@
 // Google or code account, which skipped the sign-up form's checkbox. It sits at
 // the root, outside every gated group, so it is the one signed-in screen the
 // terms check does not guard.
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { Redirect, router, useLocalSearchParams } from 'expo-router'
 import { useAuth } from '../lib/auth-context'
@@ -50,14 +50,11 @@ export default function TermsGate() {
   const [error, setError] = useState<AuthProblem | null>(null)
   const [busy, setBusy] = useState(false)
 
-  const goBack = returnTo === 'back' && hasContributorTerms === true
-  useEffect(() => {
-    if (goBack) router.back()
-  }, [goBack])
-
-  if (gate === 'loading' || goBack) return null
+  const backs = returnTo === 'back'
+  if (gate === 'loading') return null
   if (gate !== 'ok') return <Redirect href={gate} />
-  if (hasContributorTerms) return <Redirect href="/home" />
+  // hasContributorTerms is loaded once, so a lapsed acceptance leaves it stale-true; a pushed screen waits for its own accept.
+  if (hasContributorTerms && !backs) return <Redirect href="/home" />
 
   async function accept() {
     setError(null)
@@ -72,8 +69,9 @@ export default function TermsGate() {
     }
     const res = await acceptContributorTerms()
     setBusy(false)
-    // Success flips hasContributorTerms, and the redirect above takes over.
-    if (res.error) setError({ kind: 'other', message: res.error })
+    if (res.error) return setError({ kind: 'other', message: res.error })
+    // Otherwise the flag flips and the redirect above takes over.
+    if (backs) router.back()
   }
 
   return (

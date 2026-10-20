@@ -10,6 +10,8 @@ import PrintingLayout from '../../../app/printing/_layout'
 
 const mockRedirect = jest.fn()
 const mockBack = jest.fn()
+const mockReplace = jest.fn()
+let mockCanGoBack = true
 let mockParams: { returnTo?: string } = {}
 jest.mock('expo-router', () => {
   const Stack = Object.assign(() => 'stack', { Screen: () => null })
@@ -18,7 +20,7 @@ jest.mock('expo-router', () => {
     Tabs,
     usePathname: () => '/home',
     useLocalSearchParams: () => mockParams,
-    router: { back: (...a: unknown[]) => mockBack(...a) },
+    router: { back: (...a: unknown[]) => mockBack(...a), replace: (...a: unknown[]) => mockReplace(...a), canGoBack: () => mockCanGoBack },
     useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn() }),
     Redirect: ({ href }: { href: string }) => {
       mockRedirect(href)
@@ -58,6 +60,7 @@ function pending<T>() {
 beforeEach(() => {
   jest.clearAllMocks()
   mockParams = {}
+  mockCanGoBack = true
   mockAuth.loading = false
   mockAuth.session = { user: { id: 'u1' } }
   mockAuth.profile = { name: '' }
@@ -71,12 +74,17 @@ const tick = () => fireEvent.press(screen.getByTestId('accept-contributor-terms'
 const accept = () => fireEvent.press(screen.getByTestId('accept-terms'))
 
 describe('Terms gate pushed over a refused write', () => {
-  it('A15 goes back to the screen that made the write once the terms are accepted', () => {
+  it('A15 shows the form to a member whose stale flag still says accepted, and goes back only after this screen accepts', async () => {
     mockParams = { returnTo: 'back' }
     mockAuth.hasContributorTerms = true
+    mockAuth.profile = { name: 'Sam' }
     render(<TermsGate />)
-    expect(mockBack).toHaveBeenCalledTimes(1)
+    expect(screen.getByTestId('accept-terms')).toBeTruthy()
+    expect(mockBack).not.toHaveBeenCalled()
     expect(mockRedirect).not.toHaveBeenCalled()
+    tick()
+    accept()
+    await waitFor(() => expect(mockBack).toHaveBeenCalledTimes(1))
   })
 
   it('A15 does not go back while the terms are still unaccepted', () => {
