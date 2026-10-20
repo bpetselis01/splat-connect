@@ -56,5 +56,6 @@ describe('BuildQuestionsThread', () => {
   it('WM38 offers an admin no claim button', () => {
     render(<BuildQuestionsThread data={data} viewerId="admin1" makerId={null} isAdmin />)
     expect(screen.queryByRole('button', { name: /I.ll build this/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('textbox', { name: 'Message' })).not.toBeInTheDocument()
   })
 })

@@ -1698,6 +1698,7 @@ toyTransactions.post('/:id/questions', async (c) => {
   if ('error' in loaded) return c.json({ error: loaded.error!.message }, 500)
   if ('missing' in loaded) return c.json({ error: 'Not found' }, 404)
   const { tx, open } = loaded
+  if (isStrangerAdmin(c.get('role'), tx, userId, await ledOrgIds(admin, userId))) return c.json(ADMIN_CANNOT_ACT, 403)
   if (!open) return c.json({ error: 'Somebody has already claimed this one.' }, 409)
 
   const family = tx.requester_id === userId

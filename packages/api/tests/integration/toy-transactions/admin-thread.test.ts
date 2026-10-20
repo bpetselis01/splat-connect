@@ -173,4 +173,12 @@ describe('an admin on an open build request', () => {
     const { data } = await adminClient().from('toy_transactions').select('status, owner_id').eq('id', buildId).single()
     expect(data).toEqual({ status: 'requested', owner_id: null })
   })
+
+  it('WM38 refuses a question asked as the maker and stores nothing', async () => {
+    const res = await post(`/${buildId}/questions`, admin.token, { body: 'Which switch?' })
+    expect(res.status).toBe(403)
+    expect(await res.json()).toEqual({ error: 'admin_cannot_act' })
+    const { data } = await adminClient().from('build_request_questions').select('id').eq('transaction_id', buildId)
+    expect(data).toEqual([])
+  })
 })
