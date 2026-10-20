@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
-import { createTestUser, deleteTestUser, type TestUser } from '../../helpers/auth.js'
+import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
 
 const BASE = 'http://localhost'
 function toysReq(path: string, token: string, init: RequestInit = {}) {
@@ -121,5 +121,18 @@ describe('POST /api/toy-transactions/:id/reject and /withdraw', () => {
     const res = await txReq(`/${txId}/withdraw`, requester.token, { method: 'POST' })
     expect(res.status).toBe(200)
     expect(((await res.json()) as { status: string }).status).toBe('withdrawn')
+  })
+
+  it('two declines at once: one succeeds, the other gets 409, and the requester hears once', async () => {
+    const id = await requestDonation(owner.token, requester.token, 'Race blocks')
+    const decline = (reason: string) => txReq(`/${id}/reject`, owner.token, { method: 'POST', body: JSON.stringify({ reason }) })
+    const results = await Promise.all([decline('Already given away'), decline('Changed my mind')])
+    expect(results.map((r) => r.status).sort()).toEqual([200, 409])
+
+    const db = adminClient()
+    const { data: lines } = await db.from('toy_transaction_messages').select('body').eq('transaction_id', id).like('body', 'Request declined%')
+    expect(lines).toHaveLength(1)
+    const { data: told } = await db.from('notifications').select('type').eq('toy_transaction_id', id).eq('type', 'toy_rejected')
+    expect(told).toEqual([{ type: 'toy_rejected' }])
   })
 })
