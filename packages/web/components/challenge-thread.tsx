@@ -7,9 +7,7 @@
  * never returns `messages` — the brief recruits, the conversation stays
  * private even on a public challenge — so this component fetches
  * GET /api/ideas/:id/messages itself, authenticated, through
- * lib/browser-api-client.ts (contrast components/notify-form.tsx, which posts
- * directly because its endpoint is deliberately unauthenticated; every other
- * call here needs the Supabase session token browser-api-client.ts attaches).
+ * lib/browser-api-client.ts, which attaches the Supabase session token.
  * RLS returns `[]` rather than 403 to a non-participant, which is why
  * `canRead` below is computed from the author/participants the public
  * endpoint already returned, not from whether the fetch came back empty — an
