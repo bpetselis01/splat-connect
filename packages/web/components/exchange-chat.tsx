@@ -12,7 +12,7 @@
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react'
 import { CheckCircle, PaperPlaneRight } from '@phosphor-icons/react/dist/ssr'
 import type { ThreadMessage } from '@splat-connect/types'
-import { initials } from '@splat-connect/types'
+import { initials, isTermsRequired } from '@splat-connect/types'
 
 /*
  * ponytail: locale and timezone are pinned rather than read from the browser.
@@ -96,6 +96,7 @@ export function ExchangeChat({
   nameFor: (senderId: string) => string
   canSend: boolean
   busy: boolean
+  /** Rejects when the send fails, so the composer can give the text back. */
   onSend: (body: string) => Promise<void>
   /**
    * 'board' is the Soft Pop exchange thread, value for value: a head row, a
@@ -113,11 +114,12 @@ export function ExchangeChat({
    *  Default variant only, for the same reason. */
   afterMessage?: (m: ThreadMessage) => ReactNode
   /** Keeps an unsent message across a navigation away mid-send (the contributor
-   *  terms screen), under `draft:<draftKey>` in sessionStorage. */
+   *  terms screen), under `draft:<viewerId>:<draftKey>` in sessionStorage. */
   draftKey?: string
 }) {
   const board = variant === 'board'
   const [draft, setDraft] = useState('')
+  const storageKey = `draft:${viewerId}:${draftKey}`
   const logRef = useRef<HTMLDivElement>(null)
 
   // A chat that opens at the top of the history shows the least useful message
@@ -131,31 +133,40 @@ export function ExchangeChat({
   useEffect(() => {
     if (!draftKey) return
     try {
-      const saved = sessionStorage.getItem(`draft:${draftKey}`)
+      const saved = sessionStorage.getItem(storageKey)
       if (saved) {
         setDraft(saved)
-        sessionStorage.removeItem(`draft:${draftKey}`)
+        sessionStorage.removeItem(storageKey)
       }
     } catch {}
-  }, [draftKey])
+  }, [draftKey, storageKey])
 
   // A new message means the send worked, so the saved copy is spent. Dropping it
   // on onSend returning instead would race a terms redirect that is still navigating.
   useEffect(() => {
     if (!draftKey) return
     try {
-      sessionStorage.removeItem(`draft:${draftKey}`)
+      sessionStorage.removeItem(storageKey)
     } catch {}
-  }, [draftKey, messages.length])
+  }, [draftKey, storageKey, messages.length])
 
   async function send() {
     if (!draft.trim()) return
     const body = draft
     setDraft('')
     try {
-      if (draftKey) sessionStorage.setItem(`draft:${draftKey}`, body)
+      if (draftKey) sessionStorage.setItem(storageKey, body)
     } catch {}
-    await onSend(body)
+    try {
+      await onSend(body)
+    } catch (err) {
+      // A terms refusal is navigating away and the saved copy is what survives it.
+      if (isTermsRequired(err)) return
+      setDraft((current) => current || body)
+      try {
+        sessionStorage.removeItem(storageKey)
+      } catch {}
+    }
   }
 
   const groups = groupMessages(messages)
