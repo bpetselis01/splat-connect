@@ -37,6 +37,7 @@ import {
 import { getSavedIds } from '@/lib/saves'
 import type { Route } from 'next'
 import { CHALLENGE_FILTERS as FILTERS, type PublicChallenge } from '@splat-connect/types'
+import { authUrl } from '@/lib/safe-next-path'
 
 export const metadata = {
   title: 'Design challenges — SPLAT Connect',
@@ -166,7 +167,7 @@ export default async function DesignChallengesPage({
           </TintNote>
           <div className="mt-7 flex flex-wrap items-center gap-3">
             <Link
-              href={`/login?next=${encodeURIComponent('/get-involved/design-challenges')}`}
+              href={authUrl('login', '/get-involved/design-challenges') as Route}
               className="btn btn-primary px-[26px]"
             >
               Sign in to join a challenge

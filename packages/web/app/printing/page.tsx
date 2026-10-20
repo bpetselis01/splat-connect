@@ -32,6 +32,8 @@ import { BrowseHero } from '@/components/browse-hero'
 import { SplatMascot } from '@/components/splat-mascot'
 import { PrinterDirectory } from '@/components/printer-directory'
 import { printerAvailability } from '@/lib/printer-availability'
+import type { Route } from 'next'
+import { authUrl } from '@/lib/safe-next-path'
 
 export const metadata = {
   title: '3D Printing — SPLAT Connect',
@@ -156,7 +158,7 @@ export default async function PrintingPage() {
                   </p>
                   <div className="mt-2 flex flex-wrap justify-center gap-3">
                     <Link
-                      href={`/login?next=${encodeURIComponent('/printing')}`}
+                      href={authUrl('login', '/printing') as Route}
                       className="btn btn-primary btn-lg no-underline"
                     >
                       Sign in to continue

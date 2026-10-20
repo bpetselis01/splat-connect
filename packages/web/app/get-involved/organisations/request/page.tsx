@@ -16,6 +16,8 @@ import { getCapabilities } from '@/lib/capabilities'
 import { apiClient } from '@/lib/api-client'
 import { OrgRequestForm } from '@/components/org-request-form'
 import type { OrganizationRequest } from '@splat-connect/types'
+import type { Route } from 'next'
+import { authUrl } from '@/lib/safe-next-path'
 
 export const metadata = { title: 'Request an organisation — SPLAT Connect' }
 
@@ -41,7 +43,7 @@ export default async function RequestAnOrganisationPage() {
           against before you tell us anything.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <Link href={`/login?next=${encodeURIComponent(HERE)}`} className="btn btn-primary px-[26px]">
+          <Link href={authUrl('login', HERE) as Route} className="btn btn-primary px-[26px]">
             Sign in or create an account
           </Link>
         </div>
