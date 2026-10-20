@@ -4,7 +4,7 @@ import { ReviewQueueScreen } from '../../../../components/organisation/review-qu
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 const mockGet = jest.fn()
-jest.mock('../../../../lib/api-client', () => ({ apiClient: { get: (...a: unknown[]) => mockGet(...a) } }))
+jest.mock('../../../../lib/api-client', () => ({ apiClient: { get: (...a: unknown[]) => mockGet(...a), post: () => Promise.resolve() } }))
 jest.mock('expo-router', () => {
   const { useEffect } = jest.requireActual('react')
   return { useRouter: () => ({ push: jest.fn() }), useFocusEffect: (e: () => void) => useEffect(e, []) }

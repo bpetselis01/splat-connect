@@ -1,11 +1,14 @@
 // packages/mobile/tests/unit/components/organisation/review-queue-screen.test.tsx
-import { render, screen, fireEvent } from '@testing-library/react-native'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { ReviewQueueScreen } from '../../../../components/organisation/review-queue-screen'
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 
 const mockGet = jest.fn()
-jest.mock('../../../../lib/api-client', () => ({ apiClient: { get: (...a: unknown[]) => mockGet(...a) } }))
+const mockPost = jest.fn()
+jest.mock('../../../../lib/api-client', () => ({
+  apiClient: { get: (...a: unknown[]) => mockGet(...a), post: (...a: unknown[]) => mockPost(...a) },
+}))
 
 const mockPush = jest.fn()
 jest.mock('expo-router', () => {
@@ -62,9 +65,23 @@ beforeEach(() => {
   jest.clearAllMocks()
   mockUseCapabilities.mockReturnValue(leader([{ id: 'org1', name: 'Riverside Therapy' }]))
   mockGet.mockResolvedValue([])
+  mockPost.mockResolvedValue(undefined)
 })
 
 describe('ReviewQueueScreen', () => {
+  it('clears the organisations bucket once when a leader opens the queue', async () => {
+    render(<ReviewQueueScreen />)
+    await waitFor(() => expect(mockPost).toHaveBeenCalledTimes(1))
+    expect(mockPost).toHaveBeenCalledWith('/api/notifications/me/read', { bucket: 'organisations' })
+  })
+
+  it('clears nothing for somebody who leads no organisation', async () => {
+    mockUseCapabilities.mockReturnValue(leader([]))
+    render(<ReviewQueueScreen />)
+    await screen.findByText('This screen belongs to organisation leaders.')
+    expect(mockPost).not.toHaveBeenCalled()
+  })
+
   it('L01 waits on a pending backing request and on a submitted, backed guide alike', async () => {
     mockGet.mockResolvedValue([
       tutorial({ id: 't1', title: 'Asked to back', tutorial_orgs: [backing({ status: 'pending' })] }),
