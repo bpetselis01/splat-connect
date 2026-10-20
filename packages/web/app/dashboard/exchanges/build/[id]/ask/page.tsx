@@ -23,7 +23,7 @@ export default async function AskFirstPage({
   if (!data) notFound()
   return (
     <div className="max-w-[760px]">
-      <BuildQuestionsThread data={data} viewerId={caps.profile.id} makerId={maker ?? null} />
+      <BuildQuestionsThread data={data} viewerId={caps.profile.id} makerId={maker ?? null} isAdmin={caps.isAdmin} />
     </div>
   )
 }

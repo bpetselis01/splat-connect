@@ -135,3 +135,42 @@ describe('an admin in a member thread', () => {
     expect(await accepted.json()).toMatchObject({ status: 'accepted' })
   })
 })
+
+describe('an admin on an open build request', () => {
+  let family: TestUser
+  let admin: TestUser
+  let tutorialId: string
+  let buildId: string
+
+  beforeAll(async () => {
+    ;[family, admin] = await Promise.all([createTestUser('contributor'), createTestUser('admin')])
+    const db = adminClient()
+    const t = await db.from('tutorials').insert({ title: `Admin build ${Date.now()}`, description: 'G', difficulty: 'easy', status: 'approved' }).select('id').single()
+    if (t.error) throw t.error
+    tutorialId = t.data.id
+    const tx = await db
+      .from('toy_transactions')
+      .insert({ type: 'build', status: 'requested', tutorial_id: tutorialId, requester_id: family.id, travel_km: 10, requester_suburb: 'Newtown' })
+      .select('id')
+      .single()
+    if (tx.error) throw tx.error
+    buildId = tx.data.id
+  })
+
+  afterAll(async () => {
+    const db = adminClient()
+    await db.from('build_request_questions').delete().eq('transaction_id', buildId)
+    await db.from('notifications').delete().eq('toy_transaction_id', buildId)
+    await db.from('toy_transactions').delete().eq('id', buildId)
+    await db.from('tutorials').delete().eq('id', tutorialId)
+    await Promise.all([family, admin].map((u) => deleteTestUser(u.id)))
+  })
+
+  it('WM38 refuses a claim and leaves the build open', async () => {
+    const res = await post(`/${buildId}/claim`, admin.token)
+    expect(res.status).toBe(403)
+    expect(await res.json()).toEqual({ error: 'admin_cannot_act' })
+    const { data } = await adminClient().from('toy_transactions').select('status, owner_id').eq('id', buildId).single()
+    expect(data).toEqual({ status: 'requested', owner_id: null })
+  })
+})

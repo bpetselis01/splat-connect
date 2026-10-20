@@ -232,9 +232,9 @@ export function BuildThreadScreen({ id }: { id: string }) {
     )
   }
 
-  const c = buildControls(tx, viewerId, ledOrgIds)
+  const c = buildControls(tx, viewerId, ledOrgIds, caps?.isAdmin)
   const otherName = c.isMaker ? tx.requester_name : tx.owner_name
-  const card = buildCard(tx, viewerId, otherName, ledOrgIds)
+  const card = buildCard(tx, viewerId, otherName, ledOrgIds, caps?.isAdmin)
   const rail = buildRail(tx)
   const myCode = c.isMaker ? tx.owner_code : tx.requester_code
   const nameFor = (senderId: string) => (senderId === tx.requester_id ? tx.requester_name : tx.owner_name)

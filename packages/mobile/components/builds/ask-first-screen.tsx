@@ -152,7 +152,7 @@ export function AskFirstScreen({ id }: { id: string }) {
           </View>
         ) : null}
 
-        {data.open && !data.family ? (
+        {data.open && !data.family && !caps?.isAdmin ? (
           <Button label="I'll build this" loading={busy} onPress={() => void claim()} />
         ) : null}
       </ScrollView>

@@ -54,3 +54,26 @@ test('WM37 WM38 an admin opens a member build thread, cannot act on it, posts a 
     await deleteUser(family.id)
   }
 })
+
+test('WM38 an admin on the ask-first page of an open build is offered no claim', async ({ page }) => {
+  const family = await createContributor()
+  await acceptTerms(family.id)
+  const guideId = await createTutorial(family.id, { title: uniqueTitle('E2E Admin Claim Guide'), status: 'approved' })
+  tutorialIds.push(guideId)
+  const { data: build, error } = await adminClient()
+    .from('toy_transactions')
+    .insert({ type: 'build', tutorial_id: guideId, requester_id: family.id, status: 'requested', travel_km: 10 })
+    .select('id')
+    .single()
+  if (error) throw new Error(error.message)
+
+  try {
+    const admin = await signInAdmin(page)
+    await acceptTerms(admin.id)
+    await page.goto(`/dashboard/exchanges/build/${build.id}/ask`)
+    await expect(page.getByText('Not claimed yet')).toBeVisible()
+    await expect(page.getByRole('button', { name: /I.ll build this/ })).toHaveCount(0)
+  } finally {
+    await deleteUser(family.id)
+  }
+})

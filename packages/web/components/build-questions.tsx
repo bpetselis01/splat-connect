@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation'
 import type { BuildQuestions } from '@splat-connect/types'
 import { browserApiClient } from '@/lib/browser-api-client'
 
-export function BuildQuestionsThread({ data, viewerId, makerId }: { data: BuildQuestions; viewerId: string; makerId: string | null }) {
+export function BuildQuestionsThread({ data, viewerId, makerId, isAdmin = false }: { data: BuildQuestions; viewerId: string; makerId: string | null; isAdmin?: boolean }) {
   const router = useRouter()
   const [draft, setDraft] = useState('')
   const [busy, setBusy] = useState(false)
@@ -96,7 +96,7 @@ export function BuildQuestionsThread({ data, viewerId, makerId }: { data: BuildQ
           </button>
         </form>
       )}
-      {data.open && !data.family && (
+      {data.open && !data.family && !isAdmin && (
         <button type="button" disabled={busy} onClick={claim} className="btn btn-primary min-h-12 self-start px-[22px]">
           I&apos;ll build this
         </button>
