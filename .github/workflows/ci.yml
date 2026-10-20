@@ -247,7 +247,9 @@ jobs:
       # at build. One ABI instead of four: the emulator is x86_64.
       # The Expo template's 512m Metaspace ran out in lintVitalAnalyzeRelease
       # and the daemon then hung to the job timeout; the user-home properties
-      # file outranks the generated android/gradle.properties.
+      # file outranks the generated android/gradle.properties. A 4g heap plus a
+      # Kotlin daemon inheriting it starved the runner beside Supabase's
+      # containers ("lost communication with the server"), hence the caps.
       - name: Build the release APK
         working-directory: packages/mobile
         timeout-minutes: 45
@@ -255,11 +257,18 @@ jobs:
           EXPO_PUBLIC_API_URL: http://10.0.2.2:3102
           ORG_GRADLE_PROJECT_reactNativeArchitectures: x86_64
         run: |
+          free -h | head -2
           mkdir -p ~/.gradle
-          echo 'org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g' >> ~/.gradle/gradle.properties
+          printf '%s\n' 'org.gradle.jvmargs=-Xmx3g -XX:MaxMetaspaceSize=1g' \
+            'kotlin.daemon.jvmargs=-Xmx2g' 'org.gradle.workers.max=2' >> ~/.gradle/gradle.properties
           eval "$(supabase status -o env | sed 's/^/export /')"
           export EXPO_PUBLIC_SUPABASE_URL=http://10.0.2.2:54321 EXPO_PUBLIC_SUPABASE_ANON_KEY="$ANON_KEY"
           pnpm device:build
+          # Both daemons outlive the build; left running they sat beside the
+          # emulator and the runner was lost 35 min into the AVD boot.
+          (cd android && ./gradlew --stop)
+          pkill -f KotlinCompileDaemon || true
+          free -h | head -2
 
       - name: Provision the device account
         working-directory: packages/mobile
@@ -276,6 +285,7 @@ jobs:
           arch: x86_64
           profile: pixel_6
           force-avd-creation: false
+          ram-size: 2048M
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           disable-animations: false
           script: echo "Generated AVD snapshot"
@@ -287,12 +297,23 @@ jobs:
           arch: x86_64
           profile: pixel_6
           force-avd-creation: false
+          ram-size: 2048M
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot-save
           disable-animations: true
           working-directory: packages/mobile
           script: |
             adb install android/app/build/outputs/apk/release/app-release.apk
-            maestro test $(sed 's/^/--env /' "$RUNNER_TEMP/device.env" | tr '\n' ' ') .maestro/flows/ --format=JUNIT --output "$RUNNER_TEMP/maestro.xml"
+            # Titles in device.env contain spaces; one --env per line, unsplit.
+            set --
+            while IFS= read -r line; do set -- "$@" --env "$line"; done < "$RUNNER_TEMP/device.env"
+            maestro test "$@" .maestro/flows/ --format=JUNIT --output "$RUNNER_TEMP/maestro.xml" || {
+              adb logcat -d > "$RUNNER_TEMP/logcat.txt"
+              adb exec-out screencap -p > "$RUNNER_TEMP/last-screen.png"
+              # Maestro names its folders after the flow, colons included,
+              # which the artifact upload rejects.
+              tar czf "$RUNNER_TEMP/maestro-tests.tgz" -C "$HOME/.maestro" tests
+              exit 1
+            }
 
       - name: Upload Maestro failures
         if: failure()
@@ -302,7 +323,9 @@ jobs:
           path: |
             ${{ runner.temp }}/maestro.xml
             ${{ runner.temp }}/api.log
-            ~/.maestro/tests
+            ${{ runner.temp }}/logcat.txt
+            ${{ runner.temp }}/last-screen.png
+            ${{ runner.temp }}/maestro-tests.tgz
           if-no-files-found: ignore
           retention-days: 7
 
