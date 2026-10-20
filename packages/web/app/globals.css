@@ -6508,6 +6508,11 @@ body[data-motion='reduced'] :is(.sw-kicker__hint, .sw-progress, .sw-rail) {
     background: var(--b600);
     box-shadow: var(--glow);
   }
+  /* SPLAT speaking, not a member: the board's honey tint, ink text. */
+  .chat-bubble.chat-bubble-admin {
+    background: var(--tamber);
+    color: var(--tink);
+  }
   .chat-panel--board .chat-composer {
     gap: 10px;
     align-items: center;

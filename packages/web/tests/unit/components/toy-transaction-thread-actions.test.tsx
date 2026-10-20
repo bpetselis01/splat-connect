@@ -186,3 +186,13 @@ describe('ToyTransactionThread actions on a print job', () => {
     await vi.waitFor(() => expect(h.onConfirm).toHaveBeenCalledWith('111111'))
   })
 })
+
+describe('ToyTransactionThread for an admin who is not a party', () => {
+  it('WM38 offers no Withdraw, Decline or Confirm, but still lets the admin write', () => {
+    mount(detail({ status: 'accepted' }), 'admin-1')
+    expect(screen.queryByRole('button', { name: /Withdraw/ })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Decline' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Confirm handoff' })).toBeNull()
+    expect(screen.getByLabelText(/^Message /)).toBeInTheDocument()
+  })
+})

@@ -895,7 +895,8 @@ export function givenAway(
   return rows.sort((a, b) => b.at.localeCompare(a.at))
 }
 
-export type ToyTransactionMessageKind = 'system' | 'user'
+/** 'admin' is a SPLAT admin speaking in a member thread (140). */
+export type ToyTransactionMessageKind = 'system' | 'user' | 'admin'
 
 export interface ToyTransactionMessage {
   id: string
@@ -1077,7 +1078,7 @@ export interface ToyIdeaDetail extends Omit<ToyIdea, 'author_id'>, Partial<Chall
 export interface ThreadMessage {
   id: string
   sender_id: string
-  kind: 'system' | 'user'
+  kind: ToyTransactionMessageKind
   body: string
   created_at: string
 }

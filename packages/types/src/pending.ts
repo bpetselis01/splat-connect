@@ -257,6 +257,8 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: admins can open any thread and post an admin-labelled message, but cannot accept, reject, confirm or withdraw for a member. Whether to hide the party buttons from admins and exempt admins from the terms gate.",
+    question: "What may an admin do inside a member's Exchange thread? (requirements doc Q11)",
+    shipped: true,
   },
   'admin-status-validation': {
     title: "Guide status from the admin route",
