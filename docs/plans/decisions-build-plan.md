@@ -210,7 +210,7 @@ What stays fixed:
 
 **Verification:** `db:guards` green with the new kind; api integration green; web e2e admin spec green; mobile jest green.
 
-**Planning-time unknowns:** Deferred — whether the mobile bubble component is shared by all three screens (the research names `exchange-chat.tsx` grouping on web; mobile bubbles are in `thread-screen.tsx` line ~`mine=`); if not shared, three small edits.
+**Planning-time unknowns:** none. Resolved by research: one shared `packages/mobile/components/ui/MessageBubble.tsx` renders every bubble and branches on `kind` at line 24 (`system`); the admin label is a third branch there, and the three screens' `mine={… && m.kind === 'user'}` stays correct (an admin message is never `mine` for a party). The challenges and ask-first screens use the same bubble and inherit the label for free.
 
 ## Piece 3: return path and terms (R5–R9, R19)
 
@@ -244,7 +244,7 @@ What stays fixed:
 
 **Verification:** web unit green; web e2e `auth/route-protection.spec.ts` and `contributor/contributor-terms.spec.ts` green (their expectations flipped in the same commit); `pnpm test:journeys` 0 gaps.
 
-**Planning-time unknowns:** Deferred — whether `headers()` is sync or async in the installed Next (16.x: `await headers()`); the helper handles either.
+**Planning-time unknowns:** none. Resolved by research: Next is 16.2.6 and `headers()` returns `Promise<ReadonlyHeaders>`, so `requireCapabilities` awaits it; `nextWithPathname` is at `middleware.ts:27` (header set at line 29, called at 34 and 48) and the only reader of `x-pathname` is `app/layout.tsx:88`, so adding the sibling `x-pathname-search` header changes no existing consumer.
 
 ### Unit 8: The pages that keep the path but drop the query
 
@@ -399,7 +399,7 @@ Migration note: U11–U13 share `supabase/migrations/141_handoff_notifications.s
 
 **Verification:** `pnpm test:journeys` 45 types, 0 unasserted; api integration green; web + mobile unit green; `db:guards` green.
 
-**Planning-time unknowns:** Resolve Before Planning — none. Deferred — exact link targets for recycling on mobile (`(my)/recycling` or the drop-off list route; grep the V-series rows).
+**Planning-time unknowns:** none. Resolved by research: the member's drop-offs live at `packages/mobile/app/(tabs)/explore/recycling.tsx` (rows V04–V06), so the mobile link for `recycling_received` and `recycling_declined` pushes `/explore/recycling`; the leader intake view under `(my)/organisation/recycling` is not the target.
 
 ### Unit 12: Leader and event-change notifications
 
@@ -460,7 +460,7 @@ Migration note: U11–U13 share `supabase/migrations/141_handoff_notifications.s
 
 **Verification:** `pnpm test:journeys` 53 types, 0 unasserted, 23 counts asserted; all suites green.
 
-**Planning-time unknowns:** Deferred — whether `/api/public/contact` can see a bearer token today (it uses the anon client; if not, read `Authorization` when present).
+**Planning-time unknowns:** none. Resolved by research: the web contact form posts through `browserApiClient`, which attaches `Authorization: Bearer` whenever a session exists; `public.ts` already has a local `signedIn(c)` (lines 185–190) that verifies the bearer with `admin.auth.getUser` but returns only a boolean, so this unit widens it to return the user id, sets `sender_id` on the insert (the handler's comment at line 1667 promises this and the code never did it) and notifies that id. Mobile has no caller of `/api/public/contact`, so no mobile change.
 
 ### Unit 14: Notification deploy and hosted checklist
 
