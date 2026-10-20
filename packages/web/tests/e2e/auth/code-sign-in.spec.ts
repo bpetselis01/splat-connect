@@ -65,7 +65,9 @@ test('WA38 the resend waits 60 seconds, then sends a fresh code and restarts the
     await expect(page.getByText(/Resend code in 0:\d\d/)).toBeVisible()
     await expect(page.getByRole('button', { name: 'Send a new code' })).toHaveCount(0)
 
-    await page.clock.runFor(60_000)
+    // The countdown is a chain of one-second timeouts re-armed after each
+    // render, so the clock moves a tick at a time with a round trip between.
+    for (let s = 0; s < 60; s++) await page.clock.runFor(1_000)
     await expect(page.getByRole('button', { name: 'Send a new code' })).toBeVisible()
 
     // Supabase refuses a second mail to one address inside a second.
