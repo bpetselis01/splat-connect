@@ -196,7 +196,7 @@ What stays fixed:
 - `packages/web/tests/e2e/admin/thread.spec.ts` — new WM37 (admin opens a build thread from `/admin/build-requests`, posts, sees the label; the member sees it too); `scripts/journeys/journeys.json` — WM37, WM38 (refused actions), X16 (member sees the admin label on mobile)
 - `packages/types/src/pending.ts` — `admin-in-member-threads` shipped; `scripts/check-schema-guards.sh` — probe the new kind
 
-**Approach:** Migration first, then API, then both clients. The system/user grouping in `exchange-chat.tsx` keys on `kind`, so the admin label is a third branch, not a sender lookup.
+**Approach:** Migration first, then API, then both clients. An admin may post in a thread of any status (R17: an admin can open any thread and post); only the lifecycle actions are refused. The system/user grouping in `exchange-chat.tsx` keys on `kind`, so the admin label is a third branch, not a sender lookup.
 
 **Patterns:** `138_event_change_notifications.sql` for a CHECK-constraint widening with the guard; `review-notifications.ts` for notifying both parties.
 
