@@ -4,7 +4,7 @@ import { Eye, EyeSlash } from '@phosphor-icons/react/dist/ssr'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { sanitiseNextPath } from '@/lib/safe-next-path'
-import { pendingIntent, type SignupIntent } from '@splat-connect/types'
+import { pendingIntent, toProblem, type AuthProblem, type SignupIntent } from '@splat-connect/types'
 
 // PENDING(web-auth-recovery): port all mobile auth screens to web (forgot-password, code sign-in, resend-confirmation, friendly unconfirm...
 // PENDING(confirmed-page-bare-layout): fix it: the sign-in page keeps the normal layout after an email confirmation. Nothing to decide beyond sche...
@@ -16,7 +16,7 @@ const INTENT_LANDING: Record<SignupIntent, string> = {
 }
 import Link from 'next/link'
 import type { Route } from 'next'
-import { AuthStage } from '@/components/auth-shell'
+import { AuthError, AuthStage } from '@/components/auth-shell'
 
 function LoginForm() {
   const supabase = createClient()
@@ -25,18 +25,32 @@ function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<AuthProblem | null>(null)
+  const [codeLink, setCodeLink] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError(null)
+    setCodeLink(null)
 
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) {
-        setError(error.message)
+        const found = toProblem(error)!
+        if (found.kind === 'credentials') setPassword('')
+        if (found.kind === 'unconfirmed') {
+          // An account from before codes existed may never have confirmed:
+          // send a fresh code so the next screen can take it straight away.
+          const resent = await supabase.auth.resend({ type: 'signup', email })
+          if (resent.error) {
+            setError(toProblem(resent.error))
+            return
+          }
+          setCodeLink(`/login/verify?${new URLSearchParams({ email, type: 'signup', ...(next ? { next } : {}) })}`)
+        }
+        setError(found)
         return
       }
       const { data: { user } } = await supabase.auth.getUser()
@@ -117,11 +131,7 @@ function LoginForm() {
             </button>
           </div>
         </div>
-        {error && (
-          <p role="alert" className="alert alert-danger">
-            {error}
-          </p>
-        )}
+        <AuthError error={error} action={codeLink ? { label: 'Enter the code', href: codeLink } : undefined} />
         <button type="submit" disabled={loading} className="auth-submit">
           {loading ? 'Signing in…' : 'Sign in'}
         </button>
