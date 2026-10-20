@@ -21,8 +21,9 @@
  */
 import { Hono } from 'hono'
 import { createUserClient } from '../supabase/client.js'
+import { notify } from '../notify.js'
 import type { AuthVariables } from '../middleware/auth.js'
-import { REPORT_SUBJECT_KINDS } from '@splat-connect/types'
+import { REPORT_SUBJECT_KINDS, notificationBody } from '@splat-connect/types'
 
 const reports = new Hono<{ Variables: AuthVariables }>()
 
@@ -82,6 +83,18 @@ reports.post('/', async (c) => {
     .maybeSingle()
   if (error) return c.json({ error: error.message }, 500)
   if (!data) return c.json({ error: 'That report could not be filed.' }, 403)
+  await notify(
+    [
+      {
+        recipient_id: c.get('userId'),
+        type: 'report_received',
+        member_report_id: data.id,
+        actor_name: 'SPLAT',
+        body: notificationBody(label),
+      },
+    ],
+    'report_received'
+  )
   return c.json(data, 201)
 })
 

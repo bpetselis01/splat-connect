@@ -276,6 +276,11 @@ describe('NotificationsList', () => {
     ['leader_added', { org_id: 'o1', actor_name: 'Northbank' }, 'You now lead Northbank', '/dashboard/organisation'],
     ['leader_removed', { org_id: 'o1', actor_name: 'Northbank' }, 'You no longer lead Northbank', '/organizations/o1/public'],
     ['org_event_deleted', { org_id: 'o1', actor_name: 'Northbank', body: 'Build day' }, 'Northbank deleted an event you registered for', '/organizations/o1/public'],
+    ['event_rsvp_received', { org_event_id: 'e1', actor_name: 'Northbank', tutorial_title: 'Build day' }, 'You\'re registered for Build day', '/get-involved/events/e1'],
+    ['idea_received', { idea_id: 'i1', actor_name: 'SPLAT', body: 'Bubble machine' }, 'We received your idea', '/dashboard/challenges'],
+    ['report_received', { member_report_id: 'r1', actor_name: 'SPLAT', body: 'Spoon Holder' }, 'We received your report', '/notifications'],
+    ['drop_off_booked', { org_id: 'o1', actor_name: 'Northbank' }, 'Your drop-off at Northbank is booked', '/get-involved/recycling'],
+    ['contact_received', { actor_name: 'SPLAT', body: 'The battery pack gets warm' }, 'We received your message', '/notifications'],
   ] as const)('WD38 renders %s and routes it by its subject', async (type, fields, copy, href) => {
     render(
       <NotificationsList

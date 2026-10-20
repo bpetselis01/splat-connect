@@ -7,6 +7,7 @@ import { singleRowStatus } from '../single-row.js'
 import { Hono, type Context } from 'hono'
 import { nameFormerContributors } from '../former-contributor.js'
 import { chunk } from '../chunk.js'
+import { notify } from '../notify.js'
 import { challengeCounts } from '../challenge-counts.js'
 import { primaryAuthorNames, profileName } from '../profile-name.js'
 import { createAnonClient, createAdminClient } from '../supabase/client.js'
@@ -17,7 +18,7 @@ import { withPhotoUrl } from './toy-ideas.js'
 import { readNear, byDistance, pickupPostcodes, type Near } from '../distance.js'
 import { groupPlaces, type Located } from '../map.js'
 import { addressQuery, geocodeAll, type Point } from '../geocode.js'
-import { isPast, autoPicks, buildCalendar, contributorBadges, gradeOf, mergeLearnCourse, partsTotalCents, readMinutes } from '@splat-connect/types'
+import { isPast, notificationBody, autoPicks, buildCalendar, contributorBadges, gradeOf, mergeLearnCourse, partsTotalCents, readMinutes } from '@splat-connect/types'
 import type {
   ImpactSummary,
   ImpactEntity,
@@ -181,12 +182,12 @@ publicRoutes.get('/tutorials/:id/notes', async (c) => {
  * answered for anyone lets a stranger narrow it until a member's toy drops out
  * — bisecting their postcode. Signed out, the list is what it was before.
  */
-/** Whether the caller sent a valid session. These routes run before authMiddleware. */
-async function signedIn(c: Context): Promise<boolean> {
+/** The caller's user id when they sent a valid session, else null. These routes run before authMiddleware. */
+async function signedIn(c: Context): Promise<string | null> {
   const header = c.req.header('Authorization')
-  if (!header?.startsWith('Bearer ')) return false
+  if (!header?.startsWith('Bearer ')) return null
   const { data } = await createAdminClient().auth.getUser(header.slice(7))
-  return !!data.user
+  return data.user?.id ?? null
 }
 
 async function publicNear(c: Context): Promise<Near | string> {
@@ -1633,12 +1634,20 @@ publicRoutes.post('/contact', async (c) => {
     return c.json({ error: 'Say what happened, in 4000 characters or fewer.' }, 400)
   }
 
+  const senderId = await signedIn(c)
   const { error } = await createAnonClient()
     .from('contact_messages')
-    .insert({ topic, name, email, body: message })
+    .insert({ topic, name, email, body: message, sender_id: senderId })
   if (error) {
     console.error('[public/contact] insert failed:', error.message)
     return c.json({ error: 'That did not send. Try again, or email us directly.' }, 500)
+  }
+  // 142. A visitor has no inbox to tell, so only a signed-in sender hears back.
+  if (senderId) {
+    await notify(
+      [{ recipient_id: senderId, type: 'contact_received', actor_name: 'SPLAT', body: notificationBody(message) }],
+      'contact_received'
+    )
   }
 
   return c.json({ ok: true }, 201)
@@ -1655,7 +1664,7 @@ publicRoutes.post('/contact', async (c) => {
 publicRoutes.get('/map', async (c) => {
   const near = await publicNear(c)
   if (typeof near === 'string') return c.json({ error: near }, 400)
-  const member = await signedIn(c)
+  const member = !!(await signedIn(c))
   const admin = createAdminClient()
   const [toys, printers, events, orgs, unavailable] = await Promise.all([
     admin.from('toys').select('id, name, owner_id, owner_org_id').eq('status', 'published'),

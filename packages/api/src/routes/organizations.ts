@@ -1786,6 +1786,10 @@ organizations.post('/:id/recycling', async (c) => {
 
   if (error) return c.json({ error: error.message }, 500)
   if (!data) return c.json({ error: 'That booking could not be made.' }, 403)
+  await notify(
+    [{ recipient_id: c.get('userId'), type: 'drop_off_booked', org_id: c.req.param('id'), actor_name: org.name }],
+    'drop_off_booked'
+  )
   return c.json(data, 201)
 })
 

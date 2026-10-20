@@ -62,6 +62,8 @@ describe('the hub badges', () => {
     expect(await unread(author)).toEqual(ZERO)
     const idea = await ok(author, 'POST', '/ideas', { title: 'A counted switch', summary: 'Easier to press' })
     cleanup.push(async () => { await adminClient().from('toy_ideas').delete().eq('id', idea.id) })
+    expect(await unread(author)).toEqual({ ...ZERO, challenges: 1, total: 1 })
+    await markRead(author, 'challenges')
     expect(await unread(author)).toEqual(ZERO)
 
     await ok(admin, 'PATCH', `/admin/ideas/${idea.id}/status`, { status: 'challenge' })
