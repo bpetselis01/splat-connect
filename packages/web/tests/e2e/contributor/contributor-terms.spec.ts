@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { signIn, createContributor, createTutorial, uniqueTitle } from '../helpers'
+import { signIn, createContributor, createTutorial, uniqueTitle, fillDetail } from '../helpers'
 
 // No acceptTerms() anywhere in this file, deliberately. Seeding acceptance in setup
 // is what kept the contributor-terms 403 invisible to the suite.
@@ -107,24 +107,8 @@ test('WA17 accepting returns the user to where they were blocked and unblocks ed
   // API refuses without an acceptance row, and the Server Action threw a 500. This is
   // the assertion that would have caught it.
   //
-  // #edit-title / "Save details" are the ids the Details panel actually uses.
-  // Typed in a retry loop because "Save details" is gated on a `dirty` flag the
-  // form sets from React's onChange. Arriving here straight off the acceptance
-  // redirect, the markup can still be the server-rendered HTML: a fill that
-  // lands before hydration changes the DOM but no handler observes it, so dirty
-  // stays false and the button stays disabled for the rest of the test. Filling
-  // again once React is attached is what makes this deterministic.
-  const editTitle = page.locator('#edit-title')
   const saveDetails = page.getByRole('button', { name: 'Save details' })
-  // Cleared first on every attempt, which is load-bearing: React only raises
-  // onChange when the value actually differs from the one it last tracked, so
-  // re-filling the same string after a pre-hydration fill is a no-op and the
-  // retry would spin until it timed out.
-  await expect(async () => {
-    await editTitle.fill('')
-    await editTitle.fill('Edited after accepting terms')
-    await expect(saveDetails).toBeEnabled({ timeout: 1_000 })
-  }).toPass({ timeout: 30_000 })
+  await fillDetail(page, 'title', 'Edited after accepting terms')
   await saveDetails.click()
 
   // The <h1> renders tutorial.title, so it changing proves the PATCH was accepted and

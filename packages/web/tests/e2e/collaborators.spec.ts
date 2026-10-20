@@ -9,6 +9,7 @@ import {
   uniqueTitle,
   adminClient,
   pageUntilVisible,
+  fillDetail,
 } from './helpers'
 
 /**
@@ -108,7 +109,7 @@ test('WT30 a collaborator is invited, accepts, edits, submits, and both are noti
     const renamedTitle = `${title} renamed`
     // The editor opens on Status (a1535727); the title lives on Details.
     await page.goto(`/tutorials/${tutorialId}/edit?step=details`)
-    await page.locator('#edit-title').fill(renamedTitle)
+    await fillDetail(page, 'title', renamedTitle)
     await page.getByRole('button', { name: 'Save details' }).click()
     await expect
       .poll(async () => {

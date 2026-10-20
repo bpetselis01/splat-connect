@@ -1,6 +1,6 @@
 import path from 'node:path'
 import { test, expect } from '@playwright/test'
-import { signIn, createContributor, createTutorial, createOrgWithLeader, uniqueTitle, adminClient, acceptTerms } from '../helpers'
+import { signIn, createContributor, createTutorial, createOrgWithLeader, uniqueTitle, adminClient, acceptTerms, fillDetail } from '../helpers'
 
 const PDF_FIXTURE = path.join(__dirname, '..', 'fixtures', 'test.pdf')
 const PHOTO_FIXTURE = path.join(__dirname, '..', 'fixtures', 'test.jpg')
@@ -31,7 +31,7 @@ test('WT18 editing an approved tutorial resets its status to pending', async ({ 
   await page.goto(`/tutorials/${tutorialId}/edit?step=details`)
   await expect(page.locator('input[name="title"]')).toHaveValue('E2E Approved Edit Target')
 
-  await page.locator('input[name="title"]').fill('E2E Approved Edit Target (updated)')
+  await fillDetail(page, 'title', 'E2E Approved Edit Target (updated)')
   await page.getByRole('button', { name: 'Save details' }).click()
   await page.waitForLoadState('networkidle')
 
@@ -73,7 +73,7 @@ test('WT18 saving details updates the title, description and difficulty', async 
   await page.goto(`/tutorials/${id}/edit?step=details`)
 
   const renamed = `${title} renamed`
-  await page.locator('#edit-title').fill(renamed)
+  await fillDetail(page, 'title', renamed)
   await page.locator('#edit-description').fill('An edited description.')
   await page.locator('#edit-difficulty').selectOption('hard')
   await page.getByRole('button', { name: 'Save details' }).click()
@@ -103,7 +103,7 @@ test('the difficulty select shows the newly saved value after a save', async ({ 
   await page.waitForURL('**/dashboard')
   await page.goto(`/tutorials/${id}/edit?step=details`)
 
-  await page.locator('#edit-difficulty').selectOption('medium')
+  await fillDetail(page, 'difficulty', 'medium')
   await page.getByRole('button', { name: 'Save details' }).click()
 
   // The select carries key={difficulty} so it rebuilds from the saved value
@@ -310,7 +310,7 @@ const statusOf = async (id: string) =>
 test('WT18 saving a change to a rejected tutorial sends it back to pending', async ({ page }) => {
   const { id } = await editorAs(page, { status: 'rejected', rejection_note: 'Add a clearer cover photo.' })
   await page.goto(`/tutorials/${id}/edit?step=details`)
-  await page.locator('#edit-description').fill('Reworded after the review.')
+  await fillDetail(page, 'description', 'Reworded after the review.')
   await page.getByRole('button', { name: 'Save details' }).click()
 
   await expect.poll(() => statusOf(id)).toBe('pending')
