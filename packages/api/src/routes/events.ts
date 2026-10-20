@@ -224,41 +224,40 @@ events.post('/:id/registrations', async (c) => {
     }
   }
 
-  const { data: before } = await admin
-    .from('org_event_registrations')
-    .select('cancelled_at')
-    .eq('event_id', eventId)
-    .eq('user_id', c.get('userId'))
-    .maybeSingle()
-
-  const { data, error } = await supabase
-    .from('org_event_registrations')
-    // Upsert, not insert: the unique key is (event_id, user_id), so somebody
-    // who cancelled and changed their mind is the same row coming back rather
-    // than a duplicate-key error they cannot act on.
-    .upsert(
-      {
-        event_id: eventId,
-        user_id: c.get('userId'),
-        name,
-        email,
-        answers: checked.answers,
-        cancelled_at: null,
-      },
-      { onConflict: 'event_id,user_id' },
-    )
-    .select(REGISTRATION_COLUMNS)
-    .maybeSingle()
+  // Somebody who cancelled and changed their mind is the same row coming back
+  // rather than a duplicate-key error they cannot act on, so the write is three
+  // conditional steps. A step that returns a row is the one that made the RSVP
+  // new (inserted, or revived from cancelled); only that step notifies, which
+  // keeps two simultaneous saves from sending it twice.
+  const userId = c.get('userId')
+  const fields = { name, email, answers: checked.answers, cancelled_at: null }
+  const attempt = async (step: 'insert' | 'revive' | 'save') => {
+    const table = supabase.from('org_event_registrations')
+    const query =
+      step === 'insert'
+        ? table.upsert({ event_id: eventId, user_id: userId, ...fields }, { onConflict: 'event_id,user_id', ignoreDuplicates: true })
+        : table.update(fields).eq('event_id', eventId).eq('user_id', userId)
+    return (step === 'revive' ? query.not('cancelled_at', 'is', null) : query)
+      .select(REGISTRATION_COLUMNS)
+      .maybeSingle()
+  }
+  let isNew = true
+  let { data, error } = await attempt('insert')
+  if (!error && !data) ({ data, error } = await attempt('revive'))
+  if (!error && !data) {
+    isNew = false
+    ;({ data, error } = await attempt('save'))
+  }
 
   if (error) return c.json({ error: error.message }, 500)
   // RLS returns no row rather than refusing, so an absent row IS the refusal.
   if (!data) return c.json({ error: 'That registration is not yours to make.' }, 403)
   // 142. Saving the form again over a live registration is not a new RSVP.
-  if (!before || before.cancelled_at) {
+  if (isNew) {
     await notify(
       [
         {
-          recipient_id: c.get('userId'),
+          recipient_id: userId,
           type: 'event_rsvp_received',
           org_event_id: eventId,
           tutorial_title: event.title,

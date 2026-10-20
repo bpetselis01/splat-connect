@@ -76,6 +76,22 @@ describe('acknowledged submissions', () => {
     ])
   })
 
+  it('event_rsvp_received is sent once when two registrations arrive together', async () => {
+    const racer = await createTestUser('contributor')
+    try {
+      const form = { name: 'Rae', email: 'rae@example.com' }
+      const results = await Promise.all([
+        call(racer.token, 'POST', `/events/${eventId}/registrations`, form),
+        call(racer.token, 'POST', `/events/${eventId}/registrations`, form),
+      ])
+      expect(results.map((r) => r.status)).toEqual([201, 201])
+      expect(await noticesFor(racer.id, 'event_rsvp_received')).toHaveLength(1)
+    } finally {
+      await adminClient().from('org_event_registrations').delete().eq('user_id', racer.id)
+      await deleteTestUser(racer.id)
+    }
+  })
+
   it('idea_received names the idea in the body and points at it', async () => {
     const res = await call(member.token, 'POST', '/ideas', { title: 'A bubble machine', summary: 'One-press bubbles.' })
     expect(res.status).toBe(201)
