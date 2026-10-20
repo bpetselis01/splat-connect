@@ -100,6 +100,17 @@ describe('deleting an event', () => {
     expect(await noticesFor(leader.id, 'org_event_deleted')).toEqual([])
   })
 
+  it('org_event_deleted tells a registrant who cancelled and registered again once', async () => {
+    const id = await event('Twice build day')
+    const form = { name: 'Going', email: 'going@example.com' }
+    expect((await call(going.token, 'POST', `/events/${id}/registrations`, form)).status).toBe(201)
+    expect((await call(going.token, 'DELETE', `/events/${id}/registrations`)).status).toBe(200)
+    expect((await call(going.token, 'POST', `/events/${id}/registrations`, form)).status).toBe(201)
+    expect((await call(leader.token, 'DELETE', `/organizations/${orgId}/events/${id}`)).status).toBe(200)
+    const told = (await noticesFor(going.id, 'org_event_deleted')).filter((n) => n.body === 'Twice build day')
+    expect(told).toHaveLength(1)
+  })
+
   it('org_event_deleted sends nothing when nobody registered', async () => {
     const id = await event('Empty build day')
     expect((await call(leader.token, 'DELETE', `/organizations/${orgId}/events/${id}`)).status).toBe(200)

@@ -6,11 +6,13 @@
  *
  * The log line is stable and greppable after a deploy:
  *   [notify] insert failed type=<type> code=<pg code> label=<label>
+ *   [notify] chunked rows=<n> label=<label>   (a send above 500 rows)
  */
 import { createAdminClient } from './supabase/client.js'
 import { chunk } from './chunk.js'
 
 export async function notify(rows: Array<Record<string, unknown>>, label: string) {
+  if (rows.length > 500) console.error(`[notify] chunked rows=${rows.length} label=${label}`)
   for (const part of chunk(rows, 500)) {
     let code = 'none'
     try {
