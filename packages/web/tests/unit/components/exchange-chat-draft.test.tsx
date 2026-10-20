@@ -22,12 +22,12 @@ describe('the thread composer draft', () => {
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Is it still free?' } })
     fireEvent.click(screen.getByRole('button', { name: /send/i }))
     await waitFor(() => expect(neverReturns).toHaveBeenCalledWith('Is it still free?'))
-    expect(sessionStorage.getItem('draft:tx1')).toBe('Is it still free?')
+    expect(sessionStorage.getItem('draft:u1:tx1')).toBe('Is it still free?')
     first.unmount()
 
     render(<ExchangeChat {...props(vi.fn())} />)
     await waitFor(() => expect(screen.getByRole('textbox')).toHaveValue('Is it still free?'))
-    expect(sessionStorage.getItem('draft:tx1')).toBeNull()
+    expect(sessionStorage.getItem('draft:u1:tx1')).toBeNull()
   })
 
   it('drops the saved copy once the message arrives in the thread', async () => {
@@ -35,14 +35,50 @@ describe('the thread composer draft', () => {
     const view = render(<ExchangeChat {...props(send)} />)
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Hello' } })
     fireEvent.click(screen.getByRole('button', { name: /send/i }))
-    await waitFor(() => expect(sessionStorage.getItem('draft:tx1')).toBe('Hello'))
+    await waitFor(() => expect(sessionStorage.getItem('draft:u1:tx1')).toBe('Hello'))
     view.rerender(
       <ExchangeChat
         {...props(send)}
         messages={[{ id: 'm1', sender_id: 'u1', kind: 'user', body: 'Hello', created_at: '2026-10-20T00:00:00Z' }]}
       />
     )
-    expect(sessionStorage.getItem('draft:tx1')).toBeNull()
+    expect(sessionStorage.getItem('draft:u1:tx1')).toBeNull()
+  })
+
+  it('restores the text to the box and drops the saved copy when the send fails', async () => {
+    const send = vi.fn().mockRejectedValue(new Error('boom'))
+    render(<ExchangeChat {...props(send)} />)
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Lost?' } })
+    fireEvent.click(screen.getByRole('button', { name: /send/i }))
+    await waitFor(() => expect(screen.getByRole('textbox')).toHaveValue('Lost?'))
+    expect(sessionStorage.getItem('draft:u1:tx1')).toBeNull()
+  })
+
+  it('keeps the saved copy and leaves the box empty when the send is refused for terms', async () => {
+    const send = vi.fn().mockRejectedValue(Object.assign(new Error('terms'), { status: 403, code: 'terms_required' }))
+    render(<ExchangeChat {...props(send)} />)
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Hello' } })
+    fireEvent.click(screen.getByRole('button', { name: /send/i }))
+    await waitFor(() => expect(send).toHaveBeenCalled())
+    expect(screen.getByRole('textbox')).toHaveValue('')
+    expect(sessionStorage.getItem('draft:u1:tx1')).toBe('Hello')
+  })
+
+  it('keeps one draft per thread', async () => {
+    sessionStorage.setItem('draft:u1:tx1', 'for one')
+    sessionStorage.setItem('draft:u1:tx2', 'for two')
+    const one = render(<ExchangeChat {...props(vi.fn())} draftKey="tx2" />)
+    await waitFor(() => expect(screen.getByRole('textbox')).toHaveValue('for two'))
+    expect(sessionStorage.getItem('draft:u1:tx1')).toBe('for one')
+    one.unmount()
+    render(<ExchangeChat {...props(vi.fn())} draftKey="tx1" />)
+    await waitFor(() => expect(screen.getByRole('textbox')).toHaveValue('for one'))
+  })
+
+  it('does not hand one viewer another viewer\'s draft', () => {
+    sessionStorage.setItem('draft:u2:tx1', 'not yours')
+    render(<ExchangeChat {...props(vi.fn())} />)
+    expect(screen.getByRole('textbox')).toHaveValue('')
   })
 
   it('still sends when storage is unavailable', async () => {

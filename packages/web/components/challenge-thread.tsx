@@ -164,8 +164,9 @@ export function ChallengeThread({
     try {
       await browserApiClient.post(`/api/ideas/${ideaId}/messages`, { body })
       await loadMessages()
-    } catch {
+    } catch (err) {
       setError('Something went wrong. Please try again.')
+      throw err
     } finally {
       setBusy(false)
     }
