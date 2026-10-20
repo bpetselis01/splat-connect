@@ -303,7 +303,10 @@ jobs:
           working-directory: packages/mobile
           script: |
             adb install android/app/build/outputs/apk/release/app-release.apk
-            maestro test $(sed 's/^/--env /' "$RUNNER_TEMP/device.env" | tr '\n' ' ') .maestro/flows/ --format=JUNIT --output "$RUNNER_TEMP/maestro.xml"
+            # Titles in device.env contain spaces; one --env per line, unsplit.
+            set --
+            while IFS= read -r line; do set -- "$@" --env "$line"; done < "$RUNNER_TEMP/device.env"
+            maestro test "$@" .maestro/flows/ --format=JUNIT --output "$RUNNER_TEMP/maestro.xml"
 
       - name: Upload Maestro failures
         if: failure()
