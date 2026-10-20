@@ -8,7 +8,7 @@ import CodeSignIn from '../../../app/(auth)/code-sign-in'
 import Verify from '../../../app/(auth)/verify'
 import ForgotPassword from '../../../app/(auth)/forgot-password'
 import ResetPassword from '../../../app/(auth)/reset-password'
-import { problem } from '../../../lib/auth-errors'
+import { problem } from '@splat-connect/types'
 
 const mockPush = jest.fn()
 const mockReplace = jest.fn()

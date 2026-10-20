@@ -65,12 +65,20 @@ describe('web sign-in against local Supabase', () => {
     expect(data.session).toBeNull()
   })
 
-  it('WA08 an unconfirmed email is refused with "Email not confirmed"', async () => {
+  it('WA08 an unconfirmed email is refused with email_not_confirmed, and the resend the page then makes mails a code', async () => {
     const { email } = await confirmedUser({ confirmed: false })
     const { data, error } = await anon().auth.signInWithPassword({ email, password: PASSWORD })
     expect(error?.code).toBe('email_not_confirmed')
-    expect(error?.message).toBe('Email not confirmed')
     expect(data.session).toBeNull()
+
+    expect((await anon().auth.resend({ type: 'signup', email })).error).toBeNull()
+    let snippet = ''
+    for (let i = 0; i < 40 && !snippet; i++) {
+      const res = await fetch(`${MAIL}/search?query=${encodeURIComponent(`to:${email}`)}`)
+      snippet = ((await res.json()) as { messages: { Snippet: string }[] }).messages[0]?.Snippet ?? ''
+      if (!snippet) await new Promise((r) => setTimeout(r, 250))
+    }
+    expect(snippet).toMatch(/\b\d{6}\b/)
   })
 
   it('WA05 the sign-up intent is pending until the first sign-in spends it, and stays recorded', async () => {

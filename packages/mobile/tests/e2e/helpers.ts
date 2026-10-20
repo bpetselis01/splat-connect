@@ -1,9 +1,9 @@
 import { type Page, expect } from '@playwright/test'
-import { PASSWORD, acceptTerms, adminClient, makeLeader, uniqueEmail as seedEmail, uniqueTitle } from '../../../../supabase/e2e-seed'
+import { PASSWORD, acceptTerms, adminClient, latestCode, makeLeader, uniqueEmail as seedEmail, uniqueTitle } from '../../../../supabase/e2e-seed'
 
 export {
   PASSWORD, acceptTerms, addLeader, adminClient, createAdmin, createEvent, createNotification, createOrg,
-  makeLeader, uniqueTitle, type EventQuestion,
+  latestCode, makeLeader, uniqueTitle, type EventQuestion,
 } from '../../../../supabase/e2e-seed'
 
 function uniqueEmail(prefix: string) {
@@ -199,28 +199,6 @@ export async function signUpNewAccount(page: Page, email: string) {
   await page.getByTestId('auth-submit').click()
   await enterEmailedCode(page, email)
   await expect(page).toHaveURL(/\/home$/)
-}
-
-// Local Supabase's mail catcher. The e2e reads the real 6-digit code out of
-// the email rather than confirming through the admin API, so the template and
-// the code screen are both under test.
-const MAILPIT = 'http://127.0.0.1:54324'
-
-/** The newest 6-digit code emailed to `email`, polled until it arrives. When
- *  `after` is given, only a message sent after that moment counts. */
-export async function latestCode(email: string, after = 0): Promise<string> {
-  for (let i = 0; i < 40; i++) {
-    const res = await fetch(`${MAILPIT}/api/v1/search?query=${encodeURIComponent(`to:"${email}"`)}`)
-    const { messages } = (await res.json()) as { messages: { ID: string; Created: string }[] }
-    const fresh = messages.find((m) => Date.parse(m.Created) >= after)
-    if (fresh) {
-      const msg = (await (await fetch(`${MAILPIT}/api/v1/message/${fresh.ID}`)).json()) as { Text: string }
-      const code = msg.Text.match(/\b(\d{6})\b/)?.[1]
-      if (code) return code
-    }
-    await new Promise((r) => setTimeout(r, 250))
-  }
-  throw new Error(`No code emailed to ${email}`)
 }
 
 /** On the code screen: waits for it, then types the emailed code. */

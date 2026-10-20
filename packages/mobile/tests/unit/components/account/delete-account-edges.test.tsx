@@ -3,7 +3,7 @@
 // fail, and the Apple path.
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { DeleteAccountScreen, openSummary } from '../../../../components/account/delete-account-screen'
-import { problem } from '../../../../lib/auth-errors'
+import { problem } from '@splat-connect/types'
 
 const mockBack = jest.fn()
 const mockPush = jest.fn()
