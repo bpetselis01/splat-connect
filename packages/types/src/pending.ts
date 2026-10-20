@@ -186,7 +186,6 @@ export const PENDING = {
     kind: "build",
     platforms: ["web","api"],
     needs: "Decided 2026-10-20: build the authenticated joining-link route and send the link in the registration confirmation email. Build the authenticated joining-link route and email, or drop the promise from the page.",
-    question: "The page promises a joining link after registering, but the API nulls `online_url` and nothing sends it. Build the authenticated route and email, or drop the promise?",
   },
   'web-auth-recovery': {
     title: "Web sign-in recovery",
@@ -194,7 +193,6 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: port all mobile auth screens to web (forgot-password, code sign-in, resend-confirmation, friendly unconfirmed-user message); Apple/Google wait on their setup. Whether to port the mobile auth screens to web, and which ones.",
-    question: "Web has no forgot-password, code sign-in, resend-confirmation or Apple/Google (mobile has all). An unconfirmed user sees a raw Supabase error. Port the mobile auth screens to web?",
   },
   'login-return-path': {
     title: "Returning to where you were after signing in",
@@ -202,7 +200,6 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: every redirect to /login carries ?next= and sign-in honours it, with a same-origin allow-list; one helper, eight call sites. Whether to add a `next` param to every redirect to `/login`.",
-    question: "Redirects to `/login` drop the return path in about eight places (`middleware.ts`, `requireCapabilities`, toy `?mode=`, drop-off `?org=`, LearnGate, terms gate). Add a `next` param?",
   },
   'org-directory-terms-gate': {
     title: "Organisations pages and the terms gate",
@@ -210,7 +207,6 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: remove /organizations from the middleware terms list; public read pages never require terms. Add a test. Whether to remove `/organizations` from the middleware terms list.",
-    question: "`/organizations` is in the middleware terms list, so signed-in members without terms are bounced from pages anon visitors can read. Remove the prefix?",
   },
   'silent-handoffs': {
     title: "Hand-offs that tell nobody",
@@ -218,7 +214,6 @@ export const PENDING = {
     kind: "build",
     platforms: ["api","web","mobile"],
     needs: "Decided 2026-10-20: all three groups get notification types: exchange outcomes (recycling receive/decline, org-request approve/decline, admin test-print pass/fail, first handover confirm), leader and event changes (admin add/remove leader tells the person, org event delete tells registrants), and member submissions acknowledged (event RSVP, contact form, idea submit, report submit, drop-off booking). Which silent hand-offs get a notification type (each needs a migration, API send and copy on both clients).",
-    question: "Recycling receive/decline, org-request approve/decline, admin test-print pass/fail, admin add/remove leader, org event delete (registrants not told), first handover confirm, plus event RSVP, contact form, idea submit, report submit and drop-off booking send no notification. Which of these get a notification type?",
   },
   'org-notifications-never-clear': {
     title: "Organisation notifications that never clear",
@@ -226,7 +221,6 @@ export const PENDING = {
     kind: "build",
     platforms: ["web","api"],
     needs: "Decided 2026-10-20: MarkNotificationsRead on the org pages, and org_message moves to the org bucket so the leader thread clears it; same as mobile. Whether to add `MarkNotificationsRead` to the org pages and move `org_message` to the org bucket.",
-    question: "Org-bucket notifications (`org_event_*`, `org_story_published`, `org_thanked`) never clear on web; `org_message` sits in the `exchanges` bucket so the leader thread doesn't clear it. Add `MarkNotificationsRead` to the org pages and move `org_message`?",
   },
   'admin-remove-confirm': {
     title: "Removing an account as admin",
@@ -234,7 +228,6 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: typed-phrase confirm, the same component as member self-deletion. Whether admin removal gets the typed-phrase confirm.",
-    question: "Add the typed-phrase confirm to admin account removal? (requirements doc Q7)",
   },
   'guide-rereview-rule': {
     title: "When an edited guide goes back to review",
@@ -242,7 +235,6 @@ export const PENDING = {
     kind: "build",
     platforms: ["web","api"],
     needs: "Decided 2026-10-20: content changes re-review (steps, safety, parts, tools, STL, PDF, photos, details go back to pending); prices and recommendations stay approved. Which edits send an approved guide back to review.",
-    question: "Guide editor re-review is inconsistent: details, photos, PDF and prices flip an approved guide back to `pending`; parts, tools, steps, safety, STL and recommendations do not. Which rule?",
   },
   'org-leader-terms-stub': {
     title: "Organisation leader terms",
@@ -250,7 +242,6 @@ export const PENDING = {
     kind: "build",
     platforms: ["web","api"],
     needs: "Decided 2026-10-20: Byron writes the real leader terms (Legal is code-only); the gate stays and acceptance stays version-aware so existing leaders re-accept at v1. Whether to keep gating on the placeholder until the real terms exist.",
-    question: "`legal/org-leader-terms` is a stub (v0-todo) yet acceptances are recorded against it and gate approvals. Keep gating on a placeholder?",
   },
   'dead-routes-and-handlers': {
     title: "Code nobody can reach",
@@ -258,7 +249,6 @@ export const PENDING = {
     kind: "build",
     platforms: ["web","api"],
     needs: "Decided 2026-10-20: delete every unreachable route and handler; anything wanted later comes back through a journey row. Per item, delete it with its tests or wire it to a screen.",
-    question: "Delete or wire each unreachable route and handler? (requirements doc Q10)",
   },
   'admin-in-member-threads': {
     title: "Admins inside member threads",
@@ -266,7 +256,6 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: admins can open any thread and post an admin-labelled message, but cannot accept, reject, confirm or withdraw for a member. Whether to hide the party buttons from admins and exempt admins from the terms gate.",
-    question: "What may an admin do inside a member's Exchange thread? (requirements doc Q11)",
   },
   'admin-status-validation': {
     title: "Guide status from the admin route",
@@ -274,7 +263,6 @@ export const PENDING = {
     kind: "build",
     platforms: ["api"],
     needs: "Decided 2026-10-20: validate to approved|rejected, 400 otherwise; schema line plus a test. Whether to validate the status to `approved` and `rejected`.",
-    question: "Validate the admin guide-status route to its two values? (requirements doc Q12)",
   },
   'terms-gate-fails-open': {
     title: "Terms gate when the check fails",
@@ -282,7 +270,6 @@ export const PENDING = {
     kind: "build",
     platforms: ["web","api"],
     needs: "Decided 2026-10-20: fail closed with a retry message; the API re-checks acceptance on the writes the gate protects (guide submit, exchange requests, org actions), not on reads. Whether the middleware fails closed, and whether toy, exchange and printer writes check terms in the API.",
-    question: "Should the terms gate fail closed, and which API writes re-check it? (requirements doc Q13)",
   },
   'swallowed-failures': {
     title: "Failures that look like success",
@@ -290,7 +277,6 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: surface all three: cover upload shows the error and keeps the form, Mark all read is one request or reports partial failure, home shows a could-not-load state instead of zeros. Whether to surface these three failures, and how.",
-    question: "New-guide cover upload errors are swallowed; \"Mark all read\" fires N PATCHes ignoring failures; the home page shows zeros on an API outage. Surface them?",
   },
   'duplicated-thread-actions': {
     title: "Thread actions copied three times",
@@ -298,7 +284,6 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: hoist sendMessage/accept/reject/withdraw/confirm into one module of plain functions taking args; every decline carries a reason the other party sees. Whether to hoist the actions into one place and send the decline reason from every thread page.",
-    question: "Inline server actions (`sendMessage`, `accept`, `reject`, `withdraw`, `confirm`) are duplicated in three thread pages; only the print page sends a decline reason. Hoist and send the reason everywhere?",
   },
   'small-inconsistencies': {
     title: "Smaller inconsistencies",
@@ -306,7 +291,6 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: fix all six, each with a test: one destination for Pick for my child, Save prompts signup everywhere, hide self-actions (own org toy, own profile), skip bots in tutorial_view, one <main> on /delete-account. Which of the six to fix.",
-    question: "\"Pick for my child\" goes two places; anon sees no Save on detail pages but is routed to signup from cards; a leader sees \"Ask to collect\" on their own org's toy; own profile shows \"Ask {first} to build\"; `tutorial_view` counts crawlers; nested `<main>` on `/delete-account`. Fix these?",
   },
   'makers-tab-reported-person': {
     title: "Reported people on the Makers tab",
@@ -314,7 +298,6 @@ export const PENDING = {
     kind: "build",
     platforms: ["mobile"],
     needs: "Decided 2026-10-20: a person you reported disappears from your own Makers tab and search until an admin resolves the report; others still see them. Whether to hide a reported person from the Makers tab, or change the sheet copy.",
-    question: "Decide: Whether a reported person should leave the Makers tab, as the report sheet promises.",
   },
   'idea-graduate-duplicate-contributor': {
     title: "Graduating an idea whose author participated",
@@ -322,7 +305,6 @@ export const PENDING = {
     kind: "build",
     platforms: ["api"],
     needs: "Decided 2026-10-20: the author appears once with the author role; graduation runs as a single transaction. Whether graduation de-duplicates the author, and whether it runs in one transaction.",
-    question: "Decide: How a graduated idea builds its contributor list when the author is also a participant.",
   },
   'org-pages-404-for-non-leader': {
     title: "Organisation pages for a non-leader",
@@ -330,7 +312,6 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: signed-in non-leaders are redirected to /dashboard with a note that the page is for organisation leaders; anonymous visitors go to sign in with next. Whether a non-leader is redirected (and where) or keeps the 404.",
-    question: "Decide: Whether a non-leader opening an organisation dashboard page sees a 404 or is redirected.",
   },
   'toy-transactions-role-filter-ignored': {
     title: "Role filter on the Exchange list",
@@ -338,7 +319,6 @@ export const PENDING = {
     kind: "build",
     platforms: ["api"],
     needs: "Decided 2026-10-20: the route honours the role filter on the server and the browser stops re-filtering. Whether the route honours the role filter or the parameter is removed.",
-    question: "Decide: Whether the exchanges list filters by role on the server or in the browser.",
   },
   'draft-event-story-validation': {
     title: "Validation on drafts",
@@ -346,7 +326,6 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: a draft needs only a title; every other rule applies at publish; form copy stays as is. Whether drafts skip validation as the form says, or the form copy changes.",
-    question: "Decide: Which fields a draft event or story must have before it can be saved.",
   },
   'recycling-credit-rounding': {
     title: "Recycling credit rounding",
@@ -354,7 +333,6 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: nearest 0.1 kg, and the credit is computed from the rounded weight so display and credit agree. Which rounding the credit uses.",
-    question: "Decide: How a recycling credit weight is rounded on the Weigh and credit line.",
   },
   'challenge-join-busy-stuck': {
     title: "Join after Leave on a challenge",
@@ -362,7 +340,6 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: fix it: Join resets after Leave. Nothing to decide beyond scheduling the fix.",
-    question: "Decide: Whether the Join button resets after leaving a challenge.",
   },
   'event-register-raw-409': {
     title: "Event registration error copy",
@@ -370,7 +347,6 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: show the full-event copy only, with the leader contact, and hide submit; other 409s keep a generic retry message. Whether to show only the full-event copy.",
-    question: "Decide: What the register form shows when an event is full.",
   },
   'public-org-toasts-missing': {
     title: "Toasts on the public organisation page",
@@ -378,7 +354,6 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: the public organisation page gets the ToastProvider; Follow confirms 'Following {org}', Say thanks confirms 'Thanks sent'. Whether the public page gets a ToastProvider.",
-    question: "Decide: Whether Follow and Say thanks confirm with a toast on the public organisation page.",
   },
   'guide-share-no-toast': {
     title: "Share on a Guide page",
@@ -386,7 +361,6 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: Share confirms with the shared 'Link copied' toast; no toast where a native share sheet opens. Whether Share confirms with a toast.",
-    question: "Decide: Whether Share on a guide confirms that the link was copied.",
   },
   'guide-patch-without-status-500': {
     title: "Guide PATCH without status",
@@ -394,7 +368,6 @@ export const PENDING = {
     kind: "build",
     platforms: ["api"],
     needs: "Decided 2026-10-20: a no-status edit saves the fields and answers 200 with the guide, status untouched; only a forbidden status transition answers 409 'Guide is approved; submit for re-review'. Which 4xx and message a rejected edit returns.",
-    question: "Decide: What an edit to an approved guide that changes no status should answer.",
   },
   'hub-exchange-count-plural': {
     title: "Hub Exchange count grammar",
@@ -402,7 +375,6 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: fix it: '1 exchange', '2 exchanges'. Nothing to decide beyond scheduling the fix.",
-    question: "Decide: The wording of the hub exchange count for a single exchange.",
   },
   'impact-map-soon-pill': {
     title: "Deliveries map card",
@@ -410,7 +382,6 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: drop the SOON pill and link the card to the map. Whether to drop the pill and link the card to the map.",
-    question: "Decide: Whether the Deliveries map card should still say SOON.",
   },
   'confirmed-page-bare-layout': {
     title: "Bare layout after email confirm",
@@ -418,7 +389,6 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: fix it: the sign-in page keeps the normal layout after an email confirmation. Nothing to decide beyond scheduling the fix.",
-    question: "Decide: Which layout the sign-in page shows after an email confirmation.",
   },
   'signup-reason-banners': {
     title: "Signup reason banners",
@@ -426,7 +396,6 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: both reasons get a banner with action-first copy: 'Sign up to save toys' and 'Sign up to request a build'. Whether the two reasons get a banner, and the copy.",
-    question: "Decide: Which sign-up reasons show a banner.",
   },
   'event-detail-ready-marker': {
     title: "I'm going before the profile loads",
@@ -434,7 +403,6 @@ export const PENDING = {
     kind: "build",
     platforms: ["mobile"],
     needs: "Decided 2026-10-20: the button is disabled with a subtle spinner until the viewer profile and capabilities have loaded; the e2e waits on that ready state. Whether the button waits for the profile (disabled or a ready marker).",
-    question: "Decide: Whether the event page should expose a ready state before I'm going can be tapped.",
   },
 } satisfies Record<string, PendingItem>
 
