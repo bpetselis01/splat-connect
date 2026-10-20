@@ -3,17 +3,12 @@
  * The submission form behind /get-involved/submit-an-idea.
  *
  * Posts through lib/browser-api-client.ts rather than straight to the Hono
- * API (contrast components/notify-form.tsx, which posts directly because its
- * endpoint is deliberately unauthenticated). POST /api/ideas sits behind
- * authMiddleware, so this needs the Supabase session token that
- * browser-api-client.ts attaches — posting the notify-form way would send no
- * token and get a 401.
+ * API: POST /api/ideas sits behind authMiddleware, so this needs the Supabase
+ * session token that browser-api-client.ts attaches.
  *
  * On success this navigates away immediately (to /dashboard/challenges), so
- * there is no lingering success message that needs the focus-and-role=status
- * treatment notify-form uses for its own unmounting-form problem. The error
- * path still needs the same care notify-form gives success: never swallowed,
- * always readable.
+ * there is no lingering success message to focus. The error path is never
+ * swallowed, always readable.
  */
 import { useState, type FormEvent } from 'react'
 import { ChatsCircle, Lightbulb } from '@phosphor-icons/react/dist/ssr'

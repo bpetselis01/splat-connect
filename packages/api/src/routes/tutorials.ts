@@ -488,16 +488,6 @@ tutorials.post('/:id/build', async (c) => {
   return c.json({ built: true }, 201)
 })
 
-tutorials.delete('/:id/build', async (c) => {
-  const { error } = await createUserClient(c.get('token'))
-    .from('tutorial_builds')
-    .delete()
-    .eq('tutorial_id', c.req.param('id'))
-    .eq('profile_id', c.get('userId'))
-  if (error) return c.json({ error: error.message }, 500)
-  return c.body(null, 204)
-})
-
 /**
  * Steps (080): the whole list, replaced in order. The editor and the PDF import
  * both hold the full list, so one PUT is simpler than per-step CRUD.

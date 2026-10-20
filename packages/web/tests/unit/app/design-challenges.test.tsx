@@ -1,17 +1,12 @@
 import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { PUBLIC_NAV, SCAFFOLD_KEYS } from '@/lib/public-nav'
+import { PUBLIC_NAV } from '@/lib/public-nav'
 
 describe('design challenges nav state', () => {
   it('is live, so the section no longer advertises a placeholder', () => {
     const getInvolved = PUBLIC_NAV.find((s) => s.href === '/get-involved')!
     const challenges = getInvolved.children.find((c) => c.href === '/get-involved/design-challenges')!
     expect(challenges.state).toBe('live')
-    expect(challenges.featureKey).toBeUndefined()
-  })
-
-  it('drops design-challenges from the notify allowlist', () => {
-    expect(SCAFFOLD_KEYS).not.toContain('design-challenges')
   })
 })
 

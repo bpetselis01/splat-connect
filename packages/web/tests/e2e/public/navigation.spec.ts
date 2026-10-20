@@ -133,6 +133,10 @@ test.describe('public navigation', () => {
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
   })
 
+  test('the retired /not-built page is a 404', async ({ page }) => {
+    expect((await page.goto('/not-built/anything'))?.status()).toBe(404)
+  })
+
   test('no section is left invisible when the entrance animation cannot run', async ({ page }) => {
     // The entrance was briefly a JS scroll reveal that server-rendered sections at
     // opacity:0. This asserts content does not depend on an animation to be seen.

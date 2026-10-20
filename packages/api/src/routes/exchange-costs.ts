@@ -22,8 +22,6 @@ import { costSummary } from '@splat-connect/types'
 import type { MoneyThread, ToyTransactionType } from '@splat-connect/types'
 import type { AuthVariables } from '../middleware/auth.js'
 
-// PENDING(dead-routes-and-handlers): delete every unreachable route and handler; anything wanted later comes back through a journey row. Per ite...
-
 const exchangeCosts = new Hono<{ Variables: AuthVariables }>()
 
 /**
