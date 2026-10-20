@@ -58,7 +58,7 @@ test('WT13 the start and kind cards are chosen on the form, and ?kind preselects
 
 test('WT17 a signed-out visitor is sent to log in, and a contributor without accepted terms never reaches the page', async ({ page }) => {
   await page.goto('/upload')
-  await expect(page).toHaveURL(/\/login$/)
+  await expect(page).toHaveURL(/\/login\?next=%2Fupload$/)
 
   const contributor = await createContributor()
   // Deliberately no acceptTerms. The page carries no gate of its own because

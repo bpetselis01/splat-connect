@@ -8,6 +8,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { NotePencil } from '@phosphor-icons/react/dist/ssr'
 import { browserApiClient } from '@/lib/browser-api-client'
+import { authUrl } from '@/lib/safe-next-path'
 
 export function FollowWriteup({ id, signedIn, next }: { id: string; signedIn: boolean; next: string }) {
   const router = useRouter()
@@ -15,7 +16,7 @@ export function FollowWriteup({ id, signedIn, next }: { id: string; signedIn: bo
   const [error, setError] = useState<string | null>(null)
 
   async function follow() {
-    if (!signedIn) return router.push(`/login?next=${encodeURIComponent(next)}`)
+    if (!signedIn) return router.push(authUrl('login', next))
     setError(null)
     try {
       await browserApiClient.post('/api/saves', { entity_type: 'challenge', entity_id: id })

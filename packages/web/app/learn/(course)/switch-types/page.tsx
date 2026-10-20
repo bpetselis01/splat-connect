@@ -99,7 +99,7 @@ function SwitchTypes() {
 /** Gated per page, not per layout: see components/learn-gate.tsx. */
 export default function GatedSwitchTypes() {
   return (
-    <LearnGate>
+    <LearnGate path="/learn/switch-types">
       <SwitchTypes />
     </LearnGate>
   )

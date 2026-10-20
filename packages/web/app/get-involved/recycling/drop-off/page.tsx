@@ -12,6 +12,7 @@
 import { redirect } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
 import { getCapabilities } from '@/lib/capabilities'
+import { authUrl } from '@/lib/safe-next-path'
 import { DropoffForm, type DropoffOrg } from '@/components/dropoff-form'
 
 export const metadata = { title: 'Book a drop-off — SPLAT Connect' }
@@ -21,11 +22,11 @@ export default async function BookDropoffPage({
 }: {
   searchParams: Promise<{ org?: string }>
 }) {
+  const { org } = await searchParams
   const caps = await getCapabilities()
   if (!caps) {
-    redirect(`/login?next=${encodeURIComponent('/get-involved/recycling/drop-off')}`)
+    redirect(authUrl('login', `/get-involved/recycling/drop-off${org ? `?org=${encodeURIComponent(org)}` : ''}`))
   }
-  const { org } = await searchParams
 
   const all = await apiClient
     .get<DropoffOrg[]>('/api/public/organizations')

@@ -79,6 +79,7 @@ import {
 } from '@splat-connect/types'
 import { agoInWords } from '@/lib/relative-time'
 import { checkedOn, formatCents, initials, longDate, partsTotalCents, printSettingRows } from '@splat-connect/types'
+import { authUrl } from '@/lib/safe-next-path'
 
 type Viewable = TutorialWithDetails & {
   tutorial_orgs?: TutorialOrg[]
@@ -150,7 +151,7 @@ export function TutorialView({
   // A signed-out visitor is sent to sign up from the same <a>; the route
   // handler behind /files would do the same, but the page already knows and
   // should not hand out a link it knows will bounce.
-  const signupHref = `/signup?next=${encodeURIComponent(`/tutorials/${tutorial.id}`)}&reason=download`
+  const signupHref = authUrl('signup', `/tutorials/${tutorial.id}`, { reason: 'download' })
   const fileHref = (bucket: 'tutorial-pdfs' | 'stl-files', path: string) =>
     signedIn ? `/files/${bucket}/${path}` : signupHref
   // Only a link to a file opens in a new tab; the signup detour is this tab.

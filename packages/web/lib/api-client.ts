@@ -7,8 +7,11 @@
  */
 import 'server-only'
 import { cache } from 'react'
+import { headers } from 'next/headers'
+import { redirect } from 'next/navigation'
 import { createServerSupabase } from '@/lib/supabase/server'
 import { makeApiClient } from '@splat-connect/types'
+import { termsUrl } from '@/lib/safe-next-path'
 
 // cache(): a single page render calls apiClient 4-5x (profile, tutorial,
 // backing, orgs); without this, each call re-verifies the session against
@@ -26,4 +29,6 @@ export const apiClient = makeApiClient({
   getToken,
   baseUrl: () => process.env.API_URL as string,
   cache: 'no-store',
+  // x-pathname-search is the page the action was posted from (middleware.ts).
+  onTermsRequired: async () => redirect(termsUrl((await headers()).get('x-pathname-search'))),
 })
