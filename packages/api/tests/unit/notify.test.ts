@@ -35,6 +35,14 @@ describe('notify', () => {
     expect(inserts.map((part) => part.length)).toEqual([500, 500, 1])
   })
 
+  it('logs the row count when it has to chunk, and not for a single chunk', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+    await notify(rows(500), 'leader_added')
+    expect(log).not.toHaveBeenCalled()
+    await notify(rows(1001), 'leader_added')
+    expect(log).toHaveBeenCalledWith('[notify] chunked rows=1001 label=leader_added')
+  })
+
   it('logs the CHECK refusing a type and does not throw', async () => {
     const log = vi.spyOn(console, 'error').mockImplementation(() => {})
     outcome = async () => ({ error: { code: '23514', message: 'violates check constraint' } })
