@@ -50,8 +50,6 @@ export interface NavItem {
   icon?: IconName
   /** The tile variant's icon-square colour, when a card has its own (My SPLAT). */
   tint?: string
-  /** Set on 'soon' items only — the allowlisted key POST /api/public/notify accepts. */
-  featureKey?: string
 }
 
 export interface NavSection {
@@ -454,11 +452,6 @@ export const FOOTER_COLUMNS: { heading: string; rows: FooterRow[] }[] = [
   },
   { heading: 'Legal', rows: FOOTER_LEGAL.map(({ label, href }) => ({ label, href })) },
 ]
-
-/** Every allowlisted notify key, derived so the list cannot drift from the nav. */
-export const SCAFFOLD_KEYS: readonly string[] = PUBLIC_NAV.flatMap((s) =>
-  s.children.filter((c) => c.state === 'soon').map((c) => c.featureKey!)
-)
 
 /**
  * Which section a path belongs to.

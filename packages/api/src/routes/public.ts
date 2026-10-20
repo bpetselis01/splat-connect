@@ -1284,64 +1284,8 @@ publicRoutes.get('/printable-parts', async (c) => {
   return c.json({ items: rows.slice((page - 1) * PARTS_PAGE, page * PARTS_PAGE), page, pages, total: rows.length })
 })
 
-/**
- * Interest registration from the nine remaining scaffold pages.
- *
- * The allowlist is the security boundary: without it feature_key is an open write
- * target for arbitrary strings. Keys mirror lib/public-nav.ts SCAFFOLD_KEYS — if
- * one is added there, add it here. That list is *derived* from the nav data
- * (every 'soon' child's featureKey); this Set is hand-written because this
- * package cannot import from packages/web. Nothing enforces the two staying in
- * step — a flip on one side and a forgotten edit here is silent, caught only by
- * reading both files. (design-challenges was exactly this: it flipped 'live' in
- * Task 13 and this Set still allowlisted the key until removed by hand.)
- */
-const NOTIFY_FEATURE_KEYS = new Set([
-  'ask-an-expert',
-  'requests',
-  'printing',
-  'news',
-  'events',
-  'partners',
-  'support',
-])
-
 /** Shape only. Deliverability is not our problem until we send something. */
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
-publicRoutes.post('/notify', async (c) => {
-  let body: unknown
-  try {
-    body = await c.req.json()
-  } catch {
-    return c.json({ error: 'Expected a JSON body' }, 400)
-  }
-
-  const { email, featureKey } = (body ?? {}) as { email?: unknown; featureKey?: unknown }
-
-  // 254 is the RFC 5321 maximum. Without it EMAIL_RE matches a string of any
-  // length, and there is no select policy on notify_signups to notice.
-  if (typeof email !== 'string' || email.length > 254 || !EMAIL_RE.test(email.trim())) {
-    return c.json({ error: 'A valid email address is required' }, 400)
-  }
-  if (typeof featureKey !== 'string' || !NOTIFY_FEATURE_KEYS.has(featureKey)) {
-    return c.json({ error: 'Unknown feature' }, 400)
-  }
-
-  const supabase = createAnonClient()
-  const { error } = await supabase
-    .from('notify_signups')
-    .insert({ email: email.trim().toLowerCase(), feature_key: featureKey })
-
-  // 23505 is unique_violation: already registered, which is a success from the
-  // visitor's point of view. Distinguishing it would leak list membership.
-  if (error && error.code !== '23505') {
-    console.error('[public/notify] insert failed:', error.message)
-    return c.json({ error: 'Could not register interest' }, 500)
-  }
-
-  return c.json({ ok: true })
-})
 
 /* ---------------------------------------------------------------- events --
  *

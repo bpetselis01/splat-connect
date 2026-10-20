@@ -27,14 +27,4 @@ describe('ComingSoon', () => {
     render(<ComingSoon label="3D Printing" description="Request a printed part." steps={[]} />)
     expect(screen.getByRole('link', { name: /guides/i })).toHaveAttribute('href', '/library')
   })
-
-  it('offers the notify form when a feature key is given', () => {
-    render(<ComingSoon {...props} featureKey="requests" />)
-    expect(screen.getByLabelText(/email/i)).toBeInTheDocument()
-  })
-
-  it('omits the notify form when no feature key is given', () => {
-    render(<ComingSoon {...props} />)
-    expect(screen.queryByLabelText(/email/i)).toBeNull()
-  })
 })

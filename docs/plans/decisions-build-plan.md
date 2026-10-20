@@ -7,7 +7,7 @@
 
 ## Architecture
 
-Five pieces, six PRs off `development`, landed in this order: dead routes (U1–U3), thread actions (U4–U6), return path and client-side terms handling (U7, U8, U8b, U10), notifications (U11–U14), web auth (U15–U20), and last the API terms gate (U9) on its own, after the mobile release that carries U10 is live, so no shipped app build ever sees a raw `terms_required`. Each PR is green on CI before merge; the two migrations (140 message kind + policy, 141 notification types) go to hosted by Byron before the API deploy that writes them (`docs/plans/decisions-build-requirements.md` Q1–Q2).
+Five pieces, six PRs off `development`, landed in this order: dead routes (U1–U3), thread actions (U4–U6), return path and client-side terms handling (U7, U8, U8b, U10), notifications (U11–U14), web auth (U15–U20), and last the API terms gate (U9) on its own, after the mobile release that carries U10 is live, so no shipped app build ever sees a raw `terms_required`. Each PR is green on CI before merge; the three migrations (140 revoke on notify_signups, 141 message kind + policy, 142 notification types) go to hosted by Byron before the API deploy that writes them (`docs/plans/decisions-build-requirements.md` Q1–Q2).
 
 What stays fixed:
 - **One actions module.** `packages/web/app/dashboard/exchanges/actions.ts` (`'use server'` at file level, exported plain functions taking args) is the only place the five thread actions call the API; the three pages become thin. Same shape as `app/dashboard/organisation/acting-org-actions.ts`.
@@ -65,7 +65,7 @@ What stays fixed:
 - `packages/web/components/coming-soon.tsx` — remove the NotifyForm import and the `featureKey` branch
 - `packages/web/lib/public-nav.ts` — drop `featureKey` from 'soon' items and `SCAFFOLD_KEYS`' notify use (keep the nav model otherwise)
 - `packages/api/src/routes/public.ts` — delete `publicRoutes.post('/notify')`, `NOTIFY_FEATURE_KEYS`, `EMAIL_RE` if unused elsewhere
-- `supabase/migrations/140_drop_notify_signups.sql` — NOT in this unit. The table may hold real addresses people gave on hosted; dropping it is a one-way door. It stays until Byron confirms hosted `notify_signups` is empty or exported, then a separate migration drops it (see Planning-time unknowns)
+- a drop migration — NOT in this unit (140 only revokes the open insert grant, added after review). The table may hold real addresses people gave on hosted; dropping it is a one-way door. It stays until Byron confirms hosted `notify_signups` is empty or exported, then a separate migration drops it (see Planning-time unknowns)
 - `packages/web/tests/unit/components/notify-form.test.tsx` — delete; `coming-soon.test.tsx` and `scaffold-pages.test.tsx` — drop the NotifyForm cases
 - `packages/api/tests/integration/public/notify.test.ts` — delete
 - `scripts/check-schema-guards.sh` — remove any `notify_signups` probe (grep first)
@@ -187,7 +187,7 @@ What stays fixed:
 **Dependencies:** U4 (the pages call the module; the component renders kinds)
 
 **Files:**
-- `supabase/migrations/140_admin_thread_messages.sql` — `toy_transaction_messages.kind` CHECK gains `'admin'`, and the member insert policy (`033:205`, today `sender_id = auth.uid()` + party) gains `and kind = 'user'`, so neither `admin` nor `system` can be inserted through PostgREST by a party; the admin `for all` policy and the service-role client keep their writes
+- `supabase/migrations/141_admin_thread_messages.sql` — `toy_transaction_messages.kind` CHECK gains `'admin'`, and the member insert policy (`033:205`, today `sender_id = auth.uid()` + party) gains `and kind = 'user'`, so neither `admin` nor `system` can be inserted through PostgREST by a party; the admin `for all` policy and the service-role client keep their writes
 - `packages/types/src/index.ts` — `ToyTransactionMessageKind = 'system' | 'user' | 'admin'`
 - `packages/api/src/routes/toy-transactions.ts` — `POST /:id/messages`: load the transaction and the caller's role before the insert (today it inserts first and loads after); an admin who is not a party inserts through the admin client with `kind: 'admin'`, `actor_name` "SPLAT admin", and notifies both parties (today the owner-side branch would miss the requester); `accept`, `reject`, `withdraw`, `confirm`: the existing 403/404 for a non-party admin becomes `403 { error: 'admin_cannot_act' }` (a rename of the refusal `isOwnerSide` already produces)
 - `packages/web/components/exchange-chat.tsx` — render `kind === 'admin'` with a "SPLAT admin" label and its own bubble style
@@ -367,7 +367,7 @@ What stays fixed:
 
 ## Piece 2: notifications (R10–R14, R19)
 
-Migration note: U11–U13 share `supabase/migrations/141_handoff_notifications.sql`, written once in U11 with all 15 types (the CHECK list is re-stated whole), so the hosted push happens once; U12 and U13 only add code. `notifications.mjs` treats a type with no creator as an error unless it is in `DEAD_ALLOWED`, and it reads creators from migrations that insert, not from CHECK lists, so a type listed in the CHECK but absent from the TypeScript union is invisible to it: the migration can list all 15 while the union gains a group per commit. The migration lands in the same commit as the first group. Hosted order: migration 141 before the API deploy of U11.
+Migration note: U11–U13 share `supabase/migrations/142_handoff_notifications.sql`, written once in U11 with all 15 types (the CHECK list is re-stated whole), so the hosted push happens once; U12 and U13 only add code. `notifications.mjs` treats a type with no creator as an error unless it is in `DEAD_ALLOWED`, and it reads creators from migrations that insert, not from CHECK lists, so a type listed in the CHECK but absent from the TypeScript union is invisible to it: the migration can list all 15 while the union gains a group per commit. The migration lands in the same commit as the first group. Hosted order: migration 142 before the API deploy of U11.
 
 ### Unit 11: Exchange-outcome notifications
 
@@ -378,7 +378,7 @@ Migration note: U11–U13 share `supabase/migrations/141_handoff_notifications.s
 **Dependencies:** none (first notification unit; carries the migration)
 
 **Files:**
-- `supabase/migrations/141_handoff_notifications.sql` — CHECK gains all 15 new types
+- `supabase/migrations/142_handoff_notifications.sql` — CHECK gains all 15 new types
 - `packages/types/src/index.ts` — the 7 union members, `NOTIFICATION_BUCKET` (`exchanges` except the two `org_request_*` → `organisations`), `COPY`; remove the `PENDING(silent-handoffs)` line only in U13
 - `packages/web/components/notifications-list.tsx` — `ICON` and `linkFor` (recycling → `/dashboard/recycling` member page; org request → `/dashboard/organisation` or `/get-involved/organisations/request`; test print → `/dashboard/printing`; handover → the thread)
 - `packages/mobile/lib/notifications.ts` — `linkFor` for the same
@@ -474,12 +474,12 @@ Migration note: U11–U13 share `supabase/migrations/141_handoff_notifications.s
 - `docs/plans/decisions-build-plan.md` — this section's checklist ticked
 - memory `hosted-migrations-pending` — updated by the session that pushes
 
-**Approach:** Two hosted pushes, each by Byron with the recipe in the `hosted-migrations-pending` memory: 140 before PR 2's API deploy (the admin message kind and the policy fix), 141 before PR 4's (the notification types). `pnpm db:check` against hosted green after each; after each API deploy, grep the API logs for `[notify] insert failed` and `[terms] lookup failed` (zero expected). PR 6 (U9) ships only after the mobile release carrying U10 is live. No code.
+**Approach:** Two hosted pushes, each by Byron with the recipe in the `hosted-migrations-pending` memory: 140 (the notify_signups revoke) and 141 together before PR 2's API deploy (the admin message kind and the policy fix), 142 before PR 4's (the notification types). `pnpm db:check` against hosted green after each; after each API deploy, grep the API logs for `[notify] insert failed` and `[terms] lookup failed` (zero expected). PR 6 (U9) ships only after the mobile release carrying U10 is live. No code.
 
 **Patterns:** the hosted push recipe.
 
 **Test scenarios:**
-- [ ] Happy path: hosted `db:check` reports level 141
+- [ ] Happy path: hosted `db:check` reports level 142
 - [ ] Nil/empty input: no notifications of the new types exist before the push (the CHECK would have refused them)
 - [ ] Error path: push fails on a guard → stop, nothing deployed
 - [ ] Edge case: an API deploy before the push → inserts logged as CHECK failures, writes still succeed (the wrapper) — visible in API logs

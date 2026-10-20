@@ -3,7 +3,6 @@ import {
   PUBLIC_NAV,
   FOOTER_LEGAL,
   sectionFor,
-  SCAFFOLD_KEYS,
   ACCOUNT_NAV,
   crossesAccountBoundary,
 } from '@/lib/public-nav'
@@ -66,12 +65,6 @@ describe('public nav model', () => {
 
   it('returns account section for dashboard routes', () => {
     expect(sectionFor('/dashboard')).toBe(ACCOUNT_NAV)
-  })
-
-  it('lists a scaffold key for every soon child, and nothing else', () => {
-    const soon = PUBLIC_NAV.flatMap((s) => s.children).filter((c) => c.state === 'soon')
-    expect(SCAFFOLD_KEYS.length).toBe(soon.length)
-    expect(new Set(SCAFFOLD_KEYS).size).toBe(SCAFFOLD_KEYS.length)
   })
 
   it('has seven footer legal links', () => {

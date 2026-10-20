@@ -32,4 +32,13 @@ describe('public maker name', () => {
       expect(await res.json()).toEqual({ error: 'Not found' })
     }
   })
+
+  it('answers 404 on the retired POST /api/public/notify', async () => {
+    const res = await app.request('/api/public/notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'a@example.com', featureKey: 'requests' }),
+    })
+    expect(res.status).toBe(404)
+  })
 })
