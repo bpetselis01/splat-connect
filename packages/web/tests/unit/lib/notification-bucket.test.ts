@@ -40,7 +40,6 @@ describe('notificationBucket', () => {
       'contact_received',
       'drop_off_booked',
       'handover_confirmed',
-      'org_message',
       'print_ready',
       'print_started',
       'profile_thanked',
@@ -58,9 +57,8 @@ describe('notificationBucket', () => {
     ])
   })
 
-  /* A message to or from an organisation is a conversation, like toy_message;
-     a followed org publishing, or your org being thanked, is news about an
-     organisation and counts nowhere else. */
+  /* A message to or from an organisation, a followed org publishing and your
+     org being thanked are all news about an organisation; the org hub clears them. */
   it('buckets organisation news to organisations', () => {
     expect(typesInBucket('organisations').sort()).toEqual([
       'event_rsvp_received',
@@ -70,6 +68,7 @@ describe('notificationBucket', () => {
       'org_event_changed',
       'org_event_deleted',
       'org_event_published',
+      'org_message',
       'org_request_approved',
       'org_request_declined',
       'org_story_published',

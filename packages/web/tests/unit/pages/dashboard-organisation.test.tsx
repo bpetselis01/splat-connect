@@ -52,6 +52,10 @@ vi.mock('@/lib/api-client', () => ({
   },
 }))
 
+vi.mock('@/components/mark-notifications-read', () => ({
+  MarkNotificationsRead: ({ bucket }: { bucket: string }) => <div data-testid="mark-read" data-bucket={bucket} />,
+}))
+
 const Page = (await import('@/app/dashboard/organisation/page')).default
 
 describe('Organisation tab', () => {
@@ -62,6 +66,11 @@ describe('Organisation tab', () => {
     render(await Page())
     expect(screen.getByText('Older request')).toBeInTheDocument()
     expect(screen.getByText('Newer review')).toBeInTheDocument()
+  })
+
+  it('clears the organisations bucket when the hub opens', async () => {
+    render(await Page())
+    expect(screen.getByTestId('mark-read')).toHaveAttribute('data-bucket', 'organisations')
   })
 
   it('names the organisation each row belongs to', async () => {

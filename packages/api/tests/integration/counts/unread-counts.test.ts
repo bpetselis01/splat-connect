@@ -83,6 +83,9 @@ describe('the hub badges', () => {
     await ok(family, 'POST', `/organizations/${orgId}/thanks`, { note: 'Thank you', byline: 'Sam' })
     expect(await unread(leader)).toEqual({ ...ZERO, organisations: 1, total: 1 })
 
+    await ok(family, 'POST', `/organizations/${orgId}/conversations/mine/messages`, { body: 'Can we visit?' })
+    expect(await unread(leader)).toEqual({ ...ZERO, organisations: 2, total: 2 })
+
     await markRead(leader, 'organisations')
     expect(await unread(leader)).toEqual(ZERO)
   })
