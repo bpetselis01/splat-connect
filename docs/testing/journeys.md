@@ -1093,7 +1093,7 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 | WM35 | write | `/admin/content` | A | Home page tab "Save changes" → three PUTs: home-hero, home-numbers, home-scenes | – | public home page | n/a | ✅ | ✅ | ✅ | – |
 | WM36 | write | `/admin/content` | A | Learn course tab "Save" (versioned by updated_at) → PUT learn-course; a stale version is refused with 409 | – | Learn course outline | n/a | ✅ | ✅ | ✅ | – |
 | WM37 | write | `/admin/build-requests` | A | row → "Open the thread" → member thread: composer sends a SPLAT admin message → POST /api/toy-transactions/:id/messages (both parties notified) | toy_message | – | P | ✅ | ✅ | ✅ | – |
-| WM38 | write | `/admin/build-requests` | A | member thread: no Accept, Decline, Withdraw or Confirm for an admin who is not a party; the API answers 403 admin_cannot_act | – | – | n/a | ✅ | ✅ | ✅ | – |
+| WM38 | write | `/admin/build-requests` | A | member thread: no Accept, Decline, Withdraw, Confirm or I'll build this (claim) for an admin who is not a party; the API answers 403 admin_cannot_act | – | – | n/a | ✅ | ✅ | ✅ | – |
 
 </details>
 

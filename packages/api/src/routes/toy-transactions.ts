@@ -1565,6 +1565,7 @@ toyTransactions.post('/:id/claim', async (c) => {
     return c.json({ error: error.message }, 500)
   }
   if (!tx || tx.type !== 'build') return c.json({ error: 'Not found' }, 404)
+  if (isStrangerAdmin(c.get('role'), tx, userId, await ledOrgIds(admin, userId))) return c.json(ADMIN_CANNOT_ACT, 403)
   if (tx.owner_id || tx.owner_org_id || tx.status !== 'requested') {
     return c.json({ error: 'Somebody has already claimed this one.' }, 409)
   }

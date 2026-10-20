@@ -267,6 +267,7 @@ export function MakersWantedScreen() {
                 b={b}
                 kind={onBoard ? tab : 'open'}
                 busy={busy === b.id}
+                canClaim={!caps?.isAdmin}
                 onClaim={() => claim(b.id)}
                 onAsk={() => router.push(`/exchanges/build/ask/${b.id}`)}
                 onTrack={() => router.push(`/exchanges/build/${b.id}`)}
@@ -316,6 +317,7 @@ function BuildCard({
   b,
   kind,
   busy,
+  canClaim,
   onClaim,
   onAsk,
   onTrack,
@@ -323,6 +325,7 @@ function BuildCard({
   b: OpenBuild & Partial<Pick<BoardBuild, 'maker_name' | 'party' | 'updated_at'>>
   kind: 'open' | 'live' | 'done'
   busy: boolean
+  canClaim: boolean
   onClaim: () => void
   onAsk: () => void
   onTrack: () => void
@@ -403,12 +406,14 @@ function BuildCard({
         ) : (
           <>
             <Button label="Ask first" variant="ghost" onPress={onAsk} style={styles.footButton} />
-            <Button
-              label={busy ? 'Claiming…' : "I'll build this"}
-              disabled={busy}
-              onPress={onClaim}
-              style={styles.footButton}
-            />
+            {canClaim ? (
+              <Button
+                label={busy ? 'Claiming…' : "I'll build this"}
+                disabled={busy}
+                onPress={onClaim}
+                style={styles.footButton}
+              />
+            ) : null}
           </>
         )}
       </View>

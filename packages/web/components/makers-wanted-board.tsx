@@ -70,7 +70,7 @@ const DIFF: Record<string, { label: string; tint: string }> = {
   hard: { label: 'Hard', tint: 'var(--tcoral)' },
 }
 
-export function MakersWantedBoard({ builds }: { builds: OpenBuild[] }) {
+export function MakersWantedBoard({ builds, isAdmin = false }: { builds: OpenBuild[]; isAdmin?: boolean }) {
   const router = useRouter()
   const [range, setRange] = useState<number>(0)
   const [tab, setTab] = useState<Tab>('open')
@@ -302,7 +302,7 @@ export function MakersWantedBoard({ builds }: { builds: OpenBuild[] }) {
                         Ask first
                       </Link>
                     )}
-                    {!onBoard && !b.mine && (
+                    {!onBoard && !b.mine && !isAdmin && (
                       <button
                         type="button"
                         disabled={busy === b.id}
