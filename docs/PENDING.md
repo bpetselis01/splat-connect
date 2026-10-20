@@ -109,12 +109,6 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 - Needs: Decided 2026-10-20: build the authenticated joining-link route and send the link in the registration confirmation email. Build the authenticated joining-link route and email, or drop the promise from the page.
 - In code: `packages/api/src/routes/organizations.ts`
 
-### `web-auth-recovery` — Web sign-in recovery
-
-- Platforms: web
-- Needs: Decided 2026-10-20: port all mobile auth screens to web (forgot-password, code sign-in, resend-confirmation, friendly unconfirmed-user message); Apple/Google wait on their setup. Whether to port the mobile auth screens to web, and which ones.
-- In code: `packages/web/app/login/page.tsx`
-
 ### `login-return-path` — Returning to where you were after signing in
 
 - Platforms: web
@@ -156,6 +150,12 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 - Platforms: web, api
 - Needs: Decided 2026-10-20: Byron writes the real leader terms (Legal is code-only); the gate stays and acceptance stays version-aware so existing leaders re-accept at v1. Whether to keep gating on the placeholder until the real terms exist.
 - In code: `packages/web/app/legal/org-leader-terms/page.tsx`
+
+### `dead-routes-and-handlers` — Code nobody can reach
+
+- Platforms: web, api
+- Needs: Decided 2026-10-20: delete every unreachable route and handler; anything wanted later comes back through a journey row. Per item, delete it with its tests or wire it to a screen.
+- In code: _none yet_
 
 ### `admin-in-member-threads` — Admins inside member threads
 

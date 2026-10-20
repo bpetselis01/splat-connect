@@ -23,7 +23,7 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 | mobile | My tutorials (author) | 25 | 0 | 0 |
 | mobile | Events, recycling, saved | 18 | 0 | 0 |
 | mobile | Toy library and my toys | 21 | 0 | 0 |
-| web | Sign in and sign up | 20 | 0 | 0 |
+| web | Sign in and sign up | 24 | 0 | 0 |
 | web | Gates and onboarding | 6 | 0 | 0 |
 | web | Route protection (middleware) | 7 | 0 | 0 |
 | web | Organisation leader (web) | 36 | 0 | 0 |
@@ -559,9 +559,9 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 
 ## Web
 
-### Sign in and sign up — 20 rows · 0 gaps · 0 waived
+### Sign in and sign up — 24 rows · 0 gaps · 0 waived
 
-<details><summary>20 rows, no gaps</summary>
+<details><summary>24 rows, no gaps</summary>
 
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
@@ -585,6 +585,10 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 | WA32 | nav | `/login/forgot` | anon | an email with no account gets the same "code is on its way" screen; only offline or rate limited stops it | – | – | n/a | ✅ | ✅ | ✅ | – |
 | WA33 | nav | `/login/reset` | anon | code + new password → verifyOtp(recovery) + updateUser → signed in at ?next= or the role landing; a wrong code keeps the password; a failed save retries updateUser alone | – | – | n/a | ✅ | ✅ | ✅ | – |
 | WA34 | nav | `/login/reset` | anon | a password under six characters or a missing digit is refused before the code is spent | – | – | n/a | ✅ | ✅ | ✅ | – |
+| WA35 | nav | `/login/code` | anon | "Email me a sign-in code" on sign-in carries the email here; Send code → signInWithOtp(shouldCreateUser:false), then /login/verify?type=email | OTP mail | – | n/a | ✅ | ✅ | ✅ | – |
+| WA36 | nav | `/login/code` | anon | an email with no account → "No account uses that email." with a Create an account link; nothing is sent | – | – | n/a | ✅ | ✅ | ✅ | – |
+| WA37 | nav | `/login/verify` | anon | the sixth digit fires one verifyOtp (signup or email) and signs in at ?next= or the role landing; a wrong code clears the field and the next one works | – | – | n/a | ✅ | ✅ | ✅ | – |
+| WA38 | nav | `/login/verify` | anon | "Send a new code" is held 60 s with a countdown, then resends and restarts it; "Wrong email? Change it" goes back to the code page | OTP mail | – | n/a | ✅ | ✅ | ✅ | – |
 
 </details>
 
