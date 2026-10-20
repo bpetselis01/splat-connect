@@ -1092,13 +1092,21 @@ toyTransactions.post('/:id/confirm', async (c) => {
   const confirmField = isOwner ? 'owner_confirmed_at' : 'requester_confirmed_at'
   const now = new Date().toISOString()
 
-  const { data: updated, error } = await admin
+  // Only the write that moves the field from null counts as the first confirm,
+  // so two simultaneous confirms by one party notify once.
+  const { data: firstWrite, error } = await admin
     .from('toy_transactions')
     .update({ [confirmField]: now, updated_at: now })
     .eq('id', tx.id)
+    .is(confirmField, null)
     .select()
-    .single()
+    .maybeSingle()
   if (error) return c.json({ error: error.message }, 500)
+  const firstConfirm = firstWrite !== null
+  const { data: updated, error: readError } = firstWrite
+    ? { data: firstWrite, error: null }
+    : await admin.from('toy_transactions').select().eq('id', tx.id).single()
+  if (readError || !updated) return c.json({ error: readError?.message ?? 'Not found' }, 500)
 
   const bothConfirmed =
     tx.type === 'donation'
@@ -1108,7 +1116,7 @@ toyTransactions.post('/:id/confirm', async (c) => {
   // 142. The first confirm by a party tells the other one, unless it is the
   // second of two, which completes the handover. A donation completes on the
   // owner's confirm alone, so there the requester is told on completion too.
-  if (!tx[confirmField] && (tx.type === 'donation' || !bothConfirmed)) {
+  if (firstConfirm && (tx.type === 'donation' || !bothConfirmed)) {
     const payload = {
       type: 'handover_confirmed',
       toy_transaction_id: tx.id,

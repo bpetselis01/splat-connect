@@ -211,4 +211,11 @@ describe('handover', () => {
     ])
     expect((await notesAbout(owner.id, tx.id)).filter((n) => n.type === 'handover_confirmed')).toEqual([])
   })
+
+  it('handover_confirmed is sent once when the same party confirms twice at once', async () => {
+    const tx = await exchangeAccepted()
+    const confirm = () => call(owner.token, 'POST', `/toy-transactions/${tx.id}/confirm`, { code: tx.familyCode })
+    expect((await Promise.all([confirm(), confirm()])).map((r) => r.status)).toEqual([200, 200])
+    expect((await notesAbout(family.id, tx.id)).filter((n) => n.type === 'handover_confirmed')).toHaveLength(1)
+  })
 })
