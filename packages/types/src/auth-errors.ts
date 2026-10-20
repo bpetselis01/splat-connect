@@ -74,7 +74,6 @@ export function toProblem(error: RawError | null | undefined): AuthProblem | nul
     return { kind: 'unreachable', message: `We couldn't reach SPLAT just now${status}. Try again in a minute.` }
   }
   const context = error.code ?? (error.status ? `error ${error.status}` : null)
-  if (message) return { kind: 'other', message: context ? `${message} (${context})` : message }
   return { kind: 'other', message: `Something went wrong${context ? ` (${context})` : ''}. Try again in a minute.` }
 }
 

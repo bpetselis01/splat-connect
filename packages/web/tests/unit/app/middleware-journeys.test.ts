@@ -69,6 +69,13 @@ describe('middleware: signed-out visitors', () => {
     expect(r.location!.pathname).toBe('/login')
   })
 
+  it.each(['/login', '/login/forgot', '/login/reset', '/login/code', '/login/verify'])(
+    'WA31 WA35 leaves %s open to a signed-out visitor',
+    async (path) => {
+      passes(await go(`${path}?email=a%40b.co`))
+    }
+  )
+
   it('WA28 leaves /organizations open to a signed-out visitor', async () => {
     passes(await go('/organizations'))
   })

@@ -193,6 +193,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: port all mobile auth screens to web (forgot-password, code sign-in, resend-confirmation, friendly unconfirmed-user message); Apple/Google wait on their setup. Whether to port the mobile auth screens to web, and which ones.",
+    shipped: true,
   },
   'login-return-path': {
     title: "Returning to where you were after signing in",
@@ -390,6 +391,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: fix it: the sign-in page keeps the normal layout after an email confirmation. Nothing to decide beyond scheduling the fix.",
+    shipped: true,
   },
   'signup-reason-banners': {
     title: "Signup reason banners",
