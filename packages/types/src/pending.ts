@@ -246,10 +246,11 @@ export const PENDING = {
   },
   'dead-routes-and-handlers': {
     title: "Code nobody can reach",
-    blurb: "Seven routes and handlers have no caller on either client; tests are maintained for code nobody can reach. The list is in docs/plans/journey-coverage-requirements.md, Q10.",
+    blurb: "The audit listed seven routes and handlers with no caller; four were dead on either client; tests are maintained for code nobody can reach. The list is in docs/plans/journey-coverage-requirements.md, Q10.",
     kind: "build",
     platforms: ["web","api"],
-    needs: "Decided 2026-10-20: delete every unreachable route and handler; anything wanted later comes back through a journey row. Per item, delete it with its tests or wire it to a screen.",
+    needs: "Decided 2026-10-20: delete every unreachable route and handler; anything wanted later comes back through a journey row. Per item, delete it with its tests or wire it to a screen. Shipped: web /not-built/[id], NotifyForm with POST /api/public/notify, and DELETE /tutorials/:id/build are gone. GET /api/public/map, POST /ideas/:id/constraints, GET /exchange-costs/mine and exchangeActions were kept because mobile calls or renders them. The notify_signups table stays until hosted is checked for rows.",
+    shipped: true,
   },
   'admin-in-member-threads': {
     title: "Admins inside member threads",
