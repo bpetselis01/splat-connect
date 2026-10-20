@@ -37,10 +37,10 @@ describe('toProblem', () => {
     )
   })
 
-  it('keeps an unknown message and adds its code', () => {
-    expect(toProblem({ message: 'Signups are disabled for this project', code: 'signup_disabled', status: 422 })).toEqual({
+  it('never shows an unknown raw message, only its code', () => {
+    expect(toProblem({ message: 'Database error querying schema', code: 'unexpected_failure', status: 500 })).toEqual({
       kind: 'other',
-      message: 'Signups are disabled for this project (signup_disabled)',
+      message: 'Something went wrong (unexpected_failure). Try again in a minute.',
     })
   })
 

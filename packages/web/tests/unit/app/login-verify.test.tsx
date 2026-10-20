@@ -8,6 +8,7 @@ vi.mock('next/navigation', () => ({ useSearchParams: () => search }))
 const verifyOtp = vi.fn()
 const resend = vi.fn()
 const signInWithOtp = vi.fn()
+const getUser = vi.fn()
 vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({
     auth: {
@@ -15,7 +16,7 @@ vi.mock('@/lib/supabase/client', () => ({
       resend: (...a: unknown[]) => resend(...a),
       signInWithOtp: (...a: unknown[]) => signInWithOtp(...a),
       updateUser: vi.fn(),
-      getUser: async () => ({ data: { user: { id: 'u1', user_metadata: {} } } }),
+      getUser: (...a: unknown[]) => getUser(...a),
     },
     from: () => ({ select: () => ({ eq: () => ({ single: async () => ({ data: { role: 'contributor' } }) }) }) }),
   }),
@@ -34,6 +35,7 @@ describe('verify page', () => {
     verifyOtp.mockResolvedValue({ error: null })
     resend.mockResolvedValue({ error: null })
     signInWithOtp.mockResolvedValue({ error: null })
+    getUser.mockResolvedValue({ data: { user: { id: 'u1', user_metadata: {} } } })
     Object.defineProperty(window, 'location', { value: { href: '' }, writable: true })
   })
   afterEach(() => vi.useRealTimers())
@@ -123,5 +125,14 @@ describe('verify page', () => {
     search = new URLSearchParams({ email: 'a@b.co', type: 'signup' })
     render(<VerifyPage />)
     expect(screen.getByRole('link', { name: 'Wrong email? Change it' })).toHaveAttribute('href', '/signup')
+  })
+
+  it('WA37 a failure after a good code frees the field and says so instead of hanging', async () => {
+    getUser.mockRejectedValueOnce(new Error('network'))
+    render(<VerifyPage />)
+    fireEvent.change(codeField(), { target: { value: '123456' } })
+    expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong. Try again in a minute.')
+    await waitFor(() => expect(codeField()).toBeEnabled())
+    expect(window.location.href).toBe('')
   })
 })
