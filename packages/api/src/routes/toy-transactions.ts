@@ -10,7 +10,6 @@ import { profileName } from '../profile-name.js'
 import { readNear, byDistance, pickupPostcodes } from '../distance.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
-// PENDING(admin-in-member-threads): admins can open any thread and post an admin-labelled message, but cannot accept, reject, confirm or withdr...
 // PENDING(toy-transactions-role-filter-ignored): the route honours the role filter on the server and the browser stops re-filtering. Whether the route honou...
 
 const toyTransactions = new Hono<{ Variables: AuthVariables }>()
@@ -36,6 +35,22 @@ function sanitizeCodes<T extends Record<string, any>>(
     requester_code: isOwner ? null : row.requester_code,
   }
 }
+
+/**
+ * An admin who is neither the requester nor on the owner side. They can read
+ * and speak in the thread, but the lifecycle belongs to the parties; an admin
+ * who is a party acts as one.
+ */
+function isStrangerAdmin(
+  role: string,
+  tx: { requester_id: string; owner_id: string | null; owner_org_id: string | null },
+  userId: string,
+  ledOrgs: readonly string[]
+): boolean {
+  return role === 'admin' && tx.requester_id !== userId && !isOwnerSide(tx, userId, ledOrgs)
+}
+
+const ADMIN_CANNOT_ACT = { error: 'admin_cannot_act' } as const
 
 const PICKUP_FIELDS = ['pickup_line1', 'pickup_suburb', 'pickup_state', 'pickup_postcode'] as const
 
@@ -746,13 +761,32 @@ toyTransactions.post('/:id/messages', async (c) => {
     return c.json({ error: 'Message body is required' }, 400)
   }
 
-  const supabase = createUserClient(c.get('token'))
-  const { data, error } = await supabase
+  const id = c.req.param('id')
+  const userId = c.get('userId')
+  const admin = createAdminClient()
+  const { data: tx, error: txError } = await admin
+    .from('toy_transactions')
+    .select('owner_id, owner_org_id, requester_id, toy_id')
+    .eq('id', id)
+    .maybeSingle()
+  if (txError) {
+    return txError.code === INVALID_TEXT_REPRESENTATION
+      ? c.json({ error: 'Not found' }, 404)
+      : c.json({ error: txError.message }, 500)
+  }
+  if (!tx) return c.json({ error: 'Not found' }, 404)
+
+  const ledOrgs = await ledOrgIds(admin, userId)
+  const ownerSide = isOwnerSide(tx, userId, ledOrgs)
+  // An admin who is a party speaks as a member; one who is not speaks as SPLAT,
+  // through the admin client because the member policy admits only 'user'.
+  const asAdmin = isStrangerAdmin(c.get('role'), tx, userId, ledOrgs)
+  const { data, error } = await (asAdmin ? admin : createUserClient(c.get('token')))
     .from('toy_transaction_messages')
     .insert({
-      transaction_id: c.req.param('id'),
-      sender_id: c.get('userId'),
-      kind: 'user',
+      transaction_id: id,
+      sender_id: userId,
+      kind: asAdmin ? 'admin' : 'user',
       body: body.body,
     })
     .select()
@@ -764,32 +798,22 @@ toyTransactions.post('/:id/messages', async (c) => {
     return c.json({ error: error.message }, 500)
   }
 
-  const admin = createAdminClient()
-  const { data: tx } = await admin
-    .from('toy_transactions')
-    .select('owner_id, owner_org_id, requester_id, toy_id')
-    .eq('id', c.req.param('id'))
-    .single()
-  if (tx) {
-    const userId = c.get('userId')
-    const ledOrgs = await ledOrgIds(admin, userId)
-    const payload = {
-      type: 'toy_message',
-      toy_transaction_id: c.req.param('id'),
-      toy_name: await subjectName(admin, tx as any),
-      actor_name: await profileName(admin, userId, 'A contributor'),
-      // 119: the message itself. Every recipient below is a party to this
-      // transaction (the requester, or the owner side via notifyOwnerSide).
-      body: notificationBody(body.body),
-    }
-    // A leader posting notifies the family; the family posting notifies every
-    // leader, so whoever picks the thread up next has it in their inbox.
-    if (isOwnerSide(tx, userId, ledOrgs)) {
-      await admin.from('notifications').insert({ ...payload, recipient_id: tx.requester_id })
-    } else {
-      await notifyOwnerSide(admin, tx, payload)
-    }
+  const payload = {
+    type: 'toy_message',
+    toy_transaction_id: id,
+    toy_name: await subjectName(admin, tx as any),
+    actor_name: asAdmin ? 'SPLAT admin' : await profileName(admin, userId, 'A contributor'),
+    // 119: the message itself. Every recipient below is a party to this
+    // transaction (the requester, or the owner side via notifyOwnerSide).
+    body: notificationBody(body.body),
   }
+  // A leader posting notifies the family; the family posting notifies every
+  // leader, so whoever picks the thread up next has it in their inbox. An admin
+  // belongs to neither side, so both are told.
+  if (asAdmin || ownerSide) {
+    await admin.from('notifications').insert({ ...payload, recipient_id: tx.requester_id })
+  }
+  if (asAdmin || !ownerSide) await notifyOwnerSide(admin, tx, payload)
 
   return c.json(data, 201)
 })
@@ -801,6 +825,7 @@ toyTransactions.post('/:id/accept', async (c) => {
   const userId = c.get('userId')
   const admin = createAdminClient()
   const ledOrgs = await ledOrgIds(admin, userId)
+  if (isStrangerAdmin(c.get('role'), tx as any, userId, ledOrgs)) return c.json(ADMIN_CANNOT_ACT, 403)
   if (!isOwnerSide(tx as any, userId, ledOrgs)) {
     return c.json({ error: 'Only the owner may accept' }, 403)
   }
@@ -937,6 +962,7 @@ toyTransactions.post('/:id/reject', async (c) => {
   const userId = c.get('userId')
   const admin = createAdminClient()
   const ledOrgs = await ledOrgIds(admin, userId)
+  if (isStrangerAdmin(c.get('role'), tx as any, userId, ledOrgs)) return c.json(ADMIN_CANNOT_ACT, 403)
   if (!isOwnerSide(tx as any, userId, ledOrgs)) {
     return c.json({ error: 'Only the owner may reject' }, 403)
   }
@@ -983,6 +1009,7 @@ toyTransactions.post('/:id/withdraw', async (c) => {
   const userId = c.get('userId')
   const admin = createAdminClient()
   const ledOrgs = await ledOrgIds(admin, userId)
+  if (isStrangerAdmin(c.get('role'), tx as any, userId, ledOrgs)) return c.json(ADMIN_CANNOT_ACT, 403)
   const fromOwnerSide = isOwnerSide(tx as any, userId, ledOrgs)
   if (!fromOwnerSide && userId !== tx.requester_id) return c.json({ error: 'Not found' }, 404)
   if (tx.status !== 'requested' && tx.status !== 'accepted') {
@@ -1060,6 +1087,7 @@ toyTransactions.post('/:id/confirm', async (c) => {
   const userId = c.get('userId')
   const admin = createAdminClient()
   const ledOrgs = await ledOrgIds(admin, userId)
+  if (isStrangerAdmin(c.get('role'), tx as any, userId, ledOrgs)) return c.json(ADMIN_CANNOT_ACT, 403)
   const isOwner = isOwnerSide(tx as any, userId, ledOrgs)
   if (!isOwner && userId !== tx.requester_id) return c.json({ error: 'Not found' }, 404)
   if (tx.status !== 'accepted') return c.json({ error: 'This request is not ready to confirm' }, 409)

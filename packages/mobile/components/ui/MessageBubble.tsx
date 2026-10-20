@@ -8,6 +8,8 @@ import { View, Text, StyleSheet } from 'react-native'
 import type { ThreadMessage } from '@splat-connect/types'
 import { theme } from '../../lib/theme'
 
+const ADMIN_LABEL = 'SPLAT admin'
+
 function timeOf(iso: string): string {
   return new Date(iso).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })
 }
@@ -28,18 +30,23 @@ export function MessageBubble({
       </View>
     )
   }
+  // An admin is SPLAT speaking, whoever is reading: never "You", and the
+  // caller's senderName only knows the two parties.
+  const admin = message.kind === 'admin'
+  const isMine = mine && !admin
+  const who = admin ? ADMIN_LABEL : senderName
   return (
-    <View style={[styles.bubbleRow, mine && styles.bubbleRowMine]}>
+    <View style={[styles.bubbleRow, isMine && styles.bubbleRowMine]}>
       <View
         // Left/right and the tint are the only things separating your messages
         // from theirs on screen, and neither reaches a screen reader.
         accessible
-        accessibilityLabel={`${mine ? 'You' : senderName} said: ${message.body}`}
-        style={[styles.bubble, mine ? styles.bubbleMine : styles.bubbleTheirs]}
+        accessibilityLabel={`${isMine ? 'You' : who} said: ${message.body}`}
+        style={[styles.bubble, isMine ? styles.bubbleMine : styles.bubbleTheirs, admin && styles.bubbleAdmin]}
       >
-        {!mine ? <Text style={styles.bubbleWho}>{senderName}</Text> : null}
-        <Text style={[styles.bubbleText, mine && styles.onBrand]}>{message.body}</Text>
-        <Text style={[styles.stamp, mine && styles.onBrand]}>{timeOf(message.created_at)}</Text>
+        {!isMine ? <Text style={styles.bubbleWho}>{who}</Text> : null}
+        <Text style={[styles.bubbleText, isMine && styles.onBrand]}>{message.body}</Text>
+        <Text style={[styles.stamp, isMine && styles.onBrand]}>{timeOf(message.created_at)}</Text>
       </View>
     </View>
   )
@@ -74,6 +81,7 @@ const styles = StyleSheet.create({
   bubbleMine: { backgroundColor: theme.colors.primaryDark, borderColor: theme.colors.primaryDark },
   onBrand: { color: theme.colors.onColor },
   bubbleTheirs: { backgroundColor: theme.colors.surface },
+  bubbleAdmin: { backgroundColor: theme.colors.honeySoft, borderColor: theme.colors.honey },
   bubbleWho: { fontFamily: theme.fonts.bold, fontSize: theme.type.caption, color: theme.colors.primaryDeep },
   bubbleText: { fontFamily: theme.fonts.regular, fontSize: theme.type.label, color: theme.colors.text, lineHeight: 20 },
   stamp: { fontFamily: theme.fonts.regular, fontSize: theme.type.micro, color: theme.colors.muted, alignSelf: 'flex-end' },

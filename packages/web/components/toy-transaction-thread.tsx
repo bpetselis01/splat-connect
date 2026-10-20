@@ -91,6 +91,9 @@ export function ToyTransactionThread({
 
   const tx = transaction
   const isOwner = isOwnerSide(tx, viewerId, ledOrgIds)
+  // An admin reading a member's thread can speak in it but not act on it; the
+  // API refuses admin_cannot_act, so the controls are not offered.
+  const isParty = isOwner || viewerId === tx.requester_id
   // Keyed off the requester rather than the owner: an org handoff has no
   // owner_id, so every message a leader sent would otherwise be attributed to
   // the family. owner_name is the organisation's name in that case.
@@ -119,6 +122,7 @@ export function ToyTransactionThread({
    * before that would close a build the family has never seen (057).
    */
   const canConfirm =
+    isParty &&
     tx.status === 'accepted' &&
     (tx.type !== 'donation' || isOwner) &&
     (!isBuild || tx.work_approved_at !== null) &&
@@ -126,7 +130,7 @@ export function ToyTransactionThread({
     (tx.type !== 'print' || tx.ready_at !== null)
   const alreadyConfirmed = isOwner ? tx.owner_confirmed_at !== null : tx.requester_confirmed_at !== null
   const myCode = isOwner ? tx.owner_code : tx.requester_code
-  const showMyCode = tx.status === 'accepted' && (tx.type !== 'donation' || !isOwner)
+  const showMyCode = isParty && tx.status === 'accepted' && (tx.type !== 'donation' || !isOwner)
   // The same gate the list card's handoff panel uses: a build's handover waits
   // on the approved working shot, a print's on the parts being ready.
   const handoverOpen =
@@ -307,7 +311,7 @@ export function ToyTransactionThread({
             working shot, so its code and its confirm box do not appear before
             then — showing a code for a meeting that cannot be arranged yet is
             the same class of mistake as a dead control. */}
-        {board && handoverOpen && (
+        {isParty && board && handoverOpen && (
           <div
             className="xthread-next"
             style={{ background: myMove ? 'var(--tamber)' : 'var(--surface)' }}
@@ -457,7 +461,7 @@ export function ToyTransactionThread({
 
         {/* self-start so it stays a button: stretched to the sidebar's full
             width it reads as another white card. */}
-        {open && !board && (
+        {isParty && open && !board && (
           <button
             type="button"
             disabled={busy}
@@ -574,7 +578,7 @@ export function ToyTransactionThread({
           </div>
         )}
 
-        {board && open && (
+        {isParty && board && open && (
           <div className="flex justify-center">
             <button
               type="button"
