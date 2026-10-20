@@ -10,7 +10,7 @@ vi.mock('next/link', () => ({
 }))
 
 describe('404 page', () => {
-  it('WC15 says the page was not found and links back to the home page', () => {
+  it('says the page was not found and links back to the home page', () => {
     render(<NotFound />)
     expect(screen.getByRole('heading', { level: 1, name: "We couldn't find that page" })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Back to the home page' })).toHaveAttribute('href', '/')

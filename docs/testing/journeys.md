@@ -27,7 +27,7 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 | web | Gates and onboarding | 6 | 0 | 0 |
 | web | Route protection (middleware) | 7 | 0 | 0 |
 | web | Organisation leader (web) | 36 | 0 | 0 |
-| web | Header, footer and dock | 15 | 0 | 0 |
+| web | Header, footer and dock | 14 | 0 | 0 |
 | web | My SPLAT hub | 6 | 0 | 0 |
 | web | Account | 8 | 0 | 0 |
 | web | Child profile | 3 | 0 | 0 |
@@ -54,7 +54,7 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 | web | Event detail | 4 | 0 | 0 |
 | web | Event register | 1 | 0 | 0 |
 | web | Recycling | 3 | 0 | 0 |
-| web | Legal and static pages | 8 | 0 | 0 |
+| web | Legal and static pages | 7 | 0 | 0 |
 | web | Admin | 36 | 0 | 0 |
 | web | Organisation directory | 3 | 0 | 0 |
 | web | Organisation workspace | 2 | 0 | 0 |
@@ -660,9 +660,9 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 
 </details>
 
-### Header, footer and dock — 15 rows · 0 gaps · 0 waived
+### Header, footer and dock — 14 rows · 0 gaps · 0 waived
 
-<details><summary>15 rows, no gaps</summary>
+<details><summary>14 rows, no gaps</summary>
 
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
@@ -680,7 +680,6 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 | WC12 | nav | `/toy-library/[id]` | P | "Back to My SPLAT" dock on public pages → /dashboard; absent when signed out | – | – | n/a | ✅ | ✅ | – | – |
 | WC13 | nav | `/toy-library` | P | dock on /library and /toy-library opens a corner menu of that page's actions → their pages | – | – | n/a | ✅ | ✅ | – | – |
 | WC14 | nav | `/dashboard/toys/new` | P | breadcrumb trail (account pages and five public child pages) links back up through My SPLAT; the page itself is not a link | – | – | P | ✅ | ✅ | – | – |
-| WC15 | nav | `/not-built/[id]` | anon | 404 page keeps the header and "Back to the home page" → / | – | – | n/a | ✅ | ✅ | – | – |
 
 </details>
 
@@ -1033,9 +1032,9 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 
 </details>
 
-### Legal and static pages — 8 rows · 0 gaps · 0 waived
+### Legal and static pages — 7 rows · 0 gaps · 0 waived
 
-<details><summary>8 rows, no gaps</summary>
+<details><summary>7 rows, no gaps</summary>
 
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
@@ -1046,7 +1045,6 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 | WL05 | static | `/legal/contributor-terms` | anon | contributor terms text (the same content as the signup dialog and the terms gate) | – | – | n/a | ✅ | – | – | – |
 | WL06 | static | `/legal/intended-purpose` | anon | intended purpose statement; /contact link | – | – | n/a | ✅ | – | – | – |
 | WL07 | static | `/legal/org-leader-terms` | anon | organisation leader terms: the "not written yet" stub | – | – | n/a | ✅ | – | – | – |
-| WL08 | static | `/not-built/[id]` | anon | a pending-registry item shows its title and blurb, an unknown id the generic "isn't ready yet"; "Home" → / | – | – | n/a | ✅ | – | – | – |
 
 </details>
 
