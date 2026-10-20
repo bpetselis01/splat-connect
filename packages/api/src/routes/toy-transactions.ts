@@ -970,8 +970,8 @@ toyTransactions.post('/:id/reject', async (c) => {
 
   const body = (await c.req.json().catch(() => ({}))) as { reason?: unknown }
   const reason = typeof body.reason === 'string' ? body.reason.trim() : ''
-  if (reason.length === 0) return c.json({ error: 'reason_required' }, 400)
-  if (reason.length > DECLINE_REASON_MAX) return c.json({ error: 'reason_too_long', max: DECLINE_REASON_MAX }, 400)
+  if (reason.length === 0) return c.json({ error: 'Say why you are declining.' }, 400)
+  if (reason.length > DECLINE_REASON_MAX) return c.json({ error: `Keep the reason under ${DECLINE_REASON_MAX} characters.` }, 400)
 
   const now = new Date().toISOString()
   const { data: updated, error } = await admin

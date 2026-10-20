@@ -155,7 +155,7 @@ What stays fixed:
 **Dependencies:** U4
 
 **Files:**
-- `packages/api/src/routes/toy-transactions.ts` — `POST /:id/reject`: require `reason` (1–500) for every type, not only print; the 400 bodies are `{ error: 'reason_required' }` and `{ error: 'reason_too_long', max: 500 }`
+- `packages/api/src/routes/toy-transactions.ts` — `POST /:id/reject`: require `reason` (1–500) for every type, not only print; the 400 bodies are the sentences `{ error: 'Say why you are declining.' }` and `{ error: 'Keep the reason under 500 characters.' }` (the API's `error` field is shown to members as-is, so it is copy, not a code)
 - `packages/web/components/toy-transaction-thread.tsx` — the Decline button opens the reason form for all kinds; the rejected state renders `tx.decline_reason` under "This request was declined."
 - `packages/mobile/components/exchanges/thread-screen.tsx` and `packages/mobile/components/builds/build-thread-screen.tsx` — a reason sheet before `reject`; render `decline_reason` in the declined state (print's `job-screen.tsx` already does)
 - `packages/api/tests/integration/toy-transactions/reject-withdraw.test.ts` — reject without a reason → 400 for gift/swap/build; with a reason → stored and shown in the system message and notification body
