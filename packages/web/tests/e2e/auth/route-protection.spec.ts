@@ -22,12 +22,12 @@ test('WA23 an unauthenticated visitor is redirected from /upload to /login', asy
 
 test('WA23 an unauthenticated visitor is redirected from /my-tutorials to /login', async ({ page }) => {
   await page.goto('/my-tutorials')
-  await expect(page).toHaveURL(/\/login$/)
+  await expect(page).toHaveURL(/\/login\?next=%2Fdashboard%2Ftutorials$/)
 })
 
 test('WA24 an unauthenticated visitor is redirected from /admin to /login', async ({ page }) => {
   await page.goto('/admin')
-  await expect(page).toHaveURL(/\/login$/)
+  await expect(page).toHaveURL(/\/login\?next=%2Fadmin$/)
 })
 
 // /notifications was the one account route left out of signedInRoutes: both of

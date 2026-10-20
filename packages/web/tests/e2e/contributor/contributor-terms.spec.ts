@@ -37,7 +37,7 @@ test('WA18 Sign out on the terms gate returns to the home page, signed out', asy
   await page.waitForURL(/localhost:\d+\/$/)
   await expect(page.getByRole('link', { name: 'Sign in' })).toBeVisible()
   await page.goto('/dashboard')
-  await expect(page).toHaveURL(/\/login$/)
+  await expect(page).toHaveURL(/\/login\?next=%2Fdashboard$/)
 })
 
 test('WA29 browsing stays open without accepted terms', async ({ page }) => {
