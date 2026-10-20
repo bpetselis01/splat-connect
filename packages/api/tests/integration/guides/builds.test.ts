@@ -41,8 +41,10 @@ describe('091 tutorial_builds', () => {
     expect((await call('POST', `/api/tutorials/${draft}/build`, parent.token)).status).toBe(404)
   })
 
-  it('takes a build back', async () => {
-    expect((await call('DELETE', `/api/tutorials/${guide}/build`, parent.token)).status).toBe(204)
-    expect(await (await call('GET', '/api/me/builds', parent.token)).json()).toEqual({ builds: 0 })
+  it('has no route to take a build back', async () => {
+    const res = await call('DELETE', `/api/tutorials/${guide}/build`, parent.token)
+    expect(res.status).toBe(404)
+    expect(await res.text()).toBe('404 Not Found')
+    expect(await (await call('GET', '/api/me/builds', parent.token)).json()).toEqual({ builds: 1 })
   })
 })
