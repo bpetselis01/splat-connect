@@ -209,6 +209,7 @@ export const PENDING = {
     needs: "Decided 2026-10-20: remove /organizations from the middleware terms list; public read pages never require terms. Add a test. Whether to remove `/organizations` from the middleware terms list.",
   },
   'silent-handoffs': {
+    shipped: true,
     title: "Hand-offs that tell nobody",
     blurb: "Recycling receive/decline, org-request approve/decline, admin test-print pass/fail, admin add/remove leader, org event delete (registrants not told), first handover confirm, plus event RSVP, contact form, idea submit, report submit and drop-off booking send no notification. Staff and leaders poll queues; members never hear outcomes.",
     kind: "build",
@@ -216,6 +217,7 @@ export const PENDING = {
     needs: "Decided 2026-10-20: all three groups get notification types: exchange outcomes (recycling receive/decline, org-request approve/decline, admin test-print pass/fail, first handover confirm), leader and event changes (admin add/remove leader tells the person, org event delete tells registrants), and member submissions acknowledged (event RSVP, contact form, idea submit, report submit, drop-off booking). Which silent hand-offs get a notification type (each needs a migration, API send and copy on both clients).",
   },
   'org-notifications-never-clear': {
+    shipped: true,
     title: "Organisation notifications that never clear",
     blurb: "Org-bucket notifications (`org_event_*`, `org_story_published`, `org_thanked`) never clear on web; `org_message` sits in the `exchanges` bucket so the leader thread doesn't clear it. The badge never goes to zero for leaders.",
     kind: "build",

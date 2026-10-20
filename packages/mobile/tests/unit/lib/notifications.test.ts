@@ -113,7 +113,7 @@ describe('linkFor', () => {
     expect(COPY.org_message(notification({ type: 'org_message', actor_name: 'Northbank', tutorial_title: 'Northbank' })))
       .toBe('Northbank replied to your message')
     expect(linkFor(notification({ type: 'org_message', org_conversation_id: 'c1' }))).toBe('/messages/c1')
-    expect(notificationBucket('org_message')).toBe('exchanges')
+    expect(notificationBucket('org_message')).toBe('organisations')
     expect(linkFor(notification({ type: 'org_thanked', org_id: 'o1' }))).toBe('/organisation/profile')
     expect(notificationBucket('org_thanked')).toBe('organisations')
     // 117: a showcase thanks opens the showcase; one for an exchange opens it.

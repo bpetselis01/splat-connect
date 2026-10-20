@@ -8,7 +8,6 @@ export { autoPicks, initialPicks, MAX_PICKS, pickOptions, PICK_KIND_LABEL, sameP
 export type { PicksMode, ToyPick, ToyPickInput } from './toy-picks'
 import type { PicksMode, ToyPick } from './toy-picks'
 
-// PENDING(silent-handoffs): all three groups get notification types: exchange outcomes (recycling receive/decline, org-request approve/...
 export { contributorBadges, nextBadgeThreshold, nextBadgeLine, BADGE_RULES } from './contributor-badges'
 export { ABOUT_LEAD, ABOUT_PILLARS, ABOUT_TEAM_BLURB, CONTACT_TIMES } from './about'
 export {
@@ -1828,11 +1827,10 @@ export type NotificationBucket = 'tutorials' | 'exchanges' | 'challenges' | 'org
  * transaction, not on a toy, so they all belong to My exchanges — a toy
  * sitting on a shelf generates nothing.
  *
- * 077's four: org_message is a conversation with an organisation, the same
- * kind of thing as toy_message, so it counts on My exchanges. The other three
- * are news about an organisation rather than a thing you are doing with one —
- * a followed org published, or a family thanked yours — and none of the three
- * existing cards is about that, so they get their own 'organisations' bucket.
+ * 077's four are news about an organisation rather than a thing you are doing
+ * with one: a followed org published, a family thanked yours, a family wrote
+ * to its leaders. None of the three existing cards is about that, so they get
+ * their own 'organisations' bucket, which the leader's org hub clears.
  * It has no hub card: it counts toward the inbox total and is a section there.
  */
 const NOTIFICATION_BUCKET = {
@@ -1868,7 +1866,7 @@ const NOTIFICATION_BUCKET = {
   challenge_joined: 'challenges',
   challenge_left: 'challenges',
   challenge_removed: 'challenges',
-  org_message: 'exchanges',
+  org_message: 'organisations',
   org_event_published: 'organisations',
   org_event_changed: 'organisations',
   org_event_cancelled: 'organisations',
