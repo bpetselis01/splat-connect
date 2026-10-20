@@ -1,25 +1,8 @@
 import { test, expect } from '@playwright/test'
-import { acceptTerms, adminClient, createContributor, signIn } from '../helpers'
+import { acceptTerms, adminClient, createContributor, latestCode, signIn } from '../helpers'
 
 // Spec B on the web: the public page Play links to, and deleting an account
 // with the real code from local Supabase's mail catcher.
-const MAILPIT = 'http://127.0.0.1:54324'
-
-async function latestCode(email: string, after: number): Promise<string> {
-  for (let i = 0; i < 40; i++) {
-    const res = await fetch(`${MAILPIT}/api/v1/search?query=${encodeURIComponent(`to:"${email}"`)}`)
-    const { messages } = (await res.json()) as { messages: { ID: string; Created: string }[] }
-    const fresh = messages.find((m) => Date.parse(m.Created) >= after)
-    if (fresh) {
-      const msg = (await (await fetch(`${MAILPIT}/api/v1/message/${fresh.ID}`)).json()) as { Text: string }
-      const code = msg.Text.match(/\b(\d{6})\b/)?.[1]
-      if (code) return code
-    }
-    await new Promise((r) => setTimeout(r, 250))
-  }
-  throw new Error(`No code emailed to ${email}`)
-}
-
 test('WA22 the public page explains deletion; Sign in to delete leads to sign-in and Contact us to /contact', async ({ page }) => {
   await page.goto('/delete-account')
   await expect(page.getByRole('heading', { name: 'Delete your SPLAT Connect account' })).toBeVisible()
