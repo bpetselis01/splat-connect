@@ -105,15 +105,11 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 ### `online-event-link` — Online events
 
-**Question:** The page promises a joining link after registering, but the API nulls `online_url` and nothing sends it. Build the authenticated route and email, or drop the promise?
-
 - Platforms: web, api
 - Needs: Decided 2026-10-20: build the authenticated joining-link route and send the link in the registration confirmation email. Build the authenticated joining-link route and email, or drop the promise from the page.
 - In code: `packages/api/src/routes/organizations.ts`
 
 ### `web-auth-recovery` — Web sign-in recovery
-
-**Question:** Web has no forgot-password, code sign-in, resend-confirmation or Apple/Google (mobile has all). An unconfirmed user sees a raw Supabase error. Port the mobile auth screens to web?
 
 - Platforms: web
 - Needs: Decided 2026-10-20: port all mobile auth screens to web (forgot-password, code sign-in, resend-confirmation, friendly unconfirmed-user message); Apple/Google wait on their setup. Whether to port the mobile auth screens to web, and which ones.
@@ -121,15 +117,11 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 ### `login-return-path` — Returning to where you were after signing in
 
-**Question:** Redirects to `/login` drop the return path in about eight places (`middleware.ts`, `requireCapabilities`, toy `?mode=`, drop-off `?org=`, LearnGate, terms gate). Add a `next` param?
-
 - Platforms: web
 - Needs: Decided 2026-10-20: every redirect to /login carries ?next= and sign-in honours it, with a same-origin allow-list; one helper, eight call sites. Whether to add a `next` param to every redirect to `/login`.
 - In code: `packages/web/middleware.ts`
 
 ### `org-directory-terms-gate` — Organisations pages and the terms gate
-
-**Question:** `/organizations` is in the middleware terms list, so signed-in members without terms are bounced from pages anon visitors can read. Remove the prefix?
 
 - Platforms: web
 - Needs: Decided 2026-10-20: remove /organizations from the middleware terms list; public read pages never require terms. Add a test. Whether to remove `/organizations` from the middleware terms list.
@@ -137,15 +129,11 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 ### `silent-handoffs` — Hand-offs that tell nobody
 
-**Question:** Recycling receive/decline, org-request approve/decline, admin test-print pass/fail, admin add/remove leader, org event delete (registrants not told), first handover confirm, plus event RSVP, contact form, idea submit, report submit and drop-off booking send no notification. Which of these get a notification type?
-
 - Platforms: api, web, mobile
 - Needs: Decided 2026-10-20: all three groups get notification types: exchange outcomes (recycling receive/decline, org-request approve/decline, admin test-print pass/fail, first handover confirm), leader and event changes (admin add/remove leader tells the person, org event delete tells registrants), and member submissions acknowledged (event RSVP, contact form, idea submit, report submit, drop-off booking). Which silent hand-offs get a notification type (each needs a migration, API send and copy on both clients).
 - In code: `packages/types/src/index.ts`
 
 ### `org-notifications-never-clear` — Organisation notifications that never clear
-
-**Question:** Org-bucket notifications (`org_event_*`, `org_story_published`, `org_thanked`) never clear on web; `org_message` sits in the `exchanges` bucket so the leader thread doesn't clear it. Add `MarkNotificationsRead` to the org pages and move `org_message`?
 
 - Platforms: web, api
 - Needs: Decided 2026-10-20: MarkNotificationsRead on the org pages, and org_message moves to the org bucket so the leader thread clears it; same as mobile. Whether to add `MarkNotificationsRead` to the org pages and move `org_message` to the org bucket.
@@ -153,15 +141,11 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 ### `admin-remove-confirm` — Removing an account as admin
 
-**Question:** Add the typed-phrase confirm to admin account removal? (requirements doc Q7)
-
 - Platforms: web
 - Needs: Decided 2026-10-20: typed-phrase confirm, the same component as member self-deletion. Whether admin removal gets the typed-phrase confirm.
 - In code: `packages/web/app/admin/contributors/page.tsx`
 
 ### `guide-rereview-rule` — When an edited guide goes back to review
-
-**Question:** Guide editor re-review is inconsistent: details, photos, PDF and prices flip an approved guide back to `pending`; parts, tools, steps, safety, STL and recommendations do not. Which rule?
 
 - Platforms: web, api
 - Needs: Decided 2026-10-20: content changes re-review (steps, safety, parts, tools, STL, PDF, photos, details go back to pending); prices and recommendations stay approved. Which edits send an approved guide back to review.
@@ -169,15 +153,11 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 ### `org-leader-terms-stub` — Organisation leader terms
 
-**Question:** `legal/org-leader-terms` is a stub (v0-todo) yet acceptances are recorded against it and gate approvals. Keep gating on a placeholder?
-
 - Platforms: web, api
 - Needs: Decided 2026-10-20: Byron writes the real leader terms (Legal is code-only); the gate stays and acceptance stays version-aware so existing leaders re-accept at v1. Whether to keep gating on the placeholder until the real terms exist.
 - In code: `packages/web/app/legal/org-leader-terms/page.tsx`
 
 ### `dead-routes-and-handlers` — Code nobody can reach
-
-**Question:** Delete or wire each unreachable route and handler? (requirements doc Q10)
 
 - Platforms: web, api
 - Needs: Decided 2026-10-20: delete every unreachable route and handler; anything wanted later comes back through a journey row. Per item, delete it with its tests or wire it to a screen.
@@ -185,15 +165,11 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 ### `admin-in-member-threads` — Admins inside member threads
 
-**Question:** What may an admin do inside a member's Exchange thread? (requirements doc Q11)
-
 - Platforms: web
 - Needs: Decided 2026-10-20: admins can open any thread and post an admin-labelled message, but cannot accept, reject, confirm or withdraw for a member. Whether to hide the party buttons from admins and exempt admins from the terms gate.
 - In code: `packages/api/src/routes/toy-transactions.ts`
 
 ### `admin-status-validation` — Guide status from the admin route
-
-**Question:** Validate the admin guide-status route to its two values? (requirements doc Q12)
 
 - Platforms: api
 - Needs: Decided 2026-10-20: validate to approved|rejected, 400 otherwise; schema line plus a test. Whether to validate the status to `approved` and `rejected`.
@@ -201,15 +177,11 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 ### `terms-gate-fails-open` — Terms gate when the check fails
 
-**Question:** Should the terms gate fail closed, and which API writes re-check it? (requirements doc Q13)
-
 - Platforms: web, api
 - Needs: Decided 2026-10-20: fail closed with a retry message; the API re-checks acceptance on the writes the gate protects (guide submit, exchange requests, org actions), not on reads. Whether the middleware fails closed, and whether toy, exchange and printer writes check terms in the API.
 - In code: `packages/web/middleware.ts`
 
 ### `swallowed-failures` — Failures that look like success
-
-**Question:** New-guide cover upload errors are swallowed; "Mark all read" fires N PATCHes ignoring failures; the home page shows zeros on an API outage. Surface them?
 
 - Platforms: web
 - Needs: Decided 2026-10-20: surface all three: cover upload shows the error and keeps the form, Mark all read is one request or reports partial failure, home shows a could-not-load state instead of zeros. Whether to surface these three failures, and how.
@@ -217,15 +189,11 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 ### `duplicated-thread-actions` — Thread actions copied three times
 
-**Question:** Inline server actions (`sendMessage`, `accept`, `reject`, `withdraw`, `confirm`) are duplicated in three thread pages; only the print page sends a decline reason. Hoist and send the reason everywhere?
-
 - Platforms: web
 - Needs: Decided 2026-10-20: hoist sendMessage/accept/reject/withdraw/confirm into one module of plain functions taking args; every decline carries a reason the other party sees. Whether to hoist the actions into one place and send the decline reason from every thread page.
 - In code: `packages/web/app/dashboard/exchanges/build/[id]/page.tsx`
 
 ### `small-inconsistencies` — Smaller inconsistencies
-
-**Question:** "Pick for my child" goes two places; anon sees no Save on detail pages but is routed to signup from cards; a leader sees "Ask to collect" on their own org's toy; own profile shows "Ask {first} to build"; `tutorial_view` counts crawlers; nested `<main>` on `/delete-account`. Fix these?
 
 - Platforms: web
 - Needs: Decided 2026-10-20: fix all six, each with a test: one destination for Pick for my child, Save prompts signup everywhere, hide self-actions (own org toy, own profile), skip bots in tutorial_view, one <main> on /delete-account. Which of the six to fix.
@@ -233,15 +201,11 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 ### `makers-tab-reported-person` — Reported people on the Makers tab
 
-**Question:** Decide: Whether a reported person should leave the Makers tab, as the report sheet promises.
-
 - Platforms: mobile
 - Needs: Decided 2026-10-20: a person you reported disappears from your own Makers tab and search until an admin resolves the report; others still see them. Whether to hide a reported person from the Makers tab, or change the sheet copy.
 - In code: `packages/mobile/app/(tabs)/explore/_layout.tsx`
 
 ### `idea-graduate-duplicate-contributor` — Graduating an idea whose author participated
-
-**Question:** Decide: How a graduated idea builds its contributor list when the author is also a participant.
 
 - Platforms: api
 - Needs: Decided 2026-10-20: the author appears once with the author role; graduation runs as a single transaction. Whether graduation de-duplicates the author, and whether it runs in one transaction.
@@ -249,15 +213,11 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 ### `org-pages-404-for-non-leader` — Organisation pages for a non-leader
 
-**Question:** Decide: Whether a non-leader opening an organisation dashboard page sees a 404 or is redirected.
-
 - Platforms: web
 - Needs: Decided 2026-10-20: signed-in non-leaders are redirected to /dashboard with a note that the page is for organisation leaders; anonymous visitors go to sign in with next. Whether a non-leader is redirected (and where) or keeps the 404.
 - In code: `packages/web/app/dashboard/organisation/page.tsx`
 
 ### `toy-transactions-role-filter-ignored` — Role filter on the Exchange list
-
-**Question:** Decide: Whether the exchanges list filters by role on the server or in the browser.
 
 - Platforms: api
 - Needs: Decided 2026-10-20: the route honours the role filter on the server and the browser stops re-filtering. Whether the route honours the role filter or the parameter is removed.
@@ -265,15 +225,11 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 ### `draft-event-story-validation` — Validation on drafts
 
-**Question:** Decide: Which fields a draft event or story must have before it can be saved.
-
 - Platforms: web
 - Needs: Decided 2026-10-20: a draft needs only a title; every other rule applies at publish; form copy stays as is. Whether drafts skip validation as the form says, or the form copy changes.
 - In code: `packages/web/components/event-form.tsx`
 
 ### `recycling-credit-rounding` — Recycling credit rounding
-
-**Question:** Decide: How a recycling credit weight is rounded on the Weigh and credit line.
 
 - Platforms: web
 - Needs: Decided 2026-10-20: nearest 0.1 kg, and the credit is computed from the rounded weight so display and credit agree. Which rounding the credit uses.
@@ -281,15 +237,11 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 ### `challenge-join-busy-stuck` — Join after Leave on a challenge
 
-**Question:** Decide: Whether the Join button resets after leaving a challenge.
-
 - Platforms: web
 - Needs: Decided 2026-10-20: fix it: Join resets after Leave. Nothing to decide beyond scheduling the fix.
 - In code: `packages/web/app/get-involved/design-challenges/[id]/page.tsx`
 
 ### `event-register-raw-409` — Event registration error copy
-
-**Question:** Decide: What the register form shows when an event is full.
 
 - Platforms: web
 - Needs: Decided 2026-10-20: show the full-event copy only, with the leader contact, and hide submit; other 409s keep a generic retry message. Whether to show only the full-event copy.
@@ -297,15 +249,11 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 ### `public-org-toasts-missing` — Toasts on the public organisation page
 
-**Question:** Decide: Whether Follow and Say thanks confirm with a toast on the public organisation page.
-
 - Platforms: web
 - Needs: Decided 2026-10-20: the public organisation page gets the ToastProvider; Follow confirms 'Following {org}', Say thanks confirms 'Thanks sent'. Whether the public page gets a ToastProvider.
 - In code: `packages/web/app/organizations/[id]/public/page.tsx`
 
 ### `guide-share-no-toast` — Share on a Guide page
-
-**Question:** Decide: Whether Share on a guide confirms that the link was copied.
 
 - Platforms: web
 - Needs: Decided 2026-10-20: Share confirms with the shared 'Link copied' toast; no toast where a native share sheet opens. Whether Share confirms with a toast.
@@ -313,15 +261,11 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 ### `guide-patch-without-status-500` — Guide PATCH without status
 
-**Question:** Decide: What an edit to an approved guide that changes no status should answer.
-
 - Platforms: api
 - Needs: Decided 2026-10-20: a no-status edit saves the fields and answers 200 with the guide, status untouched; only a forbidden status transition answers 409 'Guide is approved; submit for re-review'. Which 4xx and message a rejected edit returns.
 - In code: `packages/api/src/routes/tutorials.ts`
 
 ### `hub-exchange-count-plural` — Hub Exchange count grammar
-
-**Question:** Decide: The wording of the hub exchange count for a single exchange.
 
 - Platforms: web
 - Needs: Decided 2026-10-20: fix it: '1 exchange', '2 exchanges'. Nothing to decide beyond scheduling the fix.
@@ -329,15 +273,11 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 ### `impact-map-soon-pill` — Deliveries map card
 
-**Question:** Decide: Whether the Deliveries map card should still say SOON.
-
 - Platforms: web
 - Needs: Decided 2026-10-20: drop the SOON pill and link the card to the map. Whether to drop the pill and link the card to the map.
 - In code: `packages/web/app/impact/page.tsx`
 
 ### `confirmed-page-bare-layout` — Bare layout after email confirm
-
-**Question:** Decide: Which layout the sign-in page shows after an email confirmation.
 
 - Platforms: web
 - Needs: Decided 2026-10-20: fix it: the sign-in page keeps the normal layout after an email confirmation. Nothing to decide beyond scheduling the fix.
@@ -345,15 +285,11 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 ### `signup-reason-banners` — Signup reason banners
 
-**Question:** Decide: Which sign-up reasons show a banner.
-
 - Platforms: web
 - Needs: Decided 2026-10-20: both reasons get a banner with action-first copy: 'Sign up to save toys' and 'Sign up to request a build'. Whether the two reasons get a banner, and the copy.
 - In code: `packages/web/app/signup/page.tsx`
 
 ### `event-detail-ready-marker` — I'm going before the profile loads
-
-**Question:** Decide: Whether the event page should expose a ready state before I'm going can be tapped.
 
 - Platforms: mobile
 - Needs: Decided 2026-10-20: the button is disabled with a subtle spinner until the viewer profile and capabilities have loaded; the e2e waits on that ready state. Whether the button waits for the profile (disabled or a ready marker).
