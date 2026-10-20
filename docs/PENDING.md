@@ -185,7 +185,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 - Platforms: web
 - Needs: Decided 2026-10-20: hoist sendMessage/accept/reject/withdraw/confirm into one module of plain functions taking args; every decline carries a reason the other party sees. Whether to hoist the actions into one place and send the decline reason from every thread page.
-- In code: `packages/web/app/dashboard/exchanges/build/[id]/page.tsx`
+- In code: _none yet_
 
 ### `small-inconsistencies` — Smaller inconsistencies
 
