@@ -92,6 +92,9 @@ const TABLE: Record<NotificationType, Row> = {
   test_print_passed: { carries: {}, copy: 'The test print for Sam passed', link: '/print-for-others' },
   test_print_failed: { carries: { org_id: 'o1' }, copy: 'The test print for Sam didn\'t pass', link: '/print-for-others' },
   handover_confirmed: { carries: TX, copy: 'Sam confirmed the handover of Switch car', link: '/exchanges/tx1' },
+  leader_added: { carries: { org_id: 'o1' }, copy: 'You now lead Sam', link: '/organisation' },
+  leader_removed: { carries: { org_id: 'o1' }, copy: 'You no longer lead Sam', link: '/toy-library/organisation/o1' },
+  org_event_deleted: { carries: { org_id: 'o1', body: 'Open day' }, copy: 'Sam deleted an event you registered for', link: '/toy-library/organisation/o1' },
 }
 
 const row = (type: NotificationType): Notification => ({

@@ -35,6 +35,8 @@ export function linkFor(n: Notification, isAdmin = false): string {
   // request form, so a declined request opens the inbox.
   if (n.type === 'recycling_received' || n.type === 'recycling_declined') return '/explore/recycling'
   if (n.type === 'org_request_approved') return '/organisation'
+  if (n.type === 'leader_added') return '/organisation'
+  if ((n.type === 'leader_removed' || n.type === 'org_event_deleted') && n.org_id) return `/toy-library/organisation/${n.org_id}`
   if (n.type === 'test_print_passed' || n.type === 'test_print_failed') return '/print-for-others'
   if (n.org_event_id) return `/events/${n.org_event_id}`
   if (n.org_story_id) return `/news/story/${n.org_story_id}`

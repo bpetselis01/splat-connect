@@ -366,8 +366,8 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 | Q33 | nav | `(my)/admin/organisations/index` | A | Organisations: "New organisation" → /admin/organisations/new; row → /admin/organisations/:id | – | – | n/a | ✅ | ✅ | – | – |
 | Q34 | write | `(my)/admin/organisations/new` | A | "Create organisation" (name, description, first leader from the account picker) | – | Admin "Organisations" card | n/a | ✅ | ✅ | ✅ | – |
 | Q35 | write | `(my)/admin/organisations/[id]` | A | "Save details" (name, description) | – | – | n/a | ✅ | ✅ | ✅ | – |
-| Q36 | write | `(my)/admin/organisations/[id]` | A | "Add a leader" from the account picker | – | – | n/a | ✅ | ✅ | ✅ | – |
-| Q37 | write | `(my)/admin/organisations/[id]` | A | leader "Remove" | – | – | n/a | ✅ | ✅ | ✅ | – |
+| Q36 | write | `(my)/admin/organisations/[id]` | A | "Add a leader" from the account picker | leader_added | – | n/a | ✅ | ✅ | ✅ | – |
+| Q37 | write | `(my)/admin/organisations/[id]` | A | leader "Remove" | leader_removed | – | n/a | ✅ | ✅ | ✅ | – |
 | Q38 | write | `(my)/admin/organisations/[id]` | A | "Suspend" / "Reactivate" → status | – | – | n/a | ✅ | ✅ | ✅ | – |
 | Q39 | write | `(my)/admin/organisations/[id]` | A | "Mark verified" / "Remove verified" | – | Verified pill | n/a | ✅ | ✅ | ✅ | – |
 | Q40 | write | `(my)/admin/reports/index` | A | Reports: member and idea report lists with status and kind segments | – | Admin "Reports from members" card | mobile | ✅ | ✅ | ✅ | – |
@@ -637,7 +637,7 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 | WB14 | nav | `/dashboard/organisation/orders` | L | print orders: the printer-offer screen scoped to the acting organisation (title, lead, tabs) | – | – | P | ✅ | ✅ | – | – |
 | WB15 | nav | `/dashboard/organisation/publish` | L | events and stories: the Events / Stories tabs with their counts and the four stat chips; empty-state calls to action | – | Upcoming events, People going, Stories live, Drafts | L | ✅ | ✅ | ✅ | – |
 | WB16 | write | `/dashboard/organisation/publish` | L | Publish / Unpublish on an event or story row → PATCH status | org_event_published, org_story_published | public Events list, followers' unread | L | ✅ | ✅ | ✅ | – |
-| WB17 | write | `/dashboard/organisation/publish` | L | remove (bin) on an event or story row → DELETE; registrants are not told | – | public lists | L | ✅ | ✅ | ✅ | – |
+| WB17 | write | `/dashboard/organisation/publish` | L | remove (bin) on an event or story row → DELETE; an event's registrants are told | org_event_deleted | public lists | L | ✅ | ✅ | ✅ | – |
 | WB18 | nav | `/dashboard/organisation/publish` | L | "New event", "New story", row Manage → /dashboard/org/events/:id (not drafts), View → the public page, Edit → the edit form | – | – | n/a | ✅ | ✅ | – | – |
 | WB19 | write | `/dashboard/organisation/events/new` | L | event form "Publish to Events" / "Save as draft" → POST the event, PUT its questions; publish goes to the public page | org_event_published | followers' unread, public Events list | n/a | ✅ | ✅ | ✅ | – |
 | WB20 | write | `/dashboard/organisation/events/[id]/edit` | L | event form "Save changes" (live) / "Publish to Events" → PATCH the event, PUT its questions | org_event_published, org_event_changed | registrants' unread | n/a | ✅ | ✅ | ✅ | – |
@@ -1072,8 +1072,8 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 | WM16 | nav | `/admin/contributors` | A | Filter chips (?cap=), search (?q=), Pager, leader capability from the organisations list | – | accounts | n/a | ✅ | ✅ | ✅ | – |
 | WM17 | write | `/admin/contributors` | A | Per-row "Remove" (no confirm step) → server action deleteContributor → account deleted; a sole leader is refused | – | accounts | n/a | ✅ | ✅ | ✅ | – |
 | WM18 | write | `/admin/organizations` | A | "New organisation" drawer (?new=1): name, description, first leader → server action createOrg, then back to the list | – | organisations | n/a | ✅ | ✅ | ✅ | – |
-| WM19 | write | `/admin/organizations` | A | Manage drawer (?manage=:id) "Appoint" a leader → server action addLeader | – | organisation leaders | n/a | ✅ | ✅ | ✅ | – |
-| WM20 | write | `/admin/organizations` | A | Manage drawer leader "Remove" → server action removeLeader | – | organisation leaders | n/a | ✅ | ✅ | ✅ | – |
+| WM19 | write | `/admin/organizations` | A | Manage drawer (?manage=:id) "Appoint" a leader → server action addLeader | leader_added | organisation leaders | n/a | ✅ | ✅ | ✅ | – |
+| WM20 | write | `/admin/organizations` | A | Manage drawer leader "Remove" → server action removeLeader | leader_removed | organisation leaders | n/a | ✅ | ✅ | ✅ | – |
 | WM21 | write | `/admin/organizations` | A | Manage drawer "Verify" / "Unverify" → server action setVerified | – | Verified seal | n/a | ✅ | ✅ | ✅ | – |
 | WM22 | write | `/admin/organizations` | A | Manage drawer "Suspend organisation" / "Reactivate organisation" → server action setStatus | – | organisation standing | n/a | ✅ | ✅ | ✅ | – |
 | WM23 | write | `/admin/organization-requests` | A | "Approve and create it" → organisation created with the requester as first leader in one transaction | org_request_approved | pending organisation requests, organisations | P | ✅ | ✅ | ✅ | – |
@@ -1444,6 +1444,9 @@ Generated by `scripts/journeys/notifications.mjs`. Every `NotificationType` need
 | `test_print_passed` | `routes/admin.ts` | `notifications/handoffs-exchange.test.ts` | `admin/test-prints.spec.ts` | none |
 | `test_print_failed` | `routes/admin.ts` | `notifications/handoffs-exchange.test.ts` | `admin/test-prints.spec.ts` | none |
 | `handover_confirmed` | `routes/toy-transactions.ts` | `notifications/handoffs-exchange.test.ts` | `exchanges/build.spec.ts`, `exchanges/gift.spec.ts`, `exchanges/print.spec.ts`, `exchanges/swap.spec.ts`, `toy-exchange.spec.ts` | `build-thread.spec.ts`, `exchanges.spec.ts`, `print-job-printer.spec.ts`, `toy-exchange-edges.spec.ts` |
+| `leader_added` | `routes/admin.ts` | `notifications/handoffs-leaders.test.ts` | `admin/organizations.spec.ts` | `admin-organisations.spec.ts` |
+| `leader_removed` | `routes/admin.ts` | `notifications/handoffs-leaders.test.ts` | `admin/organizations.spec.ts` | `admin-organisations.spec.ts` |
+| `org_event_deleted` | `routes/organizations.ts` | `events/leader-events.test.ts`, `notifications/handoffs-leaders.test.ts` | `organisation/publish.spec.ts` | none |
 
 | Count | Computed by | Asserted by |
 |---|---|---|

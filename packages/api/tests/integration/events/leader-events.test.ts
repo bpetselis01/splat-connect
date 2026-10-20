@@ -112,7 +112,7 @@ describe('creating a published story', () => {
 })
 
 describe('removing an event people registered for', () => {
-  it('WB17 deletes the event and its registrations and tells the registrant nothing', async () => {
+  it('WB17 deletes the event and its registrations and tells the registrant it is gone (org_event_deleted)', async () => {
     const id = await newEvent({ status: 'published', title: 'Removed with registrants' })
     await adminClient().from('org_event_registrations').insert({ event_id: id, user_id: registrant.id, name: 'Reg', email: 'reg@example.com', answers: {} })
     const res = await call(leader, `/organizations/${orgId}/events/${id}`, 'DELETE')
@@ -120,9 +120,8 @@ describe('removing an event people registered for', () => {
     expect(((await res.json()) as { id: string }).id).toBe(id)
     expect((await adminClient().from('org_events').select('id').eq('id', id)).data).toEqual([])
     expect((await adminClient().from('org_event_registrations').select('id').eq('event_id', id)).data).toEqual([])
-    // Current behaviour, recorded for the product decision (Q5): nobody is told.
-    const told = ((await adminClient().from('notifications').select('type').eq('recipient_id', registrant.id)).data ?? []) as Array<{ type: string }>
-    expect(told).toEqual([])
+    const told = ((await adminClient().from('notifications').select('type, body').eq('recipient_id', registrant.id)).data ?? []) as Array<{ type: string; body: string | null }>
+    expect(told).toEqual([{ type: 'org_event_deleted', body: 'Removed with registrants' }])
   })
 })
 

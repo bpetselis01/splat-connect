@@ -13,7 +13,7 @@ describe('notificationBucket', () => {
    * compile error; this makes a *wrong* value a test failure.
    */
   it('gives every notification type a bucket', () => {
-    expect(NOTIFICATION_TYPES.length).toBe(45)
+    expect(NOTIFICATION_TYPES.length).toBe(48)
     for (const type of NOTIFICATION_TYPES) {
       expect(['tutorials', 'exchanges', 'challenges', 'organisations']).toContain(notificationBucket(type))
     }
@@ -60,8 +60,11 @@ describe('notificationBucket', () => {
      organisation and counts nowhere else. */
   it('buckets organisation news to organisations', () => {
     expect(typesInBucket('organisations').sort()).toEqual([
+      'leader_added',
+      'leader_removed',
       'org_event_cancelled',
       'org_event_changed',
+      'org_event_deleted',
       'org_event_published',
       'org_request_approved',
       'org_request_declined',
