@@ -23,7 +23,7 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 | mobile | My tutorials (author) | 25 | 0 | 0 |
 | mobile | Events, recycling, saved | 18 | 0 | 0 |
 | mobile | Toy library and my toys | 21 | 0 | 0 |
-| web | Sign in and sign up | 16 | 0 | 0 |
+| web | Sign in and sign up | 20 | 0 | 0 |
 | web | Gates and onboarding | 6 | 0 | 0 |
 | web | Route protection (middleware) | 7 | 0 | 0 |
 | web | Organisation leader (web) | 36 | 0 | 0 |
@@ -559,9 +559,9 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 
 ## Web
 
-### Sign in and sign up — 16 rows · 0 gaps · 0 waived
+### Sign in and sign up — 20 rows · 0 gaps · 0 waived
 
-<details><summary>16 rows, no gaps</summary>
+<details><summary>20 rows, no gaps</summary>
 
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
@@ -581,6 +581,10 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 | WA14 | nav | `/signup` | anon | "Back to sign in" on "Check your email" → /login | – | – | n/a | ✅ | ✅ | – | – |
 | WA15 | nav | `/signup` | anon | "Sign in" / "Create account" tabs switch screens, keeping the query | – | – | n/a | ✅ | ✅ | – | – |
 | WA16 | nav | `/auth/confirmed` | anon | "Continue" and the 3 s countdown → /login?next=; confirming does not sign the user in | – | – | n/a | ✅ | ✅ | – | – |
+| WA31 | nav | `/login/forgot` | anon | "Forgot password?" on sign-in carries the email here; Send code → resetPasswordForEmail, then /login/reset | recovery mail | – | n/a | ✅ | ✅ | ✅ | – |
+| WA32 | nav | `/login/forgot` | anon | an email with no account gets the same "code is on its way" screen; only offline or rate limited stops it | – | – | n/a | ✅ | ✅ | ✅ | – |
+| WA33 | nav | `/login/reset` | anon | code + new password → verifyOtp(recovery) + updateUser → signed in at ?next= or the role landing; a wrong code keeps the password; a failed save retries updateUser alone | – | – | n/a | ✅ | ✅ | ✅ | – |
+| WA34 | nav | `/login/reset` | anon | a password under six characters or a missing digit is refused before the code is spent | – | – | n/a | ✅ | ✅ | ✅ | – |
 
 </details>
 
