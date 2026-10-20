@@ -1,3 +1,4 @@
+import type { Route } from 'next'
 /**
  * Validates a `?next=` query value before it is ever handed to
  * `window.location.href`. That assignment is an open redirect if `next` is
@@ -33,17 +34,17 @@ export function authUrl(
   kind: 'login' | 'signup',
   pathWithQuery: string | null | undefined,
   extraParams: Record<string, string> = {}
-): string {
+): Route {
   const params = new URLSearchParams()
   const next = sanitiseNextPath(pathWithQuery)
   if (next) params.set('next', next)
   for (const [k, v] of Object.entries(extraParams)) params.set(k, v)
   const query = params.toString()
-  return query ? `/${kind}?${query}` : `/${kind}`
+  return (query ? `/${kind}?${query}` : `/${kind}`) as Route
 }
 
 /** The contributor-terms screen, returning to `pathWithQuery` once accepted. */
-export function termsUrl(pathWithQuery: string | null | undefined): string {
+export function termsUrl(pathWithQuery: string | null | undefined): Route {
   const next = sanitiseNextPath(pathWithQuery)
-  return `/onboarding/contributor-terms${next ? `?next=${encodeURIComponent(next)}` : ''}`
+  return `/onboarding/contributor-terms${next ? `?next=${encodeURIComponent(next)}` : ''}` as Route
 }
