@@ -56,4 +56,14 @@ describe('thread actions', () => {
     await expect(accept('t1', 'exchange')).rejects.toThrow('API error: status 409')
     expect(revalidate).not.toHaveBeenCalled()
   })
+
+  it('returns the API sentence when a decline is refused, so production does not mask it', async () => {
+    vi.mocked(apiClient.post).mockRejectedValue(new Error('API POST /api/toy-transactions/t1/reject failed with status 409: This request is no longer open'))
+    expect(await reject('t1', 'exchange', 'Already given away')).toEqual({ ok: false, error: 'This request is no longer open' })
+    expect(revalidate).not.toHaveBeenCalled()
+  })
+
+  it('returns ok when a decline goes through', async () => {
+    expect(await reject('t1', 'exchange', 'Already given away')).toEqual({ ok: true })
+  })
 })

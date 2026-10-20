@@ -28,6 +28,7 @@ import {
 import { safePhotoSrc } from '@/lib/photo-src'
 import { isOwnerSide, printRequestExpired, DECLINE_REASON_MAX } from '@splat-connect/types'
 import type { PickupAddress, ToyTransactionDetail } from '@splat-connect/types'
+import type { ActionResult } from '@/app/dashboard/exchanges/actions'
 import { AcceptPickupDialog } from '@/components/accept-pickup-dialog'
 import { ExchangeChat } from '@/components/exchange-chat'
 import { Badge } from '@/components/badge'
@@ -64,7 +65,7 @@ export function ToyTransactionThread({
   onAccept: (address: PickupAddress | null) => Promise<void>
   /** The reason is required on a print job: "declining needs a reason" is the
    *  artboard's rule, and the API refuses one without it. */
-  onReject: (reason?: string) => Promise<void>
+  onReject: (reason?: string) => Promise<ActionResult>
   onWithdraw: () => Promise<void>
   onConfirm: (code: string) => Promise<void>
   /** The tinted next-step card the canonical layout puts first in the sidebar.
@@ -101,13 +102,19 @@ export function ToyTransactionThread({
     senderId === tx.requester_id ? tx.requester_name : tx.owner_name
   const otherPartyName = isOwner ? tx.requester_name : tx.owner_name
 
-  async function run(fn: () => Promise<void>) {
+  async function run(fn: () => Promise<void | ActionResult>): Promise<boolean> {
     setBusy(true)
     setError(null)
     try {
-      await fn()
+      const result = await fn()
+      if (result && !result.ok) {
+        setError(result.error)
+        return false
+      }
+      return true
     } catch {
       setError('Something went wrong. Please try again.')
+      return false
     } finally {
       setBusy(false)
     }
@@ -256,8 +263,7 @@ export function ToyTransactionThread({
                   e.preventDefault()
                   const reason = declineReason.trim()
                   if (!reason) return
-                  setDeclineReason(null)
-                  await run(() => onReject(reason))
+                  if (await run(() => onReject(reason))) setDeclineReason(null)
                 }}
               >
                 <label htmlFor="decline-reason" className="field-label">
@@ -601,7 +607,9 @@ export function ToyTransactionThread({
           nameFor={nameFor}
           canSend={open}
           busy={busy}
-          onSend={(body) => run(() => onSendMessage(body))}
+          onSend={async (body) => {
+            await run(() => onSendMessage(body))
+          }}
           variant={board ? 'board' : undefined}
           head={chatHead}
         />

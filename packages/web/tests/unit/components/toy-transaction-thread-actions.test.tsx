@@ -10,7 +10,7 @@ function mount(tx: ToyTransactionDetail, viewerId: string, board = true) {
   const h = {
     onSendMessage: vi.fn().mockResolvedValue(undefined),
     onAccept: vi.fn().mockResolvedValue(undefined),
-    onReject: vi.fn().mockResolvedValue(undefined),
+    onReject: vi.fn().mockResolvedValue({ ok: true }),
     onWithdraw: vi.fn().mockResolvedValue(undefined),
     onConfirm: vi.fn().mockResolvedValue(undefined),
   }
@@ -44,6 +44,25 @@ describe('ToyTransactionThread actions on a gift or swap', () => {
     fireEvent.change(screen.getByLabelText('Why you cannot take it'), { target: { value: '  Already given away  ' } })
     fireEvent.click(send)
     await vi.waitFor(() => expect(h.onReject).toHaveBeenCalledWith('Already given away'))
+  })
+
+  it('WX07 keeps the typed reason and shows the API sentence when the decline is refused', async () => {
+    const h = mount(detail(), 'owner-1', false)
+    h.onReject.mockResolvedValue({ ok: false, error: 'This request is no longer open' })
+    fireEvent.click(screen.getByRole('button', { name: 'Decline' }))
+    fireEvent.change(screen.getByLabelText('Why you cannot take it'), { target: { value: 'Already given away' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Send the decline' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('This request is no longer open')
+    expect(screen.getByLabelText('Why you cannot take it')).toHaveValue('Already given away')
+  })
+
+  it('WX07 closes the form once the decline goes through', async () => {
+    const h = mount(detail(), 'owner-1', false)
+    fireEvent.click(screen.getByRole('button', { name: 'Decline' }))
+    fireEvent.change(screen.getByLabelText('Why you cannot take it'), { target: { value: 'Already given away' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Send the decline' }))
+    await vi.waitFor(() => expect(h.onReject).toHaveBeenCalledWith('Already given away'))
+    await vi.waitFor(() => expect(screen.queryByLabelText('Why you cannot take it')).toBeNull())
   })
 
   it('WX07 keeps Send the decline disabled for a whitespace-only reason', () => {
