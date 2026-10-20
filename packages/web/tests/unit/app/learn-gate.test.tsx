@@ -115,9 +115,9 @@ describe('LearnGate on a course page', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Switches, renamed' })).toBeTruthy()
   })
 
-  it('WE02 sends a signed-out reader to sign in when sign-in is needed, and lets a member in', async () => {
+  it('WE02 sends a signed-out reader to sign in, then back to the lesson, when sign-in is needed, and lets a member in', async () => {
     serve({ ...LEARN_COURSE, shown_as: 'sign_in' })
-    await expect(renderPage(SwitchTypes)).rejects.toThrow('redirect /login?next=/learn')
+    await expect(renderPage(SwitchTypes)).rejects.toThrow('redirect /login?next=%2Flearn%2Fswitch-types')
     caps.mockResolvedValue({ isAdmin: false })
     await renderPage(SwitchTypes)
     expect(screen.getByRole('heading', { level: 1, name: 'Switch types explained' })).toBeTruthy()

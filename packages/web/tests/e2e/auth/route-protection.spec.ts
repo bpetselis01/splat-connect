@@ -11,13 +11,13 @@ import { test, expect } from '@playwright/test'
 import { signIn, createContributor, createAdmin, acceptTerms, deleteUser } from '../helpers'
 
 test('WA23 an unauthenticated visitor is redirected from /dashboard to /login', async ({ page }) => {
-  await page.goto('/dashboard')
-  await expect(page).toHaveURL(/\/login$/)
+  await page.goto('/dashboard?tab=a')
+  await expect(page).toHaveURL(/\/login\?next=%2Fdashboard%3Ftab%3Da$/)
 })
 
 test('WA23 an unauthenticated visitor is redirected from /upload to /login', async ({ page }) => {
   await page.goto('/upload')
-  await expect(page).toHaveURL(/\/login$/)
+  await expect(page).toHaveURL(/\/login\?next=%2Fupload$/)
 })
 
 test('WA23 an unauthenticated visitor is redirected from /my-tutorials to /login', async ({ page }) => {
@@ -42,7 +42,7 @@ test('WA23 an unauthenticated visitor is redirected from /notifications to /logi
   page,
 }) => {
   await page.goto('/notifications')
-  await expect(page).toHaveURL(/\/login$/)
+  await expect(page).toHaveURL(/\/login\?next=%2Fnotifications$/)
 })
 
 test('WA25 a contributor is redirected away from /admin', async ({ page }) => {
@@ -75,24 +75,22 @@ test('WA27 a member without the terms is sent from /upload to the terms gate, wi
     await page.waitForURL(/\/onboarding\/contributor-terms/)
 
     await page.goto('/upload?draft=1')
-    await expect(page).toHaveURL(/\/onboarding\/contributor-terms\?next=%2Fupload$/)
+    await expect(page).toHaveURL(/\/onboarding\/contributor-terms\?next=%2Fupload%3Fdraft%3D1$/)
     await expect(page.getByRole('heading', { level: 1, name: 'Contributor terms' })).toBeVisible()
   } finally {
     await deleteUser(contributor.id)
   }
 })
 
-// Q4, recorded as it is: the public directory is behind the terms gate for a signed-in
-// member who has not accepted, and open to everyone else.
-test('WA28 /organizations sends a member without the terms to the terms gate', async ({ page }) => {
+test('WA28 /organizations stays open to a member without the terms', async ({ page }) => {
   const contributor = await createContributor()
   try {
     await signIn(page, contributor.email, contributor.password)
     await page.waitForURL(/\/onboarding\/contributor-terms/)
 
     await page.goto('/organizations')
-    await expect(page).toHaveURL(/\/onboarding\/contributor-terms\?next=%2Forganizations$/)
-    await expect(page.getByRole('heading', { level: 1, name: 'Contributor terms' })).toBeVisible()
+    await expect(page).toHaveURL(/\/organizations$/)
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
   } finally {
     await deleteUser(contributor.id)
   }

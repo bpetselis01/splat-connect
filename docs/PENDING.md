@@ -119,13 +119,13 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 - Platforms: web
 - Needs: Decided 2026-10-20: every redirect to /login carries ?next= and sign-in honours it, with a same-origin allow-list; one helper, eight call sites. Whether to add a `next` param to every redirect to `/login`.
-- In code: `packages/web/middleware.ts`
+- In code: _none yet_
 
 ### `org-directory-terms-gate` — Organisations pages and the terms gate
 
 - Platforms: web
 - Needs: Decided 2026-10-20: remove /organizations from the middleware terms list; public read pages never require terms. Add a test. Whether to remove `/organizations` from the middleware terms list.
-- In code: `packages/web/middleware.ts`
+- In code: _none yet_
 
 ### `silent-handoffs` — Hand-offs that tell nobody
 
@@ -173,7 +173,7 @@ Finishing one: do the work at each reference, delete the references, set `shippe
 
 - Platforms: web, api
 - Needs: Decided 2026-10-20: fail closed with a retry message; the API re-checks acceptance on the writes the gate protects (guide submit, exchange requests, org actions), not on reads. Whether the middleware fails closed, and whether toy, exchange and printer writes check terms in the API.
-- In code: `packages/web/middleware.ts`
+- In code: _none yet_
 
 ### `swallowed-failures` — Failures that look like success
 

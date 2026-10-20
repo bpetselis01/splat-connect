@@ -20,20 +20,21 @@ beforeEach(() => {
 })
 
 describe('the organisations directory and the contributor terms gate', () => {
-  it('WN03 sends a signed-in member without the current contributor terms to the terms page, keeping the path', async () => {
-    const res = await visit('/organizations')
-    expect(res.status).toBe(307)
-    expect(res.headers.get('location')).toBe('http://localhost:3105/onboarding/contributor-terms?next=%2Forganizations')
+  it('WN03 lets a signed-in member without the current contributor terms read the directory and a public profile', async () => {
+    for (const path of ['/organizations', '/organizations/o1/public?x=1']) {
+      const res = await visit(path)
+      expect(res.status).toBe(200)
+      expect(res.headers.get('location')).toBeNull()
+    }
+    expect(agreements).not.toHaveBeenCalled()
   })
 
-  it('WN03 gates the public profile the same way (the query string is dropped)', async () => {
-    const res = await visit('/organizations/o1/public?x=1')
-    expect(res.headers.get('location')).toBe(
-      'http://localhost:3105/onboarding/contributor-terms?next=%2Forganizations%2Fo1%2Fpublic'
-    )
+  it('WN03 still gates /dashboard for the same member', async () => {
+    const res = await visit('/dashboard')
+    expect(res.headers.get('location')).toBe('http://localhost:3105/onboarding/contributor-terms?next=%2Fdashboard')
   })
 
-  it('WN03 lets a signed-out visitor through, which is the inconsistency the audit records (Q4)', async () => {
+  it('WN03 lets a signed-out visitor through', async () => {
     getUser.mockResolvedValue({ data: { user: null } })
     const res = await visit('/organizations')
     expect(res.status).toBe(200)

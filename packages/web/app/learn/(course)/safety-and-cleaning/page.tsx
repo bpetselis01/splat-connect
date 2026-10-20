@@ -99,7 +99,7 @@ function SafetyAndCleaning() {
 /** Gated per page, not per layout: see components/learn-gate.tsx. */
 export default function GatedSafetyAndCleaning() {
   return (
-    <LearnGate>
+    <LearnGate path="/learn/safety-and-cleaning">
       <SafetyAndCleaning />
     </LearnGate>
   )

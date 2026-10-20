@@ -23,3 +23,21 @@ export function sanitiseNextPath(next: string | null | undefined): string | null
 
   return normalised
 }
+
+/**
+ * The one builder for a sign-in or sign-up link that returns to `pathWithQuery`.
+ * It sanitises its input, so a caller can pass a request-derived path without
+ * checking it first; an unsafe or empty path yields the bare auth URL.
+ */
+export function authUrl(
+  kind: 'login' | 'signup',
+  pathWithQuery: string | null | undefined,
+  extraParams: Record<string, string> = {}
+): string {
+  const params = new URLSearchParams()
+  const next = sanitiseNextPath(pathWithQuery)
+  if (next) params.set('next', next)
+  for (const [k, v] of Object.entries(extraParams)) params.set(k, v)
+  const query = params.toString()
+  return query ? `/${kind}?${query}` : `/${kind}`
+}
