@@ -9,24 +9,19 @@
  * Copy for /toy-library and /printing is reused verbatim from the mobile tabs
  * so a parent reads the same sentence on both surfaces.
  *
- * Diverges from mobile here: the web surface can also capture interest via
- * `featureKey` (see notify-form.tsx), so build order becomes a ranked list
- * instead of a guess. Mobile has no such form, and stays on the plain
- * "{label} is coming soon." heading — leave it untouched.
+ * Mobile stays on the plain "{label} is coming soon." heading — leave it untouched.
  */
 import Link from 'next/link'
 import type { Route } from 'next'
 import type { Icon as PhosphorIcon } from '@phosphor-icons/react'
 import { PENDING, type PendingId } from '@splat-connect/types'
 import { BookOpen } from '@phosphor-icons/react/dist/ssr'
-import { NotifyForm } from '@/components/notify-form'
 
 export function ComingSoon({
   pending,
   label: givenLabel,
   description: givenDescription,
   steps,
-  featureKey,
   alternatives,
   icon: Glyph,
 }: {
@@ -36,11 +31,9 @@ export function ComingSoon({
   label?: string
   description?: string
   steps: string[]
-  /** When set, the page offers to notify. Omit for a plain placeholder. */
-  featureKey?: string
   /**
    * Opt-in to the board's "Not built yet" screen: a tinted glyph tile, a
-   * NOT BUILT YET pill, the notify row, and these as "In the meantime" links
+   * NOT BUILT YET pill, and these as "In the meantime" links
    * in place of the steps. Callers without it keep the plan layout below.
    */
   alternatives?: Array<{ label: string; href: Route }>
@@ -66,7 +59,6 @@ export function ComingSoon({
           {label}
         </h1>
         <p className="mt-3.5 text-lg leading-[1.6] text-muted">{description}</p>
-        {featureKey && <NotifyForm featureKey={featureKey} pill />}
         <div className="mt-10 border-t border-line pt-7">
           <p className="mb-3.5 text-[15px] text-muted">In the meantime</p>
           <div className="flex flex-wrap justify-center gap-2.5">
@@ -97,11 +89,6 @@ export function ComingSoon({
           <strong className="text-ink">Not built yet</strong> — here&apos;s the plan.
         </p>
         <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted">{description}</p>
-        {featureKey && (
-          <div className="w-full max-w-md">
-            <NotifyForm featureKey={featureKey} />
-          </div>
-        )}
       </div>
 
       {steps.length > 0 && (
