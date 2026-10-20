@@ -723,6 +723,25 @@ select * from (values
      where conname = 'notifications_type_check'
        and conrelid = 'public.notifications'::regclass)),
 
+  -- 142. Until this is on the remote every one of the fifteen hand-off types
+  -- fails the CHECK and is only logged; one probe per group is enough, the
+  -- migration is a single statement.
+  ('142 notifications_type_check permits the fifteen hand-off types',
+   (select pg_get_constraintdef(oid) like '%recycling_received%'
+       and pg_get_constraintdef(oid) like '%handover_confirmed%'
+       and pg_get_constraintdef(oid) like '%leader_added%'
+       and pg_get_constraintdef(oid) like '%org_event_deleted%'
+       and pg_get_constraintdef(oid) like '%contact_received%'
+      from pg_constraint
+     where conname = 'notifications_type_check'
+       and conrelid = 'public.notifications'::regclass)),
+
+  ('142 notifications_one_subject allows a notification with no subject',
+   (select pg_get_constraintdef(oid) like '%<= 1%'
+      from pg_constraint
+     where conname = 'notifications_one_subject'
+       and conrelid = 'public.notifications'::regclass)),
+
   ('137 notifications.member_report_id exists and is a counted subject',
    (select count(*) = 1 from information_schema.columns
       where table_schema = 'public' and table_name = 'notifications'

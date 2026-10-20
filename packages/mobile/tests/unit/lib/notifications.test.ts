@@ -48,6 +48,9 @@ describe('COPY', () => {
   })
 })
 
+// Types whose row is the whole message.
+const STAYS_IN_INBOX = new Set<NotificationType>(['collaborator_invited', 'org_request_declined'])
+
 describe('linkFor', () => {
   it('opens Ask first for a question about an unclaimed build', () => {
     expect(linkFor(notification({ type: 'build_question', toy_transaction_id: 'b1' }))).toBe('/exchanges/build/ask/b1')
@@ -148,7 +151,9 @@ describe('linkFor', () => {
         org_id: type === 'org_thanked' ? 'o1' : null,
       })
       // An invite's destination is the inbox itself, where Accept / Decline live.
-      if (type === 'collaborator_invited') continue
+      // A declined organisation request has no mobile screen to open: the form
+      // is web-only, and the reason is the row's second line.
+      if (STAYS_IN_INBOX.has(type)) continue
       expect(linkFor(n)).not.toBe('/inbox')
     }
   })

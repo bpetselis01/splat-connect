@@ -266,6 +266,13 @@ describe('NotificationsList', () => {
     ['report_resolved', { member_report_id: 'r1', tutorial_id: null, actor_name: 'SPLAT' }, 'Your report was looked at', '/dashboard/reports'],
     ['backing_accepted', { tutorial_id: 't9', tutorial_title: 'Spoon Holder', actor_name: 'Northbank' }, 'Northbank agreed to back "Spoon Holder"', '/tutorials/t9'],
     ['backing_declined', { tutorial_id: 't9', tutorial_title: 'Spoon Holder', actor_name: 'Northbank' }, 'Northbank can\'t back "Spoon Holder" right now', '/tutorials/t9'],
+    ['recycling_received', { org_id: 'o1', actor_name: 'Northbank' }, 'Northbank received your drop-off', '/get-involved/recycling'],
+    ['recycling_declined', { org_id: 'o1', actor_name: 'Northbank' }, 'Northbank couldn\'t take your drop-off', '/get-involved/recycling'],
+    ['org_request_approved', { org_id: 'o1', actor_name: 'Northbank' }, 'Northbank was approved and you now lead it', '/dashboard/organisation'],
+    ['org_request_declined', { actor_name: 'Northbank' }, 'Northbank wasn\'t approved', '/get-involved/organisations/request'],
+    ['test_print_passed', { actor_name: 'Pixel' }, 'The test print for Pixel passed', '/dashboard/printers'],
+    ['test_print_failed', { org_id: 'o1', actor_name: 'Pixel' }, 'The test print for Pixel didn\'t pass', '/dashboard/printers'],
+    ['handover_confirmed', { toy_transaction_id: 'tx1', toy_name: 'Switch car', actor_name: 'Sam' }, 'Sam confirmed the handover of Switch car', '/dashboard/exchanges/tx1'],
   ] as const)('WD38 renders %s and routes it by its subject', async (type, fields, copy, href) => {
     render(
       <NotificationsList

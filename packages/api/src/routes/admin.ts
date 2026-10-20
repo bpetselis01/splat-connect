@@ -8,6 +8,7 @@ import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { deleteAccount } from '../account-deletion.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { notifyTutorialReviewed } from '../review-notifications.js'
+import { notify } from '../notify.js'
 import { ORG_COLUMNS } from './organizations.js'
 import { systemMessage, removeParticipant, withPhotoUrl } from './toy-ideas.js'
 import type { AuthVariables } from '../middleware/auth.js'
@@ -663,6 +664,14 @@ admin.post('/organization-requests/:id/approve', async (c) => {
   const body = (await c.req.json().catch(() => ({}))) as { note?: unknown }
   const note = typeof body.note === 'string' && body.note.trim() ? body.note.trim() : null
 
+  // The RPC does not return the requester, so read it first (142). A missing
+  // row (or a non-admin) falls through to the RPC's own outcome.
+  const { data: request } = await createAdminClient()
+    .from('organization_requests')
+    .select('requester_id, org_name')
+    .eq('id', c.req.param('id'))
+    .maybeSingle()
+
   const { data, error } = await supabase.rpc('approve_organization_request', {
     p_request_id: c.req.param('id'),
     p_note: note,
@@ -672,6 +681,22 @@ admin.post('/organization-requests/:id/approve', async (c) => {
   const result = data as { outcome: string; organization_id?: string; status?: string }
   if (result.outcome === 'forbidden') return c.json({ error: 'Admins only' }, 403)
   if (result.outcome === 'missing') return c.json({ error: 'Not found' }, 404)
+  // Only the call that approved it tells the requester; an 'already_reviewed'
+  // repeat sends nothing.
+  if (result.outcome === 'approved' && request) {
+    await notify(
+      [
+        {
+          recipient_id: request.requester_id,
+          type: 'org_request_approved',
+          org_id: result.organization_id,
+          actor_name: request.org_name,
+          body: notificationBody(note),
+        },
+      ],
+      'org_request_approved'
+    )
+  }
   // Idempotent rather than an error: a double-click must not mint two
   // organisations, and the first outcome is more useful than a 409.
   return c.json(result)
@@ -701,6 +726,17 @@ admin.post('/organization-requests/:id/decline', async (c) => {
     .maybeSingle()
   if (error) return c.json({ error: error.message }, 500)
   if (!data) return c.json({ error: 'That request is not open.' }, 404)
+  await notify(
+    [
+      {
+        recipient_id: data.requester_id,
+        type: 'org_request_declined',
+        actor_name: data.org_name,
+        body: notificationBody(note),
+      },
+    ],
+    'org_request_declined'
+  )
   return c.json(data)
 })
 
@@ -983,6 +1019,34 @@ admin.get('/test-prints', async (c) => {
   return c.json(out)
 })
 
+/** The printer's owner, or every current leader of the owning organisation (142). */
+async function notifyTestPrintVerdict(print: { verdict: string; note: string | null; printer_id: string }) {
+  const sb = createAdminClient()
+  const { data: printer } = await sb
+    .from('printers')
+    .select('name, owner_id, owner_org_id')
+    .eq('id', print.printer_id)
+    .maybeSingle()
+  if (!printer) return
+  const recipients: string[] = printer.owner_org_id
+    ? ((await sb.from('org_leaders').select('user_id').eq('org_id', printer.owner_org_id)).data ?? []).map(
+        (r) => r.user_id as string
+      )
+    : printer.owner_id
+      ? [printer.owner_id as string]
+      : []
+  await notify(
+    recipients.map((recipient_id) => ({
+      recipient_id,
+      type: print.verdict === 'pass' ? 'test_print_passed' : 'test_print_failed',
+      ...(printer.owner_org_id ? { org_id: printer.owner_org_id } : {}),
+      actor_name: printer.name,
+      body: notificationBody(print.note),
+    })),
+    'test_print_verdict'
+  )
+}
+
 /**
  * PATCH /api/admin/test-prints/:id
  *
@@ -1001,10 +1065,14 @@ admin.patch('/test-prints/:id', async (c) => {
     // Decided once: verified() reads the latest reviewed_at, so re-deciding an
     // old print would override a newer verdict. Atomic, not read-then-write.
     .is('verdict', null)
-    .select('id, verdict, note')
+    .select('id, verdict, note, printer_id')
     .maybeSingle()
   if (error && error.code !== INVALID_TEXT_REPRESENTATION) return c.json({ error: error.message }, 500)
-  if (data) return c.json(data)
+  if (data) {
+    await notifyTestPrintVerdict(data)
+    const { printer_id: _printer, ...visible } = data
+    return c.json(visible)
+  }
   const { data: exists } = error
     ? { data: null }
     : await createAdminClient().from('printer_test_prints').select('id').eq('id', c.req.param('id')).maybeSingle()

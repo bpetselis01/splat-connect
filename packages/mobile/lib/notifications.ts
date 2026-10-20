@@ -31,6 +31,11 @@ export function linkFor(n: Notification, isAdmin = false): string {
   // own, so /news reads which organisation it belongs to and opens that profile.
   if (n.org_conversation_id) return `/messages/${n.org_conversation_id}`
   if (n.type === 'org_thanked') return '/organisation/profile'
+  // 142: web's links for an organisation subject, or none. Mobile has no
+  // request form, so a declined request opens the inbox.
+  if (n.type === 'recycling_received' || n.type === 'recycling_declined') return '/explore/recycling'
+  if (n.type === 'org_request_approved') return '/organisation'
+  if (n.type === 'test_print_passed' || n.type === 'test_print_failed') return '/print-for-others'
   if (n.org_event_id) return `/events/${n.org_event_id}`
   if (n.org_story_id) return `/news/story/${n.org_story_id}`
   // Answered BEFORE the tutorial_id branch, exactly as on web: the recipient

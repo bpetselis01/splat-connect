@@ -102,7 +102,8 @@ test('L14 Contaminated turns the drop-off away: nothing is credited and it canno
   baseURL,
 }) => {
   const leader = await signInAsNewContributor(page)
-  const orgId = await makeOrgLeader(leader.id, uniqueTitle('E2E Turning Away Org'))
+  const orgName = uniqueTitle('E2E Turning Away Org')
+  const orgId = await makeOrgLeader(leader.id, orgName)
   const family = await createContributor()
   const familyName = uniqueTitle('Contaminating Family')
   await renameProfile(family.id, familyName)
@@ -132,6 +133,9 @@ test('L14 Contaminated turns the drop-off away: nothing is credited and it canno
     await familyPage.goto('/explore/recycling')
     await expect(familyPage.getByText('Turned away', { exact: true })).toBeVisible()
     await expect(familyPage.getByText('0 g of print credit unspent')).toBeVisible()
+    // recycling_declined: the family is told in their inbox.
+    await familyPage.goto('/inbox')
+    await expect(familyPage.getByText(`${orgName} couldn't take your drop-off`)).toBeVisible()
   } finally {
     await familyPage.context().close()
   }

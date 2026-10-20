@@ -1789,6 +1789,13 @@ export type NotificationType =
   | 'org_story_published'
   | 'org_message'
   | 'org_thanked'
+  | 'recycling_received'
+  | 'recycling_declined'
+  | 'org_request_approved'
+  | 'org_request_declined'
+  | 'test_print_passed'
+  | 'test_print_failed'
+  | 'handover_confirmed'
 
 /** Which My SPLAT card a notification's badge belongs to. */
 export type NotificationBucket = 'tutorials' | 'exchanges' | 'challenges' | 'organisations'
@@ -1859,6 +1866,13 @@ const NOTIFICATION_BUCKET = {
   org_event_cancelled: 'organisations',
   org_story_published: 'organisations',
   org_thanked: 'organisations',
+  recycling_received: 'exchanges',
+  recycling_declined: 'exchanges',
+  org_request_approved: 'organisations',
+  org_request_declined: 'organisations',
+  test_print_passed: 'exchanges',
+  test_print_failed: 'exchanges',
+  handover_confirmed: 'exchanges',
 } satisfies Record<NotificationType, NotificationBucket>
 
 /** Every notification type, for iteration at runtime — the union alone is compile-time only. */
@@ -1942,6 +1956,15 @@ export const COPY: Record<NotificationType, (n: Notification) => string> = {
       : `${n.actor_name} messaged ${n.tutorial_title ?? 'your organisation'}`,
   // The byline the family typed, or "A family" when they gave none.
   org_thanked: (n) => `${n.actor_name} said thanks to your organisation`,
+  // 142. actor_name is the organisation (or printer) the decision came from;
+  // the leader's note or reason rides in body and shows as the second line.
+  recycling_received: (n) => `${n.actor_name} received your drop-off`,
+  recycling_declined: (n) => `${n.actor_name} couldn't take your drop-off`,
+  org_request_approved: (n) => `${n.actor_name} was approved and you now lead it`,
+  org_request_declined: (n) => `${n.actor_name} wasn't approved`,
+  test_print_passed: (n) => `The test print for ${n.actor_name} passed`,
+  test_print_failed: (n) => `The test print for ${n.actor_name} didn't pass`,
+  handover_confirmed: (n) => `${n.actor_name} confirmed the handover of ${toy(n)}`,
 }
 
 // A type the database allows but this build has no line for — a newer API,

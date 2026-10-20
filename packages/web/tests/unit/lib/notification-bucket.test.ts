@@ -13,7 +13,7 @@ describe('notificationBucket', () => {
    * compile error; this makes a *wrong* value a test failure.
    */
   it('gives every notification type a bucket', () => {
-    expect(NOTIFICATION_TYPES.length).toBe(38)
+    expect(NOTIFICATION_TYPES.length).toBe(45)
     for (const type of NOTIFICATION_TYPES) {
       expect(['tutorials', 'exchanges', 'challenges', 'organisations']).toContain(notificationBucket(type))
     }
@@ -37,11 +37,16 @@ describe('notificationBucket', () => {
       'build_approved',
       'build_question',
       'build_shot_posted',
+      'handover_confirmed',
       'org_message',
       'print_ready',
       'print_started',
       'profile_thanked',
+      'recycling_declined',
+      'recycling_received',
       'report_resolved',
+      'test_print_failed',
+      'test_print_passed',
       'toy_accepted',
       'toy_message',
       'toy_rejected',
@@ -58,6 +63,8 @@ describe('notificationBucket', () => {
       'org_event_cancelled',
       'org_event_changed',
       'org_event_published',
+      'org_request_approved',
+      'org_request_declined',
       'org_story_published',
       'org_thanked',
     ])
