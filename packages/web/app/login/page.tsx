@@ -5,9 +5,6 @@ import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { authPath, landingAfterSignIn } from '@/lib/auth-landing'
 import { toProblem, type AuthProblem } from '@splat-connect/types'
-
-// PENDING(confirmed-page-bare-layout): fix it: the sign-in page keeps the normal layout after an email confirmation. Nothing to decide beyond sche...
-
 import Link from 'next/link'
 import type { Route } from 'next'
 import { AuthError, AuthStage } from '@/components/auth-shell'
