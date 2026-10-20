@@ -33,6 +33,8 @@ import {
 import type { AuthVariables } from '../middleware/auth.js'
 import { sendEmail } from '../mailer.js'
 
+// PENDING(online-event-link): build the authenticated joining-link route and send the link in the registration confirmation email. Build...
+
 const organizations = new Hono<{ Variables: AuthVariables }>()
 
 /**

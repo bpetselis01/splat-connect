@@ -10,6 +10,9 @@ import { profileName } from '../profile-name.js'
 import { readNear, byDistance, pickupPostcodes } from '../distance.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
+// PENDING(admin-in-member-threads): admins can open any thread and post an admin-labelled message, but cannot accept, reject, confirm or withdr...
+// PENDING(toy-transactions-role-filter-ignored): the route honours the role filter on the server and the browser stops re-filtering. Whether the route honou...
+
 const toyTransactions = new Hono<{ Variables: AuthVariables }>()
 
 const RLS_VIOLATION = '42501'

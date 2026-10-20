@@ -12,6 +12,8 @@ import { getCapabilities } from '@/lib/capabilities'
 import { TutorialView } from '@/components/tutorial-view'
 import { fitLine, type GuideNote, type TutorialWithDetails, type TutorialOrg } from '@splat-connect/types'
 
+// PENDING(guide-share-no-toast): Share confirms with the shared 'Link copied' toast; no toast where a native share sheet opens. Whether Shar...
+
 export default async function TutorialPage({
   params,
 }: {

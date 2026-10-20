@@ -6,6 +6,8 @@ import { CloseButton } from '../../../components/ui/CloseButton'
 import { BackButton } from '../../../components/ui/BackButton'
 import { HeaderAddButton } from '../../../components/ui/HeaderAddButton'
 
+// PENDING(makers-tab-reported-person): a person you reported disappears from your own Makers tab and search until an admin resolves the report; ot...
+
 // A deep link or notification straight to a pushed screen still lands with
 // the list under it: without this the stack held that one screen, so there
 // was no back button and the tab bar showed as if it were a tab root.

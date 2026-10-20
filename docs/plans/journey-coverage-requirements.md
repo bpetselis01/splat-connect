@@ -72,6 +72,8 @@ The problem is not a shortage of tests. It is that nothing makes the inventory s
 
 ## Outstanding Questions
 
+**All 16 answered by Byron on 2026-10-20 (evening), together with the 16 decisions the run registered; each answer is the `Decided 2026-10-20:` line of its item in `packages/types/src/pending.ts`, now `kind: build` with a `PENDING(id)` marker at its code site.**
+
 Product bugs the audit found. Each becomes a `pending.ts` entry (R16); Byron decides.
 
 | # | Question | Impact if Wrong | Owner |

@@ -22,6 +22,8 @@ import { EventRegisterForm } from '@/components/event-register-form'
 import { dateBadge, formatTimeRange } from '@splat-connect/types'
 import type { EventListItem, OrgEventQuestion } from '@splat-connect/types'
 
+// PENDING(event-register-raw-409): show the full-event copy only, with the leader contact, and hide submit; other 409s keep a generic retry me...
+
 export const metadata = { title: 'Register for an event — SPLAT Connect' }
 
 type EventDetail = EventListItem & {

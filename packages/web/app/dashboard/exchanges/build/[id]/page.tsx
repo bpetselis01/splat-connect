@@ -35,6 +35,8 @@ import { ToyTransactionThread } from '@/components/toy-transaction-thread'
 import { ChatHead } from '@/components/exchange-chat'
 import { buildStages, buildStageFacts } from '@/lib/build-stages'
 
+// PENDING(duplicated-thread-actions): hoist sendMessage/accept/reject/withdraw/confirm into one module of plain functions taking args; every decl...
+
 export default async function BuildDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const caps = await requireCapabilities()

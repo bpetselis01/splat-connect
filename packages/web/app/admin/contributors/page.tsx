@@ -9,6 +9,8 @@ import { tintFor } from '@/components/card-photo'
 import type { AdminAccountsResponse, Organization, OrgLeader } from '@splat-connect/types'
 import { initials } from '@splat-connect/types'
 
+// PENDING(admin-remove-confirm): typed-phrase confirm, the same component as member self-deletion. Whether admin removal gets the typed-phra...
+
 async function deleteContributor(id: string) {
   'use server'
   await apiClient.delete(`/api/admin/contributors/${id}`)

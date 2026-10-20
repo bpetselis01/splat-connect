@@ -15,6 +15,9 @@ import { readSuits, realignCaptions, GUIDE_SUITS_FIELDS, fieldKey, customization
 import { removeDroppedPhotos } from '../photo-storage.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
+// PENDING(guide-rereview-rule): content changes re-review (steps, safety, parts, tools, STL, PDF, photos, details go back to pending); pric...
+// PENDING(guide-patch-without-status-500): a no-status edit saves the fields and answers 200 with the guide, status untouched; only a forbidden status...
+
 const tutorials = new Hono<{ Variables: AuthVariables }>()
 
 const NEEDS_CONTENT = 'A guide needs steps or a PDF'

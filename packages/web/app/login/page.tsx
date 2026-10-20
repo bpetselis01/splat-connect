@@ -6,6 +6,9 @@ import { createClient } from '@/lib/supabase/client'
 import { sanitiseNextPath } from '@/lib/safe-next-path'
 import { pendingIntent, type SignupIntent } from '@splat-connect/types'
 
+// PENDING(web-auth-recovery): port all mobile auth screens to web (forgot-password, code sign-in, resend-confirmation, friendly unconfirm...
+// PENDING(confirmed-page-bare-layout): fix it: the sign-in page keeps the normal layout after an email confirmation. Nothing to decide beyond sche...
+
 /** Where the sign-up tile lands someone the first time they sign in. */
 const INTENT_LANDING: Record<SignupIntent, string> = {
   family: '/onboarding/child',

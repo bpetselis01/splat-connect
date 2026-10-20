@@ -34,6 +34,8 @@ import { SplatMascot } from '@/components/splat-mascot'
 import { SortControl, type SortDir, type SortOption } from '@/components/sort-control'
 import type { ToyWithOwner } from '@splat-connect/types'
 
+// PENDING(small-inconsistencies): fix all six, each with a test: one destination for Pick for my child, Save prompts signup everywhere, hide...
+
 type Icon = typeof Gift
 type FacetKey = 'offer' | 'holder'
 type Facet = { key: FacetKey; label: string; Icon: Icon; opts: { value: string; label: string; Icon: Icon }[] }

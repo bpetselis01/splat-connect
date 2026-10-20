@@ -27,6 +27,8 @@ import { MoneyPanel, type OutstandingLine } from '@/components/money-panel'
 import { SplatMascot } from '@/components/splat-mascot'
 import { isPast, type MeCounts } from '@splat-connect/types'
 
+// PENDING(hub-exchange-count-plural): fix it: '1 exchange', '2 exchanges'. Nothing to decide beyond scheduling the fix.
+
 export const metadata = {
   title: 'My SPLAT — SPLAT Connect',
 }

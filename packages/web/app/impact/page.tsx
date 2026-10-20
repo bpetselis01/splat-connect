@@ -19,6 +19,8 @@ import { Pager } from '@/components/pager'
 import { shortDate } from '@splat-connect/types'
 import type { Difficulty, ImpactSummary, StoryListItem, Tutorial } from '@splat-connect/types'
 
+// PENDING(impact-map-soon-pill): drop the SOON pill and link the card to the map. Whether to drop the pill and link the card to the map.
+
 // Same shape the empty grid/strip below already render for zero rows, so a
 // fetch failure just looks like "nothing yet" rather than a separate error UI.
 const EMPTY_IMPACT: ImpactSummary = {
