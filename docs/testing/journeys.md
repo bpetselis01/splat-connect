@@ -1028,7 +1028,7 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | WI36 | nav | `/get-involved/recycling` | anon | signed-out "Create an account" → /signup; signed in "Book a drop-off" → /get-involved/recycling/drop-off | – | – | n/a | ✅ | ✅ | – | – |
 | WI37 | write | `/get-involved/recycling/drop-off` | P | "Book the drop-off" (organisation, weight, polymer, declaration, photo, note) → POST recycling, then /dashboard | – | organisation drop-off queue | L | ✅ | ✅ | ✅ | – |
-| WI38 | nav | `/get-involved/recycling/drop-off` | anon | signed-out visit → /login?next=/get-involved/recycling/drop-off (the ?org= choice is lost) | – | – | n/a | ✅ | ✅ | – | – |
+| WI38 | nav | `/get-involved/recycling/drop-off` | anon | signed-out visit → /login?next=/get-involved/recycling/drop-off?org=<id> (the ?org= choice is kept) | – | – | n/a | ✅ | ✅ | – | – |
 
 </details>
 
@@ -1372,7 +1372,7 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 | WY04 | static | `/toy-library` | anon | hero "Browse the toys" → #toy-grid, "Pick for my child" → /learn/choosing-a-toy, "Give a toy" → /dashboard/toys/new | – | – | n/a | ✅ | – | – | – |
 | WY05 | static | `/toy-library/[id]` | anon | detail: photos, facts, holder card, picks, sign-in gate | – | – | n/a | ✅ | – | – | – |
 | WY06 | nav | `/toy-library/[id]` | P | "Ask to collect it" / "Offer a swap" → /toy-library/:id/request?mode= | – | – | P | ✅ | ✅ | – | – |
-| WY07 | nav | `/toy-library/[id]` | anon | "Sign in to ask for it" → /login?next=/toy-library/:id/request?mode= | – | – | n/a | ✅ | ✅ | – | – |
+| WY07 | nav | `/toy-library/[id]` | anon | "Sign in to ask for it" → /login?next=/toy-library/:id/request?mode=<donation\|exchange>; a signed-out visit to the request page keeps a valid ?mode= through sign-in | – | – | n/a | ✅ | ✅ | – | – |
 | WY08 | write | `/toy-library/[id]` | P | Save (labelled) → POST/DELETE /api/saves | – | Saved count | P | ✅ | ✅ | ✅ | – |
 | WY09 | write | `/toy-library/[id]` | P | "Report this listing" dialog → POST /api/reports | – | – | P | ✅ | ✅ | ✅ | – |
 | WY10 | write | `/toy-library/[id]/request` | P | "Send the request" (gift or swap, note) → POST /api/toy-transactions → /dashboard/exchanges/:id | toy_request | holder's exchanges unread, holder's exchangeActions | P | ✅ | ✅ | ✅ | – |

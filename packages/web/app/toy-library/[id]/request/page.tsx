@@ -16,6 +16,7 @@
 import { notFound, redirect } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
 import { getCapabilities } from '@/lib/capabilities'
+import { authUrl } from '@/lib/safe-next-path'
 import { RequestToyForm } from '@/components/request-toy-form'
 import { toyHolderName } from '@splat-connect/types'
 import type { Toy, ToyWithOwner, ToyTransactionSummary } from '@splat-connect/types'
@@ -31,9 +32,10 @@ export default async function RequestToyPage({
 }) {
   const { id } = await params
   const { mode } = await searchParams
+  const initialMode = mode === 'donation' || mode === 'exchange' ? mode : undefined
   const caps = await getCapabilities()
   if (!caps) {
-    redirect(`/login?next=${encodeURIComponent(`/toy-library/${id}/request`)}`)
+    redirect(authUrl('login', `/toy-library/${id}/request${initialMode ? `?mode=${initialMode}` : ''}`))
   }
 
   const res = await fetch(`${process.env.API_URL}/api/public/toys/${id}`, { cache: 'no-store' })
@@ -80,7 +82,7 @@ export default async function RequestToyPage({
         // reads off. Null for an account that has never set one, and the
         // sentence loses the place rather than the offer.
         suburb={caps.profile.pickup_suburb ?? null}
-        initialMode={mode === 'donation' || mode === 'exchange' ? mode : undefined}
+        initialMode={initialMode}
       />
     </div>
   )
