@@ -198,6 +198,7 @@ tutorials.post('/', async (c) => {
 const EDITABLE = ['title', 'description', 'difficulty', 'kind', 'build_minutes', 'age_min', 'age_max', 'tutorial_pdf_url', 'photo_urls', 'photo_captions', 'prices_checked_on', 'layer_height_mm', 'infill_percent', 'material', 'print_minutes', 'toy_name', 'toy_brand', 'works_with', 'no_build_note', 'done_note', 'status', 'customization_fields', ...GUIDE_SUITS_FIELDS] as const
 const PROTECTED = ['reviewed_by', 'reviewed_for_org_id', 'reviewed_at', 'rejection_note']
 
+// PENDING(terms-gate-fails-open): the web gate now fails closed; this check moves to src/terms.ts and guards every gated write with 403 terms_required (PR 6, U9).
 async function hasAcceptedContributorTerms(token: string, userId: string) {
   const { data } = await createUserClient(token)
     .from('user_agreements')
