@@ -1105,6 +1105,22 @@ toyTransactions.post('/:id/confirm', async (c) => {
       ? updated.owner_confirmed_at !== null
       : updated.owner_confirmed_at !== null && updated.requester_confirmed_at !== null
 
+  // 142. The first confirm by a party tells the other one, unless it is the
+  // second of two, which completes the handover. A donation completes on the
+  // owner's confirm alone, so there the requester is told on completion too.
+  if (!tx[confirmField] && (tx.type === 'donation' || !bothConfirmed)) {
+    const payload = {
+      type: 'handover_confirmed',
+      toy_transaction_id: tx.id,
+      toy_name: await subjectName(admin, tx as any),
+      actor_name: isOwner
+        ? await ownerSideName(admin, tx as any, 'The other party')
+        : await profileName(admin, userId, 'The other party'),
+    }
+    if (isOwner) await notify([{ ...payload, recipient_id: tx.requester_id }], 'handover_confirmed')
+    else await notifyOwnerSide(admin, tx as any, payload)
+  }
+
   /*
    * A build hands over an object that exists nowhere in `toys` — the maker made
    * it — and a print job hands over parts that were never a toy either. Neither
@@ -1120,20 +1136,6 @@ toyTransactions.post('/:id/confirm', async (c) => {
       kind: 'system',
       body: 'Handoff confirmed by one party. Waiting on the other.',
     })
-    // 142. Tell the other party once: a repeat confirm by the same party, or
-    // the second party's confirm (the branch below), sends nothing.
-    if (!tx[confirmField]) {
-      const payload = {
-        type: 'handover_confirmed',
-        toy_transaction_id: tx.id,
-        toy_name: await subjectName(admin, tx as any),
-        actor_name: isOwner
-          ? await ownerSideName(admin, tx as any, 'The other party')
-          : await profileName(admin, userId, 'The other party'),
-      }
-      if (isOwner) await notify([{ ...payload, recipient_id: tx.requester_id }], 'handover_confirmed')
-      else await notifyOwnerSide(admin, tx as any, payload)
-    }
     return c.json(sanitizeCodes(updated, userId, ledOrgs))
   }
 
