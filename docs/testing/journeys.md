@@ -612,7 +612,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | WA25 | nav | `/dashboard` | P | a member on /admin → home page | – | – | n/a | ✅ | ✅ | – | – |
 | WA26 | nav | `/dashboard` | A | an admin passes /admin and /dashboard | – | – | n/a | ✅ | ✅ | – | – |
 | WA27 | nav | `/dashboard` | P | a member without the current terms on /dashboard, /upload or /tutorials/:id/edit → /onboarding/contributor-terms?next=<path and query>; a failed lookup blocks too, with ?retry=1 and "We could not check your acceptance, try again" | – | – | n/a | ✅ | ✅ | – | – |
-| WA28 | nav | `/dashboard` | P | a signed-in member without the current terms can read /organizations, like a signed-out visitor | – | – | n/a | ✅ | ✅ | – | – |
+| WA28 | nav | `/dashboard` | P | a signed-in member without the current terms can read /organizations and its public profiles, like a signed-out visitor; /organizations/:id/message stays behind the terms gate | – | – | n/a | ✅ | ✅ | – | – |
 | WA29 | nav | `/dashboard` | P | a member without the current terms can still browse /library, a guide page and /notifications | – | – | n/a | ✅ | ✅ | – | – |
 
 </details>
