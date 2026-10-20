@@ -1,4 +1,3 @@
-// journeys: G03
 import { test, expect, type Page } from '@playwright/test'
 import { adminClient, createTutorial, signInAsNewContributor, uniqueTitle } from './helpers'
 
@@ -36,7 +35,7 @@ const openFilters = (page: Page) => page.getByRole('button', { name: /^Filters/ 
 const radio = (page: Page, name: string) => page.getByRole('radio', { name, exact: true })
 const pill = (page: Page, name: string) => page.getByRole('button', { name, exact: true })
 
-test('Sort by Quickest reorders the list by build time, and the heading says so', async ({ page }) => {
+test('G03 Sort by Quickest reorders the list by build time, and the heading says so', async ({ page }) => {
   const { prefix, rows } = await threeGuides(page)
   await expect(rows.nth(0)).toHaveAccessibleName(new RegExp(`${prefix} C`))
   await expect(rows.nth(2)).toHaveAccessibleName(new RegExp(`${prefix} A`))
@@ -53,7 +52,7 @@ test('Sort by Quickest reorders the list by build time, and the heading says so'
   await expect(page.getByRole('button', { name: 'Filters', exact: true })).toBeVisible()
 })
 
-test('the Show button counts the guides the page would show as the choices change', async ({ page }) => {
+test('G03 the Show button counts the guides the page would show as the choices change', async ({ page }) => {
   const { rows } = await threeGuides(page)
 
   await openFilters(page)
@@ -76,7 +75,7 @@ test('the Show button counts the guides the page would show as the choices chang
   await expect(page.getByRole('button', { name: 'Filters, 1 on' })).toBeVisible()
 })
 
-test('Reset puts every choice back, so applying shows the whole list in its default order', async ({ page }) => {
+test('G03 Reset puts every choice back, so applying shows the whole list in its default order', async ({ page }) => {
   const { prefix, rows } = await threeGuides(page)
 
   await openFilters(page)
@@ -95,7 +94,7 @@ test('Reset puts every choice back, so applying shows the whole list in its defa
   await expect(page.getByRole('button', { name: 'Filters', exact: true })).toBeVisible()
 })
 
-test('Reset also lifts a filter that was already applied, once Show confirms it', async ({ page }) => {
+test('G03 Reset also lifts a filter that was already applied, once Show confirms it', async ({ page }) => {
   const { rows } = await threeGuides(page)
   await openFilters(page)
   await pill(page, 'Hard').click()
@@ -111,7 +110,7 @@ test('Reset also lifts a filter that was already applied, once Show confirms it'
   await expect(page.getByRole('button', { name: /^Remove filter/ })).toHaveCount(0)
 })
 
-test('✕ discards what was picked and leaves what was applied, and the page reopens on the applied choices', async ({ page }) => {
+test('G03 ✕ discards what was picked and leaves what was applied, and the page reopens on the applied choices', async ({ page }) => {
   const { rows } = await threeGuides(page)
 
   // Nothing applied: pick, close, nothing changes.

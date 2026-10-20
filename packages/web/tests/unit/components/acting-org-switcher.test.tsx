@@ -11,7 +11,7 @@ const orgs = [
 ]
 
 describe('ActingOrgSwitcher', () => {
-  it('shows the current org and picks another', async () => {
+  it('WB01 shows the current org and picks another', async () => {
     render(<ActingOrgSwitcher orgs={orgs} currentId="oA" />)
     fireEvent.click(screen.getByRole('button', { name: 'Acting for Splat North. Change organisation.' }))
     expect(screen.getByText(/follow the one you pick/)).toBeInTheDocument()

@@ -1,4 +1,3 @@
-// journeys: X01 X05 X06
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, type TestUser } from '../../helpers/auth.js'
@@ -47,7 +46,7 @@ describe('POST /api/toy-transactions/:id/reject and /withdraw', () => {
     await deleteTestUser(stranger.id)
   })
 
-  it('lets the owner reject an open request', async () => {
+  it('X05 WX07 lets the owner reject an open request', async () => {
     const txId = await requestDonation(owner.token, requester.token, 'Ball')
     const res = await txReq(`/${txId}/reject`, owner.token, { method: 'POST' })
     expect(res.status).toBe(200)
@@ -66,7 +65,7 @@ describe('POST /api/toy-transactions/:id/reject and /withdraw', () => {
     expect(res.status).toBe(404)
   })
 
-  it('lets either party withdraw an open request', async () => {
+  it('X06 WX08 lets either party withdraw an open request', async () => {
     const txId = await requestDonation(owner.token, requester.token, 'Puzzle')
     const res = await txReq(`/${txId}/withdraw`, requester.token, { method: 'POST' })
     expect(res.status).toBe(200)

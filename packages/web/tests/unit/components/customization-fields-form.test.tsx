@@ -14,7 +14,7 @@ const mount = (initial = [] as Parameters<typeof CustomizationFieldsForm>[0]['in
 const save = () => fireEvent.click(screen.getByRole('button', { name: 'Save customization fields' }))
 
 describe('CustomizationFieldsForm', () => {
-  it('saves a choice question with trimmed options', async () => {
+  it('WT28 saves a choice question with trimmed options', async () => {
     const onSave = mount()
     fireEvent.click(screen.getByRole('button', { name: 'Add a question' }))
     fireEvent.change(screen.getByLabelText('Question'), { target: { value: 'Tray thickness' } })

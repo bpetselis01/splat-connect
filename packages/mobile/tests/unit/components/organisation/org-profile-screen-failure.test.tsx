@@ -1,5 +1,4 @@
 // An organisation profile when its load fails: says so, Try again re-reads, nothing hits console.error.
-// journeys: P01
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { OrgProfileScreen } from '../../../../components/organisation/org-profile-screen'
 import { useAuth } from '../../../../lib/auth-context'
@@ -21,7 +20,7 @@ const ORG = {
 
 afterEach(() => jest.restoreAllMocks())
 
-it('says the organisation could not load, and Try again loads it', async () => {
+it('P01 says the organisation could not load, and Try again loads it', async () => {
   const err = jest.spyOn(console, 'error')
   ;(useAuth as jest.Mock).mockReturnValue({ session: { user: { id: 'u1' } } })
   let offline = true

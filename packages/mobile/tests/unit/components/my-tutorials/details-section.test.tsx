@@ -1,4 +1,3 @@
-// journeys: T08
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { DetailsSection } from '../../../../components/my-tutorials/sections/details-section'
 
@@ -49,19 +48,19 @@ beforeEach(() => {
   mockDraft.saveError = null
 })
 
-it('saves the title as it is typed', () => {
+it('T08 saves the title as it is typed', () => {
   render(<DetailsSection />)
   fireEvent.changeText(screen.getByLabelText('Title'), 'Roaring T-rex')
   expect(mockDraft.save).toHaveBeenCalledWith({ title: 'Roaring T-rex' })
 })
 
-it('saves a blank description as null, not an empty string', () => {
+it('T08 saves a blank description as null, not an empty string', () => {
   render(<DetailsSection />)
   fireEvent.changeText(screen.getByLabelText('Description'), '   ')
   expect(mockDraft.save).toHaveBeenCalledWith({ description: null })
 })
 
-it('saves a chip choice', () => {
+it('T08 saves a chip choice', () => {
   render(<DetailsSection />)
   fireEvent.press(screen.getByText('Medium'))
   expect(mockDraft.save).toHaveBeenCalledWith({ difficulty: 'medium' })
@@ -79,7 +78,7 @@ it('shows a save failure without losing the edit', () => {
   expect(screen.getByLabelText('Title').props.value).toBe('Roaring dinosaur')
 })
 
-it('saves the toy fields trimmed-or-null, like web', () => {
+it('T08 saves the toy fields trimmed-or-null, like web', () => {
   render(<DetailsSection />)
   fireEvent.changeText(screen.getByLabelText('Toy'), 'T-rex')
   expect(mockDraft.save).toHaveBeenLastCalledWith({ toy_name: 'T-rex' })
@@ -91,7 +90,7 @@ it('saves the toy fields trimmed-or-null, like web', () => {
   expect(mockDraft.save).toHaveBeenLastCalledWith({ no_build_note: 'Ask the shelf' })
 })
 
-it('saves the closing line, capped at 300, blank as null', () => {
+it('T08 saves the closing line, capped at 300, blank as null', () => {
   render(<DetailsSection />)
   const field = screen.getByLabelText('Your closing line')
   expect(field.props.maxLength).toBe(300)

@@ -5,7 +5,6 @@
  * the interesting cases are the revocations: an ex-leader and a leader of some
  * other organisation must both be told the same thing a stranger is.
  */
-// journeys: L08 L10 W02
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -46,7 +45,7 @@ describe("an organisation's toy inventory", () => {
     for (const u of [leader, exLeader, rivalLeader, stranger]) await deleteTestUser(u.id)
   })
 
-  it('creates stock in one write, and keeps it out of the leader’s own toys', async () => {
+  it('L08 WB11 creates stock in one write, and keeps it out of the leader’s own toys', async () => {
     const res = await req('/toys', leader.token, {
       method: 'POST',
       body: JSON.stringify({ name: 'Sensory bear', condition: 9, owner_org_id: orgId, quantity: 5 }),

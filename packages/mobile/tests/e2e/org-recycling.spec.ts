@@ -1,4 +1,3 @@
-// journeys: L12 L13 L14 L15
 import { test, expect } from '@playwright/test'
 import { adminClient, createContributor, makeOrgLeader, renameProfile, signInAsNewContributor, uniqueTitle } from './helpers'
 import { partyPage, seedDropoff } from './org-fixtures'
@@ -9,7 +8,7 @@ import { partyPage, seedDropoff } from './org-fixtures'
  * only here) or turns it away as contaminated, and the family's screen follows.
  */
 
-test('what you take -> a family books -> the leader weighs and credits -> the family holds the credit', async ({
+test('L12 L13 L15 what you take -> a family books -> the leader weighs and credits -> the family holds the credit', async ({
   page,
   browser,
   baseURL,
@@ -97,7 +96,7 @@ test('what you take -> a family books -> the leader weighs and credits -> the fa
   }
 })
 
-test('Contaminated turns the drop-off away: nothing is credited and it cannot be decided twice', async ({
+test('L14 Contaminated turns the drop-off away: nothing is credited and it cannot be decided twice', async ({
   page,
   browser,
   baseURL,

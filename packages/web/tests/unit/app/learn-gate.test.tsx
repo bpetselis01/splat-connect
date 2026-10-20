@@ -83,7 +83,7 @@ describe('every course page is gated', () => {
 })
 
 describe('LearnGate on a course page', () => {
-  it('shows the lesson when Free, and when the course cannot be read', async () => {
+  it('WE01 shows the lesson when Free, and when the course cannot be read', async () => {
     serve(LEARN_COURSE)
     await renderPage(SwitchTypes)
     expect(screen.getByRole('heading', { level: 1, name: 'Switch types explained' })).toBeTruthy()
@@ -93,7 +93,7 @@ describe('LearnGate on a course page', () => {
     expect(screen.getAllByRole('heading', { level: 1, name: 'Switch types explained' })).toHaveLength(2)
   })
 
-  it('says "Course hidden" to a member, and to a signed-out reader', async () => {
+  it('WE01 says "Course hidden" to a member, and to a signed-out reader', async () => {
     serve(hiddenPublic)
     caps.mockResolvedValue({ isAdmin: false })
     await renderPage(SwitchTypes)
@@ -106,7 +106,7 @@ describe('LearnGate on a course page', () => {
     expect(redirect).not.toHaveBeenCalled()
   })
 
-  it("previews a hidden course for an admin from the saved row, under 'Hidden from members'", async () => {
+  it("WE01 previews a hidden course for an admin from the saved row, under 'Hidden from members'", async () => {
     serve(hiddenPublic, [savedRow])
     caps.mockResolvedValue({ isAdmin: true })
     await renderPage(SwitchTypes)
@@ -115,7 +115,7 @@ describe('LearnGate on a course page', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Switches, renamed' })).toBeTruthy()
   })
 
-  it('sends a signed-out reader to sign in when sign-in is needed, and lets a member in', async () => {
+  it('WE02 sends a signed-out reader to sign in when sign-in is needed, and lets a member in', async () => {
     serve({ ...LEARN_COURSE, shown_as: 'sign_in' })
     await expect(renderPage(SwitchTypes)).rejects.toThrow('redirect /login?next=/learn')
     caps.mockResolvedValue({ isAdmin: false })

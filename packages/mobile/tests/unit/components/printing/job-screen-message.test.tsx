@@ -1,6 +1,5 @@
 // The printer card's Message button goes to the thread that is already on the
 // page: no new screen, no new data.
-// journeys: R05
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { PrintJobScreen } from '../../../../components/printing/job-screen'
 

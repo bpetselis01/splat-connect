@@ -1,4 +1,3 @@
-// journeys: G19 K05 K06 K07 K08 K09 K11 X01
 /**
  * Build requests: the whole loop, and the three rules that make the extra stage
  * worth having.
@@ -78,7 +77,7 @@ afterAll(async () => {
 })
 
 describe('asking for a build', () => {
-  it('creates a transaction with a guide for a subject and no toy', async () => {
+  it('K05 WI28 creates a transaction with a guide for a subject and no toy', async () => {
     const res = await app.request(
       '/api/toy-transactions/build',
       json(family.token, {
@@ -102,6 +101,33 @@ describe('asking for a build', () => {
     expect(tx.owner_id).toBe(maker.id)
     expect(tx.status).toBe('requested')
     transactionId = tx.id
+  })
+
+  it('WI28 asking an organisation stores the build against it and tells its leader', async () => {
+    const admin = adminClient()
+    const { data: org } = await admin.from('organizations').insert({ name: `Ask org ${Date.now()}`, status: 'active' }).select('id').single()
+    await admin.from('org_leaders').insert({ org_id: org!.id, user_id: outsider.id })
+    try {
+      const res = await app.request(
+        '/api/toy-transactions/build',
+        json(family.token, { tutorial_id: tutorialId, maker_org_id: org!.id, build_brief: 'For Mia, 5.' })
+      )
+      expect(res.status).toBe(201)
+      const tx = (await res.json()) as { id: string }
+      const { data: row } = await admin
+        .from('toy_transactions')
+        .select('type, status, requester_id, owner_id, owner_org_id, build_brief')
+        .eq('id', tx.id)
+        .single()
+      expect(row).toEqual({
+        type: 'build', status: 'requested', requester_id: family.id, owner_id: null, owner_org_id: org!.id, build_brief: 'For Mia, 5.',
+      })
+      const { data: notes } = await admin.from('notifications').select('recipient_id, type, toy_transaction_id').eq('toy_transaction_id', tx.id)
+      expect(notes).toEqual([{ recipient_id: outsider.id, type: 'toy_request', toy_transaction_id: tx.id }])
+    } finally {
+      await admin.from('toy_transactions').delete().eq('owner_org_id', org!.id)
+      await admin.from('organizations').delete().eq('id', org!.id)
+    }
   })
 
   it('refuses a second open ask for the same guide and maker', async () => {
@@ -154,7 +180,7 @@ describe('asking for a build', () => {
 })
 
 describe('the extra stage', () => {
-  it('lets the maker accept, which 033 used to answer "missing" for', async () => {
+  it('K06 WX16 lets the maker accept, which 033 used to answer "missing" for', async () => {
     const res = await app.request(
       `/api/toy-transactions/${transactionId}/accept`,
       json(maker.token, {
@@ -199,7 +225,7 @@ describe('the extra stage', () => {
     expect(byMaker.status).toBe(403)
   })
 
-  it('lets the family approve, and refuses approving twice', async () => {
+  it('K09 WX21 lets the family approve, and refuses approving twice', async () => {
     const res = await app.request(
       `/api/toy-transactions/${transactionId}/approve-work`,
       json(family.token, {})
@@ -218,7 +244,7 @@ describe('the extra stage', () => {
    * Why: an approval carried onto a different photo closes the stage with
    * nobody having looked at what is now on the record.
    */
-  it('clears the approval when a new shot replaces the old one', async () => {
+  it('K08 WX20 clears the approval when a new shot replaces the old one', async () => {
     const res = await app.request(
       `/api/toy-transactions/${transactionId}/working-shot`,
       photo(maker.token)
@@ -237,7 +263,7 @@ describe('the extra stage', () => {
 })
 
 describe('closing a build', () => {
-  it('completes on both codes and transfers no toy, because there is none', async () => {
+  it('K11 WX19 completes on both codes and transfers no toy, because there is none', async () => {
     const admin = adminClient()
     const { data: row } = await admin
       .from('toy_transactions')

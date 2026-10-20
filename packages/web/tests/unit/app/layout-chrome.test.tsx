@@ -33,7 +33,7 @@ vi.mock('next/font/google', () => ({
 import { isBare, isAccountRoute } from '@/app/layout'
 
 describe('layout chrome rules', () => {
-  it('treats the auth callbacks and onboarding gates as bare', () => {
+  it('WC10 treats the auth callbacks and onboarding gates as bare', () => {
     expect(isBare('/auth/confirmed')).toBe(true)
     expect(isBare('/onboarding/contributor-terms')).toBe(true)
   })

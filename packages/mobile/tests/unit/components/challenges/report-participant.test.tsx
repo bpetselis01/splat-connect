@@ -25,7 +25,7 @@ describe('ReportParticipant', () => {
     expect(screen.getByRole('button', { name: 'Send report' }).props.accessibilityState.disabled).toBe(true)
   })
 
-  it('posts the trimmed reason against that person, then tells the screen', async () => {
+  it('C16 posts the trimmed reason against that person, then tells the screen', async () => {
     open()
     fireEvent.changeText(screen.getByLabelText('Why are you reporting them?'), '  Rude in the thread.  ')
     fireEvent.press(screen.getByRole('button', { name: 'Send report' }))

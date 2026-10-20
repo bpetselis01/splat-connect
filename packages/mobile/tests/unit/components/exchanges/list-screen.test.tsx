@@ -1,5 +1,4 @@
 // packages/mobile/tests/unit/components/exchanges/list-screen.test.tsx
-// journeys: X01
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { ExchangesListScreen } from '../../../../components/exchanges/list-screen'
 
@@ -82,7 +81,7 @@ beforeEach(() => {
 })
 
 describe('ExchangesListScreen', () => {
-  it('splits requested/accepted into Active and everything else into History', async () => {
+  it('X01 splits requested/accepted into Active and everything else into History', async () => {
     mockGet.mockResolvedValue([
       tx({ id: 'tx1', status: 'requested', toy_name: 'Bubble machine' }),
       tx({ id: 'tx2', status: 'accepted', toy_name: 'Switch puzzle' }),
@@ -214,7 +213,7 @@ describe('ExchangesListScreen', () => {
     expect(screen.getByText(/You:\ See\ you\ Saturday!/)).toBeTruthy()
   })
 
-  it('filters to the toy named in the ?toy= param, and shows a header chip naming it', async () => {
+  it('X01 filters to the toy named in the ?toy= param, and shows a header chip naming it', async () => {
     mockParams = { toy: 'toy1' }
     mockGet.mockResolvedValue([
       tx({ id: 'tx1', toy_id: 'toy1', toy_name: 'Bubble machine' }),
@@ -226,7 +225,7 @@ describe('ExchangesListScreen', () => {
     expect(screen.getByText('Offers on Bubble machine ✕')).toBeTruthy()
   })
 
-  it('clears the ?toy= filter via router.setParams when the chip is pressed', async () => {
+  it('X01 clears the ?toy= filter via router.setParams when the chip is pressed', async () => {
     mockParams = { toy: 'toy1' }
     mockGet.mockResolvedValue([tx({ id: 'tx1', toy_id: 'toy1', toy_name: 'Bubble machine' })])
     render(<ExchangesListScreen />)
@@ -256,7 +255,7 @@ describe('ExchangesListScreen', () => {
     expect(screen.getAllByTestId('skeleton-row').length).toBeGreaterThan(0)
   })
 
-  it('shows an error message when the fetch rejects', async () => {
+  it('X01 shows an error message when the fetch rejects', async () => {
     mockGet.mockRejectedValue(new Error('API GET failed with status 500'))
     render(<ExchangesListScreen />)
     await waitFor(() => expect(screen.getByText("Couldn't load your exchanges.")).toBeTruthy())

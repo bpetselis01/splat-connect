@@ -1,4 +1,3 @@
-// journeys: V01 V02 V03 V06
 import { test, expect } from '@playwright/test'
 import { adminClient, createContributor, createTutorial, signInAsNewContributor, uniqueTitle } from './helpers'
 import { seedPublicOrg } from './family-toys-fixtures'
@@ -44,7 +43,7 @@ const registrationRow = async (eventId: string, userId: string) =>
   (await adminClient().from('org_event_registrations').select('cancelled_at').eq('event_id', eventId).eq('user_id', userId).single())
     .data
 
-test('My events lists what a web registration booked, and Can\'t make it cancels the seat', async ({ page }) => {
+test('V01 V02 My events lists what a web registration booked, and Can\'t make it cancels the seat', async ({ page }) => {
   const me = await signInAsNewContributor(page)
   const org = await seedPublicOrg()
   const title = uniqueTitle('E2E Build Day')
@@ -77,7 +76,7 @@ test('an event the host cancelled stays on My events as Cancelled, with nothing 
   await expect(page.getByRole('button', { name: "Can't make it", exact: true })).toHaveCount(0)
 })
 
-test('a declined part request says so and Pick a printer opens the printer search', async ({ page }) => {
+test('V03 a declined part request says so and Pick a printer opens the printer search', async ({ page }) => {
   const me = await signInAsNewContributor(page)
   const org = await seedPublicOrg()
   const title = uniqueTitle('E2E Parts Day')
@@ -108,7 +107,7 @@ test('a declined part request says so and Pick a printer opens the printer searc
   await expect(page).toHaveURL(/\/printing$/)
 })
 
-test('Cancel the drop-off cancels a booked drop-off and takes the button away', async ({ page }) => {
+test('V06 Cancel the drop-off cancels a booked drop-off and takes the button away', async ({ page }) => {
   const me = await signInAsNewContributor(page)
   const org = await seedPublicOrg()
   const { data, error } = await adminClient()

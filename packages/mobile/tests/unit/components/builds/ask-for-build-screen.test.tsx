@@ -1,4 +1,3 @@
-// journeys: K05
 import { CLEARANCE, scrollPaddings } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { AskForBuildScreen } from '../../../../components/builds/ask-for-build-screen'
@@ -30,7 +29,7 @@ it('lists a handful of guides until you search, then the matches', async () => {
   expect(screen.getByText('Guide 39')).toBeTruthy()
 })
 
-it('offers the board’s How soon? choices and posts without a note', async () => {
+it('K05 offers the board’s How soon? choices and posts without a note', async () => {
   render(<AskForBuildScreen />)
   fireEvent.press(await screen.findByRole('radio', { name: 'Guide 0' }))
   for (const label of ['No rush', 'This month', 'Before holidays']) {

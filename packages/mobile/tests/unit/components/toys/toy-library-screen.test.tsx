@@ -1,5 +1,4 @@
 // packages/mobile/tests/unit/components/toys/toy-library-screen.test.tsx
-// journeys: Y01 Y03
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { theme } from '../../../../lib/theme'
 import { ScrollView, FlatList, StyleSheet } from 'react-native'
@@ -83,7 +82,7 @@ describe('ToyLibraryScreen', () => {
     expect(screen.queryByText('Nearest first')).toBeNull()
   })
 
-  it('sorts nearest first from the profile postcode, with km on each toy', async () => {
+  it('Y01 sorts nearest first from the profile postcode, with km on each toy', async () => {
     mockCaps.current = { profile: { id: 'me', pickup_postcode: '2000' } }
     mockGet.mockImplementation((path: string) =>
       Promise.resolve(path === '/api/public/toys?near=2000' ? [toy({ id: 't1', name: 'Bubble machine', km: 3 })] : [])
@@ -95,7 +94,7 @@ describe('ToyLibraryScreen', () => {
     expect(mockGet).toHaveBeenCalledWith('/api/public/toys?near=2000')
   })
 
-  it('renders toy names from the public toys endpoint', async () => {
+  it('Y01 renders toy names from the public toys endpoint', async () => {
     mockGet.mockResolvedValue([toy({ id: 't1', name: 'Bubble machine' }), toy({ id: 't2', name: 'Switch car' })])
     render(<ToyLibraryScreen />)
     expect(await screen.findByText('Bubble machine')).toBeTruthy()
@@ -103,7 +102,7 @@ describe('ToyLibraryScreen', () => {
     expect(mockGet).toHaveBeenCalledWith('/api/public/toys')
   })
 
-  it('filters the list by search text', async () => {
+  it('Y01 filters the list by search text', async () => {
     mockGet.mockResolvedValue([toy({ id: 't1', name: 'Bubble machine' }), toy({ id: 't2', name: 'Switch car' })])
     render(<ToyLibraryScreen />)
     await screen.findByText('Bubble machine')
@@ -167,7 +166,7 @@ describe('ToyLibraryScreen', () => {
     expect(screen.getAllByText('Switch-adapted', { includeHiddenElements: true }).length).toBe(1)
   })
 
-  it('filters by the four condition grades', async () => {
+  it('Y01 filters by the four condition grades', async () => {
     mockGet.mockResolvedValue([
       toy({ id: 't1', name: 'Good toy', condition: 8 }),
       toy({ id: 't2', name: 'Worn toy', condition: 2 }),
@@ -183,7 +182,7 @@ describe('ToyLibraryScreen', () => {
     expect(screen.queryByText('Worn toy')).toBeNull()
   })
 
-  it('filters by the switch-adapted toggle', async () => {
+  it('Y01 filters by the switch-adapted toggle', async () => {
     mockGet.mockResolvedValue([
       toy({ id: 't1', name: 'Plain toy', switch_adapted: false }),
       toy({ id: 't2', name: 'Adapted toy', switch_adapted: true }),
@@ -195,7 +194,7 @@ describe('ToyLibraryScreen', () => {
     expect(screen.getByText('Adapted toy')).toBeTruthy()
   })
 
-  it('flips a save by calling toggle with the toys slug and the toy id', async () => {
+  it('Y02 flips a save by calling toggle with the toys slug and the toy id', async () => {
     mockGet.mockResolvedValue([toy({ id: 't1', name: 'Bubble machine' })])
     render(<ToyLibraryScreen />)
     await screen.findByText('Bubble machine')
@@ -203,7 +202,7 @@ describe('ToyLibraryScreen', () => {
     expect(mockToggle).toHaveBeenCalledWith('toys', 't1')
   })
 
-  it('navigates to the toy detail route on card press', async () => {
+  it('Y03 navigates to the toy detail route on card press', async () => {
     mockGet.mockResolvedValue([toy({ id: 't1', name: 'Bubble machine' })])
     render(<ToyLibraryScreen />)
     const card = await screen.findByLabelText('Bubble machine')
@@ -233,7 +232,7 @@ describe('ToyLibraryScreen', () => {
     expect(mockPush).toHaveBeenCalledWith('/toy-library/organisations')
   })
 
-  it('filters to available toys and orders by newest', async () => {
+  it('Y01 filters to available toys and orders by newest', async () => {
     mockGet.mockResolvedValue([
       toy({ id: 't1', name: 'Older toy', created_at: '2026-01-01T00:00:00Z' }),
       toy({ id: 't2', name: 'Newer toy', created_at: '2026-06-01T00:00:00Z' }),
@@ -248,7 +247,7 @@ describe('ToyLibraryScreen', () => {
     expect(screen.getAllByText(/^(Older|Newer) toy$/).map((t) => t.props.children)).toEqual(['Newer toy', 'Older toy'])
   })
 
-  it('shows an error message when apiClient.get rejects, and retries', async () => {
+  it('Y01 shows an error message when apiClient.get rejects, and retries', async () => {
     toysInOrder(Promise.reject(new Error('API GET failed with status 500')))
     render(<ToyLibraryScreen />)
     expect(await screen.findByText("Couldn't load toys.")).toBeTruthy()

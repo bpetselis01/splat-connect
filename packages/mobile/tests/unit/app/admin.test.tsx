@@ -1,5 +1,4 @@
 // packages/mobile/tests/unit/app/admin.test.tsx
-// journeys: Q17
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { Linking } from 'react-native'
 import MyAdmin from '../../../app/(my)/admin'
@@ -30,7 +29,7 @@ describe('MyAdmin seat guard (S7)', () => {
 })
 
 describe('MyAdmin', () => {
-  it('opens the review queue on the phone, not the web', async () => {
+  it('Q17 opens the review queue on the phone, not the web', async () => {
     const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(true)
     render(<MyAdmin />)
     fireEvent.press(await screen.findByRole('button', { name: 'Tutorials awaiting review, 7' }))
@@ -39,7 +38,7 @@ describe('MyAdmin', () => {
     open.mockRestore()
   })
 
-  it("shows the board's six counts, each opening its queue on the phone", async () => {
+  it("Q17 shows the board's six counts, each opening its queue on the phone", async () => {
     const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(true)
     render(<MyAdmin />)
     expect(await screen.findByText('57')).toBeTruthy()
@@ -59,7 +58,7 @@ describe('MyAdmin', () => {
     open.mockRestore()
   })
 
-  it('still lists the six queues, uncounted, when the counts fail', async () => {
+  it('Q17 still lists the six queues, uncounted, when the counts fail', async () => {
     mockGet.mockRejectedValue(new Error('500'))
     render(<MyAdmin />)
     expect(await screen.findByRole('button', { name: 'Reports from members' })).toBeTruthy()

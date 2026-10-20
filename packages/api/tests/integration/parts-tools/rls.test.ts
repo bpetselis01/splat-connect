@@ -1,4 +1,3 @@
-// journeys: T09
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -43,7 +42,7 @@ afterAll(async () => {
 })
 
 describe('parts and tools RLS', () => {
-  it('owner can write parts on their own tutorial', async () => {
+  it('T09 WT25 owner can write parts on their own tutorial', async () => {
     const res = await app.request(
       `/api/tutorials/${tutorialId}/parts`,
       authed(owner.token, {

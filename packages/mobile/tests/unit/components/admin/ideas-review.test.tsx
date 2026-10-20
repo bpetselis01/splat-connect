@@ -30,7 +30,7 @@ beforeEach(() => {
 })
 
 describe('IdeasReviewScreen', () => {
-  it('lists pending ideas first and opens one', async () => {
+  it('Q26 Q27 lists pending ideas first and opens one', async () => {
     render(<IdeasReviewScreen />)
     fireEvent.press(await screen.findByRole('button', { name: /Switch bubble blower/ }))
     expect(mockPush).toHaveBeenCalledWith('/admin/ideas/i1')
@@ -45,7 +45,7 @@ describe('IdeasReviewScreen', () => {
 })
 
 describe('IdeaReviewDetailScreen', () => {
-  it('rejecting without a note is blocked, then sends the note', async () => {
+  it('Q29 rejecting without a note is blocked, then sends the note', async () => {
     render(<IdeaReviewDetailScreen ideaId="i1" />)
     fireEvent.press(await screen.findByRole('button', { name: 'Reject' }))
     expect(await screen.findByText('Say why. The author sees this note.')).toBeTruthy()
@@ -58,17 +58,24 @@ describe('IdeaReviewDetailScreen', () => {
     )
   })
 
-  it('publishes a pending idea as a challenge', async () => {
+  it('Q28 publishes a pending idea as a challenge', async () => {
     render(<IdeaReviewDetailScreen ideaId="i1" />)
     fireEvent.press(await screen.findByRole('button', { name: 'Publish' }))
     await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/api/admin/ideas/i1/status', { status: 'challenge' }))
     expect(mockBack).toHaveBeenCalled()
   })
 
-  it('graduates a published challenge', async () => {
+  it('Q30 graduates a published challenge', async () => {
     render(<IdeaReviewDetailScreen ideaId="i2" />)
     fireEvent.press(await screen.findByRole('button', { name: 'Graduate to draft' }))
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/admin/ideas/i2/graduate', {}))
+  })
+
+  it('Q31 a graduated idea offers View the draft guide, which opens /admin/review/:tutorialId', async () => {
+    mockGet.mockResolvedValue([idea({ id: 'g1', status: 'graduated', tutorial_id: 'tut9' })])
+    render(<IdeaReviewDetailScreen ideaId="g1" />)
+    fireEvent.press(await screen.findByRole('button', { name: /View the draft guide/ }))
+    expect(mockPush).toHaveBeenCalledWith('/admin/review/tut9')
   })
 
   it('offers no graduate on a question', async () => {

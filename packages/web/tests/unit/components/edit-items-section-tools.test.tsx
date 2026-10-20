@@ -88,7 +88,7 @@ describe('EditItemsSection (tools)', () => {
   // How:   changes value to 'Soldering Station', clicks Save; waitFor checks savedTools[0].name
   // Chain: the parent component persists the updated array → the tutorial detail page shows
   //        the corrected tool name after the save
-  it('clicking Save calls onSave with the updated tool', async () => {
+  it('WT26 clicking Save calls onSave with the updated tool', async () => {
     const onSave = vi.fn().mockResolvedValue(undefined)
     setup(onSave)
     fireEvent.click(screen.getByRole('button', { name: /Soldering Iron/ }))

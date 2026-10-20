@@ -1,37 +1,17 @@
-import { type Locator, type Page } from '@playwright/test'
-import { createClient } from '@supabase/supabase-js'
+import { expect, type Locator, type Page } from '@playwright/test'
+import { PASSWORD, adminClient, createOrg, addLeader, uniqueEmail, uniqueTitle } from '../../../../supabase/e2e-seed'
 
-// Local Supabase — well-known, non-secret dev keys (same as playwright.config.ts).
-const SUPABASE_URL = 'http://localhost:54321'
-const SERVICE_ROLE_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU'
-
-const PASSWORD = 'Test1234!'
-
-function uniqueEmail(prefix: string) {
-  return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1e6)}@web-e2e.local`
-}
+export {
+  PASSWORD, acceptTerms, addLeader, adminClient, createAdmin, createEvent, createNotification, createOrg,
+  makeLeader, uniqueEmail, uniqueTitle, type EventQuestion,
+} from '../../../../supabase/e2e-seed'
 
 /** Unique contributor email per invocation so runs don't collide (CI does `supabase db reset`). */
 export function uniqueContributorEmail() {
   return uniqueEmail('contrib')
 }
 
-/**
- * Unique per invocation even within the same millisecond. Four parallel workers
- * collide on `Date.now()` alone, and a duplicated title makes one spec's
- * assertions match another's fixture.
- */
-export function uniqueTitle(prefix: string) {
-  return `${prefix} ${Date.now()}-${Math.floor(Math.random() * 1e6)}`
-}
-
 const CONTRIBUTOR_NAME = 'E2E Contributor'
-
-/** Service-role client for E2E fixture setup. */
-export function adminClient() {
-  return createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
-}
 
 /** Provision a confirmed contributor directly via the service role. Returns credentials for signing in through the UI. */
 export async function createContributor() {
@@ -51,29 +31,6 @@ export async function createContributor() {
   if (profileError) throw new Error(`Failed to set contributor profile: ${profileError.message}`)
 
   return { id: data.user.id, email, password: PASSWORD, name: CONTRIBUTOR_NAME }
-}
-
-/**
- * Provision a confirmed admin via the service role. The signup trigger defaults
- * new accounts to the contributor role, so the role is set explicitly here.
- */
-export async function createAdmin() {
-  const admin = adminClient()
-  const email = uniqueEmail('admin')
-  const { data, error } = await admin.auth.admin.createUser({
-    email,
-    password: PASSWORD,
-    email_confirm: true,
-    user_metadata: { name: 'E2E Admin' },
-  })
-  if (error || !data.user) throw new Error(`Failed to create admin: ${error?.message}`)
-
-  const { error: profileError } = await admin
-    .from('profiles')
-    .upsert({ id: data.user.id, role: 'admin', name: 'E2E Admin' })
-  if (profileError) throw new Error(`Failed to set admin profile: ${profileError.message}`)
-
-  return { id: data.user.id, email, password: PASSWORD }
 }
 
 /**
@@ -217,48 +174,11 @@ export async function createTutorial(
   return id
 }
 
-/** Sign in through the /login form. Caller awaits the resulting redirect. */
-/**
- * Record a terms acceptance for a user, through the service role.
- *
- * POST /api/tutorials and the draft -> pending transition both refuse a
- * contributor who has accepted nothing, so any spec that creates or submits a
- * tutorial needs this. Deliberately NOT folded into createContributor: the gate
- * is real behaviour, and hiding it in the fixture would make it untestable.
- */
-export async function acceptTerms(
-  userId: string,
-  type: 'contributor_terms' | 'org_leader_terms' = 'contributor_terms'
-) {
-  const { error } = await adminClient()
-    .from('user_agreements')
-    .insert({ user_id: userId, agreement_type: type, version: 'v0-todo' })
-  if (error) throw new Error(`acceptTerms failed: ${error.message}`)
-}
-
-/**
- * Provision an active organisation with one leader, through the service role.
- *
- * Both writes are admin-only by policy, and creating them here rather than
- * clicking through /admin/organizations keeps a test that is about the backing
- * journey from also being a test of the admin form.
- *
- * Returns the new organisation's id.
- */
+// alias: delete in U10 once specs use makeLeader. No agreement row, unlike makeLeader.
 export async function createOrgWithLeader(leaderId: string, name: string) {
-  const admin = adminClient()
-  const { data, error } = await admin
-    .from('organizations')
-    .insert({ name, status: 'active' })
-    .select('id')
-    .single()
-  if (error) throw new Error(`createOrgWithLeader failed: ${error.message}`)
-
-  const { error: leaderError } = await admin
-    .from('org_leaders')
-    .insert({ org_id: data.id, user_id: leaderId })
-  if (leaderError) throw new Error(`createOrgWithLeader leader failed: ${leaderError.message}`)
-  return data.id as string
+  const orgId = await createOrg(name)
+  await addLeader(orgId, leaderId)
+  return orgId
 }
 
 /**
@@ -342,4 +262,25 @@ export async function pageUntilVisible(page: Page, target: Locator) {
     // old fixtures, and clicking waits out animations and the sticky header.
     await page.goto(new URL(href, page.url()).toString())
   }
+}
+
+/**
+ * Set a field on the tutorial editor's Details panel and wait until the form is
+ * dirty. A fill that lands before hydration is wiped when React sets the input's
+ * value, and no onChange runs, so "Save details" stays disabled; filling again
+ * once React is attached is what makes it deterministic. Inputs are cleared
+ * first because React raises onChange only when the value differs from the one
+ * it last tracked.
+ */
+export async function fillDetail(page: Page, field: 'title' | 'description' | 'difficulty', value: string) {
+  const box = page.locator(`#edit-${field}`)
+  const save = page.getByRole('button', { name: 'Save details' })
+  await expect(async () => {
+    if (field === 'difficulty') await box.selectOption(value)
+    else {
+      await box.fill('')
+      await box.fill(value)
+    }
+    await expect(save).toBeEnabled({ timeout: 1_000 })
+  }).toPass({ timeout: 30_000 })
 }

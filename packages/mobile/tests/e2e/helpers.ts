@@ -1,15 +1,13 @@
 import { type Page, expect } from '@playwright/test'
-import { createClient } from '@supabase/supabase-js'
+import { PASSWORD, acceptTerms, adminClient, makeLeader, uniqueEmail as seedEmail, uniqueTitle } from '../../../../supabase/e2e-seed'
 
-// Local Supabase — well-known non-secret dev keys (same as playwright.config.ts).
-const SUPABASE_URL = 'http://localhost:54321'
-const SERVICE_ROLE_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU'
-
-const PASSWORD = 'Test1234!'
+export {
+  PASSWORD, acceptTerms, addLeader, adminClient, createAdmin, createEvent, createNotification, createOrg,
+  makeLeader, uniqueTitle, type EventQuestion,
+} from '../../../../supabase/e2e-seed'
 
 function uniqueEmail(prefix: string) {
-  return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1e6)}@mobile-e2e.local`
+  return seedEmail(prefix, 'mobile-e2e.local')
 }
 
 /** Unique signup email per invocation so runs don't collide (CI does `supabase db reset`). */
@@ -17,25 +15,6 @@ export function uniqueSignupEmail() {
   return uniqueEmail('signup')
 }
 
-/** Service-role client for E2E fixture setup. */
-export function adminClient() {
-  return createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
-}
-
-/**
- * Unique per invocation even within the same millisecond. Parallel workers
- * collide on `Date.now()` alone, and a duplicated title makes one spec's
- * assertions match another's fixture.
- */
-export function uniqueTitle(prefix: string) {
-  return `${prefix} ${Date.now()}-${Math.floor(Math.random() * 1e6)}`
-}
-
-/**
- * Provision a confirmed contributor directly via the service role (the signup
- * trigger defaults new accounts to the contributor role). Returns credentials
- * for signing in through the UI.
- */
 /**
  * Sets filters on the Guides / Toy Library filter page: opens it from the
  * Filters button, presses each option (a pill toggles, a radio picks), then
@@ -73,14 +52,6 @@ export async function signInAsNewContributor(page: Page) {
   await signIn(page, contributor.email, contributor.password)
   await expect(page).toHaveURL(/\/home$/)
   return contributor
-}
-
-/** Record contributor-terms acceptance for a service-role-provisioned user. */
-async function acceptTerms(userId: string) {
-  const { error } = await adminClient()
-    .from('user_agreements')
-    .insert({ user_id: userId, agreement_type: 'contributor_terms', version: 'v0-todo' })
-  if (error) throw new Error(`acceptTerms failed: ${error.message}`)
 }
 
 /**
@@ -398,54 +369,8 @@ export async function createChallenge(
   return data.id
 }
 
-/**
- * One notification, as the API's own handlers write them: the row carries the
- * subject id its COPY line and its link both read (idea_id, tutorial_id or
- * toy_transaction_id), never all three.
- */
-export async function createNotification(
-  recipientId: string,
-  fields: {
-    type: string
-    actor_name?: string
-    tutorial_id?: string
-    tutorial_title?: string
-    toy_transaction_id?: string
-    toy_name?: string
-    idea_id?: string
-  }
-): Promise<string> {
-  const { data, error } = await adminClient()
-    .from('notifications')
-    .insert({ recipient_id: recipientId, actor_name: 'E2E Actor', ...fields })
-    .select('id')
-    .single()
-  if (error || !data) throw new Error(`createNotification failed: ${error?.message}`)
-  return data.id
-}
-
-/**
- * An organisation with this contributor as its leader, org-leader terms
- * accepted — the review policies (007) check both. Returns the org id.
- */
-export async function makeOrgLeader(userId: string, orgName?: string): Promise<string> {
-  const admin = adminClient()
-  const { data: org, error } = await admin
-    .from('organizations')
-    .insert({ name: orgName ?? uniqueTitle('E2E Org'), status: 'active' })
-    .select('id')
-    .single()
-  if (error || !org) throw new Error(`makeOrgLeader org insert failed: ${error?.message}`)
-  const { error: leaderError } = await admin
-    .from('org_leaders')
-    .insert({ org_id: org.id, user_id: userId })
-  if (leaderError) throw new Error(`makeOrgLeader leader insert failed: ${leaderError.message}`)
-  const { error: termsError } = await admin
-    .from('user_agreements')
-    .insert({ user_id: userId, agreement_type: 'org_leader_terms', version: 'v0-todo' })
-  if (termsError) throw new Error(`makeOrgLeader terms insert failed: ${termsError.message}`)
-  return org.id
-}
+// alias: delete in U10 once specs use makeLeader
+export const makeOrgLeader = makeLeader
 
 /** A backing request (or an accepted backing) from a tutorial to an org. */
 export async function requestBacking(

@@ -1,4 +1,3 @@
-// journeys: Q05 Q06 Q07
 import { test, expect } from '@playwright/test'
 import {
   createChallenge,
@@ -18,7 +17,7 @@ import {
  * is what this screen is being tested for.
  */
 
-test("a seeded notification reads exactly as web's copy says it should", async ({ page }) => {
+test("Q05 a seeded notification reads exactly as web's copy says it should", async ({ page }) => {
   const viewer = await signInAsNewContributor(page)
   const author = await createContributor()
   const ideaId = await createChallenge(author.id, { title: uniqueTitle('E2E Inbox Challenge') })
@@ -35,7 +34,7 @@ test("a seeded notification reads exactly as web's copy says it should", async (
   await expect(page.getByText('Robin joined your design challenge')).toBeVisible()
 })
 
-test('tapping a row marks it read and opens what it is about', async ({ page }) => {
+test('Q06 tapping a row marks it read and opens what it is about', async ({ page }) => {
   const viewer = await signInAsNewContributor(page)
   const author = await createContributor()
   const title = uniqueTitle('E2E Linked Challenge')
@@ -60,7 +59,7 @@ test('tapping a row marks it read and opens what it is about', async ({ page }) 
   await expect(page.getByRole('button', { name: 'Mark Challenges read' })).toBeHidden()
 })
 
-test('marking a bucket read clears its count and leaves the others alone', async ({ page }) => {
+test('Q07 marking a bucket read clears its count and leaves the others alone', async ({ page }) => {
   const viewer = await signInAsNewContributor(page)
   const author = await createContributor()
   const ideaId = await createChallenge(author.id, { title: uniqueTitle('E2E Bucket Challenge') })

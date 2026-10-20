@@ -1,4 +1,3 @@
-// journeys: T21
 import { CLEARANCE, paddingBottomOf } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { SectionFooter } from '../../../../components/my-tutorials/section-footer'
@@ -49,7 +48,7 @@ beforeEach(() => {
   mockNav.canGoBack = true
 })
 
-it('points Next at the next section still missing something, not the next in the list', () => {
+it('T21 points Next at the next section still missing something, not the next in the list', () => {
   // Details is complete and Safety is not — from Details, Next is Safety.
   mockDraft.tutorial = tutorial({ safety_declared_at: null })
   render(<SectionFooter section="details" />)
@@ -76,7 +75,7 @@ it('never offers the section you are already on', () => {
   expect(screen.getByText('Review and submit')).toBeTruthy()
 })
 
-it('offers the hub, not a second Submit, once nothing is missing', async () => {
+it('T21 offers the hub, not a second Submit, once nothing is missing', async () => {
   mockDraft.tutorial = tutorial()
   render(<SectionFooter section="files" />)
   fireEvent.press(screen.getByTestId('section-next'))

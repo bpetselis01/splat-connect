@@ -1,4 +1,3 @@
-// journeys: K01 K02 K05 K14
 import { test, expect } from '@playwright/test'
 import { adminClient, createContributor, createTutorial, signIn, signInAsNewContributor, uniqueTitle } from './helpers'
 
@@ -52,7 +51,7 @@ test('the ask form complains about the guide, then the suburb, then the parts pr
   expect(data).toEqual([])
 })
 
-test('a posted request is on the board for another maker, who claims it and lands in its thread', async ({ page, browser }) => {
+test('K01 K02 K05 a posted request is on the board for another maker, who claims it and lands in its thread', async ({ page, browser }) => {
   const family = await signInAsNewContributor(page)
   const author = await createContributor()
   const title = uniqueTitle('E2E Claimable Guide')
@@ -94,7 +93,7 @@ test('a posted request is on the board for another maker, who claims it and land
   await context.close()
 })
 
-test('a family cannot claim their own request, so it shows Track under Yours and no claim button', async ({ page }) => {
+test('K14 a family cannot claim their own request, so it shows Track under Yours and no claim button', async ({ page }) => {
   await signInAsNewContributor(page)
   const author = await createContributor()
   const title = uniqueTitle('E2E Own Request Guide')

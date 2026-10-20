@@ -1,5 +1,4 @@
 // packages/mobile/tests/unit/components/organisation/inventory-screen.test.tsx
-// journeys: L08 L09 L10
 import { Alert } from 'react-native'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { InventoryScreen } from '../../../../components/organisation/inventory-screen'
@@ -65,7 +64,7 @@ beforeEach(() => {
 afterEach(() => jest.restoreAllMocks())
 
 describe('InventoryScreen', () => {
-  it('lists the stock with quantity and status', async () => {
+  it('L08 lists the stock with quantity and status', async () => {
     mockGet.mockResolvedValue([
       stock({ id: 'toy1', name: 'Bear', quantity: 5 }),
       stock({ id: 'toy2', name: 'Drum', quantity: 1, status: 'draft' }),
@@ -108,7 +107,7 @@ describe('InventoryScreen', () => {
     expect(mockPush).toHaveBeenCalledWith('/toys/toy9')
   })
 
-  it('offers Add to inventory, which lands on the add-toy screen in org mode', async () => {
+  it('L10 offers Add to inventory, which lands on the add-toy screen in org mode', async () => {
     render(<InventoryScreen />)
     fireEvent.press(await screen.findByRole('button', { name: '+ Add to inventory' }))
     expect(mockPush).toHaveBeenCalledWith(expect.stringMatching(/^\/toys\/new\?org=.+/))
@@ -127,7 +126,7 @@ describe('InventoryScreen', () => {
     expect(mockGet).not.toHaveBeenCalled()
   })
 
-  it('shows a retired toy with its reason, and removes it from the shelf', async () => {
+  it('L09 shows a retired toy with its reason, and removes it from the shelf', async () => {
     mockGet.mockResolvedValue([
       stock({ id: 'toy1', name: 'Spinning top', quantity: 1, retired_at: '2026-08-12T00:00:00Z', retired_note: 'Broken 12 Aug', has_history: false }),
     ])

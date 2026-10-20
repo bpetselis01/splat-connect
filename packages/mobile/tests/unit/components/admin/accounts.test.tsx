@@ -21,7 +21,7 @@ beforeEach(() => {
 })
 
 describe('AccountsScreen', () => {
-  it('filters by name or email as you type', async () => {
+  it('Q24 filters by name or email as you type', async () => {
     render(<AccountsScreen />)
     expect(await screen.findByText('Ada')).toBeTruthy()
     fireEvent.changeText(screen.getByLabelText('Search accounts'), 'bo@')
@@ -29,7 +29,7 @@ describe('AccountsScreen', () => {
     expect(screen.getByText('Bo')).toBeTruthy()
   })
 
-  it('deletes an account after the confirm and drops its row', async () => {
+  it('Q25 deletes an account after the confirm and drops its row', async () => {
     render(<AccountsScreen />)
     fireEvent.press(await screen.findByRole('button', { name: 'Delete Ada' }))
     await waitFor(() => expect(mockDelete).toHaveBeenCalledWith('/api/admin/contributors/a1'))

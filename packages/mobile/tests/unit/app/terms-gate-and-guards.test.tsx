@@ -1,7 +1,6 @@
 // The contributor-terms gate's transaction (name, tick, accept, failures,
 // repeat taps) and the signed-in layouts' redirects: signed out, still
 // loading, terms not accepted, session expiring while a screen is open.
-// journeys: A11 A12 N05
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import TermsGate from '../../../app/terms'
 import OnboardingLayout from '../../../app/(onboarding)/_layout'
@@ -94,7 +93,7 @@ describe('Terms gate transaction', () => {
     ['<b>Pat</b> & "co"', '<b>Pat</b> & "co"'],
     ['Zoë 🧸 سارة', 'Zoë 🧸 سارة'],
     ['N'.repeat(500), 'N'.repeat(500)],
-  ])('saves the name %j as %j, then accepts', async (typed, saved) => {
+  ])('A11 saves the name %j as %j, then accepts', async (typed, saved) => {
     render(<TermsGate />)
     fireEvent.changeText(screen.getByLabelText('Your name'), typed)
     tick()
@@ -137,7 +136,7 @@ describe('Terms gate transaction', () => {
     await waitFor(() => expect(screen.queryByText('Could not record your acceptance. Please try again.')).toBeNull())
   })
 
-  it('tapping Accept twice while the request is out records one acceptance', async () => {
+  it('A11 tapping Accept twice while the request is out records one acceptance', async () => {
     mockAuth.profile = { name: 'Sam' }
     const slow = pending<{ error: null }>()
     mockAuth.acceptContributorTerms.mockReturnValue(slow.promise)
@@ -149,7 +148,7 @@ describe('Terms gate transaction', () => {
     expect(mockAuth.acceptContributorTerms).toHaveBeenCalledTimes(1)
   })
 
-  it('a name already on the profile is not asked for or re-saved', async () => {
+  it('A11 a name already on the profile is not asked for or re-saved', async () => {
     mockAuth.profile = { name: 'Sam' }
     render(<TermsGate />)
     tick()
@@ -158,7 +157,7 @@ describe('Terms gate transaction', () => {
     expect(mockAuth.setProfileName).not.toHaveBeenCalled()
   })
 
-  it('lists every term, and Sign out is the only way out', () => {
+  it('A12 lists every term, and Sign out is the only way out', () => {
     render(<TermsGate />)
     for (const heading of ['You wrote it, or you have permission', 'You keep the copyright', 'Review is not approval of safety', 'No claims about outcomes', 'Withdrawal']) {
       expect(screen.getByText(heading)).toBeTruthy()

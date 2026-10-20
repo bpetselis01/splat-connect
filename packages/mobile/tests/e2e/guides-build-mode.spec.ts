@@ -1,4 +1,3 @@
-// journeys: B01 B02 B03 B06 G15
 import { test, expect } from '@playwright/test'
 import { adminClient, createContributor, createTutorial, renameProfile, signInAsNewContributor, uniqueTitle } from './helpers'
 import { addNote, addSteps } from './guides-fixtures'
@@ -13,7 +12,7 @@ const STEPS = [
   { title: 'Close it', body: 'Click.' },
 ]
 
-test('Start building opens on Get ready with the parts, tools and safety checks, and Start step 1 begins', async ({ page }) => {
+test('G15 B01 Start building opens on Get ready with the parts, tools and safety checks, and Start step 1 begins', async ({ page }) => {
   await signInAsNewContributor(page)
   const author = await createContributor()
   const title = uniqueTitle('E2E Build Get Ready')
@@ -39,7 +38,7 @@ test('Start building opens on Get ready with the parts, tools and safety checks,
   await expect(page.getByText('Undo one screw.')).toBeVisible()
 })
 
-test('the All steps sheet jumps to a step, and Start over clears the ticks back to Get ready', async ({ page }) => {
+test('B02 the All steps sheet jumps to a step, and Start over clears the ticks back to Get ready', async ({ page }) => {
   await signInAsNewContributor(page)
   const author = await createContributor()
   const id = await createTutorial(author.id, { title: uniqueTitle('E2E Build All Steps') })
@@ -108,7 +107,7 @@ test('a pinned note shows on its own step only, with who approved it, and the un
   await expect(page.getByText(pinned, { exact: true })).toHaveCount(0)
 })
 
-test('finishing the last step and tapping Add to My SPLAT logs the build', async ({ page }) => {
+test('B03 finishing the last step and tapping Add to My SPLAT logs the build', async ({ page }) => {
   const reader = await signInAsNewContributor(page)
   const author = await createContributor()
   const id = await createTutorial(author.id, { title: uniqueTitle('E2E Build Logged') })
@@ -160,7 +159,7 @@ test('a build that fails to log says so and can be tried again', async ({ page }
   await expect(page.getByRole('button', { name: 'Added to My SPLAT', exact: true })).toBeVisible()
 })
 
-test('Leave feedback at the end posts and lands on the same guide page with the note in view', async ({ page }) => {
+test('B04 Leave feedback at the end posts and lands on the same guide page with the note in view', async ({ page }) => {
   await signInAsNewContributor(page)
   const author = await createContributor()
   await renameProfile(author.id, 'Mei Author')

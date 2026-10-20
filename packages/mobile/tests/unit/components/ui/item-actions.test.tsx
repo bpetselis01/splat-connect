@@ -1,4 +1,3 @@
-// journeys: Y07
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { ItemActions } from '../../../../components/ui/ItemActions'
 

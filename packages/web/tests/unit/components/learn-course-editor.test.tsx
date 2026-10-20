@@ -58,7 +58,7 @@ describe('LearnCourseEditor', () => {
   })
 
   // Byron 2026-10-02: several admins may edit the course.
-  it('shows who saved last and sends the version it loaded', async () => {
+  it('WM36 shows who saved last and sends the version it loaded', async () => {
     render(
       <LearnCourseEditor
         course={LEARN_COURSE}
@@ -71,7 +71,7 @@ describe('LearnCourseEditor', () => {
     expect(put.mock.calls[0][1]).toMatchObject({ expected_updated_at: '2026-09-20T02:00:00.000000+00:00' })
   })
 
-  it('offers a reload when someone else saved first', async () => {
+  it('WM36 offers a reload when someone else saved first', async () => {
     put.mockRejectedValue(
       Object.assign(
         new Error(

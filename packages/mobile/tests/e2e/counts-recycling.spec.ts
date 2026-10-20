@@ -1,4 +1,3 @@
-// journeys: V04 V05 L12 L13
 import { test, expect } from '@playwright/test'
 import { adminClient, createContributor, makeOrgLeader, renameProfile, signInAsNewContributor, uniqueTitle } from './helpers'
 import { partyPage } from './org-fixtures'
@@ -21,7 +20,7 @@ const DECLARATION = [
   'Photographed before drop-off',
 ]
 
-test('book with a photo -> intake count 1 -> weigh and credit -> intake count clears and the family credit appears', async ({
+test('V04 V05 L12 L13 book with a photo -> intake count 1 -> weigh and credit -> intake count clears and the family credit appears', async ({
   page,
   browser,
   baseURL,

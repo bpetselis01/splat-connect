@@ -1,4 +1,3 @@
-// journeys: A04 A05 A06 A07 A08 A09 A10 A12 Z04
 import { describe, it, expect, afterAll } from 'vitest'
 import { createClient } from '@supabase/supabase-js'
 import { adminClient } from '../../helpers/auth.js'

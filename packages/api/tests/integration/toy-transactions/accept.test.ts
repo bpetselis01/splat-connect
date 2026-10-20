@@ -1,4 +1,3 @@
-// journeys: W03 X01 X04
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, type TestUser } from '../../helpers/auth.js'
@@ -73,7 +72,7 @@ describe('POST /api/toy-transactions/:id/accept', () => {
     expect(res.status).toBe(400)
   })
 
-  it('accepts, generates a code for the owner only, and stores the supplied address', async () => {
+  it('W03 X04 WX06 accepts, generates a code for the owner only, and stores the supplied address', async () => {
     const res = await txReq(`/${tx1Id}/accept`, owner.token, { method: 'POST', body: JSON.stringify(ADDRESS) })
     expect(res.status).toBe(200)
     const tx = (await res.json()) as {

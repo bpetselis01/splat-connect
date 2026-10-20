@@ -1,4 +1,3 @@
-// journeys: T10 T11
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { StepsSection } from '../../../../components/my-tutorials/sections/steps-section'
 
@@ -64,7 +63,7 @@ describe('adding, editing and removing steps', () => {
     expect(lastRows()).toEqual([{ title: null, body: '', photo_url: null, tip: null, minutes: null }])
   })
 
-  it('sends the whole list on every keystroke', () => {
+  it('T10 sends the whole list on every keystroke', () => {
     withSteps([step(1)])
     render(<StepsSection />)
     fireEvent.changeText(screen.getByLabelText('Step 1 instructions'), 'Twist the cap')
@@ -100,7 +99,7 @@ describe('adding, editing and removing steps', () => {
     expect(lastRows()[0].minutes).toBeNull()
   })
 
-  it('removes a step and renumbers the rest', () => {
+  it('T10 removes a step and renumbers the rest', () => {
     withSteps([step(1), step(2), step(3)])
     render(<StepsSection />)
     fireEvent.press(screen.getByTestId('step-remove-1'))
@@ -127,7 +126,7 @@ describe('adding, editing and removing steps', () => {
 })
 
 describe('ordering', () => {
-  it('moves a step down and up', () => {
+  it('T10 moves a step down and up', () => {
     withSteps([step(1), step(2), step(3)])
     render(<StepsSection />)
     fireEvent.press(screen.getByTestId('step-down-0'))
@@ -190,7 +189,7 @@ describe('many steps', () => {
 describe('step photos', () => {
   const pick = { canceled: false, assets: [{ uri: 'file:///s.jpg', fileName: 's.jpg', mimeType: 'image/jpeg' }] }
 
-  it('uploads to the step-photo route and attaches the url to that step', async () => {
+  it('T11 uploads to the step-photo route and attaches the url to that step', async () => {
     withSteps([step(1), step(2)])
     mockLaunchLibrary.mockResolvedValue(pick)
     mockUploadFile.mockResolvedValue({ url: 'photos/s.jpg' })
@@ -329,7 +328,7 @@ describe('steps or a PDF', () => {
     expect(screen.getByText(stepsLabel)).toBeTruthy()
   })
 
-  it('"Choose PDF from Files" uploads inline and saves the path, without leaving Steps', async () => {
+  it('T10 "Choose PDF from Files" uploads inline and saves the path, without leaving Steps', async () => {
     mockPickPdf.mockResolvedValue('t1/guide.pdf')
     render(<StepsSection />)
     fireEvent.press(screen.getByText('Choose PDF from Files'))
@@ -353,7 +352,7 @@ describe('steps or a PDF', () => {
     expect(await screen.findByText('Could not upload the PDF. Please try again.')).toBeTruthy()
   })
 
-  it('"View PDF" signs the path and opens the preview', async () => {
+  it('T10 "View PDF" signs the path and opens the preview', async () => {
     withSteps([], 'a/guide.pdf')
     mockSign.mockResolvedValue({ data: { signedUrl: 'https://signed' }, error: null })
     render(<StepsSection />)

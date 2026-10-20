@@ -1,4 +1,3 @@
-// journeys: P04 L06 Q06 R07
 import { test, expect } from '@playwright/test'
 import {
   adminClient,
@@ -29,7 +28,7 @@ const notesOf = async (recipientId: string, type: string) =>
       .eq('type', type)
   ).data ?? []
 
-test('a family thanking an organisation reaches its leader, whose inbox row opens the profile editor', async ({ browser, baseURL }) => {
+test('P04 Q06 a family thanking an organisation reaches its leader, whose inbox row opens the profile editor', async ({ browser, baseURL }) => {
   const leader = await createContributor()
   const orgName = uniqueTitle('E2E Chain Org')
   const orgId = await makeOrgLeader(leader.id, orgName)
@@ -63,7 +62,7 @@ test('a family thanking an organisation reaches its leader, whose inbox row open
   }
 })
 
-test('a leader approving a backed guide reaches its author, whose inbox row opens the guide', async ({ browser, baseURL }) => {
+test('L06 Q06 a leader approving a backed guide reaches its author, whose inbox row opens the guide', async ({ browser, baseURL }) => {
   const leader = await createContributor()
   const orgName = uniqueTitle('E2E Approving Org')
   const orgId = await makeOrgLeader(leader.id, orgName)
@@ -101,7 +100,7 @@ test('a leader approving a backed guide reaches its author, whose inbox row open
   }
 })
 
-test('a printer starting a job reaches the requester, whose inbox thread opens the print job', async ({ browser, baseURL }) => {
+test('R07 Q06 a printer starting a job reaches the requester, whose inbox thread opens the print job', async ({ browser, baseURL }) => {
   const job = await seedPrintJob('accepted')
   const printerPage = await partyPage(browser, baseURL, job.printer)
   const familyPage = await partyPage(browser, baseURL, job.requester)

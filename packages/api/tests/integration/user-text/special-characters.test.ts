@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
+import { AGREEMENT_VERSIONS } from '@splat-connect/types'
 
 /**
  * Every user-typed string the API stores must come back exactly as sent, or be
@@ -47,7 +48,7 @@ let tutorialId: string
 beforeAll(async () => {
   user = await createTestUser('contributor')
   const admin = adminClient()
-  await admin.from('user_agreements').insert({ user_id: user.id, agreement_type: 'contributor_terms', version: 'test' })
+  await admin.from('user_agreements').insert({ user_id: user.id, agreement_type: 'contributor_terms', version: AGREEMENT_VERSIONS.contributor_terms })
   tutorialId = crypto.randomUUID()
   const made = await send(user.token, 'POST', '/api/tutorials', { id: tutorialId, title: 'Notes host', difficulty: 'easy' })
   expect(made.status).toBe(201)

@@ -73,7 +73,7 @@ describe('EditFilesSection', () => {
     expect(mockPostFormData).not.toHaveBeenCalled()
   })
 
-  it('clicking Save after selecting a PDF uploads it to /api/upload/pdf', async () => {
+  it('WT24 clicking Save after selecting a PDF uploads it to /api/upload/pdf', async () => {
     mockPostFormData.mockResolvedValue({ url: 'https://example.com/new-tutorial.pdf' })
     const { pdfInput, saveButton, onSave } = setup()
     fireEvent.change(pdfInput, { target: { files: [pdf()] } })
@@ -87,7 +87,7 @@ describe('EditFilesSection', () => {
   // How:   picks a photo without touching Save; checks it uploaded and persisted
   // Chain: a tile is the commitment, and × is how it is taken back — which also
   //        deletes the object, so nothing lingers that the author removed
-  it('adding a photo uploads and saves it without clicking Save', async () => {
+  it('WT23 adding a photo uploads and saves it without clicking Save', async () => {
     mockPostFormData.mockResolvedValue({ url: 'https://test.supabase.co/storage/v1/object/public/photos/new-photo.png' })
     const { photoInput, onSavePhotos } = setup()
     fireEvent.change(photoInput(), { target: { files: [png()] } })
@@ -118,7 +118,7 @@ describe('EditFilesSection', () => {
   })
 
   // Tests: a caption edit saves the urls with the aligned captions (087)
-  it('saves a caption with the current photo urls', async () => {
+  it('WT23 saves a caption with the current photo urls', async () => {
     const { onSavePhotos } = setup()
     fireEvent.change(screen.getByLabelText('Caption for photo 1'), { target: { value: 'Front view' } })
     fireEvent.blur(screen.getByLabelText('Caption for photo 1'))

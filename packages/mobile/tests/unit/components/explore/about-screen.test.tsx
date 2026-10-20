@@ -1,5 +1,4 @@
 // packages/mobile/tests/unit/components/explore/about-screen.test.tsx
-// journeys: Q16
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { Linking } from 'react-native'
 import { ABOUT_LEAD, ABOUT_PILLARS, ABOUT_TEAM_BLURB } from '@splat-connect/types'
@@ -20,7 +19,7 @@ const ROWS: [string, string][] = [
 ]
 
 describe('AboutScreen', () => {
-  it('opens the matching web page for every link row', () => {
+  it('Q16 opens the matching web page for every link row', () => {
     const openURL = jest.spyOn(Linking, 'openURL').mockImplementation(() => Promise.resolve(true))
     render(<AboutScreen />)
 

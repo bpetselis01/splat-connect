@@ -1,4 +1,3 @@
-# journeys: V01
 # Registering for an event from its public page: the event detail opens from a
 # link, "I'm going" pushes the register screen because the event has a question,
 # the required answer unblocks Confirm, and the registration is a real row.
@@ -9,6 +8,7 @@
 # DEVICE_USER_ID come from `maestro test --env`, fed by
 # scripts/provision-device-parent.mjs (see sign-out-clears-session.yaml for why
 # they carry no env: defaults here).
+name: "V01 V10 V12 V16 Register for an event whose question needs an answer, then see it on My events"
 appId: com.splatconnect.mobile
 ---
 - clearState

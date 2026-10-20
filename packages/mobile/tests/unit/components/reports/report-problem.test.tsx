@@ -1,4 +1,3 @@
-// journeys: G10 P09 S03 X14
 import { CLEARANCE, scrollPaddings } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { ReportProblem } from '../../../../components/reports/report-problem'
@@ -13,7 +12,7 @@ beforeEach(() => {
 })
 
 describe('ReportProblem', () => {
-  it('reports an exchange, says who with, and asks before it says OK to contact', async () => {
+  it('X14 reports an exchange, says who with, and asks before it says OK to contact', async () => {
     render(<ReportProblem subjectKind="exchange" subjectId="tx1" subjectLabel="Drum — exchange with Northside" item="this exchange" who="Northside" />)
     fireEvent.press(screen.getByRole('button', { name: 'Report a problem' }))
     expect(screen.getByText('About this exchange · with Northside. Goes to the SPLAT team only.')).toBeTruthy()

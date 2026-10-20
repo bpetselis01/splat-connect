@@ -1,5 +1,4 @@
 // packages/mobile/tests/unit/components/explore/learn-hub.test.tsx
-// journeys: Q15
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { LearnHub, learnSections } from '../../../../components/explore/learn-hub'
 import { LEARN_ARTICLES } from '../../../../lib/learn-content'
@@ -49,7 +48,7 @@ describe('LearnHub', () => {
     expect(screen.getByText('Up next · 3 min')).toBeTruthy()
   })
 
-  it('shows a tick on every read node and a numeral on the rest', () => {
+  it('Q15 shows a tick on every read node and a numeral on the rest', () => {
     mockUseLearnProgress.mockReturnValue({
       read: new Set(['toy-adaptation-101', 'switch-types']),
       markRead: jest.fn(),
@@ -119,7 +118,7 @@ describe('LearnHub', () => {
   })
 
   // site-content-learn-legal-editing: the app reads the course's title, outcome and "Shown as".
-  it("shows a saved course title and outcome in place of the app's intro", async () => {
+  it("Q15 shows a saved course title and outcome in place of the app's intro", async () => {
     mockUseLearnProgress.mockReturnValue({ read: new Set(), markRead: jest.fn(), next: LEARN_ARTICLES[0], count: 0 })
     mockGet.mockResolvedValue({ title: 'Toy adaptation, start to finish', outcome: 'Adapt a battery toy for a switch.', shown_as: 'free', units: [] })
     render(<LearnHub />)
@@ -128,7 +127,7 @@ describe('LearnHub', () => {
     expect(screen.queryByText(/How switch adaptation works/)).toBeNull()
   })
 
-  it('says "Course hidden" and lists nothing when an admin hid the course', async () => {
+  it('Q15 says "Course hidden" and lists nothing when an admin hid the course', async () => {
     mockUseLearnProgress.mockReturnValue({ read: new Set(), markRead: jest.fn(), next: LEARN_ARTICLES[0], count: 0 })
     mockGet.mockResolvedValue({ title: null, outcome: null, shown_as: 'hidden', units: [] })
     render(<LearnHub />)

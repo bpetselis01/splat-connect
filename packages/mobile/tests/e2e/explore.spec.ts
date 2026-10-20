@@ -1,4 +1,3 @@
-// journeys: Q13 Q14 Q15
 import { test, expect } from '@playwright/test'
 import { createTutorial, signInAsNewContributor, uniqueTitle } from './helpers'
 
@@ -10,7 +9,7 @@ import { createTutorial, signInAsNewContributor, uniqueTitle } from './helpers'
  * storage — which is why each test signs in fresh rather than sharing a page.
  */
 
-test('the three doors are there, with the learn path not yet started', async ({ page }) => {
+test('Q14 the three doors are there, with the learn path not yet started', async ({ page }) => {
   await signInAsNewContributor(page)
   await page.goto('/explore')
 
@@ -20,7 +19,7 @@ test('the three doors are there, with the learn path not yet started', async ({ 
   await expect(page.getByText('0/6', { exact: true })).toBeVisible()
 })
 
-test('reading an article ticks it off and advances the Continue card', async ({ page }) => {
+test('Q15 reading an article ticks it off and advances the Continue card', async ({ page }) => {
   await signInAsNewContributor(page)
   await page.goto('/explore/learn')
 
@@ -46,7 +45,7 @@ test('reading an article ticks it off and advances the Continue card', async ({ 
   await expect(page.getByText('1/6', { exact: true })).toBeVisible()
 })
 
-test('search finds a published guide and opens it', async ({ page }) => {
+test('Q13 search finds a published guide and opens it', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const title = uniqueTitle('E2E Searchable Guide')
   const id = await createTutorial(contributor.id, { title })

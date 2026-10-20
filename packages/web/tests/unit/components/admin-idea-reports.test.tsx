@@ -33,7 +33,7 @@ describe('AdminIdeaReports', () => {
     expect(screen.getByText(/No idea reports/)).toBeInTheDocument()
   })
 
-  it('Remove sends the action and the trimmed note, then refreshes', async () => {
+  it('WM30 Remove sends the action and the trimmed note, then refreshes', async () => {
     patch.mockResolvedValue({})
     render(<AdminIdeaReports reports={[report()]} />)
     fireEvent.change(screen.getByLabelText('Note for the record'), { target: { value: ' Warned twice. ' } })
@@ -42,14 +42,14 @@ describe('AdminIdeaReports', () => {
     await waitFor(() => expect(refresh).toHaveBeenCalled())
   })
 
-  it('Dismiss sends the dismiss action', async () => {
+  it('WM30 Dismiss sends the dismiss action', async () => {
     patch.mockResolvedValue({})
     render(<AdminIdeaReports reports={[report()]} />)
     fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }))
     await waitFor(() => expect(patch).toHaveBeenCalledWith('/api/admin/reports/r1', { action: 'dismiss', resolution_note: '' }))
   })
 
-  it('offers Reinstate only on a resolved report whose person is still removed', async () => {
+  it('WM31 offers Reinstate only on a resolved report whose person is still removed', async () => {
     del.mockResolvedValue(undefined)
     render(<AdminIdeaReports reports={[report({ resolved_at: '2026-10-02T00:00:00Z', removed: true }), report({ id: 'r2', resolved_at: '2026-10-02T00:00:00Z' })]} />)
     expect(screen.getAllByRole('button', { name: 'Reinstate' })).toHaveLength(1)

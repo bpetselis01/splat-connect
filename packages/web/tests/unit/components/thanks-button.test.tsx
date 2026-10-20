@@ -10,19 +10,23 @@ beforeEach(() => vi.clearAllMocks())
 
 // The public guide page has no ToastProvider, so a toast here was silent.
 describe('ThanksButton', () => {
-  it('says the thanks went, inline, with no toast provider on the page', async () => {
+  it('WT09 posts the thank for the guide, shows the new count, and says so inline with no toast provider on the page', async () => {
     post.mockResolvedValue({ thanks_count: 4 })
     render(<ThanksButton tutorialId="t1" count={3} thanked={false} own={false} signedIn />)
     fireEvent.click(screen.getByRole('button', { name: /Say thanks/ }))
     expect(await screen.findByRole('status')).toHaveTextContent('Thanks sent — they will see it in their notifications')
+    expect(post).toHaveBeenCalledWith('/api/tutorials/t1/thanks', {})
     expect(screen.getByRole('button')).toHaveTextContent('Thanked')
+    expect(screen.getByRole('button')).toHaveTextContent('4')
+    expect(screen.getByRole('button')).toBeDisabled()
   })
 
-  it('says you already thanked them on a 409', async () => {
+  it('WT09 says you already thanked them on a 409, and disables the button', async () => {
     post.mockRejectedValue(Object.assign(new Error('409'), { status: 409 }))
     render(<ThanksButton tutorialId="t1" count={3} thanked={false} own={false} signedIn />)
     fireEvent.click(screen.getByRole('button', { name: /Say thanks/ }))
     expect(await screen.findByRole('status')).toHaveTextContent('You already thanked them')
+    expect(screen.getByRole('button')).toBeDisabled()
   })
 
   it('raises an alert when it could not send', async () => {

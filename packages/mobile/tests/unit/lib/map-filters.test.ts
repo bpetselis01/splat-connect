@@ -1,4 +1,3 @@
-// journeys: Q11
 import type { MapPlace } from '@splat-connect/types'
 import { applyFilters, filterCount, itemMeta, itemRoute, KIND_ORDER, NO_FILTERS, toFeatures } from '../../../lib/map-filters'
 
@@ -27,30 +26,30 @@ const places: MapPlace[] = [
 const ids = (ps: MapPlace[]) => ps.flatMap((p) => p.items.map((i) => i.id))
 
 describe('applyFilters', () => {
-  it('keeps everything with no filters and every layer on', () => {
+  it('Q11 keeps everything with no filters and every layer on', () => {
     expect(ids(applyFilters(places, all, NO_FILTERS, now))).toEqual(['p1', 'o1', 't1', 'sat', 'later', 'o9'])
   })
 
-  it('a hidden layer drops its items, and a place left empty drops out', () => {
+  it('Q11 a hidden layer drops its items, and a place left empty drops out', () => {
     const shown = applyFilters(places, new Set(['event'] as const), NO_FILTERS, now)
     expect(shown.map((p) => p.suburb)).toEqual(['Chatswood'])
   })
 
-  it('distance keeps places within the radius and drops places with no distance', () => {
+  it('Q11 distance keeps places within the radius and drops places with no distance', () => {
     expect(applyFilters(places, all, { ...NO_FILTERS, within: 5 }, now).map((p) => p.suburb)).toEqual(['Newtown'])
   })
 
-  it('filament narrows printers and drop-offs only', () => {
+  it('Q11 filament narrows printers and drop-offs only', () => {
     expect(ids(applyFilters(places, all, { ...NO_FILTERS, materials: ['PETG'] }, now))).toEqual(['o1', 't1', 'sat', 'later', 'o9'])
   })
 
-  it('event dates: next two weeks, and weekends', () => {
+  it('Q11 event dates: next two weeks, and weekends', () => {
     expect(ids(applyFilters(places, all, { ...NO_FILTERS, when: 'fortnight' }, now))).not.toContain('later')
     expect(ids(applyFilters(places, all, { ...NO_FILTERS, when: 'weekend' }, now))).toEqual(['p1', 'o1', 't1', 'sat', 'o9'])
   })
 })
 
-it('filterCount counts distance, each filament and the date choice', () => {
+it('Q11 filterCount counts distance, each filament and the date choice', () => {
   expect(filterCount(NO_FILTERS)).toBe(0)
   expect(filterCount({ within: 5, materials: ['PLA', 'TPU'], when: 'weekend' })).toBe(4)
 })

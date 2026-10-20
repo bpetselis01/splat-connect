@@ -1,4 +1,3 @@
-// journeys: R07 R08 R09 R12 R13 R14 R16 R17
 /**
  * Printers and the jobs on them.
  *
@@ -90,7 +89,7 @@ afterAll(async () => {
 })
 
 describe('listing a printer', () => {
-  it('creates one owned by the caller, whatever the body claims', async () => {
+  it('R17 WR22 creates one owned by the caller, whatever the body claims', async () => {
     const res = await app.request(
       '/api/printers',
       json(owner.token, 'POST', {
@@ -170,7 +169,7 @@ describe('listing a printer', () => {
 })
 
 describe('asking for a print', () => {
-  it('refuses a printer that is not taking jobs', async () => {
+  it('R16 WR23 refuses a printer that is not taking jobs', async () => {
     await app.request(`/api/printers/${printerId}`, json(owner.token, 'PATCH', { accepting: false }))
     const res = await app.request(
       '/api/toy-transactions/print',
@@ -277,7 +276,7 @@ describe('moving a job through the bed', () => {
     expect(res.status).toBe(409)
   })
 
-  it('lets only the printer start it', async () => {
+  it('R07 WR17 lets only the printer start it', async () => {
     const byFamily = await app.request(
       `/api/toy-transactions/${jobId}/print-started`,
       json(family.token, 'POST', {})
@@ -294,7 +293,7 @@ describe('moving a job through the bed', () => {
     ).not.toBeNull()
   })
 
-  it('requires a photo to mark it ready', async () => {
+  it('R08 WR18 requires a photo to mark it ready', async () => {
     const noPhoto = await app.request(
       `/api/toy-transactions/${jobId}/print-ready`,
       json(owner.token, 'POST', {})
@@ -311,7 +310,7 @@ describe('moving a job through the bed', () => {
     expect(body.ready_photo_url).toContain(jobId)
   })
 
-  it('closes on both codes and transfers no toy, because there is none', async () => {
+  it('R09 WR16 closes on both codes and transfers no toy, because there is none', async () => {
     const admin = adminClient()
     const { data: row } = await admin
       .from('toy_transactions')
@@ -339,7 +338,7 @@ describe('moving a job through the bed', () => {
 })
 
 describe('declining a print', () => {
-  it('needs a reason, and stores it', async () => {
+  it('R14 WR14 WR26 needs a reason, and stores it', async () => {
     const created = await app.request(
       '/api/toy-transactions/print',
       json(family.token, 'POST', {

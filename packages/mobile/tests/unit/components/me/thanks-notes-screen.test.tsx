@@ -1,4 +1,3 @@
-// journeys: S02
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { ThanksNotesScreen } from '../../../../components/me/thanks-notes-screen'
 
@@ -20,7 +19,16 @@ const row = (over = {}) => ({
 beforeEach(() => jest.clearAllMocks())
 
 describe('ThanksNotesScreen', () => {
-  it('lists the notes and hides one, then shows it again', async () => {
+  it('Q22 loads the notes people left for the caller, with who left each', async () => {
+    mockGet.mockResolvedValue([row(), row({ thanker_id: 'u2', note: 'Quiet and sturdy.', byline: 'Idris' })])
+    render(<ThanksNotesScreen />)
+    expect(await screen.findByText('“You fixed our switch.”')).toBeTruthy()
+    expect(screen.getByText('“Quiet and sturdy.”')).toBeTruthy()
+    expect(mockGet).toHaveBeenCalledWith('/api/contributors/me/thanks')
+    expect(screen.getByRole('button', { name: 'Hide the note from Idris' })).toBeTruthy()
+  })
+
+  it('Q23 Hide PATCHes hidden true and tags the note Hidden, then Show PATCHes hidden false and clears the tag', async () => {
     mockGet.mockResolvedValue([row()])
     render(<ThanksNotesScreen />)
     expect(await screen.findByText('“You fixed our switch.”')).toBeTruthy()
@@ -28,9 +36,12 @@ describe('ThanksNotesScreen', () => {
     fireEvent.press(screen.getByRole('button', { name: 'Hide the note from Wren' }))
     expect(await screen.findByRole('button', { name: 'Show the note from Wren' })).toBeTruthy()
     expect(mockPatch).toHaveBeenCalledWith('/api/contributors/me/thanks/u1', { hidden: true })
+    expect(screen.getByText(/· Hidden/)).toBeTruthy()
     mockPatch.mockResolvedValueOnce(row())
     fireEvent.press(screen.getByRole('button', { name: 'Show the note from Wren' }))
     await waitFor(() => expect(mockPatch).toHaveBeenLastCalledWith('/api/contributors/me/thanks/u1', { hidden: false }))
+    expect(await screen.findByRole('button', { name: 'Hide the note from Wren' })).toBeTruthy()
+    expect(screen.queryByText(/· Hidden/)).toBeNull()
   })
 
   it('shows an EmptyState when there are no notes', async () => {

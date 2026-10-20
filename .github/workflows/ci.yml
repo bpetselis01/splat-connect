@@ -34,6 +34,11 @@ jobs:
   changes:
     name: Detect Changed Packages
     runs-on: ubuntu-latest
+    # On a pull_request event paths-filter reads the PR's file list through the API,
+    # which the default read-only token refuses ("Resource not accessible by integration").
+    permissions:
+      contents: read
+      pull-requests: read
     outputs:
       api: ${{ steps.filter.outputs.api }}
       web: ${{ steps.filter.outputs.web }}
@@ -162,10 +167,18 @@ jobs:
         run: supabase stop --no-backup
 
   web-e2e:
-    name: Web E2E Tests
+    name: Web E2E Tests (${{ matrix.shard }}/4)
     needs: [changes, check, test]
     if: needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
+    # 383 tests take 18.5 min locally at the single worker GoTrue's port budget allows,
+    # and the 2-core runner is about four times slower (three legs hit a 30 min cap),
+    # so the suite runs as four legs, each with its own runner and local Supabase.
+    timeout-minutes: 50
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
 
     steps:
       - uses: actions/checkout@v4
@@ -181,7 +194,9 @@ jobs:
         run: pnpm --filter @splat-connect/web exec playwright install --with-deps chromium
 
       - name: Run web E2E tests
-        run: pnpm --filter @splat-connect/web test:e2e
+        # No "--": pnpm forwards it to Playwright, which then ignores the shard
+        # flag and every leg runs the whole suite.
+        run: pnpm --filter @splat-connect/web test:e2e --shard=${{ matrix.shard }}/4
 
       # Traces and page snapshots of what failed; without them a CI-only
       # failure is a test name and a timeout.
@@ -189,7 +204,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: web-e2e-test-results
+          name: web-e2e-test-results-${{ matrix.shard }}
           path: packages/web/test-results
           retention-days: 7
 

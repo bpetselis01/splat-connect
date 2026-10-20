@@ -1,4 +1,3 @@
-// journeys: A01 A02 A03 A04 A05 A06 A07 A09 A10 A11 A13 Z04
 import { test, expect } from '@playwright/test'
 import {
   adminClient,
@@ -13,13 +12,13 @@ import {
 // The sign-in flow of docs/superpowers/specs/2026-09-30-mobile-sign-in-design.md,
 // against local Supabase. Codes are read out of Mailpit, not faked.
 
-test('a contributor signs in with a password and lands on Guides', async ({ page }) => {
+test('A05 a contributor signs in with a password and lands on Guides', async ({ page }) => {
   const { email, password } = await createContributor()
   await signIn(page, email, password)
   await expect(page).toHaveURL(/\/home$/)
 })
 
-test('Welcome opens both doors', async ({ page }) => {
+test('A01 A02 Welcome opens both doors', async ({ page }) => {
   await page.goto('/welcome')
   await page.getByTestId('welcome-get-started').click()
   await expect(page.getByText('Create your account')).toBeVisible()
@@ -34,7 +33,7 @@ test('a wrong password keeps the email and says so', async ({ page }) => {
   await expect(page.getByLabel('Email', { exact: true })).toHaveValue(email)
 })
 
-test('a new email + password account is confirmed by its code and lands on Guides', async ({ page }) => {
+test('A04 A07 a new email + password account is confirmed by its code and lands on Guides', async ({ page }) => {
   await signUpNewAccount(page, uniqueSignupEmail())
 })
 
@@ -52,7 +51,7 @@ test('signing up with a registered email offers to sign in instead', async ({ pa
   await expect(page.getByLabel('Email', { exact: true })).toHaveValue(email)
 })
 
-test('an emailed code signs an existing account in, from the code screen with the keyboard up', async ({ page }) => {
+test('A06 A07 an emailed code signs an existing account in, from the code screen with the keyboard up', async ({ page }) => {
   const { email } = await createContributor()
   await page.goto('/sign-in')
   await page.getByLabel('Email', { exact: true }).fill(email)
@@ -82,7 +81,7 @@ test('an emailed code never creates an account', async ({ page }) => {
   await expect(page.getByText('No account uses that email.')).toBeVisible()
 })
 
-test('Wrong email? Change it returns to the code screen with the email', async ({ page }) => {
+test('A08 Wrong email? Change it returns to the code screen with the email', async ({ page }) => {
   const { email } = await createContributor()
   await page.goto('/code-sign-in')
   await page.getByLabel('Email', { exact: true }).fill(email)
@@ -92,7 +91,7 @@ test('Wrong email? Change it returns to the code screen with the email', async (
   await expect(page.getByLabel('Email', { exact: true }).last()).toHaveValue(email)
 })
 
-test('forgot password resets it in the app, and the new one works', async ({ page }) => {
+test('A09 A10 forgot password resets it in the app, and the new one works', async ({ page }) => {
   const { email } = await createContributor()
   await page.goto('/sign-in')
   await page.getByLabel('Email', { exact: true }).fill(email)
@@ -112,7 +111,7 @@ test('forgot password resets it in the app, and the new one works', async ({ pag
   expect(error).toBeNull()
 })
 
-test('an account that never accepted the terms meets the gate first', async ({ page }) => {
+test('A11 an account that never accepted the terms meets the gate first', async ({ page }) => {
   const email = uniqueSignupEmail()
   const { error } = await adminClient().auth.admin.createUser({ email, password: 'Test1234!', email_confirm: true })
   expect(error).toBeNull()
@@ -125,7 +124,7 @@ test('an account that never accepted the terms meets the gate first', async ({ p
   await expect(page).toHaveURL(/\/home$/)
 })
 
-test('the account view says how you sign in, and signs out to Welcome', async ({ page }) => {
+test('Z04 the account view says how you sign in, and signs out to Welcome', async ({ page }) => {
   const { email, password } = await createContributor()
   await signIn(page, email, password)
   await expect(page).toHaveURL(/\/home$/)
@@ -137,7 +136,7 @@ test('the account view says how you sign in, and signs out to Welcome', async ({
   await expect(page).toHaveURL(/\/welcome$/)
 })
 
-test('a sign-in provider that is not switched on opens Not built yet', async ({ page }) => {
+test('A03 A13 a sign-in provider that is not switched on opens Not built yet', async ({ page }) => {
   await page.goto('/sign-in')
   await page.getByTestId('google-sign-in').click()
   await expect(page.getByText('Not built yet')).toBeVisible()

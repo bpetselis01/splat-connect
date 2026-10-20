@@ -1,6 +1,5 @@
 // The Map tab with MapCanvas stubbed: pins are buttons named by suburb, so the
 // screen's own state (chips, filters, sheet, list) is what is under test.
-// journeys: Q11 Q12
 import { render, screen, fireEvent, waitFor, within, act } from '@testing-library/react-native'
 import type { MapPlace } from '@splat-connect/types'
 import MapTab from '../../../app/(tabs)/map'
@@ -60,7 +59,7 @@ beforeEach(() => {
   mockGet.mockResolvedValue(PLACES)
 })
 
-it('?kind=printer opens with only the Printers layer picked', async () => {
+it('Q11 ?kind=printer opens with only the Printers layer picked', async () => {
   mockParams = { kind: 'printer' }
   render(<MapTab />)
   expect(await screen.findByRole('button', { name: 'pin Leichhardt' })).toBeTruthy()
@@ -73,14 +72,14 @@ it('an unknown ?kind is ignored and every layer shows', async () => {
   expect(await screen.findByRole('button', { name: 'pin Chatswood' })).toBeTruthy()
 })
 
-it('loads places near the viewer and draws a pin per suburb', async () => {
+it('Q11 loads places near the viewer and draws a pin per suburb', async () => {
   render(<MapTab />)
   expect(await screen.findByRole('button', { name: 'pin Leichhardt' })).toBeTruthy()
   expect(mockGet).toHaveBeenCalledWith('/api/public/map?near=2040')
   expect(screen.getByPlaceholderText('Near 2040 · 3 places')).toBeTruthy()
 })
 
-it('without a postcode it asks for the whole map and offers no distance filter', async () => {
+it('Q11 without a postcode it asks for the whole map and offers no distance filter', async () => {
   mockPostcode = null
   render(<MapTab />)
   await screen.findByRole('button', { name: 'pin Leichhardt' })
@@ -89,7 +88,7 @@ it('without a postcode it asks for the whole map and offers no distance filter',
   expect(screen.queryByText(/Distance from/)).toBeNull()
 })
 
-it('tapping a pin opens its sheet, and a row opens the item', async () => {
+it('Q12 tapping a pin opens its sheet, and a row opens the item', async () => {
   render(<MapTab />)
   fireEvent.press(await screen.findByRole('button', { name: 'pin Leichhardt' }))
   expect(screen.getByText(/NSW · your postcode/)).toBeTruthy()
@@ -112,7 +111,7 @@ it('a row is announced as its title, detail and distance', async () => {
   expect(screen.getByRole('button', { name: 'Bubble machine, Toy · A family, here' })).toBeTruthy()
 })
 
-it('a chip shows only its kind; more chips add kinds; unpicking the last shows everything', async () => {
+it('Q11 a chip shows only its kind; more chips add kinds; unpicking the last shows everything', async () => {
   render(<MapTab />)
   await screen.findByRole('button', { name: 'pin Chatswood' })
   fireEvent.press(screen.getByRole('button', { name: 'Organisations' }))
@@ -141,7 +140,7 @@ it('the List button shows every place nearest first, grouped by distance, and Ma
   expect(screen.getByTestId('map')).toBeTruthy()
 })
 
-it('filters apply only on Show places, and the button counts them', async () => {
+it('Q11 filters apply only on Show places, and the button counts them', async () => {
   render(<MapTab />)
   await screen.findByRole('button', { name: 'pin Chatswood' })
   fireEvent.press(screen.getByRole('button', { name: 'Filters' }))
@@ -166,7 +165,7 @@ it('the filter button turns into a close button while the sheet is open, and clo
   expect(screen.getByRole('button', { name: 'pin Chatswood' })).toBeTruthy()
 })
 
-it('search narrows to a suburb or a matching title', async () => {
+it('Q11 search narrows to a suburb or a matching title', async () => {
   render(<MapTab />)
   await screen.findByRole('button', { name: 'pin Leichhardt' })
   fireEvent.changeText(screen.getByLabelText('Search suburbs and places'), 'prusa')

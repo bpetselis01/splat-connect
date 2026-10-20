@@ -1,5 +1,4 @@
 // Print for others when the printer read fails: says so, Try again re-reads, nothing hits console.error.
-// journeys: R14 R16
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { PrintForOthersScreen } from '../../../../components/printing/offer-screen'
 

@@ -1,4 +1,3 @@
-// journeys: G07 N02 N05 B04 B07
 import { test, expect } from '@playwright/test'
 import { adminClient, createContributor, createTutorial, signInAsNewContributor, uniqueTitle } from './helpers'
 import { addSteps } from './guides-fixtures'
@@ -7,7 +6,7 @@ import { addPhotoStep, chooseFile } from './family-fixtures'
 // A guide with real text in it: the import route answers 422 for a PDF it cannot read.
 const READABLE_PDF = '../api/tests/fixtures/pdf-import/Low_Profile_Switch_Assembly_Guide_v1.0.pdf'
 
-test('Add a guide in the Guides corner menu opens the new-guide screen', async ({ page }) => {
+test('G07 Add a guide in the Guides corner menu opens the new-guide screen', async ({ page }) => {
   await signInAsNewContributor(page)
   await page.getByRole('button', { name: 'Guides', exact: true }).click()
   await page.getByRole('button', { name: 'Guide actions', exact: true }).click()
@@ -16,7 +15,7 @@ test('Add a guide in the Guides corner menu opens the new-guide screen', async (
   await expect(page.getByRole('button', { name: 'Create draft', exact: true })).toBeVisible()
 })
 
-test('Start from a PDF reads the chosen PDF through the import route and shows what it found', async ({ page }) => {
+test('N02 Start from a PDF reads the chosen PDF through the import route and shows what it found', async ({ page }) => {
   await signInAsNewContributor(page)
   await page.goto('/guides/new')
   await page.getByRole('radio', { name: 'Start from a PDF', exact: true }).click()
@@ -31,7 +30,7 @@ test('Start from a PDF reads the chosen PDF through the import route and shows w
   await expect(page.getByRole('button', { name: 'Create draft', exact: true })).toBeVisible()
 })
 
-test('a create refused for missing terms shows the terms gate, and accepting makes the draft', async ({ page }) => {
+test('N05 a create refused for missing terms shows the terms gate, and accepting makes the draft', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   await page.getByRole('button', { name: 'Guides', exact: true }).click()
   await page.getByRole('button', { name: 'Guide actions', exact: true }).click()
@@ -66,7 +65,7 @@ test('a create refused for missing terms shows the terms gate, and accepting mak
   expect(made).toHaveLength(1)
 })
 
-test('build mode: Leave feedback after the last step posts a note and tells the author', async ({ page }) => {
+test('B04 build mode: Leave feedback after the last step posts a note and tells the author', async ({ page }) => {
   await signInAsNewContributor(page)
   const author = await createContributor()
   const id = await createTutorial(author.id, { title: uniqueTitle('E2E Build Feedback') })
@@ -94,7 +93,7 @@ test('build mode: Leave feedback after the last step posts a note and tells the 
   expect(told?.map((n) => n.type)).toContain('tutorial_noted')
 })
 
-test('a step photo opens full screen in build mode and closes back to the step', async ({ page }) => {
+test('B07 a step photo opens full screen in build mode and closes back to the step', async ({ page }) => {
   await signInAsNewContributor(page)
   const author = await createContributor()
   const id = await createTutorial(author.id, { title: uniqueTitle('E2E Step Viewer') })

@@ -1,4 +1,3 @@
-# journeys: A02 A05 G01 H07 Q01 Q05
 # The Hermes-runtime smoke: sign in and land on every tab, asserting each
 # screen's own content rendered. Jest runs on Node and Playwright on Chromium;
 # this suite is the only layer that executes the app's JS on Hermes, where the
@@ -10,6 +9,7 @@
 # DEVICE_EMAIL / DEVICE_PASSWORD come from `maestro test --env`, fed by
 # scripts/provision-device-parent.mjs — see sign-out-clears-session.yaml for
 # why they are deliberately not given env: defaults here.
+name: "A02 A05 G01 H07 Q01 Q05 Sign in, then every tab renders its own content on Hermes"
 appId: com.splatconnect.mobile
 ---
 - clearState

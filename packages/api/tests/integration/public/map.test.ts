@@ -1,5 +1,4 @@
 /** GET /api/public/map: a family's toy is pinned at its pickup suburb, for signed-in callers only. */
-// journeys: Q11 Q13
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
 import type { MapPlace } from '@splat-connect/types'
 import app from '../../../src/app.js'
@@ -42,7 +41,7 @@ describe('GET /api/public/map', () => {
     await deleteTestUser(family.id)
   })
 
-  it('signed in: the family toy sits in its pickup suburb, with distance from near', async () => {
+  it('Q11 signed in: the family toy sits in its pickup suburb, with distance from near', async () => {
     const res = await get(family.token, '?near=2000')
     expect(res.status).toBe(200)
     const toy = items((await res.json()) as MapPlace[]).find((i) => i.id === toyId)
@@ -51,7 +50,7 @@ describe('GET /api/public/map', () => {
     expect(toy).not.toHaveProperty('postcode')
   })
 
-  it('signed out: no family toys and no distance', async () => {
+  it('Q11 signed out: no family toys and no distance', async () => {
     const res = await get(undefined, '?near=2000')
     expect(res.status).toBe(200)
     const all = items((await res.json()) as MapPlace[])

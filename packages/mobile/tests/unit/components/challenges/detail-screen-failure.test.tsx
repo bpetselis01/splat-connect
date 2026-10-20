@@ -1,5 +1,4 @@
 // A failed brief load says so, retries on Try again, and never hits console.error.
-// journeys: C02
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { ChallengeDetailScreen } from '../../../../components/challenges/detail-screen'
 
@@ -19,7 +18,7 @@ jest.mock('../../../../lib/saves', () => ({
 }))
 jest.mock('../../../../lib/capabilities', () => ({ useCapabilities: () => ({ caps: null, loading: false, refresh: jest.fn() }) }))
 
-it('offline: says so, Try again re-fetches and shows the brief', async () => {
+it('C02 offline: says so, Try again re-fetches and shows the brief', async () => {
   const errSpy = jest.spyOn(console, 'error')
   mockGet.mockRejectedValueOnce(new Error('Network request failed')).mockResolvedValue({
     id: 'c1',

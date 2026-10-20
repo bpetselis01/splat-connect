@@ -1,4 +1,3 @@
-// journeys: L16 L17 L28
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { OrgRequestsScreen } from '../../../../components/organisation/org-requests-screen'
 import { OrgMessagesScreen } from '../../../../components/organisation/org-messages-screen'
@@ -29,7 +28,7 @@ beforeEach(() => {
 describe('OrgRequestsScreen', () => {
   const serve = (rows: unknown) => mockGet.mockResolvedValue(rows)
 
-  it('asks for the owner-side queue', async () => {
+  it('L16 asks for the owner-side queue', async () => {
     serve([])
     render(<OrgRequestsScreen />)
     await screen.findByText('No toy requests right now.')
@@ -71,7 +70,7 @@ describe('OrgRequestsScreen', () => {
     ['donation', 'tx1', '/exchanges/tx1'],
     ['build', 'tx1', '/exchanges/build/tx1'],
     ['print', 'tx1', '/printing/jobs/tx1'],
-  ])('a %s opens %s', async (type, id, route) => {
+  ])('L17 a %s opens %s', async (type, id, route) => {
     serve([tx({ id, type })])
     render(<OrgRequestsScreen />)
     fireEvent.press(await screen.findByRole('button', { name: /Priya/ }))
@@ -144,7 +143,7 @@ describe('OrgMessagesScreen', () => {
     expect(await screen.findByText('Nobody has written yet.')).toBeTruthy()
   })
 
-  it('merges two organisations, newest first, and says which one each is to', async () => {
+  it('L28 merges two organisations, newest first, and says which one each is to', async () => {
     mockCaps = { ledOrgs: [{ id: 'o1', name: 'Northside' }, { id: 'o2', name: 'Eastwood' }] }
     serve({ o1: [conv({ id: 'a', person_name: 'Older', updated_at: '2026-01-01T00:00:00Z' })], o2: [conv({ id: 'b', person_name: 'Newer', updated_at: '2026-09-01T00:00:00Z' })] })
     render(<OrgMessagesScreen />)

@@ -1,4 +1,3 @@
-// journeys: Q02
 import { buildNav } from '@splat-connect/types'
 import { myRoute } from '../../../lib/my-routes'
 
@@ -7,7 +6,7 @@ const caps: any = {
   unread: { tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 }, exchangeActions: 0,
 }
 
-it('maps every href the Me tab can emit to a mobile route, and nothing to the web', () => {
+it('Q02 maps every href the Me tab can emit to a mobile route, and nothing to the web', () => {
   const hrefs = buildNav(caps).flatMap((g) => g.rows.map((r) => r.href))
   for (const href of hrefs) {
     const route = myRoute(href)
@@ -17,7 +16,7 @@ it('maps every href the Me tab can emit to a mobile route, and nothing to the we
   }
 })
 
-it('sends the one public row to Explore and unknown hrefs to the hub', () => {
+it('Q02 sends the one public row to Explore and unknown hrefs to the hub', () => {
   expect(myRoute('/get-involved/submit-an-idea')).toBe('/explore/challenges/new')
   expect(myRoute('/get-involved/makers-wanted')).toBe('/explore/makers-wanted')
   expect(myRoute('/dashboard/organisation/recycling')).toBe('/organisation/recycling')

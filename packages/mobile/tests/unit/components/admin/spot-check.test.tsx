@@ -18,7 +18,7 @@ beforeEach(() => {
 })
 
 describe('SpotCheckScreen', () => {
-  it('lists the sample and opens a guide on the admin review route', async () => {
+  it('Q47 Q48 lists the sample and opens a guide on the admin review route', async () => {
     mockGet.mockResolvedValue([
       {
         id: 't1', title: 'Bubble machine', toy_photo_url: null, reviewed_at: '2026-09-01T00:00:00Z',

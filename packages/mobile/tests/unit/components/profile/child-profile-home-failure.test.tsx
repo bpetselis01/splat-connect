@@ -1,5 +1,4 @@
 // A failed child-profiles load says so (never "no children"), retries on Try again, and never hits console.error.
-// journeys: Z06
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { ChildProfileHome } from '../../../../components/profile/child-profile-home'
 

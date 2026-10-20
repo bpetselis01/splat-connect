@@ -60,7 +60,7 @@ const child = (over: Partial<ChildProfile>): ChildProfile => ({
 describe('EditChildPage', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('seeds the form from the requested child', async () => {
+  it('WD16 seeds the form from the requested child', async () => {
     vi.mocked(apiClient.get).mockResolvedValue([child({ id: 'c1', age: 7, helps_with: ['seeing'] })])
     render(await EditChildPage({ params: Promise.resolve({ id: 'c1' }) }))
     expect(screen.getByRole('region', { name: 'Who they are' })).toBeInTheDocument()
@@ -77,7 +77,7 @@ describe('EditChildPage', () => {
     expect(screen.getByRole('heading', { name: 'Child 2' })).toBeInTheDocument()
   })
 
-  it('404s on a child that is not the caller\'s', async () => {
+  it('WD16 404s on a child that is not the caller\'s', async () => {
     vi.mocked(apiClient.get).mockResolvedValue([child({ id: 'c1' })])
     await expect(EditChildPage({ params: Promise.resolve({ id: 'someone-elses' }) })).rejects.toThrow('NEXT_NOT_FOUND')
   })

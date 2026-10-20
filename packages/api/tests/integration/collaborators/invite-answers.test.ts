@@ -1,4 +1,3 @@
-// journeys: Q08 Q09
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
 import { createProject } from '../../helpers/orgs.js'
@@ -38,7 +37,7 @@ describe('GET /api/collaborators/me/invites', () => {
 })
 
 describe('POST /api/collaborators/invites/:id/accept', () => {
-  it('accepts and claims the seat, notifying the primary', async () => {
+  it('Q08 WD40 accepts and claims the seat, notifying the primary (collaborator_accepted)', async () => {
     const res = await app.request(`/api/collaborators/invites/${inviteId}/accept`, { ...authed(invitee.token), method: 'POST' })
     expect(res.status).toBe(200)
 
@@ -51,7 +50,7 @@ describe('POST /api/collaborators/invites/:id/accept', () => {
 })
 
 describe('POST /api/collaborators/invites/:id/decline', () => {
-  it('declines without creating a seat, notifying the primary', async () => {
+  it('Q09 WD40 declines without creating a seat, notifying the primary (collaborator_declined)', async () => {
     const res = await app.request(`/api/collaborators/invites/${inviteId}/decline`, { ...authed(invitee.token), method: 'POST' })
     expect(res.status).toBe(200)
 

@@ -1,4 +1,4 @@
-// journeys: Z01 Z02 Z04 Z10
+import { AGREEMENT_VERSIONS } from '@splat-connect/types'
 import { CLEARANCE, scrollPaddings } from '../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { Linking } from 'react-native'
@@ -104,7 +104,7 @@ describe('ProfileScreen', () => {
   })
 
   describe('the account panel additions', () => {
-    it('saves a display-name change when editing ends', async () => {
+    it('Z01 saves a display-name change when editing ends', async () => {
       mockUseAuth.mockReturnValue(auth({}))
       render(<ProfileScreen />)
 
@@ -117,7 +117,7 @@ describe('ProfileScreen', () => {
     })
 
     // react-native-web never fires endEditing, so on web only Return saves.
-    it('saves a name and a postcode on Return too', async () => {
+    it('Z01 saves a name and a postcode on Return too', async () => {
       mockUseAuth.mockReturnValue(auth({}))
       mockGet.mockResolvedValue([])
       mockPatch.mockResolvedValue({})
@@ -137,7 +137,7 @@ describe('ProfileScreen', () => {
       await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/api/contributors/me', { pickup_postcode: '2042' }))
     })
 
-    it('saves what you do, the line under your name on your public profile', async () => {
+    it('Z02 saves what you do, the line under your name on your public profile', async () => {
       mockUseAuth.mockReturnValue(auth({}))
       mockGet.mockResolvedValue([])
       mockPatch.mockResolvedValue({})
@@ -166,17 +166,17 @@ describe('ProfileScreen', () => {
     it('shows when the contributor terms were accepted', async () => {
       mockUseAuth.mockReturnValue(auth({}))
       mockGet.mockResolvedValue([
-        { id: 'a1', user_id: 'u1', agreement_type: 'contributor_terms', version: 'v0-todo', accepted_at: '2026-08-12T00:00:00Z' },
+        { id: 'a1', user_id: 'u1', agreement_type: 'contributor_terms', version: AGREEMENT_VERSIONS.contributor_terms, accepted_at: '2026-08-12T00:00:00Z' },
       ])
       render(<ProfileScreen />)
 
       expect(
-        await screen.findByText('Contributor terms · accepted v0-todo · 12 Aug 2026')
+        await screen.findByText(`Contributor terms · accepted ${AGREEMENT_VERSIONS.contributor_terms} · 12 Aug 2026`)
       ).toBeTruthy()
     })
   })
 
-  it('opens the web dashboard and the privacy policy in the browser', () => {
+  it('Z10 opens the web dashboard and the privacy policy in the browser', () => {
     mockUseAuth.mockReturnValue(auth({}))
     const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(true)
     render(<ProfileScreen />)

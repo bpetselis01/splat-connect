@@ -1,4 +1,3 @@
-// journeys: G31
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { ModelScreen } from '../../../../components/guides/model-screen'
 
@@ -84,7 +83,7 @@ it('has no save, share or open-in-browser control', async () => {
   expect(screen.queryByText(/Open in browser|Share|Save|Download/)).toBeNull()
 })
 
-it('✕ goes back; Ask someone to print opens the printer finder for this guide', async () => {
+it('G31 ✕ goes back; Ask someone to print opens the printer finder for this guide', async () => {
   render(<ModelScreen id="g" file="f1" />)
   await screen.findByText('Lts base · lts_base.stl')
   fireEvent.press(screen.getByRole('button', { name: 'Close 3D view' }))

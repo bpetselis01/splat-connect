@@ -17,7 +17,7 @@ describe('submit explainers', () => {
     expect(screen.getByRole('heading', { level: 1, name: /submit an idea/i })).toBeInTheDocument()
   })
 
-  it('sends a signed-out visitor to sign in', async () => {
+  it('WI10 sends a signed-out visitor to sign in, returning to the idea form', async () => {
     mockGetCapabilities.mockResolvedValue(null)
     const { container } = render(await SubmitAnIdea({ searchParams: Promise.resolve({}) }))
     expect(screen.getByRole('link', { name: /sign in/i })).toHaveAttribute(
@@ -42,7 +42,7 @@ describe('submit explainers', () => {
     expect(screen.getByLabelText(/^title$/i)).toHaveValue('Old title')
   })
 
-  it('explains submitting a guide and routes to the upload flow', () => {
+  it('WT40 explains submitting a guide and routes to the upload flow', () => {
     render(<SubmitATutorial />)
     expect(screen.getByRole('heading', { level: 1, name: /submit a guide/i })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /start a guide/i })).toHaveAttribute('href', '/upload')
@@ -50,7 +50,7 @@ describe('submit explainers', () => {
 
   // /upload's middleware handles sign-in and the terms, so the page's other
   // door is the contributor path rather than a separate sign-up link.
-  it('points at the contributor path', () => {
+  it('WT40 points at the contributor path', () => {
     render(<SubmitATutorial />)
     expect(screen.getByRole('link', { name: /read the contributor path/i })).toHaveAttribute(
       'href',

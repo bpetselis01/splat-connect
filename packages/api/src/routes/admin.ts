@@ -480,6 +480,7 @@ admin.get('/spot-check', async (c) => {
     .eq('status', 'approved')
     .not('reviewed_by', 'is', null)
     .neq('reviewed_by', c.get('userId'))
+    .order('reviewed_at', { ascending: false, nullsFirst: false })
     .limit(limit)
   if (error) return c.json({ error: error.message }, 500)
   // PostgREST has no random ordering, and the sample is small enough that

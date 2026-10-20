@@ -5,7 +5,7 @@ import { EditSafetyNotesSection } from '@/components/edit-safety-notes-section'
 vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }))
 
 describe('EditSafetyNotesSection', () => {
-  it('adds a note and saves the list', async () => {
+  it('WT19 adds a note and saves the list', async () => {
     const onSave = vi.fn().mockResolvedValue(undefined)
     render(<EditSafetyNotesSection notes={[]} onSave={onSave} />)
     fireEvent.click(screen.getByRole('button', { name: 'Add a safety note' }))

@@ -1,5 +1,4 @@
 // Makers wanted when the board read fails: says so, Try again re-reads, nothing hits console.error.
-// journeys: K02
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { MakersWantedScreen } from '../../../../components/builds/makers-wanted-screen'
 

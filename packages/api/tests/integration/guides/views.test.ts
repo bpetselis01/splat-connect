@@ -1,4 +1,3 @@
-// journeys: T01
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createClient } from '@supabase/supabase-js'
 import app from '../../../src/app.js'
@@ -18,7 +17,7 @@ afterAll(async () => {
 })
 
 describe('092 tutorial_view_counts', () => {
-  it('counts every public read without touching the guide', async () => {
+  it('WT01 counts every public read without touching the guide', async () => {
     const before = (await adminClient().from('tutorials').select('updated_at').eq('id', guide).single()).data!.updated_at
     await app.request(`/api/public/tutorials/${guide}`)
     await app.request(`/api/public/tutorials/${guide}`)
@@ -26,7 +25,7 @@ describe('092 tutorial_view_counts', () => {
     expect(data).toEqual({ view_count: 2, updated_at: before })
   })
 
-  it('shows the count on the author’s own list', async () => {
+  it('T01 shows the count on the author’s own list', async () => {
     const res = await app.request('/api/tutorials/mine', { headers: { Authorization: `Bearer ${author.token}` } })
     const row = ((await res.json()) as { id: string; view_count: number }[]).find((r) => r.id === guide)
     expect(row?.view_count).toBe(2)

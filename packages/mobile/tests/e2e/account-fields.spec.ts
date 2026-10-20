@@ -1,4 +1,3 @@
-// journeys: A12 Z02 Z08 Z10
 import { test, expect, type Page } from '@playwright/test'
 import { adminClient, signIn, signInAsNewContributor, openChildProfile } from './helpers'
 import { createUserWithoutTerms, idAfter } from './family-fixtures'
@@ -7,7 +6,7 @@ import { createUserWithoutTerms, idAfter } from './family-fixtures'
 // and deleting a child profile. react-native-web never fires onEndEditing, so
 // the field is driven with Return (onSubmitEditing), as the name and postcode are.
 
-test('"What you do" saves on Return, shows after a reload, and clears to null when emptied', async ({ page }) => {
+test('Z02 "What you do" saves on Return, shows after a reload, and clears to null when emptied', async ({ page }) => {
   const me = await signInAsNewContributor(page)
   await page.goto('/account')
   const field = page.getByLabel('What you do', { exact: true })
@@ -39,7 +38,7 @@ async function captureOpens(page: Page) {
   return () => page.evaluate(() => (window as unknown as { opened: string[] }).opened)
 }
 
-test('an account that never accepted the terms is held at /terms and can sign out', async ({ page }) => {
+test('A12 an account that never accepted the terms is held at /terms and can sign out', async ({ page }) => {
   const user = await createUserWithoutTerms()
   await signIn(page, user.email, user.password)
   await expect(page).toHaveURL(/\/terms$/)
@@ -52,7 +51,7 @@ test('an account that never accepted the terms is held at /terms and can sign ou
   await expect(page).not.toHaveURL(/\/account$/)
 })
 
-test('Open Web Dashboard and the privacy links go to the web pages', async ({ page }) => {
+test('Z10 Open Web Dashboard and the privacy links go to the web pages', async ({ page }) => {
   await signInAsNewContributor(page)
   await page.goto('/account')
   const opened = await captureOpens(page)
@@ -72,7 +71,7 @@ test('Open Web Dashboard and the privacy links go to the web pages', async ({ pa
   expect((await openedOnChild()).at(-1)).toMatch(/\/privacy$/)
 })
 
-test('Delete profile asks first; cancelling keeps the child, confirming removes the row', async ({ page }) => {
+test('Z08 Delete profile asks first; cancelling keeps the child, confirming removes the row', async ({ page }) => {
   await signInAsNewContributor(page)
   await openChildProfile(page)
   const childId = idAfter(page, '/account/child/')

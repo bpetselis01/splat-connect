@@ -4,7 +4,8 @@ import type { CustomizationField, PrinterWithOwner } from '@splat-connect/types'
 import { RequestPrintForm } from '@/components/request-print-form'
 import { browserApiClient } from '@/lib/browser-api-client'
 
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }))
+const push = vi.hoisted(() => vi.fn())
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }))
 vi.mock('@/lib/browser-api-client', () => ({ browserApiClient: { post: vi.fn() } }))
 
 const printer = (id: string, owner_name: string) =>
@@ -13,7 +14,7 @@ const printer = (id: string, owner_name: string) =>
 // Tests: the board's pick-up-to-three (074) — the fourth printer is disabled
 //        once three are ticked, and the request carries every pick and the colour.
 describe('RequestPrintForm', () => {
-  it('asks up to three printers and sends them with the colour', async () => {
+  it('WR09 asks up to three printers and sends them with the colour', async () => {
     const post = vi.mocked(browserApiClient.post).mockResolvedValue({ id: 'tx-1' })
     render(
       <RequestPrintForm
@@ -43,6 +44,7 @@ describe('RequestPrintForm', () => {
         note: '',
       })
     )
+    await waitFor(() => expect(push).toHaveBeenCalledWith('/dashboard/print-requests/tx-1'))
   })
 
   const fields: CustomizationField[] = [

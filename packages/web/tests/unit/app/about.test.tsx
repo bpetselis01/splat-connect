@@ -14,19 +14,19 @@ import { TEAM_MEMBERS } from '@/app/about/team/page'
 vi.mock('@/lib/capabilities', () => ({ getCapabilities: async () => null }))
 
 describe('About', () => {
-  it('credits the ABS for the postcode centres', () => {
+  it('WS05 credits the ABS for the postcode centres', () => {
     render(<AboutPage />)
     expect(screen.getByRole('link', { name: 'CC BY 4.0' })).toHaveAttribute('href', 'https://creativecommons.org/licenses/by/4.0/')
     expect(screen.getByText(/Australian Bureau of Statistics/)).toBeInTheDocument()
   })
 
-  it('explains what SPLAT is and what it promises', () => {
+  it('WS05 explains what SPLAT is and what it promises', () => {
     render(<AboutPage />)
     expect(screen.getByRole('heading', { level: 1, name: /^about$/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /no paid tier, ever/i })).toBeInTheDocument()
   })
 
-  it('routes on to the team and to contact', () => {
+  it('WS05 routes on to the team and to contact', () => {
     render(<AboutPage />)
     for (const link of screen.getAllByRole('link', { name: /our team/i })) {
       expect(link).toHaveAttribute('href', '/about/team')
@@ -36,7 +36,7 @@ describe('About', () => {
     }
   })
 
-  it('grids the rest of the About hub', () => {
+  it('WS05 grids the rest of the About hub', () => {
     render(<AboutPage />)
     expect(screen.getByRole('link', { name: /partners.*supporters/i })).toHaveAttribute(
       'href',
@@ -65,26 +65,26 @@ describe('About', () => {
     expect(TEAM_MEMBERS[0].name).not.toMatch(/^TODO/)
   })
 
-  it('says To be completed while no team member has been supplied', () => {
+  it('WS06 says To be completed while no team member has been supplied', () => {
     render(<TeamPage />)
     expect(TEAM_MEMBERS).toHaveLength(0)
     expect(screen.getByText('To be completed')).toBeInTheDocument()
   })
 
-  it('renders a card per team member', () => {
+  it('WS06 renders a card per team member', () => {
     render(<TeamPage />)
     for (const member of TEAM_MEMBERS) {
       expect(screen.getByText(member.name)).toBeInTheDocument()
     }
   })
 
-  it('says To be completed where the organisation facts are not supplied', async () => {
+  it('WS13 says To be completed where the organisation facts are not supplied', async () => {
     render(await ContactPage())
     expect(screen.getByText('To be completed')).toBeInTheDocument()
     expect(screen.queryByText(/TODO/)).toBeNull()
   })
 
-  it('gives contact routes for the three things people actually write in about', async () => {
+  it('WS13 gives contact routes for the three things people actually write in about', async () => {
     render(await ContactPage())
     expect(screen.getByRole('heading', { level: 1, name: /contact/i })).toBeInTheDocument()
     expect(screen.getAllByText(/safety/i).length).toBeGreaterThan(0)

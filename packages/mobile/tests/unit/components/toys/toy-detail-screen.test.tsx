@@ -1,5 +1,4 @@
 // packages/mobile/tests/unit/components/toys/toy-detail-screen.test.tsx
-// journeys: Y04 Y07 Y08
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { ToyDetailScreen } from '../../../../components/toys/toy-detail-screen'
 
@@ -115,7 +114,7 @@ beforeEach(() => {
 })
 
 describe('ToyDetailScreen', () => {
-  it('shows the facts and opens the guide it was built from', async () => {
+  it('Y08 shows the facts and opens the guide it was built from', async () => {
     mockEndpoints({
       detail: Promise.resolve(
         toy({ age_min: 2, age_max: 6, batteries: '2 × AA', guide: { id: 'g1', title: 'Bubble Blower' }, holder_given: 0 })
@@ -129,20 +128,20 @@ describe('ToyDetailScreen', () => {
     expect(mockPush).toHaveBeenCalledWith('/guides/g1')
   })
 
-  it('renders the toy fetched from the public detail endpoint', async () => {
+  it('Y04 renders the toy fetched from the public detail endpoint', async () => {
     render(<ToyDetailScreen id="toy1" />)
     expect(await screen.findByText('Bubble machine')).toBeTruthy()
     expect(mockGet).toHaveBeenCalledWith('/api/public/toys/toy1')
     expect(screen.getByText('A gentle bubble maker.')).toBeTruthy()
   })
 
-  it('shows an error message when the fetch rejects', async () => {
+  it('Y04 shows an error message when the fetch rejects', async () => {
     mockEndpoints({ detail: Promise.reject(new Error('API GET failed with status 404')) })
     render(<ToyDetailScreen id="toy1" />)
     expect(await screen.findByText("Couldn't load this toy.")).toBeTruthy()
   })
 
-  it('Try again reloads the toy after a failed fetch', async () => {
+  it('Y04 Try again reloads the toy after a failed fetch', async () => {
     mockEndpoints({ detail: Promise.reject(new TypeError('Network request failed')) })
     render(<ToyDetailScreen id="toy1" />)
     await screen.findByText("Couldn't load this toy.")
@@ -157,7 +156,7 @@ describe('ToyDetailScreen', () => {
     expect(await screen.findByText('Held by Jamie')).toBeTruthy()
   })
 
-  it('shows the org holder line with quantity, and navigates to the org page on press', async () => {
+  it('Y08 shows the org holder line with quantity, and navigates to the org page on press', async () => {
     mockEndpoints({
       detail: Promise.resolve(
         toy({ owner_id: null, owner_org_id: 'org1', quantity: 4, profiles: null, organizations: { name: 'TAD Australia' } })
@@ -192,7 +191,7 @@ describe('ToyDetailScreen', () => {
     expect(screen.queryByText('Switch-adapted')).toBeNull()
   })
 
-  it('thanks an organisation holder, and offers no thanks to a person', async () => {
+  it('Y07 thanks an organisation holder, and offers no thanks to a person', async () => {
     mockEndpoints({
       detail: Promise.resolve(
         toy({ owner_id: null, owner_org_id: 'org1', profiles: null, organizations: { name: 'TAD Australia' } })
@@ -206,7 +205,7 @@ describe('ToyDetailScreen', () => {
   })
 
   // thank-people: a person holder is thanked directly.
-  it('thanks a person holder directly', async () => {
+  it('Y07 thanks a person holder directly', async () => {
     render(<ToyDetailScreen id="toy1" />)
     await screen.findByText('Bubble machine')
     fireEvent.press(screen.getByRole('button', { name: /^Thank/ }))
@@ -309,7 +308,7 @@ describe('ToyDetailScreen', () => {
     expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions', { toy_id: 'toy1', type: 'donation' })
   })
 
-  it('flips a save by calling toggle with the toys slug and the toy id', async () => {
+  it('Y07 flips a save by calling toggle with the toys slug and the toy id', async () => {
     render(<ToyDetailScreen id="toy1" />)
     await screen.findByText('Bubble machine')
     fireEvent.press(screen.getByLabelText('Save'))
@@ -345,7 +344,7 @@ describe('ToyDetailScreen', () => {
     expect(screen.queryByText('Ask to collect it')).toBeNull()
   })
 
-  it("shows the holder's picks and opens each one", async () => {
+  it("Y08 shows the holder's picks and opens each one", async () => {
     mockEndpoints({
       detail: Promise.resolve(
         toy({

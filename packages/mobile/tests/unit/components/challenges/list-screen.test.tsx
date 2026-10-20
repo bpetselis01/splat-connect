@@ -1,5 +1,4 @@
 // packages/mobile/tests/unit/components/challenges/list-screen.test.tsx
-// journeys: C01
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { ChallengesListScreen } from '../../../../components/challenges/list-screen'
 
@@ -66,7 +65,7 @@ beforeEach(() => {
 })
 
 describe('ChallengesListScreen', () => {
-  it('lists open challenges and the ones that became guides together, open first', async () => {
+  it('C01 lists open challenges and the ones that became guides together, open first', async () => {
     respond([
       row({ id: 'c1', title: 'A switch a toddler can hit', status: 'challenge' }),
       row({ id: 'c2', title: 'A one-handed board game', status: 'graduated' }),
@@ -79,7 +78,7 @@ describe('ChallengesListScreen', () => {
     expect(mockGet).toHaveBeenCalledWith('/api/public/challenges')
   })
 
-  it("marks the challenges you have joined with a you're in badge", async () => {
+  it("C01 marks the challenges you have joined with a you're in badge", async () => {
     respond(
       [row({ id: 'c1', title: 'Joined one' }), row({ id: 'c2', title: 'Not joined one' })],
       [{ id: 'c1' }]
@@ -97,7 +96,7 @@ describe('ChallengesListScreen', () => {
     ).toContain("You're in")
   })
 
-  it('never asks for the joined list when signed out', async () => {
+  it('C01 never asks for the joined list when signed out', async () => {
     mockUseCapabilities.mockReturnValue(signedOut)
     respond([row({})])
     render(<ChallengesListScreen />)
@@ -121,7 +120,7 @@ describe('ChallengesListScreen', () => {
     expect(mockPush).toHaveBeenCalledWith('/explore/challenges/new')
   })
 
-  it('offers a retry when the challenges fetch fails, and recovers on it', async () => {
+  it('C01 offers a retry when the challenges fetch fails, and recovers on it', async () => {
     // Rejects every call, not just the first: the focus effect refetches on
     // mount, and a one-shot rejection would be papered over by that retry.
     mockGet.mockRejectedValue(new Error('down'))

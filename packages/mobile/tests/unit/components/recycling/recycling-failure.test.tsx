@@ -1,5 +1,4 @@
 // Recycling when the lists fail to load: says so, Try again re-reads, nothing hits console.error.
-// journeys: V04
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { RecyclingScreen } from '../../../../components/recycling/recycling-screen'
 
@@ -25,7 +24,7 @@ const ORG = {
 
 afterEach(() => jest.restoreAllMocks())
 
-it('says recycling could not load, and Try again loads it', async () => {
+it('V04 says recycling could not load, and Try again loads it', async () => {
   const err = jest.spyOn(console, 'error')
   let offline = true
   mockGet.mockReset().mockImplementation((path: string) =>

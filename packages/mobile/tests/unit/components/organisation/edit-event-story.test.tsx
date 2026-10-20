@@ -48,7 +48,7 @@ it('localParts reads a stored instant back on the host clock, not UTC', () => {
 })
 
 describe('EditEventScreen', () => {
-  it('fills the form from the saved event and saves it in place, keeping question ids', async () => {
+  it('L35 fills the form from the saved event and saves it in place, keeping question ids', async () => {
     mockGet.mockImplementation(async (p: string) =>
       p.endsWith('/questions') ? [{ id: 'q1', prompt: 'Any allergies?', answer_type: 'short', required: false, options: [] }] : [EVENT],
     )
@@ -81,7 +81,7 @@ describe('EditEventScreen', () => {
 })
 
 describe('EditStoryScreen', () => {
-  it('starts with consent unticked and saves only once it is ticked again', async () => {
+  it('L36 starts with consent unticked and saves only once it is ticked again', async () => {
     mockGet.mockResolvedValue([STORY])
     render(<EditStoryScreen storyId="s1" />)
     const save = await screen.findByRole('button', { name: 'Save changes' })
@@ -101,7 +101,7 @@ describe('EditStoryScreen', () => {
   })
 })
 
-it('every row on Events and stories opens its edit form', async () => {
+it('L37 every row on Events and stories opens its edit form', async () => {
   mockGet.mockImplementation(async (p: string) => (p.endsWith('/events') ? [EVENT] : [STORY]))
   render(<OrgPublishScreen />)
   fireEvent.press(await screen.findByRole('button', { name: 'Edit Build day' }))

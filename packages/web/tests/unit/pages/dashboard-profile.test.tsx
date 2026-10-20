@@ -65,14 +65,14 @@ describe('ProfileTabPage', () => {
 
   // Chain: a brand-new account has to learn why this section exists before it
   //        has anything to show.
-  it('explains the section and offers Add child when there are none', async () => {
+  it('WD12 explains the section and offers Add child when there are none', async () => {
     vi.mocked(apiClient.get).mockResolvedValue([])
     render(await ProfileTabPage())
     expect(screen.getByText(/helps us suggest tutorials/i)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /add child/i })).toHaveAttribute('href', '/dashboard/child/new')
   })
 
-  it('shows the empty-state icon and message when there are no children', async () => {
+  it('WD12 shows the empty-state icon and message when there are no children', async () => {
     vi.mocked(apiClient.get).mockResolvedValue([])
     render(await ProfileTabPage())
     expect(screen.getByText("You haven't added any child profiles yet.")).toBeInTheDocument()
@@ -82,7 +82,7 @@ describe('ProfileTabPage', () => {
     )
   })
 
-  it('renders one row per child, each linking to its edit page', async () => {
+  it('WD13 renders one row per child, each linking to its edit page', async () => {
     vi.mocked(apiClient.get).mockResolvedValue([
       child({ id: 'c1', age: 6 }),
       child({ id: 'c2' }),
@@ -108,5 +108,18 @@ describe('ProfileTabPage', () => {
   it('throws rather than rendering an empty list when the fetch fails', async () => {
     vi.mocked(apiClient.get).mockRejectedValue(new Error('network'))
     await expect(ProfileTabPage()).rejects.toThrow('network')
+  })
+
+  it('WD12 WD13 adds a dashed "Add another" tile after the children', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue([child({ id: 'c1', age: 6 })])
+    render(await ProfileTabPage())
+    expect(screen.getByRole('link', { name: /Add another/ })).toHaveAttribute('href', '/dashboard/child/new')
+    expect(screen.queryByRole('link', { name: /add your first child/i })).toBeNull()
+  })
+
+  it('WD14 links Delete account to the deletion page', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue([])
+    render(await ProfileTabPage())
+    expect(screen.getByRole('link', { name: 'Delete account' })).toHaveAttribute('href', '/dashboard/profile/delete')
   })
 })

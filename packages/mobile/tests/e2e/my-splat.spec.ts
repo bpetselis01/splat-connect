@@ -1,8 +1,7 @@
-// journeys: Q01 Q02
 import { test, expect } from '@playwright/test'
 import { signUpNewAccount, uniqueSignupEmail } from './helpers'
 
-test('the Me tab is the hub: every group, a row opens its screen, Explore is at the bottom', async ({ page }) => {
+test('Q01 Q02 the Me tab is the hub: every group, a row opens its screen, Explore is at the bottom', async ({ page }) => {
   await signUpNewAccount(page, uniqueSignupEmail())
   await page.goto('/guides')
   await page.getByRole('tab', { name: /^Me(,|$)/ }).click()

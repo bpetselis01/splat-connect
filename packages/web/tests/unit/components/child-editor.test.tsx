@@ -4,8 +4,9 @@ import { ChildEditor } from '@/components/child-editor'
 import type { ChildProfile } from '@splat-connect/types'
 
 const replace = vi.fn()
+const push = vi.fn()
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ replace, push: vi.fn(), refresh: vi.fn() }),
+  useRouter: () => ({ replace, push, refresh: vi.fn() }),
   usePathname: () => '/dashboard/child/new',
   useSearchParams: () => new URLSearchParams(''),
 }))
@@ -114,7 +115,7 @@ describe('ChildEditor', () => {
     expect(force.getByRole('button', { name: 'Full' })).toHaveAttribute('aria-pressed', 'false')
   })
 
-  it('creates the profile with only the form fields and swaps the URL to its id', async () => {
+  it('WD15 creates the profile with only the form fields and swaps the URL to its id', async () => {
     vi.mocked(browserApiClient.post).mockResolvedValue(child({ id: 'new-id' }))
     render(<ChildEditor child={null} />)
 
@@ -141,7 +142,7 @@ describe('ChildEditor', () => {
     expect(replace).toHaveBeenCalledWith('/dashboard/child/new-id')
   })
 
-  it('PATCHes an existing child from its stored answers, unticking a need', async () => {
+  it('WD16 PATCHes an existing child from its stored answers, unticking a need', async () => {
     vi.mocked(browserApiClient.patch).mockResolvedValue(child())
     render(<ChildEditor child={child({ id: 'c1', helps_with: ['seeing'], one_hand: true, everyday_needs: ['quiet', 'wipeable'] })} />)
 
@@ -226,5 +227,15 @@ describe('ChildEditor', () => {
   it('shows a delete button scoped to this child once it exists', () => {
     render(<ChildEditor child={child({ id: 'c1' })} label="Child 1" />)
     expect(screen.getByRole('button', { name: 'Delete Child 1' })).toBeInTheDocument()
+  })
+
+  it('WD17 deletes the child after the confirm phrase and goes back to Account', async () => {
+    vi.mocked(browserApiClient.delete).mockResolvedValue(null)
+    render(<ChildEditor child={child({ id: 'c1' })} label="Child 1, age 6" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Child 1, age 6' }))
+    fireEvent.change(screen.getByLabelText(/to confirm/i), { target: { value: 'confirm_delete_Child_1' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
+    await vi.waitFor(() => expect(push).toHaveBeenCalledWith('/dashboard/profile'))
+    expect(browserApiClient.delete).toHaveBeenCalledWith('/api/child-profiles/c1')
   })
 })

@@ -1,4 +1,3 @@
-// journeys: G08 G09
 import { Linking } from 'react-native'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { DetailScreen } from '../../../../components/home/detail-screen'
@@ -78,7 +77,7 @@ beforeEach(() => {
 })
 
 describe('DetailScreen hero actions', () => {
-  it('files a report about this guide from the hero', async () => {
+  it('G10 files a report about this guide from the hero', async () => {
     render(<DetailScreen id="1" />)
     fireEvent.press(await screen.findByRole('button', { name: 'Report a problem' }))
     fireEvent.press(screen.getByRole('radio', { name: 'Wrong or missing info' }))
@@ -91,7 +90,7 @@ describe('DetailScreen hero actions', () => {
     )
   })
 
-  it('saves the guide, and the toast Undo takes the save back', async () => {
+  it('G08 saves the guide, and the toast Undo takes the save back', async () => {
     render(<DetailScreen id="1" />)
     fireEvent.press(await screen.findByRole('button', { name: 'Save' }))
     await waitFor(() => expect(apiClient.post).toHaveBeenCalledWith('/api/saves', { entity_type: 'tutorial', entity_id: '1' }))
