@@ -37,11 +37,13 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import type { Route } from 'next'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { apiMessage, isApiError } from '@splat-connect/types'
 import { CheckCircle } from '@phosphor-icons/react/dist/ssr'
+import { authUrl } from '@/lib/safe-next-path'
 import { ExchangeChat } from '@/components/exchange-chat'
 import type { ToyIdeaMessage, ToyIdeaParticipant } from '@splat-connect/types'
 
@@ -68,6 +70,8 @@ export function ChallengeThread({
   answerMessageId?: string | null
 }) {
   const router = useRouter()
+  const pathname = usePathname()
+  const search = useSearchParams().toString()
   const [messages, setMessages] = useState<ToyIdeaMessage[]>([])
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
@@ -244,7 +248,7 @@ export function ChallengeThread({
   if (viewerId === null) {
     return (
       <p className="text-sm text-muted">
-        <Link href="/login" className="font-semibold text-brand-dark underline">
+        <Link href={authUrl('login', search ? `${pathname}?${search}` : pathname) as Route} className="font-semibold text-brand-dark underline">
           Sign in
         </Link>{' '}
         to see the conversation and join this challenge.

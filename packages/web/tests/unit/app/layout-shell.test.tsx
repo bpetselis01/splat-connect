@@ -8,7 +8,7 @@ vi.mock('next/headers', () => ({
   headers: async () => new Headers({ 'x-pathname': path.current }),
   cookies: async () => ({ get: () => undefined }),
 }))
-vi.mock('next/navigation', () => ({ usePathname: () => path.current }))
+vi.mock('next/navigation', () => ({ usePathname: () => path.current, useSearchParams: () => new URLSearchParams() }))
 vi.mock('@/lib/capabilities', () => ({ getCapabilities: async () => caps.current }))
 vi.mock('@/lib/api-client', () => ({ apiClient: { get: vi.fn() } }))
 vi.mock('next/font/google', () => ({

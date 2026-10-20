@@ -15,6 +15,8 @@ vi.mock('next/navigation', () => ({
     throw new Error('notFound')
   },
   useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
+  usePathname: () => '/get-involved/design-challenges/c1',
+  useSearchParams: () => new URLSearchParams(),
 }))
 vi.mock('next/link', () => ({
   default: ({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) => (

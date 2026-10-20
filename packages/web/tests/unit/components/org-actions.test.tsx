@@ -9,10 +9,12 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import type { OrgRelationship } from '@splat-connect/types'
 
 const push = vi.fn()
+const search = vi.hoisted(() => ({ current: '' }))
 const refresh = vi.fn()
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push, refresh }),
   usePathname: () => '/organizations/o1/public',
+  useSearchParams: () => new URLSearchParams(search.current),
 }))
 
 const post = vi.fn()
@@ -64,6 +66,18 @@ describe('OrgActions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Follow' }))
     expect(push).toHaveBeenCalledWith('/signup?next=%2Forganizations%2Fo1%2Fpublic&reason=follow')
     expect(post).not.toHaveBeenCalled()
+  })
+
+  it('WN08 keeps the query string when a visitor signs up from a filtered page', () => {
+    search.current = 'tab=toys'
+    render(<OrgActions orgId="o1" orgName="Northbank" me={null} firstName="" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Follow' }))
+    expect(push).toHaveBeenCalledWith('/signup?next=%2Forganizations%2Fo1%2Fpublic%3Ftab%3Dtoys&reason=follow')
+    expect(screen.getByRole('link', { name: 'Message' })).toHaveAttribute(
+      'href',
+      '/signup?next=%2Forganizations%2Fo1%2Fpublic%3Ftab%3Dtoys&reason=message'
+    )
+    search.current = ''
   })
 
   it('WN08 opens the message page for a member and sign-up with the message reason for a visitor', () => {

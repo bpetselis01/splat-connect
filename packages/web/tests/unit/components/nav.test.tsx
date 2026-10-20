@@ -4,6 +4,7 @@ import { Nav } from '@/components/nav'
 import type { Capabilities } from '@/lib/capabilities'
 
 const pathname = vi.hoisted(() => ({ current: '/' }))
+const search = vi.hoisted(() => ({ current: '' }))
 
 // --- Mock strategy ---
 // next/link is replaced with a plain <a> tag so links render in jsdom without Next.js routing
@@ -22,6 +23,7 @@ vi.mock('next/link', () => ({
 
 vi.mock('next/navigation', () => ({
   usePathname: () => pathname.current,
+  useSearchParams: () => new URLSearchParams(search.current),
 }))
 
 const signedIn = {
@@ -36,6 +38,7 @@ describe('Nav', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     pathname.current = '/'
+    search.current = ''
   })
 
   // Tests: the bar carries the board's five tabs and nothing else at rest
@@ -140,8 +143,22 @@ describe('Nav', () => {
   // Tests: signed out gets Sign in (to /login) and no account pill
   it('WC07 offers sign in and no account pill when signed out', () => {
     render(<Nav caps={null} />)
-    expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login')
+    expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login?next=%2F')
     expect(screen.queryByRole('link', { name: /My SPLAT/ })).not.toBeInTheDocument()
+  })
+
+  it('WC07 sends sign in back to the current page with its query', () => {
+    pathname.current = '/library'
+    search.current = 'offer=gift'
+    render(<Nav caps={null} />)
+    expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login?next=%2Flibrary%3Foffer%3Dgift')
+  })
+
+  it('WC07 does not nest next inside next on the sign-in page itself', () => {
+    pathname.current = '/login'
+    search.current = 'next=%2Flibrary'
+    render(<Nav caps={null} />)
+    expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login')
   })
 
   // Tests: signed in, the bar ends on My SPLAT — no Sign in, and no Sign out
