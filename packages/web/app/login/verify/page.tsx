@@ -45,7 +45,13 @@ function VerifyForm() {
       setCode('')
       return setError(toProblem(failure))
     }
-    window.location.href = await landingAfterSignIn(supabase, next)
+    try {
+      window.location.href = await landingAfterSignIn(supabase, next)
+    } catch {
+      verifying.current = false
+      setBusy(false)
+      setError(toProblem({ message: '' }))
+    }
   }
 
   function onChange(digits: string) {
