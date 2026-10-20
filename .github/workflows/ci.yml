@@ -306,7 +306,14 @@ jobs:
             # Titles in device.env contain spaces; one --env per line, unsplit.
             set --
             while IFS= read -r line; do set -- "$@" --env "$line"; done < "$RUNNER_TEMP/device.env"
-            maestro test "$@" .maestro/flows/ --format=JUNIT --output "$RUNNER_TEMP/maestro.xml"
+            maestro test "$@" .maestro/flows/ --format=JUNIT --output "$RUNNER_TEMP/maestro.xml" || {
+              adb logcat -d > "$RUNNER_TEMP/logcat.txt"
+              adb exec-out screencap -p > "$RUNNER_TEMP/last-screen.png"
+              # Maestro names its folders after the flow, colons included,
+              # which the artifact upload rejects.
+              tar czf "$RUNNER_TEMP/maestro-tests.tgz" -C "$HOME/.maestro" tests
+              exit 1
+            }
 
       - name: Upload Maestro failures
         if: failure()
@@ -316,7 +323,9 @@ jobs:
           path: |
             ${{ runner.temp }}/maestro.xml
             ${{ runner.temp }}/api.log
-            ~/.maestro/tests
+            ${{ runner.temp }}/logcat.txt
+            ${{ runner.temp }}/last-screen.png
+            ${{ runner.temp }}/maestro-tests.tgz
           if-no-files-found: ignore
           retention-days: 7
 
