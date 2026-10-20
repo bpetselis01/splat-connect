@@ -605,12 +605,12 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| WA23 | nav | `/dashboard` | anon | signed out on /dashboard, /upload or /notifications → bare /login (Q3: the return path is dropped) | – | – | n/a | ✅ | ✅ | – | – |
+| WA23 | nav | `/dashboard` | anon | signed out on /dashboard, /upload or /notifications → /login?next=<path and query> | – | – | n/a | ✅ | ✅ | – | – |
 | WA24 | nav | `/dashboard` | anon | signed out on /admin → /login | – | – | n/a | ✅ | ✅ | – | – |
 | WA25 | nav | `/dashboard` | P | a member on /admin → home page | – | – | n/a | ✅ | ✅ | – | – |
 | WA26 | nav | `/dashboard` | A | an admin passes /admin and /dashboard | – | – | n/a | ✅ | ✅ | – | – |
-| WA27 | nav | `/dashboard` | P | a member without the current terms on /dashboard, /upload or /tutorials/:id/edit → /onboarding/contributor-terms?next=<path>; a failed lookup lets them through | – | – | n/a | ✅ | ✅ | – | – |
-| WA28 | nav | `/dashboard` | P | a member without the current terms on /organizations is sent to the terms gate while a signed-out visitor sees the page (Q4) | – | – | n/a | ✅ | ✅ | – | – |
+| WA27 | nav | `/dashboard` | P | a member without the current terms on /dashboard, /upload or /tutorials/:id/edit → /onboarding/contributor-terms?next=<path and query>; a failed lookup blocks too, with ?retry=1 and "We could not check your acceptance, try again" | – | – | n/a | ✅ | ✅ | – | – |
+| WA28 | nav | `/dashboard` | P | a signed-in member without the current terms can read /organizations, like a signed-out visitor | – | – | n/a | ✅ | ✅ | – | – |
 | WA29 | nav | `/dashboard` | P | a member without the current terms can still browse /library, a guide page and /notifications | – | – | n/a | ✅ | ✅ | – | – |
 
 </details>
@@ -829,7 +829,7 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | WE01 | static | `/learn` | anon | course gate: Free shows the page; hidden shows "Course hidden" to members and signed-out readers, and an admin previews it under "Hidden from members" | – | – | A | ✅ | – | ✅ | – |
-| WE02 | nav | `/learn` | anon | course gate set to Sign in: a signed-out reader goes to /login?next=/learn (the lesson path is lost), a member reads on | – | – | A | ✅ | ✅ | ✅ | – |
+| WE02 | nav | `/learn` | anon | course gate set to Sign in: a signed-out reader goes to /login?next=<the lesson path>, a member reads on | – | – | A | ✅ | ✅ | ✅ | – |
 | WE03 | nav | `/learn` | anon | "Start the course" / "Continue" → next unfinished lesson; lessons-done count read from localStorage | – | lessons done | web | ✅ | ✅ | – | – |
 | WE04 | nav | `/learn/toy-adaptation-101` | anon | Toy adaptation 101: "Done — next" marks the lesson done and opens the following lesson; the outline shows it Done after a reload | – | course progress | web | ✅ | ✅ | – | – |
 | WE05 | nav | `/learn/how-a-switch-works` | anon | How a switch works: "Done — next" marks the lesson done and opens the following lesson; the outline shows it Done after a reload | – | course progress | web | ✅ | ✅ | – | – |
@@ -1101,7 +1101,7 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | WN01 | nav | `/organizations` | anon | search box and "All" / "Takes plastic" chips; cards and pager | – | match count | L | ✅ | ✅ | ✅ | – |
 | WN02 | nav | `/organizations` | anon | organisation card → /organizations/:id/public | – | – | n/a | ✅ | ✅ | – | – |
-| WN03 | nav | `/organizations` | P | a signed-in member without the contributor terms is sent to /onboarding/contributor-terms (Q4: signed-out visitors are not) | – | – | n/a | ✅ | ✅ | – | – |
+| WN03 | nav | `/organizations` | P | a signed-in member without the contributor terms reads the organisation directory and public profiles; /dashboard stays gated | – | – | n/a | ✅ | ✅ | – | – |
 
 </details>
 

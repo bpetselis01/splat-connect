@@ -85,7 +85,7 @@ function ChoosingAToy() {
 /** Gated per page, not per layout: see components/learn-gate.tsx. */
 export default function GatedChoosingAToy() {
   return (
-    <LearnGate>
+    <LearnGate path="/learn/choosing-a-toy">
       <ChoosingAToy />
     </LearnGate>
   )

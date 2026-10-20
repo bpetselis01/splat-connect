@@ -77,7 +77,7 @@ function Adaptation101() {
 /** Gated per page, not per layout: see components/learn-gate.tsx. */
 export default function GatedAdaptation101() {
   return (
-    <LearnGate>
+    <LearnGate path="/learn/toy-adaptation-101">
       <Adaptation101 />
     </LearnGate>
   )
