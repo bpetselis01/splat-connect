@@ -4,7 +4,7 @@
 import { useState } from 'react'
 import { useRouter } from 'expo-router'
 import { useAuth, type AuthResult } from '../../lib/auth-context'
-import type { AuthProblem } from '../../lib/auth-errors'
+import type { AuthProblem } from '@splat-connect/types'
 import { Button } from '../../components/ui/Button'
 import { TextField } from '../../components/ui/TextField'
 import {

@@ -1,4 +1,5 @@
-import { toProblem } from '../../../lib/auth-errors'
+import { describe, it, expect } from 'vitest'
+import { toProblem } from '../src/auth-errors'
 
 describe('toProblem', () => {
   it.each([
@@ -52,5 +53,27 @@ describe('toProblem', () => {
 
   it('is null for no error', () => {
     expect(toProblem(null)).toBeNull()
+  })
+})
+
+describe('the shared classifier, as both clients call it', () => {
+  it('turns an unconfirmed-email error into the unconfirmed copy', () => {
+    expect(toProblem({ code: 'email_not_confirmed' })).toEqual({
+      kind: 'unconfirmed',
+      message: 'That email is not confirmed yet. We sent you a new code.',
+    })
+  })
+
+  it('is null for undefined and other for an empty error object', () => {
+    expect(toProblem(undefined)).toBeNull()
+    expect(toProblem({})?.kind).toBe('other')
+  })
+
+  it('reads a message-only invalid-login error as credentials', () => {
+    expect(toProblem({ message: 'Invalid login credentials' })?.message).toBe("That email and password don't match.")
+  })
+
+  it('reads a browser fetch TypeError as offline', () => {
+    expect(toProblem(new TypeError('Failed to fetch'))?.kind).toBe('offline')
   })
 })
