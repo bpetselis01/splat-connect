@@ -247,7 +247,9 @@ jobs:
       # at build. One ABI instead of four: the emulator is x86_64.
       # The Expo template's 512m Metaspace ran out in lintVitalAnalyzeRelease
       # and the daemon then hung to the job timeout; the user-home properties
-      # file outranks the generated android/gradle.properties.
+      # file outranks the generated android/gradle.properties. A 4g heap plus a
+      # Kotlin daemon inheriting it starved the runner beside Supabase's
+      # containers ("lost communication with the server"), hence the caps.
       - name: Build the release APK
         working-directory: packages/mobile
         timeout-minutes: 45
@@ -255,8 +257,10 @@ jobs:
           EXPO_PUBLIC_API_URL: http://10.0.2.2:3102
           ORG_GRADLE_PROJECT_reactNativeArchitectures: x86_64
         run: |
+          free -h | head -2
           mkdir -p ~/.gradle
-          echo 'org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g' >> ~/.gradle/gradle.properties
+          printf '%s\n' 'org.gradle.jvmargs=-Xmx3g -XX:MaxMetaspaceSize=1g' \
+            'kotlin.daemon.jvmargs=-Xmx2g' 'org.gradle.workers.max=2' >> ~/.gradle/gradle.properties
           eval "$(supabase status -o env | sed 's/^/export /')"
           export EXPO_PUBLIC_SUPABASE_URL=http://10.0.2.2:54321 EXPO_PUBLIC_SUPABASE_ANON_KEY="$ANON_KEY"
           pnpm device:build
