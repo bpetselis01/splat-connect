@@ -3,7 +3,7 @@ import { notificationsFor, partyPage, seedBuild, txRow } from './maker-fixtures'
 
 /** The two ways a build ends early: the addressed maker declines, or the family withdraws a live one. */
 
-test('K07 a maker declines a request addressed to them and the family sees it closed', async ({ browser, baseURL }) => {
+test('K07 X15 a maker declines a request addressed to them and the family sees it closed', async ({ browser, baseURL }) => {
   const build = await seedBuild({ withMaker: true })
   const makerPage = await partyPage(browser, baseURL, build.maker)
   const familyPage = await partyPage(browser, baseURL, build.requester)
@@ -11,6 +11,8 @@ test('K07 a maker declines a request addressed to them and the family sees it cl
   try {
     await makerPage.goto(`/exchanges/build/${build.id}`)
     await makerPage.getByRole('button', { name: 'Decline' }).click()
+    await makerPage.getByLabel('Reason for declining').fill('No time this month')
+    await makerPage.getByRole('button', { name: 'Send the decline' }).click()
     await expect(makerPage.getByText('This one did not go ahead')).toBeVisible()
     expect(await txRow(build.id)).toMatchObject({ status: 'rejected' })
     expect(await notificationsFor(build.requester.id, 'toy_rejected', build.id)).toHaveLength(1)
@@ -18,6 +20,7 @@ test('K07 a maker declines a request addressed to them and the family sees it cl
     await familyPage.goto(`/exchanges/build/${build.id}`)
     await expect(familyPage.getByText('This one did not go ahead')).toBeVisible()
     await expect(familyPage.getByText('Nothing was built').first()).toBeVisible()
+    await expect(familyPage.getByText('Reason: No time this month')).toBeVisible()
   } finally {
     await makerPage.context().close()
     await familyPage.context().close()

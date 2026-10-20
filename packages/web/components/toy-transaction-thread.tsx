@@ -26,7 +26,7 @@ import {
   XCircle,
 } from '@phosphor-icons/react/dist/ssr'
 import { safePhotoSrc } from '@/lib/photo-src'
-import { isOwnerSide, printRequestExpired } from '@splat-connect/types'
+import { isOwnerSide, printRequestExpired, DECLINE_REASON_MAX } from '@splat-connect/types'
 import type { PickupAddress, ToyTransactionDetail } from '@splat-connect/types'
 import { AcceptPickupDialog } from '@/components/accept-pickup-dialog'
 import { ExchangeChat } from '@/components/exchange-chat'
@@ -235,17 +235,14 @@ export function ToyTransactionThread({
               >
                 Accept
               </button>
-              {/* A print job's decline opens for a reason first. Everything
-                  else declines outright, because nothing asks for one. */}
+              {/* Every decline opens for a reason first; the other party reads it. */}
               <button
                 type="button"
                 disabled={busy}
-                onClick={() =>
-                  tx.type === 'print' ? setDeclineReason('') : run(() => onReject())
-                }
+                onClick={() => setDeclineReason('')}
                 className="btn btn-quiet"
               >
-                {tx.type === 'print' ? 'Decline' : 'Reject'}
+                Decline
               </button>
             </div>
             {declineReason !== null && (
@@ -266,10 +263,10 @@ export function ToyTransactionThread({
                   id="decline-reason"
                   className="field"
                   rows={3}
-                  maxLength={500}
+                  maxLength={DECLINE_REASON_MAX}
                   value={declineReason}
                   onChange={(e) => setDeclineReason(e.target.value)}
-                  placeholder="Bed is too small for the base plate."
+                  placeholder="Already given away."
                 />
                 <div className="flex gap-2">
                   <button
@@ -511,7 +508,10 @@ export function ToyTransactionThread({
           </div>
         )}
         {tx.status === 'rejected' && (
-          <p className="card p-4 text-sm text-muted">This request was declined.</p>
+          <div className="card p-4 text-sm text-muted">
+            <p>This request was declined.</p>
+            {tx.decline_reason && <blockquote className="mt-2 text-ink">{tx.decline_reason}</blockquote>}
+          </div>
         )}
         {tx.status === 'withdrawn' && (
           <p className="card p-4 text-sm text-muted">This request was withdrawn.</p>

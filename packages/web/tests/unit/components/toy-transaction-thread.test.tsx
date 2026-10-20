@@ -59,15 +59,15 @@ function tx(overrides: Partial<ToyTransactionDetail> = {}): ToyTransactionDetail
 const noop = vi.fn().mockResolvedValue(undefined)
 
 describe('ToyTransactionThread', () => {
-  it('shows Accept and Reject to the owner on a requested donation', () => {
+  it('shows Accept and Decline to the owner on a requested donation', () => {
     render(
       <ToyTransactionThread transaction={tx()} viewerId="owner-1" onSendMessage={noop} onAccept={noop} onReject={noop} onWithdraw={noop} onConfirm={noop} />
     )
     expect(screen.getByRole('button', { name: /accept/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /reject/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /decline/i })).toBeInTheDocument()
   })
 
-  it('does not show Accept/Reject to the requester', () => {
+  it('does not show Accept/Decline to the requester', () => {
     render(
       <ToyTransactionThread transaction={tx()} viewerId="requester-1" onSendMessage={noop} onAccept={noop} onReject={noop} onWithdraw={noop} onConfirm={noop} />
     )
@@ -374,12 +374,12 @@ describe('ToyTransactionThread', () => {
       expect(screen.getByRole('button', { name: /accept request/i })).toBeDisabled()
     })
 
-    it('locks Accept but not Reject while a rival handoff is in flight', () => {
+    it('locks Accept but not Decline while a rival handoff is in flight', () => {
       renderOwner({ transaction: tx({ blocked_by_rival_accept: true }) })
       const accept = screen.getByRole('button', { name: 'Accept' })
       expect(accept).toBeDisabled()
       expect(accept).toHaveAttribute('title', expect.stringMatching(/complete the current transaction/i))
-      expect(screen.getByRole('button', { name: 'Reject' })).toBeEnabled()
+      expect(screen.getByRole('button', { name: 'Decline' })).toBeEnabled()
     })
   })
 })
@@ -411,10 +411,10 @@ describe('ToyTransactionThread for an organisation', () => {
       />
     )
 
-  it('offers Accept and Reject to a leader of the org that was asked', () => {
+  it('offers Accept and Decline to a leader of the org that was asked', () => {
     renderAs(orgTx(), 'leader-1', ['org-1'])
     expect(screen.getByRole('button', { name: /accept/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /reject/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /decline/i })).toBeInTheDocument()
   })
 
   it('offers neither to a leader of a different org', () => {

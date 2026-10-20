@@ -28,7 +28,7 @@ import type {
   ToyTransactionDetail,
   ToyTransactionMessage,
 } from '@splat-connect/types'
-import { isOwnerSide, needsAction, actionLabel, apiMessage, printRequestExpired } from '@splat-connect/types'
+import { isOwnerSide, needsAction, actionLabel, apiMessage, printRequestExpired, DECLINE_REASON_MAX } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { useBottomClearance } from '../../lib/bottom-clearance'
@@ -128,6 +128,7 @@ export function ExchangeThreadScreen({ id, startAccept = false }: { id: string; 
   const [draft, setDraft] = useState('')
   const [code, setCode] = useState('')
   const [pickup, setPickup] = useState<PickupDraft | null>(null)
+  const [reason, setReason] = useState<string | null>(null)
   const logRef = useRef<ScrollView>(null)
   // Bumped by every write. A poll that was already in flight when someone
   // accepted or confirmed answers with the row as it was BEFORE their action,
@@ -466,6 +467,31 @@ export function ExchangeThreadScreen({ id, startAccept = false }: { id: string; 
                     />
                     <Button label="Cancel" variant="ghost" onPress={() => setPickup(null)} />
                   </View>
+                ) : reason !== null ? (
+                  <View style={styles.actionBlock}>
+                    <Text style={styles.blockTitle}>Why are you declining?</Text>
+                    <Text style={styles.blockBody}>The other party reads this.</Text>
+                    <TextField
+                      label="Reason"
+                      accessibilityLabel="Reason for declining"
+                      multiline
+                      maxLength={DECLINE_REASON_MAX}
+                      value={reason}
+                      onChangeText={setReason}
+                    />
+                    <Button
+                      label="Send the decline"
+                      disabled={busy || !reason.trim()}
+                      // Kept up on failure so a 409 does not throw away the words.
+                      onPress={async () => {
+                        const sent = await run(() =>
+                          apiClient.post<ToyTransaction>(`/api/toy-transactions/${id}/reject`, { reason: reason.trim() })
+                        )
+                        if (sent) setReason(null)
+                      }}
+                    />
+                    <Button label="Cancel" variant="ghost" onPress={() => setReason(null)} />
+                  </View>
                 ) : (
                   <View style={styles.actionBlock}>
                     <Text style={styles.blockBody}>
@@ -503,9 +529,7 @@ export function ExchangeThreadScreen({ id, startAccept = false }: { id: string; 
                         variant="secondary"
                         disabled={busy}
                         style={styles.rowButton}
-                        onPress={() =>
-                          run(() => apiClient.post<ToyTransaction>(`/api/toy-transactions/${id}/reject`, {}))
-                        }
+                        onPress={() => setReason('')}
                       />
                     </View>
                   </View>
@@ -543,6 +567,13 @@ export function ExchangeThreadScreen({ id, startAccept = false }: { id: string; 
                 <Text style={styles.confirmedNote}>Waiting on the other side to confirm</Text>
               ) : null}
             </View>
+          ) : null}
+
+          {tx.status === 'rejected' ? (
+            <Card style={styles.block}>
+              <Text style={styles.blockTitle}>This request was declined.</Text>
+              {tx.decline_reason ? <Text style={styles.blockBody}>Reason: {tx.decline_reason}</Text> : null}
+            </Card>
           ) : null}
 
           {/* Mirrors web's toy-transaction-thread.tsx (lines 256-266): the toy

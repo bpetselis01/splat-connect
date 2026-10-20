@@ -115,6 +115,14 @@ describe('taking a build on (K02, K04, K06)', () => {
 })
 
 describe('declining (K07)', () => {
+  it('K07 WX17 refuses a maker’s decline with no reason', async () => {
+    const id = await askMaker()
+    const res = await post(`/${id}/reject`, maker.token, {})
+    expect(res.status).toBe(400)
+    expect(await res.json()).toEqual({ error: 'reason_required' })
+    await post(`/${id}/withdraw`, family.token)
+  })
+
   it('K07 WX17 tells the family, with the maker’s reason as the body', async () => {
     const id = await askMaker()
     expect((await post(`/${id}/reject`, maker.token, { reason: 'No time this month' })).status).toBe(200)

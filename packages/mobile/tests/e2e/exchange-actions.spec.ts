@@ -17,7 +17,7 @@ import { notificationsFor, partyPage, seedDonation, sendReport } from './family-
  * action needs; the request, accept and confirm chain lives in exchanges.spec.ts.
  */
 
-test('X05 Decline turns the request down, and the requester is told in their inbox', async ({ page, browser, baseURL }) => {
+test('X05 X15 Decline needs a reason, turns the request down, and the requester is told in their inbox and reads the reason', async ({ page, browser, baseURL }) => {
   const owner = await signInAsNewContributor(page)
   const ownerName = uniqueTitle('E2E Declining Owner')
   await renameProfile(owner.id, ownerName)
@@ -28,6 +28,9 @@ test('X05 Decline turns the request down, and the requester is told in their inb
 
   await page.goto(`/exchanges/${txId}`)
   await page.getByRole('button', { name: 'Decline', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Send the decline' })).toBeDisabled()
+  await page.getByLabel('Reason for declining').fill('Already given away')
+  await page.getByRole('button', { name: 'Send the decline' }).click()
 
   await expect(page.getByText('Rejected', { exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Decline', exact: true })).toHaveCount(0)
@@ -47,6 +50,9 @@ test('X05 Decline turns the request down, and the requester is told in their inb
     await requesterPage.goto('/inbox')
     await expect(requesterPage.getByText('1 unread')).toBeVisible()
     await expect(requesterPage.getByRole('button', { name: `${toyName} with ${ownerName}` })).toBeVisible()
+    await requesterPage.goto(`/exchanges/${txId}`)
+    await expect(requesterPage.getByText('This request was declined.')).toBeVisible()
+    await expect(requesterPage.getByText('Reason: Already given away')).toBeVisible()
   } finally {
     await requesterPage.context().close()
   }
