@@ -96,6 +96,10 @@ test('WI31 WI32 a member says they are going to an event with nothing to ask, th
     await expect(page.getByText('5 seats left', { exact: true })).toBeVisible()
     const [row] = await registrations(id, family.id)
     expect(row.cancelled_at).not.toBeNull()
+
+    // event_rsvp_received: the RSVP was acknowledged in the member's inbox.
+    await page.goto('/notifications')
+    await expect(page.getByText(/^You're registered for /)).toBeVisible()
   } finally {
     await cleanup(orgId, [leader, family])
   }

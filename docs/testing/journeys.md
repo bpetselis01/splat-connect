@@ -134,7 +134,7 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 | C09 | nav | `(tabs)/explore/challenges/[id]` | P | "Submit a revised idea" | – | – | n/a | ✅ | ✅ | – | – |
 | C10 | nav | `(tabs)/explore/challenges/[id]` | P | "Read the guide" / "Follow the write-up" | – | – | web | ✅ | ✅ | – | – |
 | C11 | write | `(tabs)/explore/challenges/[id]` | P | Save heart | – | "N saves" tile | n/a | ✅ | ✅ | ✅ | – |
-| C12 | write | `(tabs)/explore/challenges/new` | P | "Submit idea" | idea_approved, idea_rejected | My challenges "Awaiting review" | web | ✅ | ✅ | ✅ | – |
+| C12 | write | `(tabs)/explore/challenges/new` | P | "Submit idea" | idea_approved, idea_rejected, idea_received | My challenges "Awaiting review" | web | ✅ | ✅ | ✅ | – |
 | C13 | write | `(tabs)/explore/challenges/new` | P | idea photo | – | – | n/a | ✅ | ✅ | ✅ | – |
 | C14 | write | `(tabs)/explore/challenges/new` | P | "Post anonymously" | – | – | n/a | ✅ | ✅ | ✅ | – |
 | C15 | write | `(my)/challenges/index` | P | My challenges list / stage filter | – | – | n/a | ✅ | ✅ | ✅ | – |
@@ -157,7 +157,7 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 | G07 | nav | `(tabs)/guides/index` | P | "Add a guide" → /guides/new | – | – | n/a | ✅ | ✅ | – | – |
 | G08 | write | `(tabs)/guides/[id]/index` | P | detail Save (ItemActions) | – | saves | n/a | ✅ | ✅ | ✅ | – |
 | G09 | write | `(tabs)/guides/[id]/index` | P | detail Thank | tutorial_thanked | library-card thanks pill | n/a | ✅ | ✅ | ✅ | – |
-| G10 | write | `(tabs)/guides/[id]/index` | P | detail Report | – | admin Reports count | web | ✅ | ✅ | ✅ | – |
+| G10 | write | `(tabs)/guides/[id]/index` | P | detail Report | report_received | admin Reports count | web | ✅ | ✅ | ✅ | – |
 | G11 | nav | `(tabs)/guides/[id]/index` | P | hero photo → PhotoViewer | – | – | n/a | ✅ | ✅ | – | ✅ |
 | G12 | nav | `(tabs)/guides/[id]/index` | P | byline / org chip → showcase / org page | – | – | n/a | ✅ | ✅ | – | – |
 | G13 | nav | `(tabs)/guides/[id]/index` | P | "What you'll need" rows → tabs | – | – | n/a | ✅ | ✅ | – | – |
@@ -174,7 +174,7 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 | G24 | write | `(tabs)/guides/[id]/index` | P | note "Add a photo" | – | – | n/a | ✅ | ✅ | ✅ | – |
 | G25 | nav | `(tabs)/guides/[id]/index` | P | note filter chips (All/Fixes/Step N/Missing) | – | chip counts | n/a | ✅ | ✅ | – | – |
 | G26 | write | `(tabs)/guides/[id]/index` | P | note menu Pin / Unpin | – | "Fixes N" chip | mobile | ✅ | ✅ | ✅ | – |
-| G27 | write | `(tabs)/guides/[id]/index` | P | note menu Report | – | – | web | ✅ | ✅ | ✅ | ✅ |
+| G27 | write | `(tabs)/guides/[id]/index` | P | note menu Report | report_received | – | web | ✅ | ✅ | ✅ | ✅ |
 | G28 | write | `(tabs)/guides/[id]/index` | P | note menu Delete (own) | – | – | n/a | ✅ | ✅ | ✅ | – |
 | G29 | nav | `(tabs)/guides/[id]/index` | P | detail "Try again" | – | – | n/a | ✅ | ✅ | – | – |
 
@@ -320,7 +320,7 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 | P06 | nav | `(tabs)/toy-library/organisation/[id]` | P | "Book a drop-off" → /explore/recycling | – | – | n/a | ✅ | ✅ | – | – |
 | P07 | nav | `(tabs)/toy-library/organisation/[id]` | P | door rows | – | – | n/a | ✅ | ✅ | – | – |
 | P08 | nav | `(tabs)/toy-library/organisation/[id]` | P | guides / toys "See all", row taps | – | – | n/a | ✅ | ✅ | – | – |
-| P09 | write | `(tabs)/toy-library/organisation/[id]` | P | Report org | – | – | web | ✅ | ✅ | ✅ | – |
+| P09 | write | `(tabs)/toy-library/organisation/[id]` | P | Report org | report_received | – | web | ✅ | ✅ | ✅ | – |
 | P10 | write | `(my)/messages/org/[orgId]` | P | family conversation Send | org_message | Me "Messages" | n/a | ✅ | ✅ | ✅ | – |
 
 </details>
@@ -419,7 +419,7 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | S01 | write | `(tabs)/guides/contributor/[id]` | P | showcase load; guide card tap | – | – | n/a | ✅ | ✅ | ✅ | – |
 | S02 | write | `(tabs)/guides/contributor/[id]` | P | "Say thanks" (ThankButton): optional "Add a note?" sheet, note visible to the receiver only | profile_thanked | – | none | ✅ | ✅ | ✅ | – |
-| S03 | write | `(tabs)/guides/contributor/[id]` | P | Report person | – | – | web | ✅ | ✅ | ✅ | – |
+| S03 | write | `(tabs)/guides/contributor/[id]` | P | Report person | report_received | – | web | ✅ | ✅ | ✅ | – |
 | S04 | nav | `(tabs)/guides/contributor/[id]` | P | org chip → org page | – | – | n/a | ✅ | ✅ | – | – |
 
 </details>
@@ -468,18 +468,18 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 | V02 | write | `(my)/events` | P | "Can't make it" | – | – | n/a | ✅ | ✅ | ✅ | – |
 | V03 | nav | `(my)/events` | P | "Pick a printer" → /printing | – | – | n/a | ✅ | ✅ | – | – |
 | V04 | write | `(tabs)/explore/recycling` | P | recycling load | – | credit | n/a | ✅ | ✅ | ✅ | – |
-| V05 | write | `(tabs)/explore/recycling` | P | "Book the drop-off" (+ photo) | – | leader intake count | mobile | ✅ | ✅ | ✅ | – |
+| V05 | write | `(tabs)/explore/recycling` | P | "Book the drop-off" (+ photo) | drop_off_booked | leader intake count | mobile | ✅ | ✅ | ✅ | – |
 | V06 | write | `(tabs)/explore/recycling` | P | "Cancel the drop-off" | – | – | n/a | ✅ | ✅ | ✅ | – |
 | V07 | write | `(my)/saved/index` | P | Saved hub tiles | – | counts | n/a | ✅ | ✅ | ✅ | – |
 | V08 | write | `(my)/saved/[slug]` | P | list heart unsave | – | list/hub count | n/a | ✅ | ✅ | ✅ | – |
 | V09 | nav | `(my)/saved/[slug]` | P | list row open | – | – | n/a | ✅ | ✅ | ✅ | – |
 | V10 | write | `events/[id]/index` | anon | event detail load: kind, when, where, cost, seats left / full / closed / cancelled / past, who is going | – | "N going", seats left | L | ✅ | ✅ | ✅ | – |
-| V11 | write | `events/[id]/index` | P | "I'm going" with nothing to ask (no questions, no cost, name and email on the profile) → POST registration with empty answers | – | "N going", My events | n/a | ✅ | ✅ | ✅ | – |
+| V11 | write | `events/[id]/index` | P | "I'm going" with nothing to ask (no questions, no cost, name and email on the profile) → POST registration with empty answers | event_rsvp_received | "N going", My events | n/a | ✅ | ✅ | ✅ | – |
 | V12 | nav | `events/[id]/index` | P | "I'm going" with questions, a cost or an incomplete profile → /events/:id/register; signed out → /sign-in (returns to the event) | – | – | n/a | ✅ | ✅ | – | – |
 | V13 | write | `events/[id]/index` | P | "Can't make it" → DELETE registration | – | "N going", My events | n/a | ✅ | ✅ | ✅ | – |
 | V14 | nav | `events/[id]/index` | anon | host chip "Hosted by <org>" → /toy-library/organisation/:id | – | – | n/a | ✅ | ✅ | – | – |
 | V15 | nav | `events/[id]/index` | P | "Print parts here" (host prints parts, signed in) → /events/:id/print | – | – | n/a | ✅ | ✅ | – | – |
-| V16 | write | `events/[id]/register` | P | "Confirm my spot" (name, email, organiser questions, cost acknowledgement) → POST registration, then /events; full or closed shows the server sentence | – | "N going", My events | n/a | ✅ | ✅ | ✅ | – |
+| V16 | write | `events/[id]/register` | P | "Confirm my spot" (name, email, organiser questions, cost acknowledgement) → POST registration, then /events; full or closed shows the server sentence | event_rsvp_received | "N going", My events | n/a | ✅ | ✅ | ✅ | – |
 | V17 | write | `events/[id]/print` | P | "Send request" (guide from saved, parts, sets, note) → POST print-at-event | toy_request | host "to answer" | n/a | ✅ | ✅ | ✅ | – |
 | V18 | nav | `events/[id]/print` | P | no saved guides: "Browse guides" → /guides | – | – | n/a | ✅ | ✅ | – | – |
 
@@ -509,7 +509,7 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 | Y04 | write | `(tabs)/toy-library/[id]` | P | detail load, carousel | – | – | n/a | ✅ | ✅ | ✅ | ✅ |
 | Y05 | write | `(tabs)/toy-library/[id]` | P | "Ask to collect it" | toy_request | owner's "My exchanges" count | mobile | ✅ | ✅ | ✅ | – |
 | Y06 | write | `(tabs)/toy-library/[id]` | P | "Arrange exchange" (offer own toy) | toy_request | owner's "My exchanges" count | mobile | ✅ | ✅ | ✅ | – |
-| Y07 | write | `(tabs)/toy-library/[id]` | P | Save / Thank owner / Report | profile_thanked, org_thanked | – | web | ✅ | ✅ | ✅ | – |
+| Y07 | write | `(tabs)/toy-library/[id]` | P | Save / Thank owner / Report | profile_thanked, org_thanked, report_received | – | web | ✅ | ✅ | ✅ | – |
 | Y08 | nav | `(tabs)/toy-library/[id]` | P | org / guide / picks links | – | – | n/a | ✅ | ✅ | – | – |
 | Y09 | write | `(tabs)/toy-library/organisations` | P | Organisations list | – | – | n/a | ✅ | ✅ | ✅ | – |
 
@@ -534,7 +534,7 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 | X11 | write | `(my)/exchanges/[id]` | P | cost "Remove" | – | money panel | n/a | ✅ | ✅ | ✅ | – |
 | X12 | write | `(my)/exchanges/[id]` | P | "Settled" toggle | – | "To settle / Settled", Me total | mobile | ✅ | ✅ | ✅ | – |
 | X13 | write | `(my)/exchanges/[id]` | P | Thank | profile_thanked | – | n/a | ✅ | ✅ | ✅ | – |
-| X14 | write | `(my)/exchanges/[id]` | P | Report | – | – | web | ✅ | ✅ | ✅ | – |
+| X14 | write | `(my)/exchanges/[id]` | P | Report | report_received | – | web | ✅ | ✅ | ✅ | – |
 
 </details>
 
@@ -929,7 +929,7 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | WI10 | nav | `/get-involved/submit-an-idea` | anon | signed-out "Sign in to submit an idea" → /login?next=/get-involved/submit-an-idea | – | – | n/a | ✅ | ✅ | – | – |
-| WI11 | write | `/get-involved/submit-an-idea` | P | "Submit for review" (title, summary, why it matters, kind, contact prefs, anonymous) → POST idea, then My challenges as pending | – | admin idea queue | P | ✅ | ✅ | ✅ | – |
+| WI11 | write | `/get-involved/submit-an-idea` | P | "Submit for review" (title, summary, why it matters, kind, contact prefs, anonymous) → POST idea, then My challenges as pending | idea_received | admin idea queue | P | ✅ | ✅ | ✅ | – |
 | WI12 | write | `/get-involved/submit-an-idea` | P | idea photo "Drop a photo of the toy" → upload, preview, path sent with the idea | – | – | P | ✅ | ✅ | ✅ | – |
 
 </details>
@@ -1003,7 +1003,7 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| WI31 | write | `/get-involved/events/[id]` | P | "I'm going" with no questions → POST registration; the button reads "You're going" | – | going count, seats left | L | ✅ | ✅ | ✅ | – |
+| WI31 | write | `/get-involved/events/[id]` | P | "I'm going" with no questions → POST registration; the button reads "You're going" | event_rsvp_received | going count, seats left | L | ✅ | ✅ | ✅ | – |
 | WI32 | write | `/get-involved/events/[id]` | P | "You're going" → DELETE registration; the button reads "I'm going" again | – | going count, seats left | L | ✅ | ✅ | ✅ | – |
 | WI33 | nav | `/get-involved/events/[id]` | anon | signed-out "I'm going" → /login?next=the event; signed in with questions or a cost → the register form | – | – | L | ✅ | ✅ | – | – |
 | WI34 | write | `/get-involved/events/[id]` | P | print-at-event "Send request" (guide, parts, sets) → POST print-at-event | toy_request | – | L | ✅ | ✅ | ✅ | – |
@@ -1016,7 +1016,7 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| WI35 | write | `/get-involved/events/[id]/register` | P | "Confirm my spot" (name, email, answers, cost box) → POST registration, then the event page; a full event shows the server sentence | – | going count | L | ✅ | ✅ | ✅ | – |
+| WI35 | write | `/get-involved/events/[id]/register` | P | "Confirm my spot" (name, email, answers, cost box) → POST registration, then the event page; a full event shows the server sentence | event_rsvp_received | going count | L | ✅ | ✅ | ✅ | – |
 
 </details>
 
@@ -1027,7 +1027,7 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | WI36 | nav | `/get-involved/recycling` | anon | signed-out "Create an account" → /signup; signed in "Book a drop-off" → /get-involved/recycling/drop-off | – | – | n/a | ✅ | ✅ | – | – |
-| WI37 | write | `/get-involved/recycling/drop-off` | P | "Book the drop-off" (organisation, weight, polymer, declaration, photo, note) → POST recycling, then /dashboard | – | organisation drop-off queue | L | ✅ | ✅ | ✅ | – |
+| WI37 | write | `/get-involved/recycling/drop-off` | P | "Book the drop-off" (organisation, weight, polymer, declaration, photo, note) → POST recycling, then /dashboard | drop_off_booked | organisation drop-off queue | L | ✅ | ✅ | ✅ | – |
 | WI38 | nav | `/get-involved/recycling/drop-off` | anon | signed-out visit → /login?next=/get-involved/recycling/drop-off (the ?org= choice is lost) | – | – | n/a | ✅ | ✅ | – | – |
 
 </details>
@@ -1226,7 +1226,7 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| WS11 | write | `/contact` | anon | "Send message" (topic, name, email, message) → POST /api/public/contact → "Sent. Thank you."; staff are not notified | – | – | n/a | ✅ | ✅ | ✅ | – |
+| WS11 | write | `/contact` | anon | "Send message" (topic, name, email, message) → POST /api/public/contact → "Sent. Thank you."; staff are not notified | contact_received | – | n/a | ✅ | ✅ | ✅ | – |
 | WS12 | nav | `/contact` | anon | "Send message" with empty fields is blocked by the form: nothing is sent and the name field is flagged | – | – | n/a | ✅ | ✅ | – | – |
 | WS13 | static | `/contact` | anon | three routes in (guide, organisation, safety) and the email address; "To be completed" where organisation facts are missing | – | – | n/a | ✅ | – | – | – |
 
@@ -1374,7 +1374,7 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 | WY06 | nav | `/toy-library/[id]` | P | "Ask to collect it" / "Offer a swap" → /toy-library/:id/request?mode= | – | – | P | ✅ | ✅ | – | – |
 | WY07 | nav | `/toy-library/[id]` | anon | "Sign in to ask for it" → /login?next=/toy-library/:id/request?mode= | – | – | n/a | ✅ | ✅ | – | – |
 | WY08 | write | `/toy-library/[id]` | P | Save (labelled) → POST/DELETE /api/saves | – | Saved count | P | ✅ | ✅ | ✅ | – |
-| WY09 | write | `/toy-library/[id]` | P | "Report this listing" dialog → POST /api/reports | – | – | P | ✅ | ✅ | ✅ | – |
+| WY09 | write | `/toy-library/[id]` | P | "Report this listing" dialog → POST /api/reports | report_received | – | P | ✅ | ✅ | ✅ | – |
 | WY10 | write | `/toy-library/[id]/request` | P | "Send the request" (gift or swap, note) → POST /api/toy-transactions → /dashboard/exchanges/:id | toy_request | holder's exchanges unread, holder's exchangeActions | P | ✅ | ✅ | ✅ | – |
 | WY11 | static | `/toy-library/[id]/request` | P | mode radios, offered-toy picker, note and chips, Cancel → /toy-library/:id | – | – | n/a | ✅ | – | – | – |
 | WY12 | nav | `/dashboard/toys` | P | StageFilter chips (All, Needs you, Live, Hidden) → ?stage= | – | counts per stage | n/a | ✅ | ✅ | – | – |
@@ -1447,6 +1447,11 @@ Generated by `scripts/journeys/notifications.mjs`. Every `NotificationType` need
 | `leader_added` | `routes/admin.ts` | `notifications/handoffs-leaders.test.ts` | `admin/organizations.spec.ts` | `admin-organisations.spec.ts` |
 | `leader_removed` | `routes/admin.ts` | `notifications/handoffs-leaders.test.ts` | `admin/organizations.spec.ts` | `admin-organisations.spec.ts` |
 | `org_event_deleted` | `routes/organizations.ts` | `events/leader-events.test.ts`, `notifications/handoffs-leaders.test.ts` | `organisation/publish.spec.ts` | none |
+| `event_rsvp_received` | `routes/events.ts` | `notifications/handoffs-acknowledged.test.ts` | `get-involved/events.spec.ts` | `events-journeys.spec.ts` |
+| `idea_received` | `routes/toy-ideas.ts` | `notifications/handoffs-acknowledged.test.ts` | `get-involved/ideas.spec.ts` | `challenges-edges.spec.ts`, `challenges.spec.ts` |
+| `report_received` | `routes/reports.ts` | `notifications/handoffs-acknowledged.test.ts` | `toys/toy-library.spec.ts` | `exchange-actions.spec.ts`, `guides-feedback.spec.ts`, `guides-report.spec.ts`, `org-public-actions.spec.ts`, `showcase.spec.ts`, `toy-detail-actions.spec.ts` |
+| `drop_off_booked` | `routes/organizations.ts` | `notifications/handoffs-acknowledged.test.ts` | `get-involved/recycling.spec.ts` | `counts-recycling.spec.ts` |
+| `contact_received` | `routes/public.ts` | `notifications/handoffs-acknowledged.test.ts` | `public/about.spec.ts` | none |
 
 | Count | Computed by | Asserted by |
 |---|---|---|

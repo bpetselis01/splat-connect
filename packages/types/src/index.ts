@@ -1799,6 +1799,11 @@ export type NotificationType =
   | 'leader_added'
   | 'leader_removed'
   | 'org_event_deleted'
+  | 'event_rsvp_received'
+  | 'idea_received'
+  | 'report_received'
+  | 'drop_off_booked'
+  | 'contact_received'
 
 /** Which My SPLAT card a notification's badge belongs to. */
 export type NotificationBucket = 'tutorials' | 'exchanges' | 'challenges' | 'organisations'
@@ -1879,6 +1884,11 @@ const NOTIFICATION_BUCKET = {
   leader_added: 'organisations',
   leader_removed: 'organisations',
   org_event_deleted: 'organisations',
+  event_rsvp_received: 'organisations',
+  idea_received: 'challenges',
+  report_received: 'exchanges',
+  drop_off_booked: 'exchanges',
+  contact_received: 'exchanges',
 } satisfies Record<NotificationType, NotificationBucket>
 
 /** Every notification type, for iteration at runtime — the union alone is compile-time only. */
@@ -1975,6 +1985,13 @@ export const COPY: Record<NotificationType, (n: Notification) => string> = {
   leader_removed: (n) => `You no longer lead ${n.actor_name}`,
   // The title rides in body, which is the card's second line: the event row is gone.
   org_event_deleted: (n) => `${n.actor_name} deleted an event you registered for`,
+  // Acknowledgements to the sender. actor_name is the organisation, or SPLAT
+  // when the platform took it; a title or the first words ride in body.
+  event_rsvp_received: (n) => `You're registered for ${n.tutorial_title ?? 'an event'}`,
+  idea_received: () => 'We received your idea',
+  report_received: () => 'We received your report',
+  drop_off_booked: (n) => `Your drop-off at ${n.actor_name} is booked`,
+  contact_received: () => 'We received your message',
 }
 
 // A type the database allows but this build has no line for — a newer API,

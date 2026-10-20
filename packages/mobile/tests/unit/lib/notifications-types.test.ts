@@ -95,6 +95,11 @@ const TABLE: Record<NotificationType, Row> = {
   leader_added: { carries: { org_id: 'o1' }, copy: 'You now lead Sam', link: '/organisation' },
   leader_removed: { carries: { org_id: 'o1' }, copy: 'You no longer lead Sam', link: '/toy-library/organisation/o1' },
   org_event_deleted: { carries: { org_id: 'o1', body: 'Open day' }, copy: 'Sam deleted an event you registered for', link: '/toy-library/organisation/o1' },
+  event_rsvp_received: { carries: { org_event_id: 'e1', tutorial_title: 'Open day' }, copy: 'You\'re registered for Open day', link: '/events/e1' },
+  idea_received: { carries: IDEA, copy: 'We received your idea', link: '/challenges' },
+  report_received: { carries: { member_report_id: 'r1' }, copy: 'We received your report', link: '/inbox' },
+  drop_off_booked: { carries: { org_id: 'o1' }, copy: 'Your drop-off at Sam is booked', link: '/explore/recycling' },
+  contact_received: { carries: {}, copy: 'We received your message', link: '/inbox' },
 }
 
 const row = (type: NotificationType): Notification => ({

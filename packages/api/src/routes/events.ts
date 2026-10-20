@@ -20,6 +20,8 @@
  */
 import { Hono } from 'hono'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
+import { notify } from '../notify.js'
+import { orgName } from './organizations.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import type { AuthVariables } from '../middleware/auth.js'
 import type { OrgEventQuestion } from '@splat-connect/types'
@@ -177,7 +179,7 @@ events.post('/:id/registrations', async (c) => {
   const admin = createAdminClient()
   const { data: event, error: eventError } = await admin
     .from('org_events')
-    .select('id, status, cancelled_at, registrations_closed_at, capacity, starts_at, cost_cents')
+    .select('id, org_id, title, status, cancelled_at, registrations_closed_at, capacity, starts_at, cost_cents')
     .eq('id', eventId)
     .maybeSingle()
   if (eventError) {
@@ -222,6 +224,13 @@ events.post('/:id/registrations', async (c) => {
     }
   }
 
+  const { data: before } = await admin
+    .from('org_event_registrations')
+    .select('cancelled_at')
+    .eq('event_id', eventId)
+    .eq('user_id', c.get('userId'))
+    .maybeSingle()
+
   const { data, error } = await supabase
     .from('org_event_registrations')
     // Upsert, not insert: the unique key is (event_id, user_id), so somebody
@@ -244,6 +253,21 @@ events.post('/:id/registrations', async (c) => {
   if (error) return c.json({ error: error.message }, 500)
   // RLS returns no row rather than refusing, so an absent row IS the refusal.
   if (!data) return c.json({ error: 'That registration is not yours to make.' }, 403)
+  // 142. Saving the form again over a live registration is not a new RSVP.
+  if (!before || before.cancelled_at) {
+    await notify(
+      [
+        {
+          recipient_id: c.get('userId'),
+          type: 'event_rsvp_received',
+          org_event_id: eventId,
+          tutorial_title: event.title,
+          actor_name: (await orgName(event.org_id)) ?? 'An organisation',
+        },
+      ],
+      'event_rsvp_received'
+    )
+  }
   return c.json(data, 201)
 })
 

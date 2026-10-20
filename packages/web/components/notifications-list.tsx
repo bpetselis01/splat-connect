@@ -74,6 +74,11 @@ const ICON: Record<NotificationType, [Glyph, string]> = {
   leader_added: [Building, 'var(--tok)'],
   leader_removed: [Building, 'var(--b100)'],
   org_event_deleted: [Undo, 'var(--tbad)'],
+  event_rsvp_received: [Check, 'var(--tok)'],
+  idea_received: [Lightbulb, 'var(--tamber)'],
+  report_received: [Inbox, 'var(--b100)'],
+  drop_off_booked: [Box, 'var(--tcoral)'],
+  contact_received: [Inbox, 'var(--b100)'],
 }
 
 function linkFor(n: Notification, isAdmin: boolean): string {
@@ -95,7 +100,7 @@ function linkFor(n: Notification, isAdmin: boolean): string {
   if (n.org_story_id) return `/about/stories/${n.org_story_id}`
   if (n.type === 'org_thanked') return '/dashboard/organisation/profile#thanks'
   // 142: subjects that are an organisation, or none at all.
-  if (n.type === 'recycling_received' || n.type === 'recycling_declined') return '/get-involved/recycling'
+  if (n.type === 'recycling_received' || n.type === 'recycling_declined' || n.type === 'drop_off_booked') return '/get-involved/recycling'
   if (n.type === 'org_request_approved') return '/dashboard/organisation'
   if (n.type === 'org_request_declined') return '/get-involved/organisations/request'
   if (n.type === 'leader_added') return '/dashboard/organisation'
@@ -138,7 +143,7 @@ function linkFor(n: Notification, isAdmin: boolean): string {
   // above already sends them to /tutorials/:id/edit instead, which is the
   // more useful landing spot when it's available.
   if (n.idea_id) {
-    return n.type === 'idea_rejected'
+    return n.type === 'idea_rejected' || n.type === 'idea_received'
       ? '/dashboard/challenges'
       : `/get-involved/design-challenges/${n.idea_id}`
   }
