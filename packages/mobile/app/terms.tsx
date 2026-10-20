@@ -71,7 +71,7 @@ export default function TermsGate() {
     setBusy(false)
     if (res.error) return setError({ kind: 'other', message: res.error })
     // Otherwise the flag flips and the redirect above takes over.
-    if (backs) router.back()
+    if (backs) router.canGoBack() ? router.back() : router.replace('/home')
   }
 
   return (

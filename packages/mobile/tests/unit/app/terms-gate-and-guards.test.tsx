@@ -87,6 +87,17 @@ describe('Terms gate pushed over a refused write', () => {
     await waitFor(() => expect(mockBack).toHaveBeenCalledTimes(1))
   })
 
+  it('A15 with no history to go back to lands on Home instead of a blank screen', async () => {
+    mockParams = { returnTo: 'back' }
+    mockCanGoBack = false
+    mockAuth.profile = { name: 'Sam' }
+    render(<TermsGate />)
+    tick()
+    accept()
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/home'))
+    expect(mockBack).not.toHaveBeenCalled()
+  })
+
   it('A15 does not go back while the terms are still unaccepted', () => {
     mockParams = { returnTo: 'back' }
     render(<TermsGate />)
