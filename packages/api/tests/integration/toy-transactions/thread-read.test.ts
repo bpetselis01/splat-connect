@@ -59,7 +59,7 @@ describe('exchange thread and toy offers', () => {
         .sort()
     expect(await open()).toEqual([txId, secondTxId].sort())
 
-    expect((await call(owner, `/api/toy-transactions/${secondTxId}/reject`, 'POST')).status).toBe(200)
+    expect((await call(owner, `/api/toy-transactions/${secondTxId}/reject`, 'POST', { reason: 'Already promised' })).status).toBe(200)
     expect(await open()).toEqual([txId])
   })
 })

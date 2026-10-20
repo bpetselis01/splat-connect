@@ -157,6 +157,8 @@ test('W12: answering an offer on another screen drops the editor\'s "N offers" w
   await page.getByText(nameA).first().click()
   await page.waitForURL(new RegExp(`/exchanges/${txA}`))
   await page.getByRole('button', { name: 'Decline', exact: true }).click()
+  await page.getByLabel('Reason for declining').fill('Already promised')
+  await page.getByRole('button', { name: 'Send the decline' }).click()
   await expect.poll(() => statusOf(txA)).toBe('rejected')
 
   await page.goBack()

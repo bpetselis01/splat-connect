@@ -268,12 +268,56 @@ describe('ExchangeThreadScreen — requested, owner side', () => {
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions/tx1/accept', {}))
   })
 
-  it('X05 declines through /reject', async () => {
-    mockPost.mockResolvedValue(detail({ status: 'rejected' }))
+  it('X05 declines only with a reason, sent trimmed to /reject', async () => {
+    mockPost.mockResolvedValue(detail({ status: 'rejected', decline_reason: 'Already given away' }))
     await open()
     fireEvent.press(screen.getByRole('button', { name: 'Decline' }))
-    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions/tx1/reject', {}))
+    expect(mockPost).not.toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: 'Send the decline' })).toBeDisabled()
+    fireEvent.changeText(screen.getByLabelText('Reason for declining'), '   ')
+    expect(screen.getByRole('button', { name: 'Send the decline' })).toBeDisabled()
+    fireEvent.changeText(screen.getByLabelText('Reason for declining'), '  Already given away  ')
+    fireEvent.press(screen.getByRole('button', { name: 'Send the decline' }))
+    await waitFor(() =>
+      expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions/tx1/reject', { reason: 'Already given away' })
+    )
     expect(await screen.findByText('Rejected')).toBeTruthy()
+  })
+
+  it('X05 Cancel closes the reason form without sending', async () => {
+    await open()
+    fireEvent.press(screen.getByRole('button', { name: 'Decline' }))
+    fireEvent.press(screen.getByRole('button', { name: 'Cancel' }))
+    expect(screen.queryByLabelText('Reason for declining')).toBeNull()
+    expect(mockPost).not.toHaveBeenCalled()
+  })
+
+  it('X05 keeps the typed reason when the server refuses it', async () => {
+    mockPost.mockRejectedValue(new Error('API POST /api/toy-transactions/tx1/reject failed with status 409: This request is no longer open'))
+    await open()
+    fireEvent.press(screen.getByRole('button', { name: 'Decline' }))
+    fireEvent.changeText(screen.getByLabelText('Reason for declining'), 'Already given away')
+    fireEvent.press(screen.getByRole('button', { name: 'Send the decline' }))
+    expect(await screen.findByText('This request is no longer open')).toBeTruthy()
+    expect(screen.getByLabelText('Reason for declining').props.value).toBe('Already given away')
+  })
+
+  it('X15 shows the requester the owner’s reason on a declined request', async () => {
+    mockGet.mockResolvedValue(
+      detail({ status: 'rejected', owner_id: 'owner1', requester_id: 'viewer1', decline_reason: 'Already given away' })
+    )
+    await open()
+    expect(screen.getByText('This request was declined.')).toBeTruthy()
+    expect(screen.getByText('Reason: Already given away')).toBeTruthy()
+  })
+
+  it('X15 shows a plain declined line when an older request has no reason', async () => {
+    mockGet.mockResolvedValue(
+      detail({ status: 'rejected', owner_id: 'owner1', requester_id: 'viewer1', decline_reason: null })
+    )
+    await open()
+    expect(screen.getByText('This request was declined.')).toBeTruthy()
+    expect(screen.queryByText(/^Reason:/)).toBeNull()
   })
 
   it('surfaces an accept failure through the error row', async () => {
@@ -595,8 +639,10 @@ describe('ExchangeThreadScreen — polling', () => {
       await act(async () => {
         jest.advanceTimersByTime(10_000)
       })
+      fireEvent.press(screen.getByRole('button', { name: 'Decline' }))
+      fireEvent.changeText(screen.getByLabelText('Reason for declining'), 'Already given away')
       await act(async () => {
-        fireEvent.press(screen.getByRole('button', { name: 'Decline' }))
+        fireEvent.press(screen.getByRole('button', { name: 'Send the decline' }))
       })
       expect(screen.getByText('Rejected')).toBeTruthy()
 

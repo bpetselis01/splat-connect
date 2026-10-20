@@ -108,7 +108,7 @@ test.describe('Toy donation and exchange', () => {
     }
   })
 
-  test('WX07 the owner can reject a request, ending it with no handoff', async ({ page }) => {
+  test('WX07 WX26 the owner declines a request with a reason, ending it with no handoff, and the requester reads the reason', async ({ page }) => {
     const owner = await createContributor()
     await acceptTerms(owner.id)
     const requester = await createContributor()
@@ -124,8 +124,16 @@ test.describe('Toy donation and exchange', () => {
       await signIn(page, owner.email, owner.password)
       await page.waitForURL('**/dashboard')
       await page.goto(txUrl)
-      await page.getByRole('button', { name: 'Reject' }).click()
+      await page.getByRole('button', { name: 'Decline' }).click()
+      await page.getByLabel('Why you cannot take it').fill('Already given away')
+      await page.getByRole('button', { name: 'Send the decline' }).click()
       await expect(page.getByText(/this request was declined/i)).toBeVisible()
+
+      await signIn(page, requester.email, requester.password)
+      await page.waitForURL('**/dashboard')
+      await page.goto(txUrl)
+      await expect(page.getByText(/this request was declined/i)).toBeVisible()
+      await expect(page.locator('blockquote', { hasText: 'Already given away' })).toBeVisible()
     } finally {
       await deleteUser(owner.id)
       await deleteUser(requester.id)

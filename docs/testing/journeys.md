@@ -70,10 +70,10 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 | web | Guide editor | 18 | 0 | 0 |
 | web | My guides | 4 | 0 | 0 |
 | web | Submit a guide | 1 | 0 | 0 |
-| web | Exchanges | 14 | 0 | 0 |
+| web | Exchanges | 15 | 0 | 0 |
 | web | Makers wanted and builds | 11 | 0 | 0 |
 | web | Toy library and my toys | 24 | 0 | 0 |
-| mobile | Exchanges | 14 | 0 | 0 |
+| mobile | Exchanges | 15 | 0 | 0 |
 | mobile | Account | 10 | 0 | 0 |
 
 ## Mobile
@@ -228,7 +228,7 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 | K04 | write | `(my)/exchanges/build/ask/[id]` | P | Ask first "I'll build this" | toy_accepted | – | n/a | ✅ | ✅ | ✅ | – |
 | K05 | write | `(tabs)/explore/makers-wanted/new` | P | "Post to Makers wanted" | toy_request | – | n/a | ✅ | ✅ | ✅ | – |
 | K06 | write | `(my)/exchanges/build/[id]` | P | thread "Take it on" (+ pickup) | toy_accepted | – | mobile | ✅ | ✅ | ✅ | – |
-| K07 | write | `(my)/exchanges/build/[id]` | P | "Decline" | toy_rejected | – | n/a | ✅ | ✅ | ✅ | – |
+| K07 | write | `(my)/exchanges/build/[id]` | P | "Decline with a reason" | toy_rejected | – | n/a | ✅ | ✅ | ✅ | – |
 | K08 | write | `(my)/exchanges/build/[id]` | P | "Post the working shot" | build_shot_posted | – | mobile | ✅ | ✅ | ✅ | – |
 | K09 | write | `(my)/exchanges/build/[id]` | P | "Looks right — arrange pickup" | build_approved | – | mobile | ✅ | ✅ | ✅ | – |
 | K10 | nav | `(my)/exchanges/build/[id]` | P | "Ask for a change" | – | – | n/a | ✅ | ✅ | – | – |
@@ -515,9 +515,9 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 
 </details>
 
-### Exchanges — 14 rows · 0 gaps · 0 waived
+### Exchanges — 15 rows · 0 gaps · 0 waived
 
-<details><summary>14 rows, no gaps</summary>
+<details><summary>15 rows, no gaps</summary>
 
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | mobile-unit | mobile-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
@@ -525,7 +525,7 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 | X02 | write | `(my)/exchanges/[id]` | P | thread load | – | – | n/a | ✅ | ✅ | ✅ | – |
 | X03 | write | `(my)/exchanges/[id]` | P | "Send" message | toy_message | inbox | n/a | ✅ | ✅ | ✅ | – |
 | X04 | write | `(my)/exchanges/[id]` | P | "Accept" → "Accept request" (+ pickup) | toy_accepted | owner-action count | mobile | ✅ | ✅ | ✅ | – |
-| X05 | write | `(my)/exchanges/[id]` | P | "Decline" | toy_rejected | – | mobile | ✅ | ✅ | ✅ | – |
+| X05 | write | `(my)/exchanges/[id]` | P | "Decline with a reason" | toy_rejected | – | mobile | ✅ | ✅ | ✅ | – |
 | X06 | write | `(my)/exchanges/[id]` | P | "Withdraw" | toy_withdrawn | – | mobile | ✅ | ✅ | ✅ | – |
 | X07 | write | `(my)/exchanges/[id]` | P | "Confirm handoff" (code) | toy_rejected | counts | mobile | ✅ | ✅ | ✅ | – |
 | X08 | write | `(my)/exchanges/[id]` | P | "New code" / "Copy" | – | – | n/a | ✅ | ✅ | ✅ | – |
@@ -535,6 +535,7 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 | X12 | write | `(my)/exchanges/[id]` | P | "Settled" toggle | – | "To settle / Settled", Me total | mobile | ✅ | ✅ | ✅ | – |
 | X13 | write | `(my)/exchanges/[id]` | P | Thank | profile_thanked | – | n/a | ✅ | ✅ | ✅ | – |
 | X14 | write | `(my)/exchanges/[id]` | P | Report | – | – | web | ✅ | ✅ | ✅ | – |
+| X15 | nav | `(my)/exchanges/[id]` | P | declined request: the requester reads the owner's reason | – | – | n/a | ✅ | ✅ | – | – |
 
 </details>
 
@@ -1317,9 +1318,9 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 
 </details>
 
-### Exchanges — 14 rows · 0 gaps · 0 waived
+### Exchanges — 15 rows · 0 gaps · 0 waived
 
-<details><summary>14 rows, no gaps</summary>
+<details><summary>15 rows, no gaps</summary>
 
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
@@ -1329,7 +1330,7 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 | WX04 | nav | `/dashboard/exchanges/[id]` | P | LiveTransaction: a message or an acceptance from the other seat refreshes the open thread without a reload (supabase realtime) | – | – | P | ✅ | ✅ | – | – |
 | WX05 | write | `/dashboard/exchanges/[id]` | P | message Send → sendMessage action → POST /api/toy-transactions/:id/messages | toy_message | other seat's exchanges unread | P | ✅ | ✅ | ✅ | – |
 | WX06 | write | `/dashboard/exchanges/[id]` | P | "Accept" → pickup dialog "Accept request" → accept action → POST /api/toy-transactions/:id/accept | toy_accepted | owner's exchangeActions -1, requester's exchanges unread | P | ✅ | ✅ | ✅ | – |
-| WX07 | write | `/dashboard/exchanges/[id]` | P | "Reject" (no reason on this page) → reject action → POST /api/toy-transactions/:id/reject | toy_rejected | requester's exchanges unread | P | ✅ | ✅ | ✅ | – |
+| WX07 | write | `/dashboard/exchanges/[id]` | P | "Decline" opens the reason form (required, 1–500) → reject action → POST /api/toy-transactions/:id/reject | toy_rejected | requester's exchanges unread | P | ✅ | ✅ | ✅ | – |
 | WX08 | write | `/dashboard/exchanges/[id]` | P | "Withdraw" → withdraw action → POST /api/toy-transactions/:id/withdraw | toy_withdrawn | other seat's exchanges unread | P | ✅ | ✅ | ✅ | – |
 | WX09 | write | `/dashboard/exchanges/[id]` | P | handover code + "Confirm handoff" → confirm action → POST /api/toy-transactions/:id/confirm; the second code closes it | toy_rejected | owner's exchangeActions, My toys Given away | P | ✅ | ✅ | ✅ | – |
 | WX10 | write | `/dashboard/exchanges/[id]` | P | CostPanel "Add cost" → POST /api/exchange-costs/:txId | – | cost total | P | ✅ | ✅ | ✅ | – |
@@ -1337,6 +1338,7 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 | WX12 | write | `/dashboard/exchanges/[id]` | P | CostPanel "Mark settled" → PATCH /api/exchange-costs/:id/settle | – | cost total | P | ✅ | ✅ | ✅ | – |
 | WX13 | nav | `/dashboard/exchanges/[id]` | P | "View the listing" → /toy-library/:toy_id | – | – | n/a | ✅ | ✅ | – | – |
 | WX14 | nav | `/dashboard/exchanges/[id]` | P | completed handoff: "Add to toy library" → /dashboard/toys/:received_toy | – | – | P | ✅ | ✅ | – | – |
+| WX26 | nav | `/dashboard/exchanges/[id]` | P | declined request: the requester reads the owner's reason under "This request was declined." | – | – | n/a | ✅ | ✅ | – | – |
 
 </details>
 
@@ -1348,7 +1350,7 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | WX15 | write | `/dashboard/exchanges/build/[id]` | P | build thread message Send → POST /api/toy-transactions/:id/messages | toy_message | other seat's exchanges unread | P | ✅ | ✅ | ✅ | – |
 | WX16 | write | `/dashboard/exchanges/build/[id]` | P | maker "Accept" (pickup dialog) → POST /api/toy-transactions/:id/accept | toy_accepted | requester's exchanges unread | P | ✅ | ✅ | ✅ | – |
-| WX17 | write | `/dashboard/exchanges/build/[id]` | P | maker "Reject" → POST /api/toy-transactions/:id/reject | toy_rejected | requester's exchanges unread | P | ✅ | ✅ | ✅ | – |
+| WX17 | write | `/dashboard/exchanges/build/[id]` | P | maker "Decline" with a reason → POST /api/toy-transactions/:id/reject | toy_rejected | requester's exchanges unread | P | ✅ | ✅ | ✅ | – |
 | WX18 | write | `/dashboard/exchanges/build/[id]` | P | "Withdraw the request" → POST /api/toy-transactions/:id/withdraw | toy_withdrawn | maker's exchanges unread | P | ✅ | ✅ | ✅ | – |
 | WX19 | write | `/dashboard/exchanges/build/[id]` | P | handover code + "Confirm handoff" → POST /api/toy-transactions/:id/confirm (needs the approved working shot) | – | exchangeActions | P | ✅ | ✅ | ✅ | – |
 | WX20 | write | `/dashboard/exchanges/build/[id]` | P | BuildNextStep "Post the working shot" (file) → POST /api/toy-transactions/:id/working-shot | build_shot_posted | requester's exchanges unread | P | ✅ | ✅ | ✅ | – |

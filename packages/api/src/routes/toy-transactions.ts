@@ -1,7 +1,7 @@
 import { chunk } from '../chunk.js'
 import { Hono, type Context } from 'hono'
 import { randomInt, randomUUID } from 'node:crypto'
-import { needsAction, isOwnerSide, answerBy, printRequestExpired, shortDate, customizationNotes, partsTotalCents, notificationBody } from '@splat-connect/types'
+import { DECLINE_REASON_MAX, needsAction, isOwnerSide, answerBy, printRequestExpired, shortDate, customizationNotes, partsTotalCents, notificationBody } from '@splat-connect/types'
 import type { CustomizationField, PrintJobFile, PrintSettings, BuildQuestion, BuildQuestions } from '@splat-connect/types'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
@@ -926,10 +926,9 @@ toyTransactions.post('/:id/accept', async (c) => {
 })
 
 /*
- * Declining. A print job's refusal carries a reason, because the artboard
- * requires one and because a reason that lives only in the thread cannot be
- * rendered on the list row that needs it. It is optional on the other kinds,
- * where nothing asks for it.
+ * Declining. Every kind carries a reason: the other party has nothing to act on
+ * without one, and a reason that lives only in the thread cannot be rendered on
+ * the list row that needs it.
  */
 toyTransactions.post('/:id/reject', async (c) => {
   const loaded = await loadForParty(c)
@@ -945,18 +944,13 @@ toyTransactions.post('/:id/reject', async (c) => {
 
   const body = (await c.req.json().catch(() => ({}))) as { reason?: unknown }
   const reason = typeof body.reason === 'string' ? body.reason.trim() : ''
-  if (reason.length > 500) return c.json({ error: 'The reason is longer than 500 characters.' }, 400)
-  // Required on a print job only. "Declining needs a reason" is the artboard's
-  // rule for the offer screen, and a printer who says no without one leaves a
-  // family with nothing to act on.
-  if (tx.type === 'print' && reason.length === 0) {
-    return c.json({ error: 'Say why you cannot take this job.' }, 400)
-  }
+  if (reason.length === 0) return c.json({ error: 'reason_required' }, 400)
+  if (reason.length > DECLINE_REASON_MAX) return c.json({ error: 'reason_too_long', max: DECLINE_REASON_MAX }, 400)
 
   const now = new Date().toISOString()
   const { data: updated, error } = await admin
     .from('toy_transactions')
-    .update({ status: 'rejected', decline_reason: reason || null, updated_at: now })
+    .update({ status: 'rejected', decline_reason: reason, updated_at: now })
     .eq('id', tx.id)
     .select()
     .single()
@@ -966,7 +960,7 @@ toyTransactions.post('/:id/reject', async (c) => {
     transaction_id: tx.id,
     sender_id: userId,
     kind: 'system',
-    body: reason ? `Request declined — ${reason}` : 'Request declined.',
+    body: `Request declined — ${reason}`,
   })
 
   await admin.from('notifications').insert({
