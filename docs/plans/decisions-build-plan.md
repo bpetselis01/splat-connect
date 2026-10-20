@@ -7,15 +7,16 @@
 
 ## Architecture
 
-Five pieces, five PRs off `development`, landed in this order: dead routes (U1–U3), thread actions (U4–U6), return path and terms (U7–U10), notifications (U11–U14), web auth (U15–U20). Each PR is green on CI before merge; the two migrations (140 message kind, 141 notification types) go to hosted by Byron before the API deploy that writes them (`docs/plans/decisions-build-requirements.md` Q1–Q2).
+Five pieces, six PRs off `development`, landed in this order: dead routes (U1–U3), thread actions (U4–U6), return path and client-side terms handling (U7, U8, U8b, U10), notifications (U11–U14), web auth (U15–U20), and last the API terms gate (U9) on its own, after the mobile release that carries U10 is live, so no shipped app build ever sees a raw `terms_required`. Each PR is green on CI before merge; the two migrations (140 message kind + policy, 141 notification types) go to hosted by Byron before the API deploy that writes them (`docs/plans/decisions-build-requirements.md` Q1–Q2).
 
 What stays fixed:
 - **One actions module.** `packages/web/app/dashboard/exchanges/actions.ts` (`'use server'` at file level, exported plain functions taking args) is the only place the five thread actions call the API; the three pages become thin. Same shape as `app/dashboard/organisation/acting-org-actions.ts`.
 - **One sanitiser.** `packages/web/lib/safe-next-path.ts` is the only same-origin check; every redirect to `/login` or `/signup` is built by one helper, `loginUrl(pathWithQuery)`, in that file.
-- **One terms check on the API.** `packages/api/src/lib/terms.ts` exports `requireContributorTerms` (Hono middleware) returning `403 { error: 'terms_required', version }`; a failed lookup is a 403 too (fail closed). The existing `hasAcceptedContributorTerms` in `tutorials.ts` moves there.
+- **One terms check on the API.** `packages/api/src/terms.ts` (API helpers are flat in `src/`, like `chunk.ts` and `review-notifications.ts`) exports `requireContributorTerms`, middleware in the shape of `middleware/auth.ts`, returning `403 { error: 'terms_required', version }`. The existing `hasAcceptedContributorTerms` in `tutorials.ts` already returns false on any error, so it is already fail-closed; it moves there unchanged except for logging the error case. The gated-route list is a constant in the same file.
 - **One auth error classifier.** `packages/types/src/auth-errors.ts` (moved from mobile) is imported by both clients; copy lives with the kinds.
+- **One terms detection.** Every client goes through `makeApiClient` in `packages/types/src/api-core.ts`; `isTermsRequired(err)` lives beside `isApiError` there, and each environment adds one navigation hook (browser `window.location.assign`, server `redirect()`, mobile `router.push`). No new error class.
 - **Notification types land one group per commit**: union + `NOTIFICATION_BUCKET` + `COPY` + web `ICON`/`linkFor` + mobile `linkFor` + the three type-list tests + schema guard + migration entry + API writers + api integration test + journeys rows, together, so `satisfies Record` compiles and `scripts/journeys/notifications.mjs` finds a creator and an asserting test at every commit.
-- **Journeys.** New rows use the next free ids: web auth WA30–WA40, exchanges WX26–WX29, printing WR28, admin WM37–WM38, mobile exchanges X15–X17, mobile auth A15, mobile org leader L44–L46, mobile printing R20. Existing write rows gain `notifies` entries for new types rather than new rows. `pnpm test:journeys` exits 0 at every commit.
+- **Journeys.** New rows use the next free ids, all verified free: web auth WA30–WA38, exchanges WX26, admin WM37–WM38, mobile exchanges X15–X16, mobile auth A15. Existing write rows gain `notifies` entries for new types rather than new rows. `pnpm test:journeys` exits 0 at every commit.
 
 ## Piece 5: dead routes (R18, R19)
 
@@ -171,7 +172,7 @@ What stays fixed:
 - [ ] Nil/empty input: empty or whitespace reason → 400 `reason required`, form shows the field error
 - [ ] Error path: 501-character reason → 400, the field shows the limit
 - [ ] Edge case: a declined thread created before this change (no `decline_reason`) renders the plain "declined" line without an empty quote block
-- [ ] Edge case: Decline submitted twice (double-click or two tabs) → the second call gets 409 and the form shows "This request was already declined", not a stuck spinner
+- [ ] Edge case: Decline submitted twice (double-click or two tabs) → the second call gets the API's existing 409 "This request is no longer open", which the form shows verbatim instead of a stuck spinner
 
 **Verification:** api integration green; web e2e exchanges green; whole mobile `npx jest` green; mobile e2e exchanges green; `pnpm test:journeys` 0 gaps.
 
@@ -186,9 +187,9 @@ What stays fixed:
 **Dependencies:** U4 (the pages call the module; the component renders kinds)
 
 **Files:**
-- `supabase/migrations/140_admin_thread_messages.sql` — `toy_transaction_messages.kind` CHECK gains `'admin'`
+- `supabase/migrations/140_admin_thread_messages.sql` — `toy_transaction_messages.kind` CHECK gains `'admin'`, and the member insert policy (`033:205`, today `sender_id = auth.uid()` + party) gains `and kind = 'user'`, so neither `admin` nor `system` can be inserted through PostgREST by a party; the admin `for all` policy and the service-role client keep their writes
 - `packages/types/src/index.ts` — `ToyTransactionMessageKind = 'system' | 'user' | 'admin'`
-- `packages/api/src/routes/toy-transactions.ts` — `POST /:id/messages`: when the caller is an admin and not a party, insert `kind: 'admin'` and notify both parties; `accept`, `reject`, `withdraw`, `confirm`: an admin who is not a party gets `403 { error: 'admin_cannot_act' }` before the party checks
+- `packages/api/src/routes/toy-transactions.ts` — `POST /:id/messages`: load the transaction and the caller's role before the insert (today it inserts first and loads after); an admin who is not a party inserts through the admin client with `kind: 'admin'`, `actor_name` "SPLAT admin", and notifies both parties (today the owner-side branch would miss the requester); `accept`, `reject`, `withdraw`, `confirm`: the existing 403/404 for a non-party admin becomes `403 { error: 'admin_cannot_act' }` (a rename of the refusal `isOwnerSide` already produces)
 - `packages/web/components/exchange-chat.tsx` — render `kind === 'admin'` with a "SPLAT admin" label and its own bubble style
 - `packages/mobile/components/exchanges/exchange-chat.tsx` (or the bubble component the three screens share) — same label
 - `packages/api/tests/integration/toy-transactions/admin-thread.test.ts` — new: admin reads a stranger's thread (200), posts (kind admin, both parties notified), accept/reject/withdraw/confirm → 403
@@ -204,6 +205,8 @@ What stays fixed:
 - [ ] Nil/empty input: admin posts an empty body → 400 (same rule as members)
 - [ ] Error path: admin calls `/accept` on a thread they are not party to → 403 `admin_cannot_act`; an admin who IS a party (their own toy) can still accept
 - [ ] Edge case: a thread with messages of all three kinds groups consecutive admin messages like user messages, never like system lines
+- [ ] Security: a party inserting `{ kind: 'admin' }` or `{ kind: 'system' }` directly through PostgREST with their own JWT is refused by the policy (integration test with the user client)
+- [ ] Edge case: an admin who IS a party (their own toy) posts as a user message and can accept
 
 **Verification:** `db:guards` green with the new kind; api integration green; web e2e admin spec green; mobile jest green.
 
@@ -220,21 +223,22 @@ What stays fixed:
 **Dependencies:** none
 
 **Files:**
-- `packages/web/lib/safe-next-path.ts` — add `loginUrl(pathWithQuery, base)` and `signupUrl(...)` that encode and build the URL; `sanitiseNextPath` unchanged
-- `packages/web/middleware.ts` — signed-out redirect uses `loginUrl(pathname + search)`; remove `/organizations` from `termsGatedPrefixes`; the terms lookup `error` branch redirects to `/onboarding/contributor-terms?next=…&retry=1`; remove the three `PENDING` lines
-- `packages/web/lib/require-capabilities.ts` — read `headers().get('x-pathname')` (set by the middleware) and redirect to `loginUrl(that)`; fall back to bare `/login` when the header is absent (tests)
-- `packages/web/components/learn-gate.tsx` — `redirect(loginUrl(currentPath))` where `currentPath` is passed in by the course page (it knows the lesson slug)
+- `packages/web/lib/safe-next-path.ts` — add `authUrl('login' | 'signup', pathWithQuery, extraParams?)` which sanitises its input with `sanitiseNextPath` before encoding (never trusts a caller); `sanitiseNextPath` unchanged. Deleting the terms page's local `safeNext` is a security fix: it normalised backslashes instead of rejecting them and accepted schemes
+- `packages/web/middleware.ts` — signed-out redirect uses `authUrl('login', pathname + search)`; `nextWithPathname` sets a second request header `x-pathname-search` = `pathname + search` (today `x-pathname` is the pathname only, so the query would be lost); remove `/organizations` from `termsGatedPrefixes`; the terms redirect's `next` carries `pathname + search`; the terms lookup `error` branch redirects to `/onboarding/contributor-terms?next=…&retry=1`; remove the three `PENDING` lines
+- `packages/web/lib/require-capabilities.ts` — read `headers().get('x-pathname-search')` and redirect to `authUrl('login', that)`; fall back to bare `/login` when the header is absent (tests)
+- `packages/web/components/learn-gate.tsx` — `redirect(authUrl('login', currentPath))` where `currentPath` is passed in by the course page (it knows the lesson slug)
 - `packages/web/app/onboarding/contributor-terms/page.tsx` — show "We could not check your acceptance, try again" when `retry=1`; delete the local `safeNext()` in favour of `sanitiseNextPath`
 - `packages/web/tests/unit/app/middleware.test.ts`, `middleware-journeys.test.ts`, `organizations-terms-gate.test.ts`, `tests/unit/lib/safe-next-path.test.ts` — WA23 now asserts `?next=`, WA27 asserts the block and the retry param, WA28/WN03 assert `/organizations` is open signed-in without terms
 - `scripts/journeys/journeys.json` — WA23, WA27, WA28, WN03, WE02 elements updated
 
-**Approach:** One helper, three call sites. `x-pathname` is already set by the middleware for every request that reaches a page, so `requireCapabilities` needs no new plumbing. The fail-closed branch keeps the `console.error` and adds the redirect.
+**Approach:** One helper, three call sites. The middleware already sets `x-pathname` for every request that reaches a page but without the query, so the one new line of plumbing is the sibling header inside `nextWithPathname` (its comment explains why every construction site must set it). The fail-closed branch keeps the `console.error` and adds the redirect.
 
 **Patterns:** the existing `?next=` sites in `toy-library/[id]/request/page.tsx` and `get-involved/events/[id]/register/page.tsx`.
 
 **Test scenarios:**
 - [ ] Happy path: signed out on `/dashboard/exchanges/abc?tab=open` → `/login?next=%2Fdashboard%2Fexchanges%2Fabc%3Ftab%3Dopen`; after sign-in the member lands there
-- [ ] Nil/empty input: `x-pathname` missing → `requireCapabilities` redirects to bare `/login`
+- [ ] Nil/empty input: `x-pathname-search` missing → `requireCapabilities` redirects to bare `/login`
+- [ ] Happy path (the one the audit missed): a page behind `requireCapabilities` opened signed-out at `/dashboard/printing?tab=jobs` → `next` keeps `?tab=jobs` (unit test on the helper with the header set)
 - [ ] Error path: terms lookup throws → redirect to the terms page with `retry=1`; the page shows the retry message; a second load with a healthy lookup passes
 - [ ] Edge case: `/organizations/o1/public` signed in without terms → page renders (no redirect); `/dashboard` still gated
 
@@ -251,10 +255,8 @@ What stays fixed:
 **Dependencies:** U7 (uses `loginUrl`)
 
 **Files:**
-- `packages/web/app/toy-library/[id]/request/page.tsx` — `loginUrl(\`/toy-library/${id}/request?mode=${mode}\`)` when `mode` is valid
+- `packages/web/app/toy-library/[id]/request/page.tsx` — `authUrl('login', \`/toy-library/${id}/request?mode=${mode}\`)` when `mode` is valid
 - `packages/web/app/get-involved/recycling/drop-off/page.tsx` — same with `?org=`
-- `packages/web/components/{save-button,thanks-button,person-thanks-button,org-actions}.tsx` — `signupUrl(pathname + search)` so a query survives
-- `packages/web/components/nav.tsx`, `challenge-thread.tsx` — the bare `/login` links carry `next` for the current page
 - `packages/web/tests/unit/pages/toy-request-gate.test.tsx` (or the nearest existing page test) and `drop-off-page.test.tsx` — the redirect keeps the query
 - `packages/web/tests/e2e/toys/toy-library.spec.ts` — WY07 asserts the return lands on the request form with the mode preselected
 - `scripts/journeys/journeys.json` — WY07, WI09 elements updated; `packages/types/src/pending.ts` — `login-return-path` and `org-directory-terms-gate` shipped
@@ -267,9 +269,36 @@ What stays fixed:
 - [ ] Happy path: anon opens `/toy-library/t1/request?mode=exchange` → sign in → lands with `mode=exchange` selected
 - [ ] Nil/empty input: `?mode=` absent → redirect carries the bare path
 - [ ] Error path: `?mode=evil` (not donation/exchange) → redirect carries the bare path (invalid mode dropped, as today)
-- [ ] Edge case: a save-button click on `/toy-library?offer=gift` sends `next=/toy-library?offer=gift` and the query survives signup
+- [ ] Edge case: a toy request started at `/toy-library/t1/request?mode=donation` survives signup as well as sign-in
 
 **Verification:** web unit + e2e toys and recycling specs green.
+
+**Planning-time unknowns:** none.
+
+### Unit 8b: Client links that carry the query
+
+**Goal:** Every client-side link to `/login` or `/signup` carries the current path with its query.
+
+**Requirements trace:** R5, R19
+
+**Dependencies:** U7
+
+**Files:**
+- `packages/web/components/{save-button,thanks-button,person-thanks-button,org-actions}.tsx` — `authUrl('signup', pathname + search, { reason })`
+- `packages/web/components/nav.tsx`, `challenge-thread.tsx` — the bare `/login` links carry `next` for the current page
+- `packages/web/tests/unit/components/save-button.test.tsx` (and the nearest existing tests for the others) — the href keeps the query
+
+**Approach:** Mechanical; `useSearchParams` gives the query in client components.
+
+**Patterns:** U7's helper.
+
+**Test scenarios:**
+- [ ] Happy path: a save-button click on `/toy-library?offer=gift` sends `next=/toy-library?offer=gift`
+- [ ] Nil/empty input: no query → the bare path
+- [ ] Error path: the helper, not a hand-built string, is what every site calls (a test greps the components for `/signup?next=`)
+- [ ] Edge case: the nav sign-in link on `/login` itself does not nest `next` inside `next`
+
+**Verification:** web unit green; e2e saves spec green.
 
 **Planning-time unknowns:** none.
 
@@ -282,15 +311,15 @@ What stays fixed:
 **Dependencies:** none (lands with U10 in the same PR; U10 must merge with it or clients see raw 403s)
 
 **Files:**
-- `packages/api/src/lib/terms.ts` — new: `hasCurrentContributorTerms(token, userId): Promise<'yes' | 'no' | 'error'>` and the middleware `requireContributorTerms` (403 on `'no'` and `'error'`, body `{ error: 'terms_required', version: AGREEMENT_VERSIONS.contributor_terms }`)
+- `packages/api/src/terms.ts` — new: `hasAcceptedContributorTerms` moved from `tutorials.ts` (already false on any error; now it also logs `[terms] lookup failed route= user=`), the middleware `requireContributorTerms` (403 `{ error: 'terms_required', version: AGREEMENT_VERSIONS.contributor_terms }`; admins are NOT exempt, Byron 2026-10-20), and `TERMS_GATED` listing every gated route
 - `packages/api/src/routes/tutorials.ts` — use the helper at the two existing checks; add it to `PUT /:id/steps`
 - `packages/api/src/routes/toy-transactions.ts` — apply to `POST /`, `/build`, `/print`, `/print-at-event`, `/:id/messages`, `/:id/accept`, `/:id/claim`, `/:id/questions`
-- `packages/api/src/routes/organizations.ts` — apply to `POST /:id/follow`, `/:id/thanks`, `/:id/conversations/mine/messages`, `/conversations/:cid/messages`, `/:id/leaders`, `PATCH /:id/pickup`, `/:id/profile`, `PUT /:id/doors`, `/:id/rate-lines`, `POST /:id/events`, `/:id/stories`, `/:id/recycling`, `/requests`
-- `packages/api/tests/integration/terms/gated-writes.test.ts` — new, table-driven over the 22 routes: without acceptance → 403 `terms_required`; with → not 403; with the lookup failing (point the user client at a revoked token or stub) → 403
-- `packages/api/tests/unit/lib/terms.test.ts` — the three outcomes
+- `packages/api/src/routes/organizations.ts` — apply to every organisation write except `POST /:id/follow` and `/:id/thanks` (Byron 2026-10-20): `/:id/conversations/mine/messages`, `/conversations/:cid/messages`, `/:id/leaders`, `PATCH /:id/pickup`, `/:id/profile`, `PUT /:id/doors`, `/:id/rate-lines`, `POST /:id/events`, `PATCH`/`DELETE /:id/events/:eid`, `POST /:id/stories`, `/:id/recycling` (booking), `PATCH /:id/recycling/:rid` (decision), `/requests`
+- `packages/api/tests/integration/terms/gated-writes.test.ts` — new, table-driven over `TERMS_GATED`: without acceptance → 403 `terms_required`; with → not 403; an admin without acceptance → 403 (not exempt); `POST /:id/follow`, every `GET`, and `POST /api/agreements` → never 403 for terms
+- `packages/api/tests/unit/terms.test.ts` — accepted, missing, and a stubbed `createUserClient` that errors → false and the log line
 - `scripts/journeys/journeys.json` — existing api-layer rows for these writes get `"terms gate"` in `element` where room; new row WA30 (web: a gated write without terms → 403 → terms page → retry)
 
-**Approach:** Middleware per route (`route.post('/path', requireAuth, requireContributorTerms, handler)`), never router-wide, so reads and the agreements route itself stay open. The e2e seed's `acceptTerms` already stamps the current version for test users; tests that want the 403 create a user without it. Blast radius, accepted by the fail-closed decision: an outage of `user_agreements` blocks every gated write for everyone on both clients; each refusal logs `[terms] lookup failed route= user=` so the outage is visible in API logs. Deploy order: this unit's API deploy waits for the mobile release that carries U10, otherwise older app builds show a raw 403 on every exchange write.
+**Approach:** Middleware per route (`route.post('/path', requireAuth, requireContributorTerms, handler)`), never router-wide, so reads and the agreements route itself stay open. The e2e seed's `acceptTerms` already stamps the current version for test users; tests that want the 403 create a user without it. Blast radius, accepted by the fail-closed decision: an outage of `user_agreements` blocks every gated write for everyone on both clients; each refusal logs `[terms] lookup failed route= user=` so the outage is visible in API logs. Deploy order: this unit is its own PR, merged and deployed only after the mobile release that carries U10 is live; the clients' handling is a no-op until the API sends the code, so shipping them first is safe. No env flag: the PR order is the gate.
 
 **Patterns:** the two existing checks in `tutorials.ts`; `requireAuth` middleware shape in `packages/api/src/middleware`.
 
@@ -302,7 +331,7 @@ What stays fixed:
 
 **Verification:** api unit + integration green; `route-coverage` still empty.
 
-**Planning-time unknowns:** Deferred — how to make the lookup fail in an integration test (a user client with a tampered token is the first try; otherwise a stub of `createUserClient` in the unit test only).
+**Planning-time unknowns:** none (the error path is a unit test with a stubbed client; the integration suite covers accepted/missing).
 
 ### Unit 10: Both clients route to terms on `terms_required` and retry
 
@@ -313,27 +342,28 @@ What stays fixed:
 **Dependencies:** U9
 
 **Files:**
-- `packages/web/lib/api-client.ts` (or wherever `apiClient` throws on non-2xx) — on 403 `terms_required`, throw `TermsRequiredError`; server actions catch it and `redirect('/onboarding/contributor-terms?next=' + current path)`; client fetches catch it and `router.push` the same
+- `packages/types/src/api-core.ts` — `isTermsRequired(err)` beside `isApiError`, reading the error code from the response body (the status line already carries it); `apiMessage` maps it to "Accept the contributor terms to continue" so a missed call site never shows the raw code
+- `packages/web/lib/browser-api-client.ts` and the server `apiClient` — one navigation hook each: the browser does `window.location.assign(authTermsUrl(current))`, the server `redirect()`s; both compute `next` from the current path and query
 - `packages/web/app/onboarding/contributor-terms/page.tsx` — after accept, return to `next` (already does)
-- `packages/mobile/lib/api.ts` (the shared fetch helper) — same detection; navigate to the mobile terms screen (`app/terms.tsx`) with `returnTo`, using the existing `takeReturnTo()` mechanism from `(auth)/_layout.tsx`
-- `packages/web/tests/unit/lib/api-client.test.ts`, `packages/mobile/tests/unit/lib/api.test.ts` — the 403 becomes the typed error / navigation
+- `packages/mobile/lib/api-client.ts` — the mobile hook: `router.push` to the terms screen (`app/terms.tsx`) with `returnTo`, using the existing `takeReturnTo()` mechanism from `(auth)/_layout.tsx`
+- `packages/types/tests/api-core.test.ts` — `isTermsRequired` on the JSON body, on a non-JSON 403 body (false), on a plain 403 (false); `packages/web/tests/unit/lib/browser-api-client.test.ts` (assign called with the right URL), a server `apiClient` test (redirect called), `packages/mobile/tests/unit/lib/api-client.test.ts` (push called with returnTo)
 - `packages/web/tests/e2e/contributor/contributor-terms.spec.ts` — WA30: a member without terms sends an exchange message → lands on terms → accepts → the message is sent
 - `packages/mobile/tests/e2e/auth.spec.ts` — A15: same on mobile
 - `scripts/journeys/journeys.json` — WA30, A15; `packages/types/src/pending.ts` — `terms-gate-fails-open` shipped
 
-**Approach:** One detection point per client, where the API error is already turned into a thrown error. Retrying the original write after acceptance is not automatic: the member returns to the page and resubmits. On web a server-action redirect drops client state, so the thread composer (`exchange-chat.tsx`) saves its draft to `sessionStorage` under `draft:<threadId>` before the redirect and restores it on return, in a try/catch (storage can be unavailable); mobile screens keep their state across the terms screen.
+**Approach:** One detection point per client, where the API error is already turned into a thrown error. Retrying the original write after acceptance is not automatic: the member returns to the page and resubmits. On web the composer (`exchange-chat.tsx`) is a client component calling the server action; it catches the terms error on the client, saves its draft to `sessionStorage` under `draft:<threadId>` in a try/catch (storage can be unavailable), then navigates to the terms URL, and restores the draft on return; a server action cannot run client code before it redirects, so the save happens in the client catch, never inside the action. Mobile screens keep their state across the terms screen.
 
 **Patterns:** `(auth)/_layout.tsx` `takeReturnTo()`; the web terms page's `next` handling.
 
 **Test scenarios:**
 - [ ] Happy path: member without terms clicks Send on a thread → terms page → Accept → back on the thread, message still typed, Send works
-- [ ] Nil/empty input: a 403 without `error: 'terms_required'` (a plain forbidden) is not intercepted
+- [ ] Nil/empty input: a 403 without `error: 'terms_required'` (a plain forbidden, or a non-JSON body) is not intercepted
 - [ ] Error path: accepting terms fails (API down) → the terms page shows its error and keeps `next`
 - [ ] Edge case: mobile member on an exchange screen gets the 403 → terms screen → Accept → returns to the same screen, not Home
 
 **Verification:** web and mobile unit green; the two e2e specs green; mobile jest whole-suite green.
 
-**Planning-time unknowns:** Deferred — the exact name of the mobile fetch helper (`packages/mobile/lib/api.ts` or `lib/api-client.ts`; grep `EXPO_PUBLIC_API_URL`).
+**Planning-time unknowns:** none.
 
 ## Piece 2: notifications (R10–R14, R19)
 
@@ -357,14 +387,14 @@ Migration note: U11–U13 share `supabase/migrations/141_handoff_notifications.s
 - `packages/web/tests/unit/lib/notification-bucket.test.ts`, `packages/mobile/tests/unit/lib/notifications-types.test.ts`, `packages/web/tests/unit/components/notifications-list.test.tsx`, `scripts/check-schema-guards.sh` — the lists
 - `scripts/journeys/journeys.json` — `notifies` added to the existing write rows (leader recycling decision WB-row, admin org-request WM-rows, admin test-print WM-row, confirm rows WX09/WX19/WR16/X-rows) and one e2e per client tagged with one of them that asserts the inbox line (web `tests/e2e/organisation/recycling.spec.ts` + admin specs; mobile `recycling`/`admin` specs)
 
-**Approach:** Types and migration first (compile error guides the tables), then the writers with the `notify(rows, label)` wrapper from `organizations.ts` moved to `packages/api/src/lib/notify.ts` so `admin.ts` and `toy-transactions.ts` share it, then tests, then journeys. The wrapper never throws (a notification must not fail the write), so its one failure line is stable and greppable: `[notify] insert failed type=<type> code=<pg code> label=<label>`; U14 greps for it after the hosted deploy. Subject columns: recycling and org-request rows use `org_id` + `body` (Byron 2026-10-20), test print uses `org_id` or none with `body`, handover uses `toy_transaction_id`.
+**Approach:** Types and migration first (compile error guides the tables), then the writers with the `notify(rows, label)` wrapper from `organizations.ts` moved to `packages/api/src/notify.ts` so `admin.ts` and `toy-transactions.ts` share it (its log line changes; grep the tests for the old `[organizations] … notify failed` text), inserting in chunks of 500 rows and logging the row count above that, then tests, then journeys. The wrapper never throws (a notification must not fail the write), so its one failure line is stable and greppable: `[notify] insert failed type=<type> code=<pg code> label=<label>`; U14 greps for it after the hosted deploy. Subject columns: recycling and org-request rows use `org_id` + `body` (Byron 2026-10-20), test print uses `org_id` or none with `body`, handover uses `toy_transaction_id`.
 
 **Patterns:** `138_event_change_notifications.sql` + `event-change-notifications.test.ts` + rows WB20/L35 (the exact shape, including the deploy-order comment).
 
 **Test scenarios:**
 - [ ] Happy path: leader marks a drop-off received → contributor's inbox shows "{org} received your drop-off" (exchanges bucket), link opens their recycling page, on web and mobile
 - [ ] Nil/empty input: admin approves an org request whose requester account was deleted → no notification, no error (the `notify` wrapper logs)
-- [ ] Error path: the insert fails the CHECK (migration not applied) → logged, the write still succeeds (wrapper never throws); the schema guard catches the missing migration locally
+- [ ] Error path: the insert fails the CHECK (migration not applied) → logged, the write still succeeds; a unit test on `notify` with a stubbed admin client proves it never throws; the schema guard catches the missing migration locally
 - [ ] Edge case: test print on an org-owned printer with three leaders → three rows; the second confirm on a handover sends nothing (only the first party's confirm tells the other)
 
 **Verification:** `pnpm test:journeys` 45 types, 0 unasserted; api integration green; web + mobile unit green; `db:guards` green.
@@ -382,12 +412,12 @@ Migration note: U11–U13 share `supabase/migrations/141_handoff_notifications.s
 **Files:**
 - `packages/types/src/index.ts` — 3 members, buckets (`organisations`), copy
 - `packages/web/components/notifications-list.tsx`, `packages/mobile/lib/notifications.ts` — icon and links (leader → the org dashboard / public page; event deleted → the org's public page)
-- `packages/api/src/routes/admin.ts` — add/remove leader → the person; `packages/api/src/routes/organizations.ts` — `DELETE /:orgId/events/:id`: select title + registrants, delete, then notify each registrant with `org_id` and the title in `body`
+- `packages/api/src/routes/admin.ts` — add/remove leader → the person; `packages/api/src/routes/organizations.ts` — `DELETE /:orgId/events/:id`: read the title and registrants first, delete, and only after the delete succeeds call `notifyRegistrants` (it already de-duplicates with a `Set` and excludes the actor) extended with a `deleted` variant that carries `org_id` and the title in `body`; the registrant select is capped and logged above 1000
 - `packages/api/tests/integration/notifications/handoffs-leaders.test.ts` — 3 `it`s
 - the three type-list tests + schema guard
 - `scripts/journeys/journeys.json` — `notifies` on the admin leader rows (WM-series) and the leader event-delete rows (WB-row + L-row); web e2e `admin/organisations.spec.ts` and mobile `admin`/`org-leader` specs assert the inbox line
 
-**Approach:** As U11. The delete handler reads before it deletes; the FK cascade on `org_event_id` is why the notification carries `org_id`.
+**Approach:** As U11. Read before delete, notify after a successful delete, so nobody hears about an event that still exists; the FK cascade on `org_event_id` is why the notification carries `org_id`.
 
 **Patterns:** U11.
 
@@ -403,7 +433,7 @@ Migration note: U11–U13 share `supabase/migrations/141_handoff_notifications.s
 
 ### Unit 13: Acknowledged-submission notifications and org bucket clear
 
-**Goal:** `event_rsvp_received`, `idea_received`, `report_received`, `drop_off_booked`, `contact_received` exist end to end; the organisations bucket clears on the org hub; `org_message` moves bucket.
+**Goal:** `event_rsvp_received`, `idea_received`, `report_received`, `drop_off_booked`, `contact_received` exist end to end; the organisations bucket clears on the org hub; `org_message` moves bucket. Two commits in one PR: the five types first, the bucket move (R14: the hub mount, the map entry, the counts test, mobile's inbox assertion) second, so each is reviewable on its own.
 
 **Requirements trace:** R12, R13, R14, R19
 
@@ -444,7 +474,7 @@ Migration note: U11–U13 share `supabase/migrations/141_handoff_notifications.s
 - `docs/plans/decisions-build-plan.md` — this section's checklist ticked
 - memory `hosted-migrations-pending` — updated by the session that pushes
 
-**Approach:** Byron pushes 140–141 with the recipe in the `hosted-migrations-pending` memory; `pnpm db:check` against hosted green; then deploy the API; after the deploy, grep the API logs for `[notify] insert failed` and `[terms] lookup failed` (zero expected). The U9 API change ships only after the mobile release carrying U10 is live. No code.
+**Approach:** Two hosted pushes, each by Byron with the recipe in the `hosted-migrations-pending` memory: 140 before PR 2's API deploy (the admin message kind and the policy fix), 141 before PR 4's (the notification types). `pnpm db:check` against hosted green after each; after each API deploy, grep the API logs for `[notify] insert failed` and `[terms] lookup failed` (zero expected). PR 6 (U9) ships only after the mobile release carrying U10 is live. No code.
 
 **Patterns:** the hosted push recipe.
 
@@ -470,12 +500,12 @@ Migration note: U11–U13 share `supabase/migrations/141_handoff_notifications.s
 
 **Files:**
 - `packages/types/src/auth-errors.ts` — moved from `packages/mobile/lib/auth-errors.ts`, exported from `packages/types/src/index.ts`
-- `packages/mobile/lib/auth-errors.ts` — re-export shim for one release, then deleted in U16 (migrate callers, then delete)
+- `packages/mobile/lib/auth-errors.ts` — deleted in this unit; mobile is not published per file, so the importers migrate in the same commit (no shim)
 - `packages/mobile/lib/auth-context.tsx`, `components/auth/parts.tsx`, every `(auth)/*.tsx` importer — import from `@splat-connect/types`
 - `packages/types/tests/auth-errors.test.ts` — moved mobile tests (if any) plus one case per kind
 - `packages/mobile/tests/unit/**` — paths updated
 
-**Approach:** Move, re-export, migrate, delete. The classifier has no React or Expo import, which is why it can move.
+**Approach:** Move, migrate every importer, delete, in one commit. The classifier has no React or Expo import, which is why it can move.
 
 **Patterns:** `nav-model.ts` and `pending.ts` as types-package modules both clients import.
 
@@ -485,7 +515,7 @@ Migration note: U11–U13 share `supabase/migrations/141_handoff_notifications.s
 - [ ] Error path: a message-only error ("Invalid login credentials") → `credentials`
 - [ ] Edge case: `toProblem` on a network `TypeError` → `offline`
 
-**Verification:** types + mobile typecheck; whole mobile jest green; `grep -r "lib/auth-errors" packages/mobile` empty after U16.
+**Verification:** types + mobile typecheck; whole mobile jest green; `grep -r "lib/auth-errors" packages/mobile` empty.
 
 **Planning-time unknowns:** none.
 
@@ -512,7 +542,8 @@ Migration note: U11–U13 share `supabase/migrations/141_handoff_notifications.s
 
 **Test scenarios:**
 - [ ] Happy path: unconfirmed member signs in → "That email is not confirmed yet. We sent you a new code." and a link to enter it
-- [ ] Nil/empty input: wrong password → "That email or password is wrong" (credentials copy), password cleared, email kept
+- [ ] Nil/empty input: wrong password → "That email and password don't match." (the classifier's credentials copy), password cleared, email kept
+- [ ] Edge case: too many attempts → the classifier's rate-limited copy (Supabase caps verify and sign-in attempts); the page never shows a raw lockout error
 - [ ] Error path: resend rate-limited → the rate-limited copy, no crash
 - [ ] Edge case: Mailpit shows the new confirmation email with the "app or on the website" line (e2e reads it)
 
@@ -546,6 +577,7 @@ Migration note: U11–U13 share `supabase/migrations/141_handoff_notifications.s
 - [ ] Nil/empty input: unknown email → still "We sent a code" (no enumeration)
 - [ ] Error path: wrong code → bad-code copy, the password field keeps its value
 - [ ] Edge case: a 5-character password is refused before `verifyOtp` is called (spy asserts no call)
+- [ ] Error path: `verifyOtp` succeeds and `updateUser` fails → the code is spent but the session exists; the page keeps the session, shows "Your code worked but the password did not save. Try the password again." and retries `updateUser` only (no new code asked)
 
 **Verification:** web unit + e2e recovery green; `pnpm test:journeys` 0 gaps with the four new rows.
 
@@ -642,9 +674,9 @@ Migration note: U11–U13 share `supabase/migrations/141_handoff_notifications.s
 
 ## Quality bar
 
-- Every unit traces to R-ids. Dependencies: U1→U2; U4→U5,U6; U7→U8; U9→U10; U11→U12,U13; U11–U13→U14; U15→U16→U17,U18→U20. No cycles.
+- Every unit traces to R-ids. Dependencies: U1→U2; U4→U5,U6; U7→U8,U8b,U10; U10→U9 (clients ship first); U6,U11→U14; U11→U12,U13; U15→U16→U17,U18→U20. No cycles.
 - Every unit has four test scenarios.
-- Files per unit: U11 and U13 list 9–10 paths because a notification type touches a fixed set of tables; the scope-reduction challenge was run and the answer is that fewer files means a type that does not compile, so the split is per group, not per file.
-- New abstractions: `actions.ts` (U4), `loginUrl` (U7), `requireContributorTerms` (U9), `TermsRequiredError` (U10), `lib/notify.ts` (U11), `auth-landing.ts` (U17); never more than two in one unit.
+- Files per unit: U11 and U13 list 9–10 paths because a notification type touches a fixed set of tables; the scope-reduction challenge was run and the answer is that fewer files means a type that does not compile, so the split is per group (and U13 by commit). U8 was over the bar for a mechanical reason and is split into U8 and U8b.
+- New abstractions: `actions.ts` (U4), `authUrl` (U7), `requireContributorTerms` + `TERMS_GATED` (U9), `isTermsRequired` (U10, a function beside `isApiError`, not a class), `src/notify.ts` (U11, a move), `auth-landing.ts` (U17, three consumers); never more than two in one unit.
 - Planning-time unknowns are each marked Resolve Before Planning (U14: hosted push say-so) or Deferred.
 - Handoff test: an engineer invents nothing behavioural; the copy strings come from the mobile screens, the link targets are named, the error bodies are named.
