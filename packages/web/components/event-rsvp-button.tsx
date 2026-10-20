@@ -19,6 +19,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Check, CalendarCheck } from '@phosphor-icons/react/dist/ssr'
 import { browserApiClient } from '@/lib/browser-api-client'
+import { authUrl } from '@/lib/safe-next-path'
 
 export function EventRsvpButton({
   eventId,
@@ -45,7 +46,7 @@ export function EventRsvpButton({
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
 
-  const next = encodeURIComponent(`/get-involved/events/${eventId}`)
+  const next = `/get-involved/events/${eventId}`
 
   async function toggle() {
     setError(null)
@@ -70,7 +71,7 @@ export function EventRsvpButton({
 
   if (!signedIn) {
     return (
-      <a href={`/login?next=${next}`} className={`btn btn-primary ${sz}`}>
+      <a href={authUrl('login', next)} className={`btn btn-primary ${sz}`}>
         <CalendarCheck weight="bold" aria-hidden="true" />
         I&apos;m going
       </a>
