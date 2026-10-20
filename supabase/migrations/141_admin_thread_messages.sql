@@ -1,4 +1,4 @@
--- 140 — Admins can post in a member thread, labelled as such.
+-- 141 — Admins can post in a member thread, labelled as such.
 --
 -- toy_transaction_messages.kind gains 'admin'. The member insert policy also
 -- pins kind = 'user': until now a party could insert a 'system' message
