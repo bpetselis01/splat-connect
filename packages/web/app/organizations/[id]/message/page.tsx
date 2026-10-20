@@ -12,13 +12,14 @@ import type { OrgPublicProfile, OrgRelationship, OrgThread } from '@splat-connec
 import { getCapabilities } from '@/lib/capabilities'
 import { apiClient } from '@/lib/api-client'
 import { OrgThreadView } from '@/components/org-thread'
+import { authUrl } from '@/lib/safe-next-path'
 
 export const metadata = { title: 'Message an organisation — SPLAT Connect' }
 
 export default async function MessageOrgPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const caps = await getCapabilities()
-  if (!caps) redirect(`/login?next=${encodeURIComponent(`/organizations/${id}/message`)}`)
+  if (!caps) redirect(authUrl('login', `/organizations/${id}/message`))
 
   const res = await fetch(`${process.env.API_URL}/api/public/organizations/${id}`, { cache: 'no-store' })
   if (!res.ok) notFound()

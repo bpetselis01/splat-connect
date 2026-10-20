@@ -50,6 +50,7 @@ export function OrgThreadView({
       router.refresh()
     } catch (err) {
       setError(apiErrorDetail(err) ?? 'That did not send. Try again.')
+      throw err
     } finally {
       setBusy(false)
     }

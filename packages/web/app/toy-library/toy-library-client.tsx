@@ -33,6 +33,7 @@ import { BrowseHero } from '@/components/browse-hero'
 import { SplatMascot } from '@/components/splat-mascot'
 import { SortControl, type SortDir, type SortOption } from '@/components/sort-control'
 import type { ToyWithOwner } from '@splat-connect/types'
+import { authUrl } from '@/lib/safe-next-path'
 
 // PENDING(small-inconsistencies): fix all six, each with a test: one destination for Pick for my child, Save prompts signup everywhere, hide...
 
@@ -132,7 +133,7 @@ export function ToyLibraryClient({
   // takes, for the same reason: signing up first, with the reason on screen,
   // beats /onboarding/child's bare redirect to /login.
   const wizardHref = (
-    signedIn ? '/onboarding/child' : '/signup?next=%2Fonboarding%2Fchild&reason=child'
+    signedIn ? '/onboarding/child' : authUrl('signup', '/onboarding/child', { reason: 'child' })
   ) as Route
 
   return (

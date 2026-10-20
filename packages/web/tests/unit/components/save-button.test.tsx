@@ -38,6 +38,14 @@ beforeEach(() => {
 })
 
 describe('SaveButton', () => {
+  it('WG09 keeps the query string of the page the visitor was on', () => {
+    window.history.pushState({}, '', '/library?offer=gift')
+    render(<SaveButton slug="tutorials" id="abc" saved={false} signedIn={false} />)
+    fireEvent.click(screen.getByRole('button'))
+    expect(push).toHaveBeenCalledWith('/signup?next=%2Flibrary%3Foffer%3Dgift&reason=save')
+    window.history.pushState({}, '', '/')
+  })
+
   it('WG09 sends a signed-out visitor to sign up, carrying where they were and why', async () => {
     render(<SaveButton slug="tutorials" id="abc" saved={false} signedIn={false} />)
     fireEvent.click(screen.getByRole('button'))

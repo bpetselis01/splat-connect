@@ -110,9 +110,9 @@ test.describe('course set to Sign in', () => {
     else await course().delete().eq('key', 'learn-course')
   })
 
-  test('WE02 a signed-out reader on a lesson is sent to log in, and the lesson path is lost', async ({ page }) => {
+  test('WE02 a signed-out reader on a lesson is sent to log in with the lesson path to return to', async ({ page }) => {
     await page.goto('/learn/switch-types')
-    await expect(page).toHaveURL(/\/login\?next=\/learn$/)
+    await expect(page).toHaveURL(/\/login\?next=%2Flearn%2Fswitch-types$/)
     await expect(page.locator('#email')).toBeVisible()
   })
 
