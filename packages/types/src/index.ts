@@ -1807,6 +1807,9 @@ export type NotificationType =
 /** Which My SPLAT card a notification's badge belongs to. */
 export type NotificationBucket = 'tutorials' | 'exchanges' | 'challenges' | 'organisations'
 
+/** The one request that marks a bucket read: POST with `{ bucket }`. Web, mobile and the counts test all send it. */
+export const MARK_BUCKET_READ_PATH = '/api/notifications/me/read'
+
 /**
  * Notification type → the hub card that counts it.
  *

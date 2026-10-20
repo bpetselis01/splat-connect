@@ -4,6 +4,7 @@
  * test starts from an account that has never been told anything.
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
+import { MARK_BUCKET_READ_PATH } from '@splat-connect/types'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
 import { createOrg, addLeader, createProject, cleanupOrg } from '../../helpers/orgs.js'
 import { call, ok, publishedToy } from './api.js'
@@ -73,7 +74,7 @@ describe('the hub badges', () => {
     expect(await unread(author)).toEqual(ZERO)
   })
 
-  it('counts:unread-counts.organisations rises by one when a family thanks the organisation, and Mark read clears it', async () => {
+  it('counts:unread-counts.organisations rises by one when a family thanks the organisation, and opening the hub clears it', async () => {
     const leader = await fresh()
     const orgId = await createOrg({ createdBy: leader.id })
     await addLeader(orgId, leader.id)
@@ -86,7 +87,9 @@ describe('the hub badges', () => {
     await ok(family, 'POST', `/organizations/${orgId}/conversations/mine/messages`, { body: 'Can we visit?' })
     expect(await unread(leader)).toEqual({ ...ZERO, organisations: 2, total: 2 })
 
-    await markRead(leader, 'organisations')
+    // The request MarkNotificationsRead sends when the hub opens, not a call the page never makes.
+    const hubOpen = await call(leader, 'POST', MARK_BUCKET_READ_PATH.replace(/^\/api/, ''), { bucket: 'organisations' })
+    expect(hubOpen.status).toBe(204)
     expect(await unread(leader)).toEqual(ZERO)
   })
 })
