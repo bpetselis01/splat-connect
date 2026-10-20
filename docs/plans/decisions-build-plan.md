@@ -474,7 +474,7 @@ Migration note: U11–U13 share `supabase/migrations/142_handoff_notifications.s
 - `docs/plans/decisions-build-plan.md` — this section's checklist ticked
 - memory `hosted-migrations-pending` — updated by the session that pushes
 
-**Approach:** Two hosted pushes, each by Byron with the recipe in the `hosted-migrations-pending` memory: 140 with PR 1 (the notify_signups revoke, no deploy dependency), 141 before PR 2's API deploy (the admin message kind and the policy fix), 142 before PR 4's (the notification types). `pnpm db:check` against hosted green after each; after each API deploy, grep the API logs for `[notify] insert failed` and `[terms] lookup failed` (zero expected). PR 6 (U9) ships only after the mobile release carrying U10 is live. No code.
+**Approach:** Two hosted pushes, each by Byron with the recipe in the `hosted-migrations-pending` memory: 140 (the notify_signups revoke) and 141 together before PR 2's API deploy (the admin message kind and the policy fix), 142 before PR 4's (the notification types). `pnpm db:check` against hosted green after each; after each API deploy, grep the API logs for `[notify] insert failed` and `[terms] lookup failed` (zero expected). PR 6 (U9) ships only after the mobile release carrying U10 is live. No code.
 
 **Patterns:** the hosted push recipe.
 
