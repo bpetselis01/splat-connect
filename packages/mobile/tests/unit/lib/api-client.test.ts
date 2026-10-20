@@ -4,6 +4,9 @@ jest.mock('../../../lib/supabase', () => ({
   supabase: { auth: { getSession: mockGetSession } },
 }))
 
+const mockPush = jest.fn()
+jest.mock('expo-router', () => ({ router: { push: (...a: unknown[]) => mockPush(...a) } }))
+
 const fetchMock = jest.fn()
 globalThis.fetch = fetchMock as unknown as typeof fetch
 
@@ -90,5 +93,18 @@ describe('apiMessage', () => {
   it('keeps the API sentence for a 4xx and the fallback otherwise', () => {
     expect(apiMessage(new Error('API POST /a failed with status 400: Name has "quotes" & <tags>'), 'x')).toBe('Name has "quotes" & <tags>')
     expect(apiMessage(new Error('API POST /a failed with status 500: pg boom'), 'x')).toBe('x')
+  })
+
+  it('terms_required — pushes the terms screen over the current one, to come back to', async () => {
+    fetchMock.mockResolvedValue(errorResponse(403, { error: 'terms_required' }))
+    await expect(apiClient.post('/api/toy-transactions/abc/messages', { body: 'hi' })).rejects.toThrow('terms_required')
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/terms', params: { returnTo: 'back' } })
+  })
+
+  it('a plain 403 does not push', async () => {
+    mockPush.mockClear()
+    fetchMock.mockResolvedValue(errorResponse(403, { error: 'Forbidden' }))
+    await expect(apiClient.post('/api/x', {})).rejects.toThrow('Forbidden')
+    expect(mockPush).not.toHaveBeenCalled()
   })
 })

@@ -7,7 +7,7 @@ describe('/delete-account', () => {
     render(<DeleteAccountInfoPage />)
     expect(screen.getByRole('heading', { level: 1, name: 'Delete your SPLAT Connect account' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { level: 2, name: 'Deleted' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Sign in to delete' })).toHaveAttribute('href', '/login?next=/dashboard/profile/delete')
+    expect(screen.getByRole('link', { name: 'Sign in to delete' })).toHaveAttribute('href', '/login?next=%2Fdashboard%2Fprofile%2Fdelete')
     expect(screen.getByRole('link', { name: 'Contact us' })).toHaveAttribute('href', '/contact')
   })
 })

@@ -63,6 +63,7 @@ import {
   type SuitsFilter,
   type Tutorial,
 } from '@splat-connect/types'
+import { authUrl } from '@/lib/safe-next-path'
 
 export type LibraryStats = { guides: number; contributors: number; organisations: number }
 
@@ -177,7 +178,7 @@ export function LibraryClient({
   // The wizard keeps a profile, which needs an account. Signing up first, with
   // the reason on screen, beats /onboarding/child's bare redirect to /login.
   const wizardHref = (
-    signedIn ? '/onboarding/child' : '/signup?next=%2Fonboarding%2Fchild&reason=child'
+    signedIn ? '/onboarding/child' : authUrl('signup', '/onboarding/child', { reason: 'child' })
   ) as Route
 
   return (

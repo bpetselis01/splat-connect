@@ -73,7 +73,7 @@ test('WI10 submitting requires signing in, and the sign-in link returns to the i
   await expect(page.getByRole('main').getByRole('link', { name: /sign in/i })).toBeVisible()
   await expect(page.getByLabel(/idea name/i)).toHaveCount(0)
   await page.getByRole('main').getByRole('link', { name: /sign in/i }).click()
-  await expect(page).toHaveURL(/\/login\?next=\/get-involved\/submit-an-idea$/)
+  await expect(page).toHaveURL(/\/login\?next=%2Fget-involved%2Fsubmit-an-idea$/)
 })
 
 test('WI15 the card heart saves a challenge, survives a reload, and unsaves', async ({ page }) => {

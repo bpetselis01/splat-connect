@@ -144,3 +144,18 @@ test('A03 A13 a sign-in provider that is not switched on opens Not built yet', a
   await page.getByTestId('not-built-back').click()
   await expect(page.getByText('Welcome back')).toBeVisible()
 })
+
+// Skipped until PR 6 (U9) ships the API gate: nothing answers terms_required before then.
+test.skip('A15 a write refused for want of terms opens the terms screen and returns to the same screen', async ({ page }) => {
+  const { id, email, password } = await createContributor()
+  await signIn(page, email, password)
+  await expect(page).toHaveURL(/\/home$/)
+
+  await adminClient().from('user_agreements').delete().eq('user_id', id)
+  await page.goto('/exchanges')
+  await page.getByTestId('exchange-send').click()
+  await expect(page).toHaveURL(/\/terms$/)
+  await page.getByTestId('accept-contributor-terms').click()
+  await page.getByTestId('accept-terms').click()
+  await expect(page).toHaveURL(/\/exchanges$/)
+})

@@ -80,7 +80,7 @@ test('WN01 WN02 the directory searches by name, filters to organisations that ta
   }
 })
 
-test('WN03 a signed-in member without the contributor terms is sent to the terms page, where a signed-out visitor is not (Q4)', async ({ page }) => {
+test('WN03 a signed-in member without the contributor terms still reads the directory', async ({ page }) => {
   await page.goto('/organizations')
   await expect(page.getByRole('heading', { level: 1, name: 'Organisations' })).toBeVisible()
 
@@ -88,7 +88,8 @@ test('WN03 a signed-in member without the contributor terms is sent to the terms
   try {
     await signIn(page, member.email, member.password)
     await page.goto('/organizations')
-    await expect(page).toHaveURL(/\/onboarding\/contributor-terms\?next=%2Forganizations$/)
+    await expect(page).toHaveURL(/\/organizations$/)
+    await expect(page.getByRole('heading', { level: 1, name: 'Organisations' })).toBeVisible()
   } finally {
     await deleteUser(member.id)
   }

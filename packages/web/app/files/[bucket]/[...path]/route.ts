@@ -22,6 +22,7 @@
  */
 import { NextResponse } from 'next/server'
 import { createServerSupabase } from '@/lib/supabase/server'
+import { authUrl } from '@/lib/safe-next-path'
 
 // The allowlist is why this is not a generic storage proxy. STLs are sent as
 // an attachment under their own name; a PDF opens inline, as it always has.
@@ -59,13 +60,11 @@ export async function GET(
   if (!user) {
     // path[0] is the owning record's id: every object in these buckets lives
     // under its own folder (032 for tutorials, 056 for exchange receipts).
-    const next = encodeURIComponent(
-      rule.folder === 'tutorial' ? `/tutorials/${path[0]}` : `/dashboard/exchanges/${path[0]}`
-    )
+    const next = rule.folder === 'tutorial' ? `/tutorials/${path[0]}` : `/dashboard/exchanges/${path[0]}`
     // no-store: the Location header carries a bearer credential (below, a
     // signed URL) or points at a next-step redirect keyed to this visitor —
     // neither may be served from a shared cache.
-    return NextResponse.redirect(new URL(`/signup?next=${next}&reason=download`, req.url), {
+    return NextResponse.redirect(new URL(authUrl('signup', next, { reason: 'download' }), req.url), {
       status: 302,
       headers: { 'Cache-Control': 'no-store' },
     })
