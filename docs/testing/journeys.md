@@ -616,7 +616,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | WA23 | nav | `/dashboard` | anon | signed out on /dashboard, /upload or /notifications → /login?next=<path and query> | – | – | n/a | ✅ | ✅ | – | – |
-| WA24 | nav | `/dashboard` | anon | signed out on /admin → /login | – | – | n/a | ✅ | ✅ | – | – |
+| WA24 | nav | `/dashboard` | anon | signed out on /admin → /login?next=/admin | – | – | n/a | ✅ | ✅ | – | – |
 | WA25 | nav | `/dashboard` | P | a member on /admin → home page | – | – | n/a | ✅ | ✅ | – | – |
 | WA26 | nav | `/dashboard` | A | an admin passes /admin and /dashboard | – | – | n/a | ✅ | ✅ | – | – |
 | WA27 | nav | `/dashboard` | P | a member without the current terms on /dashboard, /upload or /tutorials/:id/edit → /onboarding/contributor-terms?next=<path and query>; a failed lookup blocks too, with ?retry=1 and "We could not check your acceptance, try again" | – | – | n/a | ✅ | ✅ | – | – |
@@ -682,7 +682,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | WC04 | nav | `/login` | anon | phone "Menu" button folds and unfolds the nav; Escape closes it | – | – | n/a | ✅ | ✅ | – | – |
 | WC05 | nav | `/login` | anon | header search → /library?q=, the library opens filtered | – | – | n/a | ✅ | ✅ | – | – |
 | WC06 | nav | `/login` | anon | display toggles (light, dark, high contrast; reduce motion) → cookie and body attribute, kept on reload | – | – | n/a | ✅ | ✅ | – | – |
-| WC07 | nav | `/login` | anon | "Sign in" link (signed out) → /login | – | – | n/a | ✅ | ✅ | – | – |
+| WC07 | nav | `/login` | anon | "Sign in" link (signed out) → /login?next=<current path> | – | – | n/a | ✅ | ✅ | – | – |
 | WC08 | nav | `/toy-library` | P | "My SPLAT" link with initials and unread badge → /dashboard | – | header unread badge | P | ✅ | ✅ | ✅ | – |
 | WC09 | nav | `/login` | anon | footer columns: every link (Learn, 3D Printing, Get Involved, Impact and About, Legal) resolves to a page | – | – | n/a | ✅ | ✅ | – | – |
 | WC10 | nav | `/onboarding/contributor-terms` | anon | gate pages (/onboarding/*) render bare: no header, footer or dock, still a main landmark and the skip link | – | – | n/a | ✅ | ✅ | – | – |
@@ -1038,7 +1038,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | WI36 | nav | `/get-involved/recycling` | anon | signed-out "Create an account" → /signup; signed in "Book a drop-off" → /get-involved/recycling/drop-off | – | – | n/a | ✅ | ✅ | – | – |
 | WI37 | write | `/get-involved/recycling/drop-off` | P | "Book the drop-off" (organisation, weight, polymer, declaration, photo, note) → POST recycling, then /dashboard | – | organisation drop-off queue | L | ✅ | ✅ | ✅ | – |
-| WI38 | nav | `/get-involved/recycling/drop-off` | anon | signed-out visit → /login?next=/get-involved/recycling/drop-off?org=<id> (the ?org= choice is kept) | – | – | n/a | ✅ | ✅ | – | – |
+| WI38 | nav | `/get-involved/recycling/drop-off` | anon | signed-out visit → /login?next=/get-involved/recycling/drop-off?org=<id> (the ?org= choice survives the way back) | – | – | n/a | ✅ | ✅ | – | – |
 
 </details>
 
@@ -1273,7 +1273,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | WT14 | write | `/upload` | P | "Create draft and open the editor": title, kind, difficulty → draft → editor on Files | – | My tutorials list | n/a | ✅ | ✅ | ✅ | – |
 | WT15 | write | `/upload` | P | cover photo on create (saved as the first photo; a failed upload leaves the draft) | – | – | n/a | ✅ | ✅ | ✅ | – |
 | WT16 | write | `/upload` | P | "Start from a PDF": read the PDF, review what was found, create the guide with its PDF, parts, tools and steps | – | – | n/a | ✅ | ✅ | ✅ | – |
-| WT17 | nav | `/upload` | anon | gate: a Member without current contributor terms → /onboarding/contributor-terms?next=/upload; signed out → /login | – | – | n/a | ✅ | ✅ | – | – |
+| WT17 | nav | `/upload` | anon | gate: a Member without current contributor terms → /onboarding/contributor-terms?next=/upload; signed out → /login?next=/upload | – | – | n/a | ✅ | ✅ | – | – |
 
 </details>
 
@@ -1323,7 +1323,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| WT40 | nav | `/get-involved/submit-a-tutorial` | anon | "Start a guide" → /upload; "Read the contributor path" → /get-involved/contributors | – | – | n/a | ✅ | ✅ | – | – |
+| WT40 | nav | `/get-involved/submit-a-tutorial` | anon | "Start a guide" → /upload (signed out: /login?next=/upload); "Read the contributor path" → /get-involved/contributors | – | – | n/a | ✅ | ✅ | – | – |
 
 </details>
 

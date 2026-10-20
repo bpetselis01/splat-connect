@@ -64,7 +64,7 @@ test('WI37 a member books a drop-off with a photo and the booking is stored for 
   }
 })
 
-test('WI38 a signed-out visitor is sent to sign in, and the ?org= choice is lost on the way back', async ({ page }) => {
+test('WI38 a signed-out visitor is sent to sign in, and the ?org= choice survives the way back', async ({ page }) => {
   await page.goto('/get-involved/recycling/drop-off?org=00000000-0000-0000-0000-000000000000')
-  await expect(page).toHaveURL(/\/login\?next=%2Fget-involved%2Frecycling%2Fdrop-off$/)
+  await expect(page).toHaveURL(/\/login\?next=%2Fget-involved%2Frecycling%2Fdrop-off%3Forg%3D00000000-0000-0000-0000-000000000000$/)
 })

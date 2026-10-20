@@ -9,7 +9,7 @@ test('WA22 the public page explains deletion; Sign in to delete leads to sign-in
   await expect(page.getByRole('link', { name: 'Contact us' })).toHaveAttribute('href', '/contact')
 
   await page.getByRole('link', { name: 'Sign in to delete' }).click()
-  await expect(page).toHaveURL(/\/login\?next=\/dashboard\/profile\/delete$/)
+  await expect(page).toHaveURL(/\/login\?next=%2Fdashboard%2Fprofile%2Fdelete$/)
   await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible()
 })
 
