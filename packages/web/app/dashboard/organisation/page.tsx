@@ -35,6 +35,9 @@ import {
 } from '@phosphor-icons/react/dist/ssr'
 import type { Tutorial, TutorialOrg, UserAgreement } from '@splat-connect/types'
 
+// PENDING(org-notifications-never-clear): MarkNotificationsRead on the org pages, and org_message moves to the org bucket so the leader thread clears...
+// PENDING(org-pages-404-for-non-leader): signed-in non-leaders are redirected to /dashboard with a note that the page is for organisation leaders; a...
+
 type Backed = Tutorial & { tutorial_orgs?: TutorialOrg[] }
 
 export default async function OrganisationTabPage() {

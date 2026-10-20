@@ -74,6 +74,8 @@ import {
   type OrgEventQuestion,
 } from '@splat-connect/types'
 
+// PENDING(draft-event-story-validation): a draft needs only a title; every other rule applies at publish; form copy stays as is. Whether drafts skip...
+
 /** A question being edited. `id` is absent until it has been saved once. */
 type DraftQuestion = {
   id?: string

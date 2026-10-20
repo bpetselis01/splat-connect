@@ -7,6 +7,8 @@ export type { Grade, GradeKey } from './toy-grade'
 export { autoPicks, initialPicks, MAX_PICKS, pickOptions, PICK_KIND_LABEL, samePick } from './toy-picks'
 export type { PicksMode, ToyPick, ToyPickInput } from './toy-picks'
 import type { PicksMode, ToyPick } from './toy-picks'
+
+// PENDING(silent-handoffs): all three groups get notification types: exchange outcomes (recycling receive/decline, org-request approve/...
 export { contributorBadges, nextBadgeThreshold, nextBadgeLine, BADGE_RULES } from './contributor-badges'
 export { ABOUT_LEAD, ABOUT_PILLARS, ABOUT_TEAM_BLURB, CONTACT_TIMES } from './about'
 export {

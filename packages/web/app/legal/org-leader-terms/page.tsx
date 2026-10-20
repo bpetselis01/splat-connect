@@ -18,6 +18,8 @@
 import { ProsePage } from '@/components/prose-page'
 import { ToBeCompleted } from '@/components/to-be-completed'
 
+// PENDING(org-leader-terms-stub): Byron writes the real leader terms (Legal is code-only); the gate stays and acceptance stays version-aware...
+
 export default function OrgLeaderTermsPage() {
   return (
     <ProsePage title="Organisation leader terms">

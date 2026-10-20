@@ -2,6 +2,10 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { AGREEMENT_VERSIONS } from '@splat-connect/types'
 
+// PENDING(login-return-path): every redirect to /login carries ?next= and sign-in honours it, with a same-origin allow-list; one helper,...
+// PENDING(org-directory-terms-gate): remove /organizations from the middleware terms list; public read pages never require terms. Add a test. Wh...
+// PENDING(terms-gate-fails-open): fail closed with a retry message; the API re-checks acceptance on the writes the gate protects (guide submi...
+
 /**
  * The root layout decides whether to render the app shell, and a server layout
  * cannot read the pathname. Publishing it as a *request* header is the smallest

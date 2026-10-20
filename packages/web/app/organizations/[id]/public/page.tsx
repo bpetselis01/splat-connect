@@ -56,6 +56,8 @@ import {
   type Tutorial,
 } from '@splat-connect/types'
 
+// PENDING(public-org-toasts-missing): the public organisation page gets the ToastProvider; Follow confirms 'Following {org}', Say thanks confirms...
+
 const CHIP_TINTS = ['var(--tok)', 'var(--b100)', 'var(--tamber)', 'var(--tcoral)', 'var(--tviolet)', 'var(--tmint)']
 const QUOTE_TINTS = ['var(--tmint)', 'var(--tamber)', 'var(--tviolet)', 'var(--b100)']
 const DIFFICULTY_LABEL = { easy: 'Easy', medium: 'Medium', hard: 'Hard' } as const

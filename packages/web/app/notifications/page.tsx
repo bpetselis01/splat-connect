@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache'
 import { NotificationsList } from '@/components/notifications-list'
 import type { Notification, TutorialCollaboratorInvite } from '@splat-connect/types'
 
+// PENDING(swallowed-failures): surface all three: cover upload shows the error and keeps the form, Mark all read is one request or reports...
+
 export default async function NotificationsPage() {
   // caps is React-cached and the root layout has already fetched it on this
   // request, so this costs nothing beyond the lookup.

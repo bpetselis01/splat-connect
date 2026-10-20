@@ -13,6 +13,8 @@ import { systemMessage, removeParticipant, withPhotoUrl } from './toy-ideas.js'
 import type { AuthVariables } from '../middleware/auth.js'
 import { notificationBody, readLearnCourse, type AdminCounts, type TutorialStatus } from '@splat-connect/types'
 
+// PENDING(admin-status-validation): validate to approved|rejected, 400 otherwise; schema line plus a test. Whether to validate the status to `a...
+
 const admin = new Hono<{ Variables: AuthVariables }>()
 
 admin.use('*', async (c, next) => {
