@@ -13,6 +13,7 @@ import { randomUUID } from 'node:crypto'
 import { Hono, type Context } from 'hono'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { chunk } from '../chunk.js'
+import { notify } from '../notify.js'
 import { ledOrgIds } from '../toy-access.js'
 import { profileName } from '../profile-name.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
@@ -568,13 +569,6 @@ async function leaderIds(orgId: string): Promise<string[]> {
 async function orgName(orgId: string): Promise<string | null> {
   const { data } = await createAdminClient().from('organizations').select('name').eq('id', orgId).maybeSingle()
   return (data?.name as string | undefined) ?? null
-}
-
-/** Logged, never thrown: the write the notification is about has committed. */
-async function notify(rows: Array<Record<string, unknown>>, label: string) {
-  if (!rows.length) return
-  const { error } = await createAdminClient().from('notifications').insert(rows)
-  if (error) console.error(`[organizations] ${label} notify failed:`, error.message)
 }
 
 /**
@@ -1834,6 +1828,20 @@ organizations.patch('/:orgId/recycling/:id', async (c) => {
       return c.json({ error: 'This drop-off has already been decided and cannot be changed.' }, 409)
     }
     return c.json({ error: 'No such drop-off at your organisation.' }, 404)
+  }
+  // 142. The .eq('status', 'booked') above makes a repeat a 409, so this runs once.
+  if (data.contributor_id !== c.get('userId')) {
+    await notify(
+      [
+        {
+          recipient_id: data.contributor_id,
+          type: status === 'received' ? 'recycling_received' : 'recycling_declined',
+          org_id: c.req.param('orgId'),
+          actor_name: (await orgName(c.req.param('orgId'))) ?? 'An organisation',
+        },
+      ],
+      `recycling_${status}`
+    )
   }
   return c.json(data)
 })

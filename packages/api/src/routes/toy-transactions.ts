@@ -1,4 +1,5 @@
 import { chunk } from '../chunk.js'
+import { notify } from '../notify.js'
 import { Hono, type Context } from 'hono'
 import { randomInt, randomUUID } from 'node:crypto'
 import { needsAction, isOwnerSide, answerBy, printRequestExpired, shortDate, customizationNotes, partsTotalCents, notificationBody } from '@splat-connect/types'
@@ -88,9 +89,7 @@ async function notifyOwnerSide(
       ? [tx.owner_id]
       : []
   if (recipients.length === 0) return
-  await admin
-    .from('notifications')
-    .insert(recipients.map((recipient_id) => ({ ...payload, recipient_id })))
+  await notify(recipients.map((recipient_id) => ({ ...payload, recipient_id })), String(payload.type))
 }
 
 /**
@@ -1121,6 +1120,20 @@ toyTransactions.post('/:id/confirm', async (c) => {
       kind: 'system',
       body: 'Handoff confirmed by one party. Waiting on the other.',
     })
+    // 142. Tell the other party once: a repeat confirm by the same party, or
+    // the second party's confirm (the branch below), sends nothing.
+    if (!tx[confirmField]) {
+      const payload = {
+        type: 'handover_confirmed',
+        toy_transaction_id: tx.id,
+        toy_name: await subjectName(admin, tx as any),
+        actor_name: isOwner
+          ? await ownerSideName(admin, tx as any, 'The other party')
+          : await profileName(admin, userId, 'The other party'),
+      }
+      if (isOwner) await notify([{ ...payload, recipient_id: tx.requester_id }], 'handover_confirmed')
+      else await notifyOwnerSide(admin, tx as any, payload)
+    }
     return c.json(sanitizeCodes(updated, userId, ledOrgs))
   }
 

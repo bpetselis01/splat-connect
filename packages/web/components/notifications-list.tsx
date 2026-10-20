@@ -64,6 +64,13 @@ const ICON: Record<NotificationType, [Glyph, string]> = {
   backing_accepted: [Check, 'var(--tok)'],
   backing_declined: [Undo, 'var(--tbad)'],
   report_resolved: [Check, 'var(--tok)'],
+  recycling_received: [Check, 'var(--tok)'],
+  recycling_declined: [Undo, 'var(--tbad)'],
+  org_request_approved: [Check, 'var(--tok)'],
+  org_request_declined: [Undo, 'var(--tbad)'],
+  test_print_passed: [Check, 'var(--tok)'],
+  test_print_failed: [Undo, 'var(--tbad)'],
+  handover_confirmed: [Handshake, 'var(--tmint)'],
 }
 
 function linkFor(n: Notification, isAdmin: boolean): string {
@@ -84,6 +91,11 @@ function linkFor(n: Notification, isAdmin: boolean): string {
   if (n.org_event_id) return `/get-involved/events/${n.org_event_id}`
   if (n.org_story_id) return `/about/stories/${n.org_story_id}`
   if (n.type === 'org_thanked') return '/dashboard/organisation/profile#thanks'
+  // 142: subjects that are an organisation, or none at all.
+  if (n.type === 'recycling_received' || n.type === 'recycling_declined') return '/get-involved/recycling'
+  if (n.type === 'org_request_approved') return '/dashboard/organisation'
+  if (n.type === 'org_request_declined') return '/get-involved/organisations/request'
+  if (n.type === 'test_print_passed' || n.type === 'test_print_failed') return '/dashboard/printers'
   // The two review-queue types must be answered BEFORE the tutorial_id branch
   // below: their recipient is a reviewer, not a contributor, and
   // /tutorials/:id/edit is the author's editor — a leader following it lands on
