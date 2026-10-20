@@ -83,7 +83,7 @@ describe('POST /api/toy-transactions/:id/reject and /withdraw', () => {
     for (const body of [{}, { reason: '   ' }, { reason: 7 }]) {
       const res = await reject(txId, owner.token, body)
       expect(res.status).toBe(400)
-      expect(await res.json()).toEqual({ error: 'reason_required' })
+      expect(await res.json()).toEqual({ error: 'Say why you are declining.' })
     }
     expect(((await (await txReq(`/${txId}`, owner.token)).json()) as { status: string }).status).toBe('requested')
   })
@@ -92,7 +92,7 @@ describe('POST /api/toy-transactions/:id/reject and /withdraw', () => {
     const txId = await requestDonation(owner.token, requester.token, 'Tent')
     const tooLong = await reject(txId, owner.token, { reason: 'x'.repeat(501) })
     expect(tooLong.status).toBe(400)
-    expect(await tooLong.json()).toEqual({ error: 'reason_too_long', max: 500 })
+    expect(await tooLong.json()).toEqual({ error: 'Keep the reason under 500 characters.' })
     expect((await reject(txId, owner.token, { reason: 'x'.repeat(500) })).status).toBe(200)
   })
 

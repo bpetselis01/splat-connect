@@ -209,7 +209,7 @@ describe('part requests at an event', () => {
     }).select('id').single()
     const noReason = await app.request(`/api/toy-transactions/${other!.id}/reject`, send(leader.token, 'POST', {}))
     expect(noReason.status).toBe(400)
-    expect(await noReason.json()).toEqual({ error: 'Say why you cannot take this job.' })
+    expect(await noReason.json()).toEqual({ error: 'Say why you are declining.' })
 
     const res = await app.request(`/api/toy-transactions/${other!.id}/reject`, send(leader.token, 'POST', { reason: 'Our machine is down' }))
     expect(res.status).toBe(200)

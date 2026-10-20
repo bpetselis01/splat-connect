@@ -119,7 +119,7 @@ describe('declining (K07)', () => {
     const id = await askMaker()
     const res = await post(`/${id}/reject`, maker.token, {})
     expect(res.status).toBe(400)
-    expect(await res.json()).toEqual({ error: 'reason_required' })
+    expect(await res.json()).toEqual({ error: 'Say why you are declining.' })
     await post(`/${id}/withdraw`, family.token)
   })
 

@@ -27,7 +27,8 @@ test('WM37 WM38 an admin opens a member build thread, cannot act on it, posts a 
   if (error) throw new Error(error.message)
 
   try {
-    await signInAdmin(page)
+    const admin = await signInAdmin(page)
+    await acceptTerms(admin.id)
     await page.goto('/admin/build-requests')
     await page.getByRole('listitem').filter({ hasText: title }).getByRole('link', { name: 'Open the thread' }).click()
     await page.waitForURL(`**/dashboard/exchanges/build/${build.id}`)
