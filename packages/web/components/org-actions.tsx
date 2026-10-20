@@ -15,10 +15,11 @@
  * org sees none of them — they would be following, messaging and thanking
  * themselves — and gets the editor link instead.
  */
+import { authUrl } from '@/lib/safe-next-path'
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import type { Route } from 'next'
-import { useRouter, usePathname } from 'next/navigation'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { BellRinging, BellSimple, ChatCircleText, HandHeart, PencilSimple } from '@phosphor-icons/react/dist/ssr'
 import type { OrgRelationship } from '@splat-connect/types'
 import { browserApiClient } from '@/lib/browser-api-client'
@@ -39,6 +40,8 @@ export function OrgActions({
 }) {
   const router = useRouter()
   const pathname = usePathname()
+  const search = useSearchParams().toString()
+  const here = search ? `${pathname}?${search}` : pathname
   const showToast = useToast()
   const [following, setFollowing] = useState(me?.following ?? false)
   const [thanked, setThanked] = useState(!!me?.thanks)
@@ -54,7 +57,7 @@ export function OrgActions({
     )
   }
 
-  const signUp = (reason: string) => router.push(`/signup?next=${encodeURIComponent(pathname)}&reason=${reason}` as Route)
+  const signUp = (reason: string) => router.push(authUrl('signup', here, { reason }) as Route)
 
   async function toggleFollow() {
     if (!me) return signUp('follow')
@@ -84,7 +87,7 @@ export function OrgActions({
         {following ? 'Following' : 'Follow'}
       </button>
       <Link
-        href={me ? `/organizations/${orgId}/message` : `/signup?next=${encodeURIComponent(pathname)}&reason=message`}
+        href={me ? `/organizations/${orgId}/message` : authUrl('signup', here, { reason: 'message' })}
         className="btn btn-primary btn-sm gap-2"
       >
         <ChatCircleText weight="fill" aria-hidden="true" />

@@ -24,16 +24,24 @@
  * - lib/org-access.ts: the per-organisation check this generalises
  */
 import { cache } from 'react'
+import { unstable_rethrow } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
 import type { Profile, Organization, UnreadCounts, Capabilities } from '@splat-connect/types'
 
 export type { Capabilities } from '@splat-connect/types'
 
+// Next's own redirect and not-found errors travel as exceptions; they are not a flaky fetch to hide.
+const degrade = <T>(fallback: T) => (err: unknown) => {
+  unstable_rethrow(err)
+  return fallback
+}
+
 export const getCapabilities = cache(async (): Promise<Capabilities | null> => {
   let profile: Profile
   try {
     profile = await apiClient.get<Profile>('/api/contributors/me')
-  } catch {
+  } catch (err) {
+    unstable_rethrow(err)
     // No profile means no user. Not degradable.
     return null
   }
@@ -45,14 +53,14 @@ export const getCapabilities = cache(async (): Promise<Capabilities | null> => {
   // Each degrades to "capability absent" on failure so one flaky fetch hides one
   // nav group or badge rather than blanking the dashboard.
   const [ledOrgs, unread, exchangeActions] = await Promise.all([
-    apiClient.get<Organization[]>('/api/organizations/mine').catch(() => [] as Organization[]),
+    apiClient.get<Organization[]>('/api/organizations/mine').catch(degrade([] as Organization[])),
     apiClient
       .get<UnreadCounts>('/api/notifications/me/unread-counts')
-      .catch(() => ({ tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 }) as UnreadCounts),
+      .catch(degrade({ tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 } as UnreadCounts)),
     apiClient
       .get<{ count: number }>('/api/toy-transactions/action-count')
       .then((r) => r.count)
-      .catch(() => 0),
+      .catch(degrade(0)),
   ])
 
   return {

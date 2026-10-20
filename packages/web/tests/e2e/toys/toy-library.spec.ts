@@ -71,7 +71,7 @@ test.describe('Toy library', () => {
       await page.locator('#email').fill(member.email)
       await page.locator('#password').fill(member.password)
       await page.getByRole('button', { name: 'Sign in' }).click()
-      await expect(page).toHaveURL(new RegExp(`/toy-library/${toyId}/request`))
+      await expect(page).toHaveURL(new RegExp(`/toy-library/${toyId}/request\\?mode=donation$`))
       await expect(page.getByLabel(/Say who it is for/)).toBeVisible()
     } finally {
       await deleteUser(holder.id)

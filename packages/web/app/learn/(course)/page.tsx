@@ -77,7 +77,7 @@ function LearnPage() {
 /** Gated per page, not per layout: see components/learn-gate.tsx. */
 export default function GatedLearnPage() {
   return (
-    <LearnGate>
+    <LearnGate path="/learn">
       <LearnPage />
     </LearnGate>
   )

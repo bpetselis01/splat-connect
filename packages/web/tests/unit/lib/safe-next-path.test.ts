@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { sanitiseNextPath } from '@/lib/safe-next-path'
+import { authUrl, sanitiseNextPath } from '@/lib/safe-next-path'
 
 describe('sanitiseNextPath', () => {
   it('accepts a legitimate same-origin path', () => {
@@ -46,5 +46,28 @@ describe('sanitiseNextPath', () => {
 
   it('rejects a backslash anywhere in an otherwise valid path', () => {
     expect(sanitiseNextPath('/get-involved\\evil')).toBeNull()
+  })
+})
+
+describe('authUrl', () => {
+  it('encodes the path and its query into next', () => {
+    expect(authUrl('login', '/dashboard/printing?tab=jobs')).toBe('/login?next=%2Fdashboard%2Fprinting%3Ftab%3Djobs')
+  })
+
+  it('appends extra params after next', () => {
+    expect(authUrl('signup', '/toy-library?offer=gift', { reason: 'save' })).toBe(
+      '/signup?next=%2Ftoy-library%3Foffer%3Dgift&reason=save'
+    )
+  })
+
+  it('gives the bare URL for a missing path', () => {
+    expect(authUrl('login', null)).toBe('/login')
+    expect(authUrl('signup', undefined, { reason: 'save' })).toBe('/signup?reason=save')
+  })
+
+  it('drops an off-site path instead of trusting the caller', () => {
+    expect(authUrl('login', 'https://evil.example')).toBe('/login')
+    expect(authUrl('login', '//evil.example')).toBe('/login')
+    expect(authUrl('login', '/\\evil.example')).toBe('/login')
   })
 })

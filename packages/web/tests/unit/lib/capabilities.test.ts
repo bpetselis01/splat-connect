@@ -145,4 +145,28 @@ describe('getCapabilities', () => {
     })
     expect(await subject()).toBeNull()
   })
+
+  // The server onTermsRequired redirects by throwing NEXT_REDIRECT; a catch that eats it leaves the page rendering as if nothing happened.
+  describe('a Next redirect thrown from a fetch', () => {
+    const redirectError = () => Object.assign(new Error('NEXT_REDIRECT'), { digest: 'NEXT_REDIRECT;replace;/onboarding/contributor-terms;307;' })
+
+    it('passes out of the profile fetch', async () => {
+      route({ '/api/contributors/me': redirectError() })
+      await expect(subject()).rejects.toMatchObject({ message: 'NEXT_REDIRECT' })
+    })
+
+    it.each(['/api/organizations/mine', '/api/notifications/me/unread-counts', '/api/toy-transactions/action-count'])(
+      'passes out of %s',
+      async (path) => {
+        route({
+          '/api/contributors/me': PROFILE,
+          '/api/organizations/mine': [],
+          '/api/notifications/me/unread-counts': { total: 0 },
+          '/api/toy-transactions/action-count': { count: 0 },
+          [path]: redirectError(),
+        })
+        await expect(subject()).rejects.toMatchObject({ message: 'NEXT_REDIRECT' })
+      }
+    )
+  })
 })

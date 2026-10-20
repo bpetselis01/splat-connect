@@ -1,3 +1,4 @@
+import type { Route } from 'next'
 /**
  * Validates a `?next=` query value before it is ever handed to
  * `window.location.href`. That assignment is an open redirect if `next` is
@@ -22,4 +23,28 @@ export function sanitiseNextPath(next: string | null | undefined): string | null
   if (!normalised.startsWith('/')) return null // must be absolute-from-root
 
   return normalised
+}
+
+/**
+ * The one builder for a sign-in or sign-up link that returns to `pathWithQuery`.
+ * It sanitises its input, so a caller can pass a request-derived path without
+ * checking it first; an unsafe or empty path yields the bare auth URL.
+ */
+export function authUrl(
+  kind: 'login' | 'signup',
+  pathWithQuery: string | null | undefined,
+  extraParams: Record<string, string> = {}
+): Route {
+  const params = new URLSearchParams()
+  const next = sanitiseNextPath(pathWithQuery)
+  if (next) params.set('next', next)
+  for (const [k, v] of Object.entries(extraParams)) params.set(k, v)
+  const query = params.toString()
+  return (query ? `/${kind}?${query}` : `/${kind}`) as Route
+}
+
+/** The contributor-terms screen, returning to `pathWithQuery` once accepted. */
+export function termsUrl(pathWithQuery: string | null | undefined): Route {
+  const next = sanitiseNextPath(pathWithQuery)
+  return `/onboarding/contributor-terms${next ? `?next=${encodeURIComponent(next)}` : ''}` as Route
 }

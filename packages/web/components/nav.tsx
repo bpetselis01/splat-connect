@@ -1,7 +1,8 @@
 'use client'
 import { useEffect, useId, useRef, useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import type { Route } from 'next'
+import { usePathname, useSearchParams } from 'next/navigation'
 import {
   CaretDown,
   List,
@@ -23,6 +24,7 @@ import { ACCOUNT_NAV, sectionFor } from '@/lib/public-nav'
 import type { Capabilities } from '@/lib/capabilities'
 import type { Mode, Motion } from '@/lib/display-prefs'
 import { initials } from '@splat-connect/types'
+import { authUrl } from '@/lib/safe-next-path'
 
 /** Five primary tabs, everything else behind More — the board's NAV5. */
 const TABS = [
@@ -58,6 +60,9 @@ interface NavProps {
 export function Nav({ caps, mode = 'light', motion = 'full' }: NavProps) {
   // Null outside an App Router context (e.g. the unit tests render Nav directly).
   const pathname = usePathname() ?? ''
+  const search = useSearchParams().toString()
+  // On the auth screens themselves the link must not nest next inside next.
+  const onAuthScreen = pathname === '/login' || pathname === '/signup'
   const activeSection = sectionFor(pathname)
   const menu = useRef<HTMLDivElement>(null)
   const menuId = useId()
@@ -189,7 +194,10 @@ export function Nav({ caps, mode = 'light', motion = 'full' }: NavProps) {
               </span>
             </BoundaryLink>
           ) : (
-            <Link href="/login" className="nav-signin">
+            <Link
+              href={(onAuthScreen ? '/login' : authUrl('login', search ? `${pathname}?${search}` : pathname)) as Route}
+              className="nav-signin"
+            >
               Sign in
             </Link>
           )}

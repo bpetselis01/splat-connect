@@ -9,7 +9,7 @@
  * "Shown as" (Byron, 2026-10-02):
  * - Free: the course.
  * - Free, sign-in needed: a signed-out reader goes to sign in, then back to the
- *   course home.
+ *   lesson they opened (`path`, passed by the page).
  * - Hidden: "Course hidden" for everyone but an admin. The public read serves
  *   no outline for a hidden course, so an admin's preview reads the saved row
  *   through the admin API and shows it under "Hidden from members".
@@ -20,6 +20,7 @@
  */
 import { redirect } from 'next/navigation'
 import { mergeLearnCourse, type LearnCourse } from '@splat-connect/types'
+import { authUrl } from '@/lib/safe-next-path'
 import { apiClient } from '@/lib/api-client'
 import { getCapabilities } from '@/lib/capabilities'
 import { LearnCourseProvider } from '@/components/learn-course-context'
@@ -32,7 +33,7 @@ const hidden = (
   </section>
 )
 
-export async function LearnGate({ children }: { children: React.ReactNode }) {
+export async function LearnGate({ path, children }: { path: string; children: React.ReactNode }) {
   const course = await apiClient
     .get<LearnCourse>('/api/public/learn-course')
     .catch(() => mergeLearnCourse(null))
@@ -40,7 +41,7 @@ export async function LearnGate({ children }: { children: React.ReactNode }) {
 
   const caps = await getCapabilities()
   if (course.shown_as === 'sign_in') {
-    if (!caps) redirect('/login?next=/learn')
+    if (!caps) redirect(authUrl('login', path))
     return <LearnCourseProvider course={course}>{children}</LearnCourseProvider>
   }
 

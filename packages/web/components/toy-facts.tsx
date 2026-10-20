@@ -14,6 +14,7 @@ import {
   ShieldCheck,
 } from '@phosphor-icons/react/dist/ssr'
 import { toyFacts, type ToyDetail } from '@splat-connect/types'
+import { authUrl } from '@/lib/safe-next-path'
 
 export function ToyFacts({ toy }: { toy: Pick<ToyDetail, 'age_min' | 'age_max' | 'batteries' | 'switch_fitting' | 'volume' | 'guide'> }) {
   const facts = toyFacts(toy)
@@ -62,7 +63,7 @@ const UNLOCKS = [
 ]
 
 export function ToySignInGate({ toyId }: { toyId: string }) {
-  const next = encodeURIComponent(`/toy-library/${toyId}`)
+  const next = `/toy-library/${toyId}`
   return (
     <section
       aria-labelledby="toy-gate-h"
@@ -93,10 +94,10 @@ export function ToySignInGate({ toyId }: { toyId: string }) {
         ))}
       </ul>
       <div className="mt-2 flex flex-wrap justify-center gap-3">
-        <Link href={`/login?next=${next}` as Route} className="btn btn-primary">
+        <Link href={authUrl('login', next) as Route} className="btn btn-primary">
           Sign in to unlock
         </Link>
-        <Link href={`/signup?next=${next}` as Route} className="btn btn-quiet">
+        <Link href={authUrl('signup', next) as Route} className="btn btn-quiet">
           Create a free account
         </Link>
       </div>

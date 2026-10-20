@@ -32,6 +32,8 @@ import {
   SECONDARY_BTN,
   TintNote,
 } from '@/components/involved-page'
+import type { Route } from 'next'
+import { authUrl } from '@/lib/safe-next-path'
 
 export const metadata = {
   title: 'Makers wanted — SPLAT Connect',
@@ -72,7 +74,7 @@ export default async function MakersWantedPage() {
         </TintNote>
         <div className="mt-7 flex flex-wrap items-center gap-3">
           <Link
-            href={`/login?next=${encodeURIComponent('/get-involved/makers-wanted')}`}
+            href={authUrl('login', '/get-involved/makers-wanted') as Route}
             className="btn btn-primary px-[26px]"
           >
             Sign in to see requests

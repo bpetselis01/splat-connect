@@ -41,6 +41,26 @@ describe('contributor terms onboarding', () => {
     expect(post).toHaveBeenCalledWith('/api/agreements', { agreement_type: 'contributor_terms' })
   })
 
+  it('WA17 returns to a path with its query, and ignores an off-site next', async () => {
+    search = 'next=%2Fupload%3Fdraft%3D1'
+    const { unmount } = render(<ContributorTermsOnboarding />)
+    fireEvent.click(screen.getByRole('checkbox'))
+    fireEvent.click(screen.getByRole('button', { name: 'Accept and continue' }))
+    await waitFor(() => expect(window.location.href).toBe('/upload?draft=1'))
+    unmount()
+    search = 'next=%2F%5Cevil.example'
+    render(<ContributorTermsOnboarding />)
+    fireEvent.click(screen.getByRole('checkbox'))
+    fireEvent.click(screen.getByRole('button', { name: 'Accept and continue' }))
+    await waitFor(() => expect(window.location.href).toBe('/dashboard'))
+  })
+
+  it('WA27 says the acceptance could not be checked when retry=1', () => {
+    search = 'next=%2Fdashboard&retry=1'
+    render(<ContributorTermsOnboarding />)
+    expect(screen.getByRole('alert')).toHaveTextContent('We could not check your acceptance, try again')
+  })
+
   it('WA17 keeps Accept and continue disabled until the box is ticked, and does not post', () => {
     render(<ContributorTermsOnboarding />)
     const accept = screen.getByRole('button', { name: 'Accept and continue' })

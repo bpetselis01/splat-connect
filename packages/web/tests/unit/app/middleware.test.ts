@@ -43,7 +43,7 @@ describe('contributor terms gate', () => {
     const res = await run('/upload?kind=assistive_tech')
     const to = new URL(res.headers.get('location')!)
     expect(to.pathname).toBe('/onboarding/contributor-terms')
-    expect(to.searchParams.get('next')).toBe('/upload')
+    expect(to.searchParams.get('next')).toBe('/upload?kind=assistive_tech')
   })
 
   it('WT17 lets a Member who accepted the current terms through to /upload', async () => {
@@ -61,10 +61,12 @@ describe('contributor terms gate', () => {
     expect((await run('/tutorials/abc')).headers.get('location')).toBeNull()
   })
 
-  it('errs open when the terms lookup fails, since the api is the real enforcement', async () => {
+  it('fails closed when the terms lookup fails', async () => {
     signedIn()
     vi.spyOn(console, 'error').mockImplementation(() => {})
     agreementsQuery.mockResolvedValue({ data: null, error: { message: 'down' } })
-    expect((await run('/upload')).headers.get('location')).toBeNull()
+    const to = new URL((await run('/upload'))!.headers.get('location')!)
+    expect(to.pathname).toBe('/onboarding/contributor-terms')
+    expect(to.search).toBe('?next=%2Fupload&retry=1')
   })
 })

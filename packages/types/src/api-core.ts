@@ -15,10 +15,19 @@
  * numerically instead of pattern-matching the message, which breaks the
  * moment describeFailure's wording changes.
  */
-export type ApiError = Error & { status: number }
+export type ApiError = Error & { status: number; code?: string }
 
 export function isApiError(err: unknown): err is ApiError {
   return err instanceof Error && typeof (err as { status?: unknown }).status === 'number'
+}
+
+/**
+ * The API's gate on contributor terms answers 403 `{ error: 'terms_required' }`.
+ * The code is read from the JSON body once, in throwFailure; a 403 whose body
+ * is not JSON, or says anything else, is a plain forbidden.
+ */
+export function isTermsRequired(err: unknown): boolean {
+  return isApiError(err) && err.status === 403 && err.code === 'terms_required'
 }
 
 /** The API's own `error` sentence out of a thrown request, when it sent one. */
@@ -45,6 +54,7 @@ export function isNetworkError(err: unknown): boolean {
  * raw Postgres error is not copy.
  */
 export function apiMessage(err: unknown, fallback: string): string {
+  if (isTermsRequired(err)) return 'Accept the contributor terms to continue'
   const text = err instanceof Error ? err.message : ''
   const match = /failed with status 4\d\d: (.+)$/.exec(text)
   if (match) return match[1]
@@ -62,6 +72,10 @@ export function makeApiClient(deps: {
   // late) and the browser client keeps its literal NEXT_PUBLIC_* read inlined
   // at its own call site by Next's build.
   baseUrl: () => string
+  // Runs once when a write is refused for want of contributor terms; each
+  // environment navigates its own way (browser assign, server redirect, mobile push).
+  // The error is still thrown after it returns, so a caller never carries on as if it worked.
+  onTermsRequired?: () => void | Promise<void>
   // Not RequestCache: that type is DOM-only, and the API's Node tsc compiles
   // this package too. 'no-store' is the only value any client passes.
   cache?: 'no-store'
@@ -70,18 +84,17 @@ export function makeApiClient(deps: {
   //      status 400" but not the reason why.
   // HOW: Reads the response body for an error field and appends it to the
   //      thrown error so the cause is visible in logs and error messages.
-  async function describeFailure(method: string, path: string, res: Response): Promise<string> {
-    let detail = ''
-    try {
-      const j = (await res.clone().json()) as { error?: string }
-      if (j.error) detail = `: ${j.error}`
-    } catch {}
-    return `API ${method} ${path} failed with status ${res.status}${detail}`
-  }
-
   async function throwFailure(method: string, path: string, res: Response): Promise<never> {
-    const err = new Error(await describeFailure(method, path, res)) as ApiError
+    let code: string | undefined
+    try {
+      code = ((await res.clone().json()) as { error?: string }).error || undefined
+    } catch {}
+    const err = new Error(
+      `API ${method} ${path} failed with status ${res.status}${code ? `: ${code}` : ''}`
+    ) as ApiError
     err.status = res.status
+    if (code) err.code = code
+    if (isTermsRequired(err)) await deps.onTermsRequired?.()
     throw err
   }
 
