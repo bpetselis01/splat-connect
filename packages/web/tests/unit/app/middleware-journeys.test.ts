@@ -109,6 +109,7 @@ describe('middleware: the contributor terms gate', () => {
     ['/upload', '/upload'],
     ['/upload?draft=1', '/upload?draft=1'],
     ['/tutorials/abc/edit', '/tutorials/abc/edit'],
+    ['/organizations/o1/message', '/organizations/o1/message'],
   ])('WA27 sends %s to the terms gate with next=%s, keeping the query string', async (path, next) => {
     const r = await go(path)
     expect(r.status).toBe(307)
@@ -141,7 +142,7 @@ describe('middleware: the contributor terms gate', () => {
     expect(console.error).toHaveBeenCalledWith('[middleware] contributor_terms lookup failed:', 'boom')
   })
 
-  it.each(['/organizations', '/organizations/o1', '/organizations/o1/public', '/organizations/o1/message'])(
+  it.each(['/organizations', '/organizations/o1', '/organizations/o1/public'])(
     'WA28 leaves %s open to a signed-in member without the terms',
     async (path) => {
       passes(await go(path))

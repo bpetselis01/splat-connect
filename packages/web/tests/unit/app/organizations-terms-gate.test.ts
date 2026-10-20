@@ -29,6 +29,13 @@ describe('the organisations directory and the contributor terms gate', () => {
     expect(agreements).not.toHaveBeenCalled()
   })
 
+  it('WN03 and WA28 gate the member-only message form for a member without the terms', async () => {
+    const res = await visit('/organizations/o1/message?x=1')
+    expect(res.headers.get('location')).toBe(
+      'http://localhost:3105/onboarding/contributor-terms?next=%2Forganizations%2Fo1%2Fmessage%3Fx%3D1',
+    )
+  })
+
   it('WN03 still gates /dashboard for the same member', async () => {
     const res = await visit('/dashboard')
     expect(res.headers.get('location')).toBe('http://localhost:3105/onboarding/contributor-terms?next=%2Fdashboard')

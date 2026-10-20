@@ -96,7 +96,9 @@ export async function middleware(request: NextRequest) {
     user &&
     (termsGatedPrefixes.some((r) => pathname.startsWith(r)) ||
       // Pattern, not prefix: /tutorials/[id] is the public detail page.
-      /^\/tutorials\/[^/]+\/edit(\/|$)/.test(pathname))
+      /^\/tutorials\/[^/]+\/edit(\/|$)/.test(pathname) ||
+      // The organisation directory and profiles are public; the message form is member-only.
+      /^\/organizations\/[^/]+\/message(\/|$)/.test(pathname))
 
   if (needsTerms) {
     const { data: agreements, error } = await supabase
