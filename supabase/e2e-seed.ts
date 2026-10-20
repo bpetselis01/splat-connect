@@ -167,3 +167,51 @@ export async function createNotification(
   if (error || !data) throw new Error(`createNotification failed: ${error?.message}`)
   return data.id
 }
+
+// Local Supabase's mail catcher. Specs read the real emailed code out of it
+// rather than confirming through the admin API, so the template and the code
+// screen are both under test.
+const MAILPIT_PORT = 54324
+const MAILPIT = `http://127.0.0.1:${MAILPIT_PORT}`
+
+export class MailpitUnreachableError extends Error {
+  constructor(cause: unknown) {
+    super(`Mailpit is not answering on port ${MAILPIT_PORT} (${String(cause)}). Is local Supabase running?`)
+    this.name = 'MailpitUnreachableError'
+  }
+}
+
+export class NoMailError extends Error {
+  constructor(email: string, waitedMs: number) {
+    super(`No email reached ${email} within ${waitedMs} ms.`)
+    this.name = 'NoMailError'
+  }
+}
+
+/** Text of the newest email to `email` sent at or after `after` (epoch ms),
+ *  polled until it arrives. */
+export async function latestMail(email: string, after = 0, tries = 40): Promise<string> {
+  const query = encodeURIComponent(`to:"${email}"`)
+  for (let i = 0; i < tries; i++) {
+    try {
+      const res = await fetch(`${MAILPIT}/api/v1/search?query=${query}`)
+      const { messages } = (await res.json()) as { messages: { ID: string; Created: string }[] }
+      const fresh = messages.find((m) => Date.parse(m.Created) >= after)
+      if (fresh) {
+        const msg = (await (await fetch(`${MAILPIT}/api/v1/message/${fresh.ID}`)).json()) as { Text: string }
+        return msg.Text
+      }
+    } catch (e) {
+      throw new MailpitUnreachableError(e)
+    }
+    await new Promise((r) => setTimeout(r, 250))
+  }
+  throw new NoMailError(email, tries * 250)
+}
+
+/** The 6-digit code in the newest email to `email` sent at or after `after`. */
+export async function latestCode(email: string, after = 0): Promise<string> {
+  const code = (await latestMail(email, after)).match(/\b(\d{6})\b/)?.[1]
+  if (!code) throw new Error(`The email to ${email} has no 6-digit code.`)
+  return code
+}

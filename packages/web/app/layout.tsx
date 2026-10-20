@@ -64,8 +64,10 @@ export const metadata: Metadata = {
 /** Routes that must never show the shell. A nav on the contributor-terms
     gate is an escape hatch out of a gate — every link bounces straight back.
     /login and /signup left this list on 2026-09-18: the board draws the site
-    header on both, and a sign-in page is somewhere anyone may leave. */
-const BARE_PREFIXES = ['/auth', '/onboarding']
+    header on both, and a sign-in page is somewhere anyone may leave.
+    /auth/confirmed left it on 2026-10-20 for the same reason: a soft
+    navigation from a bare page to /login kept the bare layout until a reload. */
+const BARE_PREFIXES = ['/onboarding']
 
 /** Exported for tests: the layout is async and reads headers(), so the rule is
     verified here rather than by rendering the whole tree. */
@@ -104,9 +106,8 @@ export default async function RootLayout({
   if (bare) {
     // Same scaffolding as the non-bare branch below, minus the three pieces
     // that are always conditional on !bare there too: Nav, PixelBackdrop
-    // and PublicFooter. A gate page (/login, /signup, /auth/confirmed,
-    // /onboarding/contributor-terms) still needs the .pixel ancestor its
-    // buttons are styled under, the skip link (WCAG 2.4.1), and a <main>
+    // and PublicFooter. A gate page (/onboarding/contributor-terms) still
+    // needs the .pixel ancestor its buttons are styled under, the skip link (WCAG 2.4.1), and a <main>
     // landmark — losing all three was a real regression from before this
     // branch, caught in the final review round.
     return (

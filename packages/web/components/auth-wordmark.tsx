@@ -18,10 +18,9 @@ export function BrandMark({ large = false }: { large?: boolean }) {
 /**
  * The wordmark the board puts at the top of every signed-out screen.
  *
- * Its own component because three of those screens are not the sign-in pair:
- * /auth/confirmed and /onboarding/contributor-terms have their own layouts, and
+ * Its own component because the contributor-terms gate is not the sign-in pair:
  * AuthShell carries the sign-in / create-account tab switch, which would be
- * wrong on a terms gate. Both of them showed no wordmark at all until now.
+ * wrong on a gate.
  *
  * Two words, two colours: SPLAT in ink and Connect in brand, Baloo 2 at
  * 22px/800.
