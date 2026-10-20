@@ -2574,3 +2574,5 @@ export interface AdminCounts {
   accounts: number
   organisations: number
 }
+export { problem, toProblem } from './auth-errors'
+export type { AuthProblem } from './auth-errors'

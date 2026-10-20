@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { FOOTER_COLUMNS } from '../../../lib/public-nav'
+import { createContributor, signIn } from '../helpers'
 
 /**
  * The broadest guard in the suite.
@@ -33,14 +34,21 @@ test.describe('fat footer', () => {
     await expect(page.locator('footer').getByRole('link', { name: 'Privacy policy' })).toBeVisible()
   })
 
-  // /login and /signup left the bare list on 2026-09-18 (app/layout.tsx,
-  // BARE_PREFIXES; landed in 105d3b5d): the board draws the full site chrome on
-  // both. The gates under /auth and /onboarding stay bare.
-  test('WC10 is absent on the gate pages, which are deliberately bare', async ({ page }) => {
-    await page.goto('/auth/confirmed')
+  // /login, /signup and /auth/confirmed left the bare list (app/layout.tsx,
+  // BARE_PREFIXES): the board draws the full site chrome on them. Only the
+  // /onboarding gates stay bare.
+  test('WC10 is absent on the contributor-terms gate, which is deliberately bare', async ({ page }) => {
+    const { email, password } = await createContributor()
+    await signIn(page, email, password)
+    await page.waitForURL(/\/onboarding\/contributor-terms/)
     await expect(page.getByRole('main')).toBeVisible()
     await expect(page.locator('footer')).toHaveCount(0)
     await expect(page.getByRole('banner')).toHaveCount(0)
+  })
+
+  test('renders on the email-confirmed page', async ({ page }) => {
+    await page.goto('/auth/confirmed')
+    await expect(page.locator('footer').getByRole('link', { name: 'Privacy policy' })).toBeVisible()
   })
 
   test('renders on the sign-in page, which the board draws with the site chrome', async ({ page }) => {

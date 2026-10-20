@@ -23,7 +23,7 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 | mobile | My tutorials (author) | 25 | 0 | 0 |
 | mobile | Events, recycling, saved | 18 | 0 | 0 |
 | mobile | Toy library and my toys | 21 | 0 | 0 |
-| web | Sign in and sign up | 16 | 0 | 0 |
+| web | Sign in and sign up | 24 | 0 | 0 |
 | web | Gates and onboarding | 6 | 0 | 0 |
 | web | Route protection (middleware) | 7 | 0 | 0 |
 | web | Organisation leader (web) | 36 | 0 | 0 |
@@ -561,20 +561,20 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 
 ## Web
 
-### Sign in and sign up — 16 rows · 0 gaps · 0 waived
+### Sign in and sign up — 24 rows · 0 gaps · 0 waived
 
-<details><summary>16 rows, no gaps</summary>
+<details><summary>24 rows, no gaps</summary>
 
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | WA01 | nav | `/login` | anon | "Sign in" with a member's email and password → /dashboard, header switches to My SPLAT | – | – | n/a | ✅ | ✅ | ✅ | – |
 | WA02 | nav | `/login` | A | "Sign in" as an admin → /admin | – | – | n/a | ✅ | ✅ | ✅ | – |
-| WA03 | nav | `/login` | anon | wrong password → the auth error shows and the page stays on /login | – | – | n/a | ✅ | ✅ | ✅ | – |
+| WA03 | nav | `/login` | anon | wrong password → "That email and password don't match.", the password clears and the page stays on /login | – | – | n/a | ✅ | ✅ | ✅ | – |
 | WA04 | nav | `/login` | anon | "?next=" is honoured after sign-in only for a same-origin path, else the role default | – | – | n/a | ✅ | ✅ | – | – |
 | WA05 | nav | `/login` | anon | first sign-in after choosing a sign-up tile lands on /onboarding/child (family) or /dashboard/tutorials (maker), once | – | – | n/a | ✅ | ✅ | ✅ | – |
 | WA06 | nav | `/login` | anon | show / hide password toggle | – | – | n/a | ✅ | ✅ | – | – |
 | WA07 | nav | `/login` | anon | "Create one" → /signup, keeping the query string | – | – | n/a | ✅ | ✅ | – | – |
-| WA08 | nav | `/login` | anon | unconfirmed email → the raw auth error and no resend control (Q2: web has no forgot-password or resend) | – | – | n/a | ✅ | ✅ | ✅ | – |
+| WA08 | nav | `/login` | anon | unconfirmed email → friendly copy, a new code is sent and an Enter the code link opens /login/verify | – | – | n/a | ✅ | ✅ | ✅ | – |
 | WA09 | write | `/signup` | anon | "Create my account" (name, email, password, tile, terms) → signUp with terms version and intent, then "Check your email" | confirmation mail | – | n/a | ✅ | ✅ | ✅ | – |
 | WA10 | nav | `/signup` | anon | contributor-terms row opens the terms dialog; Accept ticks it, Reject / Escape / backdrop close it unticked; typed fields survive | – | – | n/a | ✅ | ✅ | – | – |
 | WA11 | nav | `/signup` | anon | password under six characters or a mismatched confirmation is refused before any account is made | – | – | n/a | ✅ | ✅ | – | – |
@@ -583,6 +583,14 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 | WA14 | nav | `/signup` | anon | "Back to sign in" on "Check your email" → /login | – | – | n/a | ✅ | ✅ | – | – |
 | WA15 | nav | `/signup` | anon | "Sign in" / "Create account" tabs switch screens, keeping the query | – | – | n/a | ✅ | ✅ | – | – |
 | WA16 | nav | `/auth/confirmed` | anon | "Continue" and the 3 s countdown → /login?next=; confirming does not sign the user in | – | – | n/a | ✅ | ✅ | – | – |
+| WA31 | nav | `/login/forgot` | anon | "Forgot password?" on sign-in carries the email here; Send code → resetPasswordForEmail, then /login/reset | recovery mail | – | n/a | ✅ | ✅ | ✅ | – |
+| WA32 | nav | `/login/forgot` | anon | an email with no account gets the same "code is on its way" screen; only offline or rate limited stops it | – | – | n/a | ✅ | ✅ | ✅ | – |
+| WA33 | nav | `/login/reset` | anon | code + new password → verifyOtp(recovery) + updateUser → signed in at ?next= or the role landing; a wrong code keeps the password; a failed save retries updateUser alone | – | – | n/a | ✅ | ✅ | ✅ | – |
+| WA34 | nav | `/login/reset` | anon | a password under six characters or a missing digit is refused before the code is spent | – | – | n/a | ✅ | ✅ | ✅ | – |
+| WA35 | nav | `/login/code` | anon | "Email me a sign-in code" on sign-in carries the email here; Send code → signInWithOtp(shouldCreateUser:false), then /login/verify?type=email | OTP mail | – | n/a | ✅ | ✅ | ✅ | – |
+| WA36 | nav | `/login/code` | anon | an email with no account → "No account uses that email." with a Create an account link; nothing is sent | – | – | n/a | ✅ | ✅ | ✅ | – |
+| WA37 | nav | `/login/verify` | anon | the sixth digit fires one verifyOtp (signup or email) and signs in at ?next= or the role landing; a wrong code clears the field and the next one works | – | – | n/a | ✅ | ✅ | ✅ | – |
+| WA38 | nav | `/login/verify` | anon | "Send a new code" is held 60 s with a countdown, then resends and restarts it; "Wrong email? Change it" goes back to the code page | OTP mail | – | n/a | ✅ | ✅ | ✅ | – |
 
 </details>
 
@@ -677,7 +685,7 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 | WC07 | nav | `/login` | anon | "Sign in" link (signed out) → /login | – | – | n/a | ✅ | ✅ | – | – |
 | WC08 | nav | `/toy-library` | P | "My SPLAT" link with initials and unread badge → /dashboard | – | header unread badge | P | ✅ | ✅ | ✅ | – |
 | WC09 | nav | `/login` | anon | footer columns: every link (Learn, 3D Printing, Get Involved, Impact and About, Legal) resolves to a page | – | – | n/a | ✅ | ✅ | – | – |
-| WC10 | nav | `/auth/confirmed` | anon | gate pages (/auth/*, /onboarding/*) render bare: no header, footer or dock, still a main landmark and the skip link | – | – | n/a | ✅ | ✅ | – | – |
+| WC10 | nav | `/onboarding/contributor-terms` | anon | gate pages (/onboarding/*) render bare: no header, footer or dock, still a main landmark and the skip link | – | – | n/a | ✅ | ✅ | – | – |
 | WC11 | nav | `/login` | anon | "Skip to main content" → focuses the main landmark | – | – | n/a | ✅ | ✅ | – | – |
 | WC12 | nav | `/toy-library/[id]` | P | "Back to My SPLAT" dock on public pages → /dashboard; absent when signed out | – | – | n/a | ✅ | ✅ | – | – |
 | WC13 | nav | `/toy-library` | P | dock on /library and /toy-library opens a corner menu of that page's actions → their pages | – | – | n/a | ✅ | ✅ | – | – |
