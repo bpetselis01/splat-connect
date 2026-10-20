@@ -64,24 +64,24 @@ What stays fixed:
 - `packages/web/components/coming-soon.tsx` — remove the NotifyForm import and the `featureKey` branch
 - `packages/web/lib/public-nav.ts` — drop `featureKey` from 'soon' items and `SCAFFOLD_KEYS`' notify use (keep the nav model otherwise)
 - `packages/api/src/routes/public.ts` — delete `publicRoutes.post('/notify')`, `NOTIFY_FEATURE_KEYS`, `EMAIL_RE` if unused elsewhere
-- `supabase/migrations/140_drop_notify_signups.sql` — `drop table if exists public.notify_signups` (RLS and grants go with it)
+- `supabase/migrations/140_drop_notify_signups.sql` — NOT in this unit. The table may hold real addresses people gave on hosted; dropping it is a one-way door. It stays until Byron confirms hosted `notify_signups` is empty or exported, then a separate migration drops it (see Planning-time unknowns)
 - `packages/web/tests/unit/components/notify-form.test.tsx` — delete; `coming-soon.test.tsx` and `scaffold-pages.test.tsx` — drop the NotifyForm cases
 - `packages/api/tests/integration/public/notify.test.ts` — delete
 - `scripts/check-schema-guards.sh` — remove any `notify_signups` probe (grep first)
 
-**Approach:** Delete from the client inward; run `pnpm --filter @splat-connect/api test:unit` to confirm the route-coverage ratchet has nothing to say (a deleted route drops out). The migration is a plain drop; `db:check` and `db:guards` must stay green locally after `supabase db reset`.
+**Approach:** Delete from the client inward; run `pnpm --filter @splat-connect/api test:unit` to confirm the route-coverage ratchet has nothing to say (a deleted route drops out). The table stays in this unit; nothing reads or writes it once the route is gone, and `db:guards` keeps probing it until the follow-up migration drops it.
 
 **Patterns:** migrations 050 (`archived_at` drop) for a column/table removal with the guard script updated in the same change.
 
 **Test scenarios:**
 - [ ] Happy path: `POST /api/public/notify` answers 404 (one line in `tests/integration/public/public-404.test.ts` or the nearest existing 404 test)
 - [ ] Nil/empty input: a 'soon' nav item without `featureKey` renders the same (nav tests green)
-- [ ] Error path: `supabase db reset` applies 140 on a database that never had the table (`if exists`)
-- [ ] Edge case: `scripts/check-schema-guards.sh` passes with no `notify_signups` reference
+- [ ] Error path: an insert into `notify_signups` by the anon role now has no route to reach it; `db:guards` still green with the table present
+- [ ] Edge case: `scripts/check-schema-guards.sh` keeps its `notify_signups` probe until the follow-up migration
 
 **Verification:** api unit + integration green; `pnpm db:check` and `pnpm db:guards` green; web unit green.
 
-**Planning-time unknowns:** Deferred — whether `EMAIL_RE` has another user in `public.ts` (grep decides; keep if so).
+**Planning-time unknowns:** Resolve Before Planning — Byron confirms whether hosted `notify_signups` holds rows (export them if so); only then a separate migration drops the table and the guard probe. Deferred — whether `EMAIL_RE` has another user in `public.ts` (grep decides; keep if so).
 
 ### Unit 3: Delete DELETE /tutorials/:id/build
 
@@ -154,7 +154,7 @@ What stays fixed:
 **Dependencies:** U4
 
 **Files:**
-- `packages/api/src/routes/toy-transactions.ts` — `POST /:id/reject`: require `reason` (1–500) for every type, not only print
+- `packages/api/src/routes/toy-transactions.ts` — `POST /:id/reject`: require `reason` (1–500) for every type, not only print; the 400 bodies are `{ error: 'reason_required' }` and `{ error: 'reason_too_long', max: 500 }`
 - `packages/web/components/toy-transaction-thread.tsx` — the Decline button opens the reason form for all kinds; the rejected state renders `tx.decline_reason` under "This request was declined."
 - `packages/mobile/components/exchanges/thread-screen.tsx` and `packages/mobile/components/builds/build-thread-screen.tsx` — a reason sheet before `reject`; render `decline_reason` in the declined state (print's `job-screen.tsx` already does)
 - `packages/api/tests/integration/toy-transactions/reject-withdraw.test.ts` — reject without a reason → 400 for gift/swap/build; with a reason → stored and shown in the system message and notification body
@@ -171,6 +171,7 @@ What stays fixed:
 - [ ] Nil/empty input: empty or whitespace reason → 400 `reason required`, form shows the field error
 - [ ] Error path: 501-character reason → 400, the field shows the limit
 - [ ] Edge case: a declined thread created before this change (no `decline_reason`) renders the plain "declined" line without an empty quote block
+- [ ] Edge case: Decline submitted twice (double-click or two tabs) → the second call gets 409 and the form shows "This request was already declined", not a stuck spinner
 
 **Verification:** api integration green; web e2e exchanges green; whole mobile `npx jest` green; mobile e2e exchanges green; `pnpm test:journeys` 0 gaps.
 
@@ -185,7 +186,7 @@ What stays fixed:
 **Dependencies:** U4 (the pages call the module; the component renders kinds)
 
 **Files:**
-- `supabase/migrations/141_admin_thread_messages.sql` — `toy_transaction_messages.kind` CHECK gains `'admin'`
+- `supabase/migrations/140_admin_thread_messages.sql` — `toy_transaction_messages.kind` CHECK gains `'admin'`
 - `packages/types/src/index.ts` — `ToyTransactionMessageKind = 'system' | 'user' | 'admin'`
 - `packages/api/src/routes/toy-transactions.ts` — `POST /:id/messages`: when the caller is an admin and not a party, insert `kind: 'admin'` and notify both parties; `accept`, `reject`, `withdraw`, `confirm`: an admin who is not a party gets `403 { error: 'admin_cannot_act' }` before the party checks
 - `packages/web/components/exchange-chat.tsx` — render `kind === 'admin'` with a "SPLAT admin" label and its own bubble style
@@ -289,7 +290,7 @@ What stays fixed:
 - `packages/api/tests/unit/lib/terms.test.ts` — the three outcomes
 - `scripts/journeys/journeys.json` — existing api-layer rows for these writes get `"terms gate"` in `element` where room; new row WA30 (web: a gated write without terms → 403 → terms page → retry)
 
-**Approach:** Middleware per route (`route.post('/path', requireAuth, requireContributorTerms, handler)`), never router-wide, so reads and the agreements route itself stay open. The e2e seed's `acceptTerms` already stamps the current version for test users; tests that want the 403 create a user without it.
+**Approach:** Middleware per route (`route.post('/path', requireAuth, requireContributorTerms, handler)`), never router-wide, so reads and the agreements route itself stay open. The e2e seed's `acceptTerms` already stamps the current version for test users; tests that want the 403 create a user without it. Blast radius, accepted by the fail-closed decision: an outage of `user_agreements` blocks every gated write for everyone on both clients; each refusal logs `[terms] lookup failed route= user=` so the outage is visible in API logs. Deploy order: this unit's API deploy waits for the mobile release that carries U10, otherwise older app builds show a raw 403 on every exchange write.
 
 **Patterns:** the two existing checks in `tutorials.ts`; `requireAuth` middleware shape in `packages/api/src/middleware`.
 
@@ -320,7 +321,7 @@ What stays fixed:
 - `packages/mobile/tests/e2e/auth.spec.ts` — A15: same on mobile
 - `scripts/journeys/journeys.json` — WA30, A15; `packages/types/src/pending.ts` — `terms-gate-fails-open` shipped
 
-**Approach:** One detection point per client, where the API error is already turned into a thrown error. Retrying the original write after acceptance is not automatic: the member returns to the page and the form state is what it was (web server-action pages re-render; mobile screens keep their state), which matches how the web terms gate already behaves.
+**Approach:** One detection point per client, where the API error is already turned into a thrown error. Retrying the original write after acceptance is not automatic: the member returns to the page and resubmits. On web a server-action redirect drops client state, so the thread composer (`exchange-chat.tsx`) saves its draft to `sessionStorage` under `draft:<threadId>` before the redirect and restores it on return, in a try/catch (storage can be unavailable); mobile screens keep their state across the terms screen.
 
 **Patterns:** `(auth)/_layout.tsx` `takeReturnTo()`; the web terms page's `next` handling.
 
@@ -336,7 +337,7 @@ What stays fixed:
 
 ## Piece 2: notifications (R10–R14, R19)
 
-Migration note: U11–U13 share `supabase/migrations/142_handoff_notifications.sql`, written once in U11 with all 15 types (the CHECK list is re-stated whole), so the hosted push happens once; U12 and U13 only add code. The `notifications.mjs` matrix accepts a type with a migration creator and no API writer yet? No: a type with no creator is an error unless in `DEAD_ALLOWED`. So the migration lists all 15, but the TypeScript union gains a group per commit, and the migration must land in the same commit as the first group. Hosted order: migration 142 before the API deploy of U11.
+Migration note: U11–U13 share `supabase/migrations/141_handoff_notifications.sql`, written once in U11 with all 15 types (the CHECK list is re-stated whole), so the hosted push happens once; U12 and U13 only add code. `notifications.mjs` treats a type with no creator as an error unless it is in `DEAD_ALLOWED`, and it reads creators from migrations that insert, not from CHECK lists, so a type listed in the CHECK but absent from the TypeScript union is invisible to it: the migration can list all 15 while the union gains a group per commit. The migration lands in the same commit as the first group. Hosted order: migration 141 before the API deploy of U11.
 
 ### Unit 11: Exchange-outcome notifications
 
@@ -347,7 +348,7 @@ Migration note: U11–U13 share `supabase/migrations/142_handoff_notifications.s
 **Dependencies:** none (first notification unit; carries the migration)
 
 **Files:**
-- `supabase/migrations/142_handoff_notifications.sql` — CHECK gains all 15 new types
+- `supabase/migrations/141_handoff_notifications.sql` — CHECK gains all 15 new types
 - `packages/types/src/index.ts` — the 7 union members, `NOTIFICATION_BUCKET` (`exchanges` except the two `org_request_*` → `organisations`), `COPY`; remove the `PENDING(silent-handoffs)` line only in U13
 - `packages/web/components/notifications-list.tsx` — `ICON` and `linkFor` (recycling → `/dashboard/recycling` member page; org request → `/dashboard/organisation` or `/get-involved/organisations/request`; test print → `/dashboard/printing`; handover → the thread)
 - `packages/mobile/lib/notifications.ts` — `linkFor` for the same
@@ -356,7 +357,7 @@ Migration note: U11–U13 share `supabase/migrations/142_handoff_notifications.s
 - `packages/web/tests/unit/lib/notification-bucket.test.ts`, `packages/mobile/tests/unit/lib/notifications-types.test.ts`, `packages/web/tests/unit/components/notifications-list.test.tsx`, `scripts/check-schema-guards.sh` — the lists
 - `scripts/journeys/journeys.json` — `notifies` added to the existing write rows (leader recycling decision WB-row, admin org-request WM-rows, admin test-print WM-row, confirm rows WX09/WX19/WR16/X-rows) and one e2e per client tagged with one of them that asserts the inbox line (web `tests/e2e/organisation/recycling.spec.ts` + admin specs; mobile `recycling`/`admin` specs)
 
-**Approach:** Types and migration first (compile error guides the tables), then the writers with the `notify(rows, label)` wrapper from `organizations.ts` moved to `packages/api/src/lib/notify.ts` so `admin.ts` and `toy-transactions.ts` share it, then tests, then journeys. Subject columns: recycling and org-request rows use `org_id` + `body` (Byron 2026-10-20), test print uses `org_id` or none with `body`, handover uses `toy_transaction_id`.
+**Approach:** Types and migration first (compile error guides the tables), then the writers with the `notify(rows, label)` wrapper from `organizations.ts` moved to `packages/api/src/lib/notify.ts` so `admin.ts` and `toy-transactions.ts` share it, then tests, then journeys. The wrapper never throws (a notification must not fail the write), so its one failure line is stable and greppable: `[notify] insert failed type=<type> code=<pg code> label=<label>`; U14 greps for it after the hosted deploy. Subject columns: recycling and org-request rows use `org_id` + `body` (Byron 2026-10-20), test print uses `org_id` or none with `body`, handover uses `toy_transaction_id`.
 
 **Patterns:** `138_event_change_notifications.sql` + `event-change-notifications.test.ts` + rows WB20/L35 (the exact shape, including the deploy-order comment).
 
@@ -443,12 +444,12 @@ Migration note: U11–U13 share `supabase/migrations/142_handoff_notifications.s
 - `docs/plans/decisions-build-plan.md` — this section's checklist ticked
 - memory `hosted-migrations-pending` — updated by the session that pushes
 
-**Approach:** Byron pushes 140–142 with the recipe in the `hosted-migrations-pending` memory; `pnpm db:check` against hosted green; then deploy the API. No code.
+**Approach:** Byron pushes 140–141 with the recipe in the `hosted-migrations-pending` memory; `pnpm db:check` against hosted green; then deploy the API; after the deploy, grep the API logs for `[notify] insert failed` and `[terms] lookup failed` (zero expected). The U9 API change ships only after the mobile release carrying U10 is live. No code.
 
 **Patterns:** the hosted push recipe.
 
 **Test scenarios:**
-- [ ] Happy path: hosted `db:check` reports level 142
+- [ ] Happy path: hosted `db:check` reports level 141
 - [ ] Nil/empty input: no notifications of the new types exist before the push (the CHECK would have refused them)
 - [ ] Error path: push fails on a guard → stop, nothing deployed
 - [ ] Edge case: an API deploy before the push → inserts logged as CHECK failures, writes still succeed (the wrapper) — visible in API logs
@@ -530,7 +531,7 @@ Migration note: U11–U13 share `supabase/migrations/142_handoff_notifications.s
 **Files:**
 - `packages/web/app/login/forgot/page.tsx` — email → `resetPasswordForEmail`; always continues to `/login/reset?email=` except offline/rate-limited (mobile's no-enumeration rule)
 - `packages/web/app/login/reset/page.tsx` — 6-digit `CodeInput` + password (min 6 checked before the code is spent) → `verifyOtp({type:'recovery'})` then `updateUser({password})` → `?next=` or the role landing (reuse the login page's landing logic, lifted into `lib/auth-landing.ts`)
-- `packages/web/components/auth-shell.tsx` — `CodeInput` part (mirrors mobile's)
+- `packages/web/components/auth-shell.tsx` — `CodeInput` part (mirrors mobile's): `inputmode="numeric"`, `autocomplete="one-time-code"`, a visible label, the error in an `aria-live="polite"` region; disabled while a verify is pending so auto-submit cannot fire twice
 - `packages/web/app/login/page.tsx` — "Forgot password?" link carrying the typed email
 - `packages/web/tests/unit/app/login-forgot.test.tsx`, `login-reset.test.tsx` — WA31–WA34
 - `packages/web/tests/e2e/auth/recovery.spec.ts` — WA31–WA34 with the Mailpit `latestCode` helper lifted from `account-deletion.spec.ts` into `tests/e2e/helpers.ts` (or `supabase/e2e-seed.ts` so mobile shares it)
@@ -575,6 +576,7 @@ Migration note: U11–U13 share `supabase/migrations/142_handoff_notifications.s
 - [ ] Nil/empty input: email with no account → no-account copy (`shouldCreateUser:false` error)
 - [ ] Error path: expired/wrong code → bad-code copy; a second wrong code does not lock the field
 - [ ] Edge case: resend before 60 s is disabled with the countdown; after, it sends and restarts the countdown
+- [ ] Edge case: the sixth digit on a slow link fires one `verifyOtp`; the input is disabled until it resolves (spy asserts a single call)
 
 **Verification:** web unit + e2e green; journeys 0 gaps.
 
