@@ -978,9 +978,12 @@ toyTransactions.post('/:id/reject', async (c) => {
     .from('toy_transactions')
     .update({ status: 'rejected', decline_reason: reason, updated_at: now })
     .eq('id', tx.id)
+    // The race guard: of two declines at once, only the first finds it open.
+    .eq('status', 'requested')
     .select()
-    .single()
+    .maybeSingle()
   if (error) return c.json({ error: error.message }, 500)
+  if (!updated) return c.json({ error: 'This request is no longer open' }, 409)
 
   await admin.from('toy_transaction_messages').insert({
     transaction_id: tx.id,
