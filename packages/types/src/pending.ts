@@ -257,7 +257,6 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: admins can open any thread and post an admin-labelled message, but cannot accept, reject, confirm or withdraw for a member. Whether to hide the party buttons from admins and exempt admins from the terms gate.",
-    question: "What may an admin do inside a member's Exchange thread? (requirements doc Q11)",
     shipped: true,
   },
   'admin-status-validation': {
@@ -287,7 +286,6 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: hoist sendMessage/accept/reject/withdraw/confirm into one module of plain functions taking args; every decline carries a reason the other party sees. Whether to hoist the actions into one place and send the decline reason from every thread page.",
-    question: "Inline server actions (`sendMessage`, `accept`, `reject`, `withdraw`, `confirm`) are duplicated in three thread pages; only the print page sends a decline reason. Hoist and send the reason everywhere?",
     shipped: true,
   },
   'small-inconsistencies': {
