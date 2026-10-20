@@ -9,7 +9,7 @@ import { deleteAccount } from '../account-deletion.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { notifyTutorialReviewed } from '../review-notifications.js'
 import { notify } from '../notify.js'
-import { ORG_COLUMNS } from './organizations.js'
+import { ORG_COLUMNS, orgName } from './organizations.js'
 import { systemMessage, removeParticipant, withPhotoUrl } from './toy-ideas.js'
 import type { AuthVariables } from '../middleware/auth.js'
 import { notificationBody, readLearnCourse, type AdminCounts, type TutorialStatus } from '@splat-connect/types'
@@ -203,6 +203,14 @@ admin.patch('/organizations/:id', async (c) => {
   return c.json(data[0])
 })
 
+/** Tell one person an admin made them, or stopped them being, a leader (142). */
+async function notifyLeader(type: 'leader_added' | 'leader_removed', orgId: string, userId: string) {
+  await notify(
+    [{ recipient_id: userId, type, org_id: orgId, actor_name: (await orgName(orgId)) ?? 'an organisation' }],
+    type
+  )
+}
+
 admin.post('/organizations/:orgId/leaders', async (c) => {
   const body = await c.req.json<{ user_id?: string }>()
   if (!body.user_id) return c.json({ error: 'user_id is required' }, 400)
@@ -223,6 +231,7 @@ admin.post('/organizations/:orgId/leaders', async (c) => {
     if (error.code === '23505') return c.json({ ok: true }, 200)
     return c.json({ error: error.message }, 500)
   }
+  await notifyLeader('leader_added', c.req.param('orgId'), body.user_id)
   return c.json(data, 201)
 })
 
@@ -236,6 +245,7 @@ admin.delete('/organizations/:orgId/leaders/:userId', async (c) => {
     .select('id')
   if (error) return c.json({ error: error.message }, 500)
   if (!data.length) return c.json({ error: 'not a leader of that organisation' }, 404)
+  await notifyLeader('leader_removed', c.req.param('orgId'), c.req.param('userId'))
   return c.body(null, 204)
 })
 

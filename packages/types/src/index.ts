@@ -1796,6 +1796,9 @@ export type NotificationType =
   | 'test_print_passed'
   | 'test_print_failed'
   | 'handover_confirmed'
+  | 'leader_added'
+  | 'leader_removed'
+  | 'org_event_deleted'
 
 /** Which My SPLAT card a notification's badge belongs to. */
 export type NotificationBucket = 'tutorials' | 'exchanges' | 'challenges' | 'organisations'
@@ -1873,6 +1876,9 @@ const NOTIFICATION_BUCKET = {
   test_print_passed: 'exchanges',
   test_print_failed: 'exchanges',
   handover_confirmed: 'exchanges',
+  leader_added: 'organisations',
+  leader_removed: 'organisations',
+  org_event_deleted: 'organisations',
 } satisfies Record<NotificationType, NotificationBucket>
 
 /** Every notification type, for iteration at runtime — the union alone is compile-time only. */
@@ -1965,6 +1971,10 @@ export const COPY: Record<NotificationType, (n: Notification) => string> = {
   test_print_passed: (n) => `The test print for ${n.actor_name} passed`,
   test_print_failed: (n) => `The test print for ${n.actor_name} didn't pass`,
   handover_confirmed: (n) => `${n.actor_name} confirmed the handover of ${toy(n)}`,
+  leader_added: (n) => `You now lead ${n.actor_name}`,
+  leader_removed: (n) => `You no longer lead ${n.actor_name}`,
+  // The title rides in body, which is the card's second line: the event row is gone.
+  org_event_deleted: (n) => `${n.actor_name} deleted an event you registered for`,
 }
 
 // A type the database allows but this build has no line for — a newer API,

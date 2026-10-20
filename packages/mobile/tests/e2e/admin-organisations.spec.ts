@@ -1,6 +1,7 @@
 import { test, expect, type Page } from '@playwright/test'
 import { addLeader, adminClient, createContributor, createOrg, renameProfile, uniqueTitle } from './helpers'
 import { cardCount, expectCard, signInAdmin } from './admin-fixtures'
+import { partyPage } from './org-fixtures'
 
 const ORGS_CARD = 'Organisations'
 // GET /api/organizations merges its extra columns with one .in(ids) read that stops working
@@ -108,7 +109,7 @@ test('Q35 Save details rewrites the name and description', async ({ page }) => {
   await expect(orgRow(page, renamed)).toBeVisible()
 })
 
-test('Q36 Add a leader picks an account and lists it under Leaders', async ({ page }) => {
+test('Q36 Add a leader picks an account and lists it under Leaders, and tells them in their inbox', async ({ page, browser, baseURL }) => {
   const first = await namedPerson('Existing Leader')
   const second = await namedPerson('Added Leader')
   const org = await seedOrg({ leader: first.id })
@@ -121,6 +122,15 @@ test('Q36 Add a leader picks an account and lists it under Leaders', async ({ pa
   await expect(page.getByText('Leaders (2)')).toBeVisible()
   await expect(page.getByRole('button', { name: `Remove ${second.name}` })).toBeVisible()
   expect(await leadersDb(org.id)).toEqual([first.id, second.id].sort())
+
+  // leader_added
+  const secondPage = await partyPage(browser, baseURL, second)
+  try {
+    await secondPage.goto('/inbox')
+    await expect(secondPage.getByText(`You now lead ${org.name}`)).toBeVisible()
+  } finally {
+    await secondPage.context().close()
+  }
 })
 
 test('Q37 Remove on a leader drops them from the organisation', async ({ page }) => {

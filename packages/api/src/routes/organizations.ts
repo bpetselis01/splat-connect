@@ -30,6 +30,7 @@ import {
   RECYCLING_MACHINES,
   RECYCLING_FORMS,
   RECYCLING_GIVES,
+  notificationBody,
 } from '@splat-connect/types'
 import type { AuthVariables } from '../middleware/auth.js'
 import { sendEmail } from '../mailer.js'
@@ -566,7 +567,7 @@ async function leaderIds(orgId: string): Promise<string[]> {
   return (data ?? []).map((r) => r.user_id as string)
 }
 
-async function orgName(orgId: string): Promise<string | null> {
+export async function orgName(orgId: string): Promise<string | null> {
   const { data } = await createAdminClient().from('organizations').select('name').eq('id', orgId).maybeSingle()
   return (data?.name as string | undefined) ?? null
 }
@@ -617,34 +618,49 @@ function movedOrRelocated(before: EventWhenWhere, after: EventWhenWhere): boolea
   })
 }
 
+/** More registrations than this are not told: one insert per recipient has to stay a sane request. */
+const MAX_REGISTRANTS_NOTIFIED = 1000
+
+/** Accounts with a live registration for the event, minus the leader acting. */
+async function registrantIds(eventId: string, actorId: string): Promise<string[]> {
+  const { data, error } = await createAdminClient()
+    .from('org_event_registrations')
+    .select('user_id')
+    .eq('event_id', eventId)
+    .is('cancelled_at', null)
+    .not('user_id', 'is', null)
+    .limit(MAX_REGISTRANTS_NOTIFIED + 1)
+  if (error) {
+    console.error(`[organizations] registrant lookup failed event=${eventId}:`, error.message)
+    return []
+  }
+  const ids = [...new Set((data ?? []).map((r) => r.user_id as string))].filter((id) => id !== actorId)
+  if ((data ?? []).length > MAX_REGISTRANTS_NOTIFIED) {
+    console.error(`[organizations] event ${eventId} has over ${MAX_REGISTRANTS_NOTIFIED} registrations; notifying the first ${MAX_REGISTRANTS_NOTIFIED}`)
+    return ids.slice(0, MAX_REGISTRANTS_NOTIFIED)
+  }
+  return ids
+}
+
 /**
- * The people registered for an event, told it moved or was cancelled (138).
- * Only registrations with an account and not themselves cancelled; the leader
- * who made the change is left out.
+ * The people registered for an event, told it moved, was cancelled (138) or was
+ * deleted (142). A deleted event cascades its notifications away, so that one
+ * carries org_id and the title in body, and its recipients are read before the
+ * delete and passed in.
  */
 async function notifyRegistrants(
   event: { id: string; org_id: string; title: string },
   actorId: string,
-  type: 'org_event_changed' | 'org_event_cancelled'
+  type: 'org_event_changed' | 'org_event_cancelled' | 'org_event_deleted',
+  recipients?: string[]
 ) {
-  const [{ data }, name] = await Promise.all([
-    createAdminClient()
-      .from('org_event_registrations')
-      .select('user_id')
-      .eq('event_id', event.id)
-      .is('cancelled_at', null)
-      .not('user_id', 'is', null),
-    orgName(event.org_id),
-  ])
-  const recipients = [...new Set((data ?? []).map((r) => r.user_id as string))].filter((id) => id !== actorId)
+  const [ids, name] = await Promise.all([recipients ?? registrantIds(event.id, actorId), orgName(event.org_id)])
+  const subject =
+    type === 'org_event_deleted'
+      ? { org_id: event.org_id, body: notificationBody(event.title) }
+      : { org_event_id: event.id, tutorial_title: event.title }
   await notify(
-    recipients.map((recipient_id) => ({
-      recipient_id,
-      type,
-      org_event_id: event.id,
-      tutorial_title: event.title,
-      actor_name: name ?? 'An organisation',
-    })),
+    ids.map((recipient_id) => ({ recipient_id, type, ...subject, actor_name: name ?? 'An organisation' })),
     type
   )
 }
@@ -1260,6 +1276,15 @@ organizations.patch('/:orgId/events/:id', async (c) => {
 
 organizations.delete('/:orgId/events/:id', async (c) => {
   const supabase = createUserClient(c.get('token'))
+  // Read before the delete: the registrations and the title go with the row (142).
+  const { data: event, error: readError } = await createAdminClient()
+    .from('org_events')
+    .select('id, org_id, title')
+    .eq('id', c.req.param('id'))
+    .eq('org_id', c.req.param('orgId'))
+    .maybeSingle()
+  if (readError) console.error('[organizations] event lookup before delete failed:', readError.message)
+  const recipients = event ? await registrantIds(event.id, c.get('userId')) : []
   const { data, error } = await supabase
     .from('org_events')
     .delete()
@@ -1269,6 +1294,8 @@ organizations.delete('/:orgId/events/:id', async (c) => {
     .maybeSingle()
   if (error) return c.json({ error: error.message }, 500)
   if (!data) return c.json({ error: 'No such event of yours.' }, 404)
+  // Only after the delete succeeded, so nobody hears about an event that still exists.
+  if (event) await notifyRegistrants(event, c.get('userId'), 'org_event_deleted', recipients)
   return c.json({ id: (data as { id: string }).id })
 })
 

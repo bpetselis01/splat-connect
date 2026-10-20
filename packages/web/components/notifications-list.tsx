@@ -71,6 +71,9 @@ const ICON: Record<NotificationType, [Glyph, string]> = {
   test_print_passed: [Check, 'var(--tok)'],
   test_print_failed: [Undo, 'var(--tbad)'],
   handover_confirmed: [Handshake, 'var(--tmint)'],
+  leader_added: [Building, 'var(--tok)'],
+  leader_removed: [Building, 'var(--b100)'],
+  org_event_deleted: [Undo, 'var(--tbad)'],
 }
 
 function linkFor(n: Notification, isAdmin: boolean): string {
@@ -95,6 +98,8 @@ function linkFor(n: Notification, isAdmin: boolean): string {
   if (n.type === 'recycling_received' || n.type === 'recycling_declined') return '/get-involved/recycling'
   if (n.type === 'org_request_approved') return '/dashboard/organisation'
   if (n.type === 'org_request_declined') return '/get-involved/organisations/request'
+  if (n.type === 'leader_added') return '/dashboard/organisation'
+  if ((n.type === 'leader_removed' || n.type === 'org_event_deleted') && n.org_id) return `/organizations/${n.org_id}/public`
   if (n.type === 'test_print_passed' || n.type === 'test_print_failed') return '/dashboard/printers'
   // The two review-queue types must be answered BEFORE the tutorial_id branch
   // below: their recipient is a reviewer, not a contributor, and

@@ -51,6 +51,9 @@ describe('COPY', () => {
 // Types whose row is the whole message.
 const STAYS_IN_INBOX = new Set<NotificationType>(['collaborator_invited', 'org_request_declined'])
 
+// Types whose subject is an organisation (the rest of 142's carry none, or a transaction).
+const ORG_SUBJECT = new Set<NotificationType>(['org_thanked', 'leader_added', 'leader_removed', 'org_event_deleted'])
+
 describe('linkFor', () => {
   it('opens Ask first for a question about an unclaimed build', () => {
     expect(linkFor(notification({ type: 'build_question', toy_transaction_id: 'b1' }))).toBe('/exchanges/build/ask/b1')
@@ -146,9 +149,9 @@ describe('linkFor', () => {
         idea_id: bucket === 'challenges' ? 'i1' : null,
         // 077's four each carry their own subject.
         org_conversation_id: type === 'org_message' ? 'c1' : null,
-        org_event_id: type.startsWith('org_event_') ? 'e1' : null,
+        org_event_id: type.startsWith('org_event_') && type !== 'org_event_deleted' ? 'e1' : null,
         org_story_id: type === 'org_story_published' ? 's1' : null,
-        org_id: type === 'org_thanked' ? 'o1' : null,
+        org_id: ORG_SUBJECT.has(type) ? 'o1' : null,
       })
       // An invite's destination is the inbox itself, where Accept / Decline live.
       // A declined organisation request has no mobile screen to open: the form

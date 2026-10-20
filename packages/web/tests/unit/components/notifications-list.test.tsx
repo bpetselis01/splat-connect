@@ -273,6 +273,9 @@ describe('NotificationsList', () => {
     ['test_print_passed', { actor_name: 'Pixel' }, 'The test print for Pixel passed', '/dashboard/printers'],
     ['test_print_failed', { org_id: 'o1', actor_name: 'Pixel' }, 'The test print for Pixel didn\'t pass', '/dashboard/printers'],
     ['handover_confirmed', { toy_transaction_id: 'tx1', toy_name: 'Switch car', actor_name: 'Sam' }, 'Sam confirmed the handover of Switch car', '/dashboard/exchanges/tx1'],
+    ['leader_added', { org_id: 'o1', actor_name: 'Northbank' }, 'You now lead Northbank', '/dashboard/organisation'],
+    ['leader_removed', { org_id: 'o1', actor_name: 'Northbank' }, 'You no longer lead Northbank', '/organizations/o1/public'],
+    ['org_event_deleted', { org_id: 'o1', actor_name: 'Northbank', body: 'Build day' }, 'Northbank deleted an event you registered for', '/organizations/o1/public'],
   ] as const)('WD38 renders %s and routes it by its subject', async (type, fields, copy, href) => {
     render(
       <NotificationsList
