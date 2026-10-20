@@ -11,7 +11,7 @@ test('WT40 Start a guide goes to the upload form for a Member and to log in for 
   // Signed out, /upload sends the visitor to log in.
   await page.goto('/get-involved/submit-a-tutorial')
   await page.getByRole('link', { name: 'Start a guide' }).click()
-  await expect(page).toHaveURL(/\/login$/)
+  await expect(page).toHaveURL(/\/login\?next=%2Fupload$/)
 
   const member = await createContributor()
   await acceptTerms(member.id)

@@ -98,13 +98,14 @@ export function ToyTransactionThread({
     senderId === tx.requester_id ? tx.requester_name : tx.owner_name
   const otherPartyName = isOwner ? tx.requester_name : tx.owner_name
 
-  async function run(fn: () => Promise<void>) {
+  async function run(fn: () => Promise<void>, rethrow = false) {
     setBusy(true)
     setError(null)
     try {
       await fn()
-    } catch {
+    } catch (err) {
       setError('Something went wrong. Please try again.')
+      if (rethrow) throw err
     } finally {
       setBusy(false)
     }
@@ -597,7 +598,8 @@ export function ToyTransactionThread({
           nameFor={nameFor}
           canSend={open}
           busy={busy}
-          onSend={(body) => run(() => onSendMessage(body))}
+          onSend={(body) => run(() => onSendMessage(body), true)}
+          draftKey={tx.id}
           variant={board ? 'board' : undefined}
           head={chatHead}
         />

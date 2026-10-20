@@ -19,6 +19,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import type { Route } from 'next'
 import { AuthStage } from '@/components/auth-shell'
+import { authUrl } from '@/lib/safe-next-path'
 
 const REDIRECT_SECONDS = 3
 
@@ -30,7 +31,7 @@ function EmailConfirmed() {
   const [secondsLeft, setSecondsLeft] = useState(REDIRECT_SECONDS)
   // The button and the countdown go to the same place — the button used to
   // drop ?next=, so not waiting cost you the page you started on.
-  const loginHref = (next ? `/login?next=${encodeURIComponent(next)}` : '/login') as Route
+  const loginHref = authUrl('login', next) as Route
 
   useEffect(() => {
     const interval = setInterval(() => {

@@ -119,7 +119,7 @@ function HowASwitchWorks() {
 /** Gated per page, not per layout: see components/learn-gate.tsx. */
 export default function GatedHowASwitchWorks() {
   return (
-    <LearnGate>
+    <LearnGate path="/learn/how-a-switch-works">
       <HowASwitchWorks />
     </LearnGate>
   )

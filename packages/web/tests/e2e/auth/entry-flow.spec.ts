@@ -10,7 +10,7 @@ test.describe('the entry point', () => {
   }) => {
     await page.goto('/')
     await page.getByRole('link', { name: 'Sign in' }).click()
-    await expect(page).toHaveURL(/\/login$/)
+    await expect(page).toHaveURL(/\/login\?next=%2F$/)
   })
 
   test('WA07 the login page links onward to signup', async ({ page }) => {

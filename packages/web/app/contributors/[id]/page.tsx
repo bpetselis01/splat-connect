@@ -22,6 +22,7 @@ import { getCapabilities } from '@/lib/capabilities'
 import { safePhotoSrc } from '@/lib/photo-src'
 import { initials, monthHeading, nextBadgeLine, shortDate } from '@splat-connect/types'
 import { formatBuildTime, type ContributorProfile } from '@splat-connect/types'
+import { authUrl } from '@/lib/safe-next-path'
 
 const DIFFICULTY_LABEL = { easy: 'Easy', medium: 'Medium', hard: 'Hard' } as const
 const H2 = 'font-display text-2xl font-extrabold text-ink'
@@ -95,7 +96,7 @@ export default async function ContributorPage({
   const askHref = (
     signedIn
       ? `/get-involved/requests/new?maker=${id}`
-      : '/signup?next=' + encodeURIComponent(`/get-involved/requests/new?maker=${id}`)
+      : authUrl('signup', `/get-involved/requests/new?maker=${id}`)
   ) as Route
 
   return (

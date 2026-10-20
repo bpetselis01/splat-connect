@@ -11,6 +11,7 @@
  * The result shows inline beside the button: the public guide page mounts no
  * ToastProvider, so a toast here was silent.
  */
+import { authUrl } from '@/lib/safe-next-path'
 import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { HandHeart } from '@phosphor-icons/react/dist/ssr'
@@ -50,7 +51,7 @@ export function ThanksButton({
 
   async function thank() {
     if (!signedIn) {
-      router.push(`/signup?next=${encodeURIComponent(pathname)}&reason=thanks`)
+      router.push(authUrl('signup', pathname + window.location.search, { reason: 'thanks' }))
       return
     }
     setPending(true)

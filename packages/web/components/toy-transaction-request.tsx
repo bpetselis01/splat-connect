@@ -19,6 +19,7 @@
  * Related files:
  * - app/toy-library/[id]/request/page.tsx: where this goes
  */
+import { authUrl } from '@/lib/safe-next-path'
 import Link from 'next/link'
 import type { Route } from 'next'
 import { ArrowsLeftRight, HandHeart, LockSimple } from '@phosphor-icons/react/dist/ssr'
@@ -62,7 +63,7 @@ export function ToyTransactionRequest({
         return (
           <Link
             key={mode}
-            href={(viewerId ? request : `/login?next=${encodeURIComponent(request)}`) as Route}
+            href={(viewerId ? request : authUrl('login', request)) as Route}
             className={`btn ${i === 0 ? 'btn-primary' : 'btn-quiet'} btn-lg btn-block no-underline`}
           >
             {viewerId ? (

@@ -44,7 +44,7 @@ export type {
   PdfDraftApi,
   PdfDraftResult,
 } from './pdf-import'
-export { isApiError, isNetworkError, apiErrorDetail, apiMessage, makeApiClient } from './api-core'
+export { isApiError, isTermsRequired, isNetworkError, apiErrorDetail, apiMessage, makeApiClient } from './api-core'
 export type { ApiError } from './api-core'
 export { dateBadge, shortDate, monthHeading, monthKey, longDate, formatTimeRange, isPast } from './dates'
 import { printRequestExpired } from './printing'

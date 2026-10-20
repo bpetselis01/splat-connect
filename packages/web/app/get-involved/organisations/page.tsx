@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { getCapabilities } from '@/lib/capabilities'
 import { InvolvedIntro, NumberedSteps, TrackCta } from '@/components/involved-page'
+import { authUrl } from '@/lib/safe-next-path'
 
 export const metadata = {
   title: 'For organisations — SPLAT Connect',
@@ -35,7 +36,7 @@ export default async function OrganisationsPage() {
         }
       >
         <Link
-          href={signed ? REQUEST : `/login?next=${encodeURIComponent(REQUEST)}`}
+          href={signed ? REQUEST : authUrl('login', REQUEST)}
           className="btn btn-primary px-[26px]"
         >
           {signed ? 'Start the request' : 'Sign in to continue'}

@@ -13,10 +13,12 @@
  * with a two-line vi.mock.
  */
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
+import { authUrl } from '@/lib/safe-next-path'
 import { getCapabilities, type Capabilities } from '@/lib/capabilities'
 
 export async function requireCapabilities(): Promise<Capabilities> {
   const caps = await getCapabilities()
-  if (!caps) redirect('/login')
+  if (!caps) redirect(authUrl('login', (await headers()).get('x-pathname-search')))
   return caps
 }

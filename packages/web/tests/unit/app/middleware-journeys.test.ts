@@ -51,17 +51,18 @@ beforeEach(() => {
 })
 
 describe('middleware: signed-out visitors', () => {
-  // Q3: the return path is dropped, so a visitor lands on the dashboard after
-  // signing in rather than where they were going.
-  it.each(['/dashboard', '/dashboard/toys', '/upload', '/upload?draft=1', '/notifications'])(
-    'WA23 sends %s to a bare /login with no ?next=',
-    async (path) => {
-      const r = await go(path)
-      expect(r.status).toBe(307)
-      expect(r.location!.pathname).toBe('/login')
-      expect(r.location!.search).toBe('')
-    }
-  )
+  it.each([
+    ['/dashboard', '%2Fdashboard'],
+    ['/dashboard/toys', '%2Fdashboard%2Ftoys'],
+    ['/upload?draft=1', '%2Fupload%3Fdraft%3D1'],
+    ['/notifications', '%2Fnotifications'],
+    ['/dashboard/exchanges/abc?tab=open', '%2Fdashboard%2Fexchanges%2Fabc%3Ftab%3Dopen'],
+  ])('WA23 sends %s to /login carrying the path and query as ?next=', async (path, encoded) => {
+    const r = await go(path)
+    expect(r.status).toBe(307)
+    expect(r.location!.pathname).toBe('/login')
+    expect(r.location!.search).toBe(`?next=${encoded}`)
+  })
 
   it('WA24 sends /admin to /login', async () => {
     const r = await go('/admin/review')
@@ -113,9 +114,10 @@ describe('middleware: the contributor terms gate', () => {
     ['/dashboard', '/dashboard'],
     ['/dashboard/toys/new', '/dashboard/toys/new'],
     ['/upload', '/upload'],
-    ['/upload?draft=1', '/upload'],
+    ['/upload?draft=1', '/upload?draft=1'],
     ['/tutorials/abc/edit', '/tutorials/abc/edit'],
-  ])('WA27 sends %s to the terms gate with next=%s, dropping the query string', async (path, next) => {
+    ['/organizations/o1/message', '/organizations/o1/message'],
+  ])('WA27 sends %s to the terms gate with next=%s, keeping the query string', async (path, next) => {
     const r = await go(path)
     expect(r.status).toBe(307)
     expect(r.location!.pathname).toBe('/onboarding/contributor-terms')
@@ -138,21 +140,20 @@ describe('middleware: the contributor terms gate', () => {
     passes(await go('/tutorials/abc/edit'))
   })
 
-  it('WA27 lets the member through when the lookup fails, and logs it', async () => {
+  it('WA27 blocks the member with a retry flag when the lookup fails, and logs it', async () => {
     state.agreementsError = { message: 'boom' }
-    passes(await go('/dashboard'))
+    const r = await go('/dashboard?tab=a')
+    expect(r.status).toBe(307)
+    expect(r.location!.pathname).toBe('/onboarding/contributor-terms')
+    expect(r.location!.search).toBe('?next=%2Fdashboard%3Ftab%3Da&retry=1')
     expect(console.error).toHaveBeenCalledWith('[middleware] contributor_terms lookup failed:', 'boom')
   })
 
-  // Q4: /organizations is a prefix in the gate, so the public directory bounces a member
-  // who has not accepted, while the same page is open to a signed-out visitor.
-  it.each(['/organizations', '/organizations/o1', '/organizations/o1/message'])(
-    'WA28 sends a member without the terms from %s to the terms gate',
+  it.each(['/organizations', '/organizations/o1', '/organizations/o1/public'])(
+    'WA28 leaves %s open to a signed-in member without the terms',
     async (path) => {
-      const r = await go(path)
-      expect(r.status).toBe(307)
-      expect(r.location!.pathname).toBe('/onboarding/contributor-terms')
-      expect(r.location!.searchParams.get('next')).toBe(path)
+      passes(await go(path))
+      expect(state.agreementFilters).toEqual([])
     }
   )
 

@@ -8,6 +8,7 @@
 
 import { createClient } from '@/lib/supabase/client'
 import { makeApiClient } from '@splat-connect/types'
+import { termsUrl } from '@/lib/safe-next-path'
 
 async function getToken(): Promise<string | null> {
   const supabase = createClient()
@@ -20,4 +21,5 @@ async function getToken(): Promise<string | null> {
 export const browserApiClient = makeApiClient({
   getToken,
   baseUrl: () => process.env.NEXT_PUBLIC_API_URL as string,
+  onTermsRequired: () => window.location.assign(termsUrl(window.location.pathname + window.location.search)),
 })
