@@ -683,7 +683,7 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 | WC07 | nav | `/login` | anon | "Sign in" link (signed out) → /login | – | – | n/a | ✅ | ✅ | – | – |
 | WC08 | nav | `/toy-library` | P | "My SPLAT" link with initials and unread badge → /dashboard | – | header unread badge | P | ✅ | ✅ | ✅ | – |
 | WC09 | nav | `/login` | anon | footer columns: every link (Learn, 3D Printing, Get Involved, Impact and About, Legal) resolves to a page | – | – | n/a | ✅ | ✅ | – | – |
-| WC10 | nav | `/auth/confirmed` | anon | gate pages (/auth/*, /onboarding/*) render bare: no header, footer or dock, still a main landmark and the skip link | – | – | n/a | ✅ | ✅ | – | – |
+| WC10 | nav | `/onboarding/contributor-terms` | anon | gate pages (/onboarding/*) render bare: no header, footer or dock, still a main landmark and the skip link | – | – | n/a | ✅ | ✅ | – | – |
 | WC11 | nav | `/login` | anon | "Skip to main content" → focuses the main landmark | – | – | n/a | ✅ | ✅ | – | – |
 | WC12 | nav | `/toy-library/[id]` | P | "Back to My SPLAT" dock on public pages → /dashboard; absent when signed out | – | – | n/a | ✅ | ✅ | – | – |
 | WC13 | nav | `/toy-library` | P | dock on /library and /toy-library opens a corner menu of that page's actions → their pages | – | – | n/a | ✅ | ✅ | – | – |
