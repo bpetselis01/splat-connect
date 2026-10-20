@@ -117,7 +117,7 @@ describe('EditTutorialPage', () => {
     })
   })
 
-  it('redirects to /login when there is no signed-in account', async () => {
+  it('WT35 redirects to /login when there is no signed-in account', async () => {
     vi.mocked(redirect).mockImplementation(() => { throw new Error('NEXT_REDIRECT') })
     mockGetCapabilities.mockResolvedValue(null)
     await expect(EditTutorialPage(pageParams)).rejects.toThrow('NEXT_REDIRECT')
@@ -132,7 +132,7 @@ describe('EditTutorialPage', () => {
     expect(redirect).toHaveBeenCalledWith('/dashboard')
   })
 
-  it('redirects to /dashboard when user is not a contributor on the tutorial', async () => {
+  it('WT35 redirects to /dashboard when user is not a contributor on the tutorial', async () => {
     vi.mocked(redirect).mockImplementation(() => { throw new Error('NEXT_REDIRECT') })
     vi.mocked(apiClient.get)
       .mockResolvedValueOnce({

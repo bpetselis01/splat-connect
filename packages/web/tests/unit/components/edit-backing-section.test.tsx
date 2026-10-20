@@ -84,13 +84,13 @@ describe('EditBackingSection', () => {
     expect(options).toContain('Northside')
   })
 
-  it('withdraws a request that has not been acted on', async () => {
+  it('WT31 withdraws a request that has not been acted on', async () => {
     render(<EditBackingSection {...base} backing={[row('o1', 'Riverside', 'pending')]} />)
     fireEvent.click(screen.getByRole('button', { name: /withdraw/i }))
     await waitFor(() => expect(onWithdraw).toHaveBeenCalledWith('o1'))
   })
 
-  it('asks the chosen organisation', async () => {
+  it('WT31 asks the chosen organisation', async () => {
     render(<EditBackingSection {...base} backing={[]} />)
     fireEvent.change(screen.getByLabelText(/Ask another organisation/i), {
       target: { value: 'o2' },

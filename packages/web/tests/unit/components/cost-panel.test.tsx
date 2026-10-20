@@ -84,7 +84,7 @@ describe('CostPanel', () => {
     expect(screen.queryByRole('button', { name: /settle/i })).not.toBeInTheDocument()
   })
 
-  it('settles a line and moves the headline figure', async () => {
+  it('WX12 settles a line and moves the headline figure', async () => {
     render(<CostPanel lines={[line()]} settlement={null} viewerOwes transactionId="t1" />)
     expect(screen.getByTestId('cost-total')).toHaveTextContent('$10.60')
 
@@ -183,7 +183,7 @@ describe('CostPanel edit mode', () => {
     expect(screen.getByText(/Nobody has said this costs anything yet/i)).toBeInTheDocument()
   })
 
-  it('posts a new line and moves the total without a round trip', async () => {
+  it('WX10 posts a new line and moves the total without a round trip', async () => {
     render(
       <CostPanel lines={[]} settlement={null} viewerOwes transactionId="t1" viewerId="me" canEdit />
     )
@@ -221,6 +221,24 @@ describe('CostPanel edit mode', () => {
     )
     expect(screen.getByRole('button', { name: 'Remove Mine' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Remove Theirs' })).toBeNull()
+  })
+
+  it('WX11 removes the viewer\u2019s own line and takes it off the total', async () => {
+    render(
+      <CostPanel
+        lines={[line({ id: 'mine', description: 'Tape', amount_cents: 300, created_by: 'me' }), line({ id: 'theirs', description: 'Satchel', amount_cents: 1000, created_by: 'them' })]}
+        settlement={null}
+        viewerOwes
+        transactionId="t1"
+        viewerId="me"
+        canEdit
+      />
+    )
+    expect(screen.getByTestId('cost-total')).toHaveTextContent('$13.00')
+    fireEvent.click(screen.getByRole('button', { name: 'Remove Tape' }))
+    await waitFor(() => expect(browserApiClient.delete).toHaveBeenCalledWith('/api/exchange-costs/mine'))
+    await waitFor(() => expect(screen.getByTestId('cost-total')).toHaveTextContent('$10.00'))
+    expect(screen.queryByText('Tape')).toBeNull()
   })
 
   it('saves the note and the method as one settlement', async () => {

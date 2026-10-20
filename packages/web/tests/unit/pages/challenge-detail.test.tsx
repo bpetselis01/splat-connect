@@ -81,6 +81,15 @@ describe('ChallengeDetailPage', () => {
     expect(apiClient.get).toHaveBeenCalledWith('/api/ideas/mine/c1')
   })
 
+  it('WI22 sends a signed-out reader who presses Join to sign in, returning to the thread tab', async () => {
+    serve(brief())
+    await renderPage()
+    expect(screen.getByRole('link', { name: 'Join this challenge' })).toHaveAttribute(
+      'href',
+      '/login?next=%2Fget-involved%2Fdesign-challenges%2Fc1%3Ftab%3Dthread'
+    )
+  })
+
   it('names who is writing a graduated challenge up', async () => {
     serve(brief({ status: 'graduated', writing_up: { profile_id: 'p1', name: 'Tom Beattie', started_at: '2026-09-02T03:00:00Z' } }))
     await renderPage()

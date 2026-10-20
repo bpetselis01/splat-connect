@@ -9,7 +9,7 @@ vi.mock('@/lib/browser-api-client', () => ({ browserApiClient: { patch: vi.fn() 
 const waiting = { id: 't1', printer_name: 'Bambu P1S', owner_name: 'Tom B.', photo: 'https://x/p.jpg', submitted_at: '2026-10-01T00:00:00Z', verdict: null, note: null }
 
 describe('AdminTestPrints', () => {
-  it('passes a waiting test print with a note', async () => {
+  it('WM34 passes a waiting test print with a note', async () => {
     const patch = vi.mocked(browserApiClient.patch).mockResolvedValue({})
     render(<AdminTestPrints prints={[waiting]} />)
     fireEvent.change(screen.getByLabelText('Note for Bambu P1S'), { target: { value: 'Clean layers.' } })

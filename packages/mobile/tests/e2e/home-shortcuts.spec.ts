@@ -1,4 +1,3 @@
-// journeys: H04 H05
 import { test, expect, type Page } from '@playwright/test'
 import { createContributor, signIn, signInAsNewContributor } from './helpers'
 
@@ -23,7 +22,7 @@ async function signOutKeepingDeviceData(page: Page) {
   })
 }
 
-test('a removed shortcut is still gone after a reload, and is kept under this member\'s own key', async ({ page }) => {
+test('H04 a removed shortcut is still gone after a reload, and is kept under this member\'s own key', async ({ page }) => {
   const member = await signInAsNewContributor(page)
   await page.goto('/home')
   await expect(tile(page, 'Events')).toBeVisible()
@@ -58,7 +57,7 @@ test('another member on the same browser still sees the default shortcuts, and t
   await expect(tile(page, 'Events')).toBeHidden()
 })
 
-test('a shortcut added from the sheet survives a reload and the sheet then offers to remove it', async ({ page }) => {
+test('H05 a shortcut added from the sheet survives a reload and the sheet then offers to remove it', async ({ page }) => {
   await signInAsNewContributor(page)
   await page.goto('/home')
   await expect(tile(page, 'Learn')).toBeHidden()

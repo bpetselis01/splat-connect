@@ -1,8 +1,7 @@
-// journeys: P01 P08 S01 S04
 import { test, expect } from '@playwright/test'
-import { signInAsNewContributor, createTutorial, uniqueTitle, adminClient } from './helpers'
+import { signInAsNewContributor, createContributor, createTutorial, makeOrgLeader, renameProfile, uniqueTitle, adminClient } from './helpers'
 
-test("the contributor page lists that contributor's guides and opens one", async ({ page }) => {
+test("S01 the contributor page lists that contributor's guides and opens one", async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const author = uniqueTitle('E2E Showcase Author')
   const title = uniqueTitle('E2E Showcase Guide')
@@ -50,4 +49,20 @@ test('the organisation page lists the guides it backs', async ({ page }) => {
 
   await page.getByText(title).filter({ visible: true }).click()
   await expect(page).toHaveURL(new RegExp(`/guides/${id}$`))
+})
+
+test('S04 the organisation chip on a leader’s page opens that organisation’s page', async ({ page }) => {
+  await signInAsNewContributor(page)
+  const leader = await createContributor()
+  const name = uniqueTitle('E2E Chip Leader')
+  const orgName = uniqueTitle('E2E Chip Org')
+  await renameProfile(leader.id, name)
+  await createTutorial(leader.id, { title: uniqueTitle('E2E Chip Guide') })
+  const orgId = await makeOrgLeader(leader.id, orgName)
+
+  await page.goto(`/guides/contributor/${leader.id}`)
+  await expect(page.getByText(name)).toBeVisible()
+  await page.getByRole('link', { name: `Organisation: ${orgName}` }).click()
+  await expect(page).toHaveURL(new RegExp(`/guides/organisation/${orgId}$`))
+  await expect(page.getByRole('heading', { name: orgName })).toBeVisible()
 })

@@ -74,7 +74,7 @@ describe('ToyTransactionThread', () => {
     expect(screen.queryByRole('button', { name: /accept/i })).not.toBeInTheDocument()
   })
 
-  it('lets only the owner confirm a donation, using the requester code', async () => {
+  it('WX09 lets only the owner confirm a donation, using the requester code', async () => {
     const onConfirm = vi.fn().mockResolvedValue(undefined)
     render(
       <ToyTransactionThread
@@ -249,7 +249,7 @@ describe('ToyTransactionThread', () => {
   // Chain: transferring the toy silently would leave it a draft the receiver
   //        never learns they own — the offer is the only thing connecting the
   //        handoff to the toy now sitting in their My Toys
-  it('offers the receiver a way to list the toy they were handed', () => {
+  it('WX14 offers the receiver a way to list the toy they were handed', () => {
     render(
       <ToyTransactionThread
         transaction={tx({
@@ -338,7 +338,7 @@ describe('ToyTransactionThread', () => {
       expect(screen.getByRole('heading', { name: /where should they collect it/i })).toBeInTheDocument()
     })
 
-    it('sends the saved address when the owner keeps their default', async () => {
+    it('WX06 sends the saved address when the owner keeps their default', async () => {
       const onAccept = renderOwner({ viewerDefaultAddress: ADDRESS })
       fireEvent.click(screen.getByRole('button', { name: 'Accept' }))
       fireEvent.click(screen.getByRole('button', { name: /accept request/i }))

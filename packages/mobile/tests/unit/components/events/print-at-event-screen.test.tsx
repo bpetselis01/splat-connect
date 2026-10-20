@@ -1,4 +1,3 @@
-// journeys: V01 V03
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { PrintAtEventScreen } from '../../../../components/events/print-at-event-screen'
 import { event } from './event-fixtures'
@@ -45,7 +44,7 @@ describe('PrintAtEventScreen', () => {
     expect(screen.getByText('by Priya')).toBeTruthy()
   })
 
-  it('sends the guide, the ticked parts, the sets and the note, then goes to My events', async () => {
+  it('V17 sends the guide, the ticked parts, the sets and the note, then goes to My events', async () => {
     render(<PrintAtEventScreen id="e1" />)
     fireEvent.press(await screen.findByRole('radio', { name: 'Light-up penguin' }))
     await screen.findByRole('checkbox', { name: 'Include body.stl' })
@@ -108,7 +107,7 @@ describe('PrintAtEventScreen', () => {
     expect(screen.queryByRole('button', { name: 'Send request' })).toBeNull()
   })
 
-  it('with nothing saved it says to save a guide first and links to Guides', async () => {
+  it('V18 with nothing saved it says to save a guide first and links to Guides', async () => {
     serve({ saved: [] })
     render(<PrintAtEventScreen id="e1" />)
     expect(await screen.findByText('Save a guide first.')).toBeTruthy()

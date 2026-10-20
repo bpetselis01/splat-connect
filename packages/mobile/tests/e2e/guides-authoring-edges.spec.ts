@@ -1,6 +1,5 @@
-// journeys: N03 N06 T01 T03 T04 T06 T08 T10 T13 T14 T15 T20 T22
 import { test, expect, type Page } from '@playwright/test'
-import { createTutorial, signInAsNewContributor, uniqueTitle } from './helpers'
+import { adminClient, createTutorial, signInAsNewContributor, uniqueTitle } from './helpers'
 import { addSteps, rejectWithNote } from './guides-fixtures'
 
 // The editor around its edges: autosave and recovery, steps, deleting a draft,
@@ -25,7 +24,7 @@ test('Create draft stays off for a title of only spaces', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Create draft', exact: true })).toBeDisabled()
 })
 
-test('a title with quotes, markup, an emoji and 120 characters becomes a draft that keeps it', async ({ page }) => {
+test('N06 a title with quotes, markup, an emoji and 120 characters becomes a draft that keeps it', async ({ page }) => {
   await signInAsNewContributor(page)
   const title = uniqueTitle(`E2E "Draft" <i>&</i> 🧸 ${'y'.repeat(100)}`)
   await page.goto('/guides/new')
@@ -35,7 +34,7 @@ test('a title with quotes, markup, an emoji and 120 characters becomes a draft t
   await expect(page.getByText(title)).toBeVisible()
 })
 
-test('an edit made in a section is still there after a reload (draft recovery)', async ({ page }) => {
+test('T08 an edit made in a section is still there after a reload (draft recovery)', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile Recover'), status: 'draft' })
 
@@ -48,7 +47,7 @@ test('an edit made in a section is still there after a reload (draft recovery)',
   await expect(page.getByLabel('Description')).toHaveValue('Typed, then the page was reloaded.')
 })
 
-test('leaving a section straight after typing still saves it', async ({ page }) => {
+test('T08 leaving a section straight after typing still saves it', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile FlushOnLeave'), status: 'draft' })
 
@@ -62,7 +61,7 @@ test('leaving a section straight after typing still saves it', async ({ page }) 
   await expect(page.getByLabel('Description')).toHaveValue('Saved by leaving')
 })
 
-test('a failed autosave says so and keeps the typed words on screen', async ({ page }) => {
+test('T20 a failed autosave says so and keeps the typed words on screen', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile SaveFails'), status: 'draft' })
 
@@ -81,7 +80,7 @@ test('a failed autosave says so and keeps the typed words on screen', async ({ p
   await expect(page.getByLabel('Description')).toHaveValue('Not saved yet')
 })
 
-test('steps added in the editor are saved in order and survive a reload', async ({ page }) => {
+test('T10 steps added in the editor are saved in order and survive a reload', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile EditSteps'), status: 'draft' })
 
@@ -100,7 +99,7 @@ test('steps added in the editor are saved in order and survive a reload', async 
   await expect(page.getByLabel('Step 2 instructions')).toHaveValue('Then close it.')
 })
 
-test('moving a step down swaps the two and saves the new order', async ({ page }) => {
+test('T10 moving a step down swaps the two and saves the new order', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile MoveStep'), status: 'draft' })
   await addSteps(id, [{ body: 'Alpha' }, { body: 'Bravo' }])
@@ -128,7 +127,7 @@ test('a step with no instructions is flagged and never saved', async ({ page }) 
   await expect(page.getByTestId('step-row-0')).toHaveCount(0)
 })
 
-test('the hub counts steps, and steps alone open Submit', async ({ page }) => {
+test('T10 the hub counts steps, and steps alone open Submit', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile HubSteps'), status: 'draft', withPdf: false, withSteps: false, buildMinutes: 30 })
 
@@ -164,7 +163,7 @@ test('Delete draft asks first, and cancelling keeps the draft', async ({ page })
   await expect(page.getByText(title)).toBeVisible()
 })
 
-test('Delete draft, once confirmed, removes it from My tutorials', async ({ page }) => {
+test('T06 Delete draft, once confirmed, removes it from My tutorials', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const title = uniqueTitle('E2E Mobile GoneDraft')
   const id = await createTutorial(contributor.id, { title, status: 'draft' })
@@ -191,7 +190,7 @@ test('a guide already submitted offers no Delete draft', async ({ page }) => {
   await expect(page.getByTestId('hub-submit')).toBeDisabled()
 })
 
-test('a returned guide shows the reviewer’s reason in My tutorials, quotes and all', async ({ page }) => {
+test('T01 a returned guide shows the reviewer’s reason in My tutorials, quotes and all', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile Returned'), status: 'draft' })
   const note = `Add a photo of the "jack" <close up> & the lid 🧸`
@@ -201,7 +200,7 @@ test('a returned guide shows the reviewer’s reason in My tutorials, quotes and
   await expect(page.getByText(note)).toBeVisible()
 })
 
-test('editing a returned guide sends it back for review without a Submit tap', async ({ page }) => {
+test('T22 editing a returned guide sends it back for review without a Submit tap', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile Resubmit'), status: 'draft' })
   await rejectWithNote(id, 'Please describe it.')
@@ -213,7 +212,7 @@ test('editing a returned guide sends it back for review without a Submit tap', a
   expect(body.status).toBe('pending')
 })
 
-test('choosing a photo as the guide PDF is refused and the guide keeps no PDF', async ({ page }) => {
+test('T14 choosing a photo as the guide PDF is refused and the guide keeps no PDF', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile WrongPdf'), status: 'draft', withPdf: false })
 
@@ -248,7 +247,34 @@ test('a photo upload that drops mid-way shows the error, and trying again works'
   await expect(page.getByLabel('Caption for photo 2')).toBeVisible()
 })
 
-test('an assistive-tech guide opens its 3D print files section and refuses a non-STL file', async ({ page }) => {
+test('T13 a guide author adds a photo, captions it, makes it the cover, and removes the old cover', async ({ page }) => {
+  const contributor = await signInAsNewContributor(page)
+  const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile Photos'), status: 'draft' })
+  const stored = async () => {
+    const { data } = await adminClient().from('tutorials').select('photo_urls, photo_captions').eq('id', id).single()
+    return data as { photo_urls: string[]; photo_captions: (string | null)[] | null }
+  }
+  const [seeded] = (await stored()).photo_urls
+
+  await page.goto(`/tutorials/${id}/photos`)
+  await chooseFile(page, 'Choose from library', PHOTO_FIXTURE)
+  await expect(page.getByLabel('Caption for photo 2')).toBeVisible()
+  await expect.poll(async () => (await stored()).photo_urls).toHaveLength(2)
+  const added = (await stored()).photo_urls[1]!
+  expect(added).toContain(`/${id}/`)
+
+  await page.getByLabel('Caption for photo 2').fill('Switch close-up')
+  await expect.poll(async () => (await stored()).photo_captions?.[1]).toBe('Switch close-up')
+
+  await page.getByRole('button', { name: 'Make photo 2 the cover' }).click()
+  await expect.poll(async () => (await stored()).photo_urls).toEqual([added, seeded])
+  expect((await stored()).photo_captions?.[0]).toBe('Switch close-up')
+
+  await page.getByRole('button', { name: 'Remove photo 2' }).click()
+  await expect.poll(async () => (await stored()).photo_urls).toEqual([added])
+})
+
+test('T04 T15 an assistive-tech guide opens its 3D print files section and refuses a non-STL file', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile Stl'), status: 'draft', kind: 'assistive_tech' })
 

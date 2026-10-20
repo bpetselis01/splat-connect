@@ -1,6 +1,6 @@
 import path from 'node:path'
 import { test, expect } from '@playwright/test'
-import { signIn, createContributor, createTutorial, uniqueTitle, adminClient, acceptTerms } from '../helpers'
+import { signIn, createContributor, createTutorial, createOrgWithLeader, uniqueTitle, adminClient, acceptTerms, fillDetail } from '../helpers'
 
 const PDF_FIXTURE = path.join(__dirname, '..', 'fixtures', 'test.pdf')
 const PHOTO_FIXTURE = path.join(__dirname, '..', 'fixtures', 'test.jpg')
@@ -17,7 +17,7 @@ async function openStep(page: import('@playwright/test').Page, label: string | R
   return page.getByRole('tabpanel')
 }
 
-test('editing an approved tutorial resets its status to pending', async ({ page }) => {
+test('WT18 editing an approved tutorial resets its status to pending', async ({ page }) => {
   const contributor = await createContributor()
   await acceptTerms(contributor.id)
   const tutorialId = await createTutorial(contributor.id, {
@@ -31,7 +31,7 @@ test('editing an approved tutorial resets its status to pending', async ({ page 
   await page.goto(`/tutorials/${tutorialId}/edit?step=details`)
   await expect(page.locator('input[name="title"]')).toHaveValue('E2E Approved Edit Target')
 
-  await page.locator('input[name="title"]').fill('E2E Approved Edit Target (updated)')
+  await fillDetail(page, 'title', 'E2E Approved Edit Target (updated)')
   await page.getByRole('button', { name: 'Save details' }).click()
   await page.waitForLoadState('networkidle')
 
@@ -48,7 +48,7 @@ test('editing an approved tutorial resets its status to pending', async ({ page 
   ).toBeVisible()
 })
 
-test('a contributor cannot edit another contributor\'s tutorial', async ({ page }) => {
+test('WT35 a contributor cannot edit another contributor\'s tutorial', async ({ page }) => {
   const owner = await createContributor()
   await acceptTerms(owner.id)
   const outsider = await createContributor()
@@ -62,7 +62,7 @@ test('a contributor cannot edit another contributor\'s tutorial', async ({ page 
   await page.waitForURL('**/dashboard')
 })
 
-test('saving details updates the title, description and difficulty', async ({ page }) => {
+test('WT18 saving details updates the title, description and difficulty', async ({ page }) => {
   const contributor = await createContributor()
   await acceptTerms(contributor.id)
   const title = uniqueTitle('E2E Edit Details')
@@ -73,7 +73,7 @@ test('saving details updates the title, description and difficulty', async ({ pa
   await page.goto(`/tutorials/${id}/edit?step=details`)
 
   const renamed = `${title} renamed`
-  await page.locator('#edit-title').fill(renamed)
+  await fillDetail(page, 'title', renamed)
   await page.locator('#edit-description').fill('An edited description.')
   await page.locator('#edit-difficulty').selectOption('hard')
   await page.getByRole('button', { name: 'Save details' }).click()
@@ -103,7 +103,7 @@ test('the difficulty select shows the newly saved value after a save', async ({ 
   await page.waitForURL('**/dashboard')
   await page.goto(`/tutorials/${id}/edit?step=details`)
 
-  await page.locator('#edit-difficulty').selectOption('medium')
+  await fillDetail(page, 'difficulty', 'medium')
   await page.getByRole('button', { name: 'Save details' }).click()
 
   // The select carries key={difficulty} so it rebuilds from the saved value
@@ -111,7 +111,7 @@ test('the difficulty select shows the newly saved value after a save', async ({ 
   await expect(page.locator('#edit-difficulty')).toHaveValue('medium')
 })
 
-test('a photo is added to a guide, and the tutorial PDF replaced', async ({ page }) => {
+test('WT23 WT24 a photo is added to a guide, and the tutorial PDF replaced', async ({ page }) => {
   const contributor = await createContributor()
   await acceptTerms(contributor.id)
   const id = await createTutorial(contributor.id, {
@@ -159,7 +159,7 @@ test('a photo is added to a guide, and the tutorial PDF replaced', async ({ page
     ])
 })
 
-test('a part can be added, edited and deleted', async ({ page }) => {
+test('WT25 a part can be added, edited and deleted, and the saved list reloads', async ({ page }) => {
   const contributor = await createContributor()
   await acceptTerms(contributor.id)
   const id = await createTutorial(contributor.id, {
@@ -179,6 +179,9 @@ test('a part can be added, edited and deleted', async ({ page }) => {
   await parts.getByPlaceholder('Name').fill('Added part')
   await parts.getByRole('button', { name: 'Add part' }).click()
   await expect(parts.getByRole('button', { name: /Added part/ })).toBeVisible()
+  await expect(page.getByRole('status')).toHaveText('Part added')
+  await page.reload()
+  await expect((await openStep(page, 'Parts')).getByRole('button', { name: /Added part/ })).toBeVisible()
 
   await parts.getByRole('button', { name: /Added part/ }).click()
   await parts.locator('input').first().fill('Edited part')
@@ -190,7 +193,7 @@ test('a part can be added, edited and deleted', async ({ page }) => {
   await expect(parts.getByRole('button', { name: /Edited part/ })).toHaveCount(0)
 })
 
-test('a tool can be added, edited and deleted', async ({ page }) => {
+test('WT26 a tool can be added, edited and deleted, and the saved list reloads', async ({ page }) => {
   const contributor = await createContributor()
   await acceptTerms(contributor.id)
   const id = await createTutorial(contributor.id, {
@@ -210,6 +213,9 @@ test('a tool can be added, edited and deleted', async ({ page }) => {
   await tools.getByPlaceholder('Name').fill('Added tool')
   await tools.getByRole('button', { name: 'Add tool' }).click()
   await expect(tools.getByRole('button', { name: /Added tool/ })).toBeVisible()
+  await expect(page.getByRole('status')).toHaveText('Tool added')
+  await page.reload()
+  await expect((await openStep(page, 'Tools')).getByRole('button', { name: /Added tool/ })).toBeVisible()
 
   await tools.getByRole('button', { name: /Added tool/ }).click()
   await tools.locator('input').first().fill('Edited tool')
@@ -221,7 +227,7 @@ test('a tool can be added, edited and deleted', async ({ page }) => {
   await expect(tools.getByRole('button', { name: /Edited tool/ })).toHaveCount(0)
 })
 
-test('an STL file record can be added', async ({ page }) => {
+test('WT27 an STL file record can be added', async ({ page }) => {
   const contributor = await createContributor()
   await acceptTerms(contributor.id)
   const id = await createTutorial(contributor.id, {
@@ -288,4 +294,166 @@ test('a rejected tutorial shows the rejection callout', async ({ page }) => {
 
   await expect(page.getByText('Your reviewer sent this back')).toBeVisible()
   await expect(page.getByText('The photos are too dark to follow.')).toBeVisible()
+})
+
+async function editorAs(page: import('@playwright/test').Page, overrides: Parameters<typeof createTutorial>[1] = {}) {
+  const contributor = await createContributor()
+  await acceptTerms(contributor.id)
+  const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Editor'), ...overrides })
+  await signIn(page, contributor.email, contributor.password)
+  await page.waitForURL('**/dashboard')
+  return { contributor, id }
+}
+const statusOf = async (id: string) =>
+  (await adminClient().from('tutorials').select('status').eq('id', id).single()).data?.status
+
+test('WT18 saving a change to a rejected tutorial sends it back to pending', async ({ page }) => {
+  const { id } = await editorAs(page, { status: 'rejected', rejection_note: 'Add a clearer cover photo.' })
+  await page.goto(`/tutorials/${id}/edit?step=details`)
+  await fillDetail(page, 'description', 'Reworded after the review.')
+  await page.getByRole('button', { name: 'Save details' }).click()
+
+  await expect.poll(() => statusOf(id)).toBe('pending')
+  await page.goto('/dashboard/tutorials')
+  await expect(page.getByTestId('tutorial-row').filter({ hasText: 'E2E Editor' }).getByText('Waiting', { exact: true })).toBeVisible()
+})
+
+test('WT19 safety notes save and reload, and leave an approved guide approved', async ({ page }) => {
+  const { id } = await editorAs(page, { status: 'approved' })
+  await page.goto(`/tutorials/${id}/edit?step=details`)
+  const details = page.getByRole('tabpanel')
+  await details.getByRole('button', { name: 'Add a safety note' }).click()
+  await details.getByLabel('Safety note 1 title').fill('Screw the battery door shut')
+  await details.getByLabel('Safety note 1 detail').fill('The clip alone lets small hands in.')
+  await details.getByRole('button', { name: 'Save safety notes' }).click()
+  await expect
+    .poll(async () => (await adminClient().from('tutorial_safety_notes').select('title').eq('tutorial_id', id)).data)
+    .toEqual([{ title: 'Screw the battery door shut' }])
+
+  await page.reload()
+  await expect(page.getByLabel('Safety note 1 title')).toHaveValue('Screw the battery door shut')
+  await expect(page.getByLabel('Safety note 1 detail')).toHaveValue('The clip alone lets small hands in.')
+  expect(await statusOf(id)).toBe('approved')
+})
+
+test('WT20 the "who it is for" chips save and reload', async ({ page }) => {
+  const { id } = await editorAs(page, { status: 'draft' })
+  await page.goto(`/tutorials/${id}/edit?step=details`)
+  const chip = page.getByRole('button', { name: 'Adapted toy', exact: true })
+  await expect(chip).toHaveAttribute('aria-pressed', 'false')
+  await chip.click()
+  await page.getByRole('button', { name: "Save who it's for" }).click()
+  await expect(page.getByText('Saved', { exact: true })).toBeVisible()
+
+  await page.reload()
+  await expect(page.getByRole('button', { name: 'Adapted toy', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  const { data } = await adminClient().from('tutorials').select('device_types').eq('id', id).single()
+  expect(data?.device_types).toEqual(['adapted_toy'])
+})
+
+test('WT21 WT22 steps and a step photo save and reload, and leave an approved guide approved', async ({ page }) => {
+  const { id } = await editorAs(page, { status: 'approved' })
+  await page.goto(`/tutorials/${id}/edit?step=steps`)
+  const steps = page.getByRole('tabpanel')
+  await steps.getByRole('button', { name: 'Add a step' }).click()
+  await steps.getByPlaceholder('What to do in this step').fill('Open the battery cover.')
+  await steps.getByLabel('Photo for step 1').setInputFiles(PHOTO_FIXTURE)
+  await expect(steps.getByRole('button', { name: 'Save steps' })).toBeEnabled({ timeout: 30_000 })
+  await steps.getByRole('button', { name: 'Save steps' }).click()
+  await expect(page.getByRole('status')).toContainText(/steps saved/i)
+
+  await page.reload()
+  await expect(page.getByPlaceholder('What to do in this step')).toHaveValue('Open the battery cover.')
+  const { data } = await adminClient().from('tutorial_steps').select('body, photo_url').eq('tutorial_id', id)
+  expect(data).toEqual([{ body: 'Open the battery cover.', photo_url: expect.stringContaining(`${id}/steps/`) }])
+  expect(await statusOf(id)).toBe('approved')
+})
+
+test('WT28 STL print settings save and reload', async ({ page }) => {
+  const { id } = await editorAs(page, { status: 'draft' })
+  await page.goto(`/tutorials/${id}/edit?step=stl`)
+  const stl = page.getByRole('tabpanel')
+  await stl.getByLabel('Width (mm)').fill('45')
+  await stl.getByRole('button', { name: 'Save print settings' }).click()
+  await expect(page.getByRole('status')).toContainText('Print settings saved')
+
+  await page.reload()
+  await expect(page.getByLabel('Width (mm)')).toHaveValue('45')
+  const { data } = await adminClient().from('stl_files').select('size_x_mm').eq('tutorial_id', id).single()
+  expect(Number(data?.size_x_mm)).toBe(45)
+})
+
+test('WT29 a pick is added to Worth a look and survives a reload; removing it empties the list', async ({ page }) => {
+  const other = await createContributor()
+  const target = await createTutorial(other.id, { title: uniqueTitle('E2E Pick Target'), status: 'approved' })
+  const { id } = await editorAs(page, { status: 'draft' })
+  await page.goto(`/tutorials/${id}/edit?step=recommended`)
+  await page.getByLabel('Add a recommendation').selectOption(target)
+  await expect(page.getByRole('status')).toContainText('Recommendation added')
+
+  await page.reload()
+  await expect(page.getByRole('tabpanel').locator('li', { hasText: 'E2E Pick Target' })).toBeVisible()
+  const { data } = await adminClient().from('tutorial_recommendations').select('recommended_id').eq('tutorial_id', id)
+  expect(data).toEqual([{ recommended_id: target }])
+
+  await page.getByRole('tabpanel').getByRole('button', { name: 'Remove' }).click()
+  await expect(page.getByRole('status')).toContainText('Recommendation removed')
+  await page.reload()
+  await expect(page.getByRole('tabpanel').locator('li', { hasText: 'E2E Pick Target' })).toHaveCount(0)
+})
+
+test('WT31 asking an organisation to back the guide tells its leader, and withdrawing removes the request', async ({ page, browser }) => {
+  const leader = await createContributor()
+  const orgName = uniqueTitle('E2E Backers')
+  const orgId = await createOrgWithLeader(leader.id, orgName)
+  const { contributor, id } = await editorAs(page, { status: 'draft', title: uniqueTitle('E2E Needs Backing') })
+  void contributor
+
+  await page.goto(`/tutorials/${id}/edit?step=team`)
+  await page.getByLabel(/Ask another organisation/i).selectOption(orgId)
+  await page.getByRole('button', { name: /^Ask$/ }).click()
+  await expect(page.getByRole('status')).toContainText(orgName)
+  await page.reload()
+  await expect(page.getByRole('tabpanel').getByText(orgName).first()).toBeVisible()
+  const { data } = await adminClient().from('tutorial_orgs').select('org_id, status').eq('tutorial_id', id)
+  expect(data).toEqual([{ org_id: orgId, status: 'pending' }])
+
+  const leaderCtx = await browser.newContext()
+  const leaderPage = await leaderCtx.newPage()
+  await signIn(leaderPage, leader.email, leader.password)
+  await leaderPage.goto('/notifications')
+  await expect(leaderPage.getByText(/asked your organisation to back/).first()).toBeVisible()
+  await leaderCtx.close()
+
+  await page.getByRole('button', { name: /withdraw/i }).click()
+  await expect.poll(async () => (await adminClient().from('tutorial_orgs').select('org_id').eq('tutorial_id', id)).data).toEqual([])
+})
+
+test('WT33 the Status checklist jumps to the step that needs work, and Preview opens the reader view', async ({ page }) => {
+  const { id } = await editorAs(page, { status: 'draft', withPdf: false, withSteps: false })
+  await page.goto(`/tutorials/${id}/edit`)
+  await page.locator('li.editor-check', { hasText: 'Steps' }).getByRole('button', { name: 'Fill it in' }).click()
+  await expect(page.getByRole('tab', { name: /^Steps/ })).toHaveAttribute('aria-selected', 'true')
+  await expect(page).toHaveURL(/step=steps/)
+
+  await page.goto(`/tutorials/${id}/edit`)
+  await page.getByRole('link', { name: 'Preview as a reader' }).click()
+  await expect(page).toHaveURL(/preview=1/)
+  await expect(page.getByText('Previewing as a reader.')).toBeVisible()
+  await page.getByRole('link', { name: 'Back to the editor' }).click()
+  await expect(page.getByRole('tab', { name: /^Status/ })).toBeVisible()
+})
+
+test('WT34 a draft is deleted after typing the confirmation, and My tutorials no longer lists it', async ({ page }) => {
+  const title = uniqueTitle('E2E Delete Draft')
+  const { id } = await editorAs(page, { status: 'draft', title })
+  await page.goto(`/tutorials/${id}/edit`)
+  await page.getByRole('button', { name: /Delete draft/ }).click()
+  await page.getByLabel(/to confirm/i).fill('confirm_delete_draft')
+  await page.getByRole('dialog').getByRole('button', { name: 'Delete', exact: true }).click()
+
+  await expect(page).toHaveURL(/\/dashboard\/tutorials$/)
+  await expect(page.getByText(title)).toHaveCount(0)
+  const { data } = await adminClient().from('tutorials').select('id').eq('id', id)
+  expect(data).toEqual([])
 })

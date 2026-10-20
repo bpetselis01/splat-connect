@@ -1,8 +1,7 @@
-// journeys: G01 G02 G06
 import { test, expect } from '@playwright/test'
 import { signInAsNewContributor, createTutorial, uniqueTitle, pickFilter, adminClient } from './helpers'
 
-test('the library lists a tutorial with its difficulty badge', async ({ page }) => {
+test('G01 the library lists a tutorial with its difficulty badge', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const title = uniqueTitle('E2E Mobile Library')
   await createTutorial(contributor.id, { title, status: 'approved', difficulty: 'easy' })
@@ -14,7 +13,7 @@ test('the library lists a tutorial with its difficulty badge', async ({ page }) 
   await expect(page.getByRole('button', { name: title }).getByText('Easy', { exact: true })).toBeVisible()
 })
 
-test('search narrows the list and clearing it restores the tutorial', async ({ page }) => {
+test('G02 search narrows the list and clearing it restores the tutorial', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const title = uniqueTitle('E2E Mobile Search')
   await createTutorial(contributor.id, { title, status: 'approved' })
@@ -42,7 +41,7 @@ test('the difficulty filter narrows results', async ({ page }) => {
   await expect(page.getByText(title)).toBeVisible()
 })
 
-test('an aborted tutorials request shows the error state and a retry button', async ({ page }) => {
+test('G04 an aborted tutorials request shows the error state and a retry button', async ({ page }) => {
   await signInAsNewContributor(page)
   await page.route('**/api/public/tutorials*', (route) => route.abort())
 
@@ -109,7 +108,7 @@ test('a backed guide carries a Backed pill on the card, and an unbacked one does
   await expect(page.getByRole('button', { name: plain }).getByText('Backed', { exact: true })).toHaveCount(0)
 })
 
-test('tapping Save on a card flips the bookmark and the flip survives a reload', async ({ page }) => {
+test('G06 tapping Save on a card flips the bookmark and the flip survives a reload', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const title = uniqueTitle('E2E Mobile Save')
   await createTutorial(contributor.id, { title, status: 'approved' })

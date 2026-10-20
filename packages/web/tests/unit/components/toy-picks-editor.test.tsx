@@ -18,7 +18,7 @@ describe('ToyPicksEditor', () => {
     vi.mocked(browserApiClient.patch).mockReset()
   })
 
-  it('saves the hand-picked toys and guides in the order chosen', async () => {
+  it('WY23 saves the hand-picked toys and guides in the order chosen', async () => {
     vi.mocked(browserApiClient.put).mockResolvedValue({ picks: [] })
     const onSaved = vi.fn()
     render(
@@ -50,7 +50,7 @@ describe('ToyPicksEditor', () => {
     )
   })
 
-  it('switches back to automatic', async () => {
+  it('WY23 switches back to automatic', async () => {
     const onSaved = vi.fn()
     vi.mocked(browserApiClient.patch).mockResolvedValue(toy({ picks_mode: 'auto' }))
     render(<ToyPicksEditor toy={toy({ picks_mode: 'picked' })} ownToys={[]} guides={[]} onSaved={onSaved} />)

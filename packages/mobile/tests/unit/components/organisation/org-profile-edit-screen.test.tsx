@@ -1,4 +1,3 @@
-// journeys: L23 L24
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { TextInput } from 'react-native'
 import { OrgProfileEditScreen } from '../../../../components/organisation/org-profile-edit-screen'
@@ -43,7 +42,7 @@ describe('OrgProfileEditScreen', () => {
     expect(input('contact_email').props.value).toBe('hi@n.org')
   })
 
-  it('selects the current state and changing it is what gets saved', async () => {
+  it('L23 selects the current state and changing it is what gets saved', async () => {
     render(<OrgProfileEditScreen />)
     await screen.findByDisplayValue('Northside')
     expect(screen.getByRole('radio', { name: 'VIC' }).props.accessibilityState.selected).toBe(true)
@@ -52,7 +51,7 @@ describe('OrgProfileEditScreen', () => {
     await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/api/organizations/o1/profile', expect.objectContaining({ state: 'QLD' })))
   })
 
-  it('saves every field, with the name trimmed, and says it is live', async () => {
+  it('L23 saves every field, with the name trimmed, and says it is live', async () => {
     render(<OrgProfileEditScreen />)
     await screen.findByDisplayValue('Northside')
     fireEvent.changeText(input('name'), '  Northside Therapy  ')
@@ -150,7 +149,7 @@ describe('OrgProfileEditScreen', () => {
       expect(screen.queryByRole('button', { name: /Hide|Show again/ })).toBeNull()
     })
 
-    it('Hide and Show again flip the same note through its own route and update the row', async () => {
+    it('L24 Hide and Show again flip the same note through its own route and update the row', async () => {
       serve(org(), [thanks()])
       mockPatch.mockResolvedValueOnce(thanks({ hidden_at: '2026-09-01T00:00:00Z' }))
       render(<OrgProfileEditScreen />)

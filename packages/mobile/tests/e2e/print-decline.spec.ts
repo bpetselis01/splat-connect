@@ -1,4 +1,3 @@
-// journeys: R14
 import { test, expect } from '@playwright/test'
 import { notificationsFor, partyPage, seedPrintJob, txRow } from './maker-fixtures'
 
@@ -6,7 +5,7 @@ import { notificationsFor, partyPage, seedPrintJob, txRow } from './maker-fixtur
  * A printer declines a request with a stock reason: the card leaves Requests,
  * the row records the reason, and the family's job page says why.
  */
-test('declining a print request with a reason tells the family why', async ({ browser, baseURL }) => {
+test('R14 declining a print request with a reason tells the family why', async ({ browser, baseURL }) => {
   const job = await seedPrintJob('requested')
   const printerPage = await partyPage(browser, baseURL, job.printer)
   const familyPage = await partyPage(browser, baseURL, job.requester)

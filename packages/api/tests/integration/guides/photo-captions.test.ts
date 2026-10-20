@@ -1,4 +1,3 @@
-// journeys: T13
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -27,7 +26,7 @@ afterAll(async () => {
 })
 
 describe('087 photo captions', () => {
-  it('saves captions beside the photos', async () => {
+  it('T13 WT23 saves captions beside the photos', async () => {
     expect((await patch({ photo_captions: ['The finished drum', null, 'The jack'] })).status).toBe(200)
     expect((await row()).photo_captions).toEqual(['The finished drum', null, 'The jack'])
   })

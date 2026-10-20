@@ -1,5 +1,4 @@
 // Request a print when the guide or printer read fails: says so, Try again re-reads, nothing hits console.error.
-// journeys: R03
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { RequestPrintScreen } from '../../../../components/printing/request-screen'
 

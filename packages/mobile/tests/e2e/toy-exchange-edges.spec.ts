@@ -1,4 +1,3 @@
-// journeys: W01 W02 X03 X04 X07
 import { test, expect, type Browser, type Page } from '@playwright/test'
 import {
   createContributor,
@@ -34,7 +33,7 @@ async function requestPickup(page: Page, toyId: string): Promise<string> {
   return page.url().split('/exchanges/')[1]
 }
 
-test('a toy with quotes, angle brackets and an ampersand in its name can be added and found again', async ({ page }) => {
+test('W01 W02 a toy with quotes, angle brackets and an ampersand in its name can be added and found again', async ({ page }) => {
   await signInAsNewContributor(page)
   const name = `Sam's "Sparky" <b>drum</b> & co ${Date.now()}`
 
@@ -56,7 +55,7 @@ test('Create stays held for a name of only spaces', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Create', exact: true })).toBeDisabled()
 })
 
-test('messages with emoji, markup and quotes arrive exactly as typed, and survive a reload', async ({ browser, baseURL }) => {
+test('X03 messages with emoji, markup and quotes arrive exactly as typed, and survive a reload', async ({ browser, baseURL }) => {
   const owner = await createContributor()
   const requester = await createContributor()
   await renameProfile(requester.id, uniqueTitle('E2E Msg Requester'))
@@ -87,7 +86,7 @@ test('messages with emoji, markup and quotes arrive exactly as typed, and surviv
   }
 })
 
-test('a wrong handover code is refused and the exchange stays open, then the right code padded with spaces completes it', async ({ browser, baseURL }) => {
+test('X04 X07 a wrong handover code is refused and the exchange stays open, then the right code padded with spaces completes it', async ({ browser, baseURL }) => {
   const owner = await createContributor()
   await setPickupAddress(owner.id, PICKUP)
   const requester = await createContributor()

@@ -9,6 +9,7 @@ import {
   uniqueTitle,
   adminClient,
   pageUntilVisible,
+  fillDetail,
 } from './helpers'
 
 /**
@@ -40,7 +41,7 @@ async function unreadCount(userId: string) {
  * this proves is that they are wired together end to end, the way
  * contributor/org-backing.spec.ts proves the delegated-review loop.
  */
-test('a collaborator is invited, accepts, edits, submits, and both are notified on approval', async ({
+test('WT30 a collaborator is invited, accepts, edits, submits, and both are notified on approval', async ({
   page,
 }) => {
   const author = await createContributor()
@@ -108,7 +109,7 @@ test('a collaborator is invited, accepts, edits, submits, and both are notified 
     const renamedTitle = `${title} renamed`
     // The editor opens on Status (a1535727); the title lives on Details.
     await page.goto(`/tutorials/${tutorialId}/edit?step=details`)
-    await page.locator('#edit-title').fill(renamedTitle)
+    await fillDetail(page, 'title', renamedTitle)
     await page.getByRole('button', { name: 'Save details' }).click()
     await expect
       .poll(async () => {
@@ -192,5 +193,55 @@ test('a collaborator is invited, accepts, edits, submits, and both are notified 
     await deleteUser(author.id)
     await deleteUser(collaborator.id)
     await deleteUser(admin.id)
+  }
+})
+
+test('WT30 the primary removes a collaborator, and a collaborator leaves; each tells the other', async ({ page, browser }) => {
+  const author = await createContributor()
+  await acceptTerms(author.id)
+  const removed = await createContributor()
+  const leaver = await createContributor()
+  await acceptTerms(leaver.id)
+  const title = uniqueTitle('Collab Exit')
+  const tutorialId = await createTutorial(author.id, { title, status: 'draft' })
+  const { error } = await adminClient().from('tutorial_contributors').insert([
+    { tutorial_id: tutorialId, profile_id: removed.id, role: 'collaborator' },
+    { tutorial_id: tutorialId, profile_id: leaver.id, role: 'collaborator' },
+  ])
+  expect(error).toBeNull()
+  const seats = async () =>
+    ((await adminClient().from('tutorial_contributors').select('profile_id').eq('tutorial_id', tutorialId)).data ?? []).map((r) => r.profile_id).sort()
+
+  try {
+    await signIn(page, leaver.email, leaver.password)
+    await page.waitForURL('**/dashboard')
+    await page.goto(`/tutorials/${tutorialId}/edit`)
+    const mine = await openStep(page, 'Team')
+    await mine.getByRole('button', { name: 'Leave' }).click()
+    await expect(page.getByRole('status')).toContainText('Left tutorial')
+    await expect.poll(seats).toEqual([author.id, removed.id].sort())
+
+    const ownerCtx = await browser.newContext()
+    const owner = await ownerCtx.newPage()
+    await signIn(owner, author.email, author.password)
+    await owner.goto('/notifications')
+    await expect(owner.getByText(new RegExp(`left "${title}"`))).toBeVisible()
+    await owner.goto(`/tutorials/${tutorialId}/edit`)
+    const team = await openStep(owner, 'Team')
+    await team.getByRole('button', { name: 'Remove' }).click()
+    await expect(owner.getByRole('status')).toContainText('Removed collaborator')
+    await expect.poll(seats).toEqual([author.id])
+    await ownerCtx.close()
+
+    const goneCtx = await browser.newContext()
+    const gone = await goneCtx.newPage()
+    await signIn(gone, removed.email, removed.password)
+    await gone.goto('/notifications')
+    await expect(gone.getByText(new RegExp(`removed you from "${title}"`))).toBeVisible()
+    await goneCtx.close()
+  } finally {
+    await deleteUser(author.id)
+    await deleteUser(removed.id)
+    await deleteUser(leaver.id)
   }
 })

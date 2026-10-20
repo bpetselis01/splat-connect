@@ -1,6 +1,5 @@
 // What the cost panel does with odd amounts, odd descriptions, a second tap and
 // a failed save. The ordinary journeys live in cost-panel.test.tsx.
-// journeys: X12
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { CostPanel } from '../../../../components/exchanges/cost-panel'
 import { NAMES } from '../../../special-strings'
@@ -187,7 +186,7 @@ describe('taps and failures', () => {
 })
 
 describe('settling', () => {
-  it('stays unsettled when the settle request fails, and says so', async () => {
+  it('X12 stays unsettled when the settle request fails, and says so', async () => {
     serve([line()])
     mockPatch.mockRejectedValue(new Error('API PATCH /x failed with status 500'))
     render(family())
@@ -196,7 +195,7 @@ describe('settling', () => {
     expect(screen.getByText('Mark as settled')).toBeTruthy()
   })
 
-  it('un-settles an early mark with settled:false', async () => {
+  it('X12 un-settles an early mark with settled:false', async () => {
     serve([line({ settled_at: '2026-10-01T00:00:00Z' })])
     mockPatch.mockResolvedValue({ id: 'l1', settled_at: null })
     render(family())
@@ -205,7 +204,7 @@ describe('settling', () => {
     expect(await screen.findByText('Mark as settled')).toBeTruthy()
   })
 
-  it('settles several lines each once, and not one that is already settled', async () => {
+  it('X12 settles several lines each once, and not one that is already settled', async () => {
     serve([
       line({ id: 'a' }),
       line({ id: 'b', amount_cents: 200 }),
@@ -219,7 +218,7 @@ describe('settling', () => {
     expect(await screen.findByText('Marked as settled')).toBeTruthy()
   })
 
-  it('settles once when Mark as settled is pressed twice before the answer', async () => {
+  it('X12 settles once when Mark as settled is pressed twice before the answer', async () => {
     serve([line()])
     mockPatch.mockReturnValue(new Promise(() => {}))
     render(family())

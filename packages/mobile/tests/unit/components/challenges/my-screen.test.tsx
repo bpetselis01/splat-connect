@@ -1,5 +1,4 @@
 // packages/mobile/tests/unit/components/challenges/my-screen.test.tsx
-// journeys: C15
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { MyChallengesScreen } from '../../../../components/challenges/my-screen'
 
@@ -51,7 +50,7 @@ beforeEach(() => {
 })
 
 describe('MyChallengesScreen', () => {
-  it('labels each idea with its author-facing status word', async () => {
+  it('C15 labels each idea with its author-facing status word', async () => {
     respond([
       idea({ id: 'i1', title: 'Pending one', status: 'pending' }),
       idea({ id: 'i2', title: 'Published one', status: 'challenge' }),
@@ -66,7 +65,7 @@ describe('MyChallengesScreen', () => {
     expect(screen.getByText('Not taken forward')).toBeTruthy()
   })
 
-  it('counts each stage on the filter, once per idea, and narrows both lists to it', async () => {
+  it('C15 counts each stage on the filter, once per idea, and narrows both lists to it', async () => {
     respond(
       [
         idea({ id: 'i1', title: 'Pending one', status: 'pending' }),
@@ -90,7 +89,7 @@ describe('MyChallengesScreen', () => {
     expect(screen.queryByText('Published one')).toBeNull()
   })
 
-  it('reads each row the way the board does', async () => {
+  it('C15 reads each row the way the board does', async () => {
     respond(
       [
         idea({ id: 'm1', title: 'Bubbles', status: 'challenge', created_at: '2026-09-02T00:00:00Z', maker_count: 3, answer_count: 0 }),
@@ -124,7 +123,7 @@ describe('MyChallengesScreen', () => {
     expect(mockPush).toHaveBeenCalledWith('/explore/challenges/quiet')
   })
 
-  it('lists the challenges you joined separately from your own ideas', async () => {
+  it('C15 lists the challenges you joined separately from your own ideas', async () => {
     respond(
       [idea({ id: 'mine1', title: 'My idea' })],
       [idea({ id: 'joined1', title: 'Their challenge', author_id: 'someone', status: 'challenge' })]
@@ -165,7 +164,7 @@ describe('MyChallengesScreen', () => {
     expect(mockPush).toHaveBeenCalledWith('/explore/challenges')
   })
 
-  it('refetches on focus so an idea joined elsewhere shows on the way back', async () => {
+  it('C15 refetches on focus so an idea joined elsewhere shows on the way back', async () => {
     render(<MyChallengesScreen />)
     // Mount effect plus the focus effect: two rounds of both endpoints.
     await waitFor(() => expect(mockGet).toHaveBeenCalledWith('/api/ideas/mine'))

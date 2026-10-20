@@ -1,4 +1,3 @@
-// journeys: R17
 import { CLEARANCE, paddingBottomOf } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { AddPrinterScreen } from '../../../../components/printing/add-printer-screen'
@@ -13,7 +12,7 @@ jest.mock('../../../../lib/capabilities', () => ({
 
 beforeEach(() => mockPost.mockReset())
 
-it('sends the standard rates with the printer', async () => {
+it('R17 sends the standard rates with the printer', async () => {
   mockPost.mockResolvedValue({})
   render(<AddPrinterScreen />)
   expect(screen.getByText('Nothing listed — your card will say you cover everything yourself.')).toBeTruthy()
@@ -29,7 +28,7 @@ it('sends the standard rates with the printer', async () => {
   )
 })
 
-it('says no rate is free and sends null', async () => {
+it('R17 says no rate is free and sends null', async () => {
   mockPost.mockResolvedValue({})
   render(<AddPrinterScreen />)
   fireEvent.changeText(screen.getByLabelText('Make and model'), 'Ender')

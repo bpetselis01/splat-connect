@@ -1,5 +1,4 @@
 // My print requests: one row per request, live first, only the viewer's own.
-// journeys: R18
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { PrintRequestsScreen } from '../../../../components/printing/requests-screen'
 import { NAMES } from '../../../special-strings'
@@ -55,7 +54,7 @@ it('says the list could not load when the read fails, and shows no rows', async 
   expect(screen.queryByText('New request')).toBeNull()
 })
 
-it('leaves out donations, builds, and prints that other people asked for', async () => {
+it('R18 leaves out donations, builds, and prints that other people asked for', async () => {
   serve([
     row('mine'),
     row('donation', { type: 'donation' }),
@@ -67,7 +66,7 @@ it('leaves out donations, builds, and prints that other people asked for', async
   for (const hidden of ['donation', 'build', 'theirs']) expect(screen.queryByText(`Guide ${hidden}`)).toBeNull()
 })
 
-it('folds a request sent to three printers into one row that says so', async () => {
+it('R18 folds a request sent to three printers into one row that says so', async () => {
   serve([row('a', { print_group_id: 'g', print_group_size: 3 }), row('b', { print_group_id: 'g', print_group_size: 3 }), row('c', { print_group_id: 'g', print_group_size: 3 })])
   render(<PrintRequestsScreen />)
   expect(await screen.findByText(/3 printers asked/)).toBeTruthy()

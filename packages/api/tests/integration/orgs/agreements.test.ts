@@ -1,4 +1,3 @@
-// journeys: A14 N05
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -25,7 +24,7 @@ afterAll(async () => {
 })
 
 describe('POST /api/agreements', () => {
-  it('records an acceptance at the server-chosen version', async () => {
+  it('N05 records an acceptance at the server-chosen version', async () => {
     const res = await app.request('/api/agreements', authed(user.token, {
       method: 'POST',
       body: JSON.stringify({ agreement_type: 'contributor_terms', version: 'v99-forged' }),
@@ -34,8 +33,26 @@ describe('POST /api/agreements', () => {
     const row = (await res.json()) as { user_id: string; version: string }
     // The forged version in the body is ignored — the server picks it, so a
     // client cannot claim acceptance of terms that were never published.
-    expect(row.version).toBe('v0-todo')
+    expect(row.version).toBe(AGREEMENT_VERSIONS.contributor_terms)
     expect(row.user_id).toBe(user.id)
+  })
+
+  it('WN05 records the organisation leader terms at their own server-chosen version', async () => {
+    const leader = await createTestUser('contributor')
+    try {
+      const res = await app.request('/api/agreements', authed(leader.token, {
+        method: 'POST',
+        body: JSON.stringify({ agreement_type: 'org_leader_terms', version: 'v99-forged' }),
+      }))
+      expect(res.status).toBe(201)
+      const row = (await res.json()) as { user_id: string; agreement_type: string; version: string }
+      expect(row).toMatchObject({ user_id: leader.id, agreement_type: 'org_leader_terms', version: AGREEMENT_VERSIONS.org_leader_terms })
+      const { data } = await adminClient().from('user_agreements').select('version').eq('user_id', leader.id).eq('agreement_type', 'org_leader_terms')
+      expect(data).toEqual([{ version: AGREEMENT_VERSIONS.org_leader_terms }])
+    } finally {
+      await adminClient().from('user_agreements').delete().eq('user_id', leader.id)
+      await deleteTestUser(leader.id)
+    }
   })
 
   it('refuses an unknown agreement type', async () => {
@@ -48,7 +65,7 @@ describe('POST /api/agreements', () => {
 })
 
 describe('GET /api/agreements/me', () => {
-  it("returns only the caller's acceptances", async () => {
+  it("A14 returns only the caller's acceptances", async () => {
     const mine = await app.request('/api/agreements/me', authed(user.token))
     expect(((await mine.json()) as unknown[]).length).toBe(1)
 
@@ -65,7 +82,7 @@ describe('version-aware acceptance (139)', () => {
     for (const type of Object.keys(AGREEMENT_VERSIONS) as AgreementType[]) {
       const { data, error } = await adminClient().rpc('current_agreement_version', { p_agreement_type: type })
       expect(error).toBeNull()
-      expect(data, type).toBe(AGREEMENT_VERSIONS[type])
+      expect(data, type).toBe(AGREEMENT_VERSIONS.contributor_terms)
     }
   })
 

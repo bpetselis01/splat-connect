@@ -1,6 +1,5 @@
 // Print for others: the three tabs at their edges — empty, failing, racing
 // printers, a printer with no saved address, and every write's failure path.
-// journeys: R14 R16
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { PrintForOthersScreen } from '../../../../components/printing/offer-screen'
 import { NAMES } from '../../../special-strings'
@@ -317,7 +316,7 @@ describe('accepting as an organisation', () => {
 })
 
 describe('declining', () => {
-  it('offers each of the four reasons and sends the one tapped', async () => {
+  it('R14 offers each of the four reasons and sends the one tapped', async () => {
     render(<PrintForOthersScreen />)
     fireEvent.press(await screen.findByText('Decline…'))
     for (const reason of ['No PETG on hand', 'Too big for my bed', 'Away for a while', 'Too many jobs already']) {
@@ -476,7 +475,7 @@ describe('My printers', () => {
     fireEvent.press(await screen.findByRole('tab', { name: 'My printers' }))
   }
 
-  it('pauses an open printer and opens a paused one, by what it is now', async () => {
+  it('R16 pauses an open printer and opens a paused one, by what it is now', async () => {
     serve([machine('Open'), machine('Shut', { accepting: false })], [])
     await open()
     fireEvent.press(screen.getByText('Pause'))

@@ -39,7 +39,7 @@ beforeEach(() => {
 })
 
 describe('Idea reports tab', () => {
-  it('lists open idea reports, counts both stages, and opens one', async () => {
+  it('Q40 Q41 lists open idea reports, counts both stages, and opens one', async () => {
     render(<MemberReportsScreen />)
     fireEvent.press(await screen.findByRole('tab', { name: 'Idea reports' }))
     fireEvent.press(await screen.findByRole('button', { name: /Sam in Ladybug switch/ }))
@@ -56,7 +56,7 @@ describe('Idea reports tab', () => {
 })
 
 describe('IdeaReportDetailScreen', () => {
-  it('Remove sends the action with the trimmed note', async () => {
+  it('Q45 Remove sends the action with the trimmed note', async () => {
     render(<IdeaReportDetailScreen reportId="ir1" />)
     fireEvent.changeText(await screen.findByLabelText('Note for the record'), '  Warned twice. ')
     fireEvent.press(screen.getByRole('button', { name: 'Remove' }))
@@ -64,13 +64,13 @@ describe('IdeaReportDetailScreen', () => {
     expect(mockBack).toHaveBeenCalled()
   })
 
-  it('Dismiss sends the dismiss action', async () => {
+  it('Q44 Dismiss sends the dismiss action', async () => {
     render(<IdeaReportDetailScreen reportId="ir1" />)
     fireEvent.press(await screen.findByRole('button', { name: 'Dismiss' }))
     await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/api/admin/reports/ir1', { action: 'dismiss', resolution_note: '' }))
   })
 
-  it('a resolved report with a removed person offers only Reinstate', async () => {
+  it('Q46 a resolved report with a removed person offers only Reinstate', async () => {
     render(<IdeaReportDetailScreen reportId="ir2" />)
     fireEvent.press(await screen.findByRole('button', { name: 'Reinstate' }))
     await waitFor(() => expect(mockDelete).toHaveBeenCalledWith('/api/admin/ideas/i1/participants/p1/removal'))

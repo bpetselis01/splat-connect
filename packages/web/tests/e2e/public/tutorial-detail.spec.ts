@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
-import { adminClient, createContributor, createTutorial, uniqueTitle } from '../helpers'
+import { adminClient, createContributor, createTutorial, signIn, uniqueTitle } from '../helpers'
 
-test('the detail page renders a tutorial in full', async ({ page }) => {
+test('WT01 the detail page renders a tutorial in full', async ({ page }) => {
   const contributor = await createContributor()
   const title = uniqueTitle('E2E Detail')
   const tutorialId = await createTutorial(contributor.id, { title, status: 'approved' })
@@ -28,7 +28,7 @@ test('the detail page renders a tutorial in full', async ({ page }) => {
   await expect(page.getByRole('link', { name: 'Download e2e-mount.stl' })).toHaveAttribute('href', detour)
 })
 
-test('an unknown tutorial id renders a 404', async ({ page }) => {
+test('WT01 an unknown tutorial id renders a 404', async ({ page }) => {
   const response = await page.goto('/tutorials/00000000-0000-0000-0000-000000000000')
   expect(response?.status()).toBe(404)
 })
@@ -50,7 +50,7 @@ test('a tutorial with no photo shows the placeholder', async ({ page }) => {
   await expect(page.getByRole('img', { name: title })).toHaveCount(0)
 })
 
-test('optional parts and tools are badged and buy links open in a new tab', async ({ page }) => {
+test('WT03 optional parts and tools are badged and buy links open in a new tab', async ({ page }) => {
   const contributor = await createContributor()
   const id = await createTutorial(contributor.id, {
     title: uniqueTitle('E2E Detail Optional'),
@@ -113,4 +113,44 @@ test('the rail names the starting toy, what it works with and the no-build note'
   await expect(page.getByText('Works with', { exact: true })).toBeVisible()
   await expect(page.getByText('Any 3.5mm switch')).toBeVisible()
   await expect(page.getByText('Two adapted copies are in the library right now.')).toBeVisible()
+})
+
+test('WT02 the breadcrumb leads back to the library, and a section tab swaps its panel', async ({ page }) => {
+  const contributor = await createContributor()
+  const title = uniqueTitle('E2E Detail Tabs')
+  const id = await createTutorial(contributor.id, { title, status: 'approved' })
+
+  await page.goto(`/tutorials/${id}`)
+  const parts = page.getByRole('tab', { name: 'Parts & tools' })
+  const files = page.getByRole('tab', { name: 'Files & print settings' })
+  await expect(parts).toHaveAttribute('aria-selected', 'true')
+  await expect(page.getByRole('cell', { name: 'E2E part', exact: true })).toBeVisible()
+
+  await files.click()
+  await expect(files).toHaveAttribute('aria-selected', 'true')
+  await expect(page.getByRole('link', { name: 'Download e2e-mount.stl' })).toBeVisible()
+  await expect(page.getByRole('cell', { name: 'E2E part', exact: true })).toBeHidden()
+
+  await page.getByRole('navigation', { name: 'Breadcrumb' }).getByRole('link', { name: 'Guides' }).click()
+  await expect(page).toHaveURL(/\/library$/)
+})
+
+test('WT06 the rail leads to the build-help form and the toy library, and the Files tab to a print request', async ({ page }) => {
+  const author = await createContributor()
+  const reader = await createContributor()
+  const id = await createTutorial(author.id, { title: uniqueTitle('E2E Detail Links'), status: 'approved' })
+
+  await signIn(page, reader.email, reader.password)
+  await page.goto(`/tutorials/${id}`)
+  await page.getByRole('link', { name: 'Get help with this build' }).click()
+  await expect(page).toHaveURL(new RegExp(`/get-involved/requests/new\\?guide=${id}$`))
+
+  await page.goto(`/tutorials/${id}`)
+  await page.getByRole('link', { name: 'Toy library →' }).click()
+  await expect(page).toHaveURL(/\/toy-library$/)
+
+  await page.goto(`/tutorials/${id}`)
+  await page.getByRole('tab', { name: 'Files & print settings' }).click()
+  await page.getByRole('link', { name: 'Request a print →' }).click()
+  await expect(page).toHaveURL(new RegExp(`/printing/requests\\?guide=${id}$`))
 })

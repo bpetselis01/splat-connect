@@ -25,12 +25,12 @@ describe('email confirmed page', () => {
     expect(screen.getByText(/redirecting you to sign in/i)).toBeInTheDocument()
   })
 
-  it('offers an immediate manual sign-in link as a fallback', () => {
+  it('WA16 offers an immediate manual sign-in link as a fallback', () => {
     render(<EmailConfirmedPage />)
     expect(screen.getByRole('link', { name: 'Continue' })).toHaveAttribute('href', '/login')
   })
 
-  it('redirects to /login once the countdown finishes', () => {
+  it('WA16 redirects to /login once the countdown finishes', () => {
     render(<EmailConfirmedPage />)
     expect(replace).not.toHaveBeenCalled()
 
@@ -57,7 +57,7 @@ describe('email confirmed page', () => {
    * and lands here — without carrying `next` on to /login they arrive nowhere
    * near the twelve search results they started from.
    */
-  it('hands ?next= on to /login, which already honours it', () => {
+  it('WA16 hands ?next= on to /login, which already honours it', () => {
     search = new URLSearchParams('next=%2Flibrary')
     render(<EmailConfirmedPage />)
     act(() => {

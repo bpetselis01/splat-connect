@@ -1,8 +1,7 @@
-// journeys: Q05
 import { test, expect } from '@playwright/test'
 import { signInAsNewContributor } from './helpers'
 
-test('offline inbox: says so with Try again, then loads once back online', async ({ page }) => {
+test('Q05 offline inbox: says so with Try again, then loads once back online', async ({ page }) => {
   await signInAsNewContributor(page)
 
   const consoleErrors: string[] = []

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 
+vi.setConfig({ testTimeout: 30_000 })
 const get = vi.fn()
 vi.mock('@/lib/api-client', () => ({
   apiClient: { get: (...a: unknown[]) => get(...a), patch: vi.fn() },

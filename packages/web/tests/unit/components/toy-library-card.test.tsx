@@ -35,7 +35,7 @@ const toy = {
 } as unknown as ToyWithOwner
 
 describe('ToyLibraryCard', () => {
-  it('links to the toy detail page', () => {
+  it('WY02 links to the toy detail page', () => {
     render(<ToyLibraryCard toy={toy} />)
     expect(screen.getByTestId('toy-library-card')).toHaveAttribute('href', '/toy-library/toy-1')
   })
@@ -52,7 +52,7 @@ describe('ToyLibraryCard', () => {
     expect(container.firstElementChild).toHaveAttribute('data-testid', 'toy-library-card')
   })
 
-  it('renders the control as a sibling of the card link when save is given', () => {
+  it('WY03 renders the control as a sibling of the card link when save is given', () => {
     const { container } = render(
       <ToyLibraryCard toy={toy} save={{ slug: 'toys', id: toy.id, saved: false, signedIn: true }} />
     )

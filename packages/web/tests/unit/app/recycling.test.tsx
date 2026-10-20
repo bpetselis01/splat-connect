@@ -17,6 +17,22 @@ beforeEach(() => {
   )
 })
 
+describe('Recycling calls to action', () => {
+  it('WI36 sends a signed-in member to book a drop-off', async () => {
+    render(await RecyclingPage())
+    expect(screen.getByRole('link', { name: /book a drop-off/i })).toHaveAttribute('href', '/get-involved/recycling/drop-off')
+  })
+
+  it('WI36 sends a signed-out visitor to sign up, and lists nobody\'s credit', async () => {
+    mockGetCapabilities.mockResolvedValue(null)
+    mockGet.mockClear()
+    render(await RecyclingPage())
+    expect(screen.getByRole('link', { name: 'Create an account to book a drop-off' })).toHaveAttribute('href', '/signup')
+    expect(screen.queryByText('Print credit, unspent')).toBeNull()
+    expect(mockGet).not.toHaveBeenCalledWith('/api/organizations/recycling/credit')
+  })
+})
+
 describe('Recycling, signed in', () => {
   it('lists unspent print credit per organisation', async () => {
     render(await RecyclingPage())

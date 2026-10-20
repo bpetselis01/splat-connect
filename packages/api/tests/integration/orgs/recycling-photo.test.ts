@@ -3,7 +3,6 @@
  * contributor's own folder, signed reads for the contributor and the
  * organisation's leaders — and an account deletion that still completes.
  */
-// journeys: V05
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createUserClient } from '../../../src/supabase/client.js'
@@ -63,7 +62,7 @@ describe('112 the recycling-photos bucket', () => {
 })
 
 describe('POST /api/upload/recycling-photo', () => {
-  it('writes under the caller’s folder, naming the file from its type', async () => {
+  it('V05 WI37 writes under the caller’s folder, naming the file from its type', async () => {
     const res = await upload(me.token, png())
     expect(res.status).toBe(200)
     const body = (await res.json()) as { path: string; url: string }
@@ -113,7 +112,7 @@ describe('a booking with a photo', () => {
     expect(error?.code).toBe('23514')
   })
 
-  it('stores the path and signs it for the contributor and the leader', async () => {
+  it('V05 WI37 stores the path and signs it for the contributor and the leader', async () => {
     const res = await app.request(`/api/organizations/${orgId}/recycling`, json(me.token, 'POST', booking(path)))
     expect(res.status).toBe(201)
     const row = (await res.json()) as { id: string; photo_url: string }

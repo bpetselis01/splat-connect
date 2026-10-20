@@ -1,5 +1,4 @@
 // packages/mobile/tests/unit/components/inbox/inbox-screen.test.tsx
-// journeys: Q05 Q06 Q07 Q08 Q09 Q10
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { theme } from '../../../../lib/theme'
 import { ScrollView, FlatList, StyleSheet } from 'react-native'
@@ -119,7 +118,7 @@ describe('InboxScreen', () => {
     expect(clears(screen.UNSAFE_getAllByType(ScrollView))).toBe(false)
   })
 
-  it('splits exchanges from notifications, and counts what is unread in each group', async () => {
+  it('Q05 splits exchanges from notifications, and counts what is unread in each group', async () => {
     respond([
       notification({ id: 'n1', type: 'toy_request', toy_transaction_id: 'tx1' }),
       notification({ id: 'n2', type: 'toy_message', toy_transaction_id: 'tx2' }),
@@ -156,7 +155,7 @@ describe('InboxScreen', () => {
     expect(screen.queryByText('Sam requested Switch car')).toBeNull()
   })
 
-  it('draws an exchange as its thread: who, their last message, and a dot while unread', async () => {
+  it('Q10 draws an exchange as its thread: who, their last message, and a dot while unread', async () => {
     respond(
       [notification({ id: 'n1', type: 'toy_message', toy_transaction_id: 'tx1' })],
       [],
@@ -195,7 +194,7 @@ describe('InboxScreen', () => {
     expect(mockPush).toHaveBeenCalledWith('/exchanges/build/tx2')
   })
 
-  it('opens a print job from its inbox row on the job screen, not the toy thread (S2)', async () => {
+  it('Q06 opens a print job from its inbox row on the job screen, not the toy thread (S2)', async () => {
     respond(
       [notification({ id: 'n9', type: 'print_ready', toy_transaction_id: 'tx9' })],
       [],
@@ -206,7 +205,7 @@ describe('InboxScreen', () => {
     expect(mockPush).toHaveBeenCalledWith('/printing/jobs/tx9')
   })
 
-  it("opens an admin's submitted-guide notice on the admin review screen, a non-admin's on the organisation hub", async () => {
+  it("Q06 opens an admin's submitted-guide notice on the admin review screen, a non-admin's on the organisation hub", async () => {
     const note = notification({ type: 'tutorial_submitted', tutorial_id: 't1', tutorial_title: 'Bubble machine', toy_transaction_id: null })
     mockCaps = { isAdmin: true }
     respond([note])
@@ -221,7 +220,7 @@ describe('InboxScreen', () => {
     expect(mockPush).toHaveBeenLastCalledWith('/organisation')
   })
 
-  it('opens on Notifications when there are no exchanges, and where it is told to', async () => {
+  it('Q05 opens on Notifications when there are no exchanges, and where it is told to', async () => {
     const note = notification({ id: 'n4', type: 'tutorial_approved', tutorial_id: 't1', tutorial_title: 'Bubble machine', toy_transaction_id: null })
     respond([note])
     const { unmount } = render(<InboxScreen showHeader />)
@@ -240,7 +239,7 @@ describe('InboxScreen', () => {
     expect(await screen.findByText('Sam accepted your request for Switch car')).toBeTruthy()
   })
 
-  it('marks an unread row read and opens what it is about', async () => {
+  it('Q06 marks an unread row read and opens what it is about', async () => {
     respond([notification({ id: 'n7', type: 'toy_message', toy_transaction_id: 'tx7' })])
     render(<InboxScreen />)
 
@@ -270,7 +269,7 @@ describe('InboxScreen', () => {
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/exchanges/tx9'))
   })
 
-  it('marks a whole bucket read from its eyebrow', async () => {
+  it('Q07 marks a whole bucket read from its eyebrow', async () => {
     respond([
       notification({ id: 'n1', type: 'toy_request' }),
       notification({ id: 'n2', type: 'toy_message', toy_transaction_id: 'tx2' }),
@@ -287,7 +286,7 @@ describe('InboxScreen', () => {
     await waitFor(() => expect(mockInvalidate).toHaveBeenCalled())
   })
 
-  it('offers Accept and Decline on an invite that is still pending', async () => {
+  it('Q08 offers Accept and Decline on an invite that is still pending', async () => {
     respond(
       [
         notification({
@@ -319,7 +318,7 @@ describe('InboxScreen', () => {
     expect(mockPush).not.toHaveBeenCalled()
   })
 
-  it('declines an invite through the same route', async () => {
+  it('Q09 declines an invite through the same route', async () => {
     respond(
       [
         notification({

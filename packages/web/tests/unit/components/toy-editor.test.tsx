@@ -60,7 +60,7 @@ describe('ToyEditor', () => {
     expect(screen.getByLabelText('Name')).toHaveValue('Fire truck')
   })
 
-  it('saves details through PATCH /api/toys/:id and keeps the updated toy in state', async () => {
+  it('WY17 saves details through PATCH /api/toys/:id and keeps the updated toy in state', async () => {
     vi.mocked(browserApiClient.patch).mockResolvedValue(toy({ name: 'Dump truck' }))
     render(<ToyEditor toy={toy()} />)
     fireEvent.click(screen.getByRole('tab', { name: /Details/ }))
@@ -83,7 +83,7 @@ describe('ToyEditor', () => {
       .forEach((b) => expect(b).toBeDisabled())
   })
 
-  it('lists through PATCH /api/toys/:id/publish and flips to Live', async () => {
+  it('WY21 lists through PATCH /api/toys/:id/publish and flips to Live', async () => {
     vi.mocked(browserApiClient.patch).mockResolvedValue(toy({ status: 'published' }))
     render(<ToyEditor toy={toy()} />)
     fireEvent.click(screen.getAllByRole('button', { name: 'List it in the library' })[0])
@@ -101,7 +101,7 @@ describe('ToyEditor', () => {
     expect(screen.getByText('Only you can see this')).toBeInTheDocument()
   })
 
-  it('saves the offer type when a card is picked', async () => {
+  it('WY20 saves the offer type when a card is picked', async () => {
     vi.mocked(browserApiClient.patch).mockResolvedValue(toy({ offer_type: 'exchange' }))
     render(<ToyEditor toy={toy()} />)
     fireEvent.click(screen.getByRole('radio', { name: /Swap/ }))
@@ -137,7 +137,7 @@ describe('ToyEditor', () => {
     expect(screen.getByRole('button', { name: /delete toy/i })).toBeInTheDocument()
   })
 
-  it('pauses a live toy and offers to take requests again', async () => {
+  it('WY22 pauses a live toy and offers to take requests again', async () => {
     vi.mocked(browserApiClient.patch).mockResolvedValue(toy({ status: 'published', paused_at: '2026-09-30T00:00:00Z' }))
     render(<ToyEditor toy={toy({ status: 'published' })} />)
     fireEvent.click(screen.getByRole('button', { name: 'Mark unavailable' }))

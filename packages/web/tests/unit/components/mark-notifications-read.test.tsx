@@ -13,7 +13,7 @@ describe('MarkNotificationsRead', () => {
     post.mockResolvedValue(undefined)
   })
 
-  it('clears its bucket on mount', async () => {
+  it('WD22 WT37 clears its bucket on mount', async () => {
     render(<MarkNotificationsRead bucket="tutorials" />)
     await waitFor(() =>
       expect(post).toHaveBeenCalledWith('/api/notifications/me/read', { bucket: 'tutorials' })
@@ -56,5 +56,11 @@ describe('MarkNotificationsRead', () => {
     render(<MarkNotificationsRead bucket="challenges" />)
 
     await waitFor(() => expect(caught).toHaveBeenCalled())
+  })
+
+  it('WX01 clears the exchanges bucket, and only that one, when My exchanges opens', async () => {
+    render(<MarkNotificationsRead bucket="exchanges" />)
+    await waitFor(() => expect(post).toHaveBeenCalledWith('/api/notifications/me/read', { bucket: 'exchanges' }))
+    expect(post).toHaveBeenCalledTimes(1)
   })
 })

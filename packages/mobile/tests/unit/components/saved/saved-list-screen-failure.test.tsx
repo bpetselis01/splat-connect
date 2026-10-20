@@ -1,5 +1,4 @@
 // A failed saved-list load says so, retries on Try again, and never hits console.error.
-// journeys: V08 V09
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { SavedListScreen } from '../../../../components/saved/saved-list-screen'
 
@@ -18,7 +17,7 @@ jest.mock('../../../../lib/saves', () => ({
   }),
 }))
 
-it('offline: says so, Try again re-fetches and shows the list', async () => {
+it('V09 offline: says so, Try again re-fetches and shows the list', async () => {
   const errSpy = jest.spyOn(console, 'error')
   let down = true // mount and focus both fetch, so a one-shot rejection is not enough
   mockGet.mockImplementation(() =>

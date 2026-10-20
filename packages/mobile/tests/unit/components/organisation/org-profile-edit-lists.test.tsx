@@ -1,4 +1,3 @@
-// journeys: L23
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { OrgProfileEditScreen } from '../../../../components/organisation/org-profile-edit-screen'
 
@@ -42,7 +41,7 @@ describe('OrgProfileEditScreen lists', () => {
     expect(screen.queryByText(/edited on the web/)).toBeNull()
   })
 
-  it('saves the profile extras, then both lists, with cents round-tripped', async () => {
+  it('L23 saves the profile extras, then both lists, with cents round-tripped', async () => {
     render(<OrgProfileEditScreen />)
     await screen.findByDisplayValue('4.50')
     fireEvent.changeText(screen.getByDisplayValue('4.50'), '$4.55')

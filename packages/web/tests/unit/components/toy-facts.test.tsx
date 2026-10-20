@@ -56,7 +56,7 @@ describe('ReportLink', () => {
     expect(push).toHaveBeenCalledWith('/login?next=%2Ftoy-library%2Ft1')
   })
 
-  it('files a toy report with the picked reason', async () => {
+  it('WY09 files a toy report with the picked reason', async () => {
     render(<ReportLink subjectKind="toy" subjectId="t1" subjectLabel="Plush dog" who="Family 3" signedIn />)
     fireEvent.click(screen.getByRole('button', { name: /Report this listing/ }))
     const send = screen.getByRole('button', { name: /Send to SPLAT/ })

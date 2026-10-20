@@ -8,8 +8,9 @@ import { fileURLToPath } from 'node:url'
 import { PENDING, isPendingId, type PendingItem } from '@splat-connect/types'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..')
-const { references } = (await import(path.join(root, 'scripts/pending.mjs'))) as {
+const { references, needsNoCodeSite } = (await import(path.join(root, 'scripts/pending.mjs'))) as {
   references: () => Map<string, string[]>
+  needsNoCodeSite: (i: PendingItem) => boolean
 }
 const refs = references()
 const entries = Object.entries(PENDING) as [string, PendingItem][]
@@ -19,8 +20,24 @@ describe('pending work stays in step', () => {
     expect([...refs.keys()].filter((id) => !isPendingId(id))).toEqual([])
   })
   it('every open item is referenced somewhere in the code', () => {
-    const unreferenced = entries.filter(([id, i]) => !i.shipped && !refs.has(id)).map(([id]) => id)
+    const unreferenced = entries
+      .filter(([id, i]) => !i.shipped && !needsNoCodeSite(i) && !refs.has(id))
+      .map(([id]) => id)
     expect(unreferenced).toEqual([])
+  })
+  // The exemption is for a decision still waiting on Byron; it ends when the
+  // decision ships or loses its question.
+  it('only an open decision with a question may have no code site', () => {
+    const base = { title: 't', blurb: 'b', platforms: ['web' as const], needs: 'n' }
+    const fixture: Record<string, PendingItem> = {
+      open: { ...base, kind: 'decision', question: 'q?' },
+      shipped: { ...base, kind: 'decision', question: 'q?', shipped: true },
+      noQuestion: { ...base, kind: 'decision' },
+      emptyQuestion: { ...base, kind: 'decision', question: '' },
+      build: { ...base, kind: 'build', question: 'q?' },
+    }
+    const exempt = Object.entries(fixture).filter(([, i]) => needsNoCodeSite(i)).map(([id]) => id)
+    expect(exempt).toEqual(['open'])
   })
   it('a shipped item leaves no references behind', () => {
     const left = entries.filter(([id, i]) => i.shipped && refs.has(id)).map(([id]) => id)

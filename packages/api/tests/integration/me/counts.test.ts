@@ -1,5 +1,4 @@
 /** me-count-badges: one call, every count scoped to the caller. */
-// journeys: Q01
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -59,7 +58,7 @@ afterAll(async () => {
 })
 
 describe('GET /api/me/counts', () => {
-  it("counts what is waiting on this account and nobody else's", async () => {
+  it("Q01 WD01 counts what is waiting on this account and nobody else's", async () => {
     // A query that fails reads 0 and logs; none of these may have.
     const logged = vi.spyOn(console, 'error')
     expect(await counts(me.token)).toMatchObject({ tutorials: 1, challenges: 1, printRequests: 0, printJobs: 1, review: 0, intake: 0, orgOrders: 0 })
@@ -69,7 +68,7 @@ describe('GET /api/me/counts', () => {
   })
 
   // Review Focus 4: no orgs, no printers, nothing authored — zeros, not a 500.
-  it('is all zeros for an account with nothing, and makers counts every open request', async () => {
+  it('Q01 is all zeros for an account with nothing, and makers counts every open request', async () => {
     const res = await app.request('/api/me/counts', { headers: { Authorization: `Bearer ${fresh.token}` } })
     expect(res.status).toBe(200)
     const theirs = (await res.json()) as Record<string, number>

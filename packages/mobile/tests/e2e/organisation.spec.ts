@@ -1,4 +1,3 @@
-// journeys: L01 L02 L04 L06 L07 L08 T18
 import { test, expect } from '@playwright/test'
 import {
   createContributor,
@@ -15,7 +14,7 @@ import {
  * authority — or sent back with a note, which the API refuses to take blank.
  */
 
-test('a backing request walks the queue: back it, then approve the submission', async ({ page }) => {
+test('L01 L02 L04 L06 a backing request walks the queue: back it, then approve the submission', async ({ page }) => {
   const leader = await signInAsNewContributor(page)
   const orgId = await makeOrgLeader(leader.id)
   const author = await createContributor()
@@ -46,7 +45,7 @@ test('a backing request walks the queue: back it, then approve the submission', 
   await expect(page.getByRole('button', { name: title })).toBeVisible()
 })
 
-test('requesting changes will not travel without a note', async ({ page }) => {
+test('L07 requesting changes will not travel without a note', async ({ page }) => {
   const leader = await signInAsNewContributor(page)
   const orgId = await makeOrgLeader(leader.id)
   const author = await createContributor()
@@ -70,7 +69,7 @@ test('requesting changes will not travel without a note', async ({ page }) => {
   await expect(page.getByRole('button', { name: title })).toBeHidden()
 })
 
-test('the inventory shows org stock with its quantity', async ({ page }) => {
+test('L08 the inventory shows org stock with its quantity', async ({ page }) => {
   const leader = await signInAsNewContributor(page)
   const orgId = await makeOrgLeader(leader.id)
   const name = uniqueTitle('E2E Org Bear')

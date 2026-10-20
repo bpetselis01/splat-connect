@@ -2,28 +2,16 @@
 // YAML and cannot reach the service role, so this runs first and emits the
 // credentials as KEY=value lines for `maestro test --env`.
 //
-// Deliberately duplicates createContributor() + acceptTerms() from
-// tests/e2e/helpers.ts rather than importing them: that module imports
-// `expect` from @playwright/test (a value, not just a type), which a plain
-// Node script has no reason to load. Keep the two in sync.
-//
 // No role in the metadata and no profiles upsert: the signup trigger defaults
 // every account to 'contributor', and migration 011 removed the 'parent' role
 // this script used to write (the constraint now rejects it).
-import { createClient } from '@supabase/supabase-js'
+import { PASSWORD, acceptTerms, adminClient, uniqueEmail } from '../../../supabase/e2e-seed.ts'
 
-// Local Supabase by default — well-known non-secret dev keys, same values as
-// playwright.config.ts and tests/e2e/helpers.ts. Point DEVICE_SUPABASE_URL and
-// DEVICE_SERVICE_ROLE_KEY elsewhere to provision on another project.
-const SUPABASE_URL = process.env.DEVICE_SUPABASE_URL ?? 'http://localhost:54321'
-const SERVICE_ROLE_KEY =
-  process.env.DEVICE_SERVICE_ROLE_KEY ??
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU'
+// Local Supabase by default. Point DEVICE_SUPABASE_URL and DEVICE_SERVICE_ROLE_KEY
+// elsewhere to provision on another project.
+const email = uniqueEmail('device-parent', 'mobile-e2e.local')
 
-const PASSWORD = 'Test1234!'
-const email = `device-parent-${Date.now()}-${Math.floor(Math.random() * 1e6)}@mobile-e2e.local`
-
-const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
+const admin = adminClient(process.env.DEVICE_SUPABASE_URL, process.env.DEVICE_SERVICE_ROLE_KEY)
 
 const { data, error } = await admin.auth.admin.createUser({
   email,
@@ -33,10 +21,7 @@ const { data, error } = await admin.auth.admin.createUser({
 })
 if (error || !data.user) throw new Error(`Failed to create account: ${error?.message}`)
 
-const { error: termsError } = await admin
-  .from('user_agreements')
-  .insert({ user_id: data.user.id, agreement_type: 'contributor_terms', version: 'v0-todo' })
-if (termsError) throw new Error(`Failed to accept terms: ${termsError.message}`)
+await acceptTerms(data.user.id, 'contributor_terms', admin)
 
 // One notification, so the Inbox smoke flow renders a real row. An empty inbox
 // renders no rows, and rows are where the 2026-09-01 Hermes crash lived —

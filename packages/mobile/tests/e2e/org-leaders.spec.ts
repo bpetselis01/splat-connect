@@ -1,4 +1,3 @@
-// journeys: L25 L26 L27
 import { test, expect } from '@playwright/test'
 import { adminClient, createContributor, makeOrgLeader, renameProfile, signInAsNewContributor, uniqueTitle } from './helpers'
 import { addOrgLeader, partyPage } from './org-fixtures'
@@ -15,7 +14,7 @@ async function invitesFor(orgId: string) {
   return data ?? []
 }
 
-test('inviting a leader writes the invite, and the invitee finds it on their Account screen', async ({ page, browser, baseURL }) => {
+test('L25 inviting a leader writes the invite, and the invitee finds it on their Account screen', async ({ page, browser, baseURL }) => {
   const leader = await signInAsNewContributor(page)
   const orgName = uniqueTitle('E2E Inviting Org')
   const orgId = await makeOrgLeader(leader.id, orgName)
@@ -45,7 +44,7 @@ test('inviting a leader writes the invite, and the invitee finds it on their Acc
   expect(await invitesFor(orgId)).toHaveLength(1)
 })
 
-test('Cancel invitation deletes the invite and it leaves the invitee’s Account screen', async ({ page, browser, baseURL }) => {
+test('L26 Cancel invitation deletes the invite and it leaves the invitee’s Account screen', async ({ page, browser, baseURL }) => {
   const leader = await signInAsNewContributor(page)
   const orgName = uniqueTitle('E2E Cancelling Org')
   const orgId = await makeOrgLeader(leader.id, orgName)
@@ -74,7 +73,7 @@ test('Cancel invitation deletes the invite and it leaves the invitee’s Account
   }
 })
 
-test('Step down appears only with a co-leader, removes the leadership, and takes the leader off the public page', async ({ page, browser, baseURL }) => {
+test('L27 Step down appears only with a co-leader, removes the leadership, and takes the leader off the public page', async ({ page, browser, baseURL }) => {
   const leader = await signInAsNewContributor(page)
   const orgName = uniqueTitle('E2E Stepping Org')
   const orgId = await makeOrgLeader(leader.id, orgName)

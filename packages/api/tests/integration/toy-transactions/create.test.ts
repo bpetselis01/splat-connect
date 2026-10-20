@@ -1,4 +1,3 @@
-// journeys: X01 X02 Y05 Y06
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, type TestUser } from '../../helpers/auth.js'
@@ -48,7 +47,7 @@ describe('POST /api/toy-transactions', () => {
     await deleteTestUser(requester.id)
   })
 
-  it('creates a donation request and a system message', async () => {
+  it('Y05 WY10 creates a donation request and a system message', async () => {
     const res = await txReq('/', requester.token, {
       method: 'POST',
       body: JSON.stringify({ toy_id: toyId, type: 'donation' }),

@@ -1,4 +1,3 @@
-// journeys: N01 N04 N06 T05 T09 T12 T14
 import { test, expect, type Page } from '@playwright/test'
 import { signUpNewAccount, uniqueSignupEmail, uniqueTitle } from './helpers'
 
@@ -27,7 +26,7 @@ async function chooseFile(page: Page, button: string, file: string) {
   await (await chooser).setFiles(file)
 }
 
-test('a new account writes a guide end to end and submits it for review', async ({ page }) => {
+test('N06 T05 T09 T12 T14 T25 a new account writes a guide end to end and submits it for review', async ({ page }) => {
   await signUpNewAccount(page, uniqueSignupEmail())
   // Guides is a default shortcut on Home now, not a tab.
   await page.getByRole('button', { name: 'Guides', exact: true }).click()

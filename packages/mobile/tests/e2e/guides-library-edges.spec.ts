@@ -1,4 +1,3 @@
-// journeys: G04 V07
 import { test, expect } from '@playwright/test'
 import { createTutorial, signInAsNewContributor, uniqueTitle } from './helpers'
 
@@ -57,7 +56,7 @@ test('clearing a search that found nothing brings the library back', async ({ pa
   await expect(page.getByRole('button', { name: title })).toBeVisible()
 })
 
-test('tapping Save twice quickly leaves the bookmark where the last tap put it, and a reload agrees', async ({ page }) => {
+test('G06 tapping Save twice quickly leaves the bookmark where the last tap put it, and a reload agrees', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const title = uniqueTitle('E2E Mobile DoubleSave')
   await createTutorial(contributor.id, { title, status: 'approved' })
@@ -82,7 +81,7 @@ test('tapping Save twice quickly leaves the bookmark where the last tap put it, 
   await expect(page.getByLabel('Saved', { exact: true })).toHaveCount(0)
 })
 
-test('a failed save puts the bookmark back and nothing is on the shelf', async ({ page }) => {
+test('G06 V07 a failed save puts the bookmark back and nothing is on the shelf', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const title = uniqueTitle('E2E Mobile SaveFails')
   await createTutorial(contributor.id, { title, status: 'approved' })

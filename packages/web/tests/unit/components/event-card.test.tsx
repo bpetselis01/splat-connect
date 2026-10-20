@@ -31,13 +31,18 @@ const event = (over: Partial<EventListItem>) =>
 describe('EventCard', () => {
   // The API refuses a costed registration without cost_acknowledged, which
   // only the register form sends, so a one-tap POST would always fail.
-  it('sends a costed event with no questions to the register form', () => {
+  it('WI33 sends a costed event with no questions to the register form', () => {
     render(<EventCard event={event({ cost_cents: 450 })} signedIn hasQuestions={false} />)
     expect(screen.getByRole('link', { name: /I.m going/ })).toHaveAttribute('href', '/get-involved/events/ev-1/register')
   })
 
-  it('registers a free event with no questions in one tap', () => {
+  it('WI31 registers a free event with no questions in one tap', () => {
     render(<EventCard event={event({})} signedIn hasQuestions={false} />)
     expect(screen.getByRole('button', { name: /I.m going/ })).toBeInTheDocument()
+  })
+
+  it('WI30 opens the event page from the title', () => {
+    render(<EventCard event={event({})} signedIn hasQuestions={false} />)
+    expect(screen.getByRole('link', { name: 'Switch build day' })).toHaveAttribute('href', '/get-involved/events/ev-1')
   })
 })

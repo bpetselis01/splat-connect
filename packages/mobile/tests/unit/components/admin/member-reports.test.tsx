@@ -30,7 +30,7 @@ beforeEach(() => {
 })
 
 describe('MemberReportsScreen', () => {
-  it('lists the new reports with their counts and opens one', async () => {
+  it('Q40 Q41 lists the new reports with their counts and opens one', async () => {
     render(<MemberReportsScreen />)
     fireEvent.press(await screen.findByRole('button', { name: /Guide: Ladybug/ }))
     expect(mockGet).toHaveBeenCalledWith('/api/admin/member-reports')
@@ -47,7 +47,7 @@ describe('MemberReportsScreen', () => {
 })
 
 describe('MemberReportDetailScreen', () => {
-  it('resolving sends the status and the note', async () => {
+  it('Q43 resolving sends the status and the note', async () => {
     render(<MemberReportDetailScreen reportId="r1" />)
     fireEvent.changeText(await screen.findByLabelText('Note to the reporter'), '  We fixed it.  ')
     fireEvent.press(screen.getByRole('button', { name: 'Resolve' }))
@@ -57,7 +57,7 @@ describe('MemberReportDetailScreen', () => {
     expect(mockBack).toHaveBeenCalled()
   })
 
-  it('"Looking into it" sends the looking status', async () => {
+  it('Q42 "Looking into it" sends the looking status', async () => {
     render(<MemberReportDetailScreen reportId="r1" />)
     fireEvent.press(await screen.findByRole('button', { name: 'Looking into it' }))
     await waitFor(() =>

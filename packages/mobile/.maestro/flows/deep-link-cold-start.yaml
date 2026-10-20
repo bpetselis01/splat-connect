@@ -1,4 +1,3 @@
-# journeys: A14
 # A cold start straight into a pushed screen. The session gate runs on load, and
 # a deep link arrives before any tab has been visited: the guide must open
 # signed in, not bounce to Welcome and not land on Home. Expo Router resolves the
@@ -8,6 +7,7 @@
 # DEVICE_EMAIL, DEVICE_PASSWORD, DEVICE_GUIDE_ID and DEVICE_GUIDE_TITLE come from
 # `maestro test --env` (see sign-out-clears-session.yaml for why they carry no
 # defaults here).
+name: "A14 A cold start into a deep link opens the guide signed in"
 appId: com.splatconnect.mobile
 ---
 - launchApp:

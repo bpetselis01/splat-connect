@@ -40,7 +40,7 @@ beforeEach(() => {
 })
 
 describe('OrganisationsScreen', () => {
-  it('lists organisations with their leaders and state, and opens one', async () => {
+  it('Q32 Q33 lists organisations with their leaders and state, and opens one', async () => {
     render(<OrganisationsScreen />)
     fireEvent.press(await screen.findByRole('button', { name: /Riverside/ }))
     expect(screen.getByText('Ada')).toBeTruthy()
@@ -48,7 +48,7 @@ describe('OrganisationsScreen', () => {
     expect(mockPush).toHaveBeenCalledWith('/admin/organisations/o1')
   })
 
-  it('opens the create screen from the header button', async () => {
+  it('Q33 opens the create screen from the header button', async () => {
     render(<OrganisationsScreen />)
     fireEvent.press(await screen.findByRole('button', { name: 'New organisation' }))
     expect(mockPush).toHaveBeenCalledWith('/admin/organisations/new')
@@ -62,7 +62,7 @@ describe('OrganisationsScreen', () => {
 })
 
 describe('OrganisationManageScreen', () => {
-  it('a leader added shows in the list', async () => {
+  it('Q36 a leader added shows in the list', async () => {
     render(<OrganisationManageScreen orgId="o1" />)
     fireEvent.changeText(await screen.findByLabelText('Search accounts'), 'bo')
     fireEvent.press(screen.getByRole('button', { name: 'Pick Bo' }))
@@ -77,14 +77,14 @@ describe('OrganisationManageScreen', () => {
     expect(screen.queryByRole('button', { name: 'Pick Cy' })).toBeNull()
   })
 
-  it('removing a leader drops it from the list', async () => {
+  it('Q37 removing a leader drops it from the list', async () => {
     render(<OrganisationManageScreen orgId="o1" />)
     fireEvent.press(await screen.findByRole('button', { name: 'Remove Ada' }))
     await waitFor(() => expect(mockDelete).toHaveBeenCalledWith('/api/admin/organizations/o1/leaders/a1'))
     await waitFor(() => expect(screen.getByText('Leaders (0)')).toBeTruthy())
   })
 
-  it('suspends and verifies through the admin PATCH', async () => {
+  it('Q38 Q39 suspends and verifies through the admin PATCH', async () => {
     render(<OrganisationManageScreen orgId="o1" />)
     fireEvent.press(await screen.findByRole('button', { name: 'Suspend' }))
     await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/api/admin/organizations/o1', { status: 'suspended' }))
@@ -93,7 +93,7 @@ describe('OrganisationManageScreen', () => {
     await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/api/admin/organizations/o1', { verified: true }))
   })
 
-  it('saves a rename', async () => {
+  it('Q35 saves a rename', async () => {
     render(<OrganisationManageScreen orgId="o1" />)
     fireEvent.changeText(await screen.findByLabelText('Name'), ' Riverside Makers ')
     fireEvent.press(screen.getByRole('button', { name: 'Save details' }))
@@ -102,7 +102,7 @@ describe('OrganisationManageScreen', () => {
     )
   })
 
-  it('creates an organisation with its first leader and goes back', async () => {
+  it('Q34 creates an organisation with its first leader and goes back', async () => {
     render(<OrganisationManageScreen />)
     fireEvent.changeText(await screen.findByLabelText('Name'), 'New Co')
     fireEvent.changeText(screen.getByLabelText('Search accounts'), 'ada')

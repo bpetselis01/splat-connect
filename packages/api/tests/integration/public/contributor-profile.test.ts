@@ -1,4 +1,3 @@
-// journeys: G12 Q13 S01
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -75,7 +74,7 @@ describe('GET /api/public/contributors/:id', () => {
     await deleteTestUser(empty.id)
   })
 
-  it('404s for opted-out and zero-contribution people, 200 for eligible', async () => {
+  it('S01 WP01 404s for opted-out and zero-contribution people, 200 for eligible', async () => {
     const ok = await app.request(`${BASE}/api/public/contributors/${maker.id}`)
     expect(ok.status).toBe(200)
     const body = (await ok.json()) as any

@@ -1,4 +1,3 @@
-// journeys: L23
 import { test, expect } from '@playwright/test'
 import { adminClient, createContributor, makeOrgLeader, signInAsNewContributor, uniqueTitle } from './helpers'
 import { partyPage } from './org-fixtures'
@@ -9,7 +8,7 @@ import { partyPage } from './org-fixtures'
  * as it was, because PATCH /profile writes only the fields it is sent.
  */
 
-test('Save and publish writes the org row, the public page shows it, and the web-only fields survive', async ({
+test('L23 Save and publish writes the org row, the public page shows it, and the web-only fields survive', async ({
   page,
   browser,
   baseURL,

@@ -1,4 +1,3 @@
-// journeys: H07
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { TabBar } from '../../../components/tab-bar'
 
@@ -16,7 +15,7 @@ describe('tab badge count math', () => {
     ['negative (a count that raced below zero)', -3],
     ['NaN', NaN],
     ['missing', undefined],
-  ])('hides the badge for %s', (_l, v) => {
+  ])('H07 hides the badge for %s', (_l, v) => {
     render(<TabBar {...props} badges={{ inbox: v as number, me: v as number }} />)
     expect(screen.queryByTestId('tab-badge')).toBeNull()
     expect(screen.getByLabelText('Inbox')).toBeTruthy()
@@ -25,18 +24,18 @@ describe('tab badge count math', () => {
 
   it.each([
     [1, '1'], [9, '9'], [99, '99'], [100, '99+'], [101, '99+'], [1_000_000, '99+'],
-  ])('shows %i as %s', (count, text) => {
+  ])('H07 shows %i as %s', (count, text) => {
     render(<TabBar {...props} badges={{ inbox: count }} />)
     expect(screen.getByTestId('tab-badge')).toHaveTextContent(text)
   })
 
-  it('reads the unread phrase for Inbox and the waiting phrase for Me, with the true count even past 99', () => {
+  it('H07 reads the unread phrase for Inbox and the waiting phrase for Me, with the true count even past 99', () => {
     render(<TabBar {...props} badges={{ inbox: 250, me: 1 }} />)
     expect(screen.getByLabelText('Inbox, 250 unread')).toBeTruthy()
     expect(screen.getByLabelText('Me, 1 waiting')).toBeTruthy()
   })
 
-  it('a badged tab is still pressable and navigates', () => {
+  it('H07 a badged tab is still pressable and navigates', () => {
     props.navigation.navigate.mockClear()
     render(<TabBar {...props} badges={{ inbox: 4 }} />)
     fireEvent.press(screen.getByLabelText('Inbox, 4 unread'))

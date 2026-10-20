@@ -1,6 +1,5 @@
 // Makers wanted: the four tabs, distance, claiming, paging and the ways the
 // board can be empty, failing or answering out of order.
-// journeys: K02
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { MakersWantedScreen } from '../../../../components/builds/makers-wanted-screen'
 import { NAMES } from '../../../special-strings'
@@ -270,7 +269,7 @@ describe('distance', () => {
 })
 
 describe('claiming', () => {
-  it('claims and goes to the thread', async () => {
+  it('K02 claims and goes to the thread', async () => {
     render(<MakersWantedScreen />)
     fireEvent.press(await screen.findByRole('button', { name: "I'll build this" }))
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/exchanges/build/b1'))
@@ -300,7 +299,7 @@ describe('claiming', () => {
     expect(await screen.findByText(message)).toBeTruthy()
   })
 
-  it('claims once however many times the button is tapped while the claim is in flight', async () => {
+  it('K02 claims once however many times the button is tapped while the claim is in flight', async () => {
     let finish!: (v: object) => void
     mockPost.mockReturnValue(new Promise((r) => (finish = r)))
     render(<MakersWantedScreen />)

@@ -1,4 +1,3 @@
-// journeys: T06
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
 import { acceptTerms, createProject } from '../../helpers/orgs.js'
@@ -27,7 +26,7 @@ const exists = async (id: string) => {
 }
 
 describe('DELETE /api/tutorials/:id', () => {
-  it('deletes a draft', async () => {
+  it('T06 WT34 deletes a draft', async () => {
     const id = await createProject({ authorId: author.id, status: 'draft' })
     const res = await del(id)
     expect(res.status).toBe(204)

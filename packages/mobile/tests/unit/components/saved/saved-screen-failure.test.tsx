@@ -1,5 +1,4 @@
 // A failed saves load says so, retries on Try again, and never hits console.error.
-// journeys: V07
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { SavedScreen } from '../../../../components/saved/saved-screen'
 
@@ -11,7 +10,7 @@ jest.mock('expo-router', () => {
   return { useRouter: () => ({ push: jest.fn() }), useFocusEffect: (e: () => void) => useEffect(e, []) }
 })
 
-it('offline: says so, Try again re-fetches and shows the tiles', async () => {
+it('V07 offline: says so, Try again re-fetches and shows the tiles', async () => {
   const errSpy = jest.spyOn(console, 'error')
   let down = true // mount and focus both fetch, so a one-shot rejection is not enough
   mockGet.mockImplementation(() =>

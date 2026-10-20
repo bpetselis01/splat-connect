@@ -1,5 +1,4 @@
 /** 066 thanks: one per person per guide, never your own, only on a published guide. */
-// journeys: G09
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -34,7 +33,7 @@ describe('guide thanks against the real database', () => {
     expect(await res.json()).toEqual({ thanked: false, own: false })
   })
 
-  it('records a thank, bumps the count, and notifies every credited contributor anonymously', async () => {
+  it('G09 WT09 records a thank, bumps the count, and notifies every credited contributor anonymously (tutorial_thanked)', async () => {
     const res = await call('POST', thanks(guide), family.token)
     expect(res.status).toBe(201)
     expect(await res.json()).toEqual({ thanks_count: 1 })
@@ -72,6 +71,6 @@ describe('guide thanks against the real database', () => {
   })
 
   it('needs a signed-in member', async () => {
-    expect((await app.request(thanks(guide), { method: 'POST' })).status).toBe(401)
+    expect((await app.request(`/api/tutorials/${guide}/thanks`, { method: 'POST' })).status).toBe(401)
   })
 })

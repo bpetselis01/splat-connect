@@ -1,4 +1,3 @@
-// journeys: L25 L26 L27
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { OrgLeadersSection } from '../../../../components/organisation/org-leaders-section'
 
@@ -26,7 +25,7 @@ describe('OrgLeadersSection', () => {
     expect(screen.queryByText('Step down as leader')).toBeNull()
   })
 
-  it('invites a co-leader by email and shows the API refusal in words', async () => {
+  it('L25 invites a co-leader by email and shows the API refusal in words', async () => {
     mockGet.mockResolvedValue({ leaders: [me], invites: [] })
     mockPost.mockRejectedValueOnce(new Error('API POST /x failed with status 404: No SPLAT account uses that email. Ask them to sign up first.'))
     render(<OrgLeadersSection orgId="o1" />)
@@ -42,7 +41,7 @@ describe('OrgLeadersSection', () => {
     expect(mockPost).toHaveBeenLastCalledWith('/api/organizations/o1/leaders', { email: 'priya@example.com' })
   })
 
-  it('steps down once someone else leads', async () => {
+  it('L27 steps down once someone else leads', async () => {
     mockGet.mockResolvedValue({ leaders: [me, priya], invites: [] })
     mockDelete.mockResolvedValue(undefined)
     const onSteppedDown = jest.fn()
@@ -52,7 +51,7 @@ describe('OrgLeadersSection', () => {
     expect(mockDelete).toHaveBeenCalledWith('/api/organizations/o1/leaders/me')
   })
 
-  it('cancels an invitation and reloads without it', async () => {
+  it('L26 cancels an invitation and reloads without it', async () => {
     mockGet.mockResolvedValueOnce({ leaders: [me], invites: [{ id: 'i1', name: 'Priya', email: 'priya@example.com' }] })
     mockDelete.mockResolvedValue(undefined)
     render(<OrgLeadersSection orgId="o1" />)

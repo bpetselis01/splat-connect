@@ -1,4 +1,3 @@
-# journeys: B01 B05 G05 G11 G15 G30 G31
 # The guide page on Hermes and a real touch screen: the hero's paging, build
 # mode (a fullScreenModal), and the header ✕ that closes the whole trail back
 # to the last screen with the tab bar. Playwright draws the same screens but
@@ -12,6 +11,7 @@
 #
 # DEVICE_EMAIL / DEVICE_PASSWORD / DEVICE_GUIDE_TITLE come from `maestro test --env` — see
 # sign-out-clears-session.yaml for why they carry no env: defaults here.
+name: "B01 B05 G05 G11 G15 G30 G31 Open a guide, build it, view a part in 3D, and close the trail"
 appId: com.splatconnect.mobile
 ---
 - clearState
@@ -42,6 +42,19 @@ appId: com.splatconnect.mobile
 - swipe:
     start: "15%,30%"
     end: "85%,30%"
+- assertVisible:
+    text: "1/2 · .*"
+
+# G11: a tap on the hero opens the photo viewer (a native modal, so Playwright
+# cannot show it); its own close control puts the guide back.
+- tapOn:
+    text: "Open photo 1 full screen"
+- assertVisible:
+    text: "Close photo"
+- assertVisible:
+    text: "1 of 2"
+- tapOn:
+    text: "Close photo"
 - assertVisible:
     text: "1/2 · .*"
 

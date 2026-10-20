@@ -1,4 +1,3 @@
-// journeys: H01
 import { render, screen, fireEvent, act } from '@testing-library/react-native'
 import { HomeScreen } from '../../../../components/home/home-screen'
 
@@ -64,7 +63,7 @@ describe('Home Today card count math', () => {
     expect(screen.queryByText(/toy exchange/)).toBeNull()
   })
 
-  it('opens the Inbox however large the count', () => {
+  it('H01 opens the Inbox however large the count', () => {
     setup({ total: 99999, exchanges: 0 })
     fireEvent.press(screen.getByLabelText(/new messages/))
     expect(mockPush).toHaveBeenCalledWith('/inbox')

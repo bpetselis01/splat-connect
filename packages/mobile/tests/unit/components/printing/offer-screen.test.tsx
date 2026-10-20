@@ -3,7 +3,6 @@
 // Print for others: an organisation's request gets the machine picker, which
 // preselects the best fit and stamps the choice on accept; declining sends a
 // reason.
-// journeys: L11 R07 R12 R13
 import { CLEARANCE, scrollPaddings } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { PrintForOthersScreen } from '../../../../components/printing/offer-screen'
@@ -84,7 +83,7 @@ beforeEach(() => {
   })
 })
 
-it('preselects the machine that fits and accepts on it', async () => {
+it('R13 preselects the machine that fits and accepts on it', async () => {
   render(<PrintForOthersScreen />)
   expect(await screen.findByText('Accept on Bambu P1S')).toBeTruthy()
   expect(await screen.findByText('Also asked 1 other. Settings from the guide: PETG.')).toBeTruthy()
@@ -113,7 +112,7 @@ it('declines with a reason', async () => {
   )
 })
 
-it("scoped to an organisation, shows only that organisation's machines and jobs", async () => {
+it("L11 R12 scoped to an organisation, shows only that organisation's machines and jobs", async () => {
   render(<PrintForOthersScreen orgId="elsewhere" />)
   // Every fixture machine belongs to 'org', so the job on 'Ender PLA' is not
   // this organisation's to answer.
@@ -121,7 +120,7 @@ it("scoped to an organisation, shows only that organisation's machines and jobs"
   expect(screen.queryByText('Also asked 1 other. Settings from the guide: PETG.')).toBeNull()
 })
 
-it('leaves an expired request off the Requests tab', async () => {
+it('R12 leaves an expired request off the Requests tab', async () => {
   mockGet.mockImplementation((path: string) =>
     Promise.resolve(
       path === '/api/printers/mine'

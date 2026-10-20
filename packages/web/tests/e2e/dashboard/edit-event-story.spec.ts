@@ -16,7 +16,7 @@ import {
  * kept, consent re-ticked, the story's date kept) have API and unit coverage;
  * this proves the Edit links and the two edit pages are wired to them.
  */
-test('a leader edits a published event and story in place', async ({ page }) => {
+test('WB18 WB20 WB26 a leader edits a published event and story in place', async ({ page }) => {
   const leader = await createContributor()
   const orgId = await createOrgWithLeader(leader.id, `Edit Org ${Date.now()}`)
   const eventTitle = uniqueTitle('Build day')

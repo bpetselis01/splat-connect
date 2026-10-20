@@ -1,4 +1,4 @@
-> Snapshot of the scout's inventory; the living map is docs/testing/mobile-journeys.md, generated from packages/mobile/tests/journeys.json.
+> Snapshot of the scout's inventory; the living map is docs/testing/journeys.md, generated from scripts/journeys/journeys.json.
 
 # Mobile coverage inventory (scout output, 2026-10-07)
 

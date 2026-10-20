@@ -1,5 +1,4 @@
 // Find a printer when the printer list cannot be read: says so, Try again re-reads, nothing hits console.error.
-// journeys: R01 R02
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { FindPrinterScreen } from '../../../../components/printing/find-screen'
 

@@ -27,7 +27,7 @@ describe('PrintAtEventForm', () => {
     post.mockResolvedValue({ id: 't1' } as never)
   })
 
-  it('sends the guide, the ticked parts, the sets and the note, then points at My events', async () => {
+  it('WI34 sends the guide, the ticked parts, the sets and the note, then points at My events', async () => {
     render(<PrintAtEventForm eventId="e1" maxSets={3} />)
     await pickGuide()
     fireEvent.click(screen.getByRole('checkbox', { name: 'wing.stl' }))
@@ -42,7 +42,7 @@ describe('PrintAtEventForm', () => {
     expect(await screen.findByRole('link', { name: 'My events' })).toBeTruthy()
   })
 
-  it('shows the server\'s sentence when no part is ticked', async () => {
+  it('WI34 shows the server\'s sentence when no part is ticked', async () => {
     post.mockRejectedValue(new Error('Request failed with status 400: Tick at least one part to print.'))
     render(<PrintAtEventForm eventId="e1" maxSets={3} />)
     await pickGuide()

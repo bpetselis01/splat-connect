@@ -12,7 +12,7 @@ import { createContributor, createTutorial, createPublishedToy, deleteUser, uniq
  * so no explicit opt-in is needed.
  */
 test.describe('Impact wall and contributor profile', () => {
-  test('wall card leads to a profile listing their guides and toys', async ({ page }) => {
+  test('WS01 wall card leads to a profile listing their guides and toys', async ({ page }) => {
     const contributor = await createContributor()
     const tutorialTitle = uniqueTitle('Impact Tutorial')
     await createTutorial(contributor.id, { title: tutorialTitle, status: 'approved' })

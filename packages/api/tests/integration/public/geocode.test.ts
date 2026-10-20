@@ -1,5 +1,4 @@
 /** geocode.ts against the local geocodes table (126), with Nominatim stubbed. */
-// journeys: Q13
 import { describe, it, expect, afterAll, vi } from 'vitest'
 import { geocodeAll } from '../../../src/geocode.js'
 import { adminClient } from '../../helpers/auth.js'

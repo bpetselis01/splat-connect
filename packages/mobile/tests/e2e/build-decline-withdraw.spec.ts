@@ -1,10 +1,9 @@
-// journeys: K07 K12
 import { test, expect } from '@playwright/test'
 import { notificationsFor, partyPage, seedBuild, txRow } from './maker-fixtures'
 
 /** The two ways a build ends early: the addressed maker declines, or the family withdraws a live one. */
 
-test('a maker declines a request addressed to them and the family sees it closed', async ({ browser, baseURL }) => {
+test('K07 a maker declines a request addressed to them and the family sees it closed', async ({ browser, baseURL }) => {
   const build = await seedBuild({ withMaker: true })
   const makerPage = await partyPage(browser, baseURL, build.maker)
   const familyPage = await partyPage(browser, baseURL, build.requester)
@@ -25,7 +24,7 @@ test('a maker declines a request addressed to them and the family sees it closed
   }
 })
 
-test('the family withdraws a claimed build and the maker is told', async ({ browser, baseURL }) => {
+test('K12 the family withdraws a claimed build and the maker is told', async ({ browser, baseURL }) => {
   const build = await seedBuild({ status: 'accepted' })
   const makerPage = await partyPage(browser, baseURL, build.maker)
   const familyPage = await partyPage(browser, baseURL, build.requester)

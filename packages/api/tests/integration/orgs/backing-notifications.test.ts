@@ -36,7 +36,7 @@ afterAll(async () => {
 })
 
 describe('backing answers notify the author', () => {
-  it('accept inserts backing_accepted once, even if answered again', async () => {
+  it('WB04 accept inserts backing_accepted once, even if answered again', async () => {
     expect((await answer(acceptedGuide, 'accept')).status).toBe(200)
     expect((await answer(acceptedGuide, 'accept')).status).toBe(200)
 
@@ -50,8 +50,11 @@ describe('backing answers notify the author', () => {
     expect(rows[0].actor_name).toBeTruthy()
   })
 
-  it('decline inserts backing_declined', async () => {
+  it('L05 WB05 decline marks the backing declined by the leader and inserts backing_declined', async () => {
     expect((await answer(declinedGuide, 'decline')).status).toBe(200)
+
+    const { data: backing } = await adminClient().from('tutorial_orgs').select('status, responded_by').eq('tutorial_id', declinedGuide).eq('org_id', orgId).single()
+    expect(backing).toEqual({ status: 'declined', responded_by: leader.id })
 
     const rows = await notices(declinedGuide)
     expect(rows).toHaveLength(1)

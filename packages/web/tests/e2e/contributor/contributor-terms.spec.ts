@@ -1,10 +1,10 @@
 import { test, expect } from '@playwright/test'
-import { signIn, createContributor, createTutorial, uniqueTitle } from '../helpers'
+import { signIn, createContributor, createTutorial, uniqueTitle, fillDetail } from '../helpers'
 
 // No acceptTerms() anywhere in this file, deliberately. Seeding acceptance in setup
 // is what kept the contributor-terms 403 invisible to the suite.
 
-test('an account without accepted terms is sent to the catch-up screen', async ({ page }) => {
+test('WA27 an account without accepted terms is sent to the catch-up screen', async ({ page }) => {
   const contributor = await createContributor()
   await signIn(page, contributor.email, contributor.password)
   // signIn() only clicks the button; the login page's own redirect (which
@@ -16,7 +16,30 @@ test('an account without accepted terms is sent to the catch-up screen', async (
   await expect(page).toHaveURL(/\/onboarding\/contributor-terms/)
 })
 
-test('browsing stays open without accepted terms', async ({ page }) => {
+test('WA17 Accept and continue stays disabled until the box is ticked', async ({ page }) => {
+  const contributor = await createContributor()
+  await signIn(page, contributor.email, contributor.password)
+  await page.waitForURL(/\/onboarding\/contributor-terms/)
+
+  const accept = page.getByRole('button', { name: 'Accept and continue' })
+  await expect(accept).toBeDisabled()
+  await page.getByRole('checkbox').check()
+  await expect(accept).toBeEnabled()
+})
+
+test('WA18 Sign out on the terms gate returns to the home page, signed out', async ({ page }) => {
+  const contributor = await createContributor()
+  await signIn(page, contributor.email, contributor.password)
+  await page.waitForURL(/\/onboarding\/contributor-terms/)
+
+  await page.getByRole('button', { name: 'Sign out' }).click()
+  await page.waitForURL(/localhost:\d+\/$/)
+  await expect(page.getByRole('link', { name: 'Sign in' })).toBeVisible()
+  await page.goto('/dashboard')
+  await expect(page).toHaveURL(/\/login$/)
+})
+
+test('WA29 browsing stays open without accepted terms', async ({ page }) => {
   const contributor = await createContributor()
   const tutorialId = await createTutorial(contributor.id, {
     title: uniqueTitle('E2E Terms Browsing'),
@@ -36,9 +59,14 @@ test('browsing stays open without accepted terms', async ({ page }) => {
   // The public detail page must not be caught by the /tutorials gate.
   await page.goto(`/tutorials/${tutorialId}`)
   await expect(page).toHaveURL(new RegExp(`/tutorials/${tutorialId}$`))
+
+  // An account page that is signed-in only, not terms-gated.
+  await page.goto('/notifications')
+  await expect(page).toHaveURL(/\/notifications$/)
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
 })
 
-test('accepting on first login lands on the dashboard with its real header, not the bare layout', async ({ page }) => {
+test('WA17 accepting on first login lands on the dashboard with its real header, not the bare layout', async ({ page }) => {
   const contributor = await createContributor()
   await signIn(page, contributor.email, contributor.password)
   await page.waitForURL(/\/onboarding\/contributor-terms/)
@@ -54,7 +82,7 @@ test('accepting on first login lands on the dashboard with its real header, not 
   await expect(page.getByRole('heading', { name: /^Welcome back,/, level: 1 })).toBeVisible()
 })
 
-test('accepting returns the user to where they were blocked and unblocks editing', async ({ page }) => {
+test('WA17 accepting returns the user to where they were blocked and unblocks editing', async ({ page }) => {
   const contributor = await createContributor()
   const tutorialId = await createTutorial(contributor.id, {
     title: uniqueTitle('E2E Terms Unblocks Edit'),
@@ -79,24 +107,8 @@ test('accepting returns the user to where they were blocked and unblocks editing
   // API refuses without an acceptance row, and the Server Action threw a 500. This is
   // the assertion that would have caught it.
   //
-  // #edit-title / "Save details" are the ids the Details panel actually uses.
-  // Typed in a retry loop because "Save details" is gated on a `dirty` flag the
-  // form sets from React's onChange. Arriving here straight off the acceptance
-  // redirect, the markup can still be the server-rendered HTML: a fill that
-  // lands before hydration changes the DOM but no handler observes it, so dirty
-  // stays false and the button stays disabled for the rest of the test. Filling
-  // again once React is attached is what makes this deterministic.
-  const editTitle = page.locator('#edit-title')
   const saveDetails = page.getByRole('button', { name: 'Save details' })
-  // Cleared first on every attempt, which is load-bearing: React only raises
-  // onChange when the value actually differs from the one it last tracked, so
-  // re-filling the same string after a pre-hydration fill is a no-op and the
-  // retry would spin until it timed out.
-  await expect(async () => {
-    await editTitle.fill('')
-    await editTitle.fill('Edited after accepting terms')
-    await expect(saveDetails).toBeEnabled({ timeout: 1_000 })
-  }).toPass({ timeout: 30_000 })
+  await fillDetail(page, 'title', 'Edited after accepting terms')
   await saveDetails.click()
 
   // The <h1> renders tutorial.title, so it changing proves the PATCH was accepted and

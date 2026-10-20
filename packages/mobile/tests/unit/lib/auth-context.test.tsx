@@ -1,4 +1,3 @@
-// journeys: A14
 import { renderHook, act, waitFor } from '@testing-library/react-native'
 import type { ReactNode } from 'react'
 import { AGREEMENT_VERSIONS } from '@splat-connect/types'
@@ -73,7 +72,7 @@ describe('useAuth', () => {
   })
 
   // Tests: loading starts true and flips to false once the initial session check resolves
-  it('resolves loading to false after the initial session check', async () => {
+  it('A14 resolves loading to false after the initial session check', async () => {
     const { result } = renderHook(() => useAuth(), { wrapper })
     expect(result.current.loading).toBe(true)
     await waitFor(() => expect(result.current.loading).toBe(false))
@@ -81,7 +80,7 @@ describe('useAuth', () => {
   })
 
   // Tests: signIn surfaces the Supabase error message on failure
-  it('signIn maps bad credentials to the spec wording', async () => {
+  it('A05 signIn maps bad credentials to the spec wording', async () => {
     mockSignInWithPassword.mockResolvedValue({ error: { message: 'Invalid login credentials' } })
     const { result } = renderHook(() => useAuth(), { wrapper })
     await waitFor(() => expect(result.current.loading).toBe(false))
@@ -89,7 +88,7 @@ describe('useAuth', () => {
     expect(problem).toEqual({ kind: 'credentials', message: "That email and password don't match." })
   })
 
-  it('signIn sends a fresh code when the email was never confirmed', async () => {
+  it('A05 signIn sends a fresh code when the email was never confirmed', async () => {
     mockSignInWithPassword.mockResolvedValue({ error: { message: 'Email not confirmed', code: 'email_not_confirmed' } })
     mockResend.mockResolvedValue({ error: null })
     const { result } = renderHook(() => useAuth(), { wrapper })
@@ -100,7 +99,7 @@ describe('useAuth', () => {
   })
 
   // Tests: signIn returns a null error on success
-  it('signIn returns null error on success', async () => {
+  it('A05 signIn returns null error on success', async () => {
     mockSignInWithPassword.mockResolvedValue({ error: null })
     const { result } = renderHook(() => useAuth(), { wrapper })
     await waitFor(() => expect(result.current.loading).toBe(false))
@@ -265,7 +264,7 @@ describe('useAuth', () => {
   })
 
   // Tests: an active session triggers a profile fetch that carries the role
-  it('loads the profile (with role) when a session exists', async () => {
+  it('A14 loads the profile (with role) when a session exists', async () => {
     mockGetSession.mockResolvedValue({ data: { session: { access_token: 't', user: { id: 'u1' } } } })
     mockApiGet.mockImplementation((path: string) =>
       path === '/api/agreements/me'
@@ -295,11 +294,11 @@ describe('useAuth', () => {
   })
 
   // Tests: the agreements endpoint reporting a contributor_terms row flips the flag
-  it('reports contributor terms from the agreements endpoint', async () => {
+  it('A14 reports contributor terms from the agreements endpoint', async () => {
     mockGetSession.mockResolvedValue({ data: { session: { access_token: 't', user: { id: 'u1' } } } })
     mockApiGet.mockImplementation((path: string) =>
       path === '/api/agreements/me'
-        ? Promise.resolve([{ agreement_type: 'contributor_terms', version: 'v0-todo' }])
+        ? Promise.resolve([{ agreement_type: 'contributor_terms', version: AGREEMENT_VERSIONS.contributor_terms }])
         : Promise.resolve({ id: 'u1', name: 'Ada', role: 'contributor' })
     )
 
@@ -309,7 +308,7 @@ describe('useAuth', () => {
   })
 
   // Tests: no contributor_terms row means the flag stays false
-  it('reports no contributor terms when the row is absent', async () => {
+  it('A14 reports no contributor terms when the row is absent', async () => {
     mockGetSession.mockResolvedValue({ data: { session: { access_token: 't', user: { id: 'u1' } } } })
     mockApiGet.mockImplementation((path: string) =>
       path === '/api/agreements/me'

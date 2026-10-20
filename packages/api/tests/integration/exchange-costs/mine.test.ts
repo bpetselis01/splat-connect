@@ -2,7 +2,6 @@
  * The Me tab's money panel: every thread with money on it, whichever way it
  * runs, settled or not, named by the other person and the kind of thread.
  */
-// journeys: Q01
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -79,7 +78,7 @@ afterAll(async () => {
 })
 
 describe('GET /api/exchange-costs/mine', () => {
-  it('lists money both ways, settled or not, unsettled first, and skips a thread with nothing claimed', async () => {
+  it('Q01 lists money both ways, settled or not, unsettled first, and skips a thread with nothing claimed', async () => {
     const tomName = (await adminClient().from('profiles').select('name').eq('id', tom.id).single()).data!.name
     const body = await mine(sam)
     expect(body.threads.map((t) => t.transaction_id)).toEqual([tx.donation, tx.build])

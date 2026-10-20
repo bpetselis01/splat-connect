@@ -1,4 +1,3 @@
-// journeys: Z09
 import { CLEARANCE, scrollPaddings } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { ChildWizard } from '../../../../components/profile/child-wizard'
@@ -32,7 +31,7 @@ beforeEach(() => {
 })
 
 describe('ChildWizard', () => {
-  it('walks every step on Skip, saves nothing, and finishes on the guides', async () => {
+  it('Z09 walks every step on Skip, saves nothing, and finishes on the guides', async () => {
     jest.useFakeTimers()
     try {
       render(<ChildWizard />)
@@ -55,7 +54,7 @@ describe('ChildWizard', () => {
     }
   })
 
-  it('saves only what a step answered on Continue', async () => {
+  it('Z09 saves only what a step answered on Continue', async () => {
     jest.useFakeTimers()
     try {
       render(<ChildWizard />)
@@ -77,7 +76,7 @@ describe('ChildWizard', () => {
     }
   })
 
-  it('saves how the child starts things, with one hand as its own chip', async () => {
+  it('Z09 saves how the child starts things, with one hand as its own chip', async () => {
     jest.useFakeTimers()
     try {
       render(<ChildWizard />)
@@ -94,7 +93,7 @@ describe('ChildWizard', () => {
     }
   })
 
-  it('saves what the child enjoys, and Good to know is the last step', async () => {
+  it('Z09 saves what the child enjoys, and Good to know is the last step', async () => {
     jest.useFakeTimers()
     try {
       render(<ChildWizard />)
@@ -114,7 +113,7 @@ describe('ChildWizard', () => {
     }
   })
 
-  it('ends on the board\'s done screen with the matches, and opens Guides', async () => {
+  it('Z09 ends on the board\'s done screen with the matches, and opens Guides', async () => {
     mockGet.mockImplementation((path: string) =>
       path === '/api/public/tutorials'
         ? Promise.resolve([

@@ -1,4 +1,3 @@
-// journeys: Q03 Q04 Q08 Q09 Q11 Q12 Q16
 import { test, expect, type Page } from '@playwright/test'
 import { adminClient, createContributor, createTutorial, signIn, signInAsNewContributor, uniqueTitle } from './helpers'
 import { seedCollaboratorInvite, seedMapOrg, seedMoneyThread } from './family-fixtures'
@@ -7,29 +6,35 @@ import { seedCollaboratorInvite, seedMapOrg, seedMoneyThread } from './family-fi
 // buttons, the Map's list view, and the About links. Each test seeds its own
 // rows and asserts only on them.
 
-test.describe('money line on Me opens its own thread', () => {
-  const cases = [
-    { type: 'donation', path: (id: string) => `/exchanges/${id}` },
-    { type: 'build', path: (id: string) => `/exchanges/build/${id}` },
-    { type: 'print', path: (id: string) => `/printing/jobs/${id}` },
-  ] as const
-  for (const c of cases) {
-    test(`a ${c.type} line goes to ${c.type === 'donation' ? 'the exchange' : c.type === 'build' ? 'the build thread' : 'the print job'}`, async ({ page }) => {
-      const what = `E2E Cost ${c.type} ${Date.now()}`
-      const thread = await seedMoneyThread(c.type, what)
-      await signIn(page, thread.payer.email, thread.payer.password)
-      await page.waitForURL(/\/home$/)
+async function openMoneyLine(page: Page, type: 'donation' | 'build' | 'print') {
+  const what = `E2E Cost ${type} ${Date.now()}`
+  const thread = await seedMoneyThread(type, what)
+  await signIn(page, thread.payer.email, thread.payer.password)
+  await page.waitForURL(/\/home$/)
 
-      await page.goto('/me')
-      const line = page.getByRole('button', { name: new RegExp(`^${what},`) })
-      await expect(line).toHaveAccessibleName(/\$4\.50, to settle$/)
-      await line.click()
-      await expect(page).toHaveURL(new RegExp(`${c.path(thread.id)}$`))
-    })
-  }
+  await page.goto('/me')
+  const line = page.getByRole('button', { name: new RegExp(`^${what},`) })
+  await expect(line).toHaveAccessibleName(/\$4\.50, to settle$/)
+  await line.click()
+  return thread.id
+}
+
+test('Q03 a donation line on Me goes to the exchange', async ({ page }) => {
+  const id = await openMoneyLine(page, 'donation')
+  await expect(page).toHaveURL(new RegExp(`/exchanges/${id}$`))
 })
 
-test('How badges are earned opens the rules and closes again', async ({ page }) => {
+test('Q03 a build line on Me goes to the build thread', async ({ page }) => {
+  const id = await openMoneyLine(page, 'build')
+  await expect(page).toHaveURL(new RegExp(`/exchanges/build/${id}$`))
+})
+
+test('Q03 a print line on Me goes to the print job', async ({ page }) => {
+  const id = await openMoneyLine(page, 'print')
+  await expect(page).toHaveURL(new RegExp(`/printing/jobs/${id}$`))
+})
+
+test('Q04 How badges are earned opens the rules and closes again', async ({ page }) => {
   await signInAsNewContributor(page)
   await page.goto('/me')
   const row = page.getByRole('button', { name: 'How badges are earned', exact: true })
@@ -48,7 +53,7 @@ async function inviteFixture() {
   return { author, title, tutorialId }
 }
 
-test('Accept on a collaborator invite gives the seat and tells the author', async ({ page }) => {
+test('Q08 Accept on a collaborator invite gives the seat and tells the author', async ({ page }) => {
   const { author, title, tutorialId } = await inviteFixture()
   const invitee = await signInAsNewContributor(page)
   const inviteId = await seedCollaboratorInvite(tutorialId, title, invitee.id, author.id)
@@ -68,7 +73,7 @@ test('Accept on a collaborator invite gives the seat and tells the author', asyn
   expect(told?.map((n) => n.type)).toContain('collaborator_accepted')
 })
 
-test('Decline on a collaborator invite leaves no seat and tells the author', async ({ page }) => {
+test('Q09 Decline on a collaborator invite leaves no seat and tells the author', async ({ page }) => {
   const { author, title, tutorialId } = await inviteFixture()
   const invitee = await signInAsNewContributor(page)
   const inviteId = await seedCollaboratorInvite(tutorialId, title, invitee.id, author.id)
@@ -90,7 +95,7 @@ test('Decline on a collaborator invite leaves no seat and tells the author', asy
 
 const placeRow = (page: Page, org: string, kind: string) => page.getByRole('button', { name: new RegExp(`^${org}, ${kind}`) })
 
-test('the Map lists a seeded organisation and its drop-off, narrowed by search, layer chip and filament filter', async ({ page }) => {
+test('Q11 Q12 the Map lists a seeded organisation and its drop-off, narrowed by search, layer chip and filament filter', async ({ page }) => {
   await signInAsNewContributor(page)
   const name = uniqueTitle('E2E Map Org')
   const orgId = await seedMapOrg(name)
@@ -120,7 +125,7 @@ test('the Map lists a seeded organisation and its drop-off, narrowed by search, 
   await expect(page).toHaveURL(new RegExp(`/toy-library/organisation/${orgId}$`))
 })
 
-test('a map drop-off row opens the recycling screen', async ({ page }) => {
+test('Q12 a map drop-off row opens the recycling screen', async ({ page }) => {
   await signInAsNewContributor(page)
   const name = uniqueTitle('E2E Map Dropoff')
   await seedMapOrg(name)
@@ -132,7 +137,7 @@ test('a map drop-off row opens the recycling screen', async ({ page }) => {
   await expect(page).toHaveURL(/\/explore\/recycling$/)
 })
 
-test('About SPLAT links open the matching web pages', async ({ page }) => {
+test('Q16 About SPLAT links open the matching web pages', async ({ page }) => {
   await signInAsNewContributor(page)
   await page.goto('/explore/about')
   await page.evaluate(() => {

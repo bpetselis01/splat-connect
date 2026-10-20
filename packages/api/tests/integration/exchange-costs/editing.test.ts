@@ -1,4 +1,3 @@
-// journeys: X10 X11
 /**
  * Writing to the cost panel: adding a line, removing one, and recording how the
  * money changed hands.
@@ -81,7 +80,7 @@ afterAll(async () => {
 })
 
 describe('adding a cost', () => {
-  it('makes the caller the payee and the other party the payer', async () => {
+  it('X10 WX10 makes the caller the payee and the other party the payer', async () => {
     const res = await app.request(
       `/api/exchange-costs/${transactionId}`,
       json(payee.token, 'POST', { description: 'Filament', amount_cents: 1210 })
@@ -152,7 +151,7 @@ describe('adding a cost', () => {
 })
 
 describe('removing a cost', () => {
-  it('lets the author remove their own line and nobody else remove it', async () => {
+  it('X11 WX11 lets the author remove their own line and nobody else remove it', async () => {
     const created = await app.request(
       `/api/exchange-costs/${transactionId}`,
       json(payee.token, 'POST', { description: 'Mine to remove', amount_cents: 300 })

@@ -1,4 +1,3 @@
-// journeys: G17
 import { test, expect } from '@playwright/test'
 import { createContributor, createTutorial, signInAsNewContributor, uniqueTitle } from './helpers'
 import { addSteps } from './guides-fixtures'
@@ -7,7 +6,7 @@ import { addSteps } from './guides-fixtures'
 // stepped guide (its hero button is Start building there), whose footer links to the guide on the website. The no-PDF message is
 // covered in guides-detail.spec.ts.
 
-test('Files > View opens the full guide, whose footer links to the guide on the website', async ({ page }) => {
+test('G17 Files > View opens the full guide, whose footer links to the guide on the website', async ({ page }) => {
   await signInAsNewContributor(page)
   const author = await createContributor()
   const id = await createTutorial(author.id, { title: uniqueTitle('E2E PDF Guide') })

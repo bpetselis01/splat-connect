@@ -1,4 +1,3 @@
-// journeys: G22
 import { Linking } from 'react-native'
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { GuideTools } from '../../../../components/guides/guide-tools'
@@ -23,7 +22,7 @@ const tools = [
   { id: 't2', tutorial_id: 'g', name: 'Hot glue gun', is_optional: false, buy_links: [] },
 ]
 
-it('ticks the tools you already have and links to Learn', async () => {
+it('G22 ticks the tools you already have and links to Learn', async () => {
   render(<Tools tools={tools} />)
   expect(await screen.findByText('0 of 2 already yours')).toBeTruthy()
   expect(screen.getByText(/Not in the parts total/)).toBeTruthy()

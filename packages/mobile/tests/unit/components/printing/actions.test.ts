@@ -1,6 +1,5 @@
 // The writes the print screens share: the photo picker's three outcomes (no
 // permission, backed out, picked) for the ready photo and the test print.
-// journeys: R06 R07 R08 R15
 import { apiMessage } from '@splat-connect/types'
 import { markReady, startPrint, submitTestPrint, withdrawRequest } from '../../../../components/printing/actions'
 
@@ -54,7 +53,7 @@ describe.each([
 })
 
 describe('markReady', () => {
-  it('uploads the picked photo to the job’s print-ready route and returns the job row', async () => {
+  it('R08 uploads the picked photo to the job’s print-ready route and returns the job row', async () => {
     mockLaunch.mockResolvedValue({ canceled: false, assets: [{ uri: 'file:///a.heic', fileName: 'IMG_1.HEIC', mimeType: 'image/heic' }] })
     mockUpload.mockResolvedValue({ id: 'j1', ready_at: 'now' })
     expect(await markReady('j1')).toEqual({ id: 'j1', ready_at: 'now' })
@@ -82,7 +81,7 @@ describe('markReady', () => {
 })
 
 describe('submitTestPrint', () => {
-  it('uploads to the printer’s test-prints route with no id field, since the id is in the path', async () => {
+  it('R15 uploads to the printer’s test-prints route with no id field, since the id is in the path', async () => {
     mockLaunch.mockResolvedValue({ canceled: false, assets: [{ uri: 'file:///t.png', fileName: 'arch.png', mimeType: 'image/png' }] })
     mockUpload.mockResolvedValue({ verdict: null })
     expect(await submitTestPrint('p9')).toEqual({ verdict: null })
@@ -103,13 +102,13 @@ describe('submitTestPrint', () => {
 })
 
 describe('the plain posts', () => {
-  it('startPrint posts an empty body to print-started', async () => {
+  it('R07 startPrint posts an empty body to print-started', async () => {
     mockPost.mockResolvedValue({ id: 'j1' })
     await startPrint('j1')
     expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions/j1/print-started', {})
   })
 
-  it('withdrawRequest withdraws the one job it is given and lets the API fold the group', async () => {
+  it('R06 withdrawRequest withdraws the one job it is given and lets the API fold the group', async () => {
     mockPost.mockResolvedValue({})
     await withdrawRequest({ id: 'j1', print_group_id: 'g' })
     expect(mockPost).toHaveBeenCalledTimes(1)

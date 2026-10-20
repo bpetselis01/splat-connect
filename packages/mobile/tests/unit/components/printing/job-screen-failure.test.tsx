@@ -1,5 +1,4 @@
 // A print job whose first read fails: says so, Try again re-reads, nothing hits console.error.
-// journeys: R06
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { PrintJobScreen } from '../../../../components/printing/job-screen'
 

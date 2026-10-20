@@ -1,4 +1,3 @@
-// journeys: L03 L05
 import { test, expect } from '@playwright/test'
 import {
   adminClient,
@@ -15,7 +14,7 @@ import {
  * check it, and declines a backing request.
  */
 
-test('Open the tutorial PDF opens the guide preview with a signed link to the file', async ({ page }) => {
+test('L03 Open the tutorial PDF opens the guide preview with a signed link to the file', async ({ page }) => {
   const leader = await signInAsNewContributor(page)
   const orgId = await makeOrgLeader(leader.id)
   const author = await createContributor()
@@ -32,7 +31,7 @@ test('Open the tutorial PDF opens the guide preview with a signed link to the fi
   await expect(page.getByText('No PDF is available for this tutorial yet.')).toHaveCount(0)
 })
 
-test('Decline turns the backing down: the row says declined and the guide leaves the queue', async ({ page }) => {
+test('L05 Decline turns the backing down: the row says declined and the guide leaves the queue', async ({ page }) => {
   const leader = await signInAsNewContributor(page)
   const orgId = await makeOrgLeader(leader.id)
   const author = await createContributor()

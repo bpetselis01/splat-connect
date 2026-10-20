@@ -1,5 +1,4 @@
 // packages/mobile/tests/unit/components/toys/request-block.test.tsx
-// journeys: Y05
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import type { Toy, ToyWithOwner } from '@splat-connect/types'
 import { RequestBlock } from '../../../../components/toys/request-block'
@@ -100,7 +99,7 @@ describe('RequestBlock', () => {
     expect(screen.getByRole('button', { name: 'Arrange exchange' })).toBeTruthy()
   })
 
-  it('posts a donation request and calls onStarted with the transaction id', async () => {
+  it('Y05 posts a donation request and calls onStarted with the transaction id', async () => {
     mockPost.mockResolvedValue({ id: 'tx1', toy_id: 'toy1', type: 'donation' })
     render(<RequestBlock toy={toy({ offer_type: 'donation' })} myToys={[]} myToysLoaded={true} myToysError={null} onStarted={mockOnStarted} />)
     fireEvent.press(screen.getByRole('button', { name: 'Ask to collect it' }))

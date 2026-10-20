@@ -1,4 +1,3 @@
-// journeys: Z01 Z02 Z03
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -26,7 +25,7 @@ afterAll(async () => {
 })
 
 describe('PATCH /api/contributors/me', () => {
-  it('updates the caller name', async () => {
+  it('Z01 WD10 updates the caller name', async () => {
     const res = await app.request(
       '/api/contributors/me',
       authed(user.token, { method: 'PATCH', body: JSON.stringify({ name: 'Ada Lovelace' }) })
@@ -115,7 +114,7 @@ describe('PATCH /api/contributors/me', () => {
     expect(res.status).toBe(400)
   })
 
-  it('takes a four-digit postcode or none, and says what is wrong otherwise', async () => {
+  it('Z03 WD10 takes a four-digit postcode or none, and says what is wrong otherwise', async () => {
     const patch = (pickup_postcode: string) =>
       app.request('/api/contributors/me', authed(user.token, { method: 'PATCH', body: JSON.stringify({ pickup_postcode }) }))
     const bad = await patch('12')

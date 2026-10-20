@@ -2,7 +2,6 @@
  * Did it fit? — the family who asked says so once the parts are collected.
  * "Needs a reprint" tells the printer, in the thread and the inbox.
  */
-// journeys: R10
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -74,7 +73,7 @@ describe('094 print fit', () => {
     expect((await fit(family, await job('requested'), { fit: 'fitted' })).status).toBe(409)
   })
 
-  it('records a reprint once, and tells the printer', async () => {
+  it('R10 records a reprint once, and tells the printer', async () => {
     const id = await job('completed')
     const res = await fit(family, id, { fit: 'reprint' })
     expect(res.status).toBe(200)

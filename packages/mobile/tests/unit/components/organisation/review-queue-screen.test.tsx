@@ -1,5 +1,4 @@
 // packages/mobile/tests/unit/components/organisation/review-queue-screen.test.tsx
-// journeys: L01 L02
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { ReviewQueueScreen } from '../../../../components/organisation/review-queue-screen'
 
@@ -66,7 +65,7 @@ beforeEach(() => {
 })
 
 describe('ReviewQueueScreen', () => {
-  it('waits on a pending backing request and on a submitted, backed guide alike', async () => {
+  it('L01 waits on a pending backing request and on a submitted, backed guide alike', async () => {
     mockGet.mockResolvedValue([
       tutorial({ id: 't1', title: 'Asked to back', tutorial_orgs: [backing({ status: 'pending' })] }),
       tutorial({
@@ -123,7 +122,7 @@ describe('ReviewQueueScreen', () => {
     expect(labels.indexOf('Older ask')).toBeLessThan(labels.indexOf('Newer ask'))
   })
 
-  it('opens the review detail for a row', async () => {
+  it('L02 opens the review detail for a row', async () => {
     mockGet.mockResolvedValue([
       tutorial({ id: 't1', title: 'Open me', tutorial_orgs: [backing({})] }),
     ])

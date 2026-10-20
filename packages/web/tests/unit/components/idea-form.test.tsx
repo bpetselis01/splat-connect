@@ -3,7 +3,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { IdeaForm } from '@/components/idea-form'
 import { browserApiClient } from '@/lib/browser-api-client'
 
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }))
+const push = vi.fn()
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }))
 vi.mock('@/lib/browser-api-client', () => ({ browserApiClient: { post: vi.fn(), postFormData: vi.fn() } }))
 
 describe('IdeaForm', () => {
@@ -40,7 +41,7 @@ describe('IdeaForm', () => {
   })
 
   // 106: uploaded before the idea exists; the idea carries the path, the preview the url.
-  it('uploads a photo, shows it, and sends its path with the idea', async () => {
+  it('WI12 uploads a photo, shows it, and sends its path with the idea', async () => {
     vi.mocked(browserApiClient.postFormData).mockResolvedValue({ path: 'ideas/u/a.png', url: 'https://x/ideas/u/a.png' })
     render(<IdeaForm />)
     fireEvent.change(screen.getByLabelText(/drop a photo of the toy/i), {
@@ -58,7 +59,7 @@ describe('IdeaForm', () => {
     )
   })
 
-  it('says so when the photo does not upload', async () => {
+  it('WI12 says so when the photo does not upload', async () => {
     vi.mocked(browserApiClient.postFormData).mockRejectedValue(new Error('nope'))
     render(<IdeaForm />)
     fireEvent.change(screen.getByLabelText(/drop a photo of the toy/i), {
@@ -67,15 +68,33 @@ describe('IdeaForm', () => {
     expect(await screen.findByText('Could not upload the photo. Please try again.')).toBeInTheDocument()
   })
 
-  it('sends no photo when none is added', async () => {
+  it('WI11 posts the typed idea with no photo and opens My challenges', async () => {
     vi.mocked(browserApiClient.post).mockClear()
+    push.mockClear()
     render(<IdeaForm />)
     fireEvent.change(screen.getByLabelText(/^title$/i), { target: { value: 'T' } })
     fireEvent.change(screen.getByLabelText(/^summary$/i), { target: { value: 'S' } })
     fireEvent.click(screen.getByRole('button', { name: /submit for review/i }))
     await waitFor(() =>
-      expect(browserApiClient.post).toHaveBeenCalledWith('/api/ideas', expect.objectContaining({ photo_path: null }))
+      expect(browserApiClient.post).toHaveBeenCalledWith('/api/ideas', {
+        title: 'T',
+        summary: 'S',
+        description: null,
+        kind: 'challenge',
+        contact_prefs: [],
+        photo_path: null,
+        anonymous: false,
+      })
     )
+    expect(push).toHaveBeenCalledWith('/dashboard/challenges')
+  })
+
+  it('WI11 asks for a title and a summary before posting anything', async () => {
+    vi.mocked(browserApiClient.post).mockClear()
+    render(<IdeaForm />)
+    fireEvent.submit(screen.getByLabelText(/^title$/i).closest('form')!)
+    expect(await screen.findByRole('alert')).toHaveTextContent('A title and a summary are required.')
+    expect(browserApiClient.post).not.toHaveBeenCalled()
   })
 
   it('starts from the idea it revises, photo included', async () => {

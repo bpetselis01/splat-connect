@@ -4,7 +4,7 @@ import { createContributor, createTutorial, signIn, uniqueTitle } from '../helpe
 // The board's #library: skill and time facets, the tag groups, a Recommended-first sort, and the header
 // search arriving as ?q=. Spec docs/superpowers/specs/2026-09-18-library-backend-design.md.
 
-test('the library lists an approved guide and hides a pending one', async ({ page }) => {
+test('WG01 the library lists an approved guide, hides a pending one, and counts the reviewed guides', async ({ page }) => {
   const contributor = await createContributor()
   const approved = uniqueTitle('E2E Library Approved')
   const pending = uniqueTitle('E2E Library Pending')
@@ -16,9 +16,10 @@ test('the library lists an approved guide and hides a pending one', async ({ pag
   await expect(page.getByRole('heading', { name: 'Adapt a toy in an evening' })).toBeVisible()
   await expect(page.getByText(approved)).toBeVisible()
   await expect(page.getByText(pending)).toHaveCount(0)
+  await expect(page.getByText('reviewed guides').locator('xpath=preceding-sibling::dd')).toHaveText(/^[1-9]\d*$/)
 })
 
-test('the header search arrives as a removable chip', async ({ page }) => {
+test('WG02 the header search arrives as a removable chip', async ({ page }) => {
   const contributor = await createContributor()
   const title = uniqueTitle('E2E Library Search')
   await createTutorial(contributor.id, { title, status: 'approved' })
@@ -34,7 +35,7 @@ test('the header search arrives as a removable chip', async ({ page }) => {
   await expect(page.getByText('Nothing matches all of those yet')).toHaveCount(0)
 })
 
-test('Time filters on hands-on minutes, and Needs printing on STL files', async ({ page }) => {
+test('WG04 Time filters on hands-on minutes, and Needs printing on STL files', async ({ page }) => {
   const contributor = await createContributor()
   const marker = uniqueTitle('E2E Time')
   const quick = `${marker} quick`
@@ -53,7 +54,7 @@ test('Time filters on hands-on minutes, and Needs printing on STL files', async 
   await expect(page.getByText(quick)).toHaveCount(0)
 })
 
-test('sort by Quickest', async ({ page }) => {
+test('WG03 sort by Quickest', async ({ page }) => {
   const contributor = await createContributor()
   const marker = uniqueTitle('E2E Sort')
   await createTutorial(contributor.id, { title: `${marker} long`, status: 'approved', buildMinutes: 120 })
@@ -99,4 +100,69 @@ test('a signed-out visitor gets Share alone, and the account call to action goes
   await page.getByRole('link', { name: 'Sign in to download' }).click()
   await expect(page).toHaveURL(new RegExp(`/signup\\?next=%2Ftutorials%2F${id}&reason=download`))
   await expect(page.getByText('You need an account to download tutorial files.')).toBeVisible()
+})
+
+test('WG05 Clear filters in the empty state brings the whole list back', async ({ page }) => {
+  const contributor = await createContributor()
+  const title = uniqueTitle('E2E Library Clear')
+  await createTutorial(contributor.id, { title, status: 'approved' })
+
+  await page.goto('/library?q=zzz-no-such-guide-zzz')
+  await expect(page.getByText('Nothing matches all of those yet')).toBeVisible()
+  await page.getByRole('button', { name: 'Clear filters' }).click()
+
+  await expect(page.getByText('Nothing matches all of those yet')).toHaveCount(0)
+  await expect(page.getByTestId('tutorial-card').first()).toBeVisible()
+})
+
+test('WG06 Show more reveals the guides past the first 24', async ({ page }) => {
+  const contributor = await createContributor()
+  const marker = uniqueTitle('E2E More')
+  for (let i = 0; i < 25; i++) await createTutorial(contributor.id, { title: `${marker} ${i}`, status: 'approved' })
+
+  await page.goto(`/library?q=${encodeURIComponent(marker)}`)
+  await expect(page.getByTestId('tutorial-card')).toHaveCount(24)
+  await expect(page.getByText('Showing 24 of 25')).toBeVisible()
+  await page.getByRole('button', { name: 'Show more guides' }).click()
+  await expect(page.getByTestId('tutorial-card')).toHaveCount(25)
+  await expect(page.getByRole('button', { name: 'Show more guides' })).toHaveCount(0)
+})
+
+test('WG07 a guide card opens its guide', async ({ page }) => {
+  const contributor = await createContributor()
+  const title = uniqueTitle('E2E Library Open')
+  const id = await createTutorial(contributor.id, { title, status: 'approved' })
+
+  await page.goto(`/library?q=${encodeURIComponent(title)}`)
+  await page.getByTestId('tutorial-card').filter({ hasText: title }).click()
+
+  await expect(page).toHaveURL(new RegExp(`/tutorials/${id}$`))
+  await expect(page.getByRole('heading', { name: title })).toBeVisible()
+})
+
+test('WG10 Pick for my child sends a signed-out visitor through sign up, and a signed-in one to the wizard', async ({ page }) => {
+  await page.goto('/library')
+  await page.getByRole('link', { name: 'Pick for my child' }).first().click()
+  await expect(page).toHaveURL(/\/signup\?next=%2Fonboarding%2Fchild&reason=child/)
+
+  const reader = await createContributor()
+  await signIn(page, reader.email, reader.password)
+  await page.goto('/library')
+  await page.getByRole('link', { name: 'Pick for my child' }).first().click()
+  await expect(page).toHaveURL(/\/onboarding\/child/)
+})
+
+test('WG11 the hero offers Submit a guide, and the filter note offers Submit an idea', async ({ page }) => {
+  await page.goto('/library')
+  await page.locator('.browse-hero__aside').getByRole('link', { name: 'Submit a guide' }).click()
+  await expect(page).toHaveURL(/\/get-involved\/submit-a-tutorial$/)
+  await expect(page.getByRole('heading', { name: 'Submit a guide', level: 1 })).toBeVisible()
+
+  await page.goto('/library')
+  await page.locator('#guide-grid').getByRole('link', { name: /Submit an idea/ }).first().click()
+  await expect(page).toHaveURL(/\/get-involved\/submit-an-idea$/)
+
+  await page.goto('/library?q=zzz-no-such-guide-zzz')
+  await page.locator('#guide-grid').getByRole('link', { name: 'Browse toys instead' }).click()
+  await expect(page).toHaveURL(/\/toy-library$/)
 })

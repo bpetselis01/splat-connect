@@ -1,4 +1,3 @@
-// journeys: H06
 import { StyleSheet } from 'react-native'
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { RecentRows } from '../../../../components/home/recent-rows'
@@ -51,7 +50,7 @@ it('tints each kind as the board does', () => {
   })
 })
 
-it('opens the saved href on press', () => {
+it('H06 opens the saved href on press', () => {
   mockRecents = [R('event', { title: 'Open day', href: '/events/9' })]
   render(<RecentRows />)
   fireEvent.press(screen.getByText('Open day'))

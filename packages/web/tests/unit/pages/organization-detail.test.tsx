@@ -1,3 +1,4 @@
+import { AGREEMENT_VERSIONS } from '@splat-connect/types'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 
@@ -47,7 +48,7 @@ const route = (mine: unknown[]) => (path: string) =>
   Promise.resolve(
     path === '/api/organizations/mine' ? mine
       : path === '/api/tutorials' ? tutorials
-      : path === '/api/agreements/me' ? [{ id: 'a', user_id: 'u', agreement_type: 'org_leader_terms', version: 'v0-todo', accepted_at: '' }]
+      : path === '/api/agreements/me' ? [{ id: 'a', user_id: 'u', agreement_type: 'org_leader_terms', version: AGREEMENT_VERSIONS.org_leader_terms, accepted_at: '' }]
       : theOrg
   )
 
@@ -60,7 +61,7 @@ describe('organisation detail', () => {
   //        authMiddleware, so this page cannot render anything for them itself —
   //        it must redirect, and a signed-in non-leader gets the same redirect
   //        rather than a page missing its workspace
-  it('redirects a non-leader to the public profile', async () => {
+  it('WN04 redirects a non-leader to the public profile', async () => {
     get.mockImplementation(route([]))
     const { default: Page } = await import('@/app/organizations/[id]/page')
 
@@ -69,7 +70,7 @@ describe('organisation detail', () => {
     ).rejects.toThrow('REDIRECT:/organizations/o1/public')
   })
 
-  it('adds the workspace for a leader of it', async () => {
+  it('WN04 adds the workspace for a leader of it', async () => {
     get.mockImplementation(route([theOrg]))
     const { default: Page } = await import('@/app/organizations/[id]/page')
     render(await Page({ params: Promise.resolve({ id: 'o1' }) }))

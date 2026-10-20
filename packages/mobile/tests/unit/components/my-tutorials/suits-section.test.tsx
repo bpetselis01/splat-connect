@@ -1,4 +1,3 @@
-// journeys: T17
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { SuitsSection } from '../../../../components/my-tutorials/sections/suits-section'
 
@@ -31,7 +30,7 @@ it('renders the help line and the guide questions', () => {
   expect(screen.getByText('One hand is enough')).toBeTruthy()
 })
 
-it('saves a toggled chip, then null when it is emptied again', () => {
+it('T17 saves a toggled chip, then null when it is emptied again', () => {
   render(<SuitsSection />)
   fireEvent.press(screen.getByText('Switch interface'))
   expect(mockDraft.save).toHaveBeenLastCalledWith({
@@ -43,7 +42,7 @@ it('saves a toggled chip, then null when it is emptied again', () => {
   })
 })
 
-it('saves the one-hand flag as a boolean', () => {
+it('T17 saves the one-hand flag as a boolean', () => {
   render(<SuitsSection />)
   fireEvent.press(screen.getByText('One hand is enough'))
   expect(mockDraft.save).toHaveBeenLastCalledWith(expect.objectContaining({ one_hand: true }))

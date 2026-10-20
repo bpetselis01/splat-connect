@@ -101,7 +101,7 @@ describe('admin design-challenge detail page', () => {
   // Tests: a graduated idea surfaces the draft it created, not just its status
   // Chain: the draft is the point of the whole feature — it must be reachable,
   //        not just implied by the badge
-  it('links to the created draft guide once graduated', async () => {
+  it('WM15 links to the created draft guide once graduated', async () => {
     get.mockResolvedValue([idea({ status: 'graduated', tutorial_id: 't9' })])
     const { default: Page } = await import('@/app/admin/ideas/[id]/page')
     render(await Page({ params: params() }))

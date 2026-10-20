@@ -45,7 +45,7 @@ describe('EditRecommendationsSection', () => {
     expect(screen.getAllByText(/Not yet approved/)).toHaveLength(1)
   })
 
-  it('saves the whole list, appended, when one is picked', async () => {
+  it('WT29 saves the whole list, appended, when one is picked', async () => {
     const onSave = renderSection([rec('a')])
     fireEvent.change(screen.getByLabelText('Add a recommendation'), { target: { value: 'b' } })
     await waitFor(() => expect(onSave).toHaveBeenCalledWith([{ recommended_id: 'a', required: false }, { recommended_id: 'b', required: false }]))

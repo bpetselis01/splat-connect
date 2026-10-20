@@ -1,4 +1,3 @@
-// journeys: G30 G31
 import { test, expect } from '@playwright/test'
 import { adminClient, createContributor, createTutorial, signInAsNewContributor, uniqueTitle } from './helpers'
 import { stlName } from '../../lib/guide-files'
@@ -42,7 +41,7 @@ test('lists the PDF and parts with a single pill each, and links downloads to th
   expect(opened[0]).toMatch(new RegExp(`/tutorials/${g.id}$`))
 })
 
-test('a 3D pill opens the viewer for that part with its facts, and ✕ returns to Files', async ({ page }) => {
+test('G30 a 3D pill opens the viewer for that part with its facts, and ✕ returns to Files', async ({ page }) => {
   await signInAsNewContributor(page)
   const g = await guideWithParts()
   await page.goto(`/guides/${g.id}`)
@@ -56,6 +55,23 @@ test('a 3D pill opens the viewer for that part with its facts, and ✕ returns t
   await expect(page.getByText(/Open in browser|Share|Save/)).toHaveCount(0)
   await page.getByRole('button', { name: 'Close 3D view' }).click()
   await expect(page.getByRole('tab', { name: 'Files', selected: true })).toBeVisible()
+})
+
+test('G31 the 3D view’s ✕ goes back to Files, and Ask someone to print opens the printer finder for this guide', async ({ page }) => {
+  await signInAsNewContributor(page)
+  const g = await guideWithParts()
+  await page.goto(`/guides/${g.id}`)
+  await page.getByRole('tab', { name: 'Files' }).click()
+  await page.getByRole('button', { name: `3D view of ${stlName('lts_base.stl')}` }).click()
+  await page.getByRole('button', { name: 'Close 3D view' }).click()
+  await expect(page).toHaveURL(new RegExp(`/guides/${g.id}$`))
+  await expect(page.getByRole('tab', { name: 'Files', selected: true })).toBeVisible()
+
+  await page.getByRole('button', { name: `3D view of ${stlName('lts_base.stl')}` }).click()
+  await expect(page).toHaveURL(new RegExp(`/guides/${g.id}/model\\?file=${g.files[0]}`))
+  await page.getByRole('button', { name: 'Ask someone to print' }).click()
+  await expect(page).toHaveURL(new RegExp(`/printing\\?guide=${g.id}`))
+  await expect(page).not.toHaveURL(/\/model/)
 })
 
 test('a guide with nothing to download says so', async ({ page }) => {

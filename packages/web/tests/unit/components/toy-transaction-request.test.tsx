@@ -57,7 +57,7 @@ function myToy(overrides: Partial<Toy> = {}): Toy {
 describe('ToyTransactionRequest', () => {
   beforeEach(() => vi.restoreAllMocks())
 
-  it('prompts a signed-out visitor to sign in', () => {
+  it('WY07 prompts a signed-out visitor to sign in', () => {
     render(<ToyTransactionRequest toy={toy()} viewerId={null} myToys={[]} />)
     expect(screen.getByRole('link', { name: 'Sign in to ask for it' })).toHaveAttribute(
       'href',
@@ -78,7 +78,7 @@ describe('ToyTransactionRequest', () => {
   //        the part the whole exchange turns on — "a line or two about the
   //        child is what gets a yes" — and a two-button control had nowhere to
   //        put one
-  it('links to the request screen rather than posting anything', () => {
+  it('WY06 links to the request screen rather than posting anything', () => {
     const expected = {
       donation: ['/toy-library/toy-1/request?mode=donation'],
       exchange: ['/toy-library/toy-1/request?mode=exchange'],

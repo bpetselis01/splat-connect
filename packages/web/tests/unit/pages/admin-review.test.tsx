@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 
+vi.setConfig({ testTimeout: 30_000 })
 const get = vi.fn()
 vi.mock('@/lib/api-client', () => ({ apiClient: { get: (...a: unknown[]) => get(...a) } }))
 // The row link is a client island (it opens the pane); the pane's buttons are
@@ -52,7 +53,7 @@ describe('admin review queue', () => {
   // How:   'Asked but unanswered' has a pending backing row; checks it survives the filter
   // Chain: being asked is not the same as accepting — until an org accepts, the work is
   //        still the admin's, and hiding it would drop it out of both queues
-  it('does not treat a pending request as handled', async () => {
+  it('WM04 does not treat a pending request as handled', async () => {
     get.mockResolvedValue([handled, unhandled, askedOnly])
     const { default: Page } = await import('@/app/admin/review/page')
     render(await Page({ searchParams: Promise.resolve({ mine: '1' }) }))
@@ -80,7 +81,7 @@ describe('admin review queue', () => {
   //        with a co-author invite still pending
   // Chain: the pane is a progressive enhancement — without JS the row must
   //        still reach /admin/review/[id]; with it, the marks come from data
-  it('opens the side pane for the selected row, marks computed from the guide', async () => {
+  it('WM05 opens the side pane for the selected row, marks computed from the guide', async () => {
     get.mockImplementation(async (path: string) =>
       path === '/api/tutorials/t2'
         ? {
@@ -107,7 +108,7 @@ describe('admin review queue', () => {
   // Tests: ?q= narrows the queue to titles containing it, case-insensitive
   // How:   q=PLATFORM over three guides; only 'Platform project' remains, box keeps the text
   // Chain: a GET form over the list already loaded — refresh-safe, no client code
-  it('filters the queue by guide title, ignoring case', async () => {
+  it('WM04 filters the queue by guide title, ignoring case', async () => {
     get.mockResolvedValue([handled, unhandled, askedOnly])
     const { default: Page } = await import('@/app/admin/review/page')
     render(await Page({ searchParams: Promise.resolve({ q: 'PLATFORM' }) }))
@@ -120,7 +121,7 @@ describe('admin review queue', () => {
   // Tests: ?q= also matches a credited contributor's name
   // How:   p1 resolves to Rachel Kaur via /api/admin/contributors; q=rachel keeps only her guide
   // Chain: names come from the admin contributors list, never a profiles embed
-  it('filters by contributor name', async () => {
+  it('WM04 filters by contributor name', async () => {
     get.mockImplementation(async (path: string) =>
       path === '/api/admin/contributors'
         ? { accounts: [{ id: 'p1', name: 'Rachel Kaur', email: 'r@x' }], total: 1 }

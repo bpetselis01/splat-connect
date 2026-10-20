@@ -1,8 +1,7 @@
-// journeys: Z04 Z06 Z07
 import { test, expect } from '@playwright/test'
 import { signUpNewAccount, uniqueSignupEmail, openChildProfile } from './helpers'
 
-test('the age field autosaves and survives a reload', async ({ page }) => {
+test('Z07 the age field autosaves and survives a reload', async ({ page }) => {
   await signUpNewAccount(page, uniqueSignupEmail())
   // Lands inside the new child's editor home, where age now lives.
   await openChildProfile(page)
@@ -13,7 +12,7 @@ test('the age field autosaves and survives a reload', async ({ page }) => {
   await expect(page.getByLabel("Child's age")).toHaveValue('6')
 })
 
-test('a child appears on the family list with its summary line', async ({ page }) => {
+test('Z06 a child appears on the family list with its summary line', async ({ page }) => {
   await signUpNewAccount(page, uniqueSignupEmail())
   await openChildProfile(page)
   await page.getByLabel("Child's age").fill('5')
@@ -25,7 +24,7 @@ test('a child appears on the family list with its summary line', async ({ page }
   await expect(page.getByText('Age 5')).toBeVisible()
 })
 
-test('signing out returns to Welcome', async ({ page }) => {
+test('Z04 signing out returns to Welcome', async ({ page }) => {
   await signUpNewAccount(page, uniqueSignupEmail())
   // Sign Out lives on the Account segment, which is the one a fresh account opens on.
   await page.goto('/account')

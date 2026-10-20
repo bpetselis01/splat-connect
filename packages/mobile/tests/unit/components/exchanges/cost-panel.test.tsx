@@ -1,4 +1,3 @@
-// journeys: X10 X11
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { CostPanel } from '../../../../components/exchanges/cost-panel'
 
@@ -38,7 +37,7 @@ describe('the maker', () => {
     expect(screen.queryByText('Add a line')).toBeNull()
   })
 
-  it('adds a line the family is asked to pay back', async () => {
+  it('X10 adds a line the family is asked to pay back', async () => {
     serve([])
     mockPost.mockResolvedValue(line())
     render(maker())
@@ -55,7 +54,7 @@ describe('the maker', () => {
     expect(screen.queryByText('Mark as settled')).toBeNull()
   })
 
-  it('records a cost they cover', async () => {
+  it('X10 records a cost they cover', async () => {
     serve([])
     mockPost.mockResolvedValue(line({ claiming: false, amount_cents: 400 }))
     render(maker())
@@ -78,7 +77,7 @@ describe('the maker', () => {
     expect(mockPost).not.toHaveBeenCalled()
   })
 
-  it("removes their own line and never the family's", async () => {
+  it("X11 removes their own line and never the family's", async () => {
     serve([line(), line({ id: 'l2', description: 'Their bus fare', created_by: 'fam', payer_id: 'maker', payee_id: 'fam' })])
     mockDelete.mockResolvedValue({ id: 'l1' })
     render(maker())

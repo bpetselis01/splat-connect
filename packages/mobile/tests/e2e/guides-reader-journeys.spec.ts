@@ -1,4 +1,3 @@
-// journeys: B01 G14 G22 G23
 import { test, expect } from '@playwright/test'
 import { createTutorial, signInAsNewContributor, uniqueTitle } from './helpers'
 import { addSteps } from './guides-fixtures'
@@ -7,7 +6,7 @@ import { addSteps } from './guides-fixtures'
 // community notes. A web build keeps device ticks in localStorage, so a reload is
 // the same proof a relaunch is on a phone.
 
-test('ticked steps survive a reload, and build mode resumes where they stopped', async ({ page }) => {
+test('B01 ticked steps survive a reload, and build mode resumes where they stopped', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const title = uniqueTitle('E2E Mobile Ticks')
   const id = await createTutorial(contributor.id, { title, status: 'approved' })
@@ -55,7 +54,7 @@ test('a guide with no steps makes View full guide primary', async ({ page }) => 
   await expect(page.getByText('E2E part ×2')).toBeVisible()
 })
 
-test('a sixty-step guide opens in build mode at step 1 of 60 and moves on', async ({ page }) => {
+test('B01 a sixty-step guide opens in build mode at step 1 of 60 and moves on', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile ManySteps'), status: 'approved' })
   // position is checked 1-60 by the database, so the most a guide can carry is 60.
@@ -71,7 +70,7 @@ test('a sixty-step guide opens in build mode at step 1 of 60 and moves on', asyn
   await expect(page.getByText('Step body 2', { exact: true }).last()).toBeVisible()
 })
 
-test('ticked tools survive a reload', async ({ page }) => {
+test('G22 ticked tools survive a reload', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile ToolTicks'), status: 'approved' })
 
@@ -85,7 +84,7 @@ test('ticked tools survive a reload', async ({ page }) => {
   await expect(page.getByText('1 of 1 already yours')).toBeVisible()
 })
 
-test('a reader posts a note as a missing step and sees it under Discussion', async ({ page }) => {
+test('G23 a reader posts a note as a missing step and sees it under Discussion', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Mobile Notes'), status: 'approved', withSteps: true })
 

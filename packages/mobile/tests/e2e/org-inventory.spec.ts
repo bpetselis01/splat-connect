@@ -1,4 +1,3 @@
-// journeys: L09 L10
 import { test, expect } from '@playwright/test'
 import { adminClient, createContributor, makeOrgLeader, signInAsNewContributor, uniqueTitle } from './helpers'
 import { seedOrgToy } from './org-fixtures'
@@ -8,7 +7,7 @@ import { seedOrgToy } from './org-fixtures'
  * form, and Remove is offered only on a retired toy no handover names.
  */
 
-test('an empty shelf offers + Add to inventory, which opens the new-toy form for this organisation', async ({ page }) => {
+test('L10 an empty shelf offers + Add to inventory, which opens the new-toy form for this organisation', async ({ page }) => {
   const leader = await signInAsNewContributor(page)
   const orgId = await makeOrgLeader(leader.id)
 
@@ -18,7 +17,7 @@ test('an empty shelf offers + Add to inventory, which opens the new-toy form for
   await expect(page).toHaveURL(new RegExp(`/toys/new\\?org=${orgId}$`))
 })
 
-test('Remove deletes a retired toy; a toy a handover names, and a toy still on offer, have no Remove', async ({ page }) => {
+test('L09 Remove deletes a retired toy; a toy a handover names, and a toy still on offer, have no Remove', async ({ page }) => {
   const leader = await signInAsNewContributor(page)
   const orgId = await makeOrgLeader(leader.id)
   const family = await createContributor()

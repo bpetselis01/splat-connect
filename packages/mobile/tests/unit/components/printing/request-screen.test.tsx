@@ -1,4 +1,3 @@
-// journeys: R03
 import { CLEARANCE, paddingBottomOf } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { RequestPrintScreen } from '../../../../components/printing/request-screen'
@@ -33,7 +32,7 @@ beforeEach(() => {
   )
 })
 
-it('sends a quantity per part', async () => {
+it('R03 sends a quantity per part', async () => {
   mockPost.mockResolvedValue({ id: 'j1' })
   render(<RequestPrintScreen guideId="g1" printerIds={['p1']} />)
   fireEvent.press(await screen.findByLabelText('More mount.stl'))
@@ -101,7 +100,7 @@ it('multiplies by quantity', async () => {
   expect(await screen.findByText(/about \$2\.40 at/)).toBeTruthy()
 })
 
-it('sends the customization answers that were picked', async () => {
+it('R03 sends the customization answers that were picked', async () => {
   mockPost.mockResolvedValue({ id: 'j1' })
   render(<RequestPrintScreen guideId="g1" printerIds={['p1']} />)
   expect(await screen.findByText('Set by this guide’s contributor, to size the print for you. Nothing here is required.')).toBeTruthy()
@@ -138,7 +137,7 @@ const serveCredit = (grams: number) =>
     )
   )
 
-it('offers credit at the organisation being asked, covering the job, and sends it', async () => {
+it('R03 offers credit at the organisation being asked, covering the job, and sends it', async () => {
   serveCredit(900)
   mockPost.mockResolvedValue({ id: 'j1' })
   render(<RequestPrintScreen guideId="g1" printerIds={['p2']} />)

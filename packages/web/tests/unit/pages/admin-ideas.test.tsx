@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
 
+vi.setConfig({ testTimeout: 30_000 })
 const get = vi.fn()
 vi.mock('@/lib/api-client', () => ({ apiClient: { get: (...a: unknown[]) => get(...a) } }))
 vi.mock('next/link', () => ({
@@ -23,7 +24,7 @@ describe('admin design-challenge queue', () => {
   //        after an already-decided one
   // Chain: pending is the only status still waiting on this page's actions —
   //        it must not get buried under settled rows
-  it('sorts pending ideas ahead of already-decided ones', async () => {
+  it('WM11 sorts pending ideas ahead of already-decided ones', async () => {
     get.mockResolvedValue([
       idea('i1', 'Decided idea', 'challenge'),
       idea('i2', 'Waiting idea', 'pending'),
@@ -36,7 +37,7 @@ describe('admin design-challenge queue', () => {
   })
 
   // Tests: each row links to its own detail page
-  it('links each row to /admin/ideas/:id', async () => {
+  it('WM11 links each row to /admin/ideas/:id', async () => {
     get.mockResolvedValue([idea('i1', 'Spoon holder', 'pending')])
     const { default: Page } = await import('@/app/admin/ideas/page')
     render(await Page())

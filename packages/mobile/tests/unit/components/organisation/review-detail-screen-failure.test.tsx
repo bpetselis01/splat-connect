@@ -1,5 +1,4 @@
 // A failed project load says so, retries on Try again, and never hits console.error.
-// journeys: L03
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { ReviewDetailScreen } from '../../../../components/organisation/review-detail-screen'
 

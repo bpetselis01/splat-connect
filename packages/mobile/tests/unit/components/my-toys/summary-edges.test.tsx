@@ -1,6 +1,5 @@
 // Marking a toy unavailable, retiring it and answering requests, with a second
 // tap, a refusal, a stale list and odd data. Ordinary journeys: summary-screen.test.tsx.
-// journeys: W04
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { ToySummaryScreen } from '../../../../components/my-toys/summary-screen'
 import { toySummaryLead } from '../../../../lib/my-toy'
@@ -49,7 +48,7 @@ beforeEach(() => {
 })
 
 describe('marking a toy unavailable', () => {
-  it('sends one change when the row is pressed twice before the answer', async () => {
+  it('W04 sends one change when the row is pressed twice before the answer', async () => {
     mockPatch.mockReturnValue(new Promise(() => {}))
     render(<ToySummaryScreen id="t1" />)
     const row = await screen.findByText('Mark unavailable')
@@ -58,7 +57,7 @@ describe('marking a toy unavailable', () => {
     expect(mockPatch).toHaveBeenCalledTimes(1)
   })
 
-  it('keeps the toy available, and says why, when the change is refused', async () => {
+  it('W04 keeps the toy available, and says why, when the change is refused', async () => {
     mockPatch.mockRejectedValue(new Error('API PATCH /x failed with status 409: This toy is not published'))
     render(<ToySummaryScreen id="t1" />)
     fireEvent.press(await screen.findByText('Mark unavailable'))
@@ -66,7 +65,7 @@ describe('marking a toy unavailable', () => {
     expect(screen.getByText('Mark unavailable')).toBeTruthy()
   })
 
-  it('says the phone is offline when it cannot reach the API', async () => {
+  it('W04 says the phone is offline when it cannot reach the API', async () => {
     mockPatch.mockRejectedValue(new TypeError('Network request failed'))
     render(<ToySummaryScreen id="t1" />)
     fireEvent.press(await screen.findByText('Mark unavailable'))
@@ -84,7 +83,7 @@ describe('marking a toy unavailable', () => {
     expect(await screen.findByText('Take requests again')).toBeTruthy()
   })
 
-  it('clears an earlier error when the next change works', async () => {
+  it('W04 clears an earlier error when the next change works', async () => {
     mockPatch.mockRejectedValueOnce(new Error('API PATCH /x failed with status 409: Nope')).mockResolvedValueOnce(toy({ paused_at: '2026-09-30T00:00:00Z' }))
     render(<ToySummaryScreen id="t1" />)
     fireEvent.press(await screen.findByText('Mark unavailable'))

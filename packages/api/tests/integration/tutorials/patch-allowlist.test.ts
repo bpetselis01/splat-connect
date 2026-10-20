@@ -1,4 +1,3 @@
-// journeys: T08 T17
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -40,7 +39,7 @@ afterAll(async () => {
 
 describe('PATCH /api/tutorials/:id', () => {
   // 128: who it's for round-trips, and a value that is not an answer is a 400.
-  it('applies the tags and 400s a value that is not an answer', async () => {
+  it('T17 WT20 applies the tags and 400s a value that is not an answer', async () => {
     let { data: current } = await adminClient().from('tutorials').select('updated_at').eq('id', draft).single()
     const ok = await app.request(`/api/tutorials/${draft}`, authed(author.token, {
       method: 'PATCH',
@@ -57,7 +56,7 @@ describe('PATCH /api/tutorials/:id', () => {
     expect(((await bad.json()) as { error: string }).error).toMatch(/^play must be a list of/)
   })
 
-  it('applies the editable fields', async () => {
+  it('T08 WT18 applies the editable fields', async () => {
     const { data: current } = await adminClient().from('tutorials').select('updated_at').eq('id', draft).single()
     const res = await app.request(`/api/tutorials/${draft}`, authed(author.token, {
       method: 'PATCH',
@@ -69,7 +68,7 @@ describe('PATCH /api/tutorials/:id', () => {
 
   // 071: the age range is editable, and its bounds are the database's, read
   // back as a 400 rather than the 500 the editor would show as a conflict.
-  it('applies the age range and 400s an inverted one', async () => {
+  it('T17 applies the age range and 400s an inverted one', async () => {
     let { data: current } = await adminClient().from('tutorials').select('updated_at').eq('id', draft).single()
     const ok = await app.request(`/api/tutorials/${draft}`, authed(author.token, {
       method: 'PATCH',

@@ -1,5 +1,4 @@
 // The leader's intake when the queue fails to load: says so, Try again re-reads, nothing hits console.error.
-// journeys: L13 L14
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { IntakeScreen } from '../../../../components/recycling/intake-screen'
 
@@ -28,7 +27,7 @@ const DROP = {
 
 afterEach(() => jest.restoreAllMocks())
 
-it('says the intake could not load, and Try again loads the queue', async () => {
+it('L12 says the intake could not load, and Try again loads the queue', async () => {
   const err = jest.spyOn(console, 'error')
   let offline = true
   mockGet.mockReset().mockImplementation((p: string) =>
