@@ -12,7 +12,7 @@ import { theme } from '../lib/theme'
 import { Button } from '../components/ui/Button'
 import { TextField } from '../components/ui/TextField'
 import { AuthError, AuthStage, Heading, Lede, TextLink, pill } from '../components/auth/parts'
-import type { AuthProblem } from '../lib/auth-errors'
+import type { AuthProblem } from '@splat-connect/types'
 import { Ionicons } from '@expo/vector-icons'
 
 // The board's copy (SPLAT Connect - Web.dc.html, termsBlocks).

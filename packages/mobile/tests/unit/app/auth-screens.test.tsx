@@ -10,7 +10,7 @@ import Verify from '../../../app/(auth)/verify'
 import ForgotPassword from '../../../app/(auth)/forgot-password'
 import TermsGate from '../../../app/terms'
 import NotBuilt from '../../../app/not-built'
-import { toProblem } from '../../../lib/auth-errors'
+import { toProblem } from '@splat-connect/types'
 import { BLANK, EMAILS, NAMES, PASSWORDS } from '../../special-strings'
 
 const mockPush = jest.fn()

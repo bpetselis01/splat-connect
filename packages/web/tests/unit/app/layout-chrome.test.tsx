@@ -33,9 +33,12 @@ vi.mock('next/font/google', () => ({
 import { isBare, isAccountRoute } from '@/app/layout'
 
 describe('layout chrome rules', () => {
-  it('WC10 treats the auth callbacks and onboarding gates as bare', () => {
-    expect(isBare('/auth/confirmed')).toBe(true)
+  it('WC10 treats the onboarding gates as bare', () => {
     expect(isBare('/onboarding/contributor-terms')).toBe(true)
+  })
+
+  it('WA16 gives the email-confirmed page the site header, so the sign-in page it lands on keeps it', () => {
+    expect(isBare('/auth/confirmed')).toBe(false)
   })
 
   // Chain: the board draws the site header on Sign in and Create account. Only
