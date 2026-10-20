@@ -77,17 +77,17 @@ async function printer(fields: { owner_id?: string; owner_org_id?: string }) {
   return print!.id as string
 }
 
-async function exchangeAccepted() {
-  const publish = async (who: TestUser, name: string) => {
+async function exchangeAccepted(kind: 'exchange' | 'donation' = 'exchange') {
+  const publish = async (who: TestUser, name: string, offer = 'exchange') => {
     const toy = (await (await call(who.token, 'POST', '/toys', { name, condition: 7 })).json()) as { id: string }
-    await call(who.token, 'PATCH', `/toys/${toy.id}`, { photo_urls: ['https://example.com/c.jpg'], offer_type: 'exchange' })
+    await call(who.token, 'PATCH', `/toys/${toy.id}`, { photo_urls: ['https://example.com/c.jpg'], offer_type: offer })
     await call(who.token, 'PATCH', `/toys/${toy.id}/publish`)
     return toy.id
   }
   const res = await call(family.token, 'POST', '/toy-transactions', {
-    toy_id: await publish(owner, 'Kite'),
-    type: 'exchange',
-    offered_toy_id: await publish(family, 'Yo-yo'),
+    toy_id: await publish(owner, 'Kite', kind),
+    type: kind,
+    ...(kind === 'exchange' ? { offered_toy_id: await publish(family, 'Yo-yo') } : {}),
   })
   const id = ((await res.json()) as { id: string }).id
   await call(owner.token, 'POST', `/toy-transactions/${id}/accept`, {
@@ -200,6 +200,15 @@ describe('handover', () => {
       { recipient_id: family.id, type: 'handover_confirmed', toy_transaction_id: tx.id, toy_name: 'Kite', actor_name: 'Olive Owner', body: null },
     ])
     expect((await call(family.token, 'POST', `/toy-transactions/${tx.id}/confirm`, { code: tx.ownerCode })).status).toBe(200)
+    expect((await notesAbout(owner.id, tx.id)).filter((n) => n.type === 'handover_confirmed')).toEqual([])
+  })
+
+  it('handover_confirmed tells the requester when the owner confirms a donation', async () => {
+    const tx = await exchangeAccepted('donation')
+    expect((await call(owner.token, 'POST', `/toy-transactions/${tx.id}/confirm`, { code: tx.familyCode })).status).toBe(200)
+    expect((await notesAbout(family.id, tx.id)).filter((n) => n.type === 'handover_confirmed')).toEqual([
+      { recipient_id: family.id, type: 'handover_confirmed', toy_transaction_id: tx.id, toy_name: 'Kite', actor_name: 'Olive Owner', body: null },
+    ])
     expect((await notesAbout(owner.id, tx.id)).filter((n) => n.type === 'handover_confirmed')).toEqual([])
   })
 })
