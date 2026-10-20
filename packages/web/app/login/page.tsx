@@ -6,7 +6,6 @@ import { createClient } from '@/lib/supabase/client'
 import { authPath, landingAfterSignIn } from '@/lib/auth-landing'
 import { toProblem, type AuthProblem } from '@splat-connect/types'
 
-// PENDING(web-auth-recovery): port all mobile auth screens to web (forgot-password, code sign-in, resend-confirmation, friendly unconfirm...
 // PENDING(confirmed-page-bare-layout): fix it: the sign-in page keeps the normal layout after an email confirmation. Nothing to decide beyond sche...
 
 import Link from 'next/link'
@@ -17,7 +16,7 @@ function LoginForm() {
   const supabase = createClient()
   const params = useSearchParams()
   const next = params.get('next')
-  const [email, setEmail] = useState('')
+  const [email, setEmail] = useState(params.get('email') ?? '')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<AuthProblem | null>(null)
@@ -113,6 +112,11 @@ function LoginForm() {
           {loading ? 'Signing in…' : 'Sign in'}
         </button>
       </form>
+      <p className="auth-card__alt">
+        <Link href={authPath('/login/code', { email, next }) as Route} className="auth-card__link">
+          Email me a sign-in code
+        </Link>
+      </p>
       <p className="auth-card__alt">
         No account yet?{' '}
         <Link href={`/signup${query ? `?${query}` : ''}` as Route} className="auth-card__link">

@@ -94,3 +94,46 @@ describe('web forgot password and reset against local Supabase', () => {
     expect((await anon().auth.verifyOtp({ email, token: code, type: 'recovery' })).error?.code).toBe('otp_expired')
   })
 })
+
+describe('web code sign-in and verify against local Supabase', () => {
+  it('WA35 signInWithOtp mails a six-digit sign-in code to an existing member', async () => {
+    const { email } = await confirmedUser()
+    expect((await anon().auth.signInWithOtp({ email, options: { shouldCreateUser: false } })).error).toBeNull()
+    expect(await codeFor(email)).toMatch(/^\d{6}$/)
+    expect((await mailsTo(email))[0]!.Subject).toMatch(/sign-in code/i)
+  })
+
+  it('WA36 an address with no account is refused as otp_disabled and no account is made', async () => {
+    const email = `nobody-${crypto.randomUUID()}@splat-test.local`
+    const { error } = await anon().auth.signInWithOtp({ email, options: { shouldCreateUser: false } })
+    expect(error?.code).toBe('otp_disabled')
+    const users = (await adminClient().auth.admin.listUsers({ perPage: 1000 })).data.users
+    expect(users.find((u) => u.email === email)).toBeUndefined()
+  })
+
+  it('WA37 the sign-in code verifies as type email and returns the member\'s session; a wrong code does not', async () => {
+    const { email, id } = await confirmedUser()
+    const supabase = anon()
+    await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: false } })
+    const real = await codeFor(email)
+    const wrong = await anon().auth.verifyOtp({ email, token: real === '000000' ? '111111' : '000000', type: 'email' })
+    expect(wrong.error?.code).toBe('otp_expired')
+    expect(wrong.data.session).toBeNull()
+
+    const { data, error } = await supabase.auth.verifyOtp({ email, token: real, type: 'email' })
+    expect(error).toBeNull()
+    expect(data.user?.id).toBe(id)
+    expect(data.session).not.toBeNull()
+  })
+
+  it('WA38 a sign-up confirmation code resent from the verify screen confirms the account', async () => {
+    const email = `web-${crypto.randomUUID()}@splat-test.local`
+    const { data: made } = await adminClient().auth.admin.createUser({ email, password: PASSWORD, email_confirm: false })
+    created.push(made.user!.id)
+    const supabase = anon()
+    expect((await supabase.auth.resend({ type: 'signup', email })).error).toBeNull()
+    const { data, error } = await supabase.auth.verifyOtp({ email, token: await codeFor(email), type: 'signup' })
+    expect(error).toBeNull()
+    expect(data.user?.email_confirmed_at).toBeTruthy()
+  })
+})
