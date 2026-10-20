@@ -1,4 +1,5 @@
-import { problem, toProblem } from '../../../lib/auth-errors'
+import { describe, it, expect } from 'vitest'
+import { problem, toProblem } from '../src/auth-errors'
 
 // Edge shapes of what supabase-js hands back: codes without messages, messages
 // without codes, odd casing, and servers that answer with nothing useful.
