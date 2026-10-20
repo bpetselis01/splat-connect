@@ -73,6 +73,7 @@ test('WM38 an admin on the ask-first page of an open build is offered no claim',
     await page.goto(`/dashboard/exchanges/build/${build.id}/ask`)
     await expect(page.getByText('Not claimed yet')).toBeVisible()
     await expect(page.getByRole('button', { name: /I.ll build this/ })).toHaveCount(0)
+    await expect(page.getByRole('textbox', { name: 'Message' })).toHaveCount(0)
   } finally {
     await deleteUser(family.id)
   }

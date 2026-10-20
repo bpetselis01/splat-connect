@@ -88,7 +88,7 @@ export function BuildQuestionsThread({ data, viewerId, makerId, isAdmin = false 
         </p>
       )}
 
-      {data.open && (!data.family || thread) && (
+      {data.open && !isAdmin && (!data.family || thread) && (
         <form onSubmit={send} className="flex items-start gap-2.5">
           <textarea aria-label="Message" placeholder="Message" rows={2} maxLength={1000} value={draft} onChange={(e) => setDraft(e.target.value)} className="field flex-1" />
           <button type="submit" disabled={busy || !draft.trim()} className="btn btn-primary min-h-11 px-[18px]">
