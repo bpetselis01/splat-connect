@@ -3,6 +3,7 @@ import type { Route } from 'next'
 import { ShieldCheck, SealCheck, Heart } from '@phosphor-icons/react/dist/ssr'
 import { AuthWordmark } from '@/components/auth-wordmark'
 import { SplatMascot } from '@/components/splat-mascot'
+import type { AuthProblem } from '@splat-connect/types'
 
 /**
  * The centred auth stage the board draws for Sign in, Check your email, Email
@@ -91,5 +92,29 @@ export function AuthTabs({ current, search = '' }: { current: 'login' | 'signup'
         Sign in
       </Link>
     </nav>
+  )
+}
+
+/**
+ * A classified auth failure (`toProblem`), never a raw Supabase message. The
+ * optional action is a link beside the sentence, as mobile's AuthError has.
+ */
+export function AuthError({
+  error,
+  action,
+}: {
+  error: AuthProblem | null
+  action?: { label: string; href: string }
+}) {
+  if (!error) return null
+  return (
+    <div role="alert" aria-live="polite" className="alert alert-danger">
+      <p>{error.message}</p>
+      {action ? (
+        <Link href={action.href as Route} className="auth-card__link">
+          {action.label}
+        </Link>
+      ) : null}
+    </div>
   )
 }

@@ -567,12 +567,12 @@ Gaps: 0 · Waived: 1 · Routes without rows: 5
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | WA01 | nav | `/login` | anon | "Sign in" with a member's email and password → /dashboard, header switches to My SPLAT | – | – | n/a | ✅ | ✅ | ✅ | – |
 | WA02 | nav | `/login` | A | "Sign in" as an admin → /admin | – | – | n/a | ✅ | ✅ | ✅ | – |
-| WA03 | nav | `/login` | anon | wrong password → the auth error shows and the page stays on /login | – | – | n/a | ✅ | ✅ | ✅ | – |
+| WA03 | nav | `/login` | anon | wrong password → "That email and password don't match.", the password clears and the page stays on /login | – | – | n/a | ✅ | ✅ | ✅ | – |
 | WA04 | nav | `/login` | anon | "?next=" is honoured after sign-in only for a same-origin path, else the role default | – | – | n/a | ✅ | ✅ | – | – |
 | WA05 | nav | `/login` | anon | first sign-in after choosing a sign-up tile lands on /onboarding/child (family) or /dashboard/tutorials (maker), once | – | – | n/a | ✅ | ✅ | ✅ | – |
 | WA06 | nav | `/login` | anon | show / hide password toggle | – | – | n/a | ✅ | ✅ | – | – |
 | WA07 | nav | `/login` | anon | "Create one" → /signup, keeping the query string | – | – | n/a | ✅ | ✅ | – | – |
-| WA08 | nav | `/login` | anon | unconfirmed email → the raw auth error and no resend control (Q2: web has no forgot-password or resend) | – | – | n/a | ✅ | ✅ | ✅ | – |
+| WA08 | nav | `/login` | anon | unconfirmed email → friendly copy, a new code is sent and an Enter the code link opens /login/verify | – | – | n/a | ✅ | ✅ | ✅ | – |
 | WA09 | write | `/signup` | anon | "Create my account" (name, email, password, tile, terms) → signUp with terms version and intent, then "Check your email" | confirmation mail | – | n/a | ✅ | ✅ | ✅ | – |
 | WA10 | nav | `/signup` | anon | contributor-terms row opens the terms dialog; Accept ticks it, Reject / Escape / backdrop close it unticked; typed fields survive | – | – | n/a | ✅ | ✅ | – | – |
 | WA11 | nav | `/signup` | anon | password under six characters or a mismatched confirmation is refused before any account is made | – | – | n/a | ✅ | ✅ | – | – |

@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
-import { signIn, submitLogin, createContributor, createAdmin, acceptTerms, adminClient, deleteUser, uniqueEmail, PASSWORD } from '../helpers'
+import { signIn, submitLogin, createContributor, createAdmin, acceptTerms, adminClient, deleteUser, uniqueEmail, latestMail, PASSWORD } from '../helpers'
 
 /** The sign-in form on whatever /login URL the page is already on. */
 async function submitHere(page: Page, email: string, password: string) {
@@ -31,7 +31,7 @@ test('WA03 an invalid password shows an error and stays on /login', async ({ pag
   // submitLogin, not signIn: signIn waits to leave /login, which is exactly
   // what must not happen here.
   await submitLogin(page, contributor.email, 'wrong-password')
-  await expect(page.getByText('Invalid login credentials')).toBeVisible()
+  await expect(page.getByRole('alert')).toContainText("That email and password don't match.")
   await expect(page).toHaveURL(/\/login$/)
 })
 
@@ -95,17 +95,20 @@ test('WA07 Create one opens /signup with the same query string', async ({ page }
   await expect(page).toHaveURL(/\/signup\?next=%2Flibrary&reason=save$/)
 })
 
-// Q2: web has no forgot-password and no resend-confirmation, so the raw error is all there is.
-test('WA08 an unconfirmed email shows the raw error and offers no resend', async ({ page }) => {
+test('WA08 an unconfirmed email gets a new code and a link to enter it', async ({ page }) => {
   const email = uniqueEmail('contrib')
   const { data, error } = await adminClient().auth.admin.createUser({ email, password: PASSWORD, email_confirm: false })
   if (error || !data.user) throw new Error(`createUser failed: ${error?.message}`)
   try {
+    const before = Date.now()
     await submitLogin(page, email, PASSWORD)
-    await expect(page.getByRole('alert').filter({ hasText: /\S/ })).toHaveText('Email not confirmed')
+    await expect(page.getByRole('alert')).toContainText('That email is not confirmed yet. We sent you a new code.')
+    await expect(page.getByRole('alert')).not.toContainText('Email not confirmed')
     await expect(page).toHaveURL(/\/login$/)
-    await expect(page.getByRole('button', { name: /resend|forgot|reset/i })).toHaveCount(0)
-    await expect(page.getByRole('link', { name: /resend|forgot|reset/i })).toHaveCount(0)
+    await expect(page.getByRole('link', { name: 'Enter the code' })).toHaveAttribute('href', /^\/login\/verify\?email=.+&type=signup$/)
+    const mail = await latestMail(email, before)
+    expect(mail).toMatch(/\b\d{6}\b/)
+    expect(mail).toContain('in the SPLAT Connect app or on the website')
   } finally {
     await deleteUser(data.user.id)
   }
