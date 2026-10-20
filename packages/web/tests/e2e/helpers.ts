@@ -3,7 +3,7 @@ import { PASSWORD, adminClient, createOrg, addLeader, uniqueEmail, uniqueTitle }
 
 export {
   PASSWORD, acceptTerms, addLeader, adminClient, createAdmin, createEvent, createNotification, createOrg,
-  makeLeader, uniqueEmail, uniqueTitle, type EventQuestion,
+  latestCode, latestMail, makeLeader, uniqueEmail, uniqueTitle, type EventQuestion,
 } from '../../../../supabase/e2e-seed'
 
 /** Unique contributor email per invocation so runs don't collide (CI does `supabase db reset`). */

@@ -1,4 +1,5 @@
-import { problem, toProblem } from '../../../lib/auth-errors'
+import { describe, it, expect } from 'vitest'
+import { problem, toProblem } from '../src/auth-errors'
 
 // Edge shapes of what supabase-js hands back: codes without messages, messages
 // without codes, odd casing, and servers that answer with nothing useful.
@@ -36,17 +37,17 @@ describe('toProblem, edge shapes', () => {
     expect(toProblem({ code: 'brand_new_code', message: 'Invalid login credentials' })?.kind).toBe('credentials')
   })
 
-  it('an unknown code on a 5xx with a message keeps the message, not the status', () => {
+  it('an unknown code on a 5xx names the code and never the raw message', () => {
     expect(toProblem({ code: 'unexpected_failure', status: 500, message: 'Database error' })).toEqual({
       kind: 'other',
-      message: 'Database error (unexpected_failure)',
+      message: 'Something went wrong (unexpected_failure). Try again in a minute.',
     })
   })
 
-  it('a message with a status but no code names the status', () => {
+  it('a message with a status but no code names the status, not the message', () => {
     expect(toProblem({ status: 503, message: 'Service Unavailable' })).toEqual({
       kind: 'other',
-      message: 'Service Unavailable (error 503)',
+      message: 'Something went wrong (error 503). Try again in a minute.',
     })
   })
 
@@ -64,8 +65,8 @@ describe('toProblem, edge shapes', () => {
     expect(p?.message).not.toMatch(/undefined/)
   })
 
-  it('a retryable fetch error with no status and an unknown message is shown as itself', () => {
-    expect(toProblem({ name: 'AuthRetryableFetchError', message: 'timeout' })).toEqual({ kind: 'other', message: 'timeout' })
+  it('a retryable fetch error with no status and an unknown message gets the plain sentence', () => {
+    expect(toProblem({ name: 'AuthRetryableFetchError', message: 'timeout' })).toEqual({ kind: 'other', message: 'Something went wrong. Try again in a minute.' })
   })
 
   it('an unknown error with HTML in its message is never shown verbatim as a parser error', () => {
@@ -74,14 +75,14 @@ describe('toProblem, edge shapes', () => {
     expect(p?.message).not.toMatch(/token|JSON/i)
   })
 
-  it('emoji, quotes and angle brackets in a server message pass through untouched', () => {
+  it('a server message with markup never reaches the screen', () => {
     const message = `Can't use <b>"🧸"</b> & friends`
-    expect(toProblem({ message })).toEqual({ kind: 'other', message })
+    expect(toProblem({ message })).toEqual({ kind: 'other', message: 'Something went wrong. Try again in a minute.' })
   })
 
-  it('a very long unknown message passes through whole', () => {
+  it('a very long unknown message is replaced by the plain sentence', () => {
     const message = 'x'.repeat(2000)
-    expect(toProblem({ message })?.message).toBe(message)
+    expect(toProblem({ message })?.message).toBe('Something went wrong. Try again in a minute.')
   })
 
   it('problem() builds the same sentence toProblem does', () => {

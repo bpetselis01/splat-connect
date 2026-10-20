@@ -20,6 +20,7 @@ test('WA16 Continue on the confirmed page goes to /login, keeping ?next=', async
   await page.goto('/auth/confirmed?next=%2Flibrary')
 
   await expect(page.getByRole('heading', { name: 'Email confirmed' })).toBeVisible()
+  await expect(page.locator('header').getByRole('link', { name: 'Sign in' })).toBeVisible()
   await expect(
     page.getByText('Your email has been confirmed. Sign in to your account to continue.')
   ).toBeVisible()
@@ -35,7 +36,6 @@ test('WA16 the confirmed page redirects to /login after its countdown and the vi
 
   await page.waitForURL(/\/login$/, { timeout: 10_000 })
   await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible()
-  // The soft navigation out of the bare /auth shell keeps the bare layout until a full load.
-  await page.reload()
+  // No reload: the header must already be there after the in-app redirect.
   await expect(page.locator('header').getByRole('link', { name: 'Sign in' })).toBeVisible()
 })
