@@ -1,4 +1,4 @@
-import { type Locator, type Page } from '@playwright/test'
+import { expect, type Locator, type Page } from '@playwright/test'
 import { PASSWORD, adminClient, createOrg, addLeader, uniqueEmail, uniqueTitle } from '../../../../supabase/e2e-seed'
 
 export {
@@ -262,4 +262,25 @@ export async function pageUntilVisible(page: Page, target: Locator) {
     // old fixtures, and clicking waits out animations and the sticky header.
     await page.goto(new URL(href, page.url()).toString())
   }
+}
+
+/**
+ * Set a field on the tutorial editor's Details panel and wait until the form is
+ * dirty. A fill that lands before hydration is wiped when React sets the input's
+ * value, and no onChange runs, so "Save details" stays disabled; filling again
+ * once React is attached is what makes it deterministic. Inputs are cleared
+ * first because React raises onChange only when the value differs from the one
+ * it last tracked.
+ */
+export async function fillDetail(page: Page, field: 'title' | 'description' | 'difficulty', value: string) {
+  const box = page.locator(`#edit-${field}`)
+  const save = page.getByRole('button', { name: 'Save details' })
+  await expect(async () => {
+    if (field === 'difficulty') await box.selectOption(value)
+    else {
+      await box.fill('')
+      await box.fill(value)
+    }
+    await expect(save).toBeEnabled({ timeout: 1_000 })
+  }).toPass({ timeout: 30_000 })
 }
