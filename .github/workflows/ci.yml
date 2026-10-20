@@ -264,6 +264,11 @@ jobs:
           eval "$(supabase status -o env | sed 's/^/export /')"
           export EXPO_PUBLIC_SUPABASE_URL=http://10.0.2.2:54321 EXPO_PUBLIC_SUPABASE_ANON_KEY="$ANON_KEY"
           pnpm device:build
+          # Both daemons outlive the build; left running they sat beside the
+          # emulator and the runner was lost 35 min into the AVD boot.
+          (cd android && ./gradlew --stop)
+          pkill -f KotlinCompileDaemon || true
+          free -h | head -2
 
       - name: Provision the device account
         working-directory: packages/mobile
@@ -280,6 +285,7 @@ jobs:
           arch: x86_64
           profile: pixel_6
           force-avd-creation: false
+          ram-size: 2048M
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           disable-animations: false
           script: echo "Generated AVD snapshot"
@@ -291,6 +297,7 @@ jobs:
           arch: x86_64
           profile: pixel_6
           force-avd-creation: false
+          ram-size: 2048M
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot-save
           disable-animations: true
           working-directory: packages/mobile
