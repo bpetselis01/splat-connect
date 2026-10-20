@@ -87,6 +87,7 @@ export function ExchangeChat({
   head,
   highlightId,
   afterMessage,
+  draftKey,
 }: {
   messages: ThreadMessage[]
   viewerId: string
@@ -111,6 +112,9 @@ export function ExchangeChat({
   /** A control under one message, e.g. the asker's "Mark as the answer".
    *  Default variant only, for the same reason. */
   afterMessage?: (m: ThreadMessage) => ReactNode
+  /** Keeps an unsent message across a navigation away mid-send (the contributor
+   *  terms screen), under `draft:<draftKey>` in sessionStorage. */
+  draftKey?: string
 }) {
   const board = variant === 'board'
   const [draft, setDraft] = useState('')
@@ -123,10 +127,34 @@ export function ExchangeChat({
     if (log) log.scrollTop = log.scrollHeight
   }, [messages.length])
 
+  // Storage can be unavailable (private mode, blocked site data); the draft is then simply not kept.
+  useEffect(() => {
+    if (!draftKey) return
+    try {
+      const saved = sessionStorage.getItem(`draft:${draftKey}`)
+      if (saved) {
+        setDraft(saved)
+        sessionStorage.removeItem(`draft:${draftKey}`)
+      }
+    } catch {}
+  }, [draftKey])
+
+  // A new message means the send worked, so the saved copy is spent. Dropping it
+  // on onSend returning instead would race a terms redirect that is still navigating.
+  useEffect(() => {
+    if (!draftKey) return
+    try {
+      sessionStorage.removeItem(`draft:${draftKey}`)
+    } catch {}
+  }, [draftKey, messages.length])
+
   async function send() {
     if (!draft.trim()) return
     const body = draft
     setDraft('')
+    try {
+      if (draftKey) sessionStorage.setItem(`draft:${draftKey}`, body)
+    } catch {}
     await onSend(body)
   }
 

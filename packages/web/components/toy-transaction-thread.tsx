@@ -598,6 +598,7 @@ export function ToyTransactionThread({
           canSend={open}
           busy={busy}
           onSend={(body) => run(() => onSendMessage(body))}
+          draftKey={tx.id}
           variant={board ? 'board' : undefined}
           head={chatHead}
         />

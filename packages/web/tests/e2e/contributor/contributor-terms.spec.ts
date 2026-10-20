@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
-import { signIn, createContributor, createTutorial, uniqueTitle, fillDetail } from '../helpers'
+import { adminClient, signIn, createContributor, createPublishedToy, createTutorial, deleteUser, uniqueTitle, fillDetail } from '../helpers'
+import { seat } from '../exchanges/support'
 
 // No acceptTerms() anywhere in this file, deliberately. Seeding acceptance in setup
 // is what kept the contributor-terms 403 invisible to the suite.
@@ -116,4 +117,39 @@ test('WA17 accepting returns the user to where they were blocked and unblocks ed
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(
     'Edited after accepting terms'
   )
+})
+
+// Skipped until PR 6 (U9) ships the API gate: nothing answers terms_required before then.
+test.skip('WA30 a member whose terms lapsed sends an exchange message, is sent to the terms, accepts, and the message is sent', async ({ browser, baseURL }) => {
+  const holder = await seat(browser, baseURL, 'Holly Holder')
+  const family = await seat(browser, baseURL, 'Fiona Family')
+  const toyId = await createPublishedToy(holder.id, { name: uniqueTitle('Terms drum'), offer_type: 'donation' })
+  try {
+    await family.page.goto(`/toy-library/${toyId}/request?mode=donation`)
+    await family.page.getByLabel(/Say who it is for/).fill('My daughter is five.')
+    await family.page.getByRole('button', { name: 'Send the request' }).click()
+    await family.page.waitForURL(/\/dashboard\/exchanges\/[0-9a-f-]{36}$/)
+    const thread = family.page.url()
+    await holder.page.goto(thread)
+    await holder.page.getByRole('button', { name: 'Accept', exact: true }).click()
+    await holder.page.getByRole('button', { name: 'Accept request' }).click()
+    await family.page.goto(thread)
+
+    // The terms lapse after the page loaded, so the middleware let the member in.
+    const { error } = await adminClient().from('user_agreements').delete().eq('user_id', family.id)
+    expect(error).toBeNull()
+
+    await family.page.getByLabel(/^Message /).fill('Can we meet on Thursday?')
+    await family.page.getByRole('button', { name: 'Send' }).click()
+    await family.page.waitForURL(/\/onboarding\/contributor-terms\?next=/)
+    await family.page.getByRole('checkbox').check()
+    await family.page.getByRole('button', { name: 'Accept and continue' }).click()
+    await family.page.waitForURL(thread)
+    await expect(family.page.getByLabel(/^Message /)).toHaveValue('Can we meet on Thursday?')
+    await family.page.getByRole('button', { name: 'Send' }).click()
+    await expect(family.page.getByRole('log', { name: 'Conversation' })).toContainText('Can we meet on Thursday?')
+  } finally {
+    await deleteUser(holder.id)
+    await deleteUser(family.id)
+  }
 })
