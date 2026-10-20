@@ -75,5 +75,5 @@ The five pieces are the decisions `web-auth-recovery` (+ `confirmed-page-bare-la
 | # | Question | Impact if Wrong | Owner |
 |---|----------|-----------------|-------|
 | Q1 | How many hosted members lack a current contributor-terms acceptance? They will be bounced once on their next gated write. | A large number means a visible wave of terms prompts on release day | Byron (hosted query; local cannot answer) |
-| Q2 | Hosted email templates are set by hand; who updates them with the "app or website" copy, and when relative to the web release? | Web users read "type this code into the app" until updated | Byron |
+| Q2 | Hosted email templates are set by hand; who updates them with the "app or website" copy, and when relative to the web release? | Web users read "type this code into the app" until updated | Byron. The three templates in `supabase/templates/` already say "in the SPLAT Connect app or on the website"; hosted needs the same copy by hand. |
 | Q3 | `test_print_passed/failed` recipient when the printer is owned by an organisation: every leader, or the leader who submitted the test print? | Wrong leaders notified, or nobody | Byron; default in plan: every current leader |

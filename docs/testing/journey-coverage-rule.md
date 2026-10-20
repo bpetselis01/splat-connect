@@ -36,6 +36,8 @@ A test case claims a journey by putting the id first in its title: `test('WD03 a
 
 A device cell counts for a flow under `packages/mobile/.maestro/flows/` that has been run on a phone or emulator with `pnpm device:test` before the change merges; the checker reads the flow files, not a run log, so the run is on the author. CI does not run the flows: the `Maestro Android` job was removed on 2026-10-20 (evening) after eight runs on the free runner (7.8 GB, 2 cores) never got past the first screen and exhausted the Actions allowance. The local recipe is in `docs/testing/maestro-ci-research-2026-10-20.md`.
 
+The web auth rows WA30–WA38 (recovery, code sign-in, verify) read the emailed code out of local Supabase's mail catcher (Mailpit, port 54324) through `latestCode(email, after)` in `supabase/e2e-seed.ts`, which web and mobile e2e both re-export; the spec asserts the screen after the real code is typed, so the template and the code screen are both under test.
+
 ## Routes
 
 Every web `page.tsx` and every mobile screen file needs a journey row naming it in `route`, or an entry in `scripts/journeys/routes-without-journeys.json` with the reason it has none. The check fails on a route with neither, on an entry whose route is gone or now has a row (delete it), and on a row whose `route` matches no file. A reason starting `TODO:` is a placeholder; the list only shrinks.

@@ -37,7 +37,7 @@ describe('root layout shell', () => {
     expect(html).toMatch(/<main id="main" tabindex="-1"[^>]*><p>page body<\/p>/)
   })
 
-  it.each(['/auth/confirmed', '/onboarding/contributor-terms', '/onboarding/child'])(
+  it.each(['/onboarding/contributor-terms', '/onboarding/child'])(
     'WC10 renders %s bare: main and skip link, no header, footer or dock',
     async (pathname) => {
       const html = await render(pathname, true)
@@ -49,8 +49,8 @@ describe('root layout shell', () => {
     }
   )
 
-  it('WC10 renders /login with the header and footer', async () => {
-    const html = await render('/login')
+  it.each(['/login', '/auth/confirmed'])('WC10 WA16 renders %s with the header and footer', async (pathname) => {
+    const html = await render(pathname)
     expect(html).toContain('<header')
     expect(html).toContain('<footer')
   })
