@@ -21,6 +21,7 @@ import { getCapabilities } from '@/lib/capabilities'
 import { EventRegisterForm } from '@/components/event-register-form'
 import { dateBadge, formatTimeRange } from '@splat-connect/types'
 import type { EventListItem, OrgEventQuestion } from '@splat-connect/types'
+import { authUrl } from '@/lib/safe-next-path'
 
 // PENDING(event-register-raw-409): show the full-event copy only, with the leader contact, and hide submit; other 409s keep a generic retry me...
 
@@ -35,7 +36,7 @@ export default async function EventRegisterPage({ params }: { params: Promise<{ 
   const { id } = await params
   const caps = await getCapabilities()
   if (!caps) {
-    redirect(`/login?next=${encodeURIComponent(`/get-involved/events/${id}/register`)}`)
+    redirect(authUrl('login', `/get-involved/events/${id}/register`))
   }
 
   const event = await apiClient.get<EventDetail>(`/api/public/events/${id}`).catch(() => null)

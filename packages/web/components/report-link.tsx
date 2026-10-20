@@ -21,6 +21,7 @@ import {
 } from '@phosphor-icons/react/dist/ssr'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { isBackdropClick } from '@/lib/backdrop-click'
+import { authUrl } from '@/lib/safe-next-path'
 
 /** The board's six reasons, keyed by the API's categories. */
 const REASONS = [
@@ -65,7 +66,7 @@ export function ReportLink({
 
   function start() {
     if (!signedIn) {
-      router.push(`/login?next=${encodeURIComponent(pathname)}`)
+      router.push(authUrl('login', pathname))
       return
     }
     setReason(null)

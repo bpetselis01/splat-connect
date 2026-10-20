@@ -15,12 +15,13 @@ import { apiClient } from '@/lib/api-client'
 import { getCapabilities } from '@/lib/capabilities'
 import { ChildWizard } from '@/components/child-wizard'
 import type { ChildProfile } from '@splat-connect/types'
+import { authUrl } from '@/lib/safe-next-path'
 
 export const metadata = { title: 'Child profile — SPLAT Connect' }
 
 export default async function ChildWizardPage() {
   const caps = await getCapabilities()
-  if (!caps) redirect(`/login?next=${encodeURIComponent('/onboarding/child')}`)
+  if (!caps) redirect(authUrl('login', '/onboarding/child'))
 
   const children = await apiClient
     .get<ChildProfile[]>('/api/child-profiles')

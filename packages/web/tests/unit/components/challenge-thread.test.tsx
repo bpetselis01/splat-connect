@@ -5,7 +5,11 @@ import { browserApiClient } from '@/lib/browser-api-client'
 import type { ToyIdeaMessage, ToyIdeaParticipant } from '@splat-connect/types'
 
 const mockRefresh = vi.fn()
-vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: mockRefresh }) }))
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ refresh: mockRefresh }),
+  usePathname: () => '/get-involved/design-challenges/c1',
+  useSearchParams: () => new URLSearchParams('tab=thread'),
+}))
 
 // Same fake-channel strategy as live-transaction.test.tsx: the socket is
 // faked so the component can mount and subscribe without a real connection.
@@ -41,6 +45,14 @@ function baseProps(overrides: Partial<Parameters<typeof ChallengeThread>[0]> = {
 }
 
 describe('ChallengeThread', () => {
+  it('sends a signed-out visitor to sign in and back to this page with its query', () => {
+    render(<ChallengeThread {...baseProps({ viewerId: null })} />)
+    expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute(
+      'href',
+      '/login?next=%2Fget-involved%2Fdesign-challenges%2Fc1%3Ftab%3Dthread'
+    )
+  })
+
   beforeEach(() => {
     vi.restoreAllMocks()
   })

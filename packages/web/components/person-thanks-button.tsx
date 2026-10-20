@@ -6,6 +6,7 @@
  * /signup with the reason, like ThanksButton. The public profile carries no
  * "already thanked" flag, so a 409 is how a repeat tells you.
  */
+import { authUrl } from '@/lib/safe-next-path'
 import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { HandHeart } from '@phosphor-icons/react/dist/ssr'
@@ -22,7 +23,7 @@ export function PersonThanksButton({ profileId, name, signedIn }: { profileId: s
   const [said, setSaid] = useState<{ ok: boolean; text: string } | null>(null)
 
   function start() {
-    if (!signedIn) router.push(`/signup?next=${encodeURIComponent(pathname)}&reason=thanks`)
+    if (!signedIn) router.push(authUrl('signup', pathname + window.location.search, { reason: 'thanks' }))
     else setOpen(true)
   }
 

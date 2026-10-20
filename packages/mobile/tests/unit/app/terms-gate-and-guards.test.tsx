@@ -9,12 +9,18 @@ import TabsLayout from '../../../app/(tabs)/_layout'
 import PrintingLayout from '../../../app/printing/_layout'
 
 const mockRedirect = jest.fn()
+const mockBack = jest.fn()
+const mockReplace = jest.fn()
+let mockCanGoBack = true
+let mockParams: { returnTo?: string } = {}
 jest.mock('expo-router', () => {
   const Stack = Object.assign(() => 'stack', { Screen: () => null })
   const Tabs = Object.assign(() => 'tabs', { Screen: () => null })
   return {
     Tabs,
     usePathname: () => '/home',
+    useLocalSearchParams: () => mockParams,
+    router: { back: (...a: unknown[]) => mockBack(...a), replace: (...a: unknown[]) => mockReplace(...a), canGoBack: () => mockCanGoBack },
     useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn() }),
     Redirect: ({ href }: { href: string }) => {
       mockRedirect(href)
@@ -53,6 +59,8 @@ function pending<T>() {
 
 beforeEach(() => {
   jest.clearAllMocks()
+  mockParams = {}
+  mockCanGoBack = true
   mockAuth.loading = false
   mockAuth.session = { user: { id: 'u1' } }
   mockAuth.profile = { name: '' }
@@ -64,6 +72,46 @@ beforeEach(() => {
 
 const tick = () => fireEvent.press(screen.getByTestId('accept-contributor-terms'))
 const accept = () => fireEvent.press(screen.getByTestId('accept-terms'))
+
+describe('Terms gate pushed over a refused write', () => {
+  it('A15 shows the form to a member whose stale flag still says accepted, and goes back only after this screen accepts', async () => {
+    mockParams = { returnTo: 'back' }
+    mockAuth.hasContributorTerms = true
+    mockAuth.profile = { name: 'Sam' }
+    render(<TermsGate />)
+    expect(screen.getByTestId('accept-terms')).toBeTruthy()
+    expect(mockBack).not.toHaveBeenCalled()
+    expect(mockRedirect).not.toHaveBeenCalled()
+    tick()
+    accept()
+    await waitFor(() => expect(mockBack).toHaveBeenCalledTimes(1))
+  })
+
+  it('A15 with no history to go back to lands on Home instead of a blank screen', async () => {
+    mockParams = { returnTo: 'back' }
+    mockCanGoBack = false
+    mockAuth.profile = { name: 'Sam' }
+    render(<TermsGate />)
+    tick()
+    accept()
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/home'))
+    expect(mockBack).not.toHaveBeenCalled()
+  })
+
+  it('A15 does not go back while the terms are still unaccepted', () => {
+    mockParams = { returnTo: 'back' }
+    render(<TermsGate />)
+    expect(mockBack).not.toHaveBeenCalled()
+    expect(screen.getByTestId('accept-terms')).toBeTruthy()
+  })
+
+  it('A15 sends an account that arrived without returnTo to Home', () => {
+    mockAuth.hasContributorTerms = true
+    render(<TermsGate />)
+    expect(mockRedirect).toHaveBeenCalledWith('/home')
+    expect(mockBack).not.toHaveBeenCalled()
+  })
+})
 
 describe('Terms gate transaction', () => {
   it('Accept does nothing until the box is ticked, and nothing again once it is cleared', () => {

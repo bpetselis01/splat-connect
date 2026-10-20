@@ -22,7 +22,7 @@ describe('submit explainers', () => {
     const { container } = render(await SubmitAnIdea({ searchParams: Promise.resolve({}) }))
     expect(screen.getByRole('link', { name: /sign in/i })).toHaveAttribute(
       'href',
-      '/login?next=/get-involved/submit-an-idea'
+      '/login?next=%2Fget-involved%2Fsubmit-an-idea'
     )
     expect(container.querySelector('form')).toBeNull()
   })

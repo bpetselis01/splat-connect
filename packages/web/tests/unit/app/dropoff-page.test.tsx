@@ -19,12 +19,19 @@ vi.mock('@/components/dropoff-form', () => ({
 beforeEach(() => vi.clearAllMocks())
 
 describe('Book a drop-off page', () => {
-  it('WI38 sends a signed-out visitor to sign in and drops the ?org= choice from the way back', async () => {
+  it('WI38 sends a signed-out visitor to sign in and keeps the ?org= choice on the way back', async () => {
     mockGetCapabilities.mockResolvedValue(null)
     await expect(BookDropoffPage({ searchParams: Promise.resolve({ org: 'north' }) })).rejects.toThrow(
-      'REDIRECT:/login?next=%2Fget-involved%2Frecycling%2Fdrop-off'
+      'REDIRECT:/login?next=%2Fget-involved%2Frecycling%2Fdrop-off%3Forg%3Dnorth'
     )
     expect(mockGet).not.toHaveBeenCalled()
+  })
+
+  it('WI38 sends a signed-out visitor with no ?org= back to the bare path', async () => {
+    mockGetCapabilities.mockResolvedValue(null)
+    await expect(BookDropoffPage({ searchParams: Promise.resolve({}) })).rejects.toThrow(
+      'REDIRECT:/login?next=%2Fget-involved%2Frecycling%2Fdrop-off'
+    )
   })
 
   it('WI37 offers a signed-in member only the organisations that take plastic, preselecting ?org=', async () => {

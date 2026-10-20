@@ -200,6 +200,7 @@ export const PENDING = {
     blurb: "Redirects to `/login` drop the return path in about eight places (`middleware.ts`, `requireCapabilities`, toy `?mode=`, drop-off `?org=`, LearnGate, terms gate). Users land on `/dashboard` instead of where they were going.",
     kind: "build",
     platforms: ["web"],
+    shipped: true,
     needs: "Decided 2026-10-20: every redirect to /login carries ?next= and sign-in honours it, with a same-origin allow-list; one helper, eight call sites. Whether to add a `next` param to every redirect to `/login`.",
   },
   'org-directory-terms-gate': {
@@ -207,6 +208,7 @@ export const PENDING = {
     blurb: "`/organizations` is in the middleware terms list, so signed-in members without terms are bounced from pages anon visitors can read. Inconsistent with \"public browsing stays reachable\".",
     kind: "build",
     platforms: ["web"],
+    shipped: true,
     needs: "Decided 2026-10-20: remove /organizations from the middleware terms list; public read pages never require terms. Add a test. Whether to remove `/organizations` from the middleware terms list.",
   },
   'silent-handoffs': {

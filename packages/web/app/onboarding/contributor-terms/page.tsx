@@ -17,33 +17,17 @@
  */
 import { Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Route } from 'next'
+import { sanitiseNextPath } from '@/lib/safe-next-path'
 import { TermsGate } from '@/components/terms-gate'
 import { ContributorTermsContent } from '@/components/contributor-terms-content'
 import { createClient } from '@/lib/supabase/client'
 import { AuthStage } from '@/components/auth-shell'
 import { AGREEMENT_VERSIONS } from '@splat-connect/types'
 
-/**
- * `next` arrives from the query string, so it is attacker-controllable. Only a
- * same-origin path is honoured: it must start with exactly one '/', which rules
- * out both absolute URLs and protocol-relative '//host' redirects.
- *
- * Backslashes are normalized to forward slashes before the check: browsers treat
- * /\ as an authority separator in special URL schemes, turning /\evil.example
- * into a cross-origin redirect. Normalizing collapses all backslash variants
- * into cases the protocol-relative check already rejects.
- */
-function safeNext(raw: string | null): Route<string> {
-  if (!raw) return '/dashboard' as Route<string>
-  const normalized = raw.replace(/\\/g, '/')
-  if (!normalized.startsWith('/') || normalized.startsWith('//')) return '/dashboard' as Route<string>
-  return normalized as Route<string>
-}
-
 function ContributorTermsForm() {
   const supabase = createClient()
-  const next = safeNext(useSearchParams().get('next'))
+  const params = useSearchParams()
+  const next = sanitiseNextPath(params.get('next')) ?? '/dashboard'
 
   async function signOut() {
     await supabase.auth.signOut()
@@ -55,6 +39,11 @@ function ContributorTermsForm() {
 
   return (
     <>
+      {params.get('retry') === '1' && (
+        <p role="alert" className="alert alert-warning mb-4">
+          We could not check your acceptance, try again
+        </p>
+      )}
       <TermsGate
         type="contributor_terms"
         variant="stage"
