@@ -1266,7 +1266,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | WT10 | write | `/tutorials/[id]` | P | "Mark this build done" → "Build logged" | – | My SPLAT builds | n/a | ✅ | ✅ | ✅ | – |
 | WT11 | write | `/tutorials/[id]` | P | Pin as revision / Unpin a community note (guide author or admin) | – | pinned revisions banner | mobile | ✅ | ✅ | ✅ | – |
 | WT12 | static | `/tutorials/[id]` | anon | community notes, the pinned-revisions banner and (signed in) the "how this fits your child" line | – | pinned revisions | mobile | ✅ | – | – | – |
-| WT41 | static | `/tutorials/[id]` | anon | rail Save signed out → /signup?reason=save, carrying the guide page | – | – | n/a | ✅ | – | – | – |
+| WT41 | nav | `/tutorials/[id]` | anon | rail Save signed out → /signup?reason=save, carrying the guide page | – | – | n/a | ✅ | ✅ | – | – |
 
 </details>
 
@@ -1408,7 +1408,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | WY22 | write | `/dashboard/toys/[id]` | P | pause / take requests again → PATCH paused_at | – | public library visibility | n/a | ✅ | ✅ | ✅ | – |
 | WY23 | write | `/dashboard/toys/[id]` | P | "Also worth a look" picks mode and Save picks → PATCH /api/toys/:id, PUT /api/toys/:id/picks | – | – | n/a | ✅ | ✅ | ✅ | – |
 | WY24 | write | `/dashboard/toys/[id]` | P | "Delete toy" (typed phrase) → DELETE /api/toys/:id → /dashboard/toys | – | My toys count | n/a | ✅ | ✅ | ✅ | – |
-| WY25 | static | `/toy-library/[id]` | anon | rail Save signed out → /signup?reason=save, carrying the toy page | – | – | n/a | ✅ | – | – | – |
+| WY25 | nav | `/toy-library/[id]` | anon | rail Save signed out → /signup?reason=save, carrying the toy page | – | – | n/a | ✅ | ✅ | – | – |
 
 </details>
 
