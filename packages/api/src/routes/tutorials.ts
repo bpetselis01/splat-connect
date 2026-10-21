@@ -12,6 +12,7 @@ import { nameFormerContributors } from '../former-contributor.js'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { pickEditable } from './pick-editable.js'
 import { notifyTutorialSubmitted } from '../review-notifications.js'
+import { notify } from '../notify.js'
 import { readSuits, realignCaptions, GUIDE_SUITS_FIELDS, fieldKey, customizationFieldsProblem, AGREEMENT_VERSIONS } from '@splat-connect/types'
 import { removeDroppedPhotos } from '../photo-storage.js'
 import { sendApprovedGuideBackToReview } from '../re-review.js'
@@ -487,16 +488,16 @@ tutorials.post('/:id/thanks', async (c) => {
   // No actor name, on purpose: who thanked which guide is the private half of
   // this feature (066's RLS), and a notification is the easiest place to leak
   // it. Logged, never thrown — the thank has already been counted.
-  const { error: notifyError } = await admin.from('notifications').insert(
+  await notify(
     ctx.credited.map((recipient_id) => ({
       recipient_id,
       type: 'tutorial_thanked',
       tutorial_id: id,
       tutorial_title: ctx.title,
       actor_name: 'A family',
-    }))
+    })),
+    'tutorials.thanks'
   )
-  if (notifyError) console.error('[thanks] notify failed:', notifyError.message)
 
   const { data } = await admin.from('tutorials').select('thanks_count').eq('id', id).single()
   return c.json({ thanks_count: (data as { thanks_count: number } | null)?.thanks_count ?? 0 }, 201)

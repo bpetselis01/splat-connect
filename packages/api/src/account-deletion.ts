@@ -9,6 +9,7 @@
  */
 import { createAdminClient } from './supabase/client.js'
 import { subjectName } from './routes/toy-transactions.js'
+import { notify } from './notify.js'
 
 type Admin = ReturnType<typeof createAdminClient>
 type DeletionResult = {
@@ -59,12 +60,12 @@ async function notifyCancelled(admin: Admin, { cancelled }: DeletionResult) {
   for (const c of cancelled) {
     if (!c.other) continue // an organisation's side, or an open build nobody took
     const { data: tx } = await admin.from('toy_transactions').select('type, toy_id, tutorial_id').eq('id', c.id).single()
-    await admin.from('notifications').insert({
+    await notify([{
       recipient_id: c.other,
       type: c.status === 'withdrawn' ? 'toy_withdrawn' : 'toy_rejected',
       toy_transaction_id: c.id,
       toy_name: tx ? await subjectName(admin, tx) : null,
       actor_name: 'A member who left SPLAT',
-    })
+    }], 'account-deletion.cancelled')
   }
 }

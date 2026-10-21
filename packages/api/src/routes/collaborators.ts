@@ -19,6 +19,7 @@ import { Hono } from 'hono'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import type { AuthVariables } from '../middleware/auth.js'
 import { profileName } from '../profile-name.js'
+import { notify } from '../notify.js'
 
 const collaborators = new Hono<{ Variables: AuthVariables }>()
 
@@ -71,16 +72,13 @@ collaborators.post('/:id/collaborators/invite', async (c) => {
   // Denormalized like actor_name: the invitee isn't a contributor yet, so
   // they have no RLS read access to join the tutorial's title live.
   const { data: tutorial } = await admin.from('tutorials').select('title').eq('id', c.req.param('id')).single()
-  const { error: notifyError } = await admin.from('notifications').insert({
+  await notify([{
     recipient_id: invitee.id,
     type: 'collaborator_invited',
     tutorial_id: c.req.param('id'),
     tutorial_title: tutorial?.title ?? 'a tutorial',
     actor_name: inviterName,
-  })
-  // A failed notification shouldn't fail the invite itself, but a silent
-  // failure here is invisible without a log line.
-  if (notifyError) console.error('[collaborators.invite] notification insert failed:', notifyError.message)
+  }], 'collaborators.invite')
 
   return c.json(data, 201)
 })
@@ -126,25 +124,23 @@ collaborators.delete('/:id/collaborators/:profileId', async (c) => {
   if (selfLeave) {
     // Notify the primary contributor that someone left.
     if (primaryId) {
-      const { error: notifyError } = await admin.from('notifications').insert({
+      await notify([{
         recipient_id: primaryId,
         type: 'collaborator_left',
         tutorial_id: tutorialId,
         tutorial_title: tutorial?.title ?? 'a tutorial',
         actor_name: actorName,
-      })
-      if (notifyError) console.error('[collaborators.leave] notification insert failed:', notifyError.message)
+      }], 'collaborators.leave')
     }
   } else {
     // Notify the removed collaborator.
-    const { error: notifyError } = await admin.from('notifications').insert({
+    await notify([{
       recipient_id: targetId,
       type: 'collaborator_removed',
       tutorial_id: tutorialId,
       tutorial_title: tutorial?.title ?? 'a tutorial',
       actor_name: actorName,
-    })
-    if (notifyError) console.error('[collaborators.remove] notification insert failed:', notifyError.message)
+    }], 'collaborators.remove')
   }
 
   return c.body(null, 204)

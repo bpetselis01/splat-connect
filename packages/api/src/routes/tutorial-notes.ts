@@ -6,6 +6,7 @@
  */
 import { Hono, type Context } from 'hono'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
+import { notify } from '../notify.js'
 import type { AuthVariables } from '../middleware/auth.js'
 import { toyPhotoUrl } from '../photo-storage.js'
 
@@ -41,16 +42,16 @@ async function notifyContributors(tutorialId: string, authorId: string) {
     .map((r) => r.profile_id)
     .filter((p) => p !== authorId && p !== GHOST)
   if (!recipients.length) return
-  const { error } = await admin.from('notifications').insert(
+  await notify(
     recipients.map((recipient_id) => ({
       recipient_id,
       type: 'tutorial_noted',
       tutorial_id: tutorialId,
       tutorial_title: guide?.title ?? null,
       actor_name: who?.name || 'A member',
-    }))
+    })),
+    'tutorial-notes.noted'
   )
-  if (error) console.error('[notes] notify failed:', error.message)
 }
 
 notes.post('/:id/notes', async (c) => {

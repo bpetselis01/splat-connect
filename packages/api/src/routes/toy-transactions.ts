@@ -821,7 +821,7 @@ toyTransactions.post('/:id/messages', async (c) => {
   // leader, so whoever picks the thread up next has it in their inbox. An admin
   // belongs to neither side, so both are told.
   if (asAdmin || ownerSide) {
-    await admin.from('notifications').insert({ ...payload, recipient_id: tx.requester_id })
+    await notify([{ ...payload, recipient_id: tx.requester_id }], 'toy-transactions.:id/messages')
   }
   if (asAdmin || !ownerSide) await notifyOwnerSide(admin, tx, payload)
 
@@ -932,13 +932,13 @@ toyTransactions.post('/:id/accept', async (c) => {
     body: 'Request accepted. Pickup and handoff details are ready.',
   })
 
-  await admin.from('notifications').insert({
+  await notify([{
     recipient_id: tx.requester_id,
     type: 'toy_accepted',
     toy_transaction_id: tx.id,
     toy_name: await subjectName(admin, tx as any),
     actor_name: await ownerSideName(admin, tx as any, 'The owner'),
-  })
+  }], 'toy-transactions.:id/accept')
 
   // 114: the RPC spent the credit, or found the balance short and accepted
   // without it. Short is said in the thread, where both sides will see it.
@@ -1002,7 +1002,7 @@ toyTransactions.post('/:id/reject', async (c) => {
     body: `Request declined — ${reason}`,
   })
 
-  await admin.from('notifications').insert({
+  await notify([{
     recipient_id: tx.requester_id,
     type: 'toy_rejected',
     toy_transaction_id: tx.id,
@@ -1010,7 +1010,7 @@ toyTransactions.post('/:id/reject', async (c) => {
     actor_name: await ownerSideName(admin, tx as any, 'The owner'),
     // 119: the decline reason, to the requester's row only.
     body: notificationBody(reason),
-  })
+  }], 'toy-transactions.:id/reject')
 
   return c.json(sanitizeCodes(updated, userId, ledOrgs))
 })
@@ -1081,7 +1081,7 @@ toyTransactions.post('/:id/withdraw', async (c) => {
       : await profileName(admin, userId, 'The other party'),
   }
   if (fromOwnerSide) {
-    await admin.from('notifications').insert({ ...payload, recipient_id: tx.requester_id })
+    await notify([{ ...payload, recipient_id: tx.requester_id }], 'toy-transactions.:id/withdraw')
   } else {
     await notifyOwnerSide(admin, tx as any, payload)
   }
@@ -1351,13 +1351,13 @@ toyTransactions.post('/:id/confirm', async (c) => {
           ? 'This toy is now out of stock, so this request was automatically declined.'
           : 'This toy was handed over to another request, so this one was automatically declined.',
       })
-      await admin.from('notifications').insert({
+      await notify([{
         recipient_id: rival.requester_id,
         type: 'toy_rejected',
         toy_transaction_id: rival.id,
         toy_name: toy?.name ?? 'a toy',
         actor_name: actorName,
-      })
+      }], 'toy-transactions.:id/confirm')
     }
   }
 
@@ -1655,13 +1655,13 @@ toyTransactions.post('/:id/claim', async (c) => {
     body: `${makerName} claimed this build.`,
   })
 
-  await admin.from('notifications').insert({
+  await notify([{
     recipient_id: tx.requester_id,
     type: 'toy_accepted',
     toy_transaction_id: tx.id,
     toy_name: tutorial?.title ?? 'your build request',
     actor_name: makerName,
-  })
+  }], 'toy-transactions.:id/claim')
 
   return c.json(sanitizeCodes(claimed, userId, []))
 })
@@ -1761,14 +1761,14 @@ toyTransactions.post('/:id/questions', async (c) => {
   if (error?.code === RLS_VIOLATION) return c.json({ error: 'You cannot ask about this request.' }, 403)
   if (error) return c.json({ error: error.message }, 500)
 
-  await admin.from('notifications').insert({
+  await notify([{
     recipient_id: family ? makerId : tx.requester_id,
     type: 'build_question',
     toy_transaction_id: tx.id,
     toy_name: await subjectName(admin, tx as { type: string; toy_id: string | null; tutorial_id: string | null }),
     // The family is "Family in Newtown" to a maker until a claim, as on the card.
     actor_name: family ? `Family in ${tx.requester_suburb ?? 'your area'}` : await profileName(admin, userId, 'A maker'),
-  })
+  }], 'toy-transactions.:id/questions')
   return c.json(data, 201)
 })
 
@@ -1831,13 +1831,13 @@ toyTransactions.post('/:id/working-shot', async (c) => {
     kind: 'system',
     body: 'Posted a photo of the build working.',
   })
-  await admin.from('notifications').insert({
+  await notify([{
     recipient_id: tx.requester_id,
     type: 'build_shot_posted',
     toy_transaction_id: tx.id,
     toy_name: await subjectName(admin, tx as any),
     actor_name: await ownerSideName(admin, tx as any, 'The maker'),
-  })
+  }], 'toy-transactions.:id/working-shot')
 
   return c.json(sanitizeCodes(updated, userId, ledOrgs))
 })
@@ -2316,13 +2316,13 @@ toyTransactions.post('/:id/print-started', async (c) => {
     kind: 'system',
     body: 'The job is on the bed.',
   })
-  await admin.from('notifications').insert({
+  await notify([{
     recipient_id: tx.requester_id,
     type: 'print_started',
     toy_transaction_id: tx.id,
     toy_name: await subjectName(admin, tx as any),
     actor_name: await ownerSideName(admin, tx as any, 'The printer'),
-  })
+  }], 'toy-transactions.:id/print-started')
 
   return c.json(sanitizeCodes(updated, userId, ledOrgs))
 })
@@ -2375,13 +2375,13 @@ toyTransactions.post('/:id/print-ready', async (c) => {
     kind: 'system',
     body: 'The parts are printed and ready to collect.',
   })
-  await admin.from('notifications').insert({
+  await notify([{
     recipient_id: tx.requester_id,
     type: 'print_ready',
     toy_transaction_id: tx.id,
     toy_name: await subjectName(admin, tx as any),
     actor_name: await ownerSideName(admin, tx as any, 'The printer'),
-  })
+  }], 'toy-transactions.:id/print-ready')
 
   return c.json(sanitizeCodes(updated, userId, ledOrgs))
 })
