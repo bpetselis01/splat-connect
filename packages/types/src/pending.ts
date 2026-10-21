@@ -329,6 +329,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["api"],
     needs: "Decided 2026-10-20: the route honours the role filter on the server and the browser stops re-filtering. Whether the route honours the role filter or the parameter is removed.",
+    shipped: true,
   },
   'draft-event-story-validation': {
     title: "Validation on drafts",
