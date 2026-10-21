@@ -137,23 +137,19 @@ test('WA11 mismatched passwords are refused with a message and no account is mad
   expect(data.users.some((u) => u.email === email)).toBe(false)
 })
 
-// follow and message are sent by org-actions.tsx but have no banner copy yet.
-test('WA13 ?reason= save, thanks, child and download each explain why the visitor was sent here', async ({ page }) => {
+test('WA13 ?reason= save, thanks, child, download, follow, message and build each explain why the visitor was sent here', async ({ page }) => {
   for (const [reason, copy] of [
     ['save', 'You need an account to save things.'],
     ['thanks', 'You need an account to say thanks.'],
     ['child', "A free account keeps your child's profile."],
     ['download', 'You need an account to download tutorial files.'],
+    ['follow', 'Sign up to follow this organisation'],
+    ['message', 'Sign up to message this organisation'],
+    ['build', 'Sign up to request a build'],
   ]) {
     await page.goto(`/signup?reason=${reason}`)
     await expect(page.getByText(copy), reason).toBeVisible()
   }
-})
-
-test('WA13 ?reason=follow shows no banner', async ({ page }) => {
-  await page.goto('/signup?reason=follow')
-  await expect(page.getByRole('button', { name: 'Create my account' })).toBeVisible()
-  await expect(page.locator('.alert')).toHaveCount(0)
 })
 
 test('WA15 the Sign in and Create account tabs switch screens and keep the query', async ({ page }) => {

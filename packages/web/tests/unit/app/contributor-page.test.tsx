@@ -80,7 +80,7 @@ describe('contributor profile page', () => {
     await mount()
     expect(screen.getByRole('link', { name: 'Ask Priya to build a guide' })).toHaveAttribute(
       'href',
-      '/signup?next=%2Fget-involved%2Frequests%2Fnew%3Fmaker%3Dc1'
+      '/signup?next=%2Fget-involved%2Frequests%2Fnew%3Fmaker%3Dc1&reason=build'
     )
   })
 

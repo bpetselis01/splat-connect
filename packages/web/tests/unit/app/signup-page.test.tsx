@@ -181,21 +181,17 @@ describe('signup page', () => {
     expect(screen.getByRole('button', { name: /create my account/i })).toBeEnabled()
   })
 
-  // follow and message are sent by org-actions.tsx but have no copy yet.
   it.each([
     ['save', "You need an account to save things. Create one and we'll take you back."],
     ['thanks', "You need an account to say thanks. Create one and we'll take you back."],
     ['child', "A free account keeps your child's profile. Create one and we'll take you straight to the questions."],
     ['download', "You need an account to download tutorial files. Create one and we'll take you back."],
+    ['follow', 'Sign up to follow this organisation'],
+    ['message', 'Sign up to message this organisation'],
+    ['build', 'Sign up to request a build'],
   ])('WA13 ?reason=%s explains why the visitor was sent here', (reason, copy) => {
     search = new URLSearchParams({ reason })
     render(<SignupPage />)
     expect(screen.getByText(copy)).toBeInTheDocument()
-  })
-
-  it.each(['follow', 'message'])('WA13 ?reason=%s shows no banner', (reason) => {
-    search = new URLSearchParams({ reason })
-    const { container } = render(<SignupPage />)
-    expect(container.querySelector('.alert')).toBeNull()
   })
 })

@@ -27,7 +27,7 @@ vi.mock('@/lib/capabilities', () => ({ getCapabilities }))
 vi.mock('@/lib/my-children', () => ({ getMyChildren }))
 vi.mock('@/lib/api-client', () => ({ apiClient: { get: apiGet } }))
 vi.mock('@/lib/browser-api-client', () => ({ browserApiClient: { post: vi.fn(), delete: vi.fn() } }))
-vi.mock('@/components/toast', () => ({ useToast: () => vi.fn() }))
+vi.mock('@/components/toast', () => ({ useToast: () => vi.fn(), ToastProvider: ({ children }: { children: React.ReactNode }) => <>{children}</> }))
 
 const guide = {
   id: 't1', title: 'Bubble Machine', description: 'Blows bubbles on a press.', difficulty: 'easy', kind: 'toy_adaptation',

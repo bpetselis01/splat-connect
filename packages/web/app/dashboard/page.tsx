@@ -27,8 +27,6 @@ import { MoneyPanel, type OutstandingLine } from '@/components/money-panel'
 import { SplatMascot } from '@/components/splat-mascot'
 import { isPast, type MeCounts } from '@splat-connect/types'
 
-// PENDING(hub-exchange-count-plural): fix it: '1 exchange', '2 exchanges'. Nothing to decide beyond scheduling the fix.
-
 export const metadata = {
   title: 'My SPLAT — SPLAT Connect',
 }
@@ -221,7 +219,7 @@ export default async function DashboardHub() {
     waiting.push({
       href: '/dashboard/exchanges' as Route,
       icon: Handshake,
-      label: `${caps.exchangeActions} exchange${caps.exchangeActions === 1 ? '' : 's'} need you`,
+      label: caps.exchangeActions === 1 ? '1 exchange needs you' : `${caps.exchangeActions} exchanges need you`,
       primary: true,
     })
   }

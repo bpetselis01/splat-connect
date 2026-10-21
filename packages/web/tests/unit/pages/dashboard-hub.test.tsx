@@ -345,6 +345,11 @@ describe('DashboardHub', () => {
     expect(screen.getByText(/Four things are waiting\./)).toBeInTheDocument()
     unmount()
 
+    caps.current = { ...baseCaps, exchangeActions: 1 }
+    const one = render(await DashboardHub())
+    expect(screen.getByRole('link', { name: '1 exchange needs you' })).toHaveAttribute('href', '/dashboard/exchanges')
+    one.unmount()
+
     caps.current = baseCaps
     render(await DashboardHub())
     expect(screen.queryByRole('link', { name: /need you|needs you/ })).toBeNull()

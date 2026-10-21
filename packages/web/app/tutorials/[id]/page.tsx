@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { CaretRight } from '@phosphor-icons/react/dist/ssr'
+import { ToastProvider } from '@/components/toast'
 import { ShareButton } from '@/components/share-button'
 import { SaveButton } from '@/components/save-button'
 import { ThanksButton } from '@/components/thanks-button'
@@ -11,8 +12,6 @@ import { getMyChildren } from '@/lib/my-children'
 import { getCapabilities } from '@/lib/capabilities'
 import { TutorialView } from '@/components/tutorial-view'
 import { fitLine, type GuideNote, type TutorialWithDetails, type TutorialOrg } from '@splat-connect/types'
-
-// PENDING(guide-share-no-toast): Share confirms with the shared 'Link copied' toast; no toast where a native share sheet opens. Whether Shar...
 
 export default async function TutorialPage({
   params,
@@ -69,30 +68,32 @@ export default async function TutorialPage({
         notes={notes}
         canPin={canPin}
         actions={
-          /* The board gives a guest Share alone: saving and thanking both need
-             an account, and the rail already says so under the button. */
-          signedIn ? (
-            <>
-              <SaveButton
-                slug="tutorials"
-                id={tutorial.id}
-                saved={saved.tutorials.includes(tutorial.id)}
-                signedIn
-                withLabel
-              />
+          <ToastProvider>
+            {/* The board gives a guest Share alone: saving and thanking both need
+               an account, and the rail already says so under the button. */}
+            {signedIn ? (
+              <>
+                <SaveButton
+                  slug="tutorials"
+                  id={tutorial.id}
+                  saved={saved.tutorials.includes(tutorial.id)}
+                  signedIn
+                  withLabel
+                />
+                <ShareButton title={tutorial.title} />
+                <ThanksButton
+                  tutorialId={tutorial.id}
+                  count={tutorial.thanks_count ?? 0}
+                  thanked={thanks.thanked}
+                  own={thanks.own}
+                  signedIn
+                />
+                <MarkBuildDoneButton tutorialId={tutorial.id} />
+              </>
+            ) : (
               <ShareButton title={tutorial.title} />
-              <ThanksButton
-                tutorialId={tutorial.id}
-                count={tutorial.thanks_count ?? 0}
-                thanked={thanks.thanked}
-                own={thanks.own}
-                signedIn
-              />
-              <MarkBuildDoneButton tutorialId={tutorial.id} />
-            </>
-          ) : (
-            <ShareButton title={tutorial.title} />
-          )
+            )}
+          </ToastProvider>
         }
       />
     </>

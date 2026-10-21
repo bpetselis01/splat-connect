@@ -233,6 +233,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: typed-phrase confirm, the same component as member self-deletion. Whether admin removal gets the typed-phrase confirm.",
+    shipped: true,
   },
   'guide-rereview-rule': {
     title: "When an edited guide goes back to review",
@@ -342,6 +343,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: nearest 0.1 kg, and the credit is computed from the rounded weight so display and credit agree. Which rounding the credit uses.",
+    shipped: true,
   },
   'challenge-join-busy-stuck': {
     title: "Join after Leave on a challenge",
@@ -370,6 +372,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: Share confirms with the shared 'Link copied' toast; no toast where a native share sheet opens. Whether Share confirms with a toast.",
+    shipped: true,
   },
   'guide-patch-without-status-500': {
     title: "Guide PATCH without status",
@@ -384,6 +387,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: fix it: '1 exchange', '2 exchanges'. Nothing to decide beyond scheduling the fix.",
+    shipped: true,
   },
   'impact-map-soon-pill': {
     title: "Deliveries map card",
@@ -391,6 +395,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: drop the SOON pill and link the card to the map. Whether to drop the pill and link the card to the map.",
+    shipped: true,
   },
   'confirmed-page-bare-layout': {
     title: "Bare layout after email confirm",
@@ -406,6 +411,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: both reasons get a banner with action-first copy: 'Sign up to save toys' and 'Sign up to request a build'. Whether the two reasons get a banner, and the copy.",
+    shipped: true,
   },
   'event-detail-ready-marker': {
     title: "I'm going before the profile loads",

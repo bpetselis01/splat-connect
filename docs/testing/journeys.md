@@ -580,7 +580,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | WA10 | nav | `/signup` | anon | contributor-terms row opens the terms dialog; Accept ticks it, Reject / Escape / backdrop close it unticked; typed fields survive | – | – | n/a | ✅ | ✅ | – | – |
 | WA11 | nav | `/signup` | anon | password under six characters or a mismatched confirmation is refused before any account is made | – | – | n/a | ✅ | ✅ | – | – |
 | WA12 | nav | `/signup` | anon | an email that already has an account → the error shows, no "Check your email" | – | – | n/a | ✅ | ✅ | ✅ | – |
-| WA13 | nav | `/signup` | anon | "?reason=" banner: save, thanks, child and download have copy; follow and message show none | – | – | n/a | ✅ | ✅ | – | – |
+| WA13 | nav | `/signup` | anon | "?reason=" banner: save, thanks, child, download, follow, message and build each have copy | – | – | n/a | ✅ | ✅ | – | – |
 | WA14 | nav | `/signup` | anon | "Back to sign in" on "Check your email" → /login | – | – | n/a | ✅ | ✅ | – | – |
 | WA15 | nav | `/signup` | anon | "Sign in" / "Create account" tabs switch screens, keeping the query | – | – | n/a | ✅ | ✅ | – | – |
 | WA16 | nav | `/auth/confirmed` | anon | "Continue" and the 3 s countdown → /login?next=; confirming does not sign the user in | – | – | n/a | ✅ | ✅ | – | – |
@@ -659,7 +659,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | WB24 | nav | `/dashboard/org/events/[id]` | L | registrations list with each answer, and Export CSV (data: URI built in the page); stat tiles Going, Part requests, To answer, Seats | – | Going, Part requests, To answer, Seats | P | ✅ | ✅ | ✅ | – |
 | WB25 | write | `/dashboard/organisation/stories/new` | L | story form "Publish to Stories" (consent ticked) / "Save as draft" → POST | org_story_published | followers' unread, public Stories list | n/a | ✅ | ✅ | ✅ | – |
 | WB26 | write | `/dashboard/organisation/stories/[id]/edit` | L | story form "Save changes" (consent ticked again) / "Publish to Stories" → PATCH | org_story_published | – | n/a | ✅ | ✅ | ✅ | – |
-| WB27 | write | `/dashboard/organisation/recycling` | L | intake "Weigh and credit" (actual kg, credit g) → PATCH received | recycling_received | contributor's credit balance, Booked in count | P | ✅ | ✅ | ✅ | – |
+| WB27 | write | `/dashboard/organisation/recycling` | L | intake "Weigh and credit" (actual kg rounded to 0.1, credit g from the rounded weight) → PATCH received | recycling_received | contributor's credit balance, Booked in count | P | ✅ | ✅ | ✅ | – |
 | WB28 | write | `/dashboard/organisation/recycling` | L | intake "Contaminated" → PATCH declined | recycling_declined | Booked in count | P | ✅ | ✅ | ✅ | – |
 | WB29 | write | `/dashboard/organisation/recycling` | L | "What you can take" publish (materials, machines, forms, limits, how it is brought) → PATCH the profile | – | contributor's booking form | n/a | ✅ | ✅ | ✅ | – |
 | WB30 | write | `/dashboard/organisation/profile` | L | profile form "Save and publish" → PATCH profile, then PUT doors and rate lines | – | public organisation page | n/a | ✅ | ✅ | ✅ | – |
@@ -1082,7 +1082,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | WM14 | write | `/admin/ideas/[id]` | A | "Graduate to draft guide" (live challenge only) → draft guide for the participants | idea_graduated | participants challenges unread | P | ✅ | ✅ | ✅ | – |
 | WM15 | nav | `/admin/ideas/[id]` | A | "view the draft guide" link on a graduated idea → /admin/review/:tutorialId | – | – | n/a | ✅ | ✅ | – | – |
 | WM16 | nav | `/admin/contributors` | A | Filter chips (?cap=), search (?q=), Pager, leader capability from the organisations list | – | accounts | n/a | ✅ | ✅ | ✅ | – |
-| WM17 | write | `/admin/contributors` | A | Per-row "Remove" (no confirm step) → server action deleteContributor → account deleted; a sole leader is refused | – | accounts | n/a | ✅ | ✅ | ✅ | – |
+| WM17 | write | `/admin/contributors` | A | Per-row "Delete account" → typed-phrase dialog → DELETE /api/admin/contributors/:id → account deleted; a sole leader is refused | – | accounts | n/a | ✅ | ✅ | ✅ | – |
 | WM18 | write | `/admin/organizations` | A | "New organisation" drawer (?new=1): name, description, first leader → server action createOrg, then back to the list | – | organisations | n/a | ✅ | ✅ | ✅ | – |
 | WM19 | write | `/admin/organizations` | A | Manage drawer (?manage=:id) "Appoint" a leader → server action addLeader | leader_added | organisation leaders | n/a | ✅ | ✅ | ✅ | – |
 | WM20 | write | `/admin/organizations` | A | Manage drawer leader "Remove" → server action removeLeader | leader_removed | organisation leaders | n/a | ✅ | ✅ | ✅ | – |
@@ -1258,7 +1258,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | WT04 | nav | `/tutorials/[id]` | anon | STL download: signed out → /signup?reason=download; signed in → /files/stl-files (signed URL, 60 s) | – | – | n/a | ✅ | ✅ | – | – |
 | WT05 | nav | `/tutorials/[id]` | anon | guide PDF: signed out "Sign in to download" → /signup?reason=download; signed in "Download guide (PDF)" serves the file | – | – | n/a | ✅ | ✅ | – | – |
 | WT06 | nav | `/tutorials/[id]` | anon | "Request a print" → /printing/requests?guide=; "Get help with this build" → /get-involved/requests/new?guide=; "Toy library"; recommendation cards → /tutorials/:id | – | – | n/a | ✅ | ✅ | – | – |
-| WT07 | nav | `/tutorials/[id]` | anon | Share: the platform share sheet, or the address copied to the clipboard (the "Link copied" toast has no host on this page) | – | – | n/a | ✅ | ✅ | – | – |
+| WT07 | nav | `/tutorials/[id]` | anon | Share: the platform share sheet, or the address copied to the clipboard (the "Link copied" toast shows only for the copy) | – | – | n/a | ✅ | ✅ | – | – |
 | WT08 | write | `/tutorials/[id]` | P | rail Save: save and unsave the guide (labelled heart) | – | Saved hub count | n/a | ✅ | ✅ | ✅ | – |
 | WT09 | write | `/tutorials/[id]` | P | "Say thanks": one per person, count shows, a repeat (409) reads as already thanked | tutorial_thanked | library-card thanks pill, author inbox | P | ✅ | ✅ | ✅ | – |
 | WT10 | write | `/tutorials/[id]` | P | "Mark this build done" → "Build logged" | – | My SPLAT builds | n/a | ✅ | ✅ | ✅ | – |

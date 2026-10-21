@@ -1569,14 +1569,17 @@ export function estimatedCreditGrams(grams: number): number {
  * The intake row (decided 2026-09-30): one weight box, and the credit
  * prefilled at the estimate for the leader to change. `credit` is the credit
  * box's text, or null while they have not touched it — then it follows the
- * weight. The ledger stores what the leader sends, never a yield. `line` is
+ * weight. The weight is rounded to the nearest 0.1 kg first. The ledger stores what the leader sends, never a yield. `line` is
  * what the row says under the boxes, in the board's words where it has them.
  */
 export function intakeCredit(
   weighedKg: string,
   credit: string | null
 ): { ok: true; weighed_grams: number; credit_grams: number; line: string } | { ok: false; line: string } {
-  const weighed = kgToGrams(weighedKg)
+  const typed = kgToGrams(weighedKg)
+  // Nearest 0.1 kg (decided 2026-10-20), so the kilos the screens show and the
+  // credit taken from them agree.
+  const weighed = typed === null ? null : Math.round(typed / 100) * 100
   if (!weighed) return { ok: false, line: 'Weigh it to see the credit' }
   if (weighed < MIN_DROPOFF_GRAMS) {
     return { ok: false, line: `Under the ${MIN_DROPOFF_GRAMS / 1000} kg minimum — log it as a donation or hand it back` }
