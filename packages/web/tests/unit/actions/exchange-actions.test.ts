@@ -51,9 +51,16 @@ describe('thread actions', () => {
     expect(apiClient.post).toHaveBeenLastCalledWith('/api/toy-transactions/t1/confirm', { code: '482913' })
   })
 
-  it('lets an API error propagate and does not revalidate', async () => {
-    vi.mocked(apiClient.post).mockRejectedValue(new Error('API error: status 409'))
-    await expect(accept('t1', 'exchange')).rejects.toThrow('API error: status 409')
+  it.each([
+    ['messages', (): Promise<unknown> => sendMessage('t1', 'exchange', 'Hi'), 'Could not send the message. Please try again.'],
+    ['confirm', (): Promise<unknown> => confirm('t1', 'exchange', '482913'), 'Could not confirm. Please try again.'],
+    ['withdraw', (): Promise<unknown> => withdraw('t1', 'exchange'), 'Could not withdraw. Please try again.'],
+    ['accept', (): Promise<unknown> => accept('t1', 'exchange'), 'Could not accept. Please try again.'],
+  ])('returns the API sentence when %s is refused, so production does not mask it', async (_name, run, fallback) => {
+    vi.mocked(apiClient.post).mockRejectedValue(new Error('API POST /x failed with status 409: This request is no longer open'))
+    expect(await run()).toEqual({ ok: false, error: 'This request is no longer open' })
+    vi.mocked(apiClient.post).mockRejectedValue(new Error('API error: status 500'))
+    expect(await run()).toEqual({ ok: false, error: fallback })
     expect(revalidate).not.toHaveBeenCalled()
   })
 
@@ -61,6 +68,11 @@ describe('thread actions', () => {
     vi.mocked(apiClient.post).mockRejectedValue(new Error('API POST /api/toy-transactions/t1/reject failed with status 409: This request is no longer open'))
     expect(await reject('t1', 'exchange', 'Already given away')).toEqual({ ok: false, error: 'This request is no longer open' })
     expect(revalidate).not.toHaveBeenCalled()
+  })
+
+  it('lets a terms redirect through instead of reporting it as a failed decline', async () => {
+    vi.mocked(apiClient.post).mockRejectedValue(Object.assign(new Error('NEXT_REDIRECT'), { digest: 'NEXT_REDIRECT;replace;/onboarding/contributor-terms;307;' }))
+    await expect(reject('t1', 'exchange', 'Already given away')).rejects.toThrow('NEXT_REDIRECT')
   })
 
   it('returns ok when a decline goes through', async () => {

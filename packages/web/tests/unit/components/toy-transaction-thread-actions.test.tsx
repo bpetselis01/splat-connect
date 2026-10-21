@@ -215,3 +215,41 @@ describe('ToyTransactionThread for an admin who is not a party', () => {
     expect(screen.getByLabelText(/^Message /)).toBeInTheDocument()
   })
 })
+
+describe('ToyTransactionThread shows the API sentence when an action is refused', () => {
+  const REFUSED = { ok: false, error: 'This request is no longer open.' }
+
+  it('accept', async () => {
+    const h = mount(build({ status: 'requested' }), 'owner-1')
+    h.onAccept.mockResolvedValue(REFUSED)
+    fireEvent.click(screen.getByRole('button', { name: 'Accept' }))
+    for (const [label, value] of [['Street address', '1 Test St'], ['Suburb', 'Testville'], ['State', 'VIC'], ['Postcode', '3000']]) {
+      fireEvent.change(screen.getByLabelText(label), { target: { value } })
+    }
+    fireEvent.click(screen.getByRole('button', { name: 'Accept request' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('This request is no longer open.')
+  })
+
+  it('withdraw', async () => {
+    const h = mount(detail(), 'requester-1')
+    h.onWithdraw.mockResolvedValue(REFUSED)
+    fireEvent.click(screen.getByRole('button', { name: 'Withdraw the request' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('This request is no longer open.')
+  })
+
+  it('confirm', async () => {
+    const h = mount(detail({ type: 'exchange', status: 'accepted', requester_code: '222222', owner_code: '111111' }), 'requester-1')
+    h.onConfirm.mockResolvedValue(REFUSED)
+    fireEvent.change(screen.getByLabelText(/Enter the other party/), { target: { value: '111111' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm handoff' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('This request is no longer open.')
+  })
+
+  it('send, and keeps the typed message', async () => {
+    const h = mount(detail({ status: 'accepted' }), 'requester-1')
+    h.onSendMessage.mockResolvedValue(REFUSED)
+    await send(h, 'Thursday after three?')
+    expect(await screen.findByRole('alert')).toHaveTextContent('This request is no longer open.')
+    expect(screen.getByLabelText(/^Message /)).toHaveValue('Thursday after three?')
+  })
+})

@@ -1,5 +1,6 @@
 'use server'
 import { revalidatePath } from 'next/cache'
+import { unstable_rethrow } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
 import { apiMessage, type PickupAddress } from '@splat-connect/types'
 
@@ -18,14 +19,26 @@ async function post(id: string, kind: ThreadKind, action: string, body: object) 
   revalidatePath(`${THREAD_PATH[kind]}/${id}`)
 }
 
-export async function sendMessage(id: string, kind: ThreadKind, body: string) {
-  await post(id, kind, 'messages', { body })
+export async function sendMessage(id: string, kind: ThreadKind, body: string): Promise<ActionResult> {
+  try {
+    await post(id, kind, 'messages', { body })
+    return { ok: true }
+  } catch (e) {
+    unstable_rethrow(e)
+    return { ok: false, error: apiMessage(e, 'Could not send the message. Please try again.') }
+  }
 }
 
 // An empty body for an organisation: the handler reads the fixed address from
 // the org record and ignores whatever arrives here.
-export async function accept(id: string, kind: ThreadKind, address?: PickupAddress | null) {
-  await post(id, kind, 'accept', address ?? {})
+export async function accept(id: string, kind: ThreadKind, address?: PickupAddress | null): Promise<ActionResult> {
+  try {
+    await post(id, kind, 'accept', address ?? {})
+    return { ok: true }
+  } catch (e) {
+    unstable_rethrow(e)
+    return { ok: false, error: apiMessage(e, 'Could not accept. Please try again.') }
+  }
 }
 
 export type ActionResult = { ok: true } | { ok: false; error: string }
@@ -38,16 +51,29 @@ export async function reject(id: string, kind: ThreadKind, reason?: string): Pro
     await post(id, kind, 'reject', { reason })
     return { ok: true }
   } catch (e) {
+    unstable_rethrow(e)
     return { ok: false, error: apiMessage(e, 'Could not send the decline. Please try again.') }
   }
 }
 
 // Withdrawing one job of a grouped print request withdraws the whole request
 // (the API sweeps the other printers' jobs, 074).
-export async function withdraw(id: string, kind: ThreadKind) {
-  await post(id, kind, 'withdraw', {})
+export async function withdraw(id: string, kind: ThreadKind): Promise<ActionResult> {
+  try {
+    await post(id, kind, 'withdraw', {})
+    return { ok: true }
+  } catch (e) {
+    unstable_rethrow(e)
+    return { ok: false, error: apiMessage(e, 'Could not withdraw. Please try again.') }
+  }
 }
 
-export async function confirm(id: string, kind: ThreadKind, code: string) {
-  await post(id, kind, 'confirm', { code })
+export async function confirm(id: string, kind: ThreadKind, code: string): Promise<ActionResult> {
+  try {
+    await post(id, kind, 'confirm', { code })
+    return { ok: true }
+  } catch (e) {
+    unstable_rethrow(e)
+    return { ok: false, error: apiMessage(e, 'Could not confirm. Please try again.') }
+  }
 }

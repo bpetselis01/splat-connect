@@ -59,15 +59,15 @@ export function ToyTransactionThread({
   ledOrgIds?: readonly string[]
   /** The viewer's saved profile address, seeded into the accept dialog. */
   viewerDefaultAddress?: PickupAddress | null
-  onSendMessage: (body: string) => Promise<void>
+  onSendMessage: (body: string) => Promise<ActionResult>
   /** Null when an organisation is accepting — its address is not the leader's
    *  to choose, and the server reads it from the org record. */
-  onAccept: (address: PickupAddress | null) => Promise<void>
+  onAccept: (address: PickupAddress | null) => Promise<ActionResult>
   /** The reason is required on a print job: "declining needs a reason" is the
    *  artboard's rule, and the API refuses one without it. */
   onReject: (reason?: string) => Promise<ActionResult>
-  onWithdraw: () => Promise<void>
-  onConfirm: (code: string) => Promise<void>
+  onWithdraw: () => Promise<ActionResult>
+  onConfirm: (code: string) => Promise<ActionResult>
   /** The tinted next-step card the canonical layout puts first in the sidebar.
    *  A build's is about its extra stage, which only the build page knows. */
   asideTop?: ReactNode
@@ -93,7 +93,7 @@ export function ToyTransactionThread({
   const tx = transaction
   const isOwner = isOwnerSide(tx, viewerId, ledOrgIds)
   // An admin reading a member's thread can speak in it but not act on it; the
-  // API refuses admin_cannot_act, so the controls are not offered.
+  // API refuses it, so the controls are not offered.
   const isParty = isOwner || viewerId === tx.requester_id
   // Keyed off the requester rather than the owner: an org handoff has no
   // owner_id, so every message a leader sent would otherwise be attributed to
@@ -102,7 +102,7 @@ export function ToyTransactionThread({
     senderId === tx.requester_id ? tx.requester_name : tx.owner_name
   const otherPartyName = isOwner ? tx.requester_name : tx.owner_name
 
-  async function run(fn: () => Promise<void | ActionResult>, rethrow = false): Promise<boolean> {
+  async function run(fn: () => Promise<void | ActionResult>): Promise<boolean> {
     setBusy(true)
     setError(null)
     try {
@@ -112,9 +112,8 @@ export function ToyTransactionThread({
         return false
       }
       return true
-    } catch (err) {
+    } catch {
       setError('Something went wrong. Please try again.')
-      if (rethrow) throw err
       return false
     } finally {
       setBusy(false)
@@ -609,7 +608,8 @@ export function ToyTransactionThread({
           canSend={open}
           busy={busy}
           onSend={async (body) => {
-            await run(() => onSendMessage(body), true)
+            // ExchangeChat restores the draft when onSend throws.
+            if (!(await run(() => onSendMessage(body)))) throw new Error('Message not sent')
           }}
           draftKey={tx.id}
           variant={board ? 'board' : undefined}

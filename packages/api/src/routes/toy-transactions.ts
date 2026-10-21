@@ -49,7 +49,7 @@ function isStrangerAdmin(
   return role === 'admin' && tx.requester_id !== userId && !isOwnerSide(tx, userId, ledOrgs)
 }
 
-const ADMIN_CANNOT_ACT = { error: 'admin_cannot_act' } as const
+const ADMIN_CANNOT_ACT = { error: 'Admins can read this thread but cannot act on it.' } as const
 
 const PICKUP_FIELDS = ['pickup_line1', 'pickup_suburb', 'pickup_state', 'pickup_postcode'] as const
 
