@@ -12,7 +12,7 @@ import { singleRowStatus } from '../single-row.js'
 import { randomUUID } from 'node:crypto'
 import { Hono, type Context } from 'hono'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
-import { chunk } from '../chunk.js'
+import { chunk, selectIn } from '../chunk.js'
 import { notify } from '../notify.js'
 import { ledOrgIds } from '../toy-access.js'
 import { profileName } from '../profile-name.js'
@@ -943,19 +943,20 @@ organizations.get('/:id/conversations', async (c) => {
   const rows = (data ?? []) as Conversation[]
   if (!rows.length) return c.json([])
 
-  const [{ data: people }, { data: messages }] = await Promise.all([
-    createAdminClient()
-      .from('profiles')
-      .select('id, name')
-      .in('id', rows.map((r) => r.profile_id)),
+  const [{ data: people, error: peopleError }, { data: messages, error: messagesError }] = await Promise.all([
+    selectIn(rows.map((r) => r.profile_id), (ids) => createAdminClient().from('profiles').select('id, name').in('id', ids)),
     // ponytail: reads every message to find each conversation's last; a
     // latest-message view if an org's inbox grows past a few hundred.
-    supabase
-      .from('org_messages')
-      .select('conversation_id, body, sender_id, created_at')
-      .in('conversation_id', rows.map((r) => r.id))
-      .order('created_at', { ascending: false }),
+    // A conversation's messages share one chunk, so find() still meets its latest first.
+    selectIn(rows.map((r) => r.id), (ids) =>
+      supabase
+        .from('org_messages')
+        .select('conversation_id, body, sender_id, created_at')
+        .in('conversation_id', ids)
+        .order('created_at', { ascending: false })
+    ),
   ])
+  if (peopleError || messagesError) return c.json({ error: "We couldn't load the conversations. Try again." }, 500)
   const nameOf = new Map((people ?? []).map((p) => [p.id as string, p.name as string]))
   return c.json(
     rows.map((r) => {
@@ -1698,10 +1699,10 @@ organizations.get('/:id/recycling', async (c) => {
   if (!rows.length || !(await ledOrgIds(admin, c.get('userId'))).includes(c.req.param('id'))) {
     return c.json(await withPhotoUrls(rows))
   }
-  const { data: people } = await admin
-    .from('profiles')
-    .select('id, name')
-    .in('id', [...new Set(rows.map((r) => r.contributor_id))])
+  const { data: people, error: peopleError } = await selectIn([...new Set(rows.map((r) => r.contributor_id))], (ids) =>
+    admin.from('profiles').select('id, name').in('id', ids)
+  )
+  if (peopleError) return c.json({ error: "We couldn't load who dropped these off. Try again." }, 500)
   const name = new Map((people ?? []).map((p) => [p.id, p.name]))
   return c.json(await withPhotoUrls(rows.map((r) => ({ ...r, contributor_name: name.get(r.contributor_id) ?? null }))))
 })
