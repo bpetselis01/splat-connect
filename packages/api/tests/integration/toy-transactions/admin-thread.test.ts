@@ -97,7 +97,7 @@ describe('an admin in a member thread', () => {
     ] as const) {
       const res = await post(`/${txId}/${action}`, admin.token, body)
       expect(res.status, action).toBe(403)
-      expect(await res.json(), action).toEqual({ error: 'Admins can read this exchange but cannot act on it.' })
+      expect(await res.json(), action).toEqual({ error: 'Admins can read this thread but cannot act on it.' })
     }
     expect(await status()).toBe('requested')
   })
@@ -169,7 +169,7 @@ describe('an admin on an open build request', () => {
   it('WM38 refuses a claim and leaves the build open', async () => {
     const res = await post(`/${buildId}/claim`, admin.token)
     expect(res.status).toBe(403)
-    expect(await res.json()).toEqual({ error: 'Admins can read this exchange but cannot act on it.' })
+    expect(await res.json()).toEqual({ error: 'Admins can read this thread but cannot act on it.' })
     const { data } = await adminClient().from('toy_transactions').select('status, owner_id').eq('id', buildId).single()
     expect(data).toEqual({ status: 'requested', owner_id: null })
   })
@@ -177,7 +177,7 @@ describe('an admin on an open build request', () => {
   it('WM38 refuses a question asked as the maker and stores nothing', async () => {
     const res = await post(`/${buildId}/questions`, admin.token, { body: 'Which switch?' })
     expect(res.status).toBe(403)
-    expect(await res.json()).toEqual({ error: 'Admins can read this exchange but cannot act on it.' })
+    expect(await res.json()).toEqual({ error: 'Admins can read this thread but cannot act on it.' })
     const { data } = await adminClient().from('build_request_questions').select('id').eq('transaction_id', buildId)
     expect(data).toEqual([])
   })
