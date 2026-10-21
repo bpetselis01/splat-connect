@@ -16,6 +16,8 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/tutorials/t1',
   useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
 }))
+const requestHeaders = vi.hoisted(() => ({ 'user-agent': 'Mozilla/5.0 TestBrowser' }))
+vi.mock('next/headers', () => ({ headers: async () => new Headers(requestHeaders) }))
 vi.mock('next/link', () => ({
   default: ({ href, children, ...props }: { href: string; children: React.ReactNode; [key: string]: unknown }) => (
     <a href={href} {...props}>{children}</a>
@@ -60,6 +62,14 @@ afterEach(() => {
 })
 
 describe('guide page', () => {
+  it('WT01 forwards the visitor\'s User-Agent so the API can skip crawlers when counting views', async () => {
+    await mount()
+    expect(vi.mocked(fetch)).toHaveBeenCalledWith(expect.stringContaining('/api/public/tutorials/t1'), {
+      cache: 'no-store',
+      headers: { 'user-agent': 'Mozilla/5.0 TestBrowser' },
+    })
+  })
+
   it('WT01 renders the published guide, and answers an unpublished or unknown id with the 404 page', async () => {
     await mount()
     expect(screen.getByRole('heading', { name: 'Bubble Machine' })).toBeInTheDocument()

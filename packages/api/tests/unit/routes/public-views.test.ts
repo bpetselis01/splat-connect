@@ -23,4 +23,21 @@ describe('GET /tutorials/:id views', () => {
     mockRpc.mockRejectedValue(new Error('fetch failed'))
     expect((await publicRoutes.request('/tutorials/g1')).status).toBe(200)
   })
+
+  it('does not count a crawler, and still answers', async () => {
+    mockRpc.mockReset().mockResolvedValue({ error: null })
+    const res = await publicRoutes.request('/tutorials/g1', {
+      headers: { 'user-agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' },
+    })
+    expect(res.status).toBe(200)
+    expect(mockRpc).not.toHaveBeenCalled()
+  })
+
+  it('counts a browser', async () => {
+    mockRpc.mockReset().mockResolvedValue({ error: null })
+    await publicRoutes.request('/tutorials/g1', {
+      headers: { 'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Safari/604.1' },
+    })
+    expect(mockRpc).toHaveBeenCalledWith('bump_tutorial_view', { p_tutorial_id: 'g1' })
+  })
 })

@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import { headers } from 'next/headers'
 import { CaretRight } from '@phosphor-icons/react/dist/ssr'
 import { ShareButton } from '@/components/share-button'
 import { SaveButton } from '@/components/save-button'
@@ -20,7 +21,9 @@ export default async function TutorialPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const res = await fetch(`${process.env.API_URL}/api/public/tutorials/${id}`, { cache: 'no-store' })
+  // Forwarded so the API can tell a reader from a crawler when counting views.
+  const userAgent = (await headers()).get('user-agent') ?? ''
+  const res = await fetch(`${process.env.API_URL}/api/public/tutorials/${id}`, { cache: 'no-store', headers: { 'user-agent': userAgent } })
   if (!res.ok) notFound()
 
   // The public endpoint embeds accepted backing and the approver, so a logged-out
