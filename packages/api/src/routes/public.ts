@@ -1318,15 +1318,19 @@ const PARTS_PAGE = 24
 publicRoutes.get('/printable-parts', async (c) => {
   const q = (c.req.query('q') ?? '').trim().toLowerCase()
   const asked = Number.parseInt(c.req.query('page') ?? '', 10)
-  const { data, error } = await createAnonClient()
-    .from('stl_files')
-    .select('id, filename, material, filament_grams, print_minutes, tutorial_id, tutorials!inner(id, title, status)')
-    .eq('tutorials.status', 'approved')
-    .order('filename')
-    .order('id')
+  const anon = createAnonClient()
+  const { data, error } = await selectAll((from, to) =>
+    anon
+      .from('stl_files')
+      .select('id, filename, material, filament_grams, print_minutes, tutorial_id, tutorials!inner(id, title, status)')
+      .eq('tutorials.status', 'approved')
+      .order('filename')
+      .order('id')
+      .range(from, to)
+  )
   if (error) return c.json({ error: error.message }, 500)
-  // ponytail: searches and pages in memory over one unranged read, which PostgREST caps at max_rows (1000; supabase/config.toml sets none), so past 1000 approved STLs search misses parts and total/pages are wrong. Upgrade: page with .range() + count, search with ilike.
-  const rows = ((data ?? []) as unknown as CataloguePart[]).filter(
+  // ponytail: searches and pages in memory over every approved STL, read a thousand at a time. Upgrade: ilike and count in SQL once the catalogue is tens of thousands.
+  const rows = (data as unknown as CataloguePart[]).filter(
     (p) => !q || p.filename.toLowerCase().includes(q) || p.tutorials.title.toLowerCase().includes(q)
   )
   const pages = Math.max(1, Math.ceil(rows.length / PARTS_PAGE))
