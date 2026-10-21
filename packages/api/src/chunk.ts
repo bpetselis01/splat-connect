@@ -9,3 +9,34 @@ export function chunk<T>(items: T[], size = 100): T[][] {
   for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size))
   return out
 }
+
+/** Runs one `.in()` lookup per chunk of `ids` and merges the rows; the first error wins. */
+export async function selectIn<R>(
+  ids: string[],
+  run: (ids: string[]) => PromiseLike<{ data: R[] | null; error: { message: string } | null }>,
+): Promise<{ data: R[]; error: { message: string } | null }> {
+  const results = await Promise.all(chunk(ids).map(run))
+  return {
+    data: results.flatMap((r) => r.data ?? []),
+    error: results.find((r) => r.error)?.error ?? null,
+  }
+}
+
+/**
+ * PostgREST caps every response at max_rows (1000), silently, so an unranged
+ * read of a growing table drops rows. `run` must order by a unique key or pages
+ * overlap; this walks it until a short page. Counts that need only a number
+ * should use `{ count: 'exact', head: true }` instead.
+ */
+export async function selectAll<R>(
+  run: (from: number, to: number) => PromiseLike<{ data: R[] | null; error: { message: string } | null }>,
+  size = 1000,
+): Promise<{ data: R[]; error: { message: string } | null }> {
+  const data: R[] = []
+  for (let from = 0; ; from += size) {
+    const page = await run(from, from + size - 1)
+    if (page.error) return { data: [], error: page.error }
+    data.push(...(page.data ?? []))
+    if ((page.data ?? []).length < size) return { data, error: null }
+  }
+}

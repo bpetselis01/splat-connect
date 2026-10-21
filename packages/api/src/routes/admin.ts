@@ -9,6 +9,7 @@ import { deleteAccount } from '../account-deletion.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { notifyTutorialReviewed } from '../review-notifications.js'
 import { notify } from '../notify.js'
+import { selectIn } from '../chunk.js'
 import { ORG_COLUMNS, orgName } from './organizations.js'
 import { removeParticipant, withPhotoUrl } from './toy-ideas.js'
 import type { AuthVariables } from '../middleware/auth.js'
@@ -441,9 +442,10 @@ admin.get('/reports', async (c) => {
   if (error) return c.json({ error: error.message }, 500)
   const rows = (data ?? []) as unknown as { idea_id: string; reported_profile_id: string }[]
   // `removed` lets the screen offer Reinstate only to someone actually out of the challenge.
-  const { data: out } = rows.length
-    ? await sb.from('toy_idea_participants').select('idea_id, profile_id').in('idea_id', [...new Set(rows.map((r) => r.idea_id))]).not('removed_at', 'is', null)
-    : { data: [] }
+  const { data: out, error: outError } = await selectIn([...new Set(rows.map((r) => r.idea_id))], (ids) =>
+    sb.from('toy_idea_participants').select('idea_id, profile_id').in('idea_id', ids).not('removed_at', 'is', null)
+  )
+  if (outError) return c.json({ error: "We couldn't load who was removed. Try again." }, 500)
   const gone = new Set((out ?? []).map((p) => `${p.idea_id}:${p.profile_id}`))
   return c.json(rows.map((r) => ({ ...r, removed: gone.has(`${r.idea_id}:${r.reported_profile_id}`) })))
 })
@@ -566,9 +568,10 @@ admin.get('/organization-requests', async (c) => {
    */
   const rows = (data ?? []) as Array<Record<string, unknown> & { requester_id: string }>
   const ids = [...new Set(rows.map((r) => r.requester_id))]
-  const { data: people } = ids.length
-    ? await createAdminClient().from('profiles').select('id, name, email').in('id', ids)
-    : { data: [] }
+  const { data: people, error: peopleError } = await selectIn(ids, (part) =>
+    createAdminClient().from('profiles').select('id, name, email').in('id', part)
+  )
+  if (peopleError) return c.json({ error: "We couldn't load who is asking. Try again." }, 500)
   const byId = new Map(
     ((people ?? []) as Array<{ id: string; name: string; email: string }>).map((p) => [p.id, p])
   )
@@ -741,10 +744,11 @@ admin.get('/member-reports', async (c) => {
   const rows = data ?? []
   const names = new Map<string, string>()
   const ids = [...new Set(rows.map((r) => r.reporter_id as string))]
-  if (ids.length > 0) {
-    const { data: profiles } = await supabase.from('profiles').select('id, name').in('id', ids)
-    for (const p of profiles ?? []) names.set(p.id as string, p.name as string)
-  }
+  const { data: profiles, error: profilesError } = await selectIn(ids, (part) =>
+    supabase.from('profiles').select('id, name').in('id', part)
+  )
+  if (profilesError) return c.json({ error: "We couldn't load the reporters' names. Try again." }, 500)
+  for (const p of profiles) names.set(p.id as string, p.name as string)
 
   rows.sort((a, b) => {
     const safety = Number(b.category === 'safety') - Number(a.category === 'safety')
@@ -818,10 +822,10 @@ admin.get('/build-requests', async (c) => {
   if (error) return c.json({ error: error.message }, 500)
 
   const rows = data ?? []
-  const { data: guides } = await supabase
-    .from('tutorials')
-    .select('id, title')
-    .in('id', rows.map((r) => r.tutorial_id as string))
+  const { data: guides, error: guidesError } = await selectIn([...new Set(rows.map((r) => r.tutorial_id as string))], (ids) =>
+    supabase.from('tutorials').select('id, title').in('id', ids)
+  )
+  if (guidesError) return c.json({ error: "We couldn't load the guide titles. Try again." }, 500)
   const title = new Map((guides ?? []).map((g) => [g.id as string, g.title as string]))
 
   const now = Date.now()
@@ -864,13 +868,13 @@ admin.get('/print-jobs', async (c) => {
   if (error) return c.json({ error: error.message }, 500)
 
   const rows = data ?? []
-  const [{ data: guides }, { data: printers }] = await Promise.all([
-    supabase.from('tutorials').select('id, title').in('id', rows.map((r) => r.tutorial_id as string)),
-    supabase
-      .from('printers')
-      .select('id, name')
-      .in('id', rows.map((r) => r.printer_id).filter((id): id is string => !!id)),
+  const [{ data: guides, error: guidesError }, { data: printers, error: printersError }] = await Promise.all([
+    selectIn([...new Set(rows.map((r) => r.tutorial_id as string))], (ids) => supabase.from('tutorials').select('id, title').in('id', ids)),
+    selectIn([...new Set(rows.map((r) => r.printer_id).filter((id): id is string => !!id))], (ids) =>
+      supabase.from('printers').select('id, name').in('id', ids)
+    ),
   ])
+  if (guidesError || printersError) return c.json({ error: "We couldn't load the guide and printer names. Try again." }, 500)
   const title = new Map((guides ?? []).map((g) => [g.id as string, g.title as string]))
   const printerName = new Map((printers ?? []).map((p) => [p.id as string, p.name as string]))
 
@@ -906,18 +910,19 @@ admin.get('/test-prints', async (c) => {
   const rows = data ?? []
   if (rows.length === 0) return c.json([])
 
-  const { data: machines } = await supabase
-    .from('printers')
-    .select('id, name, owner_id, owner_org_id')
-    .in('id', [...new Set(rows.map((r) => r.printer_id as string))])
+  const { data: machines, error: machinesError } = await selectIn([...new Set(rows.map((r) => r.printer_id as string))], (ids) =>
+    supabase.from('printers').select('id, name, owner_id, owner_org_id').in('id', ids)
+  )
+  if (machinesError) return c.json({ error: "We couldn't load the printers. Try again." }, 500)
   const machine = new Map((machines ?? []).map((m) => [m.id as string, m]))
   const personIds = (machines ?? []).map((m) => m.owner_id).filter((id): id is string => !!id)
   const orgIds = (machines ?? []).map((m) => m.owner_org_id).filter((id): id is string => !!id)
-  const [{ data: people }, { data: orgs }, { data: signed, error: signError }] = await Promise.all([
-    personIds.length ? supabase.from('profiles').select('id, name').in('id', personIds) : Promise.resolve({ data: [] }),
-    orgIds.length ? supabase.from('organizations').select('id, name').in('id', orgIds) : Promise.resolve({ data: [] }),
+  const [{ data: people, error: peopleError }, { data: orgs, error: orgsError }, { data: signed, error: signError }] = await Promise.all([
+    selectIn(personIds, (ids) => supabase.from('profiles').select('id, name').in('id', ids)),
+    selectIn(orgIds, (ids) => supabase.from('organizations').select('id, name').in('id', ids)),
     supabase.storage.from('printer-test-prints').createSignedUrls(rows.map((r) => r.photo_path as string), 600),
   ])
+  if (peopleError || orgsError) return c.json({ error: "We couldn't load the owners' names. Try again." }, 500)
   if (signError) console.error('[admin/test-prints] signing photos failed:', signError.message)
   const nameOf = new Map(
     [...(people ?? []), ...(orgs ?? [])].map((x) => [(x as { id: string }).id, (x as { name: string }).name])

@@ -24,6 +24,7 @@ import { Hono } from 'hono'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { ledOrgIds } from '../toy-access.js'
+import { selectIn } from '../chunk.js'
 import { readNear, byDistance } from '../distance.js'
 import { PHOTO_MIME, PHOTO_MAX_BYTES } from './upload.js'
 import { PRINT_MATERIALS } from '@splat-connect/types'
@@ -71,14 +72,12 @@ const readOne = (id: string) => createAdminClient().from('printers').select(SELE
 async function openJobCounts(
   admin: ReturnType<typeof createAdminClient>,
   printerIds: string[]
-): Promise<Map<string, number>> {
+): Promise<Map<string, number> | null> {
   const counts = new Map<string, number>()
-  if (printerIds.length === 0) return counts
-  const { data } = await admin
-    .from('toy_transactions')
-    .select('printer_id')
-    .in('printer_id', printerIds)
-    .eq('status', 'accepted')
+  const { data, error } = await selectIn(printerIds, (ids) =>
+    admin.from('toy_transactions').select('printer_id').in('printer_id', ids).eq('status', 'accepted')
+  )
+  if (error) return null
   for (const row of (data ?? []) as Array<{ printer_id: string }>) {
     counts.set(row.printer_id, (counts.get(row.printer_id) ?? 0) + 1)
   }
@@ -98,26 +97,19 @@ async function openJobCounts(
 async function ownerNames(
   admin: ReturnType<typeof createAdminClient>,
   rows: Row[]
-): Promise<{ people: Map<string, string>; orgs: Map<string, string> }> {
+): Promise<{ people: Map<string, string>; orgs: Map<string, string> } | null> {
   const personIds = [...new Set(rows.map((r) => r.owner_id).filter((id): id is string => !!id))]
   const orgIds = [...new Set(rows.map((r) => r.owner_org_id).filter((id): id is string => !!id))]
 
   const [people, orgs] = await Promise.all([
-    personIds.length
-      ? admin.from('profiles').select('id, name').in('id', personIds)
-      : Promise.resolve({ data: [] }),
-    orgIds.length
-      ? admin.from('organizations').select('id, name').in('id', orgIds)
-      : Promise.resolve({ data: [] }),
+    selectIn(personIds, (ids) => admin.from('profiles').select('id, name').in('id', ids)),
+    selectIn(orgIds, (ids) => admin.from('organizations').select('id, name').in('id', ids)),
   ])
+  if (people.error || orgs.error) return null
 
   return {
-    people: new Map(
-      ((people.data ?? []) as Array<{ id: string; name: string }>).map((p) => [p.id, p.name])
-    ),
-    orgs: new Map(
-      ((orgs.data ?? []) as Array<{ id: string; name: string }>).map((o) => [o.id, o.name])
-    ),
+    people: new Map((people.data as Array<{ id: string; name: string }>).map((p) => [p.id, p.name])),
+    orgs: new Map((orgs.data as Array<{ id: string; name: string }>).map((o) => [o.id, o.name])),
   }
 }
 
@@ -128,15 +120,18 @@ async function ownerNames(
 async function latestTestPrints(
   admin: ReturnType<typeof createAdminClient>,
   printerIds: string[]
-): Promise<Map<string, TestPrint>> {
+): Promise<Map<string, TestPrint> | null> {
   const latest = new Map<string, TestPrint>()
-  if (printerIds.length === 0) return latest
-  const { data } = await admin
-    .from('printer_test_prints')
-    .select('printer_id, verdict, note, submitted_at')
-    .in('printer_id', printerIds)
-    .order('submitted_at', { ascending: false })
-  for (const t of (data ?? []) as Array<TestPrint & { printer_id: string }>) {
+  const { data, error } = await selectIn(printerIds, (ids) =>
+    admin
+      .from('printer_test_prints')
+      .select('printer_id, verdict, note, submitted_at')
+      .in('printer_id', ids)
+      .order('submitted_at', { ascending: false })
+  )
+  if (error) return null
+  // A printer's prints share one chunk, so the first per printer is its latest.
+  for (const t of data as Array<TestPrint & { printer_id: string }>) {
     if (!latest.has(t.printer_id)) latest.set(t.printer_id, { verdict: t.verdict, note: t.note, submitted_at: t.submitted_at })
   }
   return latest
@@ -228,6 +223,7 @@ printers.get('/', async (c) => {
     ),
     ownerNames(admin, rows),
   ])
+  if (!counts || !names) return c.json({ error: "We couldn't load the printers. Try again." }, 500)
   const ranked = await byDistance(rows, (r) => r.postcode, near)
   return c.json(
     ranked.map(({ postcode: _postcode, ...r }) => ({
@@ -273,6 +269,7 @@ printers.get('/mine', async (c) => {
       rows.map((r) => r.id)
     ),
   ])
+  if (!counts || !names || !latest) return c.json({ error: "We couldn't load your printers. Try again." }, 500)
   return c.json(
     rows.map((r) => ({
       ...r,
@@ -304,6 +301,7 @@ printers.get('/:id', async (c) => {
     ownerNames(admin, [row]),
     row.owner_org_id ? ledOrgIds(admin, userId) : Promise.resolve([] as string[]),
   ])
+  if (!counts || !names) return c.json({ error: "We couldn't load this printer. Try again." }, 500)
   // The owner's form reads the postcode back; nobody else is told where a
   // machine is beyond its suburb.
   const mine = row.owner_id === userId || (!!row.owner_org_id && orgs.includes(row.owner_org_id))

@@ -1,4 +1,5 @@
 import type { ChallengeCounts } from '@splat-connect/types'
+import { selectIn } from './chunk.js'
 import { createAdminClient } from './supabase/client.js'
 
 /**
@@ -14,12 +15,14 @@ export async function challengeCounts(ideas: { id: string; author_id: string }[]
   if (ids.length === 0) return out
   const author = new Map(ideas.map((i) => [i.id, i.author_id]))
   const admin = createAdminClient()
-  const [{ data: joins }, { data: replies }] = await Promise.all([
-    admin.from('toy_idea_participants').select('idea_id').in('idea_id', ids).is('removed_at', null),
-    admin.from('toy_idea_messages').select('idea_id, sender_id').in('idea_id', ids).eq('kind', 'user'),
+  const [joins, replies] = await Promise.all([
+    selectIn(ids, (c) => admin.from('toy_idea_participants').select('idea_id').in('idea_id', c).is('removed_at', null)),
+    selectIn(ids, (c) => admin.from('toy_idea_messages').select('idea_id, sender_id').in('idea_id', c).eq('kind', 'user')),
   ])
-  for (const j of joins ?? []) out.get(j.idea_id as string)!.maker_count++
-  for (const r of replies ?? []) {
+  const error = joins.error ?? replies.error
+  if (error) throw new Error(`Challenge counts failed: ${error.message}`)
+  for (const j of joins.data) out.get(j.idea_id as string)!.maker_count++
+  for (const r of replies.data) {
     if (r.sender_id !== author.get(r.idea_id as string)) out.get(r.idea_id as string)!.answer_count++
   }
   return out

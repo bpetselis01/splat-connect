@@ -1,4 +1,4 @@
-import { chunk } from '../chunk.js'
+import { chunk, selectIn } from '../chunk.js'
 import { notify } from '../notify.js'
 import { Hono, type Context } from 'hono'
 import { randomInt, randomUUID } from 'node:crypto'
@@ -165,10 +165,12 @@ async function boardGuides(
   admin: ReturnType<typeof createAdminClient>,
   tutorialIds: string[]
 ): Promise<{ guides: Map<string, BoardGuide> } | { error: { message: string } }> {
-  const { data, error } = await admin
-    .from('tutorials')
-    .select('id, title, difficulty, status, build_minutes, parts(is_optional, price_cents)')
-    .in('id', tutorialIds)
+  const { data, error } = await selectIn([...new Set(tutorialIds)], (ids) =>
+    admin
+      .from('tutorials')
+      .select('id, title, difficulty, status, build_minutes, parts(is_optional, price_cents)')
+      .in('id', ids)
+  )
   if (error) return { error }
   type Row = Omit<BoardGuide, 'parts_total_cents'> & { parts: { is_optional: boolean; price_cents: number | null }[] | null }
   return {
@@ -443,8 +445,11 @@ toyTransactions.get('/', async (c) => {
   const groupIds = [...new Set(rows.map((r) => r.print_group_id as string | null).filter((g): g is string => !!g))]
   const groupSize = new Map<string, number>()
   if (groupIds.length) {
-    const { data: members } = await admin.from('toy_transactions').select('print_group_id').in('print_group_id', groupIds)
-    for (const m of members ?? []) groupSize.set(m.print_group_id, (groupSize.get(m.print_group_id) ?? 0) + 1)
+    const { data: members, error: membersError } = await selectIn(groupIds, (ids) =>
+      admin.from('toy_transactions').select('print_group_id').in('print_group_id', ids)
+    )
+    if (membersError) return c.json({ error: "We couldn't load your exchanges. Try again." }, 500)
+    for (const m of members) groupSize.set(m.print_group_id, (groupSize.get(m.print_group_id) ?? 0) + 1)
   }
   return c.json(
     rows.map((r) => ({

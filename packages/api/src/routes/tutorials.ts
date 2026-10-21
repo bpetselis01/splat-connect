@@ -5,6 +5,7 @@
  * its tutorial_contributors row (JWT-context issues with the insert), so it
  * must set ownership itself.
  */
+import { selectAll } from '../chunk.js'
 import { singleRowStatus } from '../single-row.js'
 import { Hono } from 'hono'
 import { nameFormerContributors } from '../former-contributor.js'
@@ -68,16 +69,21 @@ tutorials.get('/mine', async (c) => {
   // Did it fit? goes back to the guide's author (094). The prints are other
   // people's transactions, so RLS hides them from the caller; the rows above
   // are already narrowed to guides they wrote, and only counts leave.
-  const { data: answers, error: fitError } = await createAdminClient()
-    .from('toy_transactions')
-    .select('tutorial_id, print_fit')
-    .eq('type', 'print')
-    .in('tutorial_id', data.map((t) => t.id))
-    .not('print_fit', 'is', null)
+  const admin = createAdminClient()
+  const { data: answers, error: fitError } = await selectAll((from, to) =>
+    admin
+      .from('toy_transactions')
+      .select('tutorial_id, print_fit')
+      .eq('type', 'print')
+      .in('tutorial_id', data.map((t) => t.id))
+      .not('print_fit', 'is', null)
+      .order('id')
+      .range(from, to)
+  )
   if (fitError) return c.json({ error: fitError.message }, 500)
   return c.json(
     data.map((t) => {
-      const mine = (answers ?? []).filter((a) => a.tutorial_id === t.id)
+      const mine = answers.filter((a) => a.tutorial_id === t.id)
       return { ...t, print_fit_stats: { fitted: mine.filter((a) => a.print_fit === 'fitted').length, fit_answers: mine.length } }
     })
   )
