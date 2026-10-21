@@ -11,6 +11,7 @@
  */
 import { Hono, type Context } from 'hono'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
+import { notify } from '../notify.js'
 import type { AuthVariables } from '../middleware/auth.js'
 import { profileName } from '../profile-name.js'
 
@@ -70,14 +71,13 @@ async function answer(c: Context<{ Variables: AuthVariables }>, status: 'accepte
     .single()
 
   if (primaryRow) {
-    const { error: notifyError } = await admin.from('notifications').insert({
+    await notify([{
       recipient_id: primaryRow.profile_id,
       type: status === 'accepted' ? 'collaborator_accepted' : 'collaborator_declined',
       tutorial_id: data.tutorial_id,
       tutorial_title: tutorial?.title ?? 'a tutorial',
       actor_name: inviteeName,
-    })
-    if (notifyError) console.error('[collaborator-invites.answer] notification insert failed:', notifyError.message)
+    }], 'collaborator-invites.answer')
   }
 
   return c.json({ status })
