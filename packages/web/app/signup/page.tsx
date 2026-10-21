@@ -15,8 +15,6 @@ import { ContributorTermsDialog } from '@/components/contributor-terms-dialog'
 import { AuthSplit, AuthStage, AuthTabs } from '@/components/auth-shell'
 import { AGREEMENT_VERSIONS, type SignupIntent } from '@splat-connect/types'
 
-// PENDING(signup-reason-banners): both reasons get a banner with action-first copy: 'Sign up to save toys' and 'Sign up to request a build'....
-
 /** The board's "I'm mostly here to…" tiles. Where each one lands is the login
  *  page's business — see INTENT_LANDING there. */
 const INTENTS: { value: SignupIntent; label: string; Icon: typeof House }[] = [
@@ -139,6 +137,10 @@ function SignupForm() {
             You need an account to download tutorial files. Create one and we&apos;ll take you back.
           </p>
         )}
+
+        {reason === 'follow' && <p className="alert bg-brand-tint text-ink">Sign up to follow this organisation</p>}
+        {reason === 'message' && <p className="alert bg-brand-tint text-ink">Sign up to message this organisation</p>}
+        {reason === 'build' && <p className="alert bg-brand-tint text-ink">Sign up to request a build</p>}
 
         <fieldset className="auth-field">
           <legend className="auth-label">I&apos;m mostly here to…</legend>

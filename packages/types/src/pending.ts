@@ -408,6 +408,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: both reasons get a banner with action-first copy: 'Sign up to save toys' and 'Sign up to request a build'. Whether the two reasons get a banner, and the copy.",
+    shipped: true,
   },
   'event-detail-ready-marker': {
     title: "I'm going before the profile loads",

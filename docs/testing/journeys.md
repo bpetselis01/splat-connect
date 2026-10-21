@@ -580,7 +580,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | WA10 | nav | `/signup` | anon | contributor-terms row opens the terms dialog; Accept ticks it, Reject / Escape / backdrop close it unticked; typed fields survive | – | – | n/a | ✅ | ✅ | – | – |
 | WA11 | nav | `/signup` | anon | password under six characters or a mismatched confirmation is refused before any account is made | – | – | n/a | ✅ | ✅ | – | – |
 | WA12 | nav | `/signup` | anon | an email that already has an account → the error shows, no "Check your email" | – | – | n/a | ✅ | ✅ | ✅ | – |
-| WA13 | nav | `/signup` | anon | "?reason=" banner: save, thanks, child and download have copy; follow and message show none | – | – | n/a | ✅ | ✅ | – | – |
+| WA13 | nav | `/signup` | anon | "?reason=" banner: save, thanks, child, download, follow, message and build each have copy | – | – | n/a | ✅ | ✅ | – | – |
 | WA14 | nav | `/signup` | anon | "Back to sign in" on "Check your email" → /login | – | – | n/a | ✅ | ✅ | – | – |
 | WA15 | nav | `/signup` | anon | "Sign in" / "Create account" tabs switch screens, keeping the query | – | – | n/a | ✅ | ✅ | – | – |
 | WA16 | nav | `/auth/confirmed` | anon | "Continue" and the 3 s countdown → /login?next=; confirming does not sign the user in | – | – | n/a | ✅ | ✅ | – | – |

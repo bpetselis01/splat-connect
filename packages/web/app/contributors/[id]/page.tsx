@@ -96,7 +96,7 @@ export default async function ContributorPage({
   const askHref = (
     signedIn
       ? `/get-involved/requests/new?maker=${id}`
-      : authUrl('signup', `/get-involved/requests/new?maker=${id}`)
+      : authUrl('signup', `/get-involved/requests/new?maker=${id}`, { reason: 'build' })
   ) as Route
 
   return (
