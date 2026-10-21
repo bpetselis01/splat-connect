@@ -315,6 +315,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["api"],
     needs: "Decided 2026-10-20: the author appears once with the author role; graduation runs as a single transaction. Whether graduation de-duplicates the author, and whether it runs in one transaction.",
+    shipped: true,
   },
   'org-pages-404-for-non-leader': {
     title: "Organisation pages for a non-leader",

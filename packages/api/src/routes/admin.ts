@@ -10,7 +10,7 @@ import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { notifyTutorialReviewed } from '../review-notifications.js'
 import { notify } from '../notify.js'
 import { ORG_COLUMNS, orgName } from './organizations.js'
-import { systemMessage, removeParticipant, withPhotoUrl } from './toy-ideas.js'
+import { removeParticipant, withPhotoUrl } from './toy-ideas.js'
 import type { AuthVariables } from '../middleware/auth.js'
 import { notificationBody, readLearnCourse, type AdminCounts, type TutorialStatus } from '@splat-connect/types'
 
@@ -329,40 +329,12 @@ admin.patch('/ideas/:id/status', async (c) => {
 /**
  * POST /api/admin/ideas/:id/graduate
  *
- * Turns a challenge into a draft tutorial: one atomic status claim, one
- * tutorial insert, one tutorial_id link, one contributor copy, one
- * notification insert, one system message. No transaction spans these —
- * Supabase's JS client cannot open one across calls — so a failure partway
- * leaves a partial result behind. Every write below that can fail is checked
- * and reported as a 500 rather than swallowed, so a partial result is at
- * least a visible one.
- *
- * The status claim runs first and is a compare-and-swap
- * (`.eq('status', 'challenge')` on the update itself), not a read-then-act
- * check. Two concurrent POSTs — an admin double-clicking Graduate is a
- * mundane trigger — would otherwise both read 'challenge', both insert a
- * tutorial, and both attach a full contributor set: an orphan that IS
- * reachable through the normal pending → approved review path, which is
- * exactly the silent-duplicate outcome this endpoint exists to prevent.
- * With the claim as the first write, Postgres's own row-level locking makes
- * it exclusive: exactly one caller moves the row out of 'challenge', the
- * loser's update matches zero rows and gets 409 with no side effects at all.
- *
- * Everything after the claim is still sequential, unprotected writes — a
- * failure there is now an *incomplete* graduation, never a *duplicate* one.
- * The worst reachable state is idea 'graduated' with tutorial_id null (claim
- * succeeded, tutorial insert or the link-back failed) or graduated with a
- * tutorial that has no contributors (contributor insert failed). Both are
- * inert — tutorial_contributors gates who can even see or submit the draft,
- * so nothing here reaches the public library unattended — detectable by
- * query, and repairable by inserting the missing rows. A retry always 409s
- * rather than duplicating anything, because the claim already moved the row.
- *
- * ponytail: the claim is atomic (Postgres enforces it); the three writes
- * after it are not, since the Supabase JS client cannot open a transaction
- * across calls. That residual risk is bounded to "incomplete," not
- * "duplicated." If graduation ever needs full atomicity, move the whole
- * sequence into a plpgsql function and call it via .rpc().
+ * Turns a challenge into a draft guide. The whole graduation is one database
+ * transaction (graduate_idea, 143): the status claim, the draft, the link back,
+ * the contributor copy, the notifications and the thread message all land or
+ * none do. The claim is a compare-and-swap inside it, so of two concurrent
+ * calls exactly one graduates the idea and the other gets 409 with nothing
+ * written. The author is credited once, as primary, even if they also joined.
  */
 admin.post('/ideas/:id/graduate', async (c) => {
   const client = createAdminClient()
@@ -376,72 +348,11 @@ admin.post('/ideas/:id/graduate', async (c) => {
   // same of the rows; this is the readable refusal in front of it).
   if (exists.kind === 'question') return c.json({ error: 'A question cannot graduate' }, 409)
 
-  // Claim the graduation atomically. A read-then-act guard lets two concurrent
-  // calls both pass, both mint a tutorial, and both attach contributors — an
-  // orphan that IS reachable through pending->approved review. This conditional
-  // update is the compare-and-swap: exactly one caller can move the row out of
-  // 'challenge', and the loser claims no row.
-  const { data: claimed, error: claimError } = await client
-    .from('toy_ideas')
-    .update({ status: 'graduated', updated_at: new Date().toISOString() })
-    .eq('id', id)
-    .eq('status', 'challenge')
-    .select('id, author_id, title, summary')
-    .maybeSingle()
-  if (claimError) return c.json({ error: claimError.message }, 500)
-  // A challenge graduates once. A second call is a mistake, not an update —
-  // and here it also lost the compare-and-swap, so it changed nothing.
-  if (!claimed) return c.json({ error: 'Already graduated' }, 409)
-
-  const { data: tutorial, error: tutorialError } = await client
-    .from('tutorials')
-    // difficulty is NOT NULL on tutorials with a check constraint; an idea carries
-    // no difficulty, so a draft starts at 'medium' and its contributor corrects it
-    // before submitting. Do not relax the column to serve this one caller.
-    .insert({ title: claimed.title, description: claimed.summary, status: 'draft', difficulty: 'medium' })
-    .select('id')
-    .single()
-  if (tutorialError) return c.json({ error: tutorialError.message }, 500)
-
-  const { error: linkError } = await client
-    .from('toy_ideas').update({ tutorial_id: tutorial.id }).eq('id', id)
-  if (linkError) return c.json({ error: linkError.message }, 500)
-
-  // removed_at is null: someone excluded after a report must not be credited
-  // on the resulting guide, and tutorial_contributors is also the access
-  // gate for the draft — crediting them would hand back exactly the access
-  // their removal took away.
-  const { data: participants, error: participantsError } = await client
-    .from('toy_idea_participants').select('profile_id').eq('idea_id', id).is('removed_at', null)
-  if (participantsError) return c.json({ error: participantsError.message }, 500)
-
-  // The shape tutorial_contributors already stores, so this copy is free.
-  const { error: contributorsError } = await client.from('tutorial_contributors').insert([
-    { tutorial_id: tutorial.id, profile_id: claimed.author_id, role: 'primary' },
-    ...(participants ?? []).map((p: { profile_id: string }) => ({
-      tutorial_id: tutorial.id, profile_id: p.profile_id, role: 'collaborator',
-    })),
-  ])
-  if (contributorsError) return c.json({ error: contributorsError.message }, 500)
-
-  // Tell the author and every current participant a draft now exists —
-  // graduation was otherwise silent to everyone it happened to. Checked like
-  // every other write above, not swallowed: a failed notification insert is
-  // reported as a 500 rather than logged and ignored.
-  const { error: notifyError } = await client.from('notifications').insert([
-    { recipient_id: claimed.author_id, type: 'idea_graduated', idea_id: id, actor_name: 'SPLAT' },
-    ...(participants ?? []).map((p: { profile_id: string }) => ({
-      recipient_id: p.profile_id, type: 'idea_graduated', idea_id: id, actor_name: 'SPLAT',
-    })),
-  ])
-  if (notifyError) return c.json({ error: notifyError.message }, 500)
-
-  // Fire-and-forget, same as every other system message in this feature: the
-  // graduation has already succeeded by this point, so a failed thread post
-  // logs rather than fails the request.
-  await systemMessage(id, claimed.author_id, 'This challenge became a draft guide.')
-
-  return c.json({ tutorial_id: tutorial.id }, 201)
+  const { data: tutorialId, error } = await client.rpc('graduate_idea', { p_idea_id: id })
+  if (error) return c.json({ error: error.message }, 500)
+  // A challenge graduates once. A second call is a mistake, not an update.
+  if (!tutorialId) return c.json({ error: 'Already graduated' }, 409)
+  return c.json({ tutorial_id: tutorialId }, 201)
 })
 
 /** How many approved guides one spot-check draws (decision 14). */
