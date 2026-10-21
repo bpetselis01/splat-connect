@@ -236,4 +236,12 @@ describe('ToyTransactionThread shows the API sentence when an action is refused'
     fireEvent.click(screen.getByRole('button', { name: 'Withdraw the request' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('This request is no longer open.')
   })
+
+  it('confirm', async () => {
+    const h = mount(detail({ type: 'exchange', status: 'accepted', requester_code: '222222', owner_code: '111111' }), 'requester-1')
+    h.onConfirm.mockResolvedValue(REFUSED)
+    fireEvent.change(screen.getByLabelText(/Enter the other party/), { target: { value: '111111' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm handoff' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('This request is no longer open.')
+  })
 })

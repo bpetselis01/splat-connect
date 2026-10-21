@@ -67,7 +67,7 @@ export function ToyTransactionThread({
    *  artboard's rule, and the API refuses one without it. */
   onReject: (reason?: string) => Promise<ActionResult>
   onWithdraw: () => Promise<ActionResult>
-  onConfirm: (code: string) => Promise<void>
+  onConfirm: (code: string) => Promise<ActionResult>
   /** The tinted next-step card the canonical layout puts first in the sidebar.
    *  A build's is about its extra stage, which only the build page knows. */
   asideTop?: ReactNode

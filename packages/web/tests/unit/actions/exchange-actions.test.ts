@@ -52,6 +52,7 @@ describe('thread actions', () => {
   })
 
   it.each([
+    ['confirm', (): Promise<unknown> => confirm('t1', 'exchange', '482913'), 'Could not confirm. Please try again.'],
     ['withdraw', (): Promise<unknown> => withdraw('t1', 'exchange'), 'Could not withdraw. Please try again.'],
     ['accept', (): Promise<unknown> => accept('t1', 'exchange'), 'Could not accept. Please try again.'],
   ])('returns the API sentence when %s is refused, so production does not mask it', async (_name, run, fallback) => {

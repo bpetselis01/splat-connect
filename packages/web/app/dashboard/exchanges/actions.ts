@@ -62,6 +62,12 @@ export async function withdraw(id: string, kind: ThreadKind): Promise<ActionResu
   }
 }
 
-export async function confirm(id: string, kind: ThreadKind, code: string) {
-  await post(id, kind, 'confirm', { code })
+export async function confirm(id: string, kind: ThreadKind, code: string): Promise<ActionResult> {
+  try {
+    await post(id, kind, 'confirm', { code })
+    return { ok: true }
+  } catch (e) {
+    unstable_rethrow(e)
+    return { ok: false, error: apiMessage(e, 'Could not confirm. Please try again.') }
+  }
 }
