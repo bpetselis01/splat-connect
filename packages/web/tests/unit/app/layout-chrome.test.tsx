@@ -10,15 +10,13 @@ import { PublicFooter } from '@/components/public-footer'
 // under test.
 vi.mock('@/lib/api-client', () => ({ apiClient: { get: vi.fn() } }))
 
-// next/font/google's real export is transformed by Next's build-time SWC
-// loader; a raw Node/vitest import gets `{}`, so the module-level `Nunito(...)`
-// call in the layout throws "Nunito is not a function" before any test body
+// next/font/local's real export is transformed by Next's build-time SWC
+// loader; a raw Node/vitest import gets `{}`, so the module-level `localFont(...)`
+// call in the layout throws "default is not a function" before any test body
 // runs. Same category of test-environment plumbing as the mock above — no
 // change to the layout itself.
-vi.mock('next/font/google', () => ({
-  Nunito: () => ({ variable: '--font-nunito', className: '' }),
-  JetBrains_Mono: () => ({ variable: '--font-jetbrains', className: '' }),
-  Baloo_2: () => ({ variable: '--font-baloo', className: '' }),
+vi.mock('next/font/local', () => ({
+  default: ({ variable }: { variable: string }) => ({ variable, className: '' }),
 }))
 
 /**
