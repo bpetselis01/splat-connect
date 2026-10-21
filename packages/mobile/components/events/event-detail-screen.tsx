@@ -64,7 +64,7 @@ function Fact({ icon, tint, title, sub }: { icon: Icon; tint: string; title: str
 export function EventDetailScreen({ id }: { id: string }) {
   const router = useRouter()
   const { session } = useAuth()
-  const { caps } = useCapabilities()
+  const { caps, loading: capsLoading } = useCapabilities()
   const bottom = useBottomClearance()
   const [event, setEvent] = useState<EventDetail | null>(null)
   const [state, setState] = useState<'loading' | 'ready' | 'missing' | 'failed'>('loading')
@@ -283,7 +283,7 @@ export function EventDetailScreen({ id }: { id: string }) {
           ) : full ? (
             <Button label="This one is full" variant="secondary" disabled onPress={() => {}} />
           ) : (
-            <Button label="I'm going" loading={busy} onPress={imGoing} />
+            <Button label="I'm going" loading={busy || capsLoading} onPress={imGoing} />
           )}
           {event.prints_parts && session ? (
             <Button

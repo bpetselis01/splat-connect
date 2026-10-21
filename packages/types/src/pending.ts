@@ -411,6 +411,7 @@ export const PENDING = {
     title: "I'm going before the profile loads",
     blurb: "Whether the event page should expose a ready state before I'm going can be tapped. Details are in docs/plans/journey-coverage-requirements.md and the run notes.",
     kind: "build",
+    shipped: true,
     platforms: ["mobile"],
     needs: "Decided 2026-10-20: the button is disabled with a subtle spinner until the viewer profile and capabilities have loaded; the e2e waits on that ready state. Whether the button waits for the profile (disabled or a ready marker).",
   },

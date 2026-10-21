@@ -9,7 +9,8 @@ const mockUseAuth = jest.fn()
 jest.mock('../../../../lib/auth-context', () => ({ useAuth: () => mockUseAuth() }))
 const mockProfile = { name: 'Priya Nair', email: 'priya@example.com' }
 let mockCaps: { profile: typeof mockProfile } | null = { profile: mockProfile }
-jest.mock('../../../../lib/capabilities', () => ({ useCapabilities: () => ({ caps: mockCaps }) }))
+let mockCapsLoading = false
+jest.mock('../../../../lib/capabilities', () => ({ useCapabilities: () => ({ caps: mockCaps, loading: mockCapsLoading }) }))
 const mockGet = jest.fn()
 const mockPost = jest.fn()
 const mockDelete = jest.fn()
@@ -29,6 +30,7 @@ beforeEach(() => {
   jest.clearAllMocks()
   mockUseAuth.mockReturnValue(signedIn)
   mockCaps = { profile: mockProfile }
+  mockCapsLoading = false
   mockPost.mockResolvedValue({})
   mockDelete.mockResolvedValue({})
   serve()
@@ -43,6 +45,20 @@ describe('EventDetailScreen', () => {
     expect(screen.getByText('16 going')).toBeTruthy()
     expect(screen.getByRole('button', { name: "I'm going" })).toBeTruthy()
     expect(mockGet).toHaveBeenCalledWith('/api/public/events/e1?viewer=u1')
+  })
+
+  it("V10 I'm going is disabled until the viewer's capabilities have loaded", async () => {
+    mockCaps = null
+    mockCapsLoading = true
+    render(<EventDetailScreen id="e1" />)
+    const button = await screen.findByRole('button', { name: "I'm going" })
+    expect(button.props.accessibilityState.disabled).toBe(true)
+    fireEvent.press(button)
+    expect(mockPost).not.toHaveBeenCalled()
+    mockCapsLoading = false
+    mockCaps = { profile: mockProfile }
+    screen.rerender(<EventDetailScreen id="e1" />)
+    expect(screen.getByRole('button', { name: "I'm going" }).props.accessibilityState.disabled).toBe(false)
   })
 
   it('a guest reads the event without a viewer id', async () => {
