@@ -19,11 +19,11 @@ let hallId: string
 
 const LINK = 'https://meet.invalid/room-4417'
 const authed = (token: string) => ({ headers: { Authorization: `Bearer ${token}` } })
-const register = (id: string, token: string) =>
+const register = (id: string, token: string, email = 'priya@example.com') =>
   app.request(`/api/events/${id}/registrations`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: 'Priya Nair', email: 'priya@example.com', answers: {} }),
+    body: JSON.stringify({ name: 'Priya Nair', email, answers: {} }),
   })
 const link = (id: string, token?: string) => app.request(`/api/events/${id}/joining-link`, token ? authed(token) : {})
 
@@ -58,12 +58,24 @@ describe('the joining link', () => {
     expect((await register(onlineId, family.token)).status).toBe(201)
     expect(sendEmail).toHaveBeenCalledTimes(1)
     const [to, subject, text] = sendEmail.mock.calls[0] as unknown as [string, string, string]
-    expect(to).toBe('priya@example.com')
+    expect(to).toBe(family.email)
     expect(subject).toBe("You're going to Online clinic")
     expect(text).toContain(LINK)
 
     expect((await register(onlineId, family.token)).status).toBe(201)
     expect(sendEmail).toHaveBeenCalledTimes(1)
+  })
+
+  it('WI39 emails only the account address, never the one typed into the form, and not again after cancel and re-register', async () => {
+    sendEmail.mockClear()
+    await app.request(`/api/events/${onlineId}/registrations`, { method: 'DELETE', ...authed(family.token) })
+    expect((await register(onlineId, family.token, 'someone-else@example.com')).status).toBe(201)
+    expect(sendEmail).not.toHaveBeenCalled()
+
+    await adminClient().from('org_event_registrations').delete().eq('event_id', onlineId)
+    expect((await register(onlineId, family.token, 'someone-else@example.com')).status).toBe(201)
+    expect(sendEmail).toHaveBeenCalledTimes(1)
+    expect((sendEmail.mock.calls[0] as unknown as string[])[0]).toBe(family.email)
   })
 
   it('WI39 sends no email for an in-person event', async () => {

@@ -244,6 +244,7 @@ events.post('/:id/registrations', async (c) => {
   }
   let isNew = true
   let { data, error } = await attempt('insert')
+  const inserted = !error && !!data
   if (!error && !data) ({ data, error } = await attempt('revive'))
   if (!error && !data) {
     isNew = false
@@ -268,9 +269,13 @@ events.post('/:id/registrations', async (c) => {
       'event_rsvp_received'
     )
     // The link is never on a public page; this email and the joining-link route are the two ways a registrant gets it.
-    if (event.format === 'online' && event.online_url) {
+    // Only a first-ever registration, and only to the account's own address: the form's email is unverified, and a revive would let cancel and re-register repeat the mail.
+    const accountEmail = inserted && event.format === 'online' && event.online_url
+      ? (await createAdminClient().auth.admin.getUserById(userId)).data.user?.email
+      : null
+    if (accountEmail) {
       await sendEmail(
-        email,
+        accountEmail,
         `You're going to ${event.title}`,
         [
           `You're registered for ${event.title}.`,
