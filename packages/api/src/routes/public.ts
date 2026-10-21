@@ -6,7 +6,7 @@
 import { singleRowStatus } from '../single-row.js'
 import { Hono, type Context } from 'hono'
 import { nameFormerContributors } from '../former-contributor.js'
-import { chunk, selectIn } from '../chunk.js'
+import { chunk, selectAll, selectIn } from '../chunk.js'
 import { notify } from '../notify.js'
 import { challengeCounts } from '../challenge-counts.js'
 import { primaryAuthorNames, profileName } from '../profile-name.js'
@@ -77,12 +77,16 @@ publicRoutes.get('/tutorials', async (c) => {
  */
 publicRoutes.get('/tutorials/stats', async (c) => {
   const admin = createAdminClient()
-  const { data, error } = await admin
-    .from('tutorials')
-    .select('id, tutorial_contributors(profile_id), tutorial_orgs(org_id, status)')
-    .eq('status', 'approved')
+  const { data, error } = await selectAll((from, to) =>
+    admin
+      .from('tutorials')
+      .select('id, tutorial_contributors(profile_id), tutorial_orgs(org_id, status)')
+      .eq('status', 'approved')
+      .order('id')
+      .range(from, to)
+  )
   if (error) return c.json({ error: error.message }, 500)
-  const rows = (data ?? []) as unknown as Array<{
+  const rows = data as unknown as Array<{
     tutorial_contributors: { profile_id: string }[]
     tutorial_orgs: { org_id: string; status: string }[]
   }>
