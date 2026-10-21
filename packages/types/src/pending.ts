@@ -350,6 +350,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: fix it: Join resets after Leave. Nothing to decide beyond scheduling the fix.",
+    shipped: true,
   },
   'event-register-raw-409': {
     title: "Event registration error copy",

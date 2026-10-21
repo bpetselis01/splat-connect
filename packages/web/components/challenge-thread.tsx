@@ -219,6 +219,9 @@ export function ChallengeThread({
       router.refresh()
     } catch {
       setError('Could not join this challenge. Please try again.')
+    } finally {
+      // Not only on failure: the refresh keeps this instance mounted, so a
+      // busy left set would disable Join after a Leave.
       setBusy(false)
     }
   }
@@ -242,6 +245,7 @@ export function ChallengeThread({
           ? 'That person is not part of this challenge.'
           : 'Something went wrong. Please try again.'
       )
+    } finally {
       setBusy(false)
     }
   }
