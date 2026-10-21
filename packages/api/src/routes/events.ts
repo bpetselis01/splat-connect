@@ -21,6 +21,7 @@
 import { Hono } from 'hono'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { notify } from '../notify.js'
+import { selectIn } from '../chunk.js'
 import { sendEmail } from '../mailer.js'
 import { orgName } from './organizations.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
@@ -118,28 +119,35 @@ events.get('/mine', async (c) => {
   // under 033/045's column grants — the parent query comes back empty with no
   // error, which is the silent failure documented on src/routes/public.ts.
   const admin = createAdminClient()
-  const [{ data: eventRows }, { data: prints }] = await Promise.all([
-    admin
-      .from('org_events')
-      .select(
-        'id, org_id, kind, title, starts_at, ends_at, format, location, suburb, state, status, cancelled_at, prints_parts',
-      )
-      .in('id', eventIds),
+  const [{ data: eventRows, error: eventsError }, { data: prints, error: printsError }] = await Promise.all([
+    selectIn(eventIds, (ids) =>
+      admin
+        .from('org_events')
+        .select(
+          'id, org_id, kind, title, starts_at, ends_at, format, location, suburb, state, status, cancelled_at, prints_parts',
+        )
+        .in('id', ids),
+    ),
     // The family's own part-print requests against these events. Scoped to
     // their own rows: this is the requester's view of the queue the leader
     // works through on /dashboard/org/events/[id].
-    supabase
-      .from('toy_transactions')
-      .select('id, event_id, status, part_sets, tutorial_id, decline_reason, created_at')
-      .in('event_id', eventIds)
-      .eq('requester_id', userId),
+    selectIn(eventIds, (ids) =>
+      supabase
+        .from('toy_transactions')
+        .select('id, event_id, status, part_sets, tutorial_id, decline_reason, created_at')
+        .in('event_id', ids)
+        .eq('requester_id', userId),
+    ),
   ])
 
-  const orgIds = [...new Set((eventRows ?? []).map((e) => e.org_id as string))]
-  const { data: orgs } = await admin.from('organizations').select('id, name').in('id', orgIds)
-  const orgName = new Map((orgs ?? []).map((o) => [o.id as string, o.name as string]))
-  const byEvent = new Map((eventRows ?? []).map((e) => [e.id as string, e]))
-  const printByEvent = new Map((prints ?? []).map((p) => [p.event_id as string, p]))
+  const orgIds = [...new Set(eventRows.map((e) => e.org_id as string))]
+  const { data: orgs, error: orgsError } = await selectIn(orgIds, (ids) =>
+    admin.from('organizations').select('id, name').in('id', ids),
+  )
+  if (eventsError || printsError || orgsError) return c.json({ error: "We couldn't load your events. Try again." }, 500)
+  const orgName = new Map(orgs.map((o) => [o.id as string, o.name as string]))
+  const byEvent = new Map(eventRows.map((e) => [e.id as string, e]))
+  const printByEvent = new Map(prints.map((p) => [p.event_id as string, p]))
 
   const out = rows
     .map((r) => {
