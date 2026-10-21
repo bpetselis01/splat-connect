@@ -377,6 +377,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["api"],
     needs: "Decided 2026-10-20: a no-status edit saves the fields and answers 200 with the guide, status untouched; only a forbidden status transition answers 409 'Guide is approved; submit for re-review'. Which 4xx and message a rejected edit returns.",
+    shipped: true,
   },
   'hub-exchange-count-plural': {
     title: "Hub Exchange count grammar",

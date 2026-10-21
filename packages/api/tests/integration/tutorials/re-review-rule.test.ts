@@ -55,15 +55,38 @@ describe('writes that leave an approved guide approved', () => {
     expect(await statusOf(id)).toBe('approved')
   })
 
-  // The row-level policy lets an author write a published guide only into pending, so a
-  // details write that does not say so is refused (as a 500 today) and the guide is untouched.
-  // That is why the web action adds status: 'pending' itself.
-  it('WT18 a details write without a status is refused on an approved guide, which stays approved and unrenamed', async () => {
+  it('WT18 a details write without a status is saved and the guide stays approved', async () => {
     const id = await published()
     const res = await call('PATCH', `/api/tutorials/${id}`, { title: 'Renamed', updated_at: await updatedAt(id) })
-    expect(res.status).toBeGreaterThanOrEqual(400)
-    const { data } = await adminClient().from('tutorials').select('status, title').eq('id', id).single()
-    expect(data).toEqual({ status: 'approved', title: 'Backing Fixture' })
+    expect(res.status, await res.clone().text()).toBe(200)
+    const body = (await res.json()) as { title: string; status: string }
+    expect(body.title).toBe('Renamed')
+    expect(body.status).toBe('approved')
+    expect((await adminClient().from('tutorials').select('status, title').eq('id', id).single()).data).toEqual({ status: 'approved', title: 'Renamed' })
+  })
+
+  it('WT18 a status-less edit by someone who is not a contributor is refused and changes nothing', async () => {
+    const id = await published()
+    const stranger = await createTestUser('contributor')
+    try {
+      const res = await app.request(`/api/tutorials/${id}`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${stranger.token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: 'Hijacked', updated_at: await updatedAt(id) }),
+      })
+      expect(res.status).toBe(404)
+      expect((await adminClient().from('tutorials').select('title').eq('id', id).single()).data).toEqual({ title: 'Backing Fixture' })
+    } finally {
+      await deleteTestUser(stranger.id)
+    }
+  })
+
+  it('WT18 moving an approved guide to draft is a conflict that names the way back', async () => {
+    const id = await published()
+    const res = await call('PATCH', `/api/tutorials/${id}`, { status: 'draft', updated_at: await updatedAt(id) })
+    expect(res.status).toBe(409)
+    expect(await res.json()).toEqual({ error: 'Guide is approved; submit for re-review' })
+    expect(await statusOf(id)).toBe('approved')
   })
 })
 
