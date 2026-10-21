@@ -167,10 +167,9 @@ publicRoutes.get('/tutorials/:id/notes', async (c) => {
   if (error?.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
   if (error) return c.json({ error: error.message }, 500)
   const ids = [...new Set(data.flatMap((n) => [n.author_id, n.pinned_by]).filter((x): x is string => !!x))]
-  const { data: people } = ids.length
-    ? await createAdminClient().from('profiles').select('id, name').in('id', ids)
-    : { data: [] as { id: string; name: string }[] }
-  const name = new Map((people ?? []).map((p) => [p.id, p.name as string]))
+  const people = await selectIn(ids, (chunked) => createAdminClient().from('profiles').select('id, name').in('id', chunked))
+  if (people.error) return c.json({ error: 'Notes could not be loaded. Please try again.' }, 500)
+  const name = new Map(people.data.map((p) => [p.id, p.name as string]))
   return c.json(
     data.map(({ photo_path, ...n }) => ({
       ...n,
