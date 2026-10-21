@@ -284,6 +284,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: surface all three: cover upload shows the error and keeps the form, Mark all read is one request or reports partial failure, home shows a could-not-load state instead of zeros. Whether to surface these three failures, and how.",
+    shipped: true,
   },
   'duplicated-thread-actions': {
     title: "Thread actions copied three times",

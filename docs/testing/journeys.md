@@ -829,7 +829,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | WD37 | write | `/notifications` | P | list of every notification, newest first, unread dot | – | header badge | P | ✅ | ✅ | ✅ | – |
 | WD38 | write | `/notifications` | P | row click → mark read, then go to the thing it is about | – | header badge | n/a | ✅ | ✅ | ✅ | – |
-| WD39 | write | `/notifications` | P | "Mark all read" → one PATCH per unread row | – | header badge | n/a | ✅ | ✅ | ✅ | – |
+| WD39 | write | `/notifications` | P | "Mark all read" → one PATCH per unread row; failed rows are counted in an alert | – | header badge | n/a | ✅ | ✅ | ✅ | – |
 | WD40 | write | `/notifications` | P | collaborator invitation "Accept" / "Decline" on the row | collaborator_accepted, collaborator_declined | invitee list | P | ✅ | ✅ | ✅ | – |
 
 </details>
