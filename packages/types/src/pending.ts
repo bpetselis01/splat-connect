@@ -186,6 +186,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web","api"],
     needs: "Decided 2026-10-20: build the authenticated joining-link route and send the link in the registration confirmation email. Build the authenticated joining-link route and email, or drop the promise from the page.",
+    shipped: true,
   },
   'web-auth-recovery': {
     title: "Web sign-in recovery",

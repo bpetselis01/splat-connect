@@ -51,7 +51,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | web | Makers wanted | 4 | 0 | 0 |
 | web | Adaptation requests | 2 | 0 | 0 |
 | web | Events | 2 | 0 | 0 |
-| web | Event detail | 4 | 0 | 0 |
+| web | Event detail | 5 | 0 | 0 |
 | web | Event register | 1 | 0 | 0 |
 | web | Recycling | 3 | 0 | 0 |
 | web | Legal and static pages | 7 | 0 | 0 |
@@ -1010,9 +1010,9 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 
 </details>
 
-### Event detail — 4 rows · 0 gaps · 0 waived
+### Event detail — 5 rows · 0 gaps · 0 waived
 
-<details><summary>4 rows, no gaps</summary>
+<details><summary>5 rows, no gaps</summary>
 
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
@@ -1020,6 +1020,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | WI32 | write | `/get-involved/events/[id]` | P | "You're going" → DELETE registration; the button reads "I'm going" again | – | going count, seats left | L | ✅ | ✅ | ✅ | – |
 | WI33 | nav | `/get-involved/events/[id]` | anon | signed-out "I'm going" → /login?next=the event; signed in with questions or a cost → the register form | – | – | L | ✅ | ✅ | – | – |
 | WI34 | write | `/get-involved/events/[id]` | P | print-at-event "Send request" (guide, parts, sets) → POST print-at-event | toy_request | – | L | ✅ | ✅ | ✅ | – |
+| WI39 | write | `/get-involved/events/[id]` | P | online event, registered: "Join online" → the joining link from GET joining-link (registrants only), also in the confirmation email | confirmation email | – | L | ✅ | ✅ | ✅ | – |
 
 </details>
 
