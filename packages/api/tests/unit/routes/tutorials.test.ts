@@ -490,7 +490,8 @@ describe('a live guide is never left empty (T9)', () => {
     expect((await patch({ tutorial_pdf_url: null })).status).toBe(200)
     withGuide({ status: 'draft', pdf: 'g.pdf', steps: 0 })
     expect((await patch({ tutorial_pdf_url: null })).status).toBe(200)
-    expect(mockNotifySubmitted).not.toHaveBeenCalled()
+    // Only the approved guide's edit is a submission; the draft is not.
+    expect(mockNotifySubmitted).toHaveBeenCalledTimes(1)
   })
 
   it('refuses emptying the steps of an approved guide with no PDF; allows it with a PDF or on a draft', async () => {
