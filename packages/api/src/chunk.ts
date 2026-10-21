@@ -9,3 +9,15 @@ export function chunk<T>(items: T[], size = 100): T[][] {
   for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size))
   return out
 }
+
+/** Runs one `.in()` lookup per chunk of `ids` and merges the rows; the first error wins. */
+export async function selectIn<R>(
+  ids: string[],
+  run: (ids: string[]) => PromiseLike<{ data: R[] | null; error: { message: string } | null }>,
+): Promise<{ data: R[]; error: { message: string } | null }> {
+  const results = await Promise.all(chunk(ids).map(run))
+  return {
+    data: results.flatMap((r) => r.data ?? []),
+    error: results.find((r) => r.error)?.error ?? null,
+  }
+}

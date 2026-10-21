@@ -6,7 +6,7 @@
 import { singleRowStatus } from '../single-row.js'
 import { Hono, type Context } from 'hono'
 import { nameFormerContributors } from '../former-contributor.js'
-import { chunk } from '../chunk.js'
+import { chunk, selectIn } from '../chunk.js'
 import { notify } from '../notify.js'
 import { challengeCounts } from '../challenge-counts.js'
 import { primaryAuthorNames, profileName } from '../profile-name.js'
@@ -1332,25 +1332,23 @@ const EVENT_PUBLIC_COLUMNS =
 
 /** Live registrations per event, and whether the viewer is among them. */
 async function goingCounts(eventIds: string[], viewerId: string | null) {
-  if (eventIds.length === 0) return { counts: new Map<string, number>(), mine: new Set<string>() }
+  if (eventIds.length === 0) return { counts: new Map<string, number>(), mine: new Set<string>(), error: null }
   // The admin client, because org_event_registrations is readable only by its
   // own author or the organisation's leaders — by design. A count is not a
   // disclosure, so it is computed here rather than made readable to everyone.
   const admin = createAdminClient()
-  const { data } = await admin
-    .from('org_event_registrations')
-    .select('event_id, user_id')
-    .in('event_id', eventIds)
-    .is('cancelled_at', null)
+  const { data, error } = await selectIn(eventIds, (ids) =>
+    admin.from('org_event_registrations').select('event_id, user_id').in('event_id', ids).is('cancelled_at', null),
+  )
 
   const counts = new Map<string, number>()
   const mine = new Set<string>()
-  for (const r of data ?? []) {
+  for (const r of data) {
     const id = r.event_id as string
     counts.set(id, (counts.get(id) ?? 0) + 1)
     if (viewerId && r.user_id === viewerId) mine.add(id)
   }
-  return { counts, mine }
+  return { counts, mine, error }
 }
 
 publicRoutes.get('/events', async (c) => {
@@ -1384,21 +1382,25 @@ publicRoutes.get('/events', async (c) => {
   const events = rows ?? []
   const eventIds = events.map((e) => e.id as string)
   const orgIds = [...new Set(events.map((e) => e.org_id as string))]
-  const [{ data: orgs }, { counts, mine }, { data: questionRows }] = await Promise.all([
+  const [orgsRes, going, questionsRes] = await Promise.all([
     // Resolved through the admin client rather than an embed: embedding
     // organizations kills the whole query under 033/045's column grants, and
     // returns empty with no error.
-    admin.from('organizations').select('id, name').in('id', orgIds),
+    selectIn(orgIds, (ids) => admin.from('organizations').select('id, name').in('id', ids)),
     goingCounts(eventIds, viewer),
     // Which events ask something beyond name and email. The card needs this to
     // decide whether "I'm going" can be one tap or has to open the form — a
     // tap that silently skipped three required questions would put a family on
     // a list the host cannot use. Ids only; the questions themselves belong to
     // the detail route.
-    sb.from('org_event_questions').select('event_id').in('event_id', eventIds),
+    selectIn(eventIds, (ids) => sb.from('org_event_questions').select('event_id').in('event_id', ids)),
   ])
-  const orgName = new Map((orgs ?? []).map((o) => [o.id as string, o.name as string]))
-  const asks = new Set((questionRows ?? []).map((q) => q.event_id as string))
+  if (orgsRes.error || going.error || questionsRes.error) {
+    return c.json({ error: 'Events could not be loaded. Please try again.' }, 500)
+  }
+  const { counts, mine } = going
+  const orgName = new Map(orgsRes.data.map((o) => [o.id as string, o.name as string]))
+  const asks = new Set(questionsRes.data.map((q) => q.event_id as string))
 
   return c.json(
     events.map((e) => {
