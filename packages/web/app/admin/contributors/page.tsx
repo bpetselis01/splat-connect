@@ -168,7 +168,7 @@ export default async function ContributorsPage({
                     <td className="text-right">
                       <DeleteEntityButton
                         endpoint={`/api/admin/contributors/${p.id}`}
-                        redirectTo="/admin/contributors"
+                        redirectTo={href(cap)}
                         label="account"
                         className="btn btn-danger btn-sm font-bold shadow-none"
                       />
