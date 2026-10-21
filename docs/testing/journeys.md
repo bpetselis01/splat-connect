@@ -1258,7 +1258,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | WT04 | nav | `/tutorials/[id]` | anon | STL download: signed out → /signup?reason=download; signed in → /files/stl-files (signed URL, 60 s) | – | – | n/a | ✅ | ✅ | – | – |
 | WT05 | nav | `/tutorials/[id]` | anon | guide PDF: signed out "Sign in to download" → /signup?reason=download; signed in "Download guide (PDF)" serves the file | – | – | n/a | ✅ | ✅ | – | – |
 | WT06 | nav | `/tutorials/[id]` | anon | "Request a print" → /printing/requests?guide=; "Get help with this build" → /get-involved/requests/new?guide=; "Toy library"; recommendation cards → /tutorials/:id | – | – | n/a | ✅ | ✅ | – | – |
-| WT07 | nav | `/tutorials/[id]` | anon | Share: the platform share sheet, or the address copied to the clipboard (the "Link copied" toast has no host on this page) | – | – | n/a | ✅ | ✅ | – | – |
+| WT07 | nav | `/tutorials/[id]` | anon | Share: the platform share sheet, or the address copied to the clipboard (the "Link copied" toast shows only for the copy) | – | – | n/a | ✅ | ✅ | – | – |
 | WT08 | write | `/tutorials/[id]` | P | rail Save: save and unsave the guide (labelled heart) | – | Saved hub count | n/a | ✅ | ✅ | ✅ | – |
 | WT09 | write | `/tutorials/[id]` | P | "Say thanks": one per person, count shows, a repeat (409) reads as already thanked | tutorial_thanked | library-card thanks pill, author inbox | P | ✅ | ✅ | ✅ | – |
 | WT10 | write | `/tutorials/[id]` | P | "Mark this build done" → "Build logged" | – | My SPLAT builds | n/a | ✅ | ✅ | ✅ | – |

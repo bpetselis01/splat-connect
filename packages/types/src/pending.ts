@@ -369,6 +369,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: Share confirms with the shared 'Link copied' toast; no toast where a native share sheet opens. Whether Share confirms with a toast.",
+    shipped: true,
   },
   'guide-patch-without-status-500': {
     title: "Guide PATCH without status",
