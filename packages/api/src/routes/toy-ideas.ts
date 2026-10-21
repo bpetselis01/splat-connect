@@ -241,9 +241,9 @@ export async function removeParticipant(ideaId: string, profileId: string, remov
   }
   if (!data?.length) return false
   await systemMessage(ideaId, removedBy, `${await actorName(profileId)} was removed from this challenge`)
-  await createAdminClient().from('notifications').insert({
+  await notify([{
     recipient_id: profileId, type: 'challenge_removed', idea_id: ideaId, actor_name: 'SPLAT',
-  })
+  }], 'toy-ideas.reportRemoval')
   return true
 }
 
@@ -283,9 +283,9 @@ toyIdeas.post('/:id/join', async (c) => {
 
   const name = await actorName(userId)
   await systemMessage(id, userId, `${name} joined this challenge`)
-  await createAdminClient().from('notifications').insert({
+  await notify([{
     recipient_id: idea.author_id, type: 'challenge_joined', idea_id: id, actor_name: name,
-  })
+  }], 'toy-ideas.join')
 
   return c.json({ joined: true }, 201)
 })
@@ -323,12 +323,12 @@ toyIdeas.delete('/:id/participants/:profileId', async (c) => {
 
   const name = leaving ? await actorName(userId) : await actorName(target)
   await systemMessage(id, userId, leaving ? `${name} left this challenge` : `${name} was removed from this challenge`)
-  await createAdminClient().from('notifications').insert({
+  await notify([{
     recipient_id: leaving ? idea.author_id : target,
     type: leaving ? 'challenge_left' : 'challenge_removed',
     idea_id: id,
     actor_name: leaving ? name : await actorName(userId),
-  })
+  }], 'toy-ideas.leave')
 
   return c.json({ removed: true })
 })

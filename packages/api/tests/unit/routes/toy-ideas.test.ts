@@ -373,11 +373,11 @@ describe('DELETE /ideas/:id/participants/:profileId', () => {
       expect.objectContaining({ body: 'Riley the removed was removed from this challenge' }),
     ])
     expect(adminInserts.notifications).toEqual([
-      expect.objectContaining({
+      [expect.objectContaining({
         recipient_id: 'user-2',
         type: 'challenge_removed',
         actor_name: 'Alex the author',
-      }),
+      })],
     ])
   })
 })
