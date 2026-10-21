@@ -145,7 +145,7 @@ test('WI33 a signed-out visitor is sent to sign in, and a member goes to the for
   }
 })
 
-test('WI35 a member confirms a costed event with an answer, lands on the event, and a full event shows the 409 copy', async ({ page }) => {
+test('WI35 a member confirms a costed event with an answer, lands on the event, and a full event shows the full-event copy with the host contact and no button', async ({ page }) => {
   const { leader, family, orgId } = await world()
   const costed = await createEvent(orgId, leader.id, {
     status: 'published', cost_cents: 1500, cost_note: 'Filament.',
@@ -170,11 +170,10 @@ test('WI35 a member confirms a costed event with an answer, lands on the event, 
     await expect(page.getByRole('button', { name: 'Confirm my spot' })).toBeVisible()
     await adminClient().from('org_event_registrations').insert({ event_id: tight, user_id: other.id, name: 'Sam Lee', email: 'sam@example.com' })
     await page.getByRole('button', { name: 'Confirm my spot' }).click()
-    // Current behaviour: the form prints the client's raw error, so the sentence sits
-    // inside "API POST … failed with status 409: {"error":"…"}" (the phone shows only the sentence).
-    const alert = page.locator('p[role="alert"]')
-    await expect(alert).toContainText('This one is full. The host may open more seats.')
-    await expect(alert).toContainText('status 409')
+    const alert = page.getByRole('alert').filter({ hasText: 'This event is full.' })
+    await expect(alert).toContainText('to ask about more seats.')
+    await expect(alert.getByRole('link', { name: /^Contact / })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Confirm my spot' })).toHaveCount(0)
     expect(await registrations(tight, family.id)).toEqual([])
   } finally {
     await cleanup(orgId, [leader, family, other])
