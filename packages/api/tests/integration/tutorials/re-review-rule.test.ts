@@ -96,14 +96,19 @@ describe('writes that leave an approved guide approved', () => {
     expect(data).toEqual({ status: 'approved', prices_checked_on: '2026-10-01' })
   })
 
-  it('WT18 a details write without a status is saved and the guide stays approved', async () => {
-    const id = await published()
-    const res = await call('PATCH', `/api/tutorials/${id}`, { title: 'Renamed', updated_at: await updatedAt(id) })
-    expect(res.status, await res.clone().text()).toBe(200)
-    const body = (await res.json()) as { title: string; status: string }
-    expect(body.title).toBe('Renamed')
-    expect(body.status).toBe('approved')
-    expect((await adminClient().from('tutorials').select('status, title').eq('id', id).single()).data).toEqual({ status: 'approved', title: 'Renamed' })
+  it('WT18 a details write without a status sends an approved guide back to review and tells the reviewers', async () => {
+    const reviewer = await createTestUser('admin')
+    try {
+      const id = await published()
+      const res = await call('PATCH', `/api/tutorials/${id}`, { title: 'Renamed', updated_at: await updatedAt(id) })
+      expect(res.status, await res.clone().text()).toBe(200)
+      expect((await adminClient().from('tutorials').select('status, title').eq('id', id).single()).data).toEqual({ status: 'pending', title: 'Renamed' })
+      const { count } = await adminClient().from('notifications').select('id', { count: 'exact', head: true })
+        .eq('tutorial_id', id).eq('type', 'tutorial_submitted').eq('recipient_id', reviewer.id)
+      expect(count).toBe(1)
+    } finally {
+      await deleteTestUser(reviewer.id)
+    }
   })
 
   it('WT18 a status-less edit by someone who is not a contributor is refused and changes nothing', async () => {
@@ -115,7 +120,7 @@ describe('writes that leave an approved guide approved', () => {
         headers: { Authorization: `Bearer ${stranger.token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: 'Hijacked', updated_at: await updatedAt(id) }),
       })
-      expect(res.status).toBe(404)
+      expect(res.status).toBe(403)
       expect((await adminClient().from('tutorials').select('title').eq('id', id).single()).data).toEqual({ title: 'Backing Fixture' })
     } finally {
       await deleteTestUser(stranger.id)

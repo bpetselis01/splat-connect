@@ -337,10 +337,8 @@ tutorials.patch('/:id', async (c) => {
     update.photo_captions = caps
   }
 
-  const submitting = body.status === 'pending'
   // Clearing the PDF needs the same read: whether the guide is live, and what it has left.
   const clearsPdf = 'tutorial_pdf_url' in update && !(update.tutorial_pdf_url as string | null)?.trim()
-  const checksLiveContent = submitting || clearsPdf
   // Always read: an approved guide is writable by its author only into pending
   // (RLS), so what a save without a status may do depends on the current one.
   const { data: current } = await supabase
@@ -351,6 +349,19 @@ tutorials.patch('/:id', async (c) => {
   if (current?.status === 'approved' && body.status === 'draft') {
     return c.json({ error: 'Guide is approved; submit for re-review' }, 409)
   }
+  // The re-review rule: a save with no status that changes more than the prices
+  // date is a content edit, so it is a submission into pending. An admin's edit
+  // is a fix (src/re-review.ts).
+  const pricesOnly = Object.keys(update).every((k) => k === 'prices_checked_on')
+  const resubmitting = current?.status === 'approved' && !('status' in body) && !pricesOnly && c.get('role') !== 'admin'
+  if (resubmitting) {
+    if (!(await hasAcceptedContributorTerms(c.get('token'), c.get('userId')))) {
+      return c.json({ error: 'You must accept the contributor terms before submitting' }, 403)
+    }
+    update.status = 'pending'
+  }
+  const submitting = body.status === 'pending' || resubmitting
+  const checksLiveContent = submitting || clearsPdf
   // Any status but pending is a real hand-over: a draft, and a rejected or
   // approved guide the author edited and sent back (T22). Only pending ->
   // pending is the editor resending its whole form.
@@ -381,11 +392,11 @@ tutorials.patch('/:id', async (c) => {
     }
   }
 
-  // RLS refuses any write that leaves a row approved, so a save with no status
-  // on an approved guide goes through the service role once the caller is
-  // shown to be one of its contributors. `update` never carries a status here.
+  // RLS refuses any write that leaves a row approved, so a prices-only save on
+  // an approved guide goes through the service role once the caller is shown to
+  // be one of its contributors. A resubmission writes pending as the user.
   let writer = supabase
-  if (current?.status === 'approved' && !('status' in body)) {
+  if (current?.status === 'approved' && !('status' in body) && !resubmitting) {
     const { data: own } = await supabase.rpc('is_tutorial_contributor', { p_tutorial_id: c.req.param('id') })
     if (!own) return c.json({ error: 'Not found' }, 404)
     writer = createAdminClient()
