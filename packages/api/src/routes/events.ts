@@ -308,6 +308,7 @@ events.get('/:id/joining-link', async (c) => {
     return c.json({ error: error.message }, 500)
   }
   if (!event || event.status !== 'published') return c.json({ error: 'No such event.' }, 404)
+  if (event.cancelled_at) return c.json({ error: 'This event was cancelled.' }, 404)
   if (event.format !== 'online' || !event.online_url) return c.json({ error: 'This event has no joining link.' }, 404)
 
   const { data: mine } = await createUserClient(c.get('token'))

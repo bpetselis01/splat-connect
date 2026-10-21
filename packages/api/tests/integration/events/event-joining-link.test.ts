@@ -16,6 +16,7 @@ let stranger: TestUser
 let orgId: string
 let onlineId: string
 let hallId: string
+let event: (over: Record<string, unknown>) => Promise<string>
 
 const LINK = 'https://meet.invalid/room-4417'
 const authed = (token: string) => ({ headers: { Authorization: `Bearer ${token}` } })
@@ -33,7 +34,7 @@ beforeAll(async () => {
   stranger = await createTestUser('contributor')
   orgId = await createOrg({ createdBy: leader.id, name: `Joining link ${Date.now()}` })
   await addLeader(orgId, leader.id)
-  const event = async (over: Record<string, unknown>) =>
+  event = async (over: Record<string, unknown>) =>
     (await adminClient().from('org_events').insert({
       org_id: orgId, kind: 'workshop', format: 'in_person', location: 'A hall', suburb: 'Newtown', state: 'NSW',
       status: 'published', created_by: leader.id, starts_at: new Date(Date.now() + 7 * 864e5).toISOString(), ...over,
@@ -99,6 +100,14 @@ describe('the joining link', () => {
   it('WI39 stops giving the link once the registration is cancelled', async () => {
     await app.request(`/api/events/${onlineId}/registrations`, { method: 'DELETE', ...authed(family.token) })
     expect((await link(onlineId, family.token)).status).toBe(403)
+  })
+
+  it('WI39 gives no link for a cancelled event, even to a registrant', async () => {
+    const id = await event({ title: 'Cancelled clinic', format: 'online', online_url: LINK, location: null, suburb: null, state: null, cancelled_at: new Date().toISOString() })
+    await adminClient().from('org_event_registrations').insert({ event_id: id, user_id: family.id, name: 'Priya Nair', email: 'priya@example.com', answers: {} })
+    const res = await link(id, family.token)
+    expect(res.status).toBe(404)
+    expect(await res.json()).toEqual({ error: 'This event was cancelled.' })
   })
 
   it('WI39 has no link for an in-person event', async () => {
