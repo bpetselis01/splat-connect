@@ -1098,11 +1098,15 @@ async function orgProfileExtras(id: string, backed: Array<{ id: string }>) {
       .limit(6),
     admin.from('org_leaders').select('user_id').eq('org_id', id),
     // Completed handoffs this org gave, for parts printed and families helped.
-    admin
-      .from('toy_transactions')
-      .select('type, requester_id, part_sets')
-      .eq('owner_org_id', id)
-      .eq('status', 'completed'),
+    selectAll((from, to) =>
+      admin
+        .from('toy_transactions')
+        .select('type, requester_id, part_sets')
+        .eq('owner_org_id', id)
+        .eq('status', 'completed')
+        .order('id')
+        .range(from, to)
+    ),
   ])
   const failed = [org, doors, rates, printers, thanks, quotes, leaders, done].find((r) => r.error)
   if (failed) {
@@ -1139,7 +1143,7 @@ async function orgProfileExtras(id: string, backed: Array<{ id: string }>) {
   const backedBy = (userId: string) => (responded ?? []).filter((r) => r.responded_by === userId).length
 
   const row = org.data as Record<string, unknown>
-  const completed = (done.data ?? []) as Array<{ type: string; requester_id: string; part_sets: number | null }>
+  const completed = done.data as Array<{ type: string; requester_id: string; part_sets: number | null }>
 
   return {
     kind: row.kind as string | null,
