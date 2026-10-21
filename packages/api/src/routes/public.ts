@@ -39,17 +39,20 @@ const publicRoutes = new Hono()
 publicRoutes.get('/tutorials', async (c) => {
   const supabase = createAnonClient()
   const difficulty = c.req.query('difficulty')
-  let query = supabase
-    .from('tutorials')
-    // Backing rides along with the list so a library card can name its backers.
-    // The alternative is a request per card on the busiest page on the site.
-    // thanks_count and has_stl are 066's computed fields — a count and a flag,
-    // never the rows behind them.
-    .select('*, thanks_count, has_stl, parts(name), tutorial_orgs(status, organizations(id, name))')
-    .eq('status', 'approved')
-    .order('created_at', { ascending: false })
-  if (difficulty) query = query.eq('difficulty', difficulty)
-  const { data, error } = await query
+  const { data, error } = await selectAll((from, to) => {
+    let query = supabase
+      .from('tutorials')
+      // Backing rides along with the list so a library card can name its backers.
+      // The alternative is a request per card on the busiest page on the site.
+      // thanks_count and has_stl are 066's computed fields — a count and a flag,
+      // never the rows behind them.
+      .select('*, thanks_count, has_stl, parts(name), tutorial_orgs(status, organizations(id, name))')
+      .eq('status', 'approved')
+      .order('created_at', { ascending: false })
+      .order('id')
+    if (difficulty) query = query.eq('difficulty', difficulty)
+    return query.range(from, to)
+  })
   if (error) return c.json({ error: error.message }, 500)
   // Filtered here rather than in the select, for the same reason the detail route
   // does it: PostgREST cannot constrain an embedded relation from the parent query,
