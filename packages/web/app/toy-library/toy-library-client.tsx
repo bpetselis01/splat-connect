@@ -149,7 +149,7 @@ export function ToyLibraryClient({
         }}
         secondary={{
           label: 'Pick for my child',
-          href: '/learn/choosing-a-toy',
+          href: wizardHref,
           icon: <Smiley size={20} weight="bold" className="text-brand-dark" aria-hidden="true" />,
         }}
         stats={[

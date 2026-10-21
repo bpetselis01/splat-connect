@@ -1384,7 +1384,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | WY01 | nav | `/toy-library` | anon | facet buttons (How it is offered, Who is holding it), sort control and filter chips narrow the grid; Clear resets | – | – | n/a | ✅ | ✅ | – | – |
 | WY02 | nav | `/toy-library` | anon | toy card → /toy-library/:id | – | – | n/a | ✅ | ✅ | – | – |
 | WY03 | write | `/toy-library` | P | card heart → POST/DELETE /api/saves (signed out: sent to sign up) | – | Saved count | P | ✅ | ✅ | ✅ | – |
-| WY04 | static | `/toy-library` | anon | hero "Browse the toys" → #toy-grid, "Pick for my child" → /learn/choosing-a-toy, "Give a toy" → /dashboard/toys/new | – | – | n/a | ✅ | – | – | – |
+| WY04 | static | `/toy-library` | anon | hero "Browse the toys" → #toy-grid, "Pick for my child" → the child wizard (sign up first when signed out), "Give a toy" → /dashboard/toys/new | – | – | n/a | ✅ | – | – | – |
 | WY05 | static | `/toy-library/[id]` | anon | detail: photos, facts, holder card, picks, sign-in gate | – | – | n/a | ✅ | – | – | – |
 | WY06 | nav | `/toy-library/[id]` | P | "Ask to collect it" / "Offer a swap" → /toy-library/:id/request?mode= | – | – | P | ✅ | ✅ | – | – |
 | WY07 | nav | `/toy-library/[id]` | anon | "Sign in to ask for it" → /login?next=/toy-library/:id/request?mode=<donation\|exchange>; a signed-out visit to the request page keeps a valid ?mode= through sign-in | – | – | n/a | ✅ | ✅ | – | – |
