@@ -11,10 +11,8 @@ vi.mock('next/headers', () => ({
 vi.mock('next/navigation', () => ({ usePathname: () => path.current, useSearchParams: () => new URLSearchParams() }))
 vi.mock('@/lib/capabilities', () => ({ getCapabilities: async () => caps.current }))
 vi.mock('@/lib/api-client', () => ({ apiClient: { get: vi.fn() } }))
-vi.mock('next/font/google', () => ({
-  Nunito: () => ({ variable: '--font-nunito', className: '' }),
-  JetBrains_Mono: () => ({ variable: '--font-jetbrains', className: '' }),
-  Baloo_2: () => ({ variable: '--font-baloo', className: '' }),
+vi.mock('next/font/local', () => ({
+  default: ({ variable }: { variable: string }) => ({ variable, className: '' }),
 }))
 
 import RootLayout from '@/app/layout'
