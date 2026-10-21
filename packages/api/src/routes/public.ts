@@ -1085,19 +1085,20 @@ async function orgProfileExtras(id: string, backed: Array<{ id: string }>) {
   // guides they back. Name and that count, nothing else.
   const leaderIds = (leaders.data ?? []).map((l) => l.user_id as string)
   const backedIds = backed.map((t) => t.id)
-  const [{ data: people }, { data: responded }] = await Promise.all([
+  const [{ data: people }, { data: responded, error: respondedError }] = await Promise.all([
     leaderIds.length
       ? admin.from('profiles').select('id, name').in('id', leaderIds)
       : Promise.resolve({ data: [] as Array<{ id: string; name: string }> }),
-    leaderIds.length && backedIds.length
-      ? admin
-          .from('tutorial_orgs')
-          .select('responded_by')
-          .eq('org_id', id)
-          .eq('status', 'accepted')
-          .in('tutorial_id', backedIds)
-      : Promise.resolve({ data: [] as Array<{ responded_by: string | null }> }),
+    leaderIds.length
+      ? selectIn(backedIds, (ids) =>
+          admin.from('tutorial_orgs').select('responded_by').eq('org_id', id).eq('status', 'accepted').in('tutorial_id', ids)
+        )
+      : Promise.resolve({ data: [] as Array<{ responded_by: string | null }>, error: null }),
   ])
+  if (respondedError) {
+    console.error('[public/organizations/:id] backed guides failed:', respondedError.message)
+    return null
+  }
   const backedBy = (userId: string) => (responded ?? []).filter((r) => r.responded_by === userId).length
 
   const row = org.data as Record<string, unknown>
