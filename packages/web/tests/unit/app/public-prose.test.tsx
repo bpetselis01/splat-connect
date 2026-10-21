@@ -68,6 +68,8 @@ describe('Impact', () => {
     expect(screen.getByRole('img', { name: 'Bar chart of toys delivered per month, Aug 2' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Open Featured one' })).toHaveAttribute('href', '/about/stories/s9')
     expect(screen.getByRole('link', { name: /All stories/ })).toHaveAttribute('href', '/about/stories')
+    expect(screen.getByRole('link', { name: /Deliveries map/ })).toHaveAttribute('href', '/impact/map')
+    expect(screen.queryByText('SOON')).toBeNull()
   })
 
   it('WS01 reads as empty, not broken, when the impact summary cannot be fetched', async () => {

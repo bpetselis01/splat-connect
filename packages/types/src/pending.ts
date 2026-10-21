@@ -392,6 +392,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: drop the SOON pill and link the card to the map. Whether to drop the pill and link the card to the map.",
+    shipped: true,
   },
   'confirmed-page-bare-layout': {
     title: "Bare layout after email confirm",
