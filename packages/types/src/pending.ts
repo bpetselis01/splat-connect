@@ -383,6 +383,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: fix it: '1 exchange', '2 exchanges'. Nothing to decide beyond scheduling the fix.",
+    shipped: true,
   },
   'impact-map-soon-pill': {
     title: "Deliveries map card",
