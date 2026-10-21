@@ -242,6 +242,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web","api"],
     needs: "Decided 2026-10-20: content changes re-review (steps, safety, parts, tools, STL, PDF, photos, details go back to pending); prices and recommendations stay approved. Which edits send an approved guide back to review.",
+    shipped: true,
   },
   'org-leader-terms-stub': {
     title: "Organisation leader terms",
@@ -272,6 +273,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["api"],
     needs: "Decided 2026-10-20: validate to approved|rejected, 400 otherwise; schema line plus a test. Whether to validate the status to `approved` and `rejected`.",
+    shipped: true,
   },
   'terms-gate-fails-open': {
     title: "Terms gate when the check fails",
@@ -318,6 +320,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["api"],
     needs: "Decided 2026-10-20: the author appears once with the author role; graduation runs as a single transaction. Whether graduation de-duplicates the author, and whether it runs in one transaction.",
+    shipped: true,
   },
   'org-pages-404-for-non-leader': {
     title: "Organisation pages for a non-leader",
@@ -333,6 +336,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["api"],
     needs: "Decided 2026-10-20: the route honours the role filter on the server and the browser stops re-filtering. Whether the route honours the role filter or the parameter is removed.",
+    shipped: true,
   },
   'draft-event-story-validation': {
     title: "Validation on drafts",
@@ -388,6 +392,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["api"],
     needs: "Decided 2026-10-20: a no-status edit saves the fields and answers 200 with the guide, status untouched; only a forbidden status transition answers 409 'Guide is approved; submit for re-review'. Which 4xx and message a rejected edit returns.",
+    shipped: true,
   },
   'hub-exchange-count-plural': {
     title: "Hub Exchange count grammar",

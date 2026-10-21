@@ -75,12 +75,12 @@ import type { CustomizationField, Tutorial, Part, Tool, StlFile, TutorialWithDet
  * Same family as the wrapped-saveParts bug below: an inline action survives
  * being *called by* an action, never being wrapped or captured by one.
  */
-async function patchTutorialFiles(id: string, updates: Record<string, unknown>) {
+async function patchTutorialFiles(id: string, updates: Record<string, unknown>, reReview = true) {
   // Read first for updated_at: the tutorials PATCH takes it as an optimistic
   // lock, so a save built on a stale copy is refused rather than silently
   // overwriting a collaborator.
   const current = await apiClient.get<Tutorial>(`/api/tutorials/${id}`)
-  if (current.status === 'approved' || current.status === 'rejected') {
+  if (reReview && (current.status === 'approved' || current.status === 'rejected')) {
     updates.status = 'pending'
   }
   await apiClient.patch(`/api/tutorials/${id}`, { ...updates, updated_at: current.updated_at })
@@ -199,7 +199,8 @@ export default async function EditTutorialPage({
 
   async function savePricesChecked(date: string | null) {
     'use server'
-    await patchTutorialFiles(id, { prices_checked_on: date })
+    // Prices are the one saved field that leaves an approved guide live.
+    await patchTutorialFiles(id, { prices_checked_on: date }, false)
     revalidatePath(`/tutorials/${id}/edit`)
   }
 

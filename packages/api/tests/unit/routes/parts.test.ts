@@ -16,6 +16,9 @@ const mockFrom = vi.fn((table: string) => {
 
 vi.mock('../../../src/supabase/client.js', () => ({ createUserClient: () => ({ from: mockFrom }) }))
 
+// The sub-resource writes send an approved guide back to review; that move is covered by the integration suite.
+vi.mock('../../../src/re-review.js', () => ({ sendApprovedGuideBackToReview: async () => null }))
+
 const { default: parts } = await import('../../../src/routes/parts.js')
 
 function makeApp() {

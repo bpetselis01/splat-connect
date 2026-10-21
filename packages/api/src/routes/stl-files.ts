@@ -1,5 +1,6 @@
 import { subResourceRoutes } from './sub-resource.js'
 import { createUserClient } from '../supabase/client.js'
+import { sendApprovedGuideBackToReview } from '../re-review.js'
 import { STL_MATERIALS } from '@splat-connect/types'
 import type { StlFile } from '@splat-connect/types'
 
@@ -59,6 +60,8 @@ router.patch('/:id/stl-files/:fileId', async (c) => {
     return c.json({ error: error.message }, 500)
   }
   if (!data) return c.json({ error: 'Not found' }, 404)
+  const moveError = await sendApprovedGuideBackToReview(c.var, c.req.param('id'))
+  if (moveError) return c.json({ error: moveError }, 500)
   return c.json(data)
 })
 

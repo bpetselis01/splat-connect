@@ -451,6 +451,7 @@ describe('a live guide is never left empty (T9)', () => {
         }
       return base(table)
     })
+    mockAdminClient.from.mockReturnValue({ update: () => ({ eq: () => ({ eq: () => ({ select: () => ({ data: [{ id: '1', title: 't' }], error: null }) }) }) }) })
     mockUserClient.rpc.mockResolvedValue({ data: true })
   }
   const patch = (body: Record<string, unknown>) =>
