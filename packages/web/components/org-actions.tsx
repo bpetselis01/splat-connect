@@ -66,7 +66,7 @@ export function OrgActions({
       if (following) await browserApiClient.delete(`/api/organizations/${orgId}/follow`)
       else await browserApiClient.post(`/api/organizations/${orgId}/follow`, {})
       setFollowing(!following)
-      if (!following) showToast(`You will hear when ${orgName} publishes an event or a story`)
+      if (!following) showToast(`Following ${orgName}`)
     } catch {
       showToast('That did not go through. Try again.')
     } finally {
@@ -111,7 +111,7 @@ export function OrgActions({
           onSent={() => {
             setAsking(false)
             setThanked(true)
-            showToast(`Thanks sent — ${orgName}'s leaders will see it`)
+            showToast('Thanks sent')
             router.refresh()
           }}
         />

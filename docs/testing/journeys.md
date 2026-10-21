@@ -1137,9 +1137,9 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | WN06 | nav | `/organizations/[id]/public` | anon | profile render: about, doors, rate lines, recycling card, events, stories, guides | – | – | L | ✅ | ✅ | ✅ | – |
-| WN07 | write | `/organizations/[id]/public` | P | Follow / Following → POST or DELETE follow, (signed out → /signup; the toast it calls is a no-op here, no ToastProvider) | org_event_published, org_story_published | – | P | ✅ | ✅ | ✅ | – |
+| WN07 | write | `/organizations/[id]/public` | P | Follow / Following → POST or DELETE follow, confirming with the toast 'Following {org}'; signed out → /signup | org_event_published, org_story_published | – | P | ✅ | ✅ | ✅ | – |
 | WN08 | nav | `/organizations/[id]/public` | anon | "Message" → /organizations/:id/message; signed out → /signup?next&reason=message | – | – | n/a | ✅ | ✅ | – | – |
-| WN09 | write | `/organizations/[id]/public` | P | "Say thanks" → note, byline, show-on-page → POST thanks; the button reads "Thanked" | org_thanked | – | P | ✅ | ✅ | ✅ | – |
+| WN09 | write | `/organizations/[id]/public` | P | "Say thanks" → note, byline, show-on-page → POST thanks; the toast reads "Thanks sent" and the button reads "Thanked" | org_thanked | – | P | ✅ | ✅ | ✅ | – |
 | WN10 | nav | `/organizations/[id]/public` | L | a leader of this organisation sees "Edit your page" → /dashboard/organisation/profile instead of the three buttons | – | – | L | ✅ | ✅ | – | – |
 | WN11 | nav | `/organizations/[id]/public` | anon | recycling card: signed in "Book a drop-off" → drop-off?org=; signed out "How recycling works" → /get-involved/recycling | – | – | n/a | ✅ | ✅ | – | – |
 

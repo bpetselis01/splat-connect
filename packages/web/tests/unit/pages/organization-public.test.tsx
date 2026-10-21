@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
+import { useToast } from '@/components/toast'
 
 const { mockGetCapabilities, mockGet, fetchMock } = vi.hoisted(() => ({
   mockGetCapabilities: vi.fn(),
@@ -15,7 +16,12 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
   usePathname: () => '/organizations/o1/public',
 }))
-vi.mock('@/components/org-actions', () => ({ OrgActions: ({ me }: { me: unknown }) => <p>ACTIONS {me ? 'member' : 'visitor'}</p> }))
+vi.mock('@/components/org-actions', () => ({
+  OrgActions: ({ me }: { me: unknown }) => {
+    const toast = useToast()
+    return <button onClick={() => toast('probe')}>ACTIONS {me ? 'member' : 'visitor'}</button>
+  },
+}))
 vi.stubGlobal('fetch', fetchMock)
 
 const profile = (over: object = {}) => ({
@@ -61,6 +67,12 @@ describe('organisation public page', () => {
     await renderPage()
     expect(mockGet).toHaveBeenCalledWith('/api/organizations/o1/me')
     expect(screen.getByText('ACTIONS member')).toBeInTheDocument()
+  })
+
+  it('WN07 gives the buttons a ToastProvider, so Follow and Say thanks can confirm', async () => {
+    await renderPage()
+    fireEvent.click(screen.getByText('ACTIONS visitor'))
+    expect(screen.getByRole('status')).toHaveTextContent('probe')
   })
 
   it('WN06 is a 404 when the organisation is not public', async () => {

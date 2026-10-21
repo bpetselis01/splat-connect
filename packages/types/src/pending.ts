@@ -364,6 +364,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: the public organisation page gets the ToastProvider; Follow confirms 'Following {org}', Say thanks confirms 'Thanks sent'. Whether the public page gets a ToastProvider.",
+    shipped: true,
   },
   'guide-share-no-toast': {
     title: "Share on a Guide page",
