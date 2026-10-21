@@ -35,8 +35,6 @@ import { SortControl, type SortDir, type SortOption } from '@/components/sort-co
 import type { ToyWithOwner } from '@splat-connect/types'
 import { authUrl } from '@/lib/safe-next-path'
 
-// PENDING(small-inconsistencies): fix all six, each with a test: one destination for Pick for my child, Save prompts signup everywhere, hide...
-
 type Icon = typeof Gift
 type FacetKey = 'offer' | 'holder'
 type Facet = { key: FacetKey; label: string; Icon: Icon; opts: { value: string; label: string; Icon: Icon }[] }
@@ -149,7 +147,7 @@ export function ToyLibraryClient({
         }}
         secondary={{
           label: 'Pick for my child',
-          href: '/learn/choosing-a-toy',
+          href: wizardHref,
           icon: <Smiley size={20} weight="bold" className="text-brand-dark" aria-hidden="true" />,
         }}
         stats={[

@@ -96,7 +96,7 @@ describe('home page', () => {
     expect(hrefs.filter((h) => h?.startsWith('/toy-library/'))).toEqual(['/toy-library/t-1', '/toy-library/t-2'])
   })
 
-  it('WH06 the stat chips carry the impact totals, and a failed API degrades to zeros, not an error', async () => {
+  it('WH06 the stat chips carry the impact totals, and a failed API shows a could-not-load note, not zeros', async () => {
     await renderHome()
     const chips = within(screen.getByRole('heading', { level: 1 }).closest('section')!)
     expect(chips.getByText('12')).toBeInTheDocument()
@@ -107,6 +107,10 @@ describe('home page', () => {
     serve({})
     await renderHome()
     expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument()
-    expect(within(screen.getByRole('region', { name: 'Where to start' })).getByText('Browse 0 guides')).toBeInTheDocument()
+    expect(screen.getByRole('alert')).toHaveTextContent('We could not load the latest numbers. Refresh the page to try again.')
+    const doors = within(screen.getByRole('region', { name: 'Where to start' }))
+    expect(doors.getByText('Browse guides')).toBeInTheDocument()
+    expect(doors.queryByText('Browse 0 guides')).not.toBeInTheDocument()
+    expect(screen.queryByText('0')).not.toBeInTheDocument()
   })
 })

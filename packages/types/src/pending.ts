@@ -285,6 +285,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: surface all three: cover upload shows the error and keeps the form, Mark all read is one request or reports partial failure, home shows a could-not-load state instead of zeros. Whether to surface these three failures, and how.",
+    shipped: true,
   },
   'duplicated-thread-actions': {
     title: "Thread actions copied three times",
@@ -300,6 +301,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: fix all six, each with a test: one destination for Pick for my child, Save prompts signup everywhere, hide self-actions (own org toy, own profile), skip bots in tutorial_view, one <main> on /delete-account. Which of the six to fix.",
+    shipped: true,
   },
   'makers-tab-reported-person': {
     title: "Reported people on the Makers tab",

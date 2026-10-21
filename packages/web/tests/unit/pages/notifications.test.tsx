@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { ReactElement, ReactNode } from 'react'
 import NotificationsPage from '@/app/notifications/page'
+import { MarkAllReadButton } from '@/components/mark-all-read-button'
+import { NotificationsList } from '@/components/notifications-list'
 
 vi.mock('@/lib/capabilities', () => ({ getCapabilities: async () => ({ isAdmin: true }) }))
 const api = vi.hoisted(() => ({ get: vi.fn(), patch: vi.fn(), post: vi.fn() }))
@@ -33,15 +35,15 @@ const note = (id: string, read_at: string | null = null) => ({ id, type: 'tutori
 async function render(rows: unknown[], invites: unknown[] = []) {
   api.get.mockImplementation(async (path: string) => (path === '/api/collaborators/me/invites' ? invites : rows))
   const ui = await NotificationsPage()
-  const list = find(ui, (type) => typeof type === 'function')!.props as {
+  const list = find(ui, (type) => type === NotificationsList)!.props as {
     pendingInvitesByTutorial: Record<string, string>
     isAdmin: boolean
     onMarkRead: (id: string) => Promise<void>
     onAcceptInvite: (id: string) => Promise<void>
     onDeclineInvite: (id: string) => Promise<void>
   }
-  const form = find(ui, (type) => type === 'form')
-  return { ui, list, markAll: form ? (form.props.action as () => Promise<void>) : null }
+  const button = find(ui, (type) => type === MarkAllReadButton)
+  return { ui, list, markAll: button ? (button.props.action as () => Promise<number>) : null }
 }
 
 beforeEach(() => vi.clearAllMocks())
@@ -58,7 +60,7 @@ describe('NotificationsPage', () => {
   it('WD37 still renders when either read fails', async () => {
     api.get.mockRejectedValue(new Error('down'))
     const ui = await NotificationsPage()
-    expect(find(ui, (type) => typeof type === 'function')!.props.notifications).toEqual([])
+    expect(find(ui, (type) => type === NotificationsList)!.props.notifications).toEqual([])
   })
 
   it('WD38 marks one notification read with PATCH {read:true}, then revalidates the page', async () => {
@@ -78,7 +80,7 @@ describe('NotificationsPage', () => {
     api.patch.mockResolvedValue(undefined)
     const rows = [note('n1'), note('n2', '2026-10-02T00:00:00Z'), note('n3')]
     const { markAll } = await render(rows)
-    await markAll!()
+    expect(await markAll!()).toBe(0)
     expect(api.patch.mock.calls).toEqual([
       ['/api/notifications/n1', { read: true }],
       ['/api/notifications/n3', { read: true }],
@@ -86,14 +88,14 @@ describe('NotificationsPage', () => {
     expect(revalidatePath).toHaveBeenCalledWith('/notifications')
   })
 
-  it('WD39 with one failing PATCH the action rejects, the other rows were still sent, and the page is not revalidated (Q14: failures are not handled)', async () => {
+  it('WD39 with one failing PATCH the action reports 1 failure, the other rows were still sent, and the page is revalidated', async () => {
     api.patch.mockImplementation(async (path: string) => {
       if (path === '/api/notifications/n2') throw new Error('PATCH failed')
     })
     const { markAll } = await render([note('n1'), note('n2'), note('n3')])
-    await expect(markAll!()).rejects.toThrow('PATCH failed')
+    expect(await markAll!()).toBe(1)
     expect(api.patch).toHaveBeenCalledTimes(3)
-    expect(revalidatePath).not.toHaveBeenCalled()
+    expect(revalidatePath).toHaveBeenCalledWith('/notifications')
   })
 
   it('WD40 accepts and declines a collaborator invitation by its id, then revalidates', async () => {

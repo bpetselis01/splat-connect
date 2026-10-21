@@ -101,10 +101,13 @@ describe('ToyLibraryClient', () => {
     expect(screen.getByText('No toys match all of those')).toBeInTheDocument()
   })
 
-  it('WY04 points the hero at the grid, the toy chooser and the give-a-toy form', () => {
+  it('WY04 points the hero at the grid, the child wizard (the same place as the filter note) and the give-a-toy form', () => {
     render(<ToyLibraryClient toys={[toy({})]} savedIds={[]} signedIn={false} />)
     expect(screen.getByRole('link', { name: /Browse the toys/ })).toHaveAttribute('href', '#toy-grid')
-    expect(screen.getAllByRole('link', { name: /Pick for my child/ })[0]).toHaveAttribute('href', '/learn/choosing-a-toy')
+    expect(screen.getAllByRole('link', { name: /Pick for my child/ }).map((a) => a.getAttribute('href'))).toEqual([
+      '/signup?next=%2Fonboarding%2Fchild&reason=child',
+      '/signup?next=%2Fonboarding%2Fchild&reason=child',
+    ])
     expect(screen.getByRole('link', { name: /Give a toy/ })).toHaveAttribute('href', '/dashboard/toys/new')
   })
 

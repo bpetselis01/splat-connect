@@ -65,14 +65,14 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | web | Impact | 4 | 0 | 0 |
 | web | About | 6 | 0 | 0 |
 | web | Contact | 3 | 0 | 0 |
-| web | Guide detail | 12 | 0 | 0 |
+| web | Guide detail | 13 | 0 | 0 |
 | web | New guide (upload) | 5 | 0 | 0 |
 | web | Guide editor | 18 | 0 | 0 |
 | web | My guides | 4 | 0 | 0 |
 | web | Submit a guide | 1 | 0 | 0 |
 | web | Exchanges | 15 | 0 | 0 |
 | web | Makers wanted and builds | 11 | 0 | 0 |
-| web | Toy library and my toys | 24 | 0 | 0 |
+| web | Toy library and my toys | 25 | 0 | 0 |
 | mobile | Exchanges | 16 | 0 | 0 |
 | mobile | Account | 10 | 0 | 0 |
 
@@ -829,7 +829,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | WD37 | write | `/notifications` | P | list of every notification, newest first, unread dot | – | header badge | P | ✅ | ✅ | ✅ | – |
 | WD38 | write | `/notifications` | P | row click → mark read, then go to the thing it is about | – | header badge | n/a | ✅ | ✅ | ✅ | – |
-| WD39 | write | `/notifications` | P | "Mark all read" → one PATCH per unread row | – | header badge | n/a | ✅ | ✅ | ✅ | – |
+| WD39 | write | `/notifications` | P | "Mark all read" → one PATCH per unread row; failed rows are counted in an alert | – | header badge | n/a | ✅ | ✅ | ✅ | – |
 | WD40 | write | `/notifications` | P | collaborator invitation "Accept" / "Decline" on the row | collaborator_accepted, collaborator_declined | invitee list | P | ✅ | ✅ | ✅ | – |
 
 </details>
@@ -1246,9 +1246,9 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 
 </details>
 
-### Guide detail — 12 rows · 0 gaps · 0 waived
+### Guide detail — 13 rows · 0 gaps · 0 waived
 
-<details><summary>12 rows, no gaps</summary>
+<details><summary>13 rows, no gaps</summary>
 
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
@@ -1264,6 +1264,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | WT10 | write | `/tutorials/[id]` | P | "Mark this build done" → "Build logged" | – | My SPLAT builds | n/a | ✅ | ✅ | ✅ | – |
 | WT11 | write | `/tutorials/[id]` | P | Pin as revision / Unpin a community note (guide author or admin) | – | pinned revisions banner | mobile | ✅ | ✅ | ✅ | – |
 | WT12 | static | `/tutorials/[id]` | anon | community notes, the pinned-revisions banner and (signed in) the "how this fits your child" line | – | pinned revisions | mobile | ✅ | – | – | – |
+| WT41 | static | `/tutorials/[id]` | anon | rail Save signed out → /signup?reason=save, carrying the guide page | – | – | n/a | ✅ | – | – | – |
 
 </details>
 
@@ -1375,16 +1376,16 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 
 </details>
 
-### Toy library and my toys — 24 rows · 0 gaps · 0 waived
+### Toy library and my toys — 25 rows · 0 gaps · 0 waived
 
-<details><summary>24 rows, no gaps</summary>
+<details><summary>25 rows, no gaps</summary>
 
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | WY01 | nav | `/toy-library` | anon | facet buttons (How it is offered, Who is holding it), sort control and filter chips narrow the grid; Clear resets | – | – | n/a | ✅ | ✅ | – | – |
 | WY02 | nav | `/toy-library` | anon | toy card → /toy-library/:id | – | – | n/a | ✅ | ✅ | – | – |
 | WY03 | write | `/toy-library` | P | card heart → POST/DELETE /api/saves (signed out: sent to sign up) | – | Saved count | P | ✅ | ✅ | ✅ | – |
-| WY04 | static | `/toy-library` | anon | hero "Browse the toys" → #toy-grid, "Pick for my child" → /learn/choosing-a-toy, "Give a toy" → /dashboard/toys/new | – | – | n/a | ✅ | – | – | – |
+| WY04 | static | `/toy-library` | anon | hero "Browse the toys" → #toy-grid, "Pick for my child" → the child wizard (sign up first when signed out), "Give a toy" → /dashboard/toys/new | – | – | n/a | ✅ | – | – | – |
 | WY05 | static | `/toy-library/[id]` | anon | detail: photos, facts, holder card, picks, sign-in gate | – | – | n/a | ✅ | – | – | – |
 | WY06 | nav | `/toy-library/[id]` | P | "Ask to collect it" / "Offer a swap" → /toy-library/:id/request?mode= | – | – | P | ✅ | ✅ | – | – |
 | WY07 | nav | `/toy-library/[id]` | anon | "Sign in to ask for it" → /login?next=/toy-library/:id/request?mode=<donation\|exchange>; a signed-out visit to the request page keeps a valid ?mode= through sign-in | – | – | n/a | ✅ | ✅ | – | – |
@@ -1405,6 +1406,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | WY22 | write | `/dashboard/toys/[id]` | P | pause / take requests again → PATCH paused_at | – | public library visibility | n/a | ✅ | ✅ | ✅ | – |
 | WY23 | write | `/dashboard/toys/[id]` | P | "Also worth a look" picks mode and Save picks → PATCH /api/toys/:id, PUT /api/toys/:id/picks | – | – | n/a | ✅ | ✅ | ✅ | – |
 | WY24 | write | `/dashboard/toys/[id]` | P | "Delete toy" (typed phrase) → DELETE /api/toys/:id → /dashboard/toys | – | My toys count | n/a | ✅ | ✅ | ✅ | – |
+| WY25 | static | `/toy-library/[id]` | anon | rail Save signed out → /signup?reason=save, carrying the toy page | – | – | n/a | ✅ | – | – | – |
 
 </details>
 

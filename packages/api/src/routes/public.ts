@@ -32,6 +32,8 @@ import type {
   LearnCourse,
 } from '@splat-connect/types'
 
+const BOT_UA = /bot|crawl|spider|slurp|preview|headless|facebookexternalhit|curl|wget/i
+
 const publicRoutes = new Hono()
 
 publicRoutes.get('/tutorials', async (c) => {
@@ -116,11 +118,14 @@ publicRoutes.get('/tutorials/:id', async (c) => {
   if (error) return c.json({ error: error.message }, singleRowStatus(error))
   // 092. Counted, never awaited into a failure: a view that cannot be counted
   // is not a reason to refuse the guide.
-  try {
-    const { error: viewError } = await createAdminClient().rpc('bump_tutorial_view', { p_tutorial_id: c.req.param('id') })
-    if (viewError) console.error('[public guide] view not counted:', viewError.message)
-  } catch (err) {
-    console.error('[public guide] view not counted:', err)
+  // The web app forwards the visitor's User-Agent; crawlers are not readers.
+  if (!BOT_UA.test(c.req.header('user-agent') ?? '')) {
+    try {
+      const { error: viewError } = await createAdminClient().rpc('bump_tutorial_view', { p_tutorial_id: c.req.param('id') })
+      if (viewError) console.error('[public guide] view not counted:', viewError.message)
+    } catch (err) {
+      console.error('[public guide] view not counted:', err)
+    }
   }
   // Filter the embed here rather than in the select: PostgREST cannot constrain an
   // embedded relation's rows from the parent query, and an organisation's mark must
