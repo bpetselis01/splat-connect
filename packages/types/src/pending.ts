@@ -240,6 +240,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web","api"],
     needs: "Decided 2026-10-20: content changes re-review (steps, safety, parts, tools, STL, PDF, photos, details go back to pending); prices and recommendations stay approved. Which edits send an approved guide back to review.",
+    shipped: true,
   },
   'org-leader-terms-stub': {
     title: "Organisation leader terms",

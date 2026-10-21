@@ -13,9 +13,8 @@ import { pickEditable } from './pick-editable.js'
 import { notifyTutorialSubmitted } from '../review-notifications.js'
 import { readSuits, realignCaptions, GUIDE_SUITS_FIELDS, fieldKey, customizationFieldsProblem, AGREEMENT_VERSIONS } from '@splat-connect/types'
 import { removeDroppedPhotos } from '../photo-storage.js'
+import { sendApprovedGuideBackToReview } from '../re-review.js'
 import type { AuthVariables } from '../middleware/auth.js'
-
-// PENDING(guide-rereview-rule): content changes re-review (steps, safety, parts, tools, STL, PDF, photos, details go back to pending); pric...
 
 const tutorials = new Hono<{ Variables: AuthVariables }>()
 
@@ -581,6 +580,8 @@ tutorials.put('/:id/steps', async (c) => {
     (before ?? []).map((s) => s.photo_url).filter((u): u is string => !!u),
     rows.map((r) => r.photo_url).filter((u): u is string => !!u)
   )
+  const moveError = await sendApprovedGuideBackToReview(c.var, id)
+  if (moveError) return c.json({ error: moveError }, 500)
   return c.json((saved as { position: number }[]).sort((a, b) => a.position - b.position))
 })
 

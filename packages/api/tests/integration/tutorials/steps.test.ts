@@ -49,6 +49,8 @@ describe('PUT /api/tutorials/:id/steps', () => {
 
   it('comes back ordered inside both detail responses', async () => {
     await put(author.token, [{ body: 'A' }, { body: 'B' }, { body: 'C' }])
+    // The write sent the approved guide back to pending; the public read needs it live again.
+    await adminClient().from('tutorials').update({ status: 'approved' }).eq('id', guide)
     const own = await app.request(`/api/tutorials/${guide}`, { headers: { Authorization: `Bearer ${author.token}` } })
     expect(((await own.json()) as { steps: { body: string }[] }).steps.map((s) => s.body)).toEqual(['A', 'B', 'C'])
     const pub = await app.request(`/api/public/tutorials/${guide}`)

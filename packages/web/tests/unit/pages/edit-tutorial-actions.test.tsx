@@ -7,9 +7,10 @@ import type { Profile, TutorialWithDetails } from '@splat-connect/types'
  * The editor's server actions, called the way the sections call them: each
  * section component is replaced by a stub that records the props it was given,
  * and the test invokes those props. What it pins is the re-review rule as it is
- * today. Details, photos, the PDF, the prices-checked date and the customisation
- * questions send an approved OR rejected guide back to pending; parts, tools,
- * steps, safety notes, STL files and settings, picks, team and backing do not.
+ * today. Details, photos, the PDF and the customisation questions send an
+ * approved OR rejected guide back to pending. Parts, tools, steps, safety notes
+ * and STL files do it in the API; the prices-checked date, picks, team and
+ * backing leave the guide as it is.
  */
 type Props = Record<string, unknown> & Record<string, (...a: never[]) => Promise<unknown>>
 const { seen, stub } = vi.hoisted(() => {
@@ -118,12 +119,6 @@ describe('the editor sets an approved or rejected guide back to pending', () => 
     expect(patched()).toEqual([['/api/tutorials/g1', { tutorial_pdf_url: null, updated_at: 'T-CURRENT' }]])
   })
 
-  it('WT25 the prices-checked date sets pending on an approved guide', async () => {
-    const last = await mount('approved')
-    await last('prices').onSave('2026-08-02' as never)
-    expect(patched()).toEqual([['/api/tutorials/g1', { prices_checked_on: '2026-08-02', status: 'pending', updated_at: 'T-CURRENT' }]])
-  })
-
   it('WT28 the customisation questions set pending on an approved guide', async () => {
     const last = await mount('approved')
     const fields = [{ label: 'Colour', type: 'choice', options: ['red'] }]
@@ -142,6 +137,12 @@ describe('the editor leaves an approved guide approved', () => {
       ['/api/tutorials/g1/tools', { tools: [{ name: 'Screwdriver', is_optional: false }] }],
     ])
     expect(patched()).toEqual([])
+  })
+
+  it('WT25 the prices-checked date patches the date and nothing else on an approved guide', async () => {
+    const last = await mount('approved')
+    await last('prices').onSave('2026-08-02' as never)
+    expect(patched()).toEqual([['/api/tutorials/g1', { prices_checked_on: '2026-08-02', updated_at: 'T-CURRENT' }]])
   })
 
   it('WT19 WT21 safety notes post and steps put, and patch nothing', async () => {

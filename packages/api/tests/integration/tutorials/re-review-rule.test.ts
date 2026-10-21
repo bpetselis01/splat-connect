@@ -1,9 +1,8 @@
-// The re-review rule as it is today (Q8 in the requirements doc decides whether it stays).
-// The API never moves a guide back to pending on its own. The web editor does, by adding
-// status: 'pending' to the write for details, photos, PDF, prices-checked and customisation
-// questions (packages/web/tests/unit/pages/edit-tutorial-actions.test.tsx). This file pins
-// the API half: which writes leave a published guide published, and that the explicit
-// status write is what moves it.
+// The re-review rule (decided 2026-10-20): content changes (steps, safety notes, parts, tools,
+// STL files, and the details, photos and PDF the web editor sends with status: 'pending')
+// send an approved guide back to pending; prices and recommendations leave it approved.
+// This file pins the API half: the sub-resource writes move the guide themselves, and a
+// PATCH carrying no status saves the fields and leaves the status alone.
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -39,20 +38,62 @@ afterAll(async () => {
   await deleteTestUser(author.id)
 })
 
-describe('writes that leave an approved guide approved', () => {
+describe('content writes send an approved guide back to review', () => {
   it.each([
     ['parts', 'POST', (id: string) => [`/api/tutorials/${id}/parts`, { parts: [{ name: 'Jack', quantity: 1, is_optional: false, buy_links: [] }] }]],
     ['tools', 'POST', (id: string) => [`/api/tutorials/${id}/tools`, { tools: [{ name: 'Pliers', is_optional: false, buy_links: [] }] }]],
     ['steps', 'PUT', (id: string) => [`/api/tutorials/${id}/steps`, { steps: [{ body: 'Open it' }] }]],
     ['safety notes', 'POST', (id: string) => [`/api/tutorials/${id}/safety-notes`, { safety_notes: [{ title: 'Batteries', detail: null }] }]],
-    ['recommendations', 'POST', (id: string) => [`/api/tutorials/${id}/recommendations`, { recommendations: [{ recommended_id: other, required: false }] }]],
     ['STL files', 'POST', (id: string) => [`/api/tutorials/${id}/stl-files`, { stl_files: [{ filename: 'a.stl', file_url: `${id}/a.stl` }] }]],
-  ] as const)('WT19 WT21 WT25 WT26 WT27 WT29 %s keep an approved guide approved', async (_name, method, build) => {
+    ['cleared parts', 'DELETE', (id: string) => [`/api/tutorials/${id}/parts`, undefined]],
+  ] as const)('WT19 WT21 WT25 WT26 WT27 %s take an approved guide to pending', async (_name, method, build) => {
     const id = await published()
     const [path, body] = build(id)
     const res = await call(method, path as string, body)
     expect(res.status, await res.clone().text()).toBeLessThan(300)
+    expect(await statusOf(id)).toBe('pending')
+  })
+
+  it('WT21 a steps write leaves a pending guide and a rejected guide as they were', async () => {
+    const pending = await published('approved')
+    await adminClient().from('tutorials').update({ status: 'pending' }).eq('id', pending)
+    const rejected = await published('rejected')
+    for (const id of [pending, rejected]) {
+      expect((await call('PUT', `/api/tutorials/${id}/steps`, { steps: [{ body: 'Open it' }] })).status).toBe(200)
+    }
+    expect(await statusOf(pending)).toBe('pending')
+    expect(await statusOf(rejected)).toBe('rejected')
+  })
+
+  it('WT21 an admin is told once that an unbacked guide is back in review', async () => {
+    const reviewer = await createTestUser('admin')
+    try {
+      const id = await published()
+      await call('PUT', `/api/tutorials/${id}/steps`, { steps: [{ body: 'Open it' }] })
+      await call('PUT', `/api/tutorials/${id}/steps`, { steps: [{ body: 'Open it again' }] })
+      const { count } = await adminClient().from('notifications').select('id', { count: 'exact', head: true })
+        .eq('tutorial_id', id).eq('type', 'tutorial_submitted').eq('recipient_id', reviewer.id)
+      expect(count).toBe(1)
+    } finally {
+      await deleteTestUser(reviewer.id)
+    }
+  })
+})
+
+describe('writes that leave an approved guide approved', () => {
+  it('WT29 recommendations keep an approved guide approved', async () => {
+    const id = await published()
+    const res = await call('POST', `/api/tutorials/${id}/recommendations`, { recommendations: [{ recommended_id: other, required: false }] })
+    expect(res.status, await res.clone().text()).toBeLessThan(300)
     expect(await statusOf(id)).toBe('approved')
+  })
+
+  it('WT25 a prices-checked date saved without a status keeps the guide approved', async () => {
+    const id = await published()
+    const res = await call('PATCH', `/api/tutorials/${id}`, { prices_checked_on: '2026-10-01', updated_at: await updatedAt(id) })
+    expect(res.status, await res.clone().text()).toBe(200)
+    const { data } = await adminClient().from('tutorials').select('status, prices_checked_on').eq('id', id).single()
+    expect(data).toEqual({ status: 'approved', prices_checked_on: '2026-10-01' })
   })
 
   it('WT18 a details write without a status is saved and the guide stays approved', async () => {

@@ -1288,16 +1288,16 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | WT18 | write | `/tutorials/[id]/edit` | P | Details save (title, description, difficulty, build time, ages, safety declaration, works with); on an approved or rejected guide it also sets pending | tutorial_submitted | leaders' review queue | n/a | ✅ | ✅ | ✅ | – |
-| WT19 | write | `/tutorials/[id]/edit` | P | Safety notes save (does not change status) | – | – | n/a | ✅ | ✅ | ✅ | – |
+| WT19 | write | `/tutorials/[id]/edit` | P | Safety notes save (an approved guide goes back to pending) | – | – | n/a | ✅ | ✅ | ✅ | – |
 | WT20 | write | `/tutorials/[id]/edit` | P | Suits: child and device-type tags (read then PATCH with updated_at) | – | – | n/a | ✅ | ✅ | ✅ | – |
-| WT21 | write | `/tutorials/[id]/edit` | P | Steps: add, reorder, edit, delete (does not change status) | – | – | n/a | ✅ | ✅ | ✅ | – |
+| WT21 | write | `/tutorials/[id]/edit` | P | Steps: add, reorder, edit, delete (an approved guide goes back to pending) | – | – | n/a | ✅ | ✅ | ✅ | – |
 | WT22 | write | `/tutorials/[id]/edit` | P | step photo | – | – | n/a | ✅ | ✅ | ✅ | – |
 | WT23 | write | `/tutorials/[id]/edit` | P | Files: add, reorder, caption and remove photos (on an approved or rejected guide it sets pending) | tutorial_submitted | – | n/a | ✅ | ✅ | ✅ | – |
 | WT24 | write | `/tutorials/[id]/edit` | P | Files: guide PDF upload and replace (on an approved or rejected guide it sets pending) | tutorial_submitted | – | n/a | ✅ | ✅ | ✅ | – |
-| WT25 | write | `/tutorials/[id]/edit` | P | Parts: add, edit, delete (quantity, optional, buy links, price); prices-checked date sets pending on an approved guide | – | – | n/a | ✅ | ✅ | ✅ | – |
-| WT26 | write | `/tutorials/[id]/edit` | P | Tools: add, edit, delete (does not change status) | – | – | n/a | ✅ | ✅ | ✅ | – |
-| WT27 | write | `/tutorials/[id]/edit` | P | STL: upload an STL file and add its record (assistive-tech guides) | – | – | n/a | ✅ | ✅ | ✅ | – |
-| WT28 | write | `/tutorials/[id]/edit` | P | STL print settings and customisation questions (the questions set pending on an approved guide) | – | – | n/a | ✅ | ✅ | ✅ | – |
+| WT25 | write | `/tutorials/[id]/edit` | P | Parts: add, edit, delete (quantity, optional, buy links, price); an approved guide goes back to pending; the prices-checked date leaves it approved | – | – | n/a | ✅ | ✅ | ✅ | – |
+| WT26 | write | `/tutorials/[id]/edit` | P | Tools: add, edit, delete (an approved guide goes back to pending) | – | – | n/a | ✅ | ✅ | ✅ | – |
+| WT27 | write | `/tutorials/[id]/edit` | P | STL: upload an STL file and add its record (assistive-tech guides; an approved guide goes back to pending) | – | – | n/a | ✅ | ✅ | ✅ | – |
+| WT28 | write | `/tutorials/[id]/edit` | P | STL print settings and customisation questions (the questions and the print settings set pending on an approved guide) | – | – | n/a | ✅ | ✅ | ✅ | – |
 | WT29 | write | `/tutorials/[id]/edit` | P | Picks ("Also worth a look"): add, mark required first, remove | – | – | n/a | ✅ | ✅ | ✅ | – |
 | WT30 | write | `/tutorials/[id]/edit` | P | Team: invite a collaborator by email; remove one; leave | collaborator_invited, collaborator_removed, collaborator_left | invitee inbox | n/a | ✅ | ✅ | ✅ | – |
 | WT31 | write | `/tutorials/[id]/edit` | P | Backing: ask an organisation; withdraw the request | backing_requested | leaders' review count | n/a | ✅ | ✅ | ✅ | – |
