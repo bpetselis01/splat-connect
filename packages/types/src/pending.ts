@@ -304,6 +304,7 @@ export const PENDING = {
     title: "Reported people on the Makers tab",
     blurb: "Whether a reported person should leave the Makers tab, as the report sheet promises. Details are in docs/plans/journey-coverage-requirements.md and the run notes.",
     kind: "build",
+    shipped: true,
     platforms: ["mobile"],
     needs: "Decided 2026-10-20: a person you reported disappears from your own Makers tab and search until an admin resolves the report; others still see them. Whether to hide a reported person from the Makers tab, or change the sheet copy.",
   },

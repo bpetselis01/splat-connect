@@ -67,6 +67,18 @@ describe('reporting a participant', () => {
     expect(await removalNotices()).toHaveLength(0)
   })
 
+  it('hides them from the reporter\'s Makers list only, and the maker count follows', async () => {
+    const makers = async (u?: TestUser) => {
+      const res = await app.request(`/api/public/challenges/${ideaId}`, { headers: u ? { Authorization: `Bearer ${u.token}` } : {} })
+      const body = (await res.json()) as { participants: Array<{ profile_id: string }>; maker_count: number }
+      return { ids: body.participants.map((p) => p.profile_id).sort(), count: body.maker_count }
+    }
+    const everyone = [reporter.id, reported.id, bystander.id].sort()
+    expect(await makers(reporter)).toEqual({ ids: [reporter.id, bystander.id].sort(), count: 2 })
+    expect(await makers(bystander)).toEqual({ ids: everyone, count: 3 })
+    expect(await makers()).toEqual({ ids: everyone, count: 3 })
+  })
+
   it('stays open: reporting the author does not remove the reporter', async () => {
     const res = await call(reporter, `/api/ideas/${ideaId}/reports`, 'POST', { reported_profile_id: author.id, reason: 'Also this' })
     expect(res.status).toBe(201)
