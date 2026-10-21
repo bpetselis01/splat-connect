@@ -93,5 +93,6 @@ describe('contributor profile page', () => {
     getCapabilities.mockResolvedValue({ profile: { id: 'c1' } })
     await mount()
     expect(screen.queryByRole('button', { name: /Say thanks/ })).toBeNull()
+    expect(screen.queryByRole('link', { name: /to build a guide/ })).toBeNull()
   })
 })
