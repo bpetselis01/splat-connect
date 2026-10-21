@@ -12,7 +12,7 @@ import { singleRowStatus } from '../single-row.js'
 import { randomUUID } from 'node:crypto'
 import { Hono, type Context } from 'hono'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
-import { chunk, selectIn } from '../chunk.js'
+import { chunk, selectAll, selectIn } from '../chunk.js'
 import { notify } from '../notify.js'
 import { ledOrgIds } from '../toy-access.js'
 import { profileName } from '../profile-name.js'
@@ -84,15 +84,19 @@ async function withExtras<T extends { id: string }>(
 
 organizations.get('/', async (c) => {
   const supabase = createUserClient(c.get('token'))
-  const { data, error } = await supabase
+  const { data, error } = await selectAll((from, to) =>
+    supabase
     .from('organizations')
     // Leaders ride along. The admin page shows them per row, and fetching them
     // separately meant one request per organisation. A <details> cannot defer it
     // either — a server component renders whether or not the panel is open.
     .select(`${ORG_COLUMNS}, org_leaders(user_id, created_at)`)
     .order('name', { ascending: true })
+    .order('id')
+    .range(from, to)
+  )
   if (error) return c.json({ error: error.message }, 500)
-  const extras = await withExtras(data ?? [])
+  const extras = await withExtras(data)
   if (extras.error) return c.json({ error: extras.error }, 500)
   return c.json(extras.rows)
 })

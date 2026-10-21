@@ -21,3 +21,22 @@ export async function selectIn<R>(
     error: results.find((r) => r.error)?.error ?? null,
   }
 }
+
+/**
+ * PostgREST caps every response at max_rows (1000), silently, so an unranged
+ * read of a growing table drops rows. `run` must order by a unique key or pages
+ * overlap; this walks it until a short page. Counts that need only a number
+ * should use `{ count: 'exact', head: true }` instead.
+ */
+export async function selectAll<R>(
+  run: (from: number, to: number) => PromiseLike<{ data: R[] | null; error: { message: string } | null }>,
+  size = 1000,
+): Promise<{ data: R[]; error: { message: string } | null }> {
+  const data: R[] = []
+  for (let from = 0; ; from += size) {
+    const page = await run(from, from + size - 1)
+    if (page.error) return { data: [], error: page.error }
+    data.push(...(page.data ?? []))
+    if ((page.data ?? []).length < size) return { data, error: null }
+  }
+}
