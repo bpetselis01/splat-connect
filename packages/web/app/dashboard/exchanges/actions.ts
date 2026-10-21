@@ -25,8 +25,14 @@ export async function sendMessage(id: string, kind: ThreadKind, body: string) {
 
 // An empty body for an organisation: the handler reads the fixed address from
 // the org record and ignores whatever arrives here.
-export async function accept(id: string, kind: ThreadKind, address?: PickupAddress | null) {
-  await post(id, kind, 'accept', address ?? {})
+export async function accept(id: string, kind: ThreadKind, address?: PickupAddress | null): Promise<ActionResult> {
+  try {
+    await post(id, kind, 'accept', address ?? {})
+    return { ok: true }
+  } catch (e) {
+    unstable_rethrow(e)
+    return { ok: false, error: apiMessage(e, 'Could not accept. Please try again.') }
+  }
 }
 
 export type ActionResult = { ok: true } | { ok: false; error: string }

@@ -51,9 +51,13 @@ describe('thread actions', () => {
     expect(apiClient.post).toHaveBeenLastCalledWith('/api/toy-transactions/t1/confirm', { code: '482913' })
   })
 
-  it('lets an API error propagate and does not revalidate', async () => {
-    vi.mocked(apiClient.post).mockRejectedValue(new Error('API error: status 409'))
-    await expect(accept('t1', 'exchange')).rejects.toThrow('API error: status 409')
+  it.each([
+    ['accept', (): Promise<unknown> => accept('t1', 'exchange'), 'Could not accept. Please try again.'],
+  ])('returns the API sentence when %s is refused, so production does not mask it', async (_name, run, fallback) => {
+    vi.mocked(apiClient.post).mockRejectedValue(new Error('API POST /x failed with status 409: This request is no longer open'))
+    expect(await run()).toEqual({ ok: false, error: 'This request is no longer open' })
+    vi.mocked(apiClient.post).mockRejectedValue(new Error('API error: status 500'))
+    expect(await run()).toEqual({ ok: false, error: fallback })
     expect(revalidate).not.toHaveBeenCalled()
   })
 

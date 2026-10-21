@@ -62,7 +62,7 @@ export function ToyTransactionThread({
   onSendMessage: (body: string) => Promise<void>
   /** Null when an organisation is accepting — its address is not the leader's
    *  to choose, and the server reads it from the org record. */
-  onAccept: (address: PickupAddress | null) => Promise<void>
+  onAccept: (address: PickupAddress | null) => Promise<ActionResult>
   /** The reason is required on a print job: "declining needs a reason" is the
    *  artboard's rule, and the API refuses one without it. */
   onReject: (reason?: string) => Promise<ActionResult>
