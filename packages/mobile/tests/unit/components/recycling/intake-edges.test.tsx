@@ -46,7 +46,7 @@ beforeEach(() => {
 })
 
 describe('the weight and credit boxes', () => {
-  it.each(['', '0', 'abc', '-3', '2,6', '1.999', '٣', '1e3'])('hold Weigh and credit for a weight of %j and send nothing', async (typed) => {
+  it.each(['', '0', 'abc', '-3', '2,6', '1.949', '٣', '1e3'])('hold Weigh and credit for a weight of %j and send nothing', async (typed) => {
     render(<IntakeScreen />)
     await screen.findByText('Tom Beattie')
     fireEvent.changeText(actual(), typed)
@@ -64,13 +64,13 @@ describe('the weight and credit boxes', () => {
     expect(weigh().props.accessibilityState.disabled).toBe(true)
   })
 
-  it('L13 credits exactly the weight, and sends it as whole grams', async () => {
+  it('L13 credits exactly the rounded weight, and sends it as whole grams', async () => {
     render(<IntakeScreen />)
     await screen.findByText('Tom Beattie')
-    fireEvent.changeText(actual(), '3.001')
-    fireEvent.changeText(creditBox(), '3001')
+    fireEvent.changeText(actual(), '3.04')
+    fireEvent.changeText(creditBox(), '3000')
     fireEvent.press(weigh())
-    await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/api/organizations/org1/recycling/d1', { status: 'received', weighed_grams: 3001, credit_grams: 3001 }))
+    await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/api/organizations/org1/recycling/d1', { status: 'received', weighed_grams: 3000, credit_grams: 3000 }))
   })
 
   it('L13 credits nothing when the leader types zero, and sends that zero', async () => {

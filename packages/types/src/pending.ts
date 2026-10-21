@@ -342,6 +342,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: nearest 0.1 kg, and the credit is computed from the rounded weight so display and credit agree. Which rounding the credit uses.",
+    shipped: true,
   },
   'challenge-join-busy-stuck': {
     title: "Join after Leave on a challenge",

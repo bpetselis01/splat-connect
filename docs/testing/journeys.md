@@ -659,7 +659,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | WB24 | nav | `/dashboard/org/events/[id]` | L | registrations list with each answer, and Export CSV (data: URI built in the page); stat tiles Going, Part requests, To answer, Seats | – | Going, Part requests, To answer, Seats | P | ✅ | ✅ | ✅ | – |
 | WB25 | write | `/dashboard/organisation/stories/new` | L | story form "Publish to Stories" (consent ticked) / "Save as draft" → POST | org_story_published | followers' unread, public Stories list | n/a | ✅ | ✅ | ✅ | – |
 | WB26 | write | `/dashboard/organisation/stories/[id]/edit` | L | story form "Save changes" (consent ticked again) / "Publish to Stories" → PATCH | org_story_published | – | n/a | ✅ | ✅ | ✅ | – |
-| WB27 | write | `/dashboard/organisation/recycling` | L | intake "Weigh and credit" (actual kg, credit g) → PATCH received | recycling_received | contributor's credit balance, Booked in count | P | ✅ | ✅ | ✅ | – |
+| WB27 | write | `/dashboard/organisation/recycling` | L | intake "Weigh and credit" (actual kg rounded to 0.1, credit g from the rounded weight) → PATCH received | recycling_received | contributor's credit balance, Booked in count | P | ✅ | ✅ | ✅ | – |
 | WB28 | write | `/dashboard/organisation/recycling` | L | intake "Contaminated" → PATCH declined | recycling_declined | Booked in count | P | ✅ | ✅ | ✅ | – |
 | WB29 | write | `/dashboard/organisation/recycling` | L | "What you can take" publish (materials, machines, forms, limits, how it is brought) → PATCH the profile | – | contributor's booking form | n/a | ✅ | ✅ | ✅ | – |
 | WB30 | write | `/dashboard/organisation/profile` | L | profile form "Save and publish" → PATCH profile, then PUT doors and rate lines | – | public organisation page | n/a | ✅ | ✅ | ✅ | – |

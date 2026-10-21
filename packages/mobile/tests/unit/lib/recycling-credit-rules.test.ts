@@ -49,7 +49,11 @@ describe('intakeCredit', () => {
   it('prefills three quarters of the weight, rounded down to a whole gram', () => {
     expect(estimatedCreditGrams(2001)).toBe(1500)
     expect(estimatedCreditGrams(2003)).toBe(1502)
-    expect(intakeCredit('2.001', null)).toMatchObject({ ok: true, weighed_grams: 2001, credit_grams: 1500 })
+  })
+
+  it('weighs to the nearest 0.1 kg and credits from the rounded weight', () => {
+    expect(intakeCredit('2.001', null)).toMatchObject({ ok: true, weighed_grams: 2000, credit_grams: 1500 })
+    expect(intakeCredit('2.14', null)).toMatchObject({ ok: true, weighed_grams: 2100, credit_grams: 1575 })
   })
 
   it('asks for a weight before it shows a credit', () => {
@@ -58,9 +62,10 @@ describe('intakeCredit', () => {
     }
   })
 
-  it('refuses a weight one gram under the two-kilo floor and takes the floor itself', () => {
-    expect(intakeCredit('1.999', null).ok).toBe(false)
-    expect(intakeCredit('1.999', null).line).toMatch(/Under the 2 kg minimum/)
+  it('refuses a weight that rounds under the two-kilo floor and takes the floor itself', () => {
+    expect(intakeCredit('1.949', null).ok).toBe(false)
+    expect(intakeCredit('1.949', null).line).toMatch(/Under the 2 kg minimum/)
+    expect(intakeCredit('1.999', null)).toMatchObject({ ok: true, weighed_grams: MIN_DROPOFF_GRAMS })
     expect(intakeCredit('2', null)).toMatchObject({ ok: true, weighed_grams: MIN_DROPOFF_GRAMS })
   })
 
