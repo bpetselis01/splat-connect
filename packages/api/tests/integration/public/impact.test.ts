@@ -56,4 +56,10 @@ describe('GET /api/public/impact', () => {
     // opt-out guarantee on the numeric total, not just the list
     expect(body.totals.contributors).toBe(body.contributors.length)
   })
+
+  it('totals count every approved guide past the 1000-row cap', async () => {
+    const { count } = await adminClient().from('tutorials').select('id', { count: 'exact', head: true }).eq('status', 'approved')
+    const body = (await (await app.request(`${BASE}/api/public/impact`)).json()) as any
+    expect(body.totals.tutorials).toBe(count)
+  })
 })

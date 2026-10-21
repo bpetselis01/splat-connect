@@ -426,29 +426,51 @@ publicRoutes.get('/impact', async (c) => {
     { data: backing, error: backingError },
     { data: orgs, error: orgsError },
   ] = await Promise.all([
-    sb
-      .from('tutorials')
-      .select('id, created_at, reviewed_at, reviewed_for_org_id')
-      .eq('status', 'approved'),
-    sb
-      .from('tutorial_contributors')
-      .select('tutorial_id, profile_id, added_at, tutorials!inner(status)')
-      .eq('tutorials.status', 'approved'),
-    sb
-      .from('toys')
-      .select('id, owner_id, owner_org_id, created_at')
-      .eq('status', 'published'),
+    selectAll((from, to) =>
+      sb
+        .from('tutorials')
+        .select('id, created_at, reviewed_at, reviewed_for_org_id')
+        .eq('status', 'approved')
+        .order('id')
+        .range(from, to)
+    ),
+    selectAll((from, to) =>
+      sb
+        .from('tutorial_contributors')
+        .select('tutorial_id, profile_id, added_at, tutorials!inner(status)')
+        .eq('tutorials.status', 'approved')
+        .order('tutorial_id')
+        .order('profile_id')
+        .range(from, to)
+    ),
+    selectAll((from, to) =>
+      sb
+        .from('toys')
+        .select('id, owner_id, owner_org_id, created_at')
+        .eq('status', 'published')
+        .order('id')
+        .range(from, to)
+    ),
     // Ruling B: admin client, restricted columns only — counts a completed
     // handoff toward its giver, never the counterparty or any message/pickup detail.
-    admin
-      .from('toy_transactions')
-      .select('toy_id, owner_id, owner_org_id, updated_at')
-      .eq('status', 'completed'),
-    sb
-      .from('tutorial_orgs')
-      .select('tutorial_id, org_id, responded_at, requested_at')
-      .eq('status', 'accepted'),
-    sb.from('organizations').select('id, name, status'),
+    selectAll((from, to) =>
+      admin
+        .from('toy_transactions')
+        .select('toy_id, owner_id, owner_org_id, updated_at')
+        .eq('status', 'completed')
+        .order('id')
+        .range(from, to)
+    ),
+    selectAll((from, to) =>
+      sb
+        .from('tutorial_orgs')
+        .select('tutorial_id, org_id, responded_at, requested_at')
+        .eq('status', 'accepted')
+        .order('tutorial_id')
+        .order('org_id')
+        .range(from, to)
+    ),
+    selectAll((from, to) => sb.from('organizations').select('id, name, status').order('id').range(from, to)),
   ])
   if (
     tutorialsError ||
