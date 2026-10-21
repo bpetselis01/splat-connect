@@ -208,11 +208,13 @@ events.post('/:id/registrations', async (c) => {
     return c.json({ error: 'Tick the box to say you have read what this event costs.' }, 400)
   }
 
-  const { data: questions } = await admin
+  const { data: questions, error: questionsError } = await admin
     .from('org_event_questions')
     .select('id, prompt, answer_type, required, options')
     .eq('event_id', eventId)
     .order('position')
+  // Fail closed: no questions read must not mean no questions asked.
+  if (questionsError) return c.json({ error: "We couldn't load this event's questions. Try again." }, 500)
 
   const checked = checkAnswers(
     (questions ?? []) as QuestionRow[],
