@@ -13,6 +13,7 @@ const bGet = vi.fn()
 const bPost = vi.fn()
 const bPatch = vi.fn()
 const bPut = vi.fn()
+const bDel = vi.fn()
 vi.mock('@/lib/api-client', () => ({
   apiClient: { get: (...a: unknown[]) => get(...a), delete: (...a: unknown[]) => del(...a) },
 }))
@@ -22,6 +23,7 @@ vi.mock('@/lib/browser-api-client', () => ({
     post: (...a: unknown[]) => bPost(...a),
     patch: (...a: unknown[]) => bPatch(...a),
     put: (...a: unknown[]) => bPut(...a),
+    delete: (...a: unknown[]) => bDel(...a),
   },
 }))
 const revalidatePath = vi.fn()
@@ -84,13 +86,20 @@ describe('admin accounts', () => {
     expect(screen.getByRole('searchbox', { name: 'Search accounts' })).toHaveValue('PRIYA')
   })
 
-  it('WM17 Remove deletes that account and refreshes the accounts list and the dashboard', async () => {
+  it('WM17 Delete account asks for the typed phrase, then deletes that account and refreshes', async () => {
+    bDel.mockResolvedValue(null)
     await open()
     const row = screen.getAllByTestId('contributor-row').find((r) => r.textContent?.includes('priya@example.com'))!
-    fireEvent.click(within(row).getByRole('button', { name: 'Remove' }))
-    await waitFor(() => expect(del).toHaveBeenCalledWith('/api/admin/contributors/u2'))
-    expect(del).toHaveBeenCalledTimes(1)
-    expect(revalidatePath.mock.calls.map((c) => c[0])).toEqual(['/admin/contributors', '/admin'])
+    fireEvent.click(within(row).getByRole('button', { name: 'Delete account' }))
+    const dialog = within(row).getByRole('dialog')
+    const confirm = within(dialog).getByRole('button', { name: 'Delete' })
+    expect(confirm).toBeDisabled()
+    expect(bDel).not.toHaveBeenCalled()
+    fireEvent.change(within(dialog).getByLabelText(/to confirm/i), { target: { value: 'confirm_delete_account' } })
+    fireEvent.click(confirm)
+    await waitFor(() => expect(bDel).toHaveBeenCalledWith('/api/admin/contributors/u2'))
+    expect(bDel).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(refresh).toHaveBeenCalled())
   })
 })
 

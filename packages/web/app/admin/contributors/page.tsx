@@ -4,19 +4,10 @@ import type { Route } from 'next'
 import { apiClient } from '@/lib/api-client'
 import { paginate } from '@/lib/paginate'
 import { Pager } from '@/components/pager'
-import { revalidatePath } from 'next/cache'
+import { DeleteEntityButton } from '@/components/delete-entity-button'
 import { tintFor } from '@/components/card-photo'
 import type { AdminAccountsResponse, Organization, OrgLeader } from '@splat-connect/types'
 import { initials } from '@splat-connect/types'
-
-// PENDING(admin-remove-confirm): typed-phrase confirm, the same component as member self-deletion. Whether admin removal gets the typed-phra...
-
-async function deleteContributor(id: string) {
-  'use server'
-  await apiClient.delete(`/api/admin/contributors/${id}`)
-  revalidatePath('/admin/contributors')
-  revalidatePath('/admin')
-}
 
 type Cap = 'all' | 'contributors' | 'leaders'
 
@@ -175,11 +166,12 @@ export default async function ContributorsPage({
                     </td>
                     <td className="whitespace-nowrap text-muted" data-label="Joined">{joined(p.created_at)}</td>
                     <td className="text-right">
-                      <form action={deleteContributor.bind(null, p.id)}>
-                        <button type="submit" className="btn btn-danger btn-sm font-bold shadow-none">
-                          Remove
-                        </button>
-                      </form>
+                      <DeleteEntityButton
+                        endpoint={`/api/admin/contributors/${p.id}`}
+                        redirectTo="/admin/contributors"
+                        label="account"
+                        className="btn btn-danger btn-sm font-bold shadow-none"
+                      />
                     </td>
                   </tr>
                 )

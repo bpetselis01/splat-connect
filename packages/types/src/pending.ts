@@ -233,6 +233,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: typed-phrase confirm, the same component as member self-deletion. Whether admin removal gets the typed-phrase confirm.",
+    shipped: true,
   },
   'guide-rereview-rule': {
     title: "When an edited guide goes back to review",

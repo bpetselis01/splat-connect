@@ -4,9 +4,8 @@
  * the original child-profile-only version: `endpoint`/`redirectTo`/`label`
  * let toys reuse the same dialog instead of a second near-identical component.
  *
- * Deliberately unlike edit-items-section.tsx and admin/contributors, which both
- * delete on first click: this is a page of hand-entered data with no undo. The
- * phrase echoes the label the page is already showing, so the user has to read
+ * Deliberately unlike edit-items-section.tsx, which deletes on first click:
+ * this is a page of hand-entered data with no undo. The phrase echoes the label the page is already showing, so the user has to read
  * what they are about to destroy — the two-click arm/timeout this replaces
  * could not tell them that.
  *
@@ -16,7 +15,7 @@
  * is deliberately not wired to the cancel path — this component also closes
  * itself after a successful delete.
  */
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Route } from 'next'
 import { apiMessage } from '@splat-connect/types'
@@ -37,6 +36,8 @@ export function DeleteEntityButton({
 }) {
   const router = useRouter()
   const ref = useRef<HTMLDialogElement>(null)
+  // One dialog per row on the admin accounts list: a fixed id would bind every label to the first input.
+  const inputId = useId()
   const [open, setOpen] = useState(false)
   const [typed, setTyped] = useState('')
   const [busy, setBusy] = useState(false)
@@ -96,11 +97,11 @@ export function DeleteEntityButton({
           </p>
 
           <div>
-            <label htmlFor="confirm-delete-entity" className="field-label">
+            <label htmlFor={inputId} className="field-label">
               Type <code>{phrase}</code> to confirm
             </label>
             <input
-              id="confirm-delete-entity"
+              id={inputId}
               type="text"
               value={typed}
               onChange={(e) => setTyped(e.target.value)}

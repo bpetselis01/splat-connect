@@ -1082,7 +1082,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | WM14 | write | `/admin/ideas/[id]` | A | "Graduate to draft guide" (live challenge only) → draft guide for the participants | idea_graduated | participants challenges unread | P | ✅ | ✅ | ✅ | – |
 | WM15 | nav | `/admin/ideas/[id]` | A | "view the draft guide" link on a graduated idea → /admin/review/:tutorialId | – | – | n/a | ✅ | ✅ | – | – |
 | WM16 | nav | `/admin/contributors` | A | Filter chips (?cap=), search (?q=), Pager, leader capability from the organisations list | – | accounts | n/a | ✅ | ✅ | ✅ | – |
-| WM17 | write | `/admin/contributors` | A | Per-row "Remove" (no confirm step) → server action deleteContributor → account deleted; a sole leader is refused | – | accounts | n/a | ✅ | ✅ | ✅ | – |
+| WM17 | write | `/admin/contributors` | A | Per-row "Delete account" → typed-phrase dialog → DELETE /api/admin/contributors/:id → account deleted; a sole leader is refused | – | accounts | n/a | ✅ | ✅ | ✅ | – |
 | WM18 | write | `/admin/organizations` | A | "New organisation" drawer (?new=1): name, description, first leader → server action createOrg, then back to the list | – | organisations | n/a | ✅ | ✅ | ✅ | – |
 | WM19 | write | `/admin/organizations` | A | Manage drawer (?manage=:id) "Appoint" a leader → server action addLeader | leader_added | organisation leaders | n/a | ✅ | ✅ | ✅ | – |
 | WM20 | write | `/admin/organizations` | A | Manage drawer leader "Remove" → server action removeLeader | leader_removed | organisation leaders | n/a | ✅ | ✅ | ✅ | – |
