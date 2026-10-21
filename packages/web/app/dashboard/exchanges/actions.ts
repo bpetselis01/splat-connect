@@ -19,8 +19,14 @@ async function post(id: string, kind: ThreadKind, action: string, body: object) 
   revalidatePath(`${THREAD_PATH[kind]}/${id}`)
 }
 
-export async function sendMessage(id: string, kind: ThreadKind, body: string) {
-  await post(id, kind, 'messages', { body })
+export async function sendMessage(id: string, kind: ThreadKind, body: string): Promise<ActionResult> {
+  try {
+    await post(id, kind, 'messages', { body })
+    return { ok: true }
+  } catch (e) {
+    unstable_rethrow(e)
+    return { ok: false, error: apiMessage(e, 'Could not send the message. Please try again.') }
+  }
 }
 
 // An empty body for an organisation: the handler reads the fixed address from

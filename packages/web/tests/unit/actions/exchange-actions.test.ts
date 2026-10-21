@@ -52,6 +52,7 @@ describe('thread actions', () => {
   })
 
   it.each([
+    ['messages', (): Promise<unknown> => sendMessage('t1', 'exchange', 'Hi'), 'Could not send the message. Please try again.'],
     ['confirm', (): Promise<unknown> => confirm('t1', 'exchange', '482913'), 'Could not confirm. Please try again.'],
     ['withdraw', (): Promise<unknown> => withdraw('t1', 'exchange'), 'Could not withdraw. Please try again.'],
     ['accept', (): Promise<unknown> => accept('t1', 'exchange'), 'Could not accept. Please try again.'],

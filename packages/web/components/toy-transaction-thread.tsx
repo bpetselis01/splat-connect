@@ -59,7 +59,7 @@ export function ToyTransactionThread({
   ledOrgIds?: readonly string[]
   /** The viewer's saved profile address, seeded into the accept dialog. */
   viewerDefaultAddress?: PickupAddress | null
-  onSendMessage: (body: string) => Promise<void>
+  onSendMessage: (body: string) => Promise<ActionResult>
   /** Null when an organisation is accepting — its address is not the leader's
    *  to choose, and the server reads it from the org record. */
   onAccept: (address: PickupAddress | null) => Promise<ActionResult>
@@ -102,7 +102,7 @@ export function ToyTransactionThread({
     senderId === tx.requester_id ? tx.requester_name : tx.owner_name
   const otherPartyName = isOwner ? tx.requester_name : tx.owner_name
 
-  async function run(fn: () => Promise<void | ActionResult>, rethrow = false): Promise<boolean> {
+  async function run(fn: () => Promise<void | ActionResult>): Promise<boolean> {
     setBusy(true)
     setError(null)
     try {
@@ -112,9 +112,8 @@ export function ToyTransactionThread({
         return false
       }
       return true
-    } catch (err) {
+    } catch {
       setError('Something went wrong. Please try again.')
-      if (rethrow) throw err
       return false
     } finally {
       setBusy(false)
@@ -609,7 +608,8 @@ export function ToyTransactionThread({
           canSend={open}
           busy={busy}
           onSend={async (body) => {
-            await run(() => onSendMessage(body), true)
+            // ExchangeChat restores the draft when onSend throws.
+            if (!(await run(() => onSendMessage(body)))) throw new Error('Message not sent')
           }}
           draftKey={tx.id}
           variant={board ? 'board' : undefined}

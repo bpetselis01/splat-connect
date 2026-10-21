@@ -244,4 +244,12 @@ describe('ToyTransactionThread shows the API sentence when an action is refused'
     fireEvent.click(screen.getByRole('button', { name: 'Confirm handoff' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('This request is no longer open.')
   })
+
+  it('send, and keeps the typed message', async () => {
+    const h = mount(detail({ status: 'accepted' }), 'requester-1')
+    h.onSendMessage.mockResolvedValue(REFUSED)
+    await send(h, 'Thursday after three?')
+    expect(await screen.findByRole('alert')).toHaveTextContent('This request is no longer open.')
+    expect(screen.getByLabelText(/^Message /)).toHaveValue('Thursday after three?')
+  })
 })
