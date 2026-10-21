@@ -1568,8 +1568,9 @@ publicRoutes.get('/stories', async (c) => {
   // kills the whole query under 033/045's column grants and returns empty with
   // no error.
   const orgIds = [...new Set(stories.map((s) => s.org_id).filter((id): id is string => !!id))]
-  const { data: orgs } = await admin.from('organizations').select('id, name').in('id', orgIds)
-  const orgName = new Map((orgs ?? []).map((o) => [o.id as string, o.name as string]))
+  const orgs = await selectIn(orgIds, (ids) => admin.from('organizations').select('id, name').in('id', ids))
+  if (orgs.error) return c.json({ error: 'Stories could not be loaded. Please try again.' }, 500)
+  const orgName = new Map(orgs.data.map((o) => [o.id as string, o.name as string]))
 
   return c.json(
     stories.map((s) => ({
