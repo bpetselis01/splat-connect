@@ -111,6 +111,22 @@ describe('writes that leave an approved guide approved', () => {
     }
   })
 
+  it('WT18 an admin editing someone else\'s approved guide leaves it approved', async () => {
+    const admin = await createTestUser('admin')
+    try {
+      const id = await published()
+      const res = await app.request(`/api/tutorials/${id}`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${admin.token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: 'Fixed by admin', updated_at: await updatedAt(id) }),
+      })
+      expect(res.status, await res.clone().text()).toBe(200)
+      expect((await adminClient().from('tutorials').select('status, title').eq('id', id).single()).data).toEqual({ status: 'approved', title: 'Fixed by admin' })
+    } finally {
+      await deleteTestUser(admin.id)
+    }
+  })
+
   it('WT18 a status-less edit by someone who is not a contributor is refused and changes nothing', async () => {
     const id = await published()
     const stranger = await createTestUser('contributor')

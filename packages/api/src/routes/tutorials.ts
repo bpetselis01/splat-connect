@@ -398,8 +398,9 @@ tutorials.patch('/:id', async (c) => {
   let writer = supabase
   if (current?.status === 'approved' && !('status' in body) && !resubmitting) {
     const { data: own } = await supabase.rpc('is_tutorial_contributor', { p_tutorial_id: c.req.param('id') })
-    if (!own) return c.json({ error: 'Not found' }, 404)
-    writer = createAdminClient()
+    // Not a contributor (an admin, or a leader the 007 policy lets edit): RLS
+    // decides, and zero rows answers 409 below.
+    if (own) writer = createAdminClient()
   }
   const { data, error } = await writer
     .from('tutorials')
