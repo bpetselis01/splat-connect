@@ -88,10 +88,10 @@ describe('guide page', () => {
     expect(trail.querySelector('[aria-current="page"]')).toHaveTextContent('Bubble Machine')
   })
 
-  it('a signed-out visitor gets Share alone: no Save, no Say thanks, no Mark this build done', async () => {
+  it('WT41 a signed-out visitor gets Share and a Save that leads to sign up, but no Say thanks or Mark this build done', async () => {
     await mount()
     expect(screen.getByRole('button', { name: 'Share' })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /Save/ })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Save' })).toHaveAttribute('aria-pressed', 'false')
     expect(screen.queryByRole('button', { name: /Say thanks/ })).toBeNull()
     expect(screen.queryByRole('button', { name: /build done/ })).toBeNull()
     expect(apiGet).not.toHaveBeenCalled()

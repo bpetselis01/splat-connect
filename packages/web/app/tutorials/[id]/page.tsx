@@ -53,6 +53,9 @@ export default async function TutorialPage({
   // The api re-checks both on pin; this only decides whether to draw the buttons.
   const canPin = signedIn && (thanks.own || !!(await getCapabilities())?.isAdmin)
   const fit = signedIn ? fitLine(tutorial, await getMyChildren()) : null
+  const save = (
+    <SaveButton slug="tutorials" id={tutorial.id} saved={saved?.tutorials.includes(tutorial.id) ?? false} signedIn={signedIn} withLabel />
+  )
 
   return (
     <>
@@ -72,17 +75,11 @@ export default async function TutorialPage({
         notes={notes}
         canPin={canPin}
         actions={
-          /* The board gives a guest Share alone: saving and thanking both need
-             an account, and the rail already says so under the button. */
+          /* A guest gets Share and a Save that sends them to sign up; thanking
+             and marking a build done need an account. */
           signedIn ? (
             <>
-              <SaveButton
-                slug="tutorials"
-                id={tutorial.id}
-                saved={saved.tutorials.includes(tutorial.id)}
-                signedIn
-                withLabel
-              />
+              {save}
               <ShareButton title={tutorial.title} />
               <ThanksButton
                 tutorialId={tutorial.id}
@@ -94,7 +91,10 @@ export default async function TutorialPage({
               <MarkBuildDoneButton tutorialId={tutorial.id} />
             </>
           ) : (
-            <ShareButton title={tutorial.title} />
+            <>
+              {save}
+              <ShareButton title={tutorial.title} />
+            </>
           )
         }
       />

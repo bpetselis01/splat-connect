@@ -65,14 +65,14 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | web | Impact | 4 | 0 | 0 |
 | web | About | 6 | 0 | 0 |
 | web | Contact | 3 | 0 | 0 |
-| web | Guide detail | 12 | 0 | 0 |
+| web | Guide detail | 13 | 0 | 0 |
 | web | New guide (upload) | 5 | 0 | 0 |
 | web | Guide editor | 18 | 0 | 0 |
 | web | My guides | 4 | 0 | 0 |
 | web | Submit a guide | 1 | 0 | 0 |
 | web | Exchanges | 15 | 0 | 0 |
 | web | Makers wanted and builds | 11 | 0 | 0 |
-| web | Toy library and my toys | 24 | 0 | 0 |
+| web | Toy library and my toys | 25 | 0 | 0 |
 | mobile | Exchanges | 16 | 0 | 0 |
 | mobile | Account | 10 | 0 | 0 |
 
@@ -1246,9 +1246,9 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 
 </details>
 
-### Guide detail — 12 rows · 0 gaps · 0 waived
+### Guide detail — 13 rows · 0 gaps · 0 waived
 
-<details><summary>12 rows, no gaps</summary>
+<details><summary>13 rows, no gaps</summary>
 
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
@@ -1264,6 +1264,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | WT10 | write | `/tutorials/[id]` | P | "Mark this build done" → "Build logged" | – | My SPLAT builds | n/a | ✅ | ✅ | ✅ | – |
 | WT11 | write | `/tutorials/[id]` | P | Pin as revision / Unpin a community note (guide author or admin) | – | pinned revisions banner | mobile | ✅ | ✅ | ✅ | – |
 | WT12 | static | `/tutorials/[id]` | anon | community notes, the pinned-revisions banner and (signed in) the "how this fits your child" line | – | pinned revisions | mobile | ✅ | – | – | – |
+| WT41 | static | `/tutorials/[id]` | anon | rail Save signed out → /signup?reason=save, carrying the guide page | – | – | n/a | ✅ | – | – | – |
 
 </details>
 
@@ -1375,9 +1376,9 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 
 </details>
 
-### Toy library and my toys — 24 rows · 0 gaps · 0 waived
+### Toy library and my toys — 25 rows · 0 gaps · 0 waived
 
-<details><summary>24 rows, no gaps</summary>
+<details><summary>25 rows, no gaps</summary>
 
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
@@ -1405,6 +1406,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | WY22 | write | `/dashboard/toys/[id]` | P | pause / take requests again → PATCH paused_at | – | public library visibility | n/a | ✅ | ✅ | ✅ | – |
 | WY23 | write | `/dashboard/toys/[id]` | P | "Also worth a look" picks mode and Save picks → PATCH /api/toys/:id, PUT /api/toys/:id/picks | – | – | n/a | ✅ | ✅ | ✅ | – |
 | WY24 | write | `/dashboard/toys/[id]` | P | "Delete toy" (typed phrase) → DELETE /api/toys/:id → /dashboard/toys | – | My toys count | n/a | ✅ | ✅ | ✅ | – |
+| WY25 | static | `/toy-library/[id]` | anon | rail Save signed out → /signup?reason=save, carrying the toy page | – | – | n/a | ✅ | – | – | – |
 
 </details>
 

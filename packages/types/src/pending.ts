@@ -300,6 +300,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: fix all six, each with a test: one destination for Pick for my child, Save prompts signup everywhere, hide self-actions (own org toy, own profile), skip bots in tutorial_view, one <main> on /delete-account. Which of the six to fix.",
+    shipped: true,
   },
   'makers-tab-reported-person': {
     title: "Reported people on the Makers tab",
