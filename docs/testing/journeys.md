@@ -26,7 +26,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | web | Sign in and sign up | 24 | 0 | 0 |
 | web | Gates and onboarding | 7 | 0 | 2 |
 | web | Route protection (middleware) | 7 | 0 | 0 |
-| web | Organisation leader (web) | 36 | 0 | 0 |
+| web | Organisation leader (web) | 37 | 0 | 0 |
 | web | Header, footer and dock | 14 | 0 | 0 |
 | web | My SPLAT hub | 6 | 0 | 0 |
 | web | Account | 8 | 0 | 0 |
@@ -627,9 +627,9 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 
 </details>
 
-### Organisation leader (web) — 36 rows · 0 gaps · 0 waived
+### Organisation leader (web) — 37 rows · 0 gaps · 0 waived
 
-<details><summary>36 rows, no gaps</summary>
+<details><summary>37 rows, no gaps</summary>
 
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
@@ -669,6 +669,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | WB34 | write | `/dashboard/organisation/profile` | L | Leaders: "Cancel invitation" → DELETE | – | – | L | ✅ | ✅ | ✅ | – |
 | WB35 | write | `/dashboard/organisation/profile` | L | Leaders: "Step down as leader" (two or more leaders) → DELETE, then /dashboard | – | leader seat | L | ✅ | ✅ | ✅ | – |
 | WB36 | nav | `/dashboard/organisation/messages` | L | conversation list per led organisation, newest first, each row → /dashboard/messages/:id | – | – | P | ✅ | ✅ | ✅ | – |
+| WB37 | nav | `/dashboard/organisation` | P | an organisation page opened by a member who leads nothing → /dashboard with the note 'That page is for organisation leaders.'; signed out → /login with next | – | – | n/a | ✅ | ✅ | – | – |
 
 </details>
 

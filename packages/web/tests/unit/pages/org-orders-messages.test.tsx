@@ -10,6 +10,7 @@ vi.mock('@/lib/capabilities', () => ({
 vi.mock('next/headers', () => ({ cookies: async () => ({ get: () => undefined }) }))
 vi.mock('next/navigation', () => ({
   notFound: () => { throw new Error('NEXT_NOT_FOUND') },
+  redirect: (to: string) => { throw new Error(`REDIRECT ${to}`) },
   useRouter: () => ({ back: vi.fn(), push: vi.fn() }),
   usePathname: () => '/dashboard/organisation/messages',
 }))
@@ -38,9 +39,9 @@ describe('print orders', () => {
     )
   })
 
-  it('WB14 is not reachable by someone who leads nothing', async () => {
+  it('WB14 sends someone who leads nothing to the dashboard', async () => {
     leads.orgs = []
-    await expect(Orders()).rejects.toThrow('NEXT_NOT_FOUND')
+    await expect(Orders()).rejects.toThrow('REDIRECT /dashboard?notice=org-leaders-only')
   })
 })
 

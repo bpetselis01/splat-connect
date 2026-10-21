@@ -320,6 +320,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: signed-in non-leaders are redirected to /dashboard with a note that the page is for organisation leaders; anonymous visitors go to sign in with next. Whether a non-leader is redirected (and where) or keeps the 404.",
+    shipped: true,
   },
   'toy-transactions-role-filter-ignored': {
     title: "Role filter on the Exchange list",

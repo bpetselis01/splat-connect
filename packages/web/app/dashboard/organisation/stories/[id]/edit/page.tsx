@@ -3,7 +3,7 @@
  */
 import { notFound } from 'next/navigation'
 import { actingOrg } from '@/lib/acting-org'
-import { getCapabilities } from '@/lib/capabilities'
+import { requireOrgLeader } from '@/lib/org-access'
 import { apiClient } from '@/lib/api-client'
 import { StoryForm } from '@/components/story-form'
 import type { OrgStory } from '@splat-connect/types'
@@ -12,8 +12,7 @@ export const metadata = { title: 'Edit a story — SPLAT Connect' }
 
 export default async function EditStoryPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const caps = await getCapabilities()
-  if (!caps || caps.ledOrgs.length === 0) notFound()
+  const caps = await requireOrgLeader(`/dashboard/organisation/stories/${id}/edit`)
   const org = await actingOrg(caps)
 
   const stories = await apiClient

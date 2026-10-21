@@ -28,7 +28,7 @@ import {
   Eye,
 } from '@phosphor-icons/react/dist/ssr'
 import { actingOrg } from '@/lib/acting-org'
-import { getCapabilities } from '@/lib/capabilities'
+import { requireOrgLeader } from '@/lib/org-access'
 import { apiClient } from '@/lib/api-client'
 import { longDate } from '@splat-connect/types'
 import { formatRelativeTime } from '@/lib/relative-time'
@@ -47,8 +47,7 @@ export const metadata = { title: 'Manage event — SPLAT Connect' }
 
 export default async function ManageEventPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const caps = await getCapabilities()
-  if (!caps || caps.ledOrgs.length === 0) notFound()
+  const caps = await requireOrgLeader(`/dashboard/org/events/${id}`)
   const org = await actingOrg(caps)
 
   const [events, questions, registrations, inbox] = await Promise.all([

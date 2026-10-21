@@ -16,7 +16,7 @@ vi.mock('@/lib/capabilities', () => ({
   }),
 }))
 vi.mock('@/lib/api-client', () => ({ apiClient: { get: vi.fn() } }))
-vi.mock('next/navigation', () => ({ notFound: () => notFound(), useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }) }))
+vi.mock('next/navigation', () => ({ notFound: () => notFound(), redirect: (to: string) => { throw new Error(`REDIRECT ${to}`) }, useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }) }))
 vi.mock('next/link', () => ({
   default: ({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) => (
     <a href={href} className={className}>{children}</a>
@@ -173,10 +173,9 @@ describe('the organisation toy inventory page', () => {
     expect(chips).toEqual(['3On the shelf', '1Delivered all time'])
   })
 
-  it('is not reachable by someone who leads nothing', async () => {
+  it('sends someone who leads nothing to the dashboard', async () => {
     ledOrgs = []
     mockFetches([])
-    await expect(OrgInventoryPage()).rejects.toThrow('NEXT_NOT_FOUND')
-    expect(notFound).toHaveBeenCalled()
+    await expect(OrgInventoryPage()).rejects.toThrow('REDIRECT /dashboard?notice=org-leaders-only')
   })
 })
