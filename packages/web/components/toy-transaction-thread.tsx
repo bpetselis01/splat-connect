@@ -93,7 +93,7 @@ export function ToyTransactionThread({
   const tx = transaction
   const isOwner = isOwnerSide(tx, viewerId, ledOrgIds)
   // An admin reading a member's thread can speak in it but not act on it; the
-  // API refuses admin_cannot_act, so the controls are not offered.
+  // API refuses it, so the controls are not offered.
   const isParty = isOwner || viewerId === tx.requester_id
   // Keyed off the requester rather than the owner: an org handoff has no
   // owner_id, so every message a leader sent would otherwise be attributed to
