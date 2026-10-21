@@ -1,6 +1,5 @@
 // Ask first: the maker's and the family's sides at their edges — no questions
 // yet, a closed board, a failed send, a failed claim, odd message text.
-// journeys: K04
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { AskFirstScreen } from '../../../../components/builds/ask-first-screen'
 import { NAMES } from '../../../special-strings'
@@ -196,7 +195,7 @@ describe('the maker’s side', () => {
     expect(await screen.findByText('That did not go through. Try once more.')).toBeTruthy()
   })
 
-  it('claims once however many times the button is tapped while it is in flight', async () => {
+  it('K04 claims once however many times the button is tapped while it is in flight', async () => {
     let finish!: (v: object) => void
     mockPost.mockReturnValue(new Promise((r) => (finish = r)))
     render(<AskFirstScreen id="b1" />)

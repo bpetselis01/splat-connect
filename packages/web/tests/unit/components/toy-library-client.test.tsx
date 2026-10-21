@@ -45,7 +45,7 @@ const names = () => [...document.querySelectorAll('.browse-card__title')].map((p
 describe('ToyLibraryClient', () => {
   // The board's facets. A toy offered either way answers both a gift and a
   // swap search; "Swap or gift" asks only for the ones open to both.
-  it('filters by how a toy is offered', () => {
+  it('WY01 filters by how a toy is offered', () => {
     render(
       <ToyLibraryClient
         toys={[
@@ -63,7 +63,7 @@ describe('ToyLibraryClient', () => {
     expect(names()).toEqual(['Either toy'])
   })
 
-  it('filters by who is holding it', () => {
+  it('WY01 filters by who is holding it', () => {
     render(
       <ToyLibraryClient
         toys={[
@@ -78,7 +78,7 @@ describe('ToyLibraryClient', () => {
     expect(names()).toEqual(['Org toy'])
   })
 
-  it('sorts by condition, best first, and flips', () => {
+  it('WY01 sorts by condition, best first, and flips', () => {
     render(
       <ToyLibraryClient
         toys={[
@@ -95,9 +95,27 @@ describe('ToyLibraryClient', () => {
     expect(names()).toEqual(['Worn', 'Mint'])
   })
 
-  it('shows the empty state when nothing matches', () => {
+  it('WY01 shows the empty state when nothing matches', () => {
     render(<ToyLibraryClient toys={[toy({ offer_type: 'donation' })]} savedIds={[]} signedIn={false} />)
     fireEvent.click(screen.getByRole('button', { name: 'Swap only' }))
     expect(screen.getByText('No toys match all of those')).toBeInTheDocument()
+  })
+
+  it('WY04 points the hero at the grid, the child wizard (the same place as the filter note) and the give-a-toy form', () => {
+    render(<ToyLibraryClient toys={[toy({})]} savedIds={[]} signedIn={false} />)
+    expect(screen.getByRole('link', { name: /Browse the toys/ })).toHaveAttribute('href', '#toy-grid')
+    expect(screen.getAllByRole('link', { name: /Pick for my child/ }).map((a) => a.getAttribute('href'))).toEqual([
+      '/signup?next=%2Fonboarding%2Fchild&reason=child',
+      '/signup?next=%2Fonboarding%2Fchild&reason=child',
+    ])
+    expect(screen.getByRole('link', { name: /Give a toy/ })).toHaveAttribute('href', '/dashboard/toys/new')
+  })
+
+  it('WY03 hands a signed-in member the save control on each card, and a guest the sign-up route', () => {
+    const { unmount } = render(<ToyLibraryClient toys={[toy({ id: 't1', name: 'Kite' })]} savedIds={['t1']} signedIn />)
+    expect(screen.getByRole('button', { name: 'Saved' })).toHaveAttribute('aria-pressed', 'true')
+    unmount()
+    render(<ToyLibraryClient toys={[toy({ id: 't1', name: 'Kite' })]} savedIds={[]} signedIn={false} />)
+    expect(screen.getByRole('button', { name: 'Save' })).toHaveAttribute('aria-pressed', 'false')
   })
 })

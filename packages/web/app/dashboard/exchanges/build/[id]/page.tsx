@@ -18,13 +18,13 @@
  * - supabase/migrations/057_build_requests.sql: the columns all of it reads
  */
 import { notFound, redirect } from 'next/navigation'
-import { revalidatePath } from 'next/cache'
+import { sendMessage, accept, reject, withdraw, confirm } from '@/app/dashboard/exchanges/actions'
 import Link from 'next/link'
 import { BookOpen, Hammer, Info } from '@phosphor-icons/react/dist/ssr'
 import { requireCapabilities } from '@/lib/require-capabilities'
 import { apiClient } from '@/lib/api-client'
 import { isOwnerSide, pickupAddress } from '@splat-connect/types'
-import type { PickupAddress, ToyTransactionDetail } from '@splat-connect/types'
+import type { ToyTransactionDetail } from '@splat-connect/types'
 import { Badge } from '@/components/badge'
 import { Disclosure } from '@/components/disclosure'
 import { CostPanel, type CostLine, type Settlement } from '@/components/cost-panel'
@@ -50,32 +50,6 @@ export default async function BuildDetailPage({ params }: { params: Promise<{ id
   // A donation or an exchange opened at this URL belongs on the other page, and
   // sending it there is better than rendering build vocabulary over a toy.
   if (tx.type !== 'build') redirect(`/dashboard/exchanges/${id}`)
-
-  async function sendMessage(body: string) {
-    'use server'
-    await apiClient.post(`/api/toy-transactions/${id}/messages`, { body })
-    revalidatePath(`/dashboard/exchanges/build/${id}`)
-  }
-  async function accept(address: PickupAddress | null) {
-    'use server'
-    await apiClient.post(`/api/toy-transactions/${id}/accept`, address ?? {})
-    revalidatePath(`/dashboard/exchanges/build/${id}`)
-  }
-  async function reject() {
-    'use server'
-    await apiClient.post(`/api/toy-transactions/${id}/reject`, {})
-    revalidatePath(`/dashboard/exchanges/build/${id}`)
-  }
-  async function withdraw() {
-    'use server'
-    await apiClient.post(`/api/toy-transactions/${id}/withdraw`, {})
-    revalidatePath(`/dashboard/exchanges/build/${id}`)
-  }
-  async function confirm(code: string) {
-    'use server'
-    await apiClient.post(`/api/toy-transactions/${id}/confirm`, { code })
-    revalidatePath(`/dashboard/exchanges/build/${id}`)
-  }
 
   const ledOrgIds = caps.ledOrgs.map((org) => org.id)
   // On a build the giving side is the maker: they hand over the thing they made.
@@ -164,11 +138,11 @@ export default async function BuildDetailPage({ params }: { params: Promise<{ id
         viewerId={caps.profile.id}
         ledOrgIds={ledOrgIds}
         viewerDefaultAddress={pickupAddress(caps.profile)}
-        onSendMessage={sendMessage}
-        onAccept={accept}
-        onReject={reject}
-        onWithdraw={withdraw}
-        onConfirm={confirm}
+        onSendMessage={sendMessage.bind(null, id, 'build')}
+        onAccept={accept.bind(null, id, 'build')}
+        onReject={reject.bind(null, id, 'build')}
+        onWithdraw={withdraw.bind(null, id, 'build')}
+        onConfirm={confirm.bind(null, id, 'build')}
         variant="board"
         // An open request nobody has claimed has nobody to name yet.
         chatHead={

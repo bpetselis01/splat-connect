@@ -4,7 +4,6 @@
  * Asking stops at the claim, and the claimer's questions move into the build
  * thread.
  */
-// journeys: K03 K04 X01
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createClient } from '@supabase/supabase-js'
 import app from '../../../src/app.js'
@@ -54,7 +53,7 @@ afterAll(async () => {
 })
 
 describe('111 build request questions', () => {
-  it('lets a maker ask, tells the family, and the family answer in that thread', async () => {
+  it('K03 WX24 lets a maker ask, tells the family, and the family answer in that thread (build_question)', async () => {
     expect((await ask(makerA, { body: 'Which switch do you have?' })).status).toBe(201)
     const { data: told } = await adminClient().from('notifications').select('type').eq('recipient_id', family.id).eq('toy_transaction_id', txId)
     expect(told).toEqual([{ type: 'build_question' }])
@@ -104,7 +103,7 @@ describe('111 build request questions', () => {
     for (const body of ['  ', 'x'.repeat(1001)]) expect((await ask(makerA, { body })).status).toBe(400)
   })
 
-  it('stops at the claim, and moves the claimer’s questions into the build thread', async () => {
+  it('K04 WX25 stops at the claim, and moves the claimer’s questions into the build thread', async () => {
     expect((await app.request(`/api/toy-transactions/${txId}/claim`, { method: 'POST', headers: { Authorization: `Bearer ${makerA.token}` } })).status).toBe(200)
     expect((await ask(makerB, { body: 'Too late?' })).status).toBe(409)
     const { data: msgs } = await adminClient().from('toy_transaction_messages').select('body, kind').eq('transaction_id', txId).order('created_at')

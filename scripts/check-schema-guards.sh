@@ -702,7 +702,77 @@ select * from (values
         and p.prosrc like '%having count(*) >= 3%'
         and p.prosrc not like '%pickup_line1%'
         and not has_function_privilege('authenticated', p.oid, 'execute')
-        and not has_function_privilege('anon', p.oid, 'execute')))
+        and not has_function_privilege('anon', p.oid, 'execute'))),
+
+  -- 137. Until this is on the remote every backing_accepted, backing_declined
+  -- and report_resolved insert fails the CHECK and is only logged.
+  ('137 notifications_type_check permits the three parity types',
+   (select pg_get_constraintdef(oid) like '%backing_accepted%'
+       and pg_get_constraintdef(oid) like '%backing_declined%'
+       and pg_get_constraintdef(oid) like '%report_resolved%'
+      from pg_constraint
+     where conname = 'notifications_type_check'
+       and conrelid = 'public.notifications'::regclass)),
+
+  -- 138. Until this is on the remote every org_event_changed and
+  -- org_event_cancelled insert fails the CHECK and is only logged.
+  ('138 notifications_type_check permits the two event-change types',
+   (select pg_get_constraintdef(oid) like '%org_event_changed%'
+       and pg_get_constraintdef(oid) like '%org_event_cancelled%'
+      from pg_constraint
+     where conname = 'notifications_type_check'
+       and conrelid = 'public.notifications'::regclass)),
+
+  -- 142. Until this is on the remote every one of the fifteen hand-off types
+  -- fails the CHECK and is only logged; one probe per group is enough, the
+  -- migration is a single statement.
+  ('142 notifications_type_check permits the fifteen hand-off types',
+   (select pg_get_constraintdef(oid) like '%recycling_received%'
+       and pg_get_constraintdef(oid) like '%handover_confirmed%'
+       and pg_get_constraintdef(oid) like '%leader_added%'
+       and pg_get_constraintdef(oid) like '%org_event_deleted%'
+       and pg_get_constraintdef(oid) like '%contact_received%'
+      from pg_constraint
+     where conname = 'notifications_type_check'
+       and conrelid = 'public.notifications'::regclass)),
+
+  ('142 notifications_one_subject allows a notification with no subject',
+   (select pg_get_constraintdef(oid) like '%<= 1%'
+      from pg_constraint
+     where conname = 'notifications_one_subject'
+       and conrelid = 'public.notifications'::regclass)),
+
+  ('137 notifications.member_report_id exists and is a counted subject',
+   (select count(*) = 1 from information_schema.columns
+      where table_schema = 'public' and table_name = 'notifications'
+        and column_name = 'member_report_id')
+   and (select pg_get_constraintdef(oid) like '%member_report_id%'
+      from pg_constraint
+     where conname = 'notifications_one_subject'
+       and conrelid = 'public.notifications'::regclass)),
+
+  -- 139. Without it has_accepted counts any version, so a terms bump re-asks
+  -- nobody and void v0-todo acceptances keep their review grants.
+  ('139 has_accepted compares the current agreement version',
+   (select count(*) = 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+      where n.nspname = 'public' and p.proname = 'has_accepted'
+        and p.prosrc like '%current_agreement_version%')),
+
+  -- 141. Without the CHECK every admin message fails the insert. Without
+  -- `kind = 'user'` in the member policy a party can forge a SPLAT admin or
+  -- system message through PostgREST with their own JWT.
+  ('141 toy_transaction_messages permits kind admin',
+   (select pg_get_constraintdef(oid) like '%admin%'
+      from pg_constraint
+     where conname = 'toy_transaction_messages_kind_check'
+       and conrelid = 'public.toy_transaction_messages'::regclass)),
+
+  ('141 members can insert only kind user into a thread',
+   (select count(*) = 1 from pg_policies
+      where schemaname = 'public' and tablename = 'toy_transaction_messages'
+        and cmd = 'INSERT'
+        and policyname = 'Parties can message while a toy transaction is open'
+        and with_check like '%kind = ''user''%'))
 ) as t(guard, ok)
 where not ok;
 EOSQL

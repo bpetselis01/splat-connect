@@ -145,7 +145,7 @@ function Page() {
 /** Gated per page, not per layout: see components/learn-gate.tsx. */
 export default function GatedPage() {
   return (
-    <LearnGate>
+    <LearnGate path="/learn/handover">
       <Page />
     </LearnGate>
   )

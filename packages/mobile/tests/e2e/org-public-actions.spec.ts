@@ -1,4 +1,3 @@
-// journeys: P02 P03 P05 P06 P07 P09 Y09
 import { test, expect } from '@playwright/test'
 import { adminClient, signInAsNewContributor, uniqueTitle } from './helpers'
 import { seedPublicOrg, sendReport } from './family-toys-fixtures'
@@ -11,7 +10,7 @@ import { seedPublicOrg, sendReport } from './family-toys-fixtures'
 
 const orgPath = (id: string) => `/toy-library/organisation/${id}`
 
-test('Follow writes the follow row, Following removes it, and a reload keeps the state', async ({ page }) => {
+test('P02 Follow writes the follow row, Following removes it, and a reload keeps the state', async ({ page }) => {
   const me = await signInAsNewContributor(page)
   const org = await seedPublicOrg()
   const follows = async () => {
@@ -32,7 +31,7 @@ test('Follow writes the follow row, Following removes it, and a reload keeps the
   expect(await follows()).toEqual([])
 })
 
-test('Message opens the conversation with the organisation', async ({ page }) => {
+test('P03 Message opens the conversation with the organisation', async ({ page }) => {
   await signInAsNewContributor(page)
   const org = await seedPublicOrg()
 
@@ -42,7 +41,7 @@ test('Message opens the conversation with the organisation', async ({ page }) =>
   await expect(page.getByLabel(/^Message /)).toBeVisible()
 })
 
-test('Ask them to print carries the organisation into the printer search and on to the guide library', async ({ page }) => {
+test('P05 Ask them to print carries the organisation into the printer search and on to the guide library', async ({ page }) => {
   await signInAsNewContributor(page)
   const org = await seedPublicOrg()
 
@@ -57,7 +56,7 @@ test('Ask them to print carries the organisation into the printer search and on 
   await expect(page).toHaveURL(new RegExp(`/guides\\?printWith=${org.id}$`))
 })
 
-test('Book a drop-off opens the recycling screen', async ({ page }) => {
+test('P06 Book a drop-off opens the recycling screen', async ({ page }) => {
   await signInAsNewContributor(page)
   const org = await seedPublicOrg()
 
@@ -68,7 +67,7 @@ test('Book a drop-off opens the recycling screen', async ({ page }) => {
   await expect(page.getByText('Diverted from landfill')).toBeVisible()
 })
 
-test('each door row goes where its target says, and a door with no screen is not a button', async ({ page }) => {
+test('P07 each door row goes where its target says, and a door with no screen is not a button', async ({ page }) => {
   await signInAsNewContributor(page)
   const org = await seedPublicOrg({
     doors: [
@@ -101,7 +100,7 @@ test('each door row goes where its target says, and a door with no screen is not
   }
 })
 
-test('Report on an organisation page files an organisation report', async ({ page }) => {
+test('P09 Report on an organisation page files an organisation report', async ({ page }) => {
   const me = await signInAsNewContributor(page)
   const org = await seedPublicOrg()
 
@@ -116,7 +115,7 @@ test('Report on an organisation page files an organisation report', async ({ pag
   ])
 })
 
-test('the Organisations list shows active organisations only, and a row opens its page', async ({ page }) => {
+test('Y09 the Organisations list shows active organisations only, and a row opens its page', async ({ page }) => {
   await signInAsNewContributor(page)
   // The list is name-ordered with no search and only its first screenful is
   // rendered, so these names sort ahead of every other fixture's.

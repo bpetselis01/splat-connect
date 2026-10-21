@@ -1,4 +1,3 @@
-// journeys: C04 C06 C07 C08 C09 C13
 import { test, expect } from '@playwright/test'
 import { adminClient, createChallenge, createContributor, signInAsNewContributor, uniqueTitle } from './helpers'
 import { acceptNextConfirm, notificationsFor, partyPage } from './family-toys-fixtures'
@@ -15,7 +14,7 @@ async function participate(ideaId: string, profileId: string) {
   if (error) throw new Error(`participate failed: ${error.message}`)
 }
 
-test('Leave asks first, drops the participant row and tells the author', async ({ page, browser, baseURL }) => {
+test('C04 Leave asks first, drops the participant row and tells the author', async ({ page, browser, baseURL }) => {
   const me = await signInAsNewContributor(page)
   const author = await createContributor()
   const title = uniqueTitle('E2E Leavable Challenge')
@@ -51,7 +50,7 @@ test('Leave asks first, drops the participant row and tells the author', async (
   }
 })
 
-test('the asker marks a reply as the answer, and unmarks it', async ({ page }) => {
+test('C06 the asker marks a reply as the answer, and unmarks it', async ({ page }) => {
   const me = await signInAsNewContributor(page)
   const helper = await createContributor()
   const id = await createChallenge(me.id, { title: uniqueTitle('E2E Asked Question') })
@@ -81,7 +80,7 @@ test('the asker marks a reply as the answer, and unmarks it', async ({ page }) =
   expect(await answerOf()).toBeNull()
 })
 
-test('an author adds a constraint, and it joins the challenge', async ({ page }) => {
+test('C07 an author adds a constraint, and it joins the challenge', async ({ page }) => {
   const me = await signInAsNewContributor(page)
   const id = await createChallenge(me.id, { title: uniqueTitle('E2E Constrained Challenge') })
 
@@ -103,7 +102,7 @@ test('an author adds a constraint, and it joins the challenge', async ({ page })
   await expect(page.getByText('Must work with one hand', { exact: true })).toBeVisible()
 })
 
-test('Withdraw the idea removes a pending idea and says nothing was published', async ({ page }) => {
+test('C08 Withdraw the idea removes a pending idea and says nothing was published', async ({ page }) => {
   const me = await signInAsNewContributor(page)
   const id = await createChallenge(me.id, { title: uniqueTitle('E2E Withdrawn Idea'), status: 'pending' })
 
@@ -115,7 +114,7 @@ test('Withdraw the idea removes a pending idea and says nothing was published', 
   expect(data).toEqual([])
 })
 
-test('a rejected idea offers Submit a revised idea, prefilled, and files a new one', async ({ page }) => {
+test('C09 a rejected idea offers Submit a revised idea, prefilled, and files a new one', async ({ page }) => {
   const me = await signInAsNewContributor(page)
   const title = uniqueTitle('E2E Rejected Idea')
   const id = await createChallenge(me.id, { title, status: 'rejected', summary: 'First try at a summary.' })
@@ -139,7 +138,7 @@ test('a rejected idea offers Submit a revised idea, prefilled, and files a new o
   ])
 })
 
-test("an idea's photo uploads, saves with the idea, and shows on its brief", async ({ page }) => {
+test("C13 an idea's photo uploads, saves with the idea, and shows on its brief", async ({ page }) => {
   const me = await signInAsNewContributor(page)
   const title = uniqueTitle('E2E Photo Idea')
 

@@ -44,7 +44,30 @@ describe('organisations directory', () => {
     expect(screen.getByText(/set up by SPLAT/i)).toBeInTheDocument()
   })
 
-  it('links each organisation to its public profile', async () => {
+  it('WN01 narrows the cards by the search text and by the Takes plastic chip, and keeps both in the chip links', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse([
+        org('o1', 'Riverside', 'active'),
+        { ...org('o2', 'Northbank', 'active'), recycling_materials: ['PLA'] },
+      ])
+    )
+    const { default: Page } = await import('@/app/organizations/page')
+    render(await Page({ searchParams: Promise.resolve({ q: 'north', f: 'plastic' }) }))
+    expect(screen.getByRole('link', { name: /northbank/i })).toHaveAttribute('href', '/organizations/o2/public')
+    expect(screen.queryByRole('link', { name: /riverside/i })).toBeNull()
+    expect(screen.getByRole('link', { name: 'All' })).toHaveAttribute('href', '/organizations?q=north')
+    expect(screen.getByRole('link', { name: 'Takes plastic' })).toHaveAttribute('href', '/organizations?q=north&f=plastic')
+    expect(screen.getByRole('searchbox', { name: 'Search organisations' })).toHaveValue('north')
+  })
+
+  it('WN01 says no organisation matches when the search finds nothing', async () => {
+    fetchMock.mockResolvedValue(jsonResponse([org('o1', 'Riverside', 'active')]))
+    const { default: Page } = await import('@/app/organizations/page')
+    render(await Page({ searchParams: Promise.resolve({ q: 'zzz' }) }))
+    expect(screen.getByText(/No organisation matches that yet/)).toBeInTheDocument()
+  })
+
+  it('WN02 links each organisation to its public profile', async () => {
     fetchMock.mockResolvedValue(jsonResponse([org('o1', 'Riverside', 'active')]))
     const { default: Page } = await import('@/app/organizations/page')
     render(await Page())

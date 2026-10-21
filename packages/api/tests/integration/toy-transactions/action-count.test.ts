@@ -1,4 +1,3 @@
-// journeys: H07 W12 X01
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, type TestUser } from '../../helpers/auth.js'
@@ -98,7 +97,7 @@ describe('GET /api/toy-transactions/action-count', () => {
     const txId = ((await created.json()) as { id: string }).id
     const before = await actionCount(owner.token)
 
-    await txReq(`/${txId}/reject`, owner.token, { method: 'POST' })
+    await txReq(`/${txId}/reject`, owner.token, { method: 'POST', body: JSON.stringify({ reason: 'Already promised' }) })
     expect(await actionCount(owner.token)).toBe(before - 1)
   })
 })

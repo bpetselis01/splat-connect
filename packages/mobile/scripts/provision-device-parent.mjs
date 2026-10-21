@@ -2,28 +2,16 @@
 // YAML and cannot reach the service role, so this runs first and emits the
 // credentials as KEY=value lines for `maestro test --env`.
 //
-// Deliberately duplicates createContributor() + acceptTerms() from
-// tests/e2e/helpers.ts rather than importing them: that module imports
-// `expect` from @playwright/test (a value, not just a type), which a plain
-// Node script has no reason to load. Keep the two in sync.
-//
 // No role in the metadata and no profiles upsert: the signup trigger defaults
 // every account to 'contributor', and migration 011 removed the 'parent' role
 // this script used to write (the constraint now rejects it).
-import { createClient } from '@supabase/supabase-js'
+import { PASSWORD, acceptTerms, adminClient, uniqueEmail } from '../../../supabase/e2e-seed.ts'
 
-// Local Supabase by default — well-known non-secret dev keys, same values as
-// playwright.config.ts and tests/e2e/helpers.ts. Point DEVICE_SUPABASE_URL and
-// DEVICE_SERVICE_ROLE_KEY elsewhere to provision on another project.
-const SUPABASE_URL = process.env.DEVICE_SUPABASE_URL ?? 'http://localhost:54321'
-const SERVICE_ROLE_KEY =
-  process.env.DEVICE_SERVICE_ROLE_KEY ??
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU'
+// Local Supabase by default. Point DEVICE_SUPABASE_URL and DEVICE_SERVICE_ROLE_KEY
+// elsewhere to provision on another project.
+const email = uniqueEmail('device-parent', 'mobile-e2e.local')
 
-const PASSWORD = 'Test1234!'
-const email = `device-parent-${Date.now()}-${Math.floor(Math.random() * 1e6)}@mobile-e2e.local`
-
-const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
+const admin = adminClient(process.env.DEVICE_SUPABASE_URL, process.env.DEVICE_SERVICE_ROLE_KEY)
 
 const { data, error } = await admin.auth.admin.createUser({
   email,
@@ -33,10 +21,7 @@ const { data, error } = await admin.auth.admin.createUser({
 })
 if (error || !data.user) throw new Error(`Failed to create account: ${error?.message}`)
 
-const { error: termsError } = await admin
-  .from('user_agreements')
-  .insert({ user_id: data.user.id, agreement_type: 'contributor_terms', version: 'v0-todo' })
-if (termsError) throw new Error(`Failed to accept terms: ${termsError.message}`)
+await acceptTerms(data.user.id, 'contributor_terms', admin)
 
 // One notification, so the Inbox smoke flow renders a real row. An empty inbox
 // renders no rows, and rows are where the 2026-09-01 Hermes crash lived —
@@ -176,6 +161,63 @@ const { error: noteSeedError } = await admin.from('tutorial_notes').insert({
 })
 if (noteSeedError) throw new Error(`Failed to seed guide note: ${noteSeedError.message}`)
 
+// A published event with one required question, hosted by an organisation the
+// device account does not lead, for the register flow. No cost, so the form has
+// no cost tick box to find. In person needs a place by check constraint.
+const eventTitle = `Device smoke event ${Date.now()}`
+const { data: hostOrg, error: hostError } = await admin
+  .from('organizations')
+  .insert({ name: `Device host org ${Date.now()}`, status: 'active', suburb: 'Newtown', state: 'NSW' })
+  .select('id')
+  .single()
+if (hostError || !hostOrg) throw new Error(`Failed to seed host organisation: ${hostError?.message}`)
+const { data: event, error: eventError } = await admin
+  .from('org_events')
+  .insert({
+    org_id: hostOrg.id,
+    title: eventTitle,
+    summary: 'Seeded by provision-device-parent for the register flow.',
+    starts_at: new Date(Date.now() + 14 * 86400000).toISOString(),
+    format: 'in_person',
+    location: 'Device Hall, 1 Test Street',
+    suburb: 'Newtown',
+    state: 'NSW',
+    status: 'published',
+    created_by: reviewer.user.id,
+  })
+  .select('id')
+  .single()
+if (eventError || !event) throw new Error(`Failed to seed event: ${eventError?.message}`)
+const { error: questionError } = await admin
+  .from('org_event_questions')
+  .insert({ event_id: event.id, position: 1, prompt: 'Which toy are you bringing?', answer_type: 'short', required: true })
+if (questionError) throw new Error(`Failed to seed event question: ${questionError.message}`)
+
+// A guide waiting for an admin, for the admin review flow, and the admin role
+// that opens the queue. Authored by the reviewer so the device account is not
+// reviewing its own work. The role is the only gate the screens use client side;
+// the server's is_admin guard is the real check.
+const reviewTitle = `Device review guide ${Date.now()}`
+const { data: pending, error: pendingError } = await admin
+  .from('tutorials')
+  .insert({
+    title: reviewTitle,
+    description: 'Seeded by provision-device-parent for the admin review flow.',
+    difficulty: 'easy',
+    kind: 'toy_adaptation',
+    status: 'pending',
+    safety_declared_at: new Date().toISOString(),
+  })
+  .select('id')
+  .single()
+if (pendingError || !pending) throw new Error(`Failed to seed pending guide: ${pendingError?.message}`)
+const { error: pendingLinkError } = await admin
+  .from('tutorial_contributors')
+  .insert({ tutorial_id: pending.id, profile_id: reviewer.user.id, role: 'primary' })
+if (pendingLinkError) throw new Error(`Failed to link pending guide author: ${pendingLinkError.message}`)
+const { error: roleError } = await admin.from('profiles').update({ role: 'admin' }).eq('id', data.user.id)
+if (roleError) throw new Error(`Failed to make the device account an admin: ${roleError.message}`)
+
 // Plain KEY=value lines, so callers can `eval $(node …)` or append to
 // $GITHUB_ENV. The first two are what every flow needs; the ids are for the
 // flows that deep link or assert a row, passed on with `maestro test -e`.
@@ -186,3 +228,7 @@ console.log(`DEVICE_GUIDE_ID=${guide.id}`)
 console.log(`DEVICE_GUIDE_TITLE=${guideTitle}`)
 console.log(`DEVICE_LONG_GUIDE_ID=${longGuide.id}`)
 console.log(`DEVICE_LONG_GUIDE_TITLE=${longGuideTitle}`)
+console.log(`DEVICE_EVENT_ID=${event.id}`)
+console.log(`DEVICE_EVENT_TITLE=${eventTitle}`)
+console.log(`DEVICE_REVIEW_GUIDE_ID=${pending.id}`)
+console.log(`DEVICE_REVIEW_GUIDE_TITLE=${reviewTitle}`)

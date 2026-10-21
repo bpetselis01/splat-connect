@@ -8,22 +8,28 @@ import { describe, it, expect } from 'vitest'
  *        <html> twice, once per branch. Declaring a face and forgetting one
  *        branch is silent — the page just falls back, and it falls back to a
  *        stack that looks close enough to pass a glance.
- * How:   asserts both halves for both faces: the next/font import exists, and
+ * How:   asserts both halves for both faces: the next/font/local file exists, and
  *        the variable reaches the element.
  */
 describe('the Soft Pop faces', () => {
-  it('imports Baloo 2 and wires it into both html branches', () => {
+  it('self-hosts Baloo 2 and wires it into both html branches', () => {
     const dir = dirname(fileURLToPath(import.meta.url))
     const src = readFileSync(join(dir, '../../../app/layout.tsx'), 'utf8')
-    expect(src).toContain('Baloo_2')
+    expect(src).toContain('./fonts/baloo-2-latin.woff2')
     expect(src.match(/baloo\.variable/g) ?? []).toHaveLength(2)
   })
 
-  it('imports JetBrains Mono for numerics and wires it into both branches', () => {
+  it('self-hosts JetBrains Mono for numerics and wires it into both branches', () => {
     const dir = dirname(fileURLToPath(import.meta.url))
     const src = readFileSync(join(dir, '../../../app/layout.tsx'), 'utf8')
-    expect(src).toContain('JetBrains_Mono')
+    expect(src).toContain('./fonts/jetbrains-mono-latin.woff2')
     expect(src.match(/jetbrainsMono\.variable/g) ?? []).toHaveLength(2)
+  })
+
+  it('fetches nothing from Google at build time', () => {
+    const dir = dirname(fileURLToPath(import.meta.url))
+    const src = readFileSync(join(dir, '../../../app/layout.tsx'), 'utf8')
+    expect(src).not.toMatch(/import[^\n]*next\/font\/google/)
   })
 
   it('has dropped the faces the previous system used', () => {

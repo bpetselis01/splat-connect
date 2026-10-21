@@ -139,7 +139,7 @@ export function EventCard({
           eventId={event.id}
           going={event.viewer_going}
           signedIn={signedIn}
-          needsForm={hasQuestions ?? false}
+          needsForm={(hasQuestions ?? false) || (event.cost_cents ?? 0) > 0}
         />
         <span className="whitespace-nowrap text-[13px] font-bold text-muted">
           {event.going_count} going

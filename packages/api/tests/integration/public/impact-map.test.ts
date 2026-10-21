@@ -2,7 +2,6 @@
  * 121 (impact-map): completed handovers by suburb, never at address level and
  * never for fewer than three deliveries in a suburb (Review Focus 2).
  */
-// journeys: Q13
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createClient } from '@supabase/supabase-js'
 import app from '../../../src/app.js'
@@ -113,7 +112,7 @@ describe('GET /api/public/impact/map — 121', () => {
     expect((await user.rpc('impact_map')).error).not.toBeNull()
   })
 
-  it('merges one suburb spelt three ways into one group of three, placed at its postcode centre', async () => {
+  it('WS02 merges one suburb spelt three ways into one group of three, placed at its postcode centre', async () => {
     const rows = await map()
     const three = rows.filter((r) => String(r.suburb).toLowerCase() === THREE)
     expect(three).toHaveLength(1)
@@ -122,7 +121,7 @@ describe('GET /api/public/impact/map — 121', () => {
     expect(three[0].lng).toBeCloseTo(151.776, 2)
   })
 
-  it('leaves out a suburb with two handovers, a request, a build and a print job', async () => {
+  it('WS02 leaves out a suburb with two handovers, a request, a build and a print job', async () => {
     expect((await map()).some((r) => String(r.suburb).toLowerCase() === TWO)).toBe(false)
   })
 

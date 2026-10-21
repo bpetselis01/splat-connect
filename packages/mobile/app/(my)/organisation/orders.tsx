@@ -1,14 +1,13 @@
 // packages/mobile/app/(my)/organisation/orders.tsx
-// Print for others, scoped to the organisation (the board's Print orders). The
-// first organisation led, as every organisation screen on web and mobile does.
+// Print for others, scoped to the organisation (the board's Print orders), for the
+// organisation being acted for.
 import { PrintForOthersScreen } from '../../../components/printing/offer-screen'
-import { useCapabilities } from '../../../lib/capabilities'
+import { useActingOrg } from '../../../lib/acting-org'
 import { SectionStub } from '../../../components/ui/SectionStub'
 
 export default function OrgOrders() {
-  const { caps, loading } = useCapabilities()
+  const { org, loading } = useActingOrg()
   if (loading) return null
-  const org = caps?.ledOrgs[0]
   if (!org) {
     return (
       <SectionStub

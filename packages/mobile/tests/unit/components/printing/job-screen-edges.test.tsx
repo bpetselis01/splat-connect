@@ -1,6 +1,5 @@
 // One print job, from both sides: every state's card, the handover code, the
 // fit answer, the thread, the cost panel, and the ways each of those fails.
-// journeys: R06
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { PrintJobScreen } from '../../../../components/printing/job-screen'
 import { NAMES } from '../../../special-strings'
@@ -407,7 +406,7 @@ describe('withdrawing', () => {
     expect(screen.queryByLabelText('Message Tom B.')).toBeNull()
   })
 
-  it('withdraws, then reloads the job to show it withdrawn', async () => {
+  it('R06 withdraws, then reloads the job to show it withdrawn', async () => {
     serve(job())
     mockPost.mockResolvedValue({})
     render(<PrintJobScreen id="j1" />)
@@ -449,7 +448,7 @@ describe('the thread', () => {
     expect(mockPost).not.toHaveBeenCalled()
   })
 
-  it('sends the message trimmed, shows it, and empties the box', async () => {
+  it('R05 sends the message trimmed, shows it, and empties the box', async () => {
     serve(accepted())
     mockPost.mockResolvedValue(msg('m1', 'Is Friday ok?', { sender_id: 'family' }))
     render(<PrintJobScreen id="j1" />)

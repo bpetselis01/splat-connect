@@ -1,5 +1,4 @@
 // packages/mobile/tests/unit/components/saved/saved-list-screen.test.tsx
-// journeys: V08 V09
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { SavedListScreen } from '../../../../components/saved/saved-list-screen'
 
@@ -33,7 +32,7 @@ beforeEach(() => {
 })
 
 describe('SavedListScreen', () => {
-  it('lists saved guides and opens one', async () => {
+  it('V09 lists saved guides and opens one', async () => {
     mockGet.mockResolvedValue([
       { id: 't1', title: 'Bubble machine', difficulty: 'easy', kind: 'toy_adaptation' },
     ])
@@ -44,7 +43,7 @@ describe('SavedListScreen', () => {
     expect(mockGet).toHaveBeenCalledWith('/api/saves/tutorials')
   })
 
-  it('lists saved toys under their own name field and route', async () => {
+  it('V09 lists saved toys under their own name field and route', async () => {
     mockGet.mockResolvedValue([
       { id: 'y1', name: 'Switch car', condition: 8, profiles: { name: 'Jamie' }, organizations: null },
     ])
@@ -54,7 +53,7 @@ describe('SavedListScreen', () => {
     expect(mockPush).toHaveBeenCalledWith('/toy-library/y1')
   })
 
-  it('lists saved challenges and opens the brief', async () => {
+  it('V09 lists saved challenges and opens the brief', async () => {
     mockGet.mockResolvedValue([{ id: 'c1', title: 'A softer switch', summary: 'Too stiff.' }])
     render(<SavedListScreen slug="challenges" />)
 
@@ -62,7 +61,7 @@ describe('SavedListScreen', () => {
     expect(mockPush).toHaveBeenCalledWith('/explore/challenges/c1')
   })
 
-  it('lists saved parts and opens their guide', async () => {
+  it('V09 lists saved parts and opens their guide', async () => {
     mockGet.mockResolvedValue([{ id: 'f1', filename: 'cradle-65mm.stl', tutorial_id: 'g1', tutorials: { id: 'g1', title: 'Switch mount' } }])
     render(<SavedListScreen slug="parts" />)
     fireEvent.press(await screen.findByText('cradle-65mm.stl'))
@@ -70,7 +69,7 @@ describe('SavedListScreen', () => {
     expect(screen.getByText('Switch mount')).toBeTruthy()
   })
 
-  it('unsaves in place through the bookmark', async () => {
+  it('V08 unsaves in place through the bookmark', async () => {
     mockGet.mockResolvedValue([{ id: 't1', title: 'Bubble machine' }])
     render(<SavedListScreen slug="tutorials" />)
 

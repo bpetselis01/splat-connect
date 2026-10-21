@@ -9,10 +9,12 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import type { OrgRelationship } from '@splat-connect/types'
 
 const push = vi.fn()
+const search = vi.hoisted(() => ({ current: '' }))
 const refresh = vi.fn()
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push, refresh }),
   usePathname: () => '/organizations/o1/public',
+  useSearchParams: () => new URLSearchParams(search.current),
 }))
 
 const post = vi.fn()
@@ -23,7 +25,8 @@ vi.mock('@/lib/browser-api-client', () => ({
     delete: (...args: unknown[]) => del(...args),
   },
 }))
-vi.mock('@/components/toast', () => ({ useToast: () => vi.fn() }))
+const showToast = vi.hoisted(() => vi.fn())
+vi.mock('@/components/toast', () => ({ useToast: () => showToast }))
 
 // jsdom has no <dialog> methods.
 HTMLDialogElement.prototype.showModal = function (this: HTMLDialogElement) {
@@ -48,34 +51,74 @@ const me = (over: Partial<OrgRelationship> = {}): OrgRelationship => ({
 
 beforeEach(() => {
   push.mockReset()
+  showToast.mockReset()
   post.mockReset().mockResolvedValue({ thanks_count: 1 })
   del.mockReset().mockResolvedValue({ following: false })
 })
 
 describe('OrgActions', () => {
-  it('shows a leader the editor instead of the three buttons', () => {
+  it('WN10 shows a leader the editor instead of the three buttons', () => {
     render(<OrgActions orgId="o1" orgName="Northbank" me={me({ leads: true })} firstName="Rachel" />)
     expect(screen.getByRole('link', { name: /edit your page/i })).toHaveAttribute('href', '/dashboard/organisation/profile')
     expect(screen.queryByRole('button', { name: /follow/i })).not.toBeInTheDocument()
   })
 
-  it('sends a signed-out visitor to sign up to follow', () => {
+  it('WN07 sends a signed-out visitor to sign up to follow', () => {
     render(<OrgActions orgId="o1" orgName="Northbank" me={null} firstName="" />)
     fireEvent.click(screen.getByRole('button', { name: 'Follow' }))
     expect(push).toHaveBeenCalledWith('/signup?next=%2Forganizations%2Fo1%2Fpublic&reason=follow')
     expect(post).not.toHaveBeenCalled()
   })
 
-  it('follows and unfollows', async () => {
+  it('WN08 keeps the query string when a visitor signs up from a filtered page', () => {
+    search.current = 'tab=toys'
+    render(<OrgActions orgId="o1" orgName="Northbank" me={null} firstName="" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Follow' }))
+    expect(push).toHaveBeenCalledWith('/signup?next=%2Forganizations%2Fo1%2Fpublic%3Ftab%3Dtoys&reason=follow')
+    expect(screen.getByRole('link', { name: 'Message' })).toHaveAttribute(
+      'href',
+      '/signup?next=%2Forganizations%2Fo1%2Fpublic%3Ftab%3Dtoys&reason=message'
+    )
+    search.current = ''
+  })
+
+  it('WN08 opens the message page for a member and sign-up with the message reason for a visitor', () => {
+    const { unmount } = render(<OrgActions orgId="o1" orgName="Northbank" me={me()} firstName="Priya" />)
+    expect(screen.getByRole('link', { name: 'Message' })).toHaveAttribute('href', '/organizations/o1/message')
+    unmount()
+    render(<OrgActions orgId="o1" orgName="Northbank" me={null} firstName="" />)
+    expect(screen.getByRole('link', { name: 'Message' })).toHaveAttribute(
+      'href',
+      '/signup?next=%2Forganizations%2Fo1%2Fpublic&reason=message'
+    )
+  })
+
+  it('WN09 sends a signed-out visitor to sign up to say thanks, without opening the form', () => {
+    render(<OrgActions orgId="o1" orgName="Northbank" me={null} firstName="" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Say thanks' }))
+    expect(push).toHaveBeenCalledWith('/signup?next=%2Forganizations%2Fo1%2Fpublic&reason=thanks')
+    expect(screen.queryByLabelText(/sign it as/i)).toBeNull()
+  })
+
+  it('WN07 puts the button back when the follow does not go through', async () => {
+    post.mockRejectedValue(new Error('nope'))
+    render(<OrgActions orgId="o1" orgName="Northbank" me={me()} firstName="Priya" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Follow' }))
+    await waitFor(() => expect(post).toHaveBeenCalled())
+    expect(screen.getByRole('button', { name: 'Follow' })).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  it('WN07 follows and unfollows', async () => {
     render(<OrgActions orgId="o1" orgName="Northbank" me={me()} firstName="Priya" />)
     fireEvent.click(screen.getByRole('button', { name: 'Follow' }))
     await waitFor(() => expect(screen.getByRole('button', { name: 'Following' })).toBeInTheDocument())
     expect(post).toHaveBeenCalledWith('/api/organizations/o1/follow', {})
+    expect(showToast).toHaveBeenCalledWith('Following Northbank')
     fireEvent.click(screen.getByRole('button', { name: 'Following' }))
     await waitFor(() => expect(del).toHaveBeenCalledWith('/api/organizations/o1/follow'))
   })
 
-  it('prefills the byline with a first name and sends the thanks once', async () => {
+  it('WN09 prefills the byline with a first name and sends the thanks once', async () => {
     render(<OrgActions orgId="o1" orgName="Northbank" me={me()} firstName="Priya" />)
     fireEvent.click(screen.getByRole('button', { name: 'Say thanks' }))
     expect(screen.getByLabelText(/sign it as/i)).toHaveValue('Priya')
@@ -89,9 +132,10 @@ describe('OrgActions', () => {
       })
     )
     await waitFor(() => expect(screen.getByRole('button', { name: 'Thanked' })).toBeDisabled())
+    expect(showToast).toHaveBeenCalledWith('Thanks sent')
   })
 
-  it('opens an already-thanked org with the button spent', () => {
+  it('WN09 opens an already-thanked org with the button spent', () => {
     render(
       <OrgActions
         orgId="o1"

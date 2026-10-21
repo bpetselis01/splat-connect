@@ -5,7 +5,7 @@ import type { NavItem } from '@/lib/public-nav'
 
 const items: NavItem[] = [
   { href: '/learn/switch-types', label: 'Switch types', state: 'live', blurb: 'Which switch suits which child.' },
-  { href: '/learn/ask-an-expert', label: 'Ask an expert', state: 'soon', featureKey: 'ask-an-expert', blurb: 'Put a question to an OT.' },
+  { href: '/learn/ask-an-expert', label: 'Ask an expert', state: 'soon', blurb: 'Put a question to an OT.' },
 ]
 
 describe('HubGrid', () => {

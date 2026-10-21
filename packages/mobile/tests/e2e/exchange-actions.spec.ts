@@ -1,4 +1,3 @@
-// journeys: X05 X08 X09 X13 X14
 import { test, expect } from '@playwright/test'
 import {
   adminClient,
@@ -18,7 +17,7 @@ import { notificationsFor, partyPage, seedDonation, sendReport } from './family-
  * action needs; the request, accept and confirm chain lives in exchanges.spec.ts.
  */
 
-test('Decline turns the request down, and the requester is told in their inbox', async ({ page, browser, baseURL }) => {
+test('X05 X15 Decline needs a reason, turns the request down, and the requester is told in their inbox and reads the reason', async ({ page, browser, baseURL }) => {
   const owner = await signInAsNewContributor(page)
   const ownerName = uniqueTitle('E2E Declining Owner')
   await renameProfile(owner.id, ownerName)
@@ -29,6 +28,9 @@ test('Decline turns the request down, and the requester is told in their inbox',
 
   await page.goto(`/exchanges/${txId}`)
   await page.getByRole('button', { name: 'Decline', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Send the decline' })).toBeDisabled()
+  await page.getByLabel('Reason for declining').fill('Already given away')
+  await page.getByRole('button', { name: 'Send the decline' }).click()
 
   await expect(page.getByText('Rejected', { exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Decline', exact: true })).toHaveCount(0)
@@ -48,12 +50,15 @@ test('Decline turns the request down, and the requester is told in their inbox',
     await requesterPage.goto('/inbox')
     await expect(requesterPage.getByText('1 unread')).toBeVisible()
     await expect(requesterPage.getByRole('button', { name: `${toyName} with ${ownerName}` })).toBeVisible()
+    await requesterPage.goto(`/exchanges/${txId}`)
+    await expect(requesterPage.getByText('This request was declined.')).toBeVisible()
+    await expect(requesterPage.getByText('Reason: Already given away')).toBeVisible()
   } finally {
     await requesterPage.context().close()
   }
 })
 
-test('New code replaces my handoff code, and the old one stops being mine', async ({ page }) => {
+test('X08 New code replaces my handoff code, and the old one stops being mine', async ({ page }) => {
   const requester = await signInAsNewContributor(page)
   await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
   const owner = await createContributor()
@@ -83,7 +88,7 @@ test('New code replaces my handoff code, and the old one stops being mine', asyn
   expect(data?.owner_code).toBe(after.owner_code)
 })
 
-test('a completed handoff offers Add to toy library, which opens the received toy in the editor', async ({ page }) => {
+test('X09 a completed handoff offers Add to toy library, which opens the received toy in the editor', async ({ page }) => {
   const requester = await signInAsNewContributor(page)
   const owner = await createContributor()
   const toyName = uniqueTitle('E2E Received Toy')
@@ -101,7 +106,7 @@ test('a completed handoff offers Add to toy library, which opens the received to
   expect(data).toEqual({ owner_id: requester.id, status: 'draft' })
 })
 
-test('Say thanks writes one profile thanks, tells the giver, and cannot be sent twice', async ({ page, browser, baseURL }) => {
+test('X13 Say thanks writes one profile thanks, tells the giver, and cannot be sent twice', async ({ page, browser, baseURL }) => {
   const requester = await signInAsNewContributor(page)
   const owner = await createContributor()
   const ownerName = uniqueTitle('E2E Thanked Giver')
@@ -113,6 +118,7 @@ test('Say thanks writes one profile thanks, tells the giver, and cannot be sent 
   await page.goto(`/exchanges/${txId}`)
   const thanks = page.getByRole('button', { name: `Say thanks to ${ownerName}`, exact: true })
   await thanks.click()
+  await page.getByRole('button', { name: 'Send thanks', exact: true }).click()
   await expect(page.getByText('Thanks sent — they will see it in their notifications')).toBeVisible()
   await expect(thanks).toBeDisabled()
 
@@ -135,7 +141,7 @@ test('Say thanks writes one profile thanks, tells the giver, and cannot be sent 
   }
 })
 
-test('Report a problem on a thread files an exchange report naming the thread', async ({ page }) => {
+test('X14 Report a problem on a thread files an exchange report naming the thread', async ({ page }) => {
   const requester = await signInAsNewContributor(page)
   const owner = await createContributor()
   const ownerName = uniqueTitle('E2E Reported Owner')

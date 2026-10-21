@@ -45,7 +45,7 @@ describe('auth tabs', () => {
 
   // Chain: a visitor sent to signup to save something who already has an
   //        account switches tabs — ?next= must survive, or login forgets it
-  it('carries the query across to the other tab', () => {
+  it('WA15 carries the query across to the other tab', () => {
     render(<AuthTabs current="signup" search="next=%2Ftutorials%2Ft1&reason=save" />)
     expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute(
       'href',

@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
-import { signIn, createContributor, createAdmin, createTutorial, uniqueTitle, acceptTerms, adminClient, pageUntilVisible } from '../helpers'
+import { signIn, createContributor, createAdmin, createTutorial, uniqueTitle, acceptTerms, adminClient, pageUntilVisible, createOrg, deleteOrg, makeLeader, seedLeaderApproval } from '../helpers'
+import { expectCardMoved, expectInboxLine, liveCount } from './support'
 
 /**
  * Wait for the review action to land in the database, not for the network to
@@ -19,14 +20,16 @@ async function expectStatus(tutorialId: string, status: string) {
     .toBe(status)
 }
 
-test('an admin approves a pending tutorial and it appears in the public library', async ({ page }) => {
+test('WM05 WM06 an admin approves a pending tutorial from the pane, the author is told, the card drops and it appears in the public library', async ({ page }) => {
   const contributor = await createContributor()
+  await acceptTerms(contributor.id)
   const admin = await createAdmin()
   const title = uniqueTitle('E2E Review Target Approve')
   const tutorialId = await createTutorial(contributor.id, { title, status: 'pending' })
 
   await signIn(page, admin.email, admin.password)
   await page.waitForURL('**/admin')
+  const pendingBefore = await liveCount('tutorials')
 
   // The queue is oldest first and paged; a page past the end clamps to the
   // last, which is where a guide submitted seconds ago sits.
@@ -42,12 +45,82 @@ test('an admin approves a pending tutorial and it appears in the public library'
   const pane = page.getByRole('complementary', { name: `Reviewing ${title}` })
   await pane.getByRole('button', { name: 'Approve', exact: true }).click()
   await expectStatus(tutorialId, 'approved')
+  await expectCardMoved(page, 'tutorials', pendingBefore, -1)
 
   await page.goto('/library')
   await expect(page.getByText(title)).toBeVisible()
+
+  await expectInboxLine(page, contributor, `"${title}" was approved and is now published`)
 })
 
-test('an admin rejects a pending tutorial with a note visible to the contributor', async ({ page }) => {
+test('WM07 an admin sends a guide back from the pane with a note, the author is told and the card drops', async ({ page }) => {
+  const contributor = await createContributor()
+  await acceptTerms(contributor.id)
+  const admin = await createAdmin()
+  const title = uniqueTitle('E2E Pane Send Back')
+  const tutorialId = await createTutorial(contributor.id, { title, status: 'pending' })
+
+  await signIn(page, admin.email, admin.password)
+  await page.waitForURL('**/admin')
+  const pendingBefore = await liveCount('tutorials')
+
+  await page.goto('/admin/review?page=9999')
+  await page.waitForLoadState('networkidle')
+  await pageUntilVisible(page, page.getByRole('link', { name: new RegExp(title) }))
+  await page.getByRole('link', { name: new RegExp(title) }).click()
+  await page.waitForURL(new RegExp(`/admin/review\\?(page=\\d+&)?selected=${tutorialId}$`))
+
+  const pane = page.getByRole('complementary', { name: `Reviewing ${title}` })
+  await pane.getByLabel('Note to contributor').fill('Step 2 needs a clearer photo.')
+  await pane.getByRole('button', { name: 'Send back', exact: true }).click()
+  await expectStatus(tutorialId, 'rejected')
+  await expectCardMoved(page, 'tutorials', pendingBefore, -1)
+
+  await expectInboxLine(page, contributor, `"${title}" was rejected`)
+  await page.goto('/dashboard/tutorials')
+  await expect(
+    page.getByTestId('tutorial-row').filter({ hasText: title }).getByText('Step 2 needs a clearer photo.')
+  ).toBeVisible()
+})
+
+test('WM03 the review tabs show the pending idea count and open the idea queue', async ({ page }) => {
+  const admin = await createAdmin()
+  await signIn(page, admin.email, admin.password)
+  await page.waitForURL('**/admin')
+  await page.goto('/admin/review')
+
+  const tabs = page.getByRole('navigation', { name: 'Review queues' })
+  await expect(tabs.getByRole('link', { name: /^Guides/ })).toHaveAttribute('aria-current', 'page')
+  await expect(tabs.getByRole('link', { name: 'Organisations' })).toHaveAttribute('href', '/admin/organization-requests')
+  await expect(tabs.getByRole('link', { name: 'Spot check' })).toHaveAttribute('href', '/admin/spot-check')
+  await tabs.getByRole('link', { name: /^Ideas/ }).click()
+  await expect(page).toHaveURL(/\/admin\/ideas$/)
+  await expect(page.getByRole('heading', { name: 'Design challenges' })).toBeVisible()
+})
+
+test('WM04 searching the review queue by guide title keeps only the match, and the box keeps the text', async ({ page }) => {
+  const contributor = await createContributor()
+  const admin = await createAdmin()
+  const wanted = uniqueTitle('E2E Search Wanted')
+  const other = uniqueTitle('E2E Search Other')
+  await createTutorial(contributor.id, { title: wanted, status: 'pending' })
+  await createTutorial(contributor.id, { title: other, status: 'pending' })
+
+  await signIn(page, admin.email, admin.password)
+  await page.waitForURL('**/admin')
+  await page.goto('/admin/review')
+  await page.waitForLoadState('networkidle')
+  const search = page.getByRole('searchbox', { name: 'Search by guide or contributor name' })
+  await search.fill(wanted)
+  await search.press('Enter')
+
+  await expect(page).toHaveURL(/q=/)
+  await expect(page.getByRole('link', { name: wanted })).toBeVisible()
+  await expect(page.getByRole('link', { name: other })).toHaveCount(0)
+  await expect(page.getByRole('searchbox', { name: 'Search by guide or contributor name' })).toHaveValue(wanted)
+})
+
+test('WM08 an admin rejects a pending tutorial from its page with a note visible to the contributor', async ({ page }) => {
   const contributor = await createContributor()
   const admin = await createAdmin()
   const title = uniqueTitle('E2E Review Target Reject')
@@ -91,7 +164,7 @@ test('the review queue lists a pending tutorial with how long it has waited', as
   await expect(row.getByRole('cell', { name: /^\d+ (hour|day)s?$/ })).toBeVisible()
 })
 
-test('the review detail page renders parts, tools, STL files and the PDF link', async ({ page }) => {
+test('WM08 the review detail page renders parts, tools, STL files and the PDF link', async ({ page }) => {
   const contributor = await createContributor()
   const admin = await createAdmin()
   const id = await createTutorial(contributor.id, {
@@ -126,7 +199,7 @@ test('the review detail page renders parts, tools, STL files and the PDF link', 
  * had no route in the UI to take it down, though the API allowed it and an
  * integration test covered it. The page now follows the tutorial's state.
  */
-test('an approved tutorial opens read-only with an unpublish control', async ({ page }) => {
+test('WM08 an approved tutorial opens read-only with an unpublish control', async ({ page }) => {
   const contributor = await createContributor()
   const admin = await createAdmin()
   const id = await createTutorial(contributor.id, {
@@ -147,7 +220,7 @@ test('an approved tutorial opens read-only with an unpublish control', async ({ 
   await expect(page.getByRole('button', { name: /Reject/ })).toHaveCount(0)
 })
 
-test('rejecting without a note shows the contributor the fallback text', async ({ page }) => {
+test('WM08 rejecting without a note shows the contributor the fallback text', async ({ page }) => {
   const contributor = await createContributor()
   const admin = await createAdmin()
   const id = await createTutorial(contributor.id, {
@@ -168,4 +241,42 @@ test('rejecting without a note shows the contributor the fallback text', async (
   await page.waitForURL('**/dashboard')
   await page.goto('/dashboard/tutorials')
   await expect(page.getByText('No feedback was provided.')).toBeVisible()
+})
+
+test('WM09 an admin unpublishes a leader-approved guide with a note, lands on spot-check, and the author is told', async ({ page }) => {
+  const author = await createContributor()
+  await acceptTerms(author.id)
+  const leader = await createContributor()
+  const admin = await createAdmin()
+  const title = uniqueTitle('E2E Unpublish Target')
+  const orgId = await createOrg(uniqueTitle('E2E Unpublish Org'))
+  try {
+    await makeLeader(leader.id, undefined, orgId)
+    const id = await createTutorial(author.id, { title, status: 'pending' })
+    await seedLeaderApproval(id, orgId, leader.id)
+
+    await signIn(page, admin.email, admin.password)
+    await page.waitForURL('**/admin')
+    await page.goto(`/admin/spot-check?limit=500`)
+    await expect(page.getByRole('link', { name: title, exact: true })).toBeVisible()
+
+    await page.getByRole('link', { name: title, exact: true }).click()
+    await page.waitForURL(`**/admin/review/${id}`)
+    await page.waitForLoadState('networkidle')
+    await page.getByLabel(/Why are you taking it down/).fill('Step 3 is unsafe for small hands.')
+    await page.getByRole('button', { name: 'Unpublish', exact: true }).click()
+
+    await page.waitForURL('**/admin/spot-check')
+    await expectStatus(id, 'rejected')
+    await page.goto('/admin/spot-check?limit=500')
+    await expect(page.getByRole('link', { name: title, exact: true })).toHaveCount(0)
+
+    await expectInboxLine(page, author, `"${title}" was rejected`)
+    await page.goto('/dashboard/tutorials')
+    await expect(
+      page.getByTestId('tutorial-row').filter({ hasText: title }).getByText('Step 3 is unsafe for small hands.')
+    ).toBeVisible()
+  } finally {
+    await deleteOrg(orgId)
+  }
 })

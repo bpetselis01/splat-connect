@@ -6,7 +6,8 @@
 import { singleRowStatus } from '../single-row.js'
 import { Hono, type Context } from 'hono'
 import { nameFormerContributors } from '../former-contributor.js'
-import { chunk } from '../chunk.js'
+import { chunk, selectAll, selectIn } from '../chunk.js'
+import { notify } from '../notify.js'
 import { challengeCounts } from '../challenge-counts.js'
 import { primaryAuthorNames, profileName } from '../profile-name.js'
 import { createAnonClient, createAdminClient } from '../supabase/client.js'
@@ -17,7 +18,7 @@ import { withPhotoUrl } from './toy-ideas.js'
 import { readNear, byDistance, pickupPostcodes, type Near } from '../distance.js'
 import { groupPlaces, type Located } from '../map.js'
 import { addressQuery, geocodeAll, type Point } from '../geocode.js'
-import { isPast, autoPicks, buildCalendar, contributorBadges, gradeOf, mergeLearnCourse, partsTotalCents, readMinutes } from '@splat-connect/types'
+import { isPast, notificationBody, autoPicks, buildCalendar, contributorBadges, gradeOf, mergeLearnCourse, partsTotalCents, readMinutes } from '@splat-connect/types'
 import type {
   ImpactSummary,
   ImpactEntity,
@@ -31,22 +32,27 @@ import type {
   LearnCourse,
 } from '@splat-connect/types'
 
+const BOT_UA = /bot|crawl|spider|slurp|preview|headless|facebookexternalhit|curl|wget/i
+
 const publicRoutes = new Hono()
 
 publicRoutes.get('/tutorials', async (c) => {
   const supabase = createAnonClient()
   const difficulty = c.req.query('difficulty')
-  let query = supabase
-    .from('tutorials')
-    // Backing rides along with the list so a library card can name its backers.
-    // The alternative is a request per card on the busiest page on the site.
-    // thanks_count and has_stl are 066's computed fields — a count and a flag,
-    // never the rows behind them.
-    .select('*, thanks_count, has_stl, parts(name), tutorial_orgs(status, organizations(id, name))')
-    .eq('status', 'approved')
-    .order('created_at', { ascending: false })
-  if (difficulty) query = query.eq('difficulty', difficulty)
-  const { data, error } = await query
+  const { data, error } = await selectAll((from, to) => {
+    let query = supabase
+      .from('tutorials')
+      // Backing rides along with the list so a library card can name its backers.
+      // The alternative is a request per card on the busiest page on the site.
+      // thanks_count and has_stl are 066's computed fields — a count and a flag,
+      // never the rows behind them.
+      .select('*, thanks_count, has_stl, parts(name), tutorial_orgs(status, organizations(id, name))')
+      .eq('status', 'approved')
+      .order('created_at', { ascending: false })
+      .order('id')
+    if (difficulty) query = query.eq('difficulty', difficulty)
+    return query.range(from, to)
+  })
   if (error) return c.json({ error: error.message }, 500)
   // Filtered here rather than in the select, for the same reason the detail route
   // does it: PostgREST cannot constrain an embedded relation from the parent query,
@@ -74,12 +80,16 @@ publicRoutes.get('/tutorials', async (c) => {
  */
 publicRoutes.get('/tutorials/stats', async (c) => {
   const admin = createAdminClient()
-  const { data, error } = await admin
-    .from('tutorials')
-    .select('id, tutorial_contributors(profile_id), tutorial_orgs(org_id, status)')
-    .eq('status', 'approved')
+  const { data, error } = await selectAll((from, to) =>
+    admin
+      .from('tutorials')
+      .select('id, tutorial_contributors(profile_id), tutorial_orgs(org_id, status)')
+      .eq('status', 'approved')
+      .order('id')
+      .range(from, to)
+  )
   if (error) return c.json({ error: error.message }, 500)
-  const rows = (data ?? []) as unknown as Array<{
+  const rows = data as unknown as Array<{
     tutorial_contributors: { profile_id: string }[]
     tutorial_orgs: { org_id: string; status: string }[]
   }>
@@ -115,11 +125,14 @@ publicRoutes.get('/tutorials/:id', async (c) => {
   if (error) return c.json({ error: error.message }, singleRowStatus(error))
   // 092. Counted, never awaited into a failure: a view that cannot be counted
   // is not a reason to refuse the guide.
-  try {
-    const { error: viewError } = await createAdminClient().rpc('bump_tutorial_view', { p_tutorial_id: c.req.param('id') })
-    if (viewError) console.error('[public guide] view not counted:', viewError.message)
-  } catch (err) {
-    console.error('[public guide] view not counted:', err)
+  // The web app forwards the visitor's User-Agent; crawlers are not readers.
+  if (!BOT_UA.test(c.req.header('user-agent') ?? '')) {
+    try {
+      const { error: viewError } = await createAdminClient().rpc('bump_tutorial_view', { p_tutorial_id: c.req.param('id') })
+      if (viewError) console.error('[public guide] view not counted:', viewError.message)
+    } catch (err) {
+      console.error('[public guide] view not counted:', err)
+    }
   }
   // Filter the embed here rather than in the select: PostgREST cannot constrain an
   // embedded relation's rows from the parent query, and an organisation's mark must
@@ -161,10 +174,9 @@ publicRoutes.get('/tutorials/:id/notes', async (c) => {
   if (error?.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'Not found' }, 404)
   if (error) return c.json({ error: error.message }, 500)
   const ids = [...new Set(data.flatMap((n) => [n.author_id, n.pinned_by]).filter((x): x is string => !!x))]
-  const { data: people } = ids.length
-    ? await createAdminClient().from('profiles').select('id, name').in('id', ids)
-    : { data: [] as { id: string; name: string }[] }
-  const name = new Map((people ?? []).map((p) => [p.id, p.name as string]))
+  const people = await selectIn(ids, (chunked) => createAdminClient().from('profiles').select('id, name').in('id', chunked))
+  if (people.error) return c.json({ error: 'Notes could not be loaded. Please try again.' }, 500)
+  const name = new Map(people.data.map((p) => [p.id, p.name as string]))
   return c.json(
     data.map(({ photo_path, ...n }) => ({
       ...n,
@@ -181,12 +193,12 @@ publicRoutes.get('/tutorials/:id/notes', async (c) => {
  * answered for anyone lets a stranger narrow it until a member's toy drops out
  * — bisecting their postcode. Signed out, the list is what it was before.
  */
-/** Whether the caller sent a valid session. These routes run before authMiddleware. */
-async function signedIn(c: Context): Promise<boolean> {
+/** The caller's user id when they sent a valid session, else null. These routes run before authMiddleware. */
+async function signedIn(c: Context): Promise<string | null> {
   const header = c.req.header('Authorization')
-  if (!header?.startsWith('Bearer ')) return false
+  if (!header?.startsWith('Bearer ')) return null
   const { data } = await createAdminClient().auth.getUser(header.slice(7))
-  return !!data.user
+  return data.user?.id ?? null
 }
 
 async function publicNear(c: Context): Promise<Near | string> {
@@ -417,29 +429,51 @@ publicRoutes.get('/impact', async (c) => {
     { data: backing, error: backingError },
     { data: orgs, error: orgsError },
   ] = await Promise.all([
-    sb
-      .from('tutorials')
-      .select('id, created_at, reviewed_at, reviewed_for_org_id')
-      .eq('status', 'approved'),
-    sb
-      .from('tutorial_contributors')
-      .select('tutorial_id, profile_id, added_at, tutorials!inner(status)')
-      .eq('tutorials.status', 'approved'),
-    sb
-      .from('toys')
-      .select('id, owner_id, owner_org_id, created_at')
-      .eq('status', 'published'),
+    selectAll((from, to) =>
+      sb
+        .from('tutorials')
+        .select('id, created_at, reviewed_at, reviewed_for_org_id')
+        .eq('status', 'approved')
+        .order('id')
+        .range(from, to)
+    ),
+    selectAll((from, to) =>
+      sb
+        .from('tutorial_contributors')
+        .select('tutorial_id, profile_id, added_at, tutorials!inner(status)')
+        .eq('tutorials.status', 'approved')
+        .order('tutorial_id')
+        .order('profile_id')
+        .range(from, to)
+    ),
+    selectAll((from, to) =>
+      sb
+        .from('toys')
+        .select('id, owner_id, owner_org_id, created_at')
+        .eq('status', 'published')
+        .order('id')
+        .range(from, to)
+    ),
     // Ruling B: admin client, restricted columns only — counts a completed
     // handoff toward its giver, never the counterparty or any message/pickup detail.
-    admin
-      .from('toy_transactions')
-      .select('toy_id, owner_id, owner_org_id, updated_at')
-      .eq('status', 'completed'),
-    sb
-      .from('tutorial_orgs')
-      .select('tutorial_id, org_id, responded_at, requested_at')
-      .eq('status', 'accepted'),
-    sb.from('organizations').select('id, name, status'),
+    selectAll((from, to) =>
+      admin
+        .from('toy_transactions')
+        .select('toy_id, owner_id, owner_org_id, updated_at')
+        .eq('status', 'completed')
+        .order('id')
+        .range(from, to)
+    ),
+    selectAll((from, to) =>
+      sb
+        .from('tutorial_orgs')
+        .select('tutorial_id, org_id, responded_at, requested_at')
+        .eq('status', 'accepted')
+        .order('tutorial_id')
+        .order('org_id')
+        .range(from, to)
+    ),
+    selectAll((from, to) => sb.from('organizations').select('id, name, status').order('id').range(from, to)),
   ])
   if (
     tutorialsError ||
@@ -669,7 +703,8 @@ publicRoutes.get('/organizations', async (c) => {
   const near = await publicNear(c)
   if (typeof near === 'string') return c.json({ error: near }, 400)
   const supabase = createAnonClient()
-  const { data, error } = await supabase
+  const { data, error } = await selectAll((from, to) =>
+    supabase
     .from('organizations')
     // The recycling columns join the list because /get-involved/recycling and
     // its booking form both filter on "who can take what" — the alternative was
@@ -681,6 +716,9 @@ publicRoutes.get('/organizations', async (c) => {
       'id, name, description, status, suburb, state, logo_url, verified_at, recycling_materials, recycling_note, recycling_machines, recycling_forms, recycling_min_kg, recycling_max_kg, recycling_turnaround, recycling_gives, recycling_hours, recycling_door'
     )
     .order('name')
+    .order('id')
+    .range(from, to)
+  )
 
   if (error) {
     console.error('[public/organizations] read failed:', error.message)
@@ -690,16 +728,20 @@ publicRoutes.get('/organizations', async (c) => {
   // holds only named columns of organizations — so they come through the admin
   // client, three numbers per id and nothing else. A failed count read leaves
   // the directory up with zeros rather than empty.
-  const { data: countRows, error: countError } = await createAdminClient()
-    .from('organizations')
-    .select('id, org_backed_count, org_toy_count, org_has_printer')
+  const { data: countRows, error: countError } = await selectAll((from, to) =>
+    createAdminClient()
+      .from('organizations')
+      .select('id, org_backed_count, org_toy_count, org_has_printer')
+      .order('id')
+      .range(from, to)
+  )
   if (countError) console.error('[public/organizations] counts failed:', countError.message)
   const counts = new Map(
     ((countRows ?? []) as Array<{ id: string; org_backed_count: number; org_toy_count: number; org_has_printer: boolean }>).map(
       (r) => [r.id, r]
     )
   )
-  const orgs = (data ?? []).map((o) => ({
+  const orgs = data.map((o) => ({
     ...o,
     backed_count: counts.get(o.id)?.org_backed_count ?? 0,
     toy_count: counts.get(o.id)?.org_toy_count ?? 0,
@@ -1056,11 +1098,15 @@ async function orgProfileExtras(id: string, backed: Array<{ id: string }>) {
       .limit(6),
     admin.from('org_leaders').select('user_id').eq('org_id', id),
     // Completed handoffs this org gave, for parts printed and families helped.
-    admin
-      .from('toy_transactions')
-      .select('type, requester_id, part_sets')
-      .eq('owner_org_id', id)
-      .eq('status', 'completed'),
+    selectAll((from, to) =>
+      admin
+        .from('toy_transactions')
+        .select('type, requester_id, part_sets')
+        .eq('owner_org_id', id)
+        .eq('status', 'completed')
+        .order('id')
+        .range(from, to)
+    ),
   ])
   const failed = [org, doors, rates, printers, thanks, quotes, leaders, done].find((r) => r.error)
   if (failed) {
@@ -1080,23 +1126,24 @@ async function orgProfileExtras(id: string, backed: Array<{ id: string }>) {
   // guides they back. Name and that count, nothing else.
   const leaderIds = (leaders.data ?? []).map((l) => l.user_id as string)
   const backedIds = backed.map((t) => t.id)
-  const [{ data: people }, { data: responded }] = await Promise.all([
+  const [{ data: people }, { data: responded, error: respondedError }] = await Promise.all([
     leaderIds.length
       ? admin.from('profiles').select('id, name').in('id', leaderIds)
       : Promise.resolve({ data: [] as Array<{ id: string; name: string }> }),
-    leaderIds.length && backedIds.length
-      ? admin
-          .from('tutorial_orgs')
-          .select('responded_by')
-          .eq('org_id', id)
-          .eq('status', 'accepted')
-          .in('tutorial_id', backedIds)
-      : Promise.resolve({ data: [] as Array<{ responded_by: string | null }> }),
+    leaderIds.length
+      ? selectIn(backedIds, (ids) =>
+          admin.from('tutorial_orgs').select('responded_by').eq('org_id', id).eq('status', 'accepted').in('tutorial_id', ids)
+        )
+      : Promise.resolve({ data: [] as Array<{ responded_by: string | null }>, error: null }),
   ])
+  if (respondedError) {
+    console.error('[public/organizations/:id] backed guides failed:', respondedError.message)
+    return null
+  }
   const backedBy = (userId: string) => (responded ?? []).filter((r) => r.responded_by === userId).length
 
   const row = org.data as Record<string, unknown>
-  const completed = (done.data ?? []) as Array<{ type: string; requester_id: string; part_sets: number | null }>
+  const completed = done.data as Array<{ type: string; requester_id: string; part_sets: number | null }>
 
   return {
     kind: row.kind as string | null,
@@ -1226,6 +1273,23 @@ publicRoutes.get('/challenges/:id', async (c) => {
     .is('removed_at', null)
   if (participantsError) return c.json({ error: participantsError.message }, 500)
 
+  // A person the viewer reported leaves their Makers list until an admin
+  // resolves it; everyone else still sees them. toy_idea_reports has no select
+  // policy for authenticated (041), so the admin client reads it, scoped to the viewer.
+  const viewer = await signedIn(c)
+  const reportedByViewer = new Set<string>()
+  if (viewer) {
+    const { data: reports, error: reportsError } = await admin
+      .from('toy_idea_reports')
+      .select('reported_profile_id')
+      .eq('idea_id', idea.id)
+      .eq('reported_by', viewer)
+      .is('resolved_at', null)
+    if (reportsError) return c.json({ error: reportsError.message }, 500)
+    for (const r of reports ?? []) reportedByViewer.add(r.reported_profile_id as string)
+  }
+  const visible = (participants ?? []).filter((p: any) => !reportedByViewer.has(p.profile_id))
+
   // 110. Never added_by: on an anonymous challenge that is the author's id.
   const { data: constraints, error: constraintsError } = await admin
     .from('toy_idea_constraints')
@@ -1241,11 +1305,12 @@ publicRoutes.get('/challenges/:id', async (c) => {
   return c.json({
     ...withPhotoUrl(rest),
     ...counts.get(idea.id),
+    maker_count: (counts.get(idea.id)?.maker_count ?? 0) - (participants ?? []).length + visible.length,
     // 108: no name and no id for an anonymous author — the id is a name one
     // call away. The author recognises their own through /api/ideas/mine/:id.
     author_id: hidden ? null : rest.author_id,
     author_name: hidden ? null : profiles?.name ?? null,
-    participants: (participants ?? []).map((p: any) => ({
+    participants: visible.map((p: any) => ({
       idea_id: p.idea_id, profile_id: p.profile_id, joined_at: p.joined_at,
       name: p.profiles?.name ?? null,
       role: p.profiles?.role ?? 'contributor',
@@ -1268,15 +1333,19 @@ const PARTS_PAGE = 24
 publicRoutes.get('/printable-parts', async (c) => {
   const q = (c.req.query('q') ?? '').trim().toLowerCase()
   const asked = Number.parseInt(c.req.query('page') ?? '', 10)
-  const { data, error } = await createAnonClient()
-    .from('stl_files')
-    .select('id, filename, material, filament_grams, print_minutes, tutorial_id, tutorials!inner(id, title, status)')
-    .eq('tutorials.status', 'approved')
-    .order('filename')
-    .order('id')
+  const anon = createAnonClient()
+  const { data, error } = await selectAll((from, to) =>
+    anon
+      .from('stl_files')
+      .select('id, filename, material, filament_grams, print_minutes, tutorial_id, tutorials!inner(id, title, status)')
+      .eq('tutorials.status', 'approved')
+      .order('filename')
+      .order('id')
+      .range(from, to)
+  )
   if (error) return c.json({ error: error.message }, 500)
-  // ponytail: searches and pages in memory over one unranged read, which PostgREST caps at max_rows (1000; supabase/config.toml sets none), so past 1000 approved STLs search misses parts and total/pages are wrong. Upgrade: page with .range() + count, search with ilike.
-  const rows = ((data ?? []) as unknown as CataloguePart[]).filter(
+  // ponytail: searches and pages in memory over every approved STL, read a thousand at a time. Upgrade: ilike and count in SQL once the catalogue is tens of thousands.
+  const rows = (data as unknown as CataloguePart[]).filter(
     (p) => !q || p.filename.toLowerCase().includes(q) || p.tutorials.title.toLowerCase().includes(q)
   )
   const pages = Math.max(1, Math.ceil(rows.length / PARTS_PAGE))
@@ -1284,64 +1353,8 @@ publicRoutes.get('/printable-parts', async (c) => {
   return c.json({ items: rows.slice((page - 1) * PARTS_PAGE, page * PARTS_PAGE), page, pages, total: rows.length })
 })
 
-/**
- * Interest registration from the nine remaining scaffold pages.
- *
- * The allowlist is the security boundary: without it feature_key is an open write
- * target for arbitrary strings. Keys mirror lib/public-nav.ts SCAFFOLD_KEYS — if
- * one is added there, add it here. That list is *derived* from the nav data
- * (every 'soon' child's featureKey); this Set is hand-written because this
- * package cannot import from packages/web. Nothing enforces the two staying in
- * step — a flip on one side and a forgotten edit here is silent, caught only by
- * reading both files. (design-challenges was exactly this: it flipped 'live' in
- * Task 13 and this Set still allowlisted the key until removed by hand.)
- */
-const NOTIFY_FEATURE_KEYS = new Set([
-  'ask-an-expert',
-  'requests',
-  'printing',
-  'news',
-  'events',
-  'partners',
-  'support',
-])
-
 /** Shape only. Deliverability is not our problem until we send something. */
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
-publicRoutes.post('/notify', async (c) => {
-  let body: unknown
-  try {
-    body = await c.req.json()
-  } catch {
-    return c.json({ error: 'Expected a JSON body' }, 400)
-  }
-
-  const { email, featureKey } = (body ?? {}) as { email?: unknown; featureKey?: unknown }
-
-  // 254 is the RFC 5321 maximum. Without it EMAIL_RE matches a string of any
-  // length, and there is no select policy on notify_signups to notice.
-  if (typeof email !== 'string' || email.length > 254 || !EMAIL_RE.test(email.trim())) {
-    return c.json({ error: 'A valid email address is required' }, 400)
-  }
-  if (typeof featureKey !== 'string' || !NOTIFY_FEATURE_KEYS.has(featureKey)) {
-    return c.json({ error: 'Unknown feature' }, 400)
-  }
-
-  const supabase = createAnonClient()
-  const { error } = await supabase
-    .from('notify_signups')
-    .insert({ email: email.trim().toLowerCase(), feature_key: featureKey })
-
-  // 23505 is unique_violation: already registered, which is a success from the
-  // visitor's point of view. Distinguishing it would leak list membership.
-  if (error && error.code !== '23505') {
-    console.error('[public/notify] insert failed:', error.message)
-    return c.json({ error: 'Could not register interest' }, 500)
-  }
-
-  return c.json({ ok: true })
-})
 
 /* ---------------------------------------------------------------- events --
  *
@@ -1364,25 +1377,23 @@ const EVENT_PUBLIC_COLUMNS =
 
 /** Live registrations per event, and whether the viewer is among them. */
 async function goingCounts(eventIds: string[], viewerId: string | null) {
-  if (eventIds.length === 0) return { counts: new Map<string, number>(), mine: new Set<string>() }
+  if (eventIds.length === 0) return { counts: new Map<string, number>(), mine: new Set<string>(), error: null }
   // The admin client, because org_event_registrations is readable only by its
   // own author or the organisation's leaders — by design. A count is not a
   // disclosure, so it is computed here rather than made readable to everyone.
   const admin = createAdminClient()
-  const { data } = await admin
-    .from('org_event_registrations')
-    .select('event_id, user_id')
-    .in('event_id', eventIds)
-    .is('cancelled_at', null)
+  const { data, error } = await selectIn(eventIds, (ids) =>
+    admin.from('org_event_registrations').select('event_id, user_id').in('event_id', ids).is('cancelled_at', null),
+  )
 
   const counts = new Map<string, number>()
   const mine = new Set<string>()
-  for (const r of data ?? []) {
+  for (const r of data) {
     const id = r.event_id as string
     counts.set(id, (counts.get(id) ?? 0) + 1)
     if (viewerId && r.user_id === viewerId) mine.add(id)
   }
-  return { counts, mine }
+  return { counts, mine, error }
 }
 
 publicRoutes.get('/events', async (c) => {
@@ -1416,21 +1427,25 @@ publicRoutes.get('/events', async (c) => {
   const events = rows ?? []
   const eventIds = events.map((e) => e.id as string)
   const orgIds = [...new Set(events.map((e) => e.org_id as string))]
-  const [{ data: orgs }, { counts, mine }, { data: questionRows }] = await Promise.all([
+  const [orgsRes, going, questionsRes] = await Promise.all([
     // Resolved through the admin client rather than an embed: embedding
     // organizations kills the whole query under 033/045's column grants, and
     // returns empty with no error.
-    admin.from('organizations').select('id, name').in('id', orgIds),
+    selectIn(orgIds, (ids) => admin.from('organizations').select('id, name').in('id', ids)),
     goingCounts(eventIds, viewer),
     // Which events ask something beyond name and email. The card needs this to
     // decide whether "I'm going" can be one tap or has to open the form — a
     // tap that silently skipped three required questions would put a family on
     // a list the host cannot use. Ids only; the questions themselves belong to
     // the detail route.
-    sb.from('org_event_questions').select('event_id').in('event_id', eventIds),
+    selectIn(eventIds, (ids) => sb.from('org_event_questions').select('event_id').in('event_id', ids)),
   ])
-  const orgName = new Map((orgs ?? []).map((o) => [o.id as string, o.name as string]))
-  const asks = new Set((questionRows ?? []).map((q) => q.event_id as string))
+  if (orgsRes.error || going.error || questionsRes.error) {
+    return c.json({ error: 'Events could not be loaded. Please try again.' }, 500)
+  }
+  const { counts, mine } = going
+  const orgName = new Map(orgsRes.data.map((o) => [o.id as string, o.name as string]))
+  const asks = new Set(questionsRes.data.map((q) => q.event_id as string))
 
   return c.json(
     events.map((e) => {
@@ -1474,11 +1489,12 @@ publicRoutes.get('/events.ics', async (c) => {
 
   const events = rows ?? []
   // Names through the admin client, never an embed — see GET /events.
-  const { data: orgs } = await createAdminClient()
-    .from('organizations')
-    .select('id, name')
-    .in('id', [...new Set(events.map((e) => e.org_id as string))])
-  const orgName = new Map((orgs ?? []).map((o) => [o.id as string, o.name as string]))
+  const admin = createAdminClient()
+  const orgs = await selectIn([...new Set(events.map((e) => e.org_id as string))], (ids) =>
+    admin.from('organizations').select('id, name').in('id', ids),
+  )
+  if (orgs.error) return c.json({ error: 'The calendar could not be loaded. Please try again.' }, 500)
+  const orgName = new Map(orgs.data.map((o) => [o.id as string, o.name as string]))
 
   const body = buildCalendar(
     events.map((e) => {
@@ -1597,8 +1613,9 @@ publicRoutes.get('/stories', async (c) => {
   // kills the whole query under 033/045's column grants and returns empty with
   // no error.
   const orgIds = [...new Set(stories.map((s) => s.org_id).filter((id): id is string => !!id))]
-  const { data: orgs } = await admin.from('organizations').select('id, name').in('id', orgIds)
-  const orgName = new Map((orgs ?? []).map((o) => [o.id as string, o.name as string]))
+  const orgs = await selectIn(orgIds, (ids) => admin.from('organizations').select('id, name').in('id', ids))
+  if (orgs.error) return c.json({ error: 'Stories could not be loaded. Please try again.' }, 500)
+  const orgName = new Map(orgs.data.map((o) => [o.id as string, o.name as string]))
 
   return c.json(
     stories.map((s) => ({
@@ -1689,12 +1706,20 @@ publicRoutes.post('/contact', async (c) => {
     return c.json({ error: 'Say what happened, in 4000 characters or fewer.' }, 400)
   }
 
+  const senderId = await signedIn(c)
   const { error } = await createAnonClient()
     .from('contact_messages')
-    .insert({ topic, name, email, body: message })
+    .insert({ topic, name, email, body: message, sender_id: senderId })
   if (error) {
     console.error('[public/contact] insert failed:', error.message)
     return c.json({ error: 'That did not send. Try again, or email us directly.' }, 500)
+  }
+  // 142. A visitor has no inbox to tell, so only a signed-in sender hears back.
+  if (senderId) {
+    await notify(
+      [{ recipient_id: senderId, type: 'contact_received', actor_name: 'SPLAT', body: notificationBody(message) }],
+      'contact_received'
+    )
   }
 
   return c.json({ ok: true }, 201)
@@ -1711,7 +1736,7 @@ publicRoutes.post('/contact', async (c) => {
 publicRoutes.get('/map', async (c) => {
   const near = await publicNear(c)
   if (typeof near === 'string') return c.json({ error: near }, 400)
-  const member = await signedIn(c)
+  const member = !!(await signedIn(c))
   const admin = createAdminClient()
   const [toys, printers, events, orgs, unavailable] = await Promise.all([
     admin.from('toys').select('id, name, owner_id, owner_org_id').eq('status', 'published'),

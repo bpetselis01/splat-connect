@@ -1,10 +1,10 @@
-// journeys: R19
 import { CLEARANCE, scrollPaddings } from '../../bottom-spacing'
-import { render, screen } from '@testing-library/react-native'
+import { render, screen, fireEvent } from '@testing-library/react-native'
 import { PrintingBasicsScreen } from '../../../../components/printing/basics-screen'
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), back: jest.fn() }) }))
+const mockPush = jest.fn()
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, back: jest.fn() }) }))
 
 describe('PrintingBasicsScreen', () => {
   it('holds the hero picture slot as To be completed', () => {
@@ -19,4 +19,10 @@ jest.mock('react-native-safe-area-context', () => require('../../bottom-spacing'
 it('ends its scroll one gutter above the home indicator, under Find a printer', () => {
   render(<PrintingBasicsScreen />)
   expect(scrollPaddings(screen)).toEqual([CLEARANCE])
+})
+
+it('R19 sends "Find a printer" to the printer finder', () => {
+  render(<PrintingBasicsScreen />)
+  fireEvent.press(screen.getByText('Find a printer'))
+  expect(mockPush).toHaveBeenCalledWith('/printing')
 })

@@ -10,7 +10,7 @@ const file: StlFile = {
 }
 
 describe('StlSettingsForm', () => {
-  it('saves the sizes with the settings, so neither erases the other', async () => {
+  it('WT28 saves the sizes with the settings, so neither erases the other', async () => {
     const onSave = vi.fn().mockResolvedValue(undefined)
     render(
       <ToastProvider>

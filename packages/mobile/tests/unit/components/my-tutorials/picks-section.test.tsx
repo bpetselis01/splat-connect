@@ -1,4 +1,3 @@
-// journeys: T16
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { PicksSection } from '../../../../components/my-tutorials/sections/picks-section'
 import { apiClient } from '../../../../lib/api-client'
@@ -39,7 +38,7 @@ it('lists picks and offers approved guides, minus itself and what is already pic
   expect(screen.getAllByText('Guide A')).toHaveLength(1)
 })
 
-it('adds a guide by replacing the whole list', async () => {
+it('T16 adds a guide by replacing the whole list', async () => {
   render(<PicksSection />)
   fireEvent.press(await screen.findByLabelText('Add Guide B'))
   await waitFor(() =>
@@ -50,7 +49,7 @@ it('adds a guide by replacing the whole list', async () => {
   expect(await screen.findByLabelText('Remove Guide B')).toBeTruthy()
 })
 
-it('toggles Required first on a pick and sends it with the list', async () => {
+it('T16 toggles Required first on a pick and sends it with the list', async () => {
   mockDraft.tutorial = { ...base, tutorial_recommendations: [{ ...rec('a', 'Guide A'), required: true }] }
   render(<PicksSection />)
   fireEvent.press(screen.getByText('Required first'))
@@ -61,7 +60,7 @@ it('toggles Required first on a pick and sends it with the list', async () => {
   )
 })
 
-it('removes a pick, and flags one that is not approved', async () => {
+it('T16 removes a pick, and flags one that is not approved', async () => {
   mockDraft.tutorial = { ...base, tutorial_recommendations: [rec('a', 'Guide A', 'pending')] }
   render(<PicksSection />)
   expect(screen.getByText(/not yet approved/)).toBeTruthy()

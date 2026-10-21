@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Nunito, JetBrains_Mono, Baloo_2 } from 'next/font/google'
+import localFont from 'next/font/local'
 import { cookies, headers } from 'next/headers'
 import './globals.css'
 import { Nav } from '@/components/nav'
@@ -11,6 +11,11 @@ import { BackToMySplatDock } from '@/components/back-to-my-splat-dock'
 import { sectionFor, ACCOUNT_NAV } from '@/lib/public-nav'
 import { MODE_COOKIE, MOTION_COOKIE, parseMode, parseMotion } from '@/lib/display-prefs'
 
+// All three families are self-hosted latin variable files (see app/fonts):
+// next/font/google fetched Google at build time with no retry, and one
+// transient failure failed the whole CI build. Non-latin glyphs fall back to
+// the system font.
+//
 // Nunito carries UI text, labels, buttons and card titles. It is still the
 // mobile app's family (packages/mobile/lib/theme.ts), which is what keeps the
 // two surfaces reading as one product.
@@ -18,10 +23,11 @@ import { MODE_COOKIE, MOTION_COOKIE, parseMode, parseMotion } from '@/lib/displa
 // Pixel ran headings on Nunito 900 because it had no display face worth the
 // second download. Soft Pop does, so the heaviest weights move to Baloo 2 below
 // and Nunito goes back to being body and UI. The artboard loads 400-800.
-const nunito = Nunito({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800'],
-  style: ['normal', 'italic'],
+const nunito = localFont({
+  src: [
+    { path: './fonts/nunito-latin.woff2', weight: '400 800', style: 'normal' },
+    { path: './fonts/nunito-latin-italic.woff2', weight: '400 800', style: 'italic' },
+  ],
   variable: '--font-nunito',
   display: 'swap',
 })
@@ -31,14 +37,14 @@ const nunito = Nunito({
 // counts and money in mono with tabular-nums so columns of figures line up;
 // that is the job Jersey 10 held under Pixel, done by a face that can also set
 // a lowercase label.
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ['latin'],
+const jetbrainsMono = localFont({
+  src: './fonts/jetbrains-mono-latin.woff2',
   // 700 as well: design-system-update/tokens/typography.css imports
   // JetBrains Mono at 400;500;700, and the system asks for the bold — Chip's
   // stat figure and CostPanel's line amounts are both 700. Without it the
   // browser synthesises one, which is the same fault the headings had when
   // --font-display asked Baloo 2 for a 900 it does not ship.
-  weight: ['400', '500', '700'],
+  weight: '400 700',
   // Not `--font-mono`: that is the Tailwind theme key, and a token that
   // resolves to itself resolves to nothing.
   variable: '--font-jetbrains',
@@ -48,9 +54,9 @@ const jetbrainsMono = JetBrains_Mono({
 // Every heading, at 800. Unlike Jersey 10 — which was numerals-only and opted
 // in per page class — this is a real display face and applies globally through
 // --font-display.
-const baloo = Baloo_2({
-  subsets: ['latin'],
-  weight: ['600', '700', '800'],
+const baloo = localFont({
+  src: './fonts/baloo-2-latin.woff2',
+  weight: '600 800',
   variable: '--font-baloo',
   display: 'swap',
 })
@@ -64,8 +70,10 @@ export const metadata: Metadata = {
 /** Routes that must never show the shell. A nav on the contributor-terms
     gate is an escape hatch out of a gate — every link bounces straight back.
     /login and /signup left this list on 2026-09-18: the board draws the site
-    header on both, and a sign-in page is somewhere anyone may leave. */
-const BARE_PREFIXES = ['/auth', '/onboarding']
+    header on both, and a sign-in page is somewhere anyone may leave.
+    /auth/confirmed left it on 2026-10-20 for the same reason: a soft
+    navigation from a bare page to /login kept the bare layout until a reload. */
+const BARE_PREFIXES = ['/onboarding']
 
 /** Exported for tests: the layout is async and reads headers(), so the rule is
     verified here rather than by rendering the whole tree. */
@@ -104,9 +112,8 @@ export default async function RootLayout({
   if (bare) {
     // Same scaffolding as the non-bare branch below, minus the three pieces
     // that are always conditional on !bare there too: Nav, PixelBackdrop
-    // and PublicFooter. A gate page (/login, /signup, /auth/confirmed,
-    // /onboarding/contributor-terms) still needs the .pixel ancestor its
-    // buttons are styled under, the skip link (WCAG 2.4.1), and a <main>
+    // and PublicFooter. A gate page (/onboarding/contributor-terms) still
+    // needs the .pixel ancestor its buttons are styled under, the skip link (WCAG 2.4.1), and a <main>
     // landmark — losing all three was a real regression from before this
     // branch, caught in the final review round.
     return (

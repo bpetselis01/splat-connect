@@ -7,6 +7,7 @@
  */
 import { Hono } from 'hono'
 import { createUserClient } from '../supabase/client.js'
+import { selectAll } from '../chunk.js'
 import type { AuthVariables } from '../middleware/auth.js'
 import {
   notificationBucket,
@@ -29,39 +30,29 @@ notifications.get('/me', async (c) => {
   return c.json(data)
 })
 
-// PENDING(unused-api-routes): the old singular count; nothing calls it, /me/unread-counts replaced it.
-notifications.get('/me/unread-count', async (c) => {
-  const supabase = createUserClient(c.get('token'))
-  const { count, error } = await supabase
-    .from('notifications')
-    .select('id', { count: 'exact', head: true })
-    .eq('recipient_id', c.get('userId'))
-    .is('read_at', null)
-  if (error) return c.json({ error: error.message }, 500)
-  return c.json({ count: count ?? 0 })
-})
-
 /**
- * Unread, split by which My SPLAT card owns it. The singular /me/unread-count
- * above has no caller left in web or mobile; it stays for the integration
- * test that still exercises it and for any external consumer.
+ * Unread, split by which My SPLAT card owns it.
  *
  * Counted in JS over the unread rows rather than as three grouped queries:
- * one round trip, and the set is a single user's *unread* notifications.
- * ponytail: linear scan, push the grouping into SQL if someone ever carries
- * thousands unread.
+ * one round trip per thousand, and the set is a single user's *unread*
+ * notifications. ponytail: linear scan, push the grouping into SQL if someone
+ * ever carries tens of thousands unread.
  */
 notifications.get('/me/unread-counts', async (c) => {
   const supabase = createUserClient(c.get('token'))
-  const { data, error } = await supabase
-    .from('notifications')
-    .select('type')
-    .eq('recipient_id', c.get('userId'))
-    .is('read_at', null)
+  const { data, error } = await selectAll((from, to) =>
+    supabase
+      .from('notifications')
+      .select('type')
+      .eq('recipient_id', c.get('userId'))
+      .is('read_at', null)
+      .order('id')
+      .range(from, to)
+  )
   if (error) return c.json({ error: error.message }, 500)
 
   const counts: UnreadCounts = { tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 }
-  for (const row of (data ?? []) as { type: NotificationType }[]) {
+  for (const row of data as { type: NotificationType }[]) {
     // The DB constraint (043_idea_graduated_notification.sql) and the
     // NotificationType union are pinned to the same 18 values today, so this
     // never falls through in practice. If they ever drift, a SQL-only type

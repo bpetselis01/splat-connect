@@ -5,7 +5,11 @@ import { browserApiClient } from '@/lib/browser-api-client'
 import type { ToyIdeaMessage, ToyIdeaParticipant } from '@splat-connect/types'
 
 const mockRefresh = vi.fn()
-vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: mockRefresh }) }))
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ refresh: mockRefresh }),
+  usePathname: () => '/get-involved/design-challenges/c1',
+  useSearchParams: () => new URLSearchParams('tab=thread'),
+}))
 
 // Same fake-channel strategy as live-transaction.test.tsx: the socket is
 // faked so the component can mount and subscribe without a real connection.
@@ -41,6 +45,14 @@ function baseProps(overrides: Partial<Parameters<typeof ChallengeThread>[0]> = {
 }
 
 describe('ChallengeThread', () => {
+  it('sends a signed-out visitor to sign in and back to this page with its query', () => {
+    render(<ChallengeThread {...baseProps({ viewerId: null })} />)
+    expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute(
+      'href',
+      '/login?next=%2Fget-involved%2Fdesign-challenges%2Fc1%3Ftab%3Dthread'
+    )
+  })
+
   beforeEach(() => {
     vi.restoreAllMocks()
   })
@@ -60,6 +72,39 @@ describe('ChallengeThread', () => {
     expect(get).not.toHaveBeenCalled()
   })
 
+  it('WI16 joins from the Join button by posting to the challenge, then refreshes into the thread', async () => {
+    const post = vi.spyOn(browserApiClient, 'post').mockResolvedValue({})
+    render(<ChallengeThread {...baseProps({ viewerId: 'stranger-1' })} />)
+
+    fireEvent.click(screen.getByRole('button', { name: /join this challenge/i }))
+
+    await waitFor(() => expect(post).toHaveBeenCalledWith('/api/ideas/idea-1/join', {}))
+    await waitFor(() => expect(mockRefresh).toHaveBeenCalled())
+  })
+
+  it('WI16 says so when joining fails, and leaves the Join button to try again', async () => {
+    vi.spyOn(browserApiClient, 'post').mockRejectedValue(new Error('nope'))
+    render(<ChallengeThread {...baseProps({ viewerId: 'stranger-1' })} />)
+
+    fireEvent.click(screen.getByRole('button', { name: /join this challenge/i }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not join this challenge. Please try again.')
+    expect(screen.getByRole('button', { name: /join this challenge/i })).toBeEnabled()
+  })
+
+  it('WI17 sends a thread message to the challenge and reloads the conversation', async () => {
+    const get = vi.spyOn(browserApiClient, 'get').mockResolvedValue([])
+    const post = vi.spyOn(browserApiClient, 'post').mockResolvedValue({})
+    render(<ChallengeThread {...baseProps({ viewerId: 'p1' })} />)
+
+    fireEvent.change(await screen.findByPlaceholderText(/message the group/i), { target: { value: 'I can try a bigger button' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }))
+
+    await waitFor(() => expect(post).toHaveBeenCalledWith('/api/ideas/idea-1/messages', { body: 'I can try a bigger button' }))
+    const loadsBefore = get.mock.calls.length
+    expect(loadsBefore).toBeGreaterThanOrEqual(2)
+  })
+
   // Tests: nameFor resolves the author by id, a current participant by id, and
   //        falls back to "Someone" for a sender in neither
   // How:   one message per case, rendered through the real ExchangeChat
@@ -77,8 +122,9 @@ describe('ChallengeThread', () => {
     render(<ChallengeThread {...baseProps()} />)
 
     await waitFor(() => expect(screen.getByText('From the author')).toBeInTheDocument())
-    expect(screen.getByText('Robin')).toBeInTheDocument()
-    expect(screen.getByText('Casey')).toBeInTheDocument()
+    // Robin and Casey also head a row in the People list, so match the chat's own labels.
+    expect(screen.getAllByText('Robin').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Casey').length).toBeGreaterThan(0)
     expect(screen.getByText('Someone')).toBeInTheDocument()
   })
 
@@ -106,7 +152,7 @@ describe('ChallengeThread', () => {
   // Chain: leaving and being removed share the same route and the same
   //        removeParticipant function, so a passing "leave" case also proves
   //        the DELETE call shape "remove" relies on
-  it('lets a participant leave, calling DELETE on their own id and refreshing', async () => {
+  it('WI19 lets a participant leave, calling DELETE on their own id and refreshing', async () => {
     vi.spyOn(browserApiClient, 'get').mockResolvedValue([])
     const del = vi.spyOn(browserApiClient, 'delete').mockResolvedValue(undefined)
 
@@ -119,13 +165,27 @@ describe('ChallengeThread', () => {
     await waitFor(() => expect(mockRefresh).toHaveBeenCalled())
   })
 
+  it('WI19 offers a working Join button again once the participant has left', async () => {
+    vi.spyOn(browserApiClient, 'get').mockResolvedValue([])
+    vi.spyOn(browserApiClient, 'delete').mockResolvedValue(undefined)
+
+    const { rerender } = render(<ChallengeThread {...baseProps({ viewerId: 'p1' })} />)
+    await waitFor(() => expect(screen.getByRole('button', { name: /leave this challenge/i })).toBeInTheDocument())
+    fireEvent.click(screen.getByRole('button', { name: /leave this challenge/i }))
+    await waitFor(() => expect(mockRefresh).toHaveBeenCalled())
+
+    // router.refresh() re-renders the same instance with the server's new participants.
+    rerender(<ChallengeThread {...baseProps({ viewerId: 'p1', participants: [PARTICIPANTS[1]] })} />)
+    expect(screen.getByRole('button', { name: 'Join this challenge' })).toBeEnabled()
+  })
+
   // Tests: the author sees every participant with a Remove control, and
   //        Remove targets that participant's id, not the author's own
   // How:   viewer is authorId; asserts both participant names render with a
   //        Remove button, and clicking one calls DELETE on that profile_id
   // Chain: no removal surface existed anywhere before this — an author could
   //        not remove anyone through the product
-  it('lets the author remove a specific participant', async () => {
+  it('WI19 lets the author remove a specific participant', async () => {
     vi.spyOn(browserApiClient, 'get').mockResolvedValue([])
     const del = vi.spyOn(browserApiClient, 'delete').mockResolvedValue(undefined)
 
@@ -162,7 +222,7 @@ describe('ChallengeThread', () => {
   //        follow-up; only Casey's reply offers the control; clicking posts it
   // Chain: an asker marking their own message would make "Answered" mean
   //        nothing — the API refuses it too, but the button must not offer it
-  it('lets the asker of a question mark a reply as the answer, and then pins it', async () => {
+  it('WI18 lets the asker of a question mark a reply as the answer, and then pins it', async () => {
     const messages: ToyIdeaMessage[] = [
       { id: 'm1', idea_id: 'idea-1', sender_id: 'p2', kind: 'user', body: 'A zip pocket', created_at: '2026-08-01T00:00:00Z' },
       { id: 'm2', idea_id: 'idea-1', sender_id: 'author-1', kind: 'user', body: 'Thanks', created_at: '2026-08-01T00:01:00Z' },
@@ -187,5 +247,45 @@ describe('ChallengeThread', () => {
     render(<ChallengeThread {...baseProps({ viewerId: 'p1', question: true, answerMessageId: 'm1' })} />)
     expect(await screen.findByText(/marked by the asker/i)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /mark as the answer|unmark/i })).not.toBeInTheDocument()
+  })
+
+  describe('reporting a person', () => {
+    async function openReport() {
+      vi.spyOn(browserApiClient, 'get').mockResolvedValue([])
+      render(<ChallengeThread {...baseProps({ viewerId: 'p1' })} />)
+      fireEvent.click(await screen.findByRole('button', { name: 'Report Casey' }))
+    }
+
+    it('offers Report on everyone but the viewer, and asks for a reason first', async () => {
+      await openReport()
+      expect(screen.queryByRole('button', { name: 'Report Ash' })).not.toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Report Robin' })).toBeInTheDocument()
+      expect(
+        screen.getByText("You won't see them here any more. SPLAT will look at it, and they won't see your name.")
+      ).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Send report' })).toBeDisabled()
+    })
+
+    it('WI20 posts the reason and takes the person off the list', async () => {
+      await openReport()
+      const post = vi.spyOn(browserApiClient, 'post').mockResolvedValue({ reported: true })
+      fireEvent.change(screen.getByLabelText('Why are you reporting them?'), { target: { value: ' Rude. ' } })
+      fireEvent.click(screen.getByRole('button', { name: 'Send report' }))
+      await waitFor(() =>
+        expect(post).toHaveBeenCalledWith('/api/ideas/idea-1/reports', { reported_profile_id: 'p2', reason: 'Rude.' })
+      )
+      await waitFor(() => expect(screen.queryByRole('button', { name: 'Report Casey' })).not.toBeInTheDocument())
+    })
+
+    it('WI20 shows the server sentence and keeps the person listed when the report fails', async () => {
+      await openReport()
+      vi.spyOn(browserApiClient, 'post').mockRejectedValue(
+        new Error('POST failed with status 404: That person is not part of this challenge')
+      )
+      fireEvent.change(screen.getByLabelText('Why are you reporting them?'), { target: { value: 'Rude.' } })
+      fireEvent.click(screen.getByRole('button', { name: 'Send report' }))
+      expect(await screen.findByRole('alert')).toHaveTextContent('That person is not part of this challenge')
+      expect(screen.getByRole('button', { name: 'Report Casey' })).toBeInTheDocument()
+    })
   })
 })

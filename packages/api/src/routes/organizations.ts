@@ -12,9 +12,11 @@ import { singleRowStatus } from '../single-row.js'
 import { randomUUID } from 'node:crypto'
 import { Hono, type Context } from 'hono'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
+import { chunk, selectAll, selectIn } from '../chunk.js'
+import { notify } from '../notify.js'
 import { ledOrgIds } from '../toy-access.js'
 import { profileName } from '../profile-name.js'
-import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
+import { CHECK_VIOLATION, INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import {
   EVENT_KINDS,
   EVENT_TOOLS,
@@ -28,6 +30,7 @@ import {
   RECYCLING_MACHINES,
   RECYCLING_FORMS,
   RECYCLING_GIVES,
+  notificationBody,
 } from '@splat-connect/types'
 import type { AuthVariables } from '../middleware/auth.js'
 import { sendEmail } from '../mailer.js'
@@ -66,30 +69,36 @@ export const ORG_COLUMNS =
 const ORG_EXTRA_COLUMNS =
   'id, kind, logo_url, cover_url, verified_at, visit_hours, service_area, payment_methods, org_thanks_count, org_follower_count'
 
-async function withExtras<T extends { id: string }>(rows: T[]): Promise<T[]> {
-  if (!rows.length) return rows
-  const { data } = await createAdminClient()
-    .from('organizations')
-    .select(ORG_EXTRA_COLUMNS)
-    .in(
-      'id',
-      rows.map((r) => r.id)
-    )
-  const byId = new Map((data ?? []).map((r) => [r.id as string, r]))
-  return rows.map((r) => ({ ...r, ...byId.get(r.id) }))
+async function withExtras<T extends { id: string }>(
+  rows: T[]
+): Promise<{ rows: T[]; error?: string }> {
+  const admin = createAdminClient()
+  const byId = new Map<string, object>()
+  for (const ids of chunk(rows.map((r) => r.id))) {
+    const { data, error } = await admin.from('organizations').select(ORG_EXTRA_COLUMNS).in('id', ids)
+    if (error) return { rows, error: error.message }
+    for (const r of data ?? []) byId.set(r.id as string, r)
+  }
+  return { rows: rows.map((r) => ({ ...r, ...byId.get(r.id) })) }
 }
 
 organizations.get('/', async (c) => {
   const supabase = createUserClient(c.get('token'))
-  const { data, error } = await supabase
+  const { data, error } = await selectAll((from, to) =>
+    supabase
     .from('organizations')
     // Leaders ride along. The admin page shows them per row, and fetching them
     // separately meant one request per organisation. A <details> cannot defer it
     // either — a server component renders whether or not the panel is open.
     .select(`${ORG_COLUMNS}, org_leaders(user_id, created_at)`)
     .order('name', { ascending: true })
+    .order('id')
+    .range(from, to)
+  )
   if (error) return c.json({ error: error.message }, 500)
-  return c.json(await withExtras(data ?? []))
+  const extras = await withExtras(data)
+  if (extras.error) return c.json({ error: extras.error }, 500)
+  return c.json(extras.rows)
 })
 
 // Declared before '/:id' so 'mine' is not swallowed as an id.
@@ -351,6 +360,11 @@ organizations.patch('/:id/profile', async (c) => {
     if (problem) return c.json({ error: problem }, 400)
   }
 
+  // The public page renders this as an href, so a javascript: URL must never be stored.
+  if (typeof patch.website_url === 'string' && !/^https?:\/\//i.test(patch.website_url)) {
+    return c.json({ error: 'website_url must start with http:// or https://' }, 400)
+  }
+
   // A name change is a real change of identity for a badge that appears on
   // other people's guides, so it is bounded but allowed — a leader correcting a
   // typo should not have to ask an admin.
@@ -462,7 +476,9 @@ organizations.patch('/:id/profile', async (c) => {
   }
   if (error) return c.json({ error: error.message }, 500)
   if (!data) return c.json({ error: 'Not found' }, 404)
-  return c.json((await withExtras([data]))[0])
+  const extras = await withExtras([data])
+  if (extras.error) return c.json({ error: extras.error }, 500)
+  return c.json(extras.rows[0])
 })
 
 /* --------------------------------- doors and rate lines, replaced wholesale --
@@ -553,16 +569,9 @@ async function leaderIds(orgId: string): Promise<string[]> {
   return (data ?? []).map((r) => r.user_id as string)
 }
 
-async function orgName(orgId: string): Promise<string | null> {
+export async function orgName(orgId: string): Promise<string | null> {
   const { data } = await createAdminClient().from('organizations').select('name').eq('id', orgId).maybeSingle()
   return (data?.name as string | undefined) ?? null
-}
-
-/** Logged, never thrown: the write the notification is about has committed. */
-async function notify(rows: Array<Record<string, unknown>>, label: string) {
-  if (!rows.length) return
-  const { error } = await createAdminClient().from('notifications').insert(rows)
-  if (error) console.error(`[organizations] ${label} notify failed:`, error.message)
 }
 
 /**
@@ -592,6 +601,68 @@ async function notifyFollowers(
         tutorial_title: title,
         actor_name: name ?? 'An organisation',
       })),
+    type
+  )
+}
+
+/** The columns a family plans around: a change to any of them is news to the registered. */
+const EVENT_WHEN_WHERE = ['starts_at', 'ends_at', 'format', 'location', 'suburb', 'state', 'online_url'] as const
+type EventWhenWhere = Partial<Record<(typeof EVENT_WHEN_WHERE)[number], unknown>>
+
+/** Timestamps compare as instants: Postgres hands back +00:00 where the client sent Z. */
+function movedOrRelocated(before: EventWhenWhere, after: EventWhenWhere): boolean {
+  return EVENT_WHEN_WHERE.some((k) => {
+    const [a, b] = [before[k] ?? null, after[k] ?? null]
+    if (k === 'starts_at' || k === 'ends_at') {
+      return (a === null ? null : Date.parse(a as string)) !== (b === null ? null : Date.parse(b as string))
+    }
+    return a !== b
+  })
+}
+
+/** More registrations than this are not told: one insert per recipient has to stay a sane request. */
+const MAX_REGISTRANTS_NOTIFIED = 1000
+
+/** Accounts with a live registration for the event, minus the leader acting. */
+async function registrantIds(eventId: string, actorId: string): Promise<string[]> {
+  const { data, error } = await createAdminClient()
+    .from('org_event_registrations')
+    .select('user_id')
+    .eq('event_id', eventId)
+    .is('cancelled_at', null)
+    .not('user_id', 'is', null)
+    .limit(MAX_REGISTRANTS_NOTIFIED + 1)
+  if (error) {
+    console.error(`[organizations] registrant lookup failed event=${eventId}:`, error.message)
+    return []
+  }
+  const ids = [...new Set((data ?? []).map((r) => r.user_id as string))].filter((id) => id !== actorId)
+  if ((data ?? []).length > MAX_REGISTRANTS_NOTIFIED) {
+    console.error(`[organizations] event ${eventId} has over ${MAX_REGISTRANTS_NOTIFIED} registrations; notifying the first ${MAX_REGISTRANTS_NOTIFIED}`)
+    return ids.slice(0, MAX_REGISTRANTS_NOTIFIED)
+  }
+  return ids
+}
+
+/**
+ * The people registered for an event, told it moved, was cancelled (138) or was
+ * deleted (142). A deleted event cascades its notifications away, so that one
+ * carries org_id and the title in body, and its recipients are read before the
+ * delete and passed in.
+ */
+async function notifyRegistrants(
+  event: { id: string; org_id: string; title: string },
+  actorId: string,
+  type: 'org_event_changed' | 'org_event_cancelled' | 'org_event_deleted',
+  recipients?: string[]
+) {
+  const [ids, name] = await Promise.all([recipients ?? registrantIds(event.id, actorId), orgName(event.org_id)])
+  const subject =
+    type === 'org_event_deleted'
+      ? { org_id: event.org_id, body: notificationBody(event.title) }
+      : { org_event_id: event.id, tutorial_title: event.title }
+  await notify(
+    ids.map((recipient_id) => ({ recipient_id, type, ...subject, actor_name: name ?? 'An organisation' })),
     type
   )
 }
@@ -876,19 +947,20 @@ organizations.get('/:id/conversations', async (c) => {
   const rows = (data ?? []) as Conversation[]
   if (!rows.length) return c.json([])
 
-  const [{ data: people }, { data: messages }] = await Promise.all([
-    createAdminClient()
-      .from('profiles')
-      .select('id, name')
-      .in('id', rows.map((r) => r.profile_id)),
+  const [{ data: people, error: peopleError }, { data: messages, error: messagesError }] = await Promise.all([
+    selectIn(rows.map((r) => r.profile_id), (ids) => createAdminClient().from('profiles').select('id, name').in('id', ids)),
     // ponytail: reads every message to find each conversation's last; a
     // latest-message view if an org's inbox grows past a few hundred.
-    supabase
-      .from('org_messages')
-      .select('conversation_id, body, sender_id, created_at')
-      .in('conversation_id', rows.map((r) => r.id))
-      .order('created_at', { ascending: false }),
+    // A conversation's messages share one chunk, so find() still meets its latest first.
+    selectIn(rows.map((r) => r.id), (ids) =>
+      supabase
+        .from('org_messages')
+        .select('conversation_id, body, sender_id, created_at')
+        .in('conversation_id', ids)
+        .order('created_at', { ascending: false })
+    ),
   ])
+  if (peopleError || messagesError) return c.json({ error: "We couldn't load the conversations. Try again." }, 500)
   const nameOf = new Map((people ?? []).map((p) => [p.id as string, p.name as string]))
   return c.json(
     rows.map((r) => {
@@ -1047,6 +1119,14 @@ function costShape(body: Record<string, unknown>): { cost_cents: number | null; 
   return { cost_cents: cents, cost_note: cents && note ? note : null }
 }
 
+function whereGap(format: string, location: string, onlineUrl: string): string | null {
+  if (format === 'in_person' && !location) return 'Say where it is.'
+  if (format === 'online' && !onlineUrl) return 'Give the joining link.'
+  return null
+}
+
+const EVENT_PUBLISH_GAP = 'Finish the event before publishing it: it needs a date and a place.'
+
 organizations.get('/:id/events', async (c) => {
   const supabase = createUserClient(c.get('token'))
   const { data, error } = await supabase
@@ -1067,10 +1147,11 @@ organizations.post('/:id/events', async (c) => {
   const title = typeof body.title === 'string' ? body.title.trim() : ''
   if (!title || title.length > 160) return c.json({ error: 'Give the event a name.' }, 400)
 
+  // A draft needs only a title (144); the rest is asked at publish.
+  const status = body.status === 'published' ? 'published' : 'draft'
   const startsAt = typeof body.starts_at === 'string' ? body.starts_at : ''
-  if (!startsAt || Number.isNaN(Date.parse(startsAt))) {
-    return c.json({ error: 'Say when it starts.' }, 400)
-  }
+  const startsValid = !!startsAt && !Number.isNaN(Date.parse(startsAt))
+  if (status === 'published' && !startsValid) return c.json({ error: 'Say when it starts.' }, 400)
 
   const format = body.format === 'online' ? 'online' : 'in_person'
   const location = typeof body.location === 'string' ? body.location.trim() : ''
@@ -1078,15 +1159,16 @@ organizations.post('/:id/events', async (c) => {
   // "Where" is one of the four things the artboard says a family decides on, so
   // it is required in whichever form the event takes. 059's constraint says the
   // same thing; this says it in a sentence.
-  if (format === 'in_person' && !location) return c.json({ error: 'Say where it is.' }, 400)
-  if (format === 'online' && !onlineUrl) return c.json({ error: 'Give the joining link.' }, 400)
+  if (status === 'published') {
+    const gap = whereGap(format, location, onlineUrl)
+    if (gap) return c.json({ error: gap }, 400)
+  }
 
   // The rest of the form — place, kind, bench, seats, cost — read the same way
   // the PATCH below reads it. Without this a published in-person event failed
   // 061's suburb-and-state check and a draft dropped everything past "who for".
   const shape = eventShape(body, format)
   if ('error' in shape) return c.json({ error: shape.error }, 400)
-  const status = body.status === 'published' ? 'published' : 'draft'
   if (status === 'published' && format === 'in_person' && (!shape.suburb || !shape.state)) {
     return c.json({ error: 'A published event needs a suburb and a state.' }, 400)
   }
@@ -1098,11 +1180,11 @@ organizations.post('/:id/events', async (c) => {
       org_id: orgId,
       title,
       summary: typeof body.summary === 'string' && body.summary.trim() ? body.summary.trim() : null,
-      starts_at: startsAt,
+      starts_at: startsValid ? startsAt : null,
       ends_at: typeof body.ends_at === 'string' && body.ends_at ? body.ends_at : null,
       format,
-      location: format === 'in_person' ? location : null,
-      online_url: format === 'online' ? onlineUrl : null,
+      location: format === 'in_person' ? location || null : null,
+      online_url: format === 'online' ? onlineUrl || null : null,
       audience:
         typeof body.audience === 'string' && body.audience.trim() ? body.audience.trim() : null,
       status,
@@ -1154,8 +1236,10 @@ organizations.patch('/:orgId/events/:id', async (c) => {
     const format = body.format === 'online' ? 'online' : 'in_person'
     const location = typeof body.location === 'string' ? body.location.trim() : ''
     const onlineUrl = typeof body.online_url === 'string' ? body.online_url.trim() : ''
-    if (format === 'in_person' && !location) return c.json({ error: 'Say where it is.' }, 400)
-    if (format === 'online' && !onlineUrl) return c.json({ error: 'Give the joining link.' }, 400)
+    const publishing = (patch.status ?? (await statusBefore('org_events', c.req.param('id')))) === 'published'
+    const startsValid = typeof body.starts_at === 'string' && !Number.isNaN(Date.parse(body.starts_at))
+    const gap = publishing ? whereGap(format, location, onlineUrl) : null
+    if (gap) return c.json({ error: gap }, 400)
 
     const shape = eventShape(body, format)
     if ('error' in shape) return c.json({ error: shape.error }, 400)
@@ -1167,18 +1251,21 @@ organizations.patch('/:orgId/events/:id', async (c) => {
       title,
       summary: typeof body.summary === 'string' && body.summary.trim() ? body.summary.trim() : null,
       format,
-      location: format === 'in_person' ? location : null,
-      online_url: format === 'online' ? onlineUrl : null,
+      location: format === 'in_person' ? location || null : null,
+      online_url: format === 'online' ? onlineUrl || null : null,
       audience:
         typeof body.audience === 'string' && body.audience.trim() ? body.audience.trim() : null,
     })
-    if (typeof body.starts_at === 'string' && !Number.isNaN(Date.parse(body.starts_at))) {
-      patch.starts_at = body.starts_at
-    }
+    if (startsValid) patch.starts_at = body.starts_at
     patch.ends_at = typeof body.ends_at === 'string' && body.ends_at ? body.ends_at : null
   }
 
-  const before = patch.status === 'published' ? await statusBefore('org_events', c.req.param('id')) : null
+  // Read before the write: the publish edge, and what the registered planned around.
+  const { data: before } = await createAdminClient()
+    .from('org_events')
+    .select(`status, cancelled_at, ${EVENT_WHEN_WHERE.join(', ')}`)
+    .eq('id', c.req.param('id'))
+    .maybeSingle()
   const { data, error } = await supabase
     .from('org_events')
     .update(patch)
@@ -1186,16 +1273,35 @@ organizations.patch('/:orgId/events/:id', async (c) => {
     .eq('org_id', c.req.param('orgId'))
     .select(EVENT_COLUMNS)
     .maybeSingle()
-  if (error) return c.json({ error: error.message }, 500)
+  if (error) {
+    // A draft published by status alone, missing what 144 asks at publish.
+    const incomplete = error.code === CHECK_VIOLATION && /org_events_(where|published_has_a_date|in_person_has_a_place)/.test(error.message)
+    return c.json({ error: incomplete ? EVENT_PUBLISH_GAP : error.message }, incomplete ? 400 : 500)
+  }
   if (!data) return c.json({ error: 'No such event of yours.' }, 404)
-  if (before === 'draft' && data.status === 'published') {
+  const was = before as (EventWhenWhere & { status: string; cancelled_at: string | null }) | null
+  if (was?.status === 'draft' && data.status === 'published') {
     await notifyFollowers(data.org_id, c.get('userId'), { org_event_id: data.id }, data.title)
+  }
+  if (was && !was.cancelled_at && data.cancelled_at) {
+    await notifyRegistrants(data, c.get('userId'), 'org_event_cancelled')
+  } else if (was?.status === 'published' && data.status === 'published' && !data.cancelled_at && movedOrRelocated(was, data)) {
+    await notifyRegistrants(data, c.get('userId'), 'org_event_changed')
   }
   return c.json(data)
 })
 
 organizations.delete('/:orgId/events/:id', async (c) => {
   const supabase = createUserClient(c.get('token'))
+  // Read before the delete: the registrations and the title go with the row (142).
+  const { data: event, error: readError } = await createAdminClient()
+    .from('org_events')
+    .select('id, org_id, title')
+    .eq('id', c.req.param('id'))
+    .eq('org_id', c.req.param('orgId'))
+    .maybeSingle()
+  if (readError) console.error('[organizations] event lookup before delete failed:', readError.message)
+  const recipients = event ? await registrantIds(event.id, c.get('userId')) : []
   const { data, error } = await supabase
     .from('org_events')
     .delete()
@@ -1205,6 +1311,8 @@ organizations.delete('/:orgId/events/:id', async (c) => {
     .maybeSingle()
   if (error) return c.json({ error: error.message }, 500)
   if (!data) return c.json({ error: 'No such event of yours.' }, 404)
+  // Only after the delete succeeded, so nobody hears about an event that still exists.
+  if (event) await notifyRegistrants(event, c.get('userId'), 'org_event_deleted', recipients)
   return c.json({ id: (data as { id: string }).id })
 })
 
@@ -1345,11 +1453,13 @@ organizations.get('/:id/stories', async (c) => {
   return c.json(data ?? [])
 })
 
-organizations.post('/:id/stories', async (c) => {
-  const supabase = createUserClient(c.get('token'))
-  const body = (await c.req.json().catch(() => null)) as Record<string, unknown> | null
-  if (!body) return c.json({ error: 'Body must be an object' }, 400)
+/**
+ * The content of a story, read and refused the same way by the first save and
+ * every edit after it.
+ */
+const STORY_GAP = 'A story needs a title, a one-sentence summary, a body and a byline.'
 
+function storyShape(body: Record<string, unknown>, status: 'draft' | 'published') {
   const read = (field: string, max: number) => {
     const value = typeof body[field] === 'string' ? (body[field] as string).trim() : ''
     return value && value.length <= max ? value : null
@@ -1358,50 +1468,57 @@ organizations.post('/:id/stories', async (c) => {
   const summary = read('summary', 300)
   const storyBody = read('body', 20000)
   const byline = read('byline', 120)
-  if (!title || !summary || !storyBody || !byline) {
-    return c.json({ error: 'A story needs a title, a one-sentence summary, a body and a byline.' }, 400)
-  }
-
-  const consent = body.consent_confirmed === true
-  const status = body.status === 'published' ? 'published' : 'draft'
-  // 059 refuses this with a check constraint; saying it here makes the refusal
-  // a sentence rather than a constraint violation.
-  if (status === 'published' && !consent) {
-    return c.json(
-      { error: 'Confirm consent for everyone named or pictured before publishing.' },
-      400
-    )
+  // A draft needs only a title (144) and stores the rest as ''.
+  if (!title || (status === 'published' && (!summary || !storyBody || !byline))) {
+    return { error: STORY_GAP }
   }
 
   const kind =
     typeof body.kind === 'string' && body.kind in STORY_KINDS ? body.kind : 'org_update'
   // An announcement speaks for SPLAT and has no organisation behind it. 062
   // makes it admin-only at the policy level; refusing it here is the sentence.
-  if (kind === 'announcement') {
-    return c.json({ error: 'Only SPLAT publishes an announcement.' }, 400)
-  }
+  if (kind === 'announcement') return { error: 'Only SPLAT publishes an announcement.' }
 
   const pullQuote = read('pull_quote', 400)
   const pullQuoteBy = read('pull_quote_by', 120)
   // 062 refuses an unattributed quote with a check constraint, for the reason
   // recorded there: it reads as the platform's voice in a family's mouth.
-  if (pullQuote && !pullQuoteBy) {
-    return c.json({ error: 'Say who the pull quote is from.' }, 400)
+  if (pullQuote && !pullQuoteBy) return { error: 'Say who the pull quote is from.' }
+
+  return {
+    kind,
+    title,
+    summary: summary ?? '',
+    body: storyBody ?? '',
+    byline: byline ?? '',
+    consent_confirmed: body.consent_confirmed === true,
+    pull_quote: pullQuote,
+    pull_quote_by: pullQuote ? pullQuoteBy : null,
+    link_tutorial_id: typeof body.link_tutorial_id === 'string' ? body.link_tutorial_id : null,
+  }
+}
+
+const CONSENT_REFUSAL = 'Confirm consent for everyone named or pictured before publishing.'
+
+organizations.post('/:id/stories', async (c) => {
+  const supabase = createUserClient(c.get('token'))
+  const body = (await c.req.json().catch(() => null)) as Record<string, unknown> | null
+  if (!body) return c.json({ error: 'Body must be an object' }, 400)
+
+  const status = body.status === 'published' ? 'published' : 'draft'
+  const shape = storyShape(body, status)
+  if ('error' in shape) return c.json({ error: shape.error }, 400)
+  // 059 refuses this with a check constraint; saying it here makes the refusal
+  // a sentence rather than a constraint violation.
+  if (status === 'published' && !shape.consent_confirmed) {
+    return c.json({ error: CONSENT_REFUSAL }, 400)
   }
 
   const { data, error } = await supabase
     .from('org_stories')
     .insert({
+      ...shape,
       org_id: c.req.param('id'),
-      kind,
-      title,
-      summary,
-      body: storyBody,
-      byline,
-      consent_confirmed: consent,
-      pull_quote: pullQuote,
-      pull_quote_by: pullQuote ? pullQuoteBy : null,
-      link_tutorial_id: typeof body.link_tutorial_id === 'string' ? body.link_tutorial_id : null,
       status,
       // Set when it goes public, and never earlier: a story written on Monday
       // and published on Thursday is dated Thursday. 062 requires it on a
@@ -1420,33 +1537,53 @@ organizations.post('/:id/stories', async (c) => {
   return c.json(data, 201)
 })
 
+/**
+ * Publish, unpublish, or edit the whole story.
+ *
+ * A full edit only when the body carries a title, the event PATCH's rule; the
+ * status only when the body sends one, so a content save cannot take a story
+ * off the site by leaving it out.
+ */
 organizations.patch('/:orgId/stories/:id', async (c) => {
   const supabase = createUserClient(c.get('token'))
-  const body = (await c.req.json().catch(() => ({}))) as { status?: unknown }
-  const status = body.status === 'published' ? 'published' : 'draft'
+  const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>
   const now = new Date().toISOString()
-  const before = status === 'published' ? await statusBefore('org_stories', c.req.param('id')) : null
+  const patch: Record<string, unknown> = { updated_at: now }
+
+  const before = await statusBefore('org_stories', c.req.param('id'))
+  if (typeof body.title === 'string') {
+    const status = 'status' in body ? (body.status === 'published' ? 'published' : 'draft') : before
+    const shape = storyShape(body, status === 'published' ? 'published' : 'draft')
+    if ('error' in shape) return c.json({ error: shape.error }, 400)
+    Object.assign(patch, shape)
+  }
+
+  if ('status' in body) {
+    const status = body.status === 'published' ? 'published' : 'draft'
+    patch.status = status
+    // published_at is stamped on the way out and cleared on the way back in;
+    // an edit to a story already out keeps its date. 062 requires a published
+    // row to carry one; unpublishing and republishing re-dates the story,
+    // which is the honest answer — it was off the site in between.
+    if (status === 'draft') patch.published_at = null
+    else if (before !== 'published') patch.published_at = now
+  }
 
   const { data, error } = await supabase
     .from('org_stories')
-    // published_at is stamped on the way out and cleared on the way back in.
-    // 062 requires a published row to carry one; unpublishing and republishing
-    // re-dates the story, which is the honest answer — it was off the site in
-    // between.
-    .update({ status, published_at: status === 'published' ? now : null, updated_at: now })
+    .update(patch)
     .eq('id', c.req.param('id'))
     .eq('org_id', c.req.param('orgId'))
     .select(STORY_COLUMNS)
     .maybeSingle()
   if (error) {
-    // The one constraint a publish can trip: consent was never confirmed.
-    return c.json(
-      { error: 'Confirm consent for everyone named or pictured before publishing.' },
-      400
-    )
+    // Two constraints a save can trip: a published row without consent, or one
+    // that 144 lets a draft be without.
+    const incomplete = error.code === CHECK_VIOLATION && error.message.includes('org_stories_published_is_complete')
+    return c.json({ error: incomplete ? STORY_GAP : CONSENT_REFUSAL }, 400)
   }
   if (!data) return c.json({ error: 'No such story of yours.' }, 404)
-  if (before === 'draft') {
+  if (before === 'draft' && data.status === 'published') {
     await notifyFollowers(data.org_id as string, c.get('userId'), { org_story_id: data.id }, data.title)
   }
   return c.json(data)
@@ -1566,10 +1703,10 @@ organizations.get('/:id/recycling', async (c) => {
   if (!rows.length || !(await ledOrgIds(admin, c.get('userId'))).includes(c.req.param('id'))) {
     return c.json(await withPhotoUrls(rows))
   }
-  const { data: people } = await admin
-    .from('profiles')
-    .select('id, name')
-    .in('id', [...new Set(rows.map((r) => r.contributor_id))])
+  const { data: people, error: peopleError } = await selectIn([...new Set(rows.map((r) => r.contributor_id))], (ids) =>
+    admin.from('profiles').select('id, name').in('id', ids)
+  )
+  if (peopleError) return c.json({ error: "We couldn't load who dropped these off. Try again." }, 500)
   const name = new Map((people ?? []).map((p) => [p.id, p.name]))
   return c.json(await withPhotoUrls(rows.map((r) => ({ ...r, contributor_name: name.get(r.contributor_id) ?? null }))))
 })
@@ -1672,6 +1809,10 @@ organizations.post('/:id/recycling', async (c) => {
 
   if (error) return c.json({ error: error.message }, 500)
   if (!data) return c.json({ error: 'That booking could not be made.' }, 403)
+  await notify(
+    [{ recipient_id: c.get('userId'), type: 'drop_off_booked', org_id: c.req.param('id'), actor_name: org.name }],
+    'drop_off_booked'
+  )
   return c.json(data, 201)
 })
 
@@ -1741,6 +1882,20 @@ organizations.patch('/:orgId/recycling/:id', async (c) => {
       return c.json({ error: 'This drop-off has already been decided and cannot be changed.' }, 409)
     }
     return c.json({ error: 'No such drop-off at your organisation.' }, 404)
+  }
+  // 142. The .eq('status', 'booked') above makes a repeat a 409, so this runs once.
+  if (data.contributor_id !== c.get('userId')) {
+    await notify(
+      [
+        {
+          recipient_id: data.contributor_id,
+          type: status === 'received' ? 'recycling_received' : 'recycling_declined',
+          org_id: c.req.param('orgId'),
+          actor_name: (await orgName(c.req.param('orgId'))) ?? 'An organisation',
+        },
+      ],
+      `recycling_${status}`
+    )
   }
   return c.json(data)
 })
@@ -1831,7 +1986,9 @@ organizations.get('/:id', async (c) => {
     .order('position', { referencedTable: 'org_rate_lines' })
     .single()
   if (error) return c.json({ error: error.message }, singleRowStatus(error))
-  return c.json((await withExtras([data]))[0])
+  const extras = await withExtras([data])
+  if (extras.error) return c.json({ error: extras.error }, 500)
+  return c.json(extras.rows[0])
 })
 
 export default organizations

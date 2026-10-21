@@ -1,4 +1,3 @@
-// journeys: Y07 Y08
 import { test, expect } from '@playwright/test'
 import {
   adminClient,
@@ -31,7 +30,7 @@ async function heldByOrg(name: string) {
   return { leader, orgId, orgName, toyId: data.id as string }
 }
 
-test('Save writes the save row and Saved takes it away again', async ({ page }) => {
+test('Y07 Save writes the save row and Saved takes it away again', async ({ page }) => {
   const me = await signInAsNewContributor(page)
   const owner = await createContributor()
   const toyId = await createPublishedToy(owner.id, { name: uniqueTitle('E2E Saveable Toy') })
@@ -54,7 +53,7 @@ test('Save writes the save row and Saved takes it away again', async ({ page }) 
   expect(await saved()).toEqual([])
 })
 
-test("Thank the holder thanks a person once, tells them, and won't thank twice", async ({ page, browser, baseURL }) => {
+test("Y07 Thank the holder thanks a person once, tells them, and won't thank twice", async ({ page, browser, baseURL }) => {
   const me = await signInAsNewContributor(page)
   const owner = await createContributor()
   const ownerName = uniqueTitle('E2E Thanked Holder')
@@ -76,7 +75,7 @@ test("Thank the holder thanks a person once, tells them, and won't thank twice",
   expect(await notificationsFor(owner.id, 'profile_thanked')).toHaveLength(1)
 })
 
-test('Thank on an organisation-held toy thanks the organisation and notifies its leader', async ({ page }) => {
+test('Y07 Thank on an organisation-held toy thanks the organisation and notifies its leader', async ({ page }) => {
   const me = await signInAsNewContributor(page)
   const held = await heldByOrg(uniqueTitle('E2E Org Held Toy'))
 
@@ -90,7 +89,7 @@ test('Thank on an organisation-held toy thanks the organisation and notifies its
   expect(rows).toHaveLength(1)
 })
 
-test('Report on a toy files a toy report with the toy named', async ({ page }) => {
+test('Y07 Report on a toy files a toy report with the toy named', async ({ page }) => {
   const me = await signInAsNewContributor(page)
   const owner = await createContributor()
   const name = uniqueTitle('E2E Reported Toy Page')
@@ -105,7 +104,7 @@ test('Report on a toy files a toy report with the toy named', async ({ page }) =
   ])
 })
 
-test('the holding organisation, the guide it was built from and the holder\'s picks all link on', async ({ page }) => {
+test('Y08 the holding organisation, the guide it was built from and the holder\'s picks all link on', async ({ page }) => {
   await signInAsNewContributor(page)
   const held = await heldByOrg(uniqueTitle('E2E Linked Toy'))
   const author = await createContributor()

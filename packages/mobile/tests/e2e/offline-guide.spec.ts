@@ -1,8 +1,7 @@
-// journeys: G29
 import { test, expect } from '@playwright/test'
 import { signInAsNewContributor, createTutorial, uniqueTitle } from './helpers'
 
-test('offline guide: says so, no console error, Try again loads it once back online', async ({ page }) => {
+test('G29 offline guide: says so, no console error, Try again loads it once back online', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const title = uniqueTitle('E2E Offline Guide')
   const id = await createTutorial(contributor.id, { title, status: 'approved' })

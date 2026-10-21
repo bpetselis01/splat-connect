@@ -1,4 +1,3 @@
-// journeys: B04 G23 G24
 import { CLEARANCE, paddingBottomOf } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { FeedbackSheet } from '../../../../components/guides/feedback-sheet'
@@ -18,7 +17,7 @@ const base = { tutorialId: 'g', steps, authorFirstName: 'Mei', open: true, onClo
 
 beforeEach(() => { jest.clearAllMocks(); mockPost.mockResolvedValue(posted) })
 
-it('needs a step and a body before Post enables, then posts and shows the confirmation', async () => {
+it('G23 needs a step and a body before Post enables, then posts and shows the confirmation', async () => {
   render(<FeedbackSheet {...base} steps={steps as never} />)
   expect(screen.getByText('How did it go?')).toBeTruthy()
   expect(screen.getByText('Mei can pin it as a fix so the next builder sees it.')).toBeTruthy()
@@ -61,7 +60,7 @@ it('stays open and says why when the post fails', async () => {
   expect(base.onClose).not.toHaveBeenCalled()
 })
 
-it('uploads a photo and sends its path and caption', async () => {
+it('G24 uploads a photo and sends its path and caption', async () => {
   mockPick.mockResolvedValue({ path: 'g/photo.jpg' })
   render(<FeedbackSheet {...base} steps={steps as never} initialStep={1} />)
   fireEvent.press(screen.getByText('Add a photo'))
@@ -127,7 +126,7 @@ it('sits Post one gutter above the home indicator, not 24px from the edge', () =
 describe('a long guide picks its step from the list sheet', () => {
   const many = Array.from({ length: 20 }, (_, i) => ({ id: `s${i + 1}`, tutorial_id: 'g', position: i + 1, title: i === 16 ? 'Seal with varnish' : `Part ${i + 1}`, body: 'b', photo_url: null }))
 
-  it('posts the step found by number, and the confirmation names it', async () => {
+  it('G23 posts the step found by number, and the confirmation names it', async () => {
     mockPost.mockResolvedValue({ ...posted, step_position: 17 })
     render(<FeedbackSheet {...base} steps={many as never} />)
     expect(screen.queryByText('Step 17')).toBeNull()
@@ -150,7 +149,7 @@ describe('a long guide picks its step from the list sheet', () => {
     expect(screen.getByRole('button', { name: 'Post' }).props.accessibilityState?.disabled).toBeFalsy()
   })
 
-  it('Missing step from the list posts a null step', async () => {
+  it('G23 Missing step from the list posts a null step', async () => {
     render(<FeedbackSheet {...base} steps={many as never} initialStep={7} />)
     fireEvent.press(screen.getByTestId('step-picker-field'))
     fireEvent.press(screen.getByRole('button', { name: 'Missing step' }))

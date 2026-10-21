@@ -1,4 +1,3 @@
-// journeys: S02 S03
 import { test, expect } from '@playwright/test'
 import { adminClient, createContributor, createTutorial, renameProfile, signInAsNewContributor, uniqueTitle } from './helpers'
 
@@ -13,7 +12,7 @@ async function showcaseSubject() {
   return { ...subject, name }
 }
 
-test('Say thanks flashes the confirmation, stores one thanks, and tells the person', async ({ page }) => {
+test('S02 Say thanks flashes the confirmation, stores one thanks, and tells the person', async ({ page }) => {
   const thanker = await signInAsNewContributor(page)
   const subject = await showcaseSubject()
 
@@ -21,6 +20,7 @@ test('Say thanks flashes the confirmation, stores one thanks, and tells the pers
   await expect(page.getByText('Thanked 0 times')).toBeVisible()
   const posted = page.waitForResponse((r) => r.url().endsWith(`/api/contributors/${subject.id}/thanks`) && r.request().method() === 'POST')
   await page.getByRole('button', { name: 'Say thanks', exact: true }).click()
+  await page.getByRole('button', { name: 'Send thanks', exact: true }).click()
   expect((await posted).status()).toBe(201)
 
   await expect(page.getByText('Thanks sent — they will see it in their notifications')).toBeVisible()
@@ -39,7 +39,7 @@ test('Say thanks flashes the confirmation, stores one thanks, and tells the pers
   await expect(page.getByText('Thanked 1 time', { exact: true })).toBeVisible()
 })
 
-test('Report a problem on a person files a member report naming them', async ({ page }) => {
+test('S03 Report a problem on a person files a member report naming them', async ({ page }) => {
   const reporter = await signInAsNewContributor(page)
   const subject = await showcaseSubject()
 

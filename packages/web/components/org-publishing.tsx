@@ -8,8 +8,8 @@
  * than a separate table: unpublishing must not delete the evening somebody
  * spent writing it.
  *
- * The forms are their own screens (events/new, stories/new); the page header
- * links to them, and each empty tab does too.
+ * The forms are their own screens (events/new, stories/new, and [id]/edit for
+ * every row); the page header links to the new ones, and each empty tab does too.
  *
  * Publishing a story is disabled until consent is confirmed for everyone named
  * or pictured. That is a check constraint in 059 as well as this control —
@@ -100,7 +100,7 @@ export function OrgPublishing({
     run(() => browserApiClient.delete(`/api/organizations/${orgId}/${kind}/${id}`))
 
   const shownOf = (e: OrgEvent): Shown =>
-    e.status === 'draft' ? 'draft' : isPast(e.starts_at, e.ends_at) ? 'past' : 'published'
+    e.status === 'draft' || !e.starts_at ? 'draft' : isPast(e.starts_at, e.ends_at) ? 'past' : 'published'
 
   const stats = [
     { k: 'Upcoming events', v: events.filter((e) => shownOf(e) === 'published').length },
@@ -123,6 +123,7 @@ export function OrgPublishing({
     tint,
     view,
     manage,
+    edit,
     answer = 0,
   }: {
     kind: 'events' | 'stories'
@@ -137,6 +138,8 @@ export function OrgPublishing({
     view?: Route
     /** An event's own screen: registrations and part requests. */
     manage?: Route
+    /** The form it was written in, draft or published. */
+    edit: Route
     answer?: number
   }) {
     const [word, StateIcon, stateTint] = STATE[shown]
@@ -176,6 +179,10 @@ export function OrgPublishing({
                 View
               </Link>
             )}
+            <Link href={edit} className="btn btn-quiet px-[15px] text-sm">
+              <PencilSimple weight="bold" aria-hidden="true" />
+              Edit
+            </Link>
             <button
               type="button"
               className="btn btn-quiet whitespace-nowrap px-[15px] text-sm"
@@ -274,11 +281,11 @@ export function OrgPublishing({
                 kind="events"
                 id={event.id}
                 title={event.title}
-                meta={`${EVENT_KIND_LABEL[event.kind]} · ${place} · ${shortDate(event.starts_at)} · ${formatTimeRange(
-                  event.starts_at,
-                  null,
-                  event.format,
-                )} · ${going[event.id] ?? 0} going${
+                meta={`${EVENT_KIND_LABEL[event.kind]} · ${place} · ${
+                  event.starts_at
+                    ? `${shortDate(event.starts_at)} · ${formatTimeRange(event.starts_at, null, event.format)}`
+                    : 'No date yet'
+                } · ${going[event.id] ?? 0} going${
                   toAnswer[event.id] ? ` · ${toAnswer[event.id]} to answer` : ''
                 }`}
                 status={event.status}
@@ -287,6 +294,7 @@ export function OrgPublishing({
                 tint={KIND_TINT[event.kind]}
                 view={event.status === 'published' ? (`/get-involved/events/${event.id}` as Route) : undefined}
                 manage={event.status === 'draft' ? undefined : (`/dashboard/org/events/${event.id}` as Route)}
+                edit={`/dashboard/organisation/events/${event.id}/edit` as Route}
                 answer={toAnswer[event.id]}
               />
             )
@@ -308,6 +316,7 @@ export function OrgPublishing({
               icon={Newspaper}
               tint={STORY_TINT[story.kind]}
               view={story.status === 'published' ? (`/about/stories/${story.id}` as Route) : undefined}
+              edit={`/dashboard/organisation/stories/${story.id}/edit` as Route}
             />
           ))}
         </ul>

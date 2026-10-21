@@ -3,7 +3,6 @@
 // the doors, "From families", and the three buttons — a leader sees none of
 // them, a signed-out visitor goes to sign-in, and a thanks is signed with a
 // first name unless they type something else.
-// journeys: P01 P02 P03 P04 P05 P06 P07 P08
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { OrgProfileScreen } from '../../../../components/organisation/org-profile-screen'
 import { doorRoute, sinceYear } from '../../../../lib/org-profile'
@@ -65,7 +64,7 @@ function load(me: object | null) {
 }
 
 describe('OrgProfileScreen', () => {
-  it('draws the counted profile in the board’s order', async () => {
+  it('P01 draws the counted profile in the board’s order', async () => {
     load(relationship())
     render(<OrgProfileScreen id="o1" />)
     expect(await screen.findByText('Northbank Makerspace')).toBeTruthy()
@@ -94,7 +93,7 @@ describe('OrgProfileScreen', () => {
     expect(mockGet).not.toHaveBeenCalledWith('/api/organizations/o1/me')
   })
 
-  it('follows, and signs a thanks with a first name', async () => {
+  it('P02 P04 follows, and signs a thanks with a first name', async () => {
     load(relationship())
     // Two families thanked since this page loaded (2 then): the count is the server's, not 2 + 1.
     mockPost.mockResolvedValue({ thanks_count: 4 })
@@ -117,7 +116,7 @@ describe('OrgProfileScreen', () => {
     expect(await screen.findByText('Thanked 4 times')).toBeTruthy()
   })
 
-  it('unfollows from Following with a DELETE and goes back to Follow', async () => {
+  it('P02 unfollows from Following with a DELETE and goes back to Follow', async () => {
     load(relationship({ following: true }))
     mockDelete.mockResolvedValue({})
     render(<OrgProfileScreen id="o1" />)
@@ -126,7 +125,7 @@ describe('OrgProfileScreen', () => {
     expect(mockDelete).toHaveBeenCalledWith('/api/organizations/o1/follow')
   })
 
-  it('asks a printing organisation to print with it already chosen', async () => {
+  it('P05 asks a printing organisation to print with it already chosen', async () => {
     mockGet.mockImplementation((path: string) =>
       Promise.resolve(path.startsWith('/api/public') ? { ...ORG, printers: [{ id: 'p1', name: 'Prusa', materials: ['PETG'] }] } : relationship())
     )
@@ -159,7 +158,7 @@ describe('OrgProfileScreen', () => {
     expect(screen.getByText('Tue and Thu, 9am–4pm')).toBeTruthy()
   })
 
-  it('reads guide, toy and leader rows the way the board does, and expands past four', async () => {
+  it('P08 reads guide, toy and leader rows the way the board does, and expands past four', async () => {
     const guide = (i: number) => ({
       id: `g${i}`, title: `Guide ${i}`, difficulty: 'easy', build_minutes: 20, parts_total_cents: 2400,
       author_name: 'Rachel Kaur', toy_photo_url: null, status: 'approved',
@@ -188,8 +187,33 @@ describe('OrgProfileScreen', () => {
   })
 })
 
+describe('OrgProfileScreen report', () => {
+  it('P09 Report a problem files an organisation report naming this organisation', async () => {
+    mockPost.mockResolvedValue({})
+    load(relationship())
+    render(<OrgProfileScreen id="o1" />)
+    await screen.findByText('Northbank Makerspace')
+    fireEvent.press(screen.getByRole('button', { name: /Report a problem$/ }))
+    expect(screen.getByText('About Northbank Makerspace profile. Goes to the SPLAT team only.')).toBeTruthy()
+    fireEvent.press(screen.getByRole('radio', { name: 'Wrong or missing info' }))
+    fireEvent.changeText(screen.getByLabelText('What happened?'), 'Wrong opening hours.')
+    fireEvent.press(screen.getByRole('button', { name: 'Send report' }))
+    await waitFor(() =>
+      expect(mockPost).toHaveBeenCalledWith('/api/reports', {
+        subject_kind: 'organisation',
+        subject_id: 'o1',
+        subject_label: 'Northbank Makerspace',
+        category: 'wrong_info',
+        body: 'Wrong opening hours.',
+        ok_to_contact: true,
+      })
+    )
+    expect(await screen.findByText('Sent to SPLAT. You will hear back within two days.')).toBeTruthy()
+  })
+})
+
 describe('org-profile helpers', () => {
-  it('routes a message door to the conversation and leaves events unlinked', () => {
+  it('P07 routes a message door to the conversation and leaves events unlinked', () => {
     expect(doorRoute('message', 'o1')).toBe('/messages/org/o1')
     expect(doorRoute('events', 'o1')).toBeNull()
   })

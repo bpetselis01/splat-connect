@@ -2,7 +2,6 @@
  * 104: a build request's note to the maker is optional. 061's subject check
  * still holds every other arm, and still caps a note at 2000 characters.
  */
-// journeys: X01
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'

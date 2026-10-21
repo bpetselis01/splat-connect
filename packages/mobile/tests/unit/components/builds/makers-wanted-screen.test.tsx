@@ -1,4 +1,3 @@
-// journeys: K01 K14
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { MakersWantedScreen } from '../../../../components/builds/makers-wanted-screen'
 
@@ -29,7 +28,7 @@ beforeEach(() => {
   mockCaps.current = null
 })
 
-it('asks for a postcode before it filters by distance', async () => {
+it('K01 asks for a postcode before it filters by distance', async () => {
   mockGet.mockResolvedValue([build('b1', null, 'Newtown')])
   render(<MakersWantedScreen />)
   fireEvent.press(await screen.findByText('Add your postcode'))
@@ -37,7 +36,7 @@ it('asks for a postcode before it filters by distance', async () => {
   expect(mockGet).toHaveBeenCalledWith('/api/toy-transactions/open-builds')
 })
 
-it('filters on the real distance from the maker, and says it on the row', async () => {
+it('K01 filters on the real distance from the maker, and says it on the row', async () => {
   mockCaps.current = { profile: { id: 'me', pickup_postcode: '2000' } }
   mockGet.mockResolvedValue([build('b1', 4, 'Newtown'), build('b2', 40, 'Penrith')])
   render(<MakersWantedScreen />)
@@ -70,7 +69,7 @@ it('leaves the cost off when a part is unpriced', async () => {
   expect(screen.queryByText(/~\$/)).toBeNull()
 })
 
-it('reads Live and Done from the board feed, naming the maker', async () => {
+it('K01 reads Live and Done from the board feed, naming the maker', async () => {
   mockGet.mockImplementation((path: string) =>
     path.startsWith('/api/toy-transactions/builds-board?tab=live')
       ? Promise.resolve([row({ id: 'l1', maker_name: 'Tom Beattie', party: false })])
@@ -95,7 +94,7 @@ it('reads Live and Done from the board feed, naming the maker', async () => {
   expect(screen.queryByText(/null/)).toBeNull()
 })
 
-it('offers the thread on a live build of your own', async () => {
+it('K14 offers the thread on a live build of your own', async () => {
   mockGet.mockImplementation((path: string) =>
     Promise.resolve(path.includes('tab=live') ? [row({ id: 'l1', maker_name: 'Tom Beattie', party: true })] : [])
   )

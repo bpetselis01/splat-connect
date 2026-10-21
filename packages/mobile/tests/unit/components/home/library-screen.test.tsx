@@ -1,5 +1,4 @@
 // packages/mobile/tests/unit/components/home/library-screen.test.tsx
-// journeys: G01 G02 G04 G05 G07
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { theme } from '../../../../lib/theme'
 import { ScrollView, FlatList, StyleSheet } from 'react-native'
@@ -98,6 +97,14 @@ describe('LibraryScreen', () => {
     expect(clears(screen.UNSAFE_getAllByType(FlatList))).toBe(true)
   })
 
+  it('G07 Add a guide in the Guide actions menu opens the new-guide screen', async () => {
+    render(<LibraryScreen />)
+    await screen.findByText('Build a Robot Arm')
+    fireEvent.press(screen.getByLabelText('Guide actions'))
+    fireEvent.press(screen.getByLabelText('Add a guide'))
+    expect(mockPush).toHaveBeenCalledWith('/guides/new')
+  })
+
   it('offers Request a print in the Guide actions menu', async () => {
     render(<LibraryScreen />)
     await screen.findByText('Build a Robot Arm')
@@ -106,21 +113,21 @@ describe('LibraryScreen', () => {
     expect(mockPush).toHaveBeenCalledWith('/printing')
   })
 
-  it('carries an organisation to print with into the guide it opens', async () => {
+  it('G05 carries an organisation to print with into the guide it opens', async () => {
     mockParams = { printWith: 'o1' }
     render(<LibraryScreen />)
     fireEvent.press(await screen.findByText('Build a Robot Arm'))
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/guides/[id]', params: { id: '1', printWith: 'o1' } })
   })
 
-  it('renders tutorial titles from the public tutorials endpoint', async () => {
+  it('G01 renders tutorial titles from the public tutorials endpoint', async () => {
     render(<LibraryScreen />)
     expect(await screen.findByText('Build a Robot Arm')).toBeTruthy()
     expect(screen.getByText('Advanced Gearbox')).toBeTruthy()
     expect(mockGet).toHaveBeenCalledWith('/api/public/tutorials')
   })
 
-  it('refetches when the screen regains focus, so a thanks sent on the guide shows on its pill', async () => {
+  it('G01 refetches when the screen regains focus, so a thanks sent on the guide shows on its pill', async () => {
     mockEndpoints({ tutorials: Promise.resolve([row({ id: '1', title: 'Build a Robot Arm', thanks_count: 1 })]) })
     render(<LibraryScreen />)
     await screen.findByText('Build a Robot Arm')
@@ -132,7 +139,7 @@ describe('LibraryScreen', () => {
     expect(screen.getByText('Build a Robot Arm')).toBeTruthy()
   })
 
-  it('filters the list by search text', async () => {
+  it('G02 filters the list by search text', async () => {
     render(<LibraryScreen />)
     await screen.findByText('Build a Robot Arm')
     fireEvent.changeText(screen.getByPlaceholderText('Search guides'), 'gearbox')
@@ -140,7 +147,7 @@ describe('LibraryScreen', () => {
     expect(screen.getByText('Advanced Gearbox')).toBeTruthy()
   })
 
-  it('matches search against the description, not only the title', async () => {
+  it('G02 matches search against the description, not only the title', async () => {
     mockEndpoints({
       tutorials: Promise.resolve([
         row({ id: '1', title: 'Build a Robot Arm', description: 'A switch-adapted spinning top' }),
@@ -244,7 +251,7 @@ describe('LibraryScreen', () => {
     err.mockRestore()
   })
 
-  it('retries the fetch when the error state button is pressed', async () => {
+  it('G04 retries the fetch when the error state button is pressed', async () => {
     mockEndpoints({ tutorials: Promise.reject(new Error('API GET failed with status 500')) })
     render(<LibraryScreen />)
     await screen.findByText("Couldn't load tutorials.")
@@ -300,7 +307,7 @@ describe('LibraryScreen', () => {
     expect(await screen.findByText('Loading guides…')).toBeTruthy()
   })
 
-  it('clears every filter from the empty state in one tap', async () => {
+  it('G04 clears every filter from the empty state in one tap', async () => {
     render(<LibraryScreen />)
     await screen.findByText('Build a Robot Arm')
     fireEvent.changeText(screen.getByPlaceholderText('Search guides'), 'zzz')

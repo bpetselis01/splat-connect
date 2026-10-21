@@ -1,0 +1,55 @@
+# Registering for an event from its public page: the event detail opens from a
+# link, "I'm going" pushes the register screen because the event has a question,
+# the required answer unblocks Confirm, and the registration is a real row.
+# The register screen's form is a ScrollView with a TextField, the one thing the
+# Expo web export and Jest cannot show a keyboard over.
+#
+# DEVICE_EMAIL, DEVICE_PASSWORD, DEVICE_EVENT_ID, DEVICE_EVENT_TITLE and
+# DEVICE_USER_ID come from `maestro test --env`, fed by
+# scripts/provision-device-parent.mjs (see sign-out-clears-session.yaml for why
+# they carry no env: defaults here).
+name: "V01 V10 V12 V16 Register for an event whose question needs an answer, then see it on My events"
+appId: com.splatconnect.mobile
+---
+- clearState
+- runFlow: ../subflows/launch.yaml
+- runFlow: ../subflows/sign-in.yaml
+
+- stopApp
+- openLink: splatconnect:///events/${DEVICE_EVENT_ID}
+- extendedWaitUntil:
+    visible:
+      text: ${DEVICE_EVENT_TITLE}
+    timeout: 30000
+- runFlow: ../subflows/dismiss-dev-toast.yaml
+- assertVisible:
+    text: "Everyone is welcome"
+- tapOn:
+    text: "I'm going"
+
+# The event has a question, so the button went to the form, not straight to a POST.
+- assertVisible:
+    text: "Confirm my spot"
+- assertVisible:
+    text: "1 required question still to answer."
+- tapOn:
+    text: "Which toy are you bringing?"
+- inputText: "A bubble machine"
+# A tap on the form's own heading puts the keyboard away without leaving.
+- tapOn:
+    text: "Your details"
+- assertNotVisible:
+    text: "1 required question still to answer."
+- tapOn:
+    text: "Confirm my spot"
+
+# Confirm lands on My events, the event listed.
+- assertVisible:
+    text: ${DEVICE_EVENT_TITLE}
+
+# The row is the real result: landing on My events alone would show on a 500.
+- runScript:
+    file: ../scripts/assert-row.js
+    env:
+      TABLE: org_event_registrations
+      QUERY: event_id=eq.${DEVICE_EVENT_ID}&user_id=eq.${DEVICE_USER_ID}&cancelled_at=is.null

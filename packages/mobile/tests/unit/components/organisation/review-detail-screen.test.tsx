@@ -1,5 +1,4 @@
 // packages/mobile/tests/unit/components/organisation/review-detail-screen.test.tsx
-// journeys: L03 L04 L05 L06 L07
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { ReviewDetailScreen } from '../../../../components/organisation/review-detail-screen'
 
@@ -23,9 +22,9 @@ jest.mock('expo-router', () => {
 
 // The preview signs storage paths through the live supabase client; stubbed
 // the same way guides' own tests stub it.
-jest.mock('../../../../lib/supabase', () => ({
-  supabase: { storage: { from: () => ({ createSignedUrl: jest.fn().mockResolvedValue({ data: { signedUrl: 'https://signed' }, error: null }) }) } },
-}))
+const mockSign = jest.fn()
+const mockFrom = jest.fn(() => ({ createSignedUrl: mockSign }))
+jest.mock('../../../../lib/supabase', () => ({ supabase: { storage: { from: (...a: unknown[]) => mockFrom(...(a as [])) } } }))
 
 const mockUseCapabilities = jest.fn()
 jest.mock('../../../../lib/capabilities', () => ({ useCapabilities: () => mockUseCapabilities() }))
@@ -78,6 +77,7 @@ beforeEach(() => {
   mockUseCapabilities.mockReturnValue(leader([{ id: 'org1', name: 'Riverside Therapy' }]))
   respond(detail(), [pendingBacking])
   mockPost.mockResolvedValue({})
+  mockSign.mockResolvedValue({ data: { signedUrl: 'https://signed' }, error: null })
 })
 
 describe('ReviewDetailScreen', () => {
@@ -93,7 +93,26 @@ describe('ReviewDetailScreen', () => {
     expect(mockGet).toHaveBeenCalledWith('/api/tutorials/t1')
   })
 
-  it('offers Back and Decline on a pending backing request', async () => {
+  it('L03 Open the tutorial PDF signs the stored path for a minute and opens the preview with that link', async () => {
+    render(<ReviewDetailScreen tutorialId="t1" />)
+    fireEvent.press(await screen.findByRole('button', { name: 'Open the tutorial PDF' }))
+    await waitFor(() =>
+      expect(mockPush).toHaveBeenCalledWith({ pathname: '/guides/[id]/preview', params: { id: 't1', pdfUrl: 'https://signed' } }),
+    )
+    expect(mockFrom).toHaveBeenCalledWith('tutorial-pdfs')
+    expect(mockSign).toHaveBeenCalledWith('t1/tutorial.pdf', 60)
+  })
+
+  it('L03 a signing failure opens the preview with no link, so it says no PDF', async () => {
+    mockSign.mockResolvedValue({ data: null, error: new Error('nope') })
+    render(<ReviewDetailScreen tutorialId="t1" />)
+    fireEvent.press(await screen.findByRole('button', { name: 'Open the tutorial PDF' }))
+    await waitFor(() =>
+      expect(mockPush).toHaveBeenCalledWith({ pathname: '/guides/[id]/preview', params: { id: 't1', pdfUrl: '' } }),
+    )
+  })
+
+  it('L04 offers Back and Decline on a pending backing request', async () => {
     render(<ReviewDetailScreen tutorialId="t1" />)
 
     fireEvent.press(await screen.findByRole('button', { name: 'Back this guide' }))
@@ -102,7 +121,7 @@ describe('ReviewDetailScreen', () => {
     )
   })
 
-  it('declines through its own route', async () => {
+  it('L05 declines through its own route', async () => {
     render(<ReviewDetailScreen tutorialId="t1" />)
 
     fireEvent.press(await screen.findByRole('button', { name: 'Decline' }))
@@ -111,7 +130,7 @@ describe('ReviewDetailScreen', () => {
     )
   })
 
-  it('offers Approve and Request changes once backing is accepted and the guide is submitted', async () => {
+  it('L06 offers Approve and Request changes once backing is accepted and the guide is submitted', async () => {
     respond(detail({ status: 'pending' }), [acceptedBacking])
     render(<ReviewDetailScreen tutorialId="t1" />)
 
@@ -124,6 +143,14 @@ describe('ReviewDetailScreen', () => {
     )
   })
 
+  it('a leader (not admin mode) never touches the admin route', async () => {
+    respond(detail({ status: 'pending' }), [acceptedBacking])
+    render(<ReviewDetailScreen tutorialId="t1" />)
+    fireEvent.press(await screen.findByRole('button', { name: 'Approve' }))
+    await waitFor(() => expect(mockPost).toHaveBeenCalled())
+    expect(mockGet).toHaveBeenCalledWith('/api/tutorials/t1/orgs')
+  })
+
   it('refuses Request changes without a note, before spending the round trip', async () => {
     respond(detail({ status: 'pending' }), [acceptedBacking])
     render(<ReviewDetailScreen tutorialId="t1" />)
@@ -133,7 +160,7 @@ describe('ReviewDetailScreen', () => {
     expect(mockPost).not.toHaveBeenCalled()
   })
 
-  it('sends the note with a rejection', async () => {
+  it('L07 sends the note with a rejection', async () => {
     respond(detail({ status: 'pending' }), [acceptedBacking])
     render(<ReviewDetailScreen tutorialId="t1" />)
 

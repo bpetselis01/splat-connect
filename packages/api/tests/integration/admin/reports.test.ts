@@ -73,6 +73,29 @@ describe('GET /api/admin/reports', () => {
   })
 })
 
+describe('GET /api/admin/reports removed flag', () => {
+  let reportId: string
+
+  beforeAll(async () => {
+    const { data } = await adminClient().from('toy_idea_reports')
+      .insert({ idea_id: ideaId, reported_profile_id: target.id, reported_by: author.id, reason: 'Flag check' })
+      .select('id').single()
+    reportId = data!.id
+    await adminClient().from('toy_idea_participants').insert({ idea_id: ideaId, profile_id: target.id, removed_at: new Date().toISOString(), removed_by: admin.id })
+  })
+
+  afterAll(async () => {
+    await adminClient().from('toy_idea_participants').delete().eq('idea_id', ideaId).eq('profile_id', target.id)
+    await adminClient().from('toy_idea_reports').delete().eq('id', reportId)
+  })
+
+  it('is true for a reported person who has been removed from the challenge', async () => {
+    const res = await app.request('/api/admin/reports', authed(admin.token))
+    const rows = (await res.json()) as Array<{ id: string; removed: boolean }>
+    expect(rows.find((r) => r.id === reportId)!.removed).toBe(true)
+  })
+})
+
 describe('PATCH /api/admin/reports/:id', () => {
   let reportId: string
 
@@ -87,10 +110,22 @@ describe('PATCH /api/admin/reports/:id', () => {
     await adminClient().from('toy_idea_reports').delete().eq('id', reportId)
   })
 
+  it('400s on a missing or unknown action and leaves the report open', async () => {
+    for (const action of [undefined, 'ban']) {
+      const res = await app.request(`/api/admin/reports/${reportId}`, authed(admin.token, {
+        method: 'PATCH',
+        body: JSON.stringify({ resolution_note: 'x', action }),
+      }))
+      expect(res.status).toBe(400)
+    }
+    const { data } = await adminClient().from('toy_idea_reports').select('resolved_at').eq('id', reportId).single()
+    expect(data!.resolved_at).toBeNull()
+  })
+
   it('resolves an unresolved report with a resolution note', async () => {
     const res = await app.request(`/api/admin/reports/${reportId}`, authed(admin.token, {
       method: 'PATCH',
-      body: JSON.stringify({ resolution_note: 'Removed and warned' }),
+      body: JSON.stringify({ resolution_note: 'Removed and warned', action: 'dismiss' }),
     }))
     expect(res.status).toBe(200)
     const body = (await res.json()) as { resolved_at: string | null; resolution_note: string | null }
@@ -105,7 +140,7 @@ describe('PATCH /api/admin/reports/:id', () => {
   it('404s on a second resolve of the same report', async () => {
     const res = await app.request(`/api/admin/reports/${reportId}`, authed(admin.token, {
       method: 'PATCH',
-      body: JSON.stringify({ resolution_note: 'Trying again' }),
+      body: JSON.stringify({ resolution_note: 'Trying again', action: 'dismiss' }),
     }))
     expect(res.status).toBe(404)
   })
@@ -113,7 +148,7 @@ describe('PATCH /api/admin/reports/:id', () => {
   it('404s for an unknown report id', async () => {
     const res = await app.request(`/api/admin/reports/00000000-0000-0000-0000-000000000000`, authed(admin.token, {
       method: 'PATCH',
-      body: JSON.stringify({ resolution_note: 'n/a' }),
+      body: JSON.stringify({ resolution_note: 'n/a', action: 'dismiss' }),
     }))
     expect(res.status).toBe(404)
   })

@@ -1,4 +1,3 @@
-// journeys: G25
 import { test, expect } from '@playwright/test'
 import { adminClient, createContributor, createTutorial, renameProfile, signIn, uniqueTitle } from './helpers'
 import { addNote, addSteps } from './guides-fixtures'
@@ -8,7 +7,7 @@ import { addNote, addSteps } from './guides-fixtures'
  * step. Posting, pinning and deleting a note each move them with no reload.
  */
 
-test('posting, pinning and deleting a note move the filter chips without a reload', async ({ page }) => {
+test('G25 posting, pinning and deleting a note move the filter chips without a reload', async ({ page }) => {
   const author = await createContributor()
   await renameProfile(author.id, 'Mei Author')
   const builder = await createContributor()

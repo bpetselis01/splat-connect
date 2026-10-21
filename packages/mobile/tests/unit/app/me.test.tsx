@@ -1,4 +1,3 @@
-// journeys: Q01 Q02 Q03 Q04
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { theme } from '../../../lib/theme'
 import { ScrollView, FlatList, StyleSheet } from 'react-native'
@@ -40,7 +39,7 @@ beforeEach(() => {
   )
 })
 
-it('renders every buildNav group as rows, routes them through the map, and no longer links to the Explore index', () => {
+it('Q02 renders every buildNav group as rows, routes them through the map, and no longer links to the Explore index', () => {
   render(<MeTab />)
   // getAllByText: "Account" is both a group heading and a row label.
   for (const h of ['Add a tutorial', 'Exchange a toy', 'Give us a challenge', 'Organisation', 'Account', 'Explore']) expect(screen.getAllByText(h).length).toBeGreaterThan(0)
@@ -53,7 +52,7 @@ it('renders every buildNav group as rows, routes them through the map, and no lo
   expect(screen.queryByLabelText('Everything in Explore')).toBeNull()
 })
 
-it('shows the builds you have logged', async () => {
+it('Q01 shows the builds you have logged', async () => {
   render(<MeTab />)
   expect(await screen.findByText('3 builds logged')).toBeTruthy()
 })
@@ -64,7 +63,7 @@ it("greets by first name and says what a leader leads and how much is waiting", 
   expect(screen.getByText('Leads Alpha · 3 waiting')).toBeTruthy()
 })
 
-it('sends every row to its own screen, so none is drawn as SOON', () => {
+it('Q02 sends every row to its own screen, so none is drawn as SOON', () => {
   render(<MeTab />)
   mockPush.mockClear()
   // My events was the SOON example until it got its screen; now no hub row
@@ -73,11 +72,13 @@ it('sends every row to its own screen, so none is drawn as SOON', () => {
   expect(mockPush).toHaveBeenCalledWith('/events')
   fireEvent.press(screen.getByLabelText('Print for others'))
   expect(mockPush).toHaveBeenCalledWith('/print-for-others')
+  fireEvent.press(screen.getByLabelText('Thank-you notes'))
+  expect(mockPush).toHaveBeenCalledWith('/thanks')
   expect(screen.queryAllByText('SOON')).toHaveLength(0)
 })
 
 describe('Money you have agreed to', () => {
-  it('names what each thread is for and who it is with, and opens it', async () => {
+  it('Q01 Q03 names what each thread is for and who it is with, and opens it', async () => {
     mockGet.mockResolvedValue({
       threads: [
         thread({ transaction_id: 'tx-p', type: 'print', other_name: 'Contributor 2', what: 'Filament for your switch mount', amount_cents: 500 }),
@@ -129,7 +130,7 @@ describe('Money you have agreed to', () => {
   })
 })
 
-it('opens Makers wanted from Give us a challenge, and Recycling from Explore', () => {
+it('Q02 opens Makers wanted from Give us a challenge, and Recycling from Explore', () => {
   render(<MeTab />)
   mockPush.mockClear()
   fireEvent.press(screen.getByLabelText('Makers wanted'))
@@ -139,7 +140,7 @@ it('opens Makers wanted from Give us a challenge, and Recycling from Explore', (
   expect(screen.queryByLabelText('Recycle plastic')).toBeNull()
 })
 
-it('badges the rows from one counts call', async () => {
+it('Q01 badges the rows from one counts call', async () => {
   render(<MeTab />)
   expect(await screen.findByText('7')).toBeTruthy()
   expect(screen.getByText('6')).toBeTruthy()
@@ -147,7 +148,7 @@ it('badges the rows from one counts call', async () => {
 })
 
 // Review Focus 4: a failed counts call costs the badges, never the tab.
-it('renders every row uncounted when the counts call fails', async () => {
+it('Q01 renders every row uncounted when the counts call fails', async () => {
   mockGet.mockImplementation((p: string) =>
     p === '/api/me/counts' ? Promise.reject(new Error('500')) : Promise.resolve({ threads: [], owed_cents: 0, unsettled_count: 0 })
   )
@@ -159,7 +160,7 @@ it('renders every row uncounted when the counts call fails', async () => {
   expect(screen.queryByText('6')).toBeNull()
 })
 
-it('explains each badge and its threshold from one row', () => {
+it('Q04 explains each badge and its threshold from one row', () => {
   render(<MeTab />)
   expect(screen.queryByText('Have 10 approved guides published.')).toBeNull()
   fireEvent.press(screen.getByLabelText('How badges are earned'))

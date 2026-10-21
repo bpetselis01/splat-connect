@@ -42,7 +42,7 @@ async function askForToy(page: Page, toyId: string) {
 }
 
 test.describe('Toy donation and exchange', () => {
-  test('a requester can complete a donation handoff end to end', async ({ page }) => {
+  test('WY06 WY10 WY15 WX06 WX09 WX14 a requester can complete a donation handoff end to end', async ({ page }) => {
     const owner = await createContributor()
     await acceptTerms(owner.id)
     const requester = await createContributor()
@@ -108,7 +108,7 @@ test.describe('Toy donation and exchange', () => {
     }
   })
 
-  test('the owner can reject a request, ending it with no handoff', async ({ page }) => {
+  test('WX07 WX26 the owner declines a request with a reason, ending it with no handoff, and the requester reads the reason', async ({ page }) => {
     const owner = await createContributor()
     await acceptTerms(owner.id)
     const requester = await createContributor()
@@ -124,15 +124,23 @@ test.describe('Toy donation and exchange', () => {
       await signIn(page, owner.email, owner.password)
       await page.waitForURL('**/dashboard')
       await page.goto(txUrl)
-      await page.getByRole('button', { name: 'Reject' }).click()
+      await page.getByRole('button', { name: 'Decline' }).click()
+      await page.getByLabel('Why you cannot take it').fill('Already given away')
+      await page.getByRole('button', { name: 'Send the decline' }).click()
       await expect(page.getByText(/this request was declined/i)).toBeVisible()
+
+      await signIn(page, requester.email, requester.password)
+      await page.waitForURL('**/dashboard')
+      await page.goto(txUrl)
+      await expect(page.getByText(/this request was declined/i)).toBeVisible()
+      await expect(page.locator('blockquote', { hasText: 'Already given away' })).toBeVisible()
     } finally {
       await deleteUser(owner.id)
       await deleteUser(requester.id)
     }
   })
 
-  test('a requester can withdraw an open request', async ({ page }) => {
+  test('WX08 a requester can withdraw an open request', async ({ page }) => {
     const owner = await createContributor()
     await acceptTerms(owner.id)
     const requester = await createContributor()
@@ -164,7 +172,7 @@ test.describe('Toy donation and exchange', () => {
    * acceptance (a kind='system' row, whose real effect is that the refetch
    * brings a new tx.status with it and the sidebar changes).
    */
-  test('a message and an acceptance reach the other party without a reload', async ({ browser }) => {
+  test('WX04 WX05 WX06 a message and an acceptance reach the other party without a reload', async ({ browser }) => {
     const owner = await createContributor()
     await acceptTerms(owner.id)
     const requester = await createContributor()

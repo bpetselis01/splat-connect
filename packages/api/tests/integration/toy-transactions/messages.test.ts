@@ -1,4 +1,3 @@
-// journeys: K13 R05 X01 X03
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, type TestUser } from '../../helpers/auth.js'
@@ -52,7 +51,7 @@ describe('POST /api/toy-transactions/:id/messages', () => {
     await deleteTestUser(stranger.id)
   })
 
-  it('lets a party post a message', async () => {
+  it('X03 WX05 lets a party post a message', async () => {
     const res = await txReq(`/${txId}/messages`, requester.token, {
       method: 'POST',
       body: JSON.stringify({ body: 'When works for you?' }),
@@ -80,7 +79,7 @@ describe('POST /api/toy-transactions/:id/messages', () => {
     expect(res.status).toBe(400)
   })
 
-  it('previews the newest message on the list, whoever sent it', async () => {
+  it('X01 previews the newest message on the list, whoever sent it', async () => {
     await txReq(`/${txId}/messages`, owner.token, {
       method: 'POST',
       body: JSON.stringify({ body: 'Saturday suits me.' }),

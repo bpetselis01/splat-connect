@@ -1,12 +1,14 @@
 // packages/mobile/tests/unit/components/organisation/review-queue-screen.test.tsx
-// journeys: L01 L02
-import { render, screen, fireEvent } from '@testing-library/react-native'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { ReviewQueueScreen } from '../../../../components/organisation/review-queue-screen'
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
 
 const mockGet = jest.fn()
-jest.mock('../../../../lib/api-client', () => ({ apiClient: { get: (...a: unknown[]) => mockGet(...a) } }))
+const mockPost = jest.fn()
+jest.mock('../../../../lib/api-client', () => ({
+  apiClient: { get: (...a: unknown[]) => mockGet(...a), post: (...a: unknown[]) => mockPost(...a) },
+}))
 
 const mockPush = jest.fn()
 jest.mock('expo-router', () => {
@@ -63,10 +65,24 @@ beforeEach(() => {
   jest.clearAllMocks()
   mockUseCapabilities.mockReturnValue(leader([{ id: 'org1', name: 'Riverside Therapy' }]))
   mockGet.mockResolvedValue([])
+  mockPost.mockResolvedValue(undefined)
 })
 
 describe('ReviewQueueScreen', () => {
-  it('waits on a pending backing request and on a submitted, backed guide alike', async () => {
+  it('clears the organisations bucket once when a leader opens the queue', async () => {
+    render(<ReviewQueueScreen />)
+    await waitFor(() => expect(mockPost).toHaveBeenCalledTimes(1))
+    expect(mockPost).toHaveBeenCalledWith('/api/notifications/me/read', { bucket: 'organisations' })
+  })
+
+  it('clears nothing for somebody who leads no organisation', async () => {
+    mockUseCapabilities.mockReturnValue(leader([]))
+    render(<ReviewQueueScreen />)
+    await screen.findByText('This screen belongs to organisation leaders.')
+    expect(mockPost).not.toHaveBeenCalled()
+  })
+
+  it('L01 waits on a pending backing request and on a submitted, backed guide alike', async () => {
     mockGet.mockResolvedValue([
       tutorial({ id: 't1', title: 'Asked to back', tutorial_orgs: [backing({ status: 'pending' })] }),
       tutorial({
@@ -123,7 +139,7 @@ describe('ReviewQueueScreen', () => {
     expect(labels.indexOf('Older ask')).toBeLessThan(labels.indexOf('Newer ask'))
   })
 
-  it('opens the review detail for a row', async () => {
+  it('L02 opens the review detail for a row', async () => {
     mockGet.mockResolvedValue([
       tutorial({ id: 't1', title: 'Open me', tutorial_orgs: [backing({})] }),
     ])

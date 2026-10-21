@@ -1,6 +1,8 @@
 // packages/mobile/components/organisation/story-form-screen.tsx
 /**
- * Publish a story — web's components/story-form.tsx on the phone.
+ * Publish a story, or edit one already saved — web's components/story-form.tsx
+ * on the phone. On an edit the consent box starts unticked whatever was saved:
+ * the edit may name somebody new.
  *
  * Publish stays disabled until consent is ticked; that is the courtesy, and
  * 059/062's check constraint is the guarantee. The word count is readMinutes,
@@ -9,13 +11,13 @@
  * Both buttons return to Events and stories: mobile has no public story page to
  * land on, which is where web sends a published one.
  */
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import { apiMessage, STORY_KINDS, STORY_KIND_LABEL, readMinutes, type StoryKind } from '@splat-connect/types'
+import { apiMessage, isNetworkError, STORY_KINDS, STORY_KIND_LABEL, readMinutes, type OrgStory, type StoryKind } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
-import { useCapabilities } from '../../lib/capabilities'
+import { useActingOrg } from '../../lib/acting-org'
 import { theme } from '../../lib/theme'
 import { useBottomClearance } from '../../lib/bottom-clearance'
 import { Screen } from '../ui/Screen'
@@ -23,23 +25,88 @@ import { Chip } from '../ui/Chip'
 import { Button } from '../ui/Button'
 import { TextField } from '../ui/TextField'
 import { SkeletonRow } from '../ui/Skeleton'
+import { EmptyState } from '../ui/EmptyState'
+import { logFailure } from '../../lib/log'
 import { ListSection } from '../list/list-kit'
 
 // An announcement speaks for SPLAT and is admin-only (062): not on a leader's form.
 const KINDS = (Object.keys(STORY_KINDS) as StoryKind[]).filter((k) => k !== 'announcement')
 
-export function StoryFormScreen() {
+/** Loads one of the acting organisation's stories, then opens it in the form. */
+export function EditStoryScreen({ storyId }: { storyId: string }) {
+  const { org } = useActingOrg()
+  const [story, setStory] = useState<OrgStory | null>(null)
+  const [failed, setFailed] = useState<'offline' | 'other' | 'gone' | null>(null)
+  const [attempt, setAttempt] = useState(0)
+
+  useEffect(() => {
+    if (!org) return
+    let ignore = false
+    apiClient
+      .get<OrgStory[]>(`/api/organizations/${org.id}/stories`)
+      .then((stories) => {
+        if (ignore) return
+        const found = stories.find((s) => s.id === storyId)
+        if (found) setStory(found)
+        else setFailed('gone')
+      })
+      .catch((e) => {
+        if (ignore) return
+        logFailure('[EditStoryScreen] load failed:', e)
+        setFailed(isNetworkError(e) ? 'offline' : 'other')
+      })
+    return () => {
+      ignore = true
+    }
+  }, [org, storyId, attempt])
+
+  if (story) return <StoryFormScreen story={story} />
+  if (failed === 'gone') {
+    return (
+      <Screen>
+        <EmptyState icon="newspaper-outline" title="That story is not one of yours any more." />
+      </Screen>
+    )
+  }
+  if (failed) {
+    return (
+      <Screen>
+        <EmptyState
+          icon="cloud-offline-outline"
+          title={failed === 'offline' ? 'You seem to be offline.' : "Couldn't load that story."}
+          hint="Check your connection and try again."
+        >
+          <Button
+            label="Try again"
+            variant="secondary"
+            onPress={() => {
+              setFailed(null)
+              setAttempt((n) => n + 1)
+            }}
+          />
+        </EmptyState>
+      </Screen>
+    )
+  }
+  return (
+    <Screen>
+      <SkeletonRow />
+    </Screen>
+  )
+}
+
+export function StoryFormScreen({ story }: { story?: OrgStory } = {}) {
   const bottom = useBottomClearance()
   const router = useRouter()
-  const { caps } = useCapabilities()
-  const org = caps?.ledOrgs[0]
-  const [kind, setKind] = useState<StoryKind>('family')
-  const [title, setTitle] = useState('')
-  const [summary, setSummary] = useState('')
-  const [body, setBody] = useState('')
-  const [byline, setByline] = useState<string | null>(null)
-  const [pullQuote, setPullQuote] = useState('')
-  const [pullQuoteBy, setPullQuoteBy] = useState('')
+  const { org } = useActingOrg()
+  const live = story?.status === 'published'
+  const [kind, setKind] = useState<StoryKind>(story?.kind ?? 'family')
+  const [title, setTitle] = useState(story?.title ?? '')
+  const [summary, setSummary] = useState(story?.summary ?? '')
+  const [body, setBody] = useState(story?.body ?? '')
+  const [byline, setByline] = useState<string | null>(story?.byline ?? null)
+  const [pullQuote, setPullQuote] = useState(story?.pull_quote ?? '')
+  const [pullQuoteBy, setPullQuoteBy] = useState(story?.pull_quote_by ?? '')
   const [consent, setConsent] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState<'draft' | 'published' | null>(null)
@@ -63,7 +130,7 @@ export function StoryFormScreen() {
     setError(null)
     setSaving(status)
     try {
-      await apiClient.post(`/api/organizations/${org!.id}/stories`, {
+      const fields = {
         kind,
         title: title.trim(),
         summary: summary.trim(),
@@ -73,7 +140,9 @@ export function StoryFormScreen() {
         pull_quote_by: pullQuoteBy.trim() || null,
         consent_confirmed: consent,
         status,
-      })
+      }
+      if (story) await apiClient.patch(`/api/organizations/${org!.id}/stories/${story.id}`, fields)
+      else await apiClient.post(`/api/organizations/${org!.id}/stories`, fields)
       router.back()
     } catch (e) {
       setError(apiMessage(e, 'That did not save. Try once more.'))
@@ -148,10 +217,15 @@ export function StoryFormScreen() {
         </Pressable>
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        <Button label="Publish to Stories" onPress={() => void save('published')} disabled={!canPublish} loading={saving === 'published'} style={styles.primary} />
-        <Button label="Save as draft" variant="secondary" onPress={() => void save('draft')} disabled={saving !== null} loading={saving === 'draft'} style={styles.primary} />
+        <Button label={live ? 'Save changes' : 'Publish to Stories'} onPress={() => void save('published')} disabled={!canPublish} loading={saving === 'published'} style={styles.primary} />
+        {!live && <Button label="Save as draft" variant="secondary" onPress={() => void save('draft')} disabled={saving !== null} loading={saving === 'draft'} style={styles.primary} />}
         <Text style={styles.help}>
-          Published as {org.name}.{!consent && ready ? ' Publishing is held until consent is confirmed — save it as a draft meanwhile.' : ''}
+          Published as {org.name}.
+          {!consent && ready
+            ? live
+              ? ' Saving is held until consent is confirmed for everyone named now.'
+              : ' Publishing is held until consent is confirmed — save it as a draft meanwhile.'
+            : ''}
         </Text>
       </ScrollView>
     </Screen>

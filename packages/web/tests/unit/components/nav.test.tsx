@@ -4,6 +4,7 @@ import { Nav } from '@/components/nav'
 import type { Capabilities } from '@/lib/capabilities'
 
 const pathname = vi.hoisted(() => ({ current: '/' }))
+const search = vi.hoisted(() => ({ current: '' }))
 
 // --- Mock strategy ---
 // next/link is replaced with a plain <a> tag so links render in jsdom without Next.js routing
@@ -22,6 +23,7 @@ vi.mock('next/link', () => ({
 
 vi.mock('next/navigation', () => ({
   usePathname: () => pathname.current,
+  useSearchParams: () => new URLSearchParams(search.current),
 }))
 
 const signedIn = {
@@ -36,12 +38,13 @@ describe('Nav', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     pathname.current = '/'
+    search.current = ''
   })
 
   // Tests: the bar carries the board's five tabs and nothing else at rest
   // How:   renders signed out; checks each tab link, and that Learn is not on the bar
   // Chain: NAV5 on the artboard — five primary items, everything else behind More
-  it('shows the five primary tabs, with the rest behind More', () => {
+  it('WC02 shows the five primary tabs, with the rest behind More', () => {
     render(<Nav caps={null} />)
     for (const label of ['Guides', 'Toy Library', '3D Printing', 'Get Involved', 'About']) {
       expect(screen.getByRole('link', { name: label })).toBeInTheDocument()
@@ -50,7 +53,7 @@ describe('Nav', () => {
   })
 
   // Tests: the tutorial catalogue is labelled Guides and links to /library
-  it('labels the tutorial catalogue Guides, not Library', () => {
+  it('WC02 labels the tutorial catalogue Guides, not Library', () => {
     render(<Nav caps={null} />)
     expect(screen.getByRole('link', { name: 'Guides' })).toHaveAttribute('href', '/library')
     expect(screen.queryByRole('link', { name: 'Library' })).toBeNull()
@@ -60,7 +63,7 @@ describe('Nav', () => {
   // How:   checks More targets a popover and every item in it is a link to its route
   //        (opening, Escape and a press outside are the browser's; jsdom has no popover)
   // Chain: live's More was a bare two-item list; the board draws a two-column grid of eight
-  it('holds all eight More items as links in its popover', () => {
+  it('WC03 holds all eight More items as links in its popover', () => {
     render(<Nav caps={null} />)
     const more = screen.getByRole('button', { name: /More/ })
     expect(document.getElementById(more.getAttribute('popovertarget')!)).toHaveAttribute('popover', 'auto')
@@ -81,15 +84,18 @@ describe('Nav', () => {
   })
 
   // Tests: a tab section is marked current from a nested path via sectionFor
-  it('marks the tab current from a nested path', () => {
+  it('WC02 marks the tab current from a nested path', () => {
     pathname.current = '/printing/requests'
     render(<Nav caps={null} />)
     expect(screen.getByRole('link', { name: '3D Printing' })).toHaveAttribute('aria-current', 'page')
+    for (const other of ['Guides', 'Toy Library', 'Get Involved', 'About']) {
+      expect(screen.getByRole('link', { name: other })).not.toHaveAttribute('aria-current')
+    }
   })
 
   // Tests: a page that lives behind More marks both More and its item
   // Chain: otherwise a visitor on /learn sees no tab lit and cannot tell where they are
-  it('marks More and the item current for a page behind More', () => {
+  it('WC03 marks More and the item current for a page behind More', () => {
     pathname.current = '/learn/switch-types'
     render(<Nav caps={null} />)
     expect(screen.getByRole('button', { name: /More/ })).toHaveAttribute('data-current', 'true')
@@ -98,7 +104,7 @@ describe('Nav', () => {
 
   // Tests: the search box submits to the guides library as ?q=
   // Chain: a plain GET form works before hydration; library/page.tsx reads q
-  it('submits search to /library as q', () => {
+  it('WC05 submits search to /library as q', () => {
     render(<Nav caps={null} />)
     const input = screen.getByRole('searchbox', { name: 'Search' })
     expect(input).toHaveAttribute('name', 'q')
@@ -107,7 +113,7 @@ describe('Nav', () => {
 
   // Tests: the three colour modes and reduce-motion are real toggles
   // How:   clicks Dark, checks the body attribute, the pressed state and the cookie
-  it('switches colour mode on the body and remembers it', () => {
+  it('WC06 switches colour mode on the body and remembers it', () => {
     render(<Nav caps={null} />)
     expect(screen.getByRole('button', { name: 'Light mode' })).toHaveAttribute('aria-pressed', 'true')
     fireEvent.click(screen.getByRole('button', { name: 'Dark mode' }))
@@ -118,7 +124,7 @@ describe('Nav', () => {
     expect(document.body.dataset.mode).toBeUndefined()
   })
 
-  it('toggles reduced motion on the body', () => {
+  it('WC06 toggles reduced motion on the body', () => {
     render(<Nav caps={null} />)
     const motion = screen.getByRole('button', { name: 'Reduce motion' })
     fireEvent.click(motion)
@@ -129,21 +135,35 @@ describe('Nav', () => {
   })
 
   // Tests: the server-rendered mode seeds the toggles
-  it('starts from the mode the server rendered', () => {
+  it('WC06 starts from the mode the server rendered', () => {
     render(<Nav caps={null} mode="hc" />)
     expect(screen.getByRole('button', { name: 'High contrast mode' })).toHaveAttribute('aria-pressed', 'true')
   })
 
   // Tests: signed out gets Sign in (to /login) and no account pill
-  it('offers sign in and no account pill when signed out', () => {
+  it('WC07 offers sign in and no account pill when signed out', () => {
+    render(<Nav caps={null} />)
+    expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login?next=%2F')
+    expect(screen.queryByRole('link', { name: /My SPLAT/ })).not.toBeInTheDocument()
+  })
+
+  it('WC07 sends sign in back to the current page with its query', () => {
+    pathname.current = '/library'
+    search.current = 'offer=gift'
+    render(<Nav caps={null} />)
+    expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login?next=%2Flibrary%3Foffer%3Dgift')
+  })
+
+  it('WC07 does not nest next inside next on the sign-in page itself', () => {
+    pathname.current = '/login'
+    search.current = 'next=%2Flibrary'
     render(<Nav caps={null} />)
     expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login')
-    expect(screen.queryByRole('link', { name: /My SPLAT/ })).not.toBeInTheDocument()
   })
 
   // Tests: signed in, the bar ends on My SPLAT — no Sign in, and no Sign out
   // Chain: the board's header has no sign-out; it lives on the Account page now
-  it('ends on My SPLAT when signed in, with no sign in or sign out', () => {
+  it('WC08 ends on My SPLAT when signed in, with no sign in or sign out', () => {
     render(<Nav caps={signedIn} />)
     expect(screen.getByRole('link', { name: /My SPLAT/ })).toHaveAttribute('href', '/dashboard')
     expect(screen.queryByRole('link', { name: /sign in/i })).toBeNull()
@@ -153,7 +173,7 @@ describe('Nav', () => {
 
   // Tests: the unread badge and the initials both ride inside the My SPLAT pill
   // Chain: the board draws one pill — label, coral count, mint avatar — not three loose parts
-  it('carries the unread count and initials inside My SPLAT', () => {
+  it('WC08 carries the unread count and initials inside My SPLAT', () => {
     render(<Nav caps={signedIn} />)
     const account = screen.getByRole('link', { name: /My SPLAT/ })
     expect(account).toHaveAccessibleName(/3 unread/)
@@ -165,7 +185,29 @@ describe('Nav', () => {
   // How:   clicks Menu; reads aria-expanded and the nav's data-open, which is
   //        what the max-width:639px CSS keys the fold on
   // Chain: unfolded, the header is four rows (~275px) of a 390px-wide phone
-  it('folds the nav behind a Menu toggle that Escape closes', () => {
+  it('WC01 links the brand to the home page', () => {
+    render(<Nav caps={null} />)
+    expect(screen.getByRole('link', { name: 'SPLAT Connect home' })).toHaveAttribute('href', '/')
+  })
+
+  it('WC03 closes the More menu when an item is chosen', () => {
+    const hidePopover = vi.fn()
+    HTMLElement.prototype.hidePopover = hidePopover
+    render(<Nav caps={null} />)
+    fireEvent.click(screen.getByRole('link', { name: /^Contact/ }))
+    expect(hidePopover).toHaveBeenCalledTimes(1)
+  })
+
+  it('WC04 closes the folded menu when the path changes', () => {
+    const { rerender } = render(<Nav caps={null} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Menu' }))
+    expect(screen.getByRole('button', { name: 'Menu' })).toHaveAttribute('aria-expanded', 'true')
+    pathname.current = '/about'
+    rerender(<Nav caps={null} />)
+    expect(screen.getByRole('button', { name: 'Menu' })).toHaveAttribute('aria-expanded', 'false')
+  })
+
+  it('WC04 folds the nav behind a Menu toggle that Escape closes', () => {
     render(<Nav caps={null} />)
     const toggle = screen.getByRole('button', { name: 'Menu' })
     const nav = screen.getByRole('navigation', { name: 'Main' })
@@ -178,7 +220,7 @@ describe('Nav', () => {
     expect(nav).not.toHaveAttribute('data-open')
   })
 
-  it('shows no badge at zero unread', () => {
+  it('WC08 shows no badge at zero unread', () => {
     render(<Nav caps={{ ...signedIn, unread: { tutorials: 0, exchanges: 0, challenges: 0, organisations: 0, total: 0 } }} />)
     expect(screen.getByRole('link', { name: /My SPLAT/ })).not.toHaveAccessibleName(/unread/)
   })

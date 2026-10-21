@@ -1,4 +1,3 @@
-// journeys: G24 G26 G27 G28
 import { test, expect } from '@playwright/test'
 import { adminClient, createContributor, createTutorial, renameProfile, signIn, signInAsNewContributor, uniqueTitle } from './helpers'
 import { addNote, addSteps } from './guides-fixtures'
@@ -43,7 +42,7 @@ test('a reader sees the list with filters, and a menu with Report only', async (
   await expect(page.getByText('Delete', { exact: true })).toHaveCount(0)
 })
 
-test('the author pins from the menu; the fix card and the Overview card follow', async ({ page }) => {
+test('G26 the author pins from the menu; the fix card and the Overview card follow', async ({ page }) => {
   const g = await guideWithFeedback()
   await signIn(page, g.author.email, g.author.password)
   await page.waitForURL(/\/home$/)
@@ -71,7 +70,7 @@ test('the author pins from the menu; the fix card and the Overview card follow',
   expect(after.data).toEqual({ pinned_at: null, pinned_by: null })
 })
 
-test('the composer posts feedback that lands in the list, ringed', async ({ page }) => {
+test('G23 the composer posts feedback that lands in the list, ringed', async ({ page }) => {
   await signInAsNewContributor(page)
   const g = await guideWithFeedback()
   await page.goto(`/guides/${g.id}`)
@@ -93,7 +92,7 @@ test('the composer posts feedback that lands in the list, ringed', async ({ page
   await expect(page.getByRole('tab', { name: 'Feedback (3)' })).toBeVisible()
 })
 
-test('Report this note files a report about the note', async ({ page }) => {
+test('G27 Report this note files a report about the note', async ({ page }) => {
   const reader = await signInAsNewContributor(page)
   const g = await guideWithFeedback()
   await page.goto(`/guides/${g.id}`)
@@ -112,7 +111,7 @@ test('Report this note files a report about the note', async ({ page }) => {
   expect(data).toEqual({ subject_kind: 'note', subject_id: g.stepNoteId, subject_label: `Dan Builder's note on ${g.title}`, category: 'wrong_info', body: 'Wrong screw size.', reporter_id: reader.id })
 })
 
-test('your own note offers Delete and no Report; Delete removes the row', async ({ page }) => {
+test('G28 your own note offers Delete and no Report; Delete removes the row', async ({ page }) => {
   const g = await guideWithFeedback()
   const reader = await createContributor()
   const mineId = await addNote(g.id, reader.id, { step_position: 2, body: 'Mine, written by me.' })
@@ -138,7 +137,7 @@ test('your own note offers Delete and no Report; Delete removes the row', async 
   await expect(page.getByText('Delete', { exact: true })).toHaveCount(0)
 })
 
-test('a note posted with a photo shows the thumbnail, and the row carries the photo and caption', async ({ page }) => {
+test('G24 a note posted with a photo shows the thumbnail, and the row carries the photo and caption', async ({ page }) => {
   const reader = await signInAsNewContributor(page)
   await renameProfile(reader.id, 'Pia Reader')
   const g = await guideWithFeedback()

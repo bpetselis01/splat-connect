@@ -1,4 +1,3 @@
-// journeys: V04 V05 V06
 /**
  * The organisation's own screens (059) and the queue that creates one (060).
  *
@@ -122,13 +121,14 @@ describe('events and stories', () => {
     expect(raw).not.toContain('secret-room')
   })
 
-  it('refuses an in-person event with nowhere to be', async () => {
+  it('refuses to publish an in-person event with nowhere to be', async () => {
     const res = await app.request(
       `/api/organizations/${orgId}/events`,
       json(leader.token, 'POST', {
         title: 'Somewhere',
         starts_at: new Date(Date.now() + 86400000).toISOString(),
         format: 'in_person',
+        status: 'published',
       })
     )
     expect(res.status).toBe(400)
@@ -164,7 +164,7 @@ describe('events and stories', () => {
     expect(withConsent.status).toBe(201)
   })
 
-  it('shows a leader their drafts and the public nothing', async () => {
+  it('WB15 shows a leader their drafts and the public nothing', async () => {
     const created = await app.request(
       `/api/organizations/${orgId}/events`,
       json(leader.token, 'POST', {
@@ -220,7 +220,7 @@ describe('recycling intake', () => {
     expect(stale.status).toBe(409)
   })
 
-  it('books one in', async () => {
+  it('V05 WI37 books one in', async () => {
     const res = await app.request(
       `/api/organizations/${orgId}/recycling`,
       json(contributor.token, 'POST', {
@@ -270,7 +270,7 @@ describe('recycling intake', () => {
     expect(res.status).toBe(400)
   })
 
-  it('lets the leader weigh it in', async () => {
+  it('WB27 lets the leader weigh it in', async () => {
     const res = await app.request(
       `/api/organizations/${orgId}/recycling/${dropoffId}`,
       json(leader.token, 'PATCH', {
@@ -297,7 +297,7 @@ describe('recycling intake', () => {
     expect(asContributor[0].contributor_name).toBeUndefined()
   })
 
-  it("lists a contributor's own drop-offs across organisations, and cancels one still booked", async () => {
+  it("V04 V06 lists a contributor's own drop-offs across organisations, and cancels one still booked", async () => {
     const booked = (await (
       await app.request(
         `/api/organizations/${orgId}/recycling`,
@@ -336,7 +336,7 @@ describe('recycling intake', () => {
 })
 
 describe('asking for an organisation', () => {
-  it('files one, and refuses a second open ask for the same name', async () => {
+  it('WI08 files one as pending for its requester, and refuses a second open ask for the same name', async () => {
     const res = await app.request(
       '/api/organizations/requests',
       json(contributor.token, 'POST', {
@@ -347,6 +347,18 @@ describe('asking for an organisation', () => {
     )
     expect(res.status).toBe(201)
     requestId = ((await res.json()) as { id: string }).id
+    const { data: stored } = await adminClient()
+      .from('organization_requests')
+      .select('org_name, what_they_do, verification, status, requester_id')
+      .eq('id', requestId)
+      .single()
+    expect(stored).toEqual({
+      org_name: 'Eastside Therapy',
+      what_they_do: 'Paediatric OT, twelve therapists.',
+      verification: 'My work email is on eastside.example.',
+      status: 'pending',
+      requester_id: contributor.id,
+    })
 
     const again = await app.request(
       '/api/organizations/requests',
@@ -376,7 +388,7 @@ describe('asking for an organisation', () => {
     expect([401, 403]).toContain(res.status)
   })
 
-  it('creates the organisation and appoints the requester, exactly once', async () => {
+  it('WM23 creates the organisation and appoints the requester, exactly once', async () => {
     const first = await app.request(
       `/api/admin/organization-requests/${requestId}/approve`,
       json(siteAdmin.token, 'POST', {})

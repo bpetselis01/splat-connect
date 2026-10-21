@@ -3,6 +3,7 @@ import type { Route } from 'next'
 import { ShieldCheck, SealCheck, Heart } from '@phosphor-icons/react/dist/ssr'
 import { AuthWordmark } from '@/components/auth-wordmark'
 import { SplatMascot } from '@/components/splat-mascot'
+import type { AuthProblem } from '@splat-connect/types'
 
 /**
  * The centred auth stage the board draws for Sign in, Check your email, Email
@@ -91,5 +92,67 @@ export function AuthTabs({ current, search = '' }: { current: 'login' | 'signup'
         Sign in
       </Link>
     </nav>
+  )
+}
+
+/**
+ * A classified auth failure (`toProblem`), never a raw Supabase message. The
+ * optional action is a link beside the sentence, as mobile's AuthError has.
+ */
+export function AuthError({
+  error,
+  action,
+}: {
+  error: AuthProblem | null
+  action?: { label: string; href: string }
+}) {
+  if (!error) return null
+  return (
+    <div role="alert" aria-live="polite" className="alert alert-danger">
+      <p>{error.message}</p>
+      {action ? (
+        <Link href={action.href as Route} className="auth-card__link">
+          {action.label}
+        </Link>
+      ) : null}
+    </div>
+  )
+}
+
+/**
+ * The six emailed digits. The field cuts a paste or an autofill to digits and
+ * to six, so the parent can fire its verify at `length === 6`; it is disabled
+ * while that verify is pending so a slow link cannot fire it twice. The error
+ * sits in a polite live region that is always mounted, so a screen reader
+ * announces it when it appears.
+ */
+export function CodeInput({
+  value,
+  onChange,
+  disabled,
+  error,
+}: {
+  value: string
+  onChange: (code: string) => void
+  disabled?: boolean
+  error?: AuthProblem | null
+}) {
+  return (
+    <div>
+      <label htmlFor="code" className="auth-label">6-digit code</label>
+      <input
+        id="code"
+        inputMode="numeric"
+        autoComplete="one-time-code"
+        value={value}
+        disabled={disabled}
+        aria-describedby="code-error"
+        onChange={(e) => onChange(e.target.value.replace(/\D/g, '').slice(0, 6))}
+        className="auth-input auth-input--sunk font-mono tracking-[0.4em]"
+      />
+      <div id="code-error" aria-live="polite">
+        {error ? <p className="alert alert-danger mt-2">{error.message}</p> : null}
+      </div>
+    </div>
   )
 }

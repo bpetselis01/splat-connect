@@ -1,0 +1,43 @@
+# The admin review queue on a phone: the Admin hub, its guide queue, and the
+# review screen's decision buttons, as an account the provisioner made an admin.
+# Nothing is approved or sent back, so the guide stays in the queue for the next
+# run. The server's is_admin guard is the real gate; this proves the screens
+# render for an admin on the native stack (they sit under (my), a stack the Expo
+# web export lays out differently).
+#
+# DEVICE_EMAIL, DEVICE_PASSWORD and DEVICE_REVIEW_GUIDE_TITLE come from
+# `maestro test --env`, fed by scripts/provision-device-parent.mjs (see
+# sign-out-clears-session.yaml for why they carry no env: defaults here).
+name: "Q18 Admin opens the guide review queue and a guide's decision screen"
+appId: com.splatconnect.mobile
+---
+- clearState
+- runFlow: ../subflows/launch.yaml
+- runFlow: ../subflows/sign-in.yaml
+
+# The hub has no Me row: an admin gets to it through its link.
+- stopApp
+- openLink: splatconnect:///admin
+- extendedWaitUntil:
+    visible:
+      text: "Tutorials awaiting review"
+    timeout: 30000
+- runFlow: ../subflows/dismiss-dev-toast.yaml
+- tapOn:
+    text: "Tutorials awaiting review"
+- assertVisible:
+    text: "Guides waiting for a decision. Oldest first."
+
+# A shared database holds other pending guides, and the queue is oldest first.
+- scrollUntilVisible:
+    element:
+      text: ${DEVICE_REVIEW_GUIDE_TITLE}
+    timeout: 30000
+- tapOn:
+    text: ${DEVICE_REVIEW_GUIDE_TITLE}
+- extendedWaitUntil:
+    visible:
+      text: "Approve"
+    timeout: 15000
+- assertVisible:
+    text: "Request changes"

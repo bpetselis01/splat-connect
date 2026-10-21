@@ -15,12 +15,14 @@ import Link from 'next/link'
 import type { Route } from 'next'
 import { notFound } from 'next/navigation'
 import { BookOpen, CaretRight, Gift, Hammer, Medal } from '@phosphor-icons/react/dist/ssr'
+import { PersonThanksButton } from '@/components/person-thanks-button'
 import { ShelfToyCard } from '@/components/shelf-toy-card'
 import { tintFor } from '@/components/card-photo'
 import { getCapabilities } from '@/lib/capabilities'
 import { safePhotoSrc } from '@/lib/photo-src'
 import { initials, monthHeading, nextBadgeLine, shortDate } from '@splat-connect/types'
 import { formatBuildTime, type ContributorProfile } from '@splat-connect/types'
+import { authUrl } from '@/lib/safe-next-path'
 
 const DIFFICULTY_LABEL = { easy: 'Easy', medium: 'Medium', hard: 'Hard' } as const
 const H2 = 'font-display text-2xl font-extrabold text-ink'
@@ -94,7 +96,7 @@ export default async function ContributorPage({
   const askHref = (
     signedIn
       ? `/get-involved/requests/new?maker=${id}`
-      : '/signup?next=' + encodeURIComponent(`/get-involved/requests/new?maker=${id}`)
+      : authUrl('signup', `/get-involved/requests/new?maker=${id}`, { reason: 'build' })
   ) as Route
 
   return (
@@ -147,10 +149,15 @@ export default async function ContributorPage({
             )}
           </div>
           <div className="ml-auto flex flex-wrap items-center justify-end gap-2.5 pt-[18px]">
-            <Link href={askHref} className="btn btn-primary no-underline">
-              <Hammer size={18} weight="bold" aria-hidden="true" />
-              Ask {first} to build a guide
-            </Link>
+            {caps?.profile.id !== contributor.id && (
+              <>
+                <Link href={askHref} className="btn btn-primary no-underline">
+                  <Hammer size={18} weight="bold" aria-hidden="true" />
+                  Ask {first} to build a guide
+                </Link>
+                <PersonThanksButton profileId={contributor.id} name={first} signedIn={signedIn} />
+              </>
+            )}
           </div>
         </div>
         <div className="grid grid-cols-3 border-t border-line">

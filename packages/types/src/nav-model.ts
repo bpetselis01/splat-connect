@@ -194,6 +194,10 @@ export function buildNav(caps: Capabilities, counts?: MeCounts): NavGroup[] {
       // groups above. This single row also produces My SPLAT's eighth card —
       // the hub is built from this model.
       { href: '/dashboard/saved', label: 'Saved', icon: 'bookmark' },
+      // 117: the notes people left when they thanked you, to read and hide.
+      { href: '/dashboard/thanks', label: 'Thank-you notes', icon: 'heart' },
+      // 065: what you reported, and what SPLAT said back.
+      { href: '/dashboard/reports', label: 'My reports', icon: 'lifebuoy' },
       {
         href: '/notifications',
         label: 'Notifications',

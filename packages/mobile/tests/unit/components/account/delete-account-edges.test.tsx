@@ -1,10 +1,9 @@
 // Account deletion at its edges: what the review screen says for empty and
 // singular counts, what unlocks the code button, every way the code step can
 // fail, and the Apple path.
-// journeys: Z05
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { DeleteAccountScreen, openSummary } from '../../../../components/account/delete-account-screen'
-import { problem } from '../../../../lib/auth-errors'
+import { problem } from '@splat-connect/types'
 
 const mockBack = jest.fn()
 const mockPush = jest.fn()
@@ -195,7 +194,7 @@ describe('the code step', () => {
     expect(mockDelete).not.toHaveBeenCalled()
   })
 
-  it('a pasted code with spaces and dashes is checked and deletes', async () => {
+  it('Z05 a pasted code with spaces and dashes is checked and deletes', async () => {
     render(<DeleteAccountScreen />)
     await reachCodeStep()
     type('123 456')
@@ -203,7 +202,7 @@ describe('the code step', () => {
     expect(mockAuth.verifyCode).toHaveBeenCalledWith('sam@example.com', '123456', 'email')
   })
 
-  it('keeps nothing from the account until the code is right: a wrong code deletes nothing and empties the boxes', async () => {
+  it('Z05 keeps nothing from the account until the code is right: a wrong code deletes nothing and empties the boxes', async () => {
     mockAuth.verifyCode.mockResolvedValue({ problem: problem('bad-code') })
     render(<DeleteAccountScreen />)
     await reachCodeStep()
@@ -213,7 +212,7 @@ describe('the code step', () => {
     expect(mockDelete).not.toHaveBeenCalled()
   })
 
-  it('a wrong code, then the right one, deletes once', async () => {
+  it('Z05 a wrong code, then the right one, deletes once', async () => {
     mockAuth.verifyCode.mockResolvedValueOnce({ problem: problem('bad-code') }).mockResolvedValueOnce(ok)
     render(<DeleteAccountScreen />)
     await reachCodeStep()
@@ -224,7 +223,7 @@ describe('the code step', () => {
     expect(mockDelete).toHaveBeenCalledTimes(1)
   })
 
-  it('offline while checking the code deletes nothing and says so', async () => {
+  it('Z05 offline while checking the code deletes nothing and says so', async () => {
     mockAuth.verifyCode.mockResolvedValue({ problem: problem('offline') })
     render(<DeleteAccountScreen />)
     await reachCodeStep()
@@ -233,7 +232,7 @@ describe('the code step', () => {
     expect(mockDelete).not.toHaveBeenCalled()
   })
 
-  it('a deletion the server refuses keeps the account: an apology, no done screen, no sign-out', async () => {
+  it('Z05 a deletion the server refuses keeps the account: an apology, no done screen, no sign-out', async () => {
     mockDelete.mockRejectedValue(new Error('500'))
     render(<DeleteAccountScreen />)
     await reachCodeStep()
@@ -254,7 +253,7 @@ describe('the code step', () => {
     expect(screen.getByText('Your account is deleted')).toBeTruthy()
   })
 
-  it('sends confirm DELETE, no name kept by default and no Apple code', async () => {
+  it('Z05 sends confirm DELETE, no name kept by default and no Apple code', async () => {
     render(<DeleteAccountScreen />)
     await reachCodeStep()
     type('123456')
@@ -271,7 +270,7 @@ describe('the code step', () => {
     expect(screen.queryByText(/We emailed a confirmation/)).toBeNull()
   })
 
-  it('an empty answer from the server (no body) is still a deletion', async () => {
+  it('Z05 an empty answer from the server (no body) is still a deletion', async () => {
     mockDelete.mockResolvedValue(undefined)
     render(<DeleteAccountScreen />)
     await reachCodeStep()
@@ -287,7 +286,7 @@ describe('the code step', () => {
     expect(mockDelete).not.toHaveBeenCalled()
   })
 
-  it('un-ticking Keep my name sends false', async () => {
+  it('Z05 un-ticking Keep my name sends false', async () => {
     mockGet.mockResolvedValue({ ...empty, publishedGuides: 2 })
     render(<DeleteAccountScreen />)
     fireEvent.press(await screen.findByTestId('keep-name'))
@@ -322,7 +321,7 @@ describe('Apple accounts', () => {
     expect(screen.queryByTestId('native-apple')).toBeNull()
   })
 
-  it('re-authorising hands the authorization code to the deletion', async () => {
+  it('Z05 re-authorising hands the authorization code to the deletion', async () => {
     mockAuth.reauthWithApple.mockResolvedValue({ problem: null, authorizationCode: 'auth-code' })
     render(<DeleteAccountScreen />)
     await unlock()

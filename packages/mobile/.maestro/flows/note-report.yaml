@@ -1,4 +1,3 @@
-# journeys: G27
 # Reporting another member's note from the guide's Feedback tab. On iOS the note
 # menu is a Modal that must finish dismissing before the report sheet (a second
 # Modal) can present, or iOS silently drops it: the menu hands the note over in
@@ -9,6 +8,7 @@
 # ("Device Reviewer"), since the menu offers Report only on someone else's note.
 # DEVICE_EMAIL, DEVICE_PASSWORD and DEVICE_GUIDE_TITLE come from `maestro test
 # --env` — see sign-out-clears-session.yaml for why they carry no defaults here.
+name: "G27 Report another member's note from the Feedback tab"
 appId: com.splatconnect.mobile
 ---
 - clearState

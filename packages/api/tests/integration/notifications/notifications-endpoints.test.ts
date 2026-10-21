@@ -1,4 +1,3 @@
-// journeys: Q05 Q06
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
 import { createProject } from '../../helpers/orgs.js'
@@ -35,23 +34,15 @@ function authed(token: string) {
 }
 
 describe('GET /api/notifications/me', () => {
-  it('lists my notifications, newest first', async () => {
+  it('Q05 WD37 lists my notifications, newest first', async () => {
     const res = await app.request('/api/notifications/me', authed(user.token))
     const body = (await res.json()) as { id: string }[]
     expect(body.some((n) => n.id === notificationId)).toBe(true)
   })
 })
 
-describe('GET /api/notifications/me/unread-count', () => {
-  it('counts unread notifications', async () => {
-    const res = await app.request('/api/notifications/me/unread-count', authed(user.token))
-    const body = (await res.json()) as { count: number }
-    expect(body.count).toBeGreaterThanOrEqual(1)
-  })
-})
-
 describe('PATCH /api/notifications/:id', () => {
-  it('marks my own notification read', async () => {
+  it('Q06 marks my own notification read', async () => {
     const res = await app.request(`/api/notifications/${notificationId}`, {
       ...authed(user.token),
       method: 'PATCH',

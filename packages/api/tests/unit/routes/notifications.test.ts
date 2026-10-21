@@ -37,14 +37,18 @@ describe('GET /me/unread-counts', () => {
       select: () => ({
         eq: () => ({
           is: () => ({
-            data: [
-              { type: 'tutorial_approved' },
-              { type: 'collaborator_invited' },
-              { type: 'toy_message' },
-              { type: 'toy_request' },
-              { type: 'idea_graduated' },
-            ],
-            error: null,
+            order: () => ({
+              range: () => ({
+                data: [
+                  { type: 'tutorial_approved' },
+                  { type: 'collaborator_invited' },
+                  { type: 'toy_message' },
+                  { type: 'toy_request' },
+                  { type: 'idea_graduated' },
+                ],
+                error: null,
+              }),
+            }),
           }),
         }),
       }),
@@ -63,7 +67,7 @@ describe('GET /me/unread-counts', () => {
 
   it('returns all zeroes when nothing is unread', async () => {
     mockFrom.mockReturnValue({
-      select: () => ({ eq: () => ({ is: () => ({ data: [], error: null }) }) }),
+      select: () => ({ eq: () => ({ is: () => ({ order: () => ({ range: () => ({ data: [], error: null }) }) }) }) }),
     })
 
     const res = await makeApp().request('/me/unread-counts')
@@ -72,7 +76,7 @@ describe('GET /me/unread-counts', () => {
 
   it('500s rather than reporting a falsely empty inbox', async () => {
     mockFrom.mockReturnValue({
-      select: () => ({ eq: () => ({ is: () => ({ data: null, error: { message: 'boom' } }) }) }),
+      select: () => ({ eq: () => ({ is: () => ({ order: () => ({ range: () => ({ data: null, error: { message: 'boom' } }) }) }) }) }),
     })
 
     const res = await makeApp().request('/me/unread-counts')

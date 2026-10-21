@@ -1,5 +1,4 @@
 // Explore when its search sources fail: says so, Try again re-reads, nothing hits console.error.
-// journeys: Q13
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { ExploreScreen } from '../../../../components/explore/explore-screen'
 
@@ -11,7 +10,7 @@ jest.mock('../../../../lib/learn', () => ({ useLearnProgress: () => ({ count: 0 
 
 afterEach(() => jest.restoreAllMocks())
 
-it('says it could not load offline, and Try again loads the searchable lists', async () => {
+it('Q13 says it could not load offline, and Try again loads the searchable lists', async () => {
   const err = jest.spyOn(console, 'error')
   let offline = true
   mockGet.mockReset().mockImplementation((p: string) => {

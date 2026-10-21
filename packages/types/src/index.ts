@@ -7,6 +7,7 @@ export type { Grade, GradeKey } from './toy-grade'
 export { autoPicks, initialPicks, MAX_PICKS, pickOptions, PICK_KIND_LABEL, samePick } from './toy-picks'
 export type { PicksMode, ToyPick, ToyPickInput } from './toy-picks'
 import type { PicksMode, ToyPick } from './toy-picks'
+
 export { contributorBadges, nextBadgeThreshold, nextBadgeLine, BADGE_RULES } from './contributor-badges'
 export { ABOUT_LEAD, ABOUT_PILLARS, ABOUT_TEAM_BLURB, CONTACT_TIMES } from './about'
 export {
@@ -43,7 +44,7 @@ export type {
   PdfDraftApi,
   PdfDraftResult,
 } from './pdf-import'
-export { isApiError, isNetworkError, apiErrorDetail, apiMessage, makeApiClient } from './api-core'
+export { isApiError, isTermsRequired, isNetworkError, apiErrorDetail, apiMessage, makeApiClient } from './api-core'
 export type { ApiError } from './api-core'
 export { dateBadge, shortDate, monthHeading, monthKey, longDate, formatTimeRange, isPast } from './dates'
 import { printRequestExpired } from './printing'
@@ -610,6 +611,9 @@ export function buildStep(
   return 'handover'
 }
 
+/** The longest reason a decline may carry; the API refuses more and the forms stop at it. */
+export const DECLINE_REASON_MAX = 500
+
 /**
  * Whether the viewer is the giving side of a transaction.
  *
@@ -890,7 +894,8 @@ export function givenAway(
   return rows.sort((a, b) => b.at.localeCompare(a.at))
 }
 
-export type ToyTransactionMessageKind = 'system' | 'user'
+/** 'admin' is a SPLAT admin speaking in a member thread (140). */
+export type ToyTransactionMessageKind = 'system' | 'user' | 'admin'
 
 export interface ToyTransactionMessage {
   id: string
@@ -1072,7 +1077,7 @@ export interface ToyIdeaDetail extends Omit<ToyIdea, 'author_id'>, Partial<Chall
 export interface ThreadMessage {
   id: string
   sender_id: string
-  kind: 'system' | 'user'
+  kind: ToyTransactionMessageKind
   body: string
   created_at: string
 }
@@ -1102,9 +1107,17 @@ export type AgreementType = 'contributor_terms' | 'org_leader_terms'
 // the spec's §6). Any acceptance recorded at this version is void and its rows
 // should be discarded when real terms land.
 // PENDING(terms-version): contributor_terms is still 'v0-todo' until the final terms ship.
+// Bump with a migration that changes public.current_agreement_version to match.
 export const AGREEMENT_VERSIONS: Record<AgreementType, string> = {
   contributor_terms: 'v0-todo',
   org_leader_terms: 'v0-todo',
+}
+
+/** True when `rows` hold an acceptance of the CURRENT version of `type`. An
+ *  older version does not count, so bumping AGREEMENT_VERSIONS asks everyone
+ *  again. SQL's has_accepted (139) applies the same rule. */
+export function hasCurrentAgreement(rows: Pick<UserAgreement, 'agreement_type' | 'version'>[], type: AgreementType) {
+  return rows.some((r) => r.agreement_type === type && r.version === AGREEMENT_VERSIONS[type])
 }
 
 export interface Organization {
@@ -1231,6 +1244,19 @@ export interface OrgThanks {
   created_at: string
 }
 
+/** 117. A thanks given to a person. The note is private to them; hiding it
+ *  (hidden_at) only tidies their own list. */
+export interface PersonThanks {
+  profile_id: string
+  thanker_id: string
+  note: string | null
+  byline: string | null
+  show_note: boolean
+  hidden_at: string | null
+  transaction_id: string | null
+  created_at: string
+}
+
 /** 077. Message: one conversation per person per organisation, readable by
  *  that person and every leader of the org. */
 interface OrgConversation {
@@ -1302,7 +1328,8 @@ export interface OrgEvent {
   kind: EventKind
   title: string
   summary: string | null
-  starts_at: string
+  /** Null on a draft that has no date yet (144); never on a published event. */
+  starts_at: string | null
   ends_at: string | null
   format: 'in_person' | 'online'
   /** Venue and street, as the publish form labels it. Set on an in-person
@@ -1389,7 +1416,8 @@ export interface OrgEventRegistration {
 }
 
 /** One row on /get-involved/events, with the numbers the card shows. */
-export interface EventListItem extends OrgEvent {
+export interface EventListItem extends Omit<OrgEvent, 'starts_at'> {
+  starts_at: string
   org_name: string
   going_count: number
   /** Null when the event has no capacity. */
@@ -1543,14 +1571,17 @@ export function estimatedCreditGrams(grams: number): number {
  * The intake row (decided 2026-09-30): one weight box, and the credit
  * prefilled at the estimate for the leader to change. `credit` is the credit
  * box's text, or null while they have not touched it — then it follows the
- * weight. The ledger stores what the leader sends, never a yield. `line` is
+ * weight. The weight is rounded to the nearest 0.1 kg first. The ledger stores what the leader sends, never a yield. `line` is
  * what the row says under the boxes, in the board's words where it has them.
  */
 export function intakeCredit(
   weighedKg: string,
   credit: string | null
 ): { ok: true; weighed_grams: number; credit_grams: number; line: string } | { ok: false; line: string } {
-  const weighed = kgToGrams(weighedKg)
+  const typed = kgToGrams(weighedKg)
+  // Nearest 0.1 kg (decided 2026-10-20), so the kilos the screens show and the
+  // credit taken from them agree.
+  const weighed = typed === null ? null : Math.round(typed / 100) * 100
   if (!weighed) return { ok: false, line: 'Weigh it to see the credit' }
   if (weighed < MIN_DROPOFF_GRAMS) {
     return { ok: false, line: `Under the ${MIN_DROPOFF_GRAMS / 1000} kg minimum — log it as a donation or hand it back` }
@@ -1755,15 +1786,38 @@ export type NotificationType =
   | 'build_approved'
   | 'build_question'
   | 'profile_thanked'
+  | 'backing_accepted'
+  | 'backing_declined'
+  | 'report_resolved'
   | 'print_started'
   | 'print_ready'
   | 'org_event_published'
+  | 'org_event_changed'
+  | 'org_event_cancelled'
   | 'org_story_published'
   | 'org_message'
   | 'org_thanked'
+  | 'recycling_received'
+  | 'recycling_declined'
+  | 'org_request_approved'
+  | 'org_request_declined'
+  | 'test_print_passed'
+  | 'test_print_failed'
+  | 'handover_confirmed'
+  | 'leader_added'
+  | 'leader_removed'
+  | 'org_event_deleted'
+  | 'event_rsvp_received'
+  | 'idea_received'
+  | 'report_received'
+  | 'drop_off_booked'
+  | 'contact_received'
 
 /** Which My SPLAT card a notification's badge belongs to. */
 export type NotificationBucket = 'tutorials' | 'exchanges' | 'challenges' | 'organisations'
+
+/** The one request that marks a bucket read: POST with `{ bucket }`. Web, mobile and the counts test all send it. */
+export const MARK_BUCKET_READ_PATH = '/api/notifications/me/read'
 
 /**
  * Notification type → the hub card that counts it.
@@ -1785,11 +1839,10 @@ export type NotificationBucket = 'tutorials' | 'exchanges' | 'challenges' | 'org
  * transaction, not on a toy, so they all belong to My exchanges — a toy
  * sitting on a shelf generates nothing.
  *
- * 077's four: org_message is a conversation with an organisation, the same
- * kind of thing as toy_message, so it counts on My exchanges. The other three
- * are news about an organisation rather than a thing you are doing with one —
- * a followed org published, or a family thanked yours — and none of the three
- * existing cards is about that, so they get their own 'organisations' bucket.
+ * 077's four are news about an organisation rather than a thing you are doing
+ * with one: a followed org published, a family thanked yours, a family wrote
+ * to its leaders. None of the three existing cards is about that, so they get
+ * their own 'organisations' bucket, which the leader's org hub clears.
  * It has no hub card: it counts toward the inbox total and is a section there.
  */
 const NOTIFICATION_BUCKET = {
@@ -1813,6 +1866,9 @@ const NOTIFICATION_BUCKET = {
   build_approved: 'exchanges',
   build_question: 'exchanges',
   profile_thanked: 'exchanges',
+  backing_accepted: 'tutorials',
+  backing_declined: 'tutorials',
+  report_resolved: 'exchanges',
   print_started: 'exchanges',
   print_ready: 'exchanges',
   idea_approved: 'challenges',
@@ -1822,10 +1878,27 @@ const NOTIFICATION_BUCKET = {
   challenge_joined: 'challenges',
   challenge_left: 'challenges',
   challenge_removed: 'challenges',
-  org_message: 'exchanges',
+  org_message: 'organisations',
   org_event_published: 'organisations',
+  org_event_changed: 'organisations',
+  org_event_cancelled: 'organisations',
   org_story_published: 'organisations',
   org_thanked: 'organisations',
+  recycling_received: 'exchanges',
+  recycling_declined: 'exchanges',
+  org_request_approved: 'organisations',
+  org_request_declined: 'organisations',
+  test_print_passed: 'exchanges',
+  test_print_failed: 'exchanges',
+  handover_confirmed: 'exchanges',
+  leader_added: 'organisations',
+  leader_removed: 'organisations',
+  org_event_deleted: 'organisations',
+  event_rsvp_received: 'organisations',
+  idea_received: 'challenges',
+  report_received: 'exchanges',
+  drop_off_booked: 'exchanges',
+  contact_received: 'exchanges',
 } satisfies Record<NotificationType, NotificationBucket>
 
 /** Every notification type, for iteration at runtime — the union alone is compile-time only. */
@@ -1890,18 +1963,45 @@ export const COPY: Record<NotificationType, (n: Notification) => string> = {
   build_question: (n) => `${n.actor_name} wrote about ${toy(n)} before anyone claimed it`,
   // 117. Signed with the byline they typed, or "A family".
   profile_thanked: (n) => `${n.actor_name} said thanks to you`,
+  // 137. actor_name is the organisation that answered.
+  backing_accepted: (n) => `${n.actor_name} agreed to back "${title(n)}"`,
+  backing_declined: (n) => `${n.actor_name} can't back "${title(n)}" right now`,
+  report_resolved: () => 'Your report was looked at',
   print_started: (n) => `${n.actor_name} started printing ${toy(n)}`,
   print_ready: (n) => `${n.actor_name} finished printing ${toy(n)}`,
   // 077. For the two publish types the event or story title rides in
   // tutorial_title; for a message, the organisation's name does.
   org_event_published: (n) => `${n.actor_name} published an event: ${n.tutorial_title ?? 'a new one'}`,
   org_story_published: (n) => `${n.actor_name} published a story: ${n.tutorial_title ?? 'a new one'}`,
+  // 138: sent to the people registered for it.
+  org_event_changed: (n) => `${n.actor_name} changed the time or place of ${n.tutorial_title ?? 'an event you registered for'}`,
+  org_event_cancelled: (n) => `${n.actor_name} cancelled ${n.tutorial_title ?? 'an event you registered for'}`,
   org_message: (n) =>
     n.actor_name === n.tutorial_title
       ? `${n.actor_name} replied to your message`
       : `${n.actor_name} messaged ${n.tutorial_title ?? 'your organisation'}`,
   // The byline the family typed, or "A family" when they gave none.
   org_thanked: (n) => `${n.actor_name} said thanks to your organisation`,
+  // 142. actor_name is the organisation (or printer) the decision came from;
+  // the leader's note or reason rides in body and shows as the second line.
+  recycling_received: (n) => `${n.actor_name} received your drop-off`,
+  recycling_declined: (n) => `${n.actor_name} couldn't take your drop-off`,
+  org_request_approved: (n) => `${n.actor_name} was approved and you now lead it`,
+  org_request_declined: (n) => `${n.actor_name} wasn't approved`,
+  test_print_passed: (n) => `The test print for ${n.actor_name} passed`,
+  test_print_failed: (n) => `The test print for ${n.actor_name} didn't pass`,
+  handover_confirmed: (n) => `${n.actor_name} confirmed the handover of ${toy(n)}`,
+  leader_added: (n) => `You now lead ${n.actor_name}`,
+  leader_removed: (n) => `You no longer lead ${n.actor_name}`,
+  // The title rides in body, which is the card's second line: the event row is gone.
+  org_event_deleted: (n) => `${n.actor_name} deleted an event you registered for`,
+  // Acknowledgements to the sender. actor_name is the organisation, or SPLAT
+  // when the platform took it; a title or the first words ride in body.
+  event_rsvp_received: (n) => `You're registered for ${n.tutorial_title ?? 'an event'}`,
+  idea_received: () => 'We received your idea',
+  report_received: () => 'We received your report',
+  drop_off_booked: (n) => `Your drop-off at ${n.actor_name} is booked`,
+  contact_received: () => 'We received your message',
 }
 
 // A type the database allows but this build has no line for — a newer API,
@@ -1961,6 +2061,8 @@ export interface Notification {
   /** 117: a thanks sent from someone's showcase. A thanks for an exchange,
    *  print or build carries toy_transaction_id instead. */
   profile_id?: string | null
+  /** 137: the member report a report_resolved notice is about. */
+  member_report_id?: string | null
   actor_name: string
   /** 119: the reason or message, ≤ 300. */
   body?: string | null
@@ -2373,8 +2475,8 @@ export interface OrgPublicProfile {
   events?: Array<
     Pick<
       OrgEvent,
-      'id' | 'org_id' | 'title' | 'summary' | 'starts_at' | 'ends_at' | 'format' | 'location' | 'audience' | 'status'
-    >
+      'id' | 'org_id' | 'title' | 'summary' | 'ends_at' | 'format' | 'location' | 'audience' | 'status'
+    > & { starts_at: string }
   >
   stories?: Array<
     Pick<OrgStory, 'id' | 'org_id' | 'kind' | 'title' | 'summary' | 'byline' | 'status' | 'created_at'>
@@ -2528,3 +2630,5 @@ export interface AdminCounts {
   accounts: number
   organisations: number
 }
+export { problem, toProblem } from './auth-errors'
+export type { AuthProblem } from './auth-errors'

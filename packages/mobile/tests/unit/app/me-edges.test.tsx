@@ -1,4 +1,3 @@
-// journeys: Q01
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import MeTab from '../../../app/(tabs)/me'
 import { NAMES } from '../../special-strings'
@@ -96,19 +95,19 @@ describe('Me greeting and standing', () => {
 })
 
 describe('Me builds line', () => {
-  it('is hidden at zero and when the call fails', async () => {
+  it('Q01 is hidden at zero and when the call fails', async () => {
     render(<MeTab />)
     await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(3))
     expect(screen.queryByText(/builds? logged/)).toBeNull()
   })
 
-  it('says "1 build logged" for one, not "1 builds"', async () => {
+  it('Q01 says "1 build logged" for one, not "1 builds"', async () => {
     serve({ builds: { builds: 1 } })
     render(<MeTab />)
     expect(await screen.findByText('1 build logged')).toBeTruthy()
   })
 
-  it('a missing or negative count shows nothing', async () => {
+  it('Q01 a missing or negative count shows nothing', async () => {
     serve({ builds: {} })
     const a = render(<MeTab />)
     await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(3))
@@ -122,7 +121,7 @@ describe('Me builds line', () => {
 })
 
 describe('Me row counts', () => {
-  it('zero and missing counts show no badge', async () => {
+  it('Q01 zero and missing counts show no badge', async () => {
     serve({ counts: { ...COUNTS, makers: 0, review: undefined } })
     render(<MeTab />)
     await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(3))
@@ -130,7 +129,7 @@ describe('Me row counts', () => {
     expect(screen.queryByText('undefined')).toBeNull()
   })
 
-  it('a failed counts call leaves every row, uncounted', async () => {
+  it('Q01 a failed counts call leaves every row, uncounted', async () => {
     serve({ counts: new Error('500') })
     render(<MeTab />)
     await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(3))
@@ -138,7 +137,7 @@ describe('Me row counts', () => {
     expect(screen.queryByText(/^\d+$/)).toBeNull()
   })
 
-  it('a huge count is shown whole', async () => {
+  it('Q01 a huge count is shown whole', async () => {
     serve({ counts: { ...COUNTS, makers: 123456 } })
     render(<MeTab />)
     expect(await screen.findByText('123456')).toBeTruthy()
@@ -146,13 +145,13 @@ describe('Me row counts', () => {
 })
 
 describe('Me money panel', () => {
-  it('nothing when there are no threads; the panel hides rather than showing $0.00', async () => {
+  it('Q01 nothing when there are no threads; the panel hides rather than showing $0.00', async () => {
     render(<MeTab />)
     await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(3))
     expect(screen.queryByText('Money you have agreed to')).toBeNull()
   })
 
-  it('shows only the first three lines, and singular wording for one open exchange', async () => {
+  it('Q01 shows only the first three lines, and singular wording for one open exchange', async () => {
     serve({ money: { threads: ['a', 'b', 'c', 'd', 'e'].map((id) => thread({ transaction_id: id, what: `Item ${id}` })), owed_cents: 5300, unsettled_count: 1 } })
     render(<MeTab />)
     expect(await screen.findByText(/Still to settle across 1 exchange\. SPLAT never handles the money/)).toBeTruthy()
@@ -161,7 +160,7 @@ describe('Me money panel', () => {
     expect(screen.getByText('$53.00')).toBeTruthy()
   })
 
-  it('plural wording for several, and the all-settled line when none are open', async () => {
+  it('Q01 plural wording for several, and the all-settled line when none are open', async () => {
     serve({ money: { threads: [thread()], owed_cents: 2000, unsettled_count: 3 } })
     const a = render(<MeTab />)
     expect(await screen.findByText(/across 3 exchanges/)).toBeTruthy()
@@ -174,7 +173,7 @@ describe('Me money panel', () => {
 
   it.each([
     ['exchange', '/exchanges/tx'], ['donation', '/exchanges/tx'], ['build', '/exchanges/build/tx'], ['print', '/printing/jobs/tx'],
-  ])('a %s line opens %s and is named for who it is with', async (type, route) => {
+  ])('Q03 a %s line opens %s and is named for who it is with', async (type, route) => {
     serve({ money: { threads: [thread({ type, other_name: 'Sam', what: 'Thing' })], owed_cents: 100, unsettled_count: 1 } })
     render(<MeTab />)
     const line = await screen.findByRole('button', { name: new RegExp(`^Thing, Sam.*, \\$10\\.60, to settle$`) })
@@ -182,14 +181,14 @@ describe('Me money panel', () => {
     expect(mockPush).toHaveBeenCalledWith(route)
   })
 
-  it('a failed money call costs only the panel', async () => {
+  it('Q01 a failed money call costs only the panel', async () => {
     serve({ money: new Error('500') })
     render(<MeTab />)
     await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(3))
     expect(screen.getByLabelText('My toys')).toBeTruthy()
   })
 
-  it('a negative or zero amount line does not print a minus sign as currency garbage', async () => {
+  it('Q01 a negative or zero amount line does not print a minus sign as currency garbage', async () => {
     serve({ money: { threads: [thread({ amount_cents: 0 })], owed_cents: 0, unsettled_count: 1 } })
     render(<MeTab />)
     expect((await screen.findAllByText('$0.00')).length).toBeGreaterThan(0)
@@ -227,7 +226,7 @@ describe('Me admin and badges rows', () => {
 })
 
 describe('Me stays live (S6) and recovers (S19)', () => {
-  it('refetches the money panel, counts and capabilities each time the tab takes focus again', async () => {
+  it('Q01 refetches the money panel, counts and capabilities each time the tab takes focus again', async () => {
     serve({ money: { threads: [thread()], owed_cents: 1060, unsettled_count: 1 } })
     render(<MeTab />)
     expect(await screen.findByText('To settle')).toBeTruthy()

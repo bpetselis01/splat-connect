@@ -4,7 +4,6 @@
 // three axes the API itself branches on — status, which side the viewer is on,
 // and donation vs exchange — because the wrong answer on any one of them puts
 // two people in a room reciting a code that cannot match.
-// journeys: X02 X04 X05 X06 X07 X08 X09
 import { CLEARANCE, paddingBottomOf } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import {
@@ -134,7 +133,7 @@ beforeEach(() => {
 })
 
 describe('ExchangeThreadScreen — loading and header', () => {
-  it('fetches the transaction by id and names the toy and the collector on a donation', async () => {
+  it('X02 fetches the transaction by id and names the toy and the collector on a donation', async () => {
     mockGet.mockResolvedValue(detail({ type: 'donation', owner_id: 'owner1', requester_id: 'viewer1' }))
     await open()
     expect(mockGet).toHaveBeenCalledWith('/api/toy-transactions/tx1')
@@ -233,7 +232,7 @@ describe('ExchangeThreadScreen — requested, owner side', () => {
     expect(screen.getByRole('button', { name: 'Accept request' }).props.accessibilityState.disabled).toBe(true)
   })
 
-  it('posts the four pickup fields and takes the accepted transaction from the response', async () => {
+  it('X04 posts the four pickup fields and takes the accepted transaction from the response', async () => {
     mockPost.mockResolvedValue(
       detail({ status: 'accepted', owner_code: '123456', pickup_line1: '12 Rose St', pickup_suburb: 'Fitzroy', pickup_state: 'VIC', pickup_postcode: '3065' })
     )
@@ -256,7 +255,7 @@ describe('ExchangeThreadScreen — requested, owner side', () => {
     expect(await screen.findByText('Accepted')).toBeTruthy()
   })
 
-  it('accepts with an empty body and no address form when an organisation owns the toy', async () => {
+  it('X04 accepts with an empty body and no address form when an organisation owns the toy', async () => {
     mockUseCapabilities.mockReturnValue(caps({ ledOrgs: [{ id: 'org1', name: 'TAD Australia' }] }))
     mockGet.mockResolvedValue(detail({ owner_id: null, owner_org_id: 'org1', owner_name: 'TAD Australia' }))
     mockPost.mockResolvedValue(detail({ owner_id: null, owner_org_id: 'org1', status: 'accepted' }))
@@ -269,12 +268,56 @@ describe('ExchangeThreadScreen — requested, owner side', () => {
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions/tx1/accept', {}))
   })
 
-  it('declines through /reject', async () => {
-    mockPost.mockResolvedValue(detail({ status: 'rejected' }))
+  it('X05 declines only with a reason, sent trimmed to /reject', async () => {
+    mockPost.mockResolvedValue(detail({ status: 'rejected', decline_reason: 'Already given away' }))
     await open()
     fireEvent.press(screen.getByRole('button', { name: 'Decline' }))
-    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions/tx1/reject', {}))
+    expect(mockPost).not.toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: 'Send the decline' })).toBeDisabled()
+    fireEvent.changeText(screen.getByLabelText('Reason for declining'), '   ')
+    expect(screen.getByRole('button', { name: 'Send the decline' })).toBeDisabled()
+    fireEvent.changeText(screen.getByLabelText('Reason for declining'), '  Already given away  ')
+    fireEvent.press(screen.getByRole('button', { name: 'Send the decline' }))
+    await waitFor(() =>
+      expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions/tx1/reject', { reason: 'Already given away' })
+    )
     expect(await screen.findByText('Rejected')).toBeTruthy()
+  })
+
+  it('X05 Cancel closes the reason form without sending', async () => {
+    await open()
+    fireEvent.press(screen.getByRole('button', { name: 'Decline' }))
+    fireEvent.press(screen.getByRole('button', { name: 'Cancel' }))
+    expect(screen.queryByLabelText('Reason for declining')).toBeNull()
+    expect(mockPost).not.toHaveBeenCalled()
+  })
+
+  it('X05 keeps the typed reason when the server refuses it', async () => {
+    mockPost.mockRejectedValue(new Error('API POST /api/toy-transactions/tx1/reject failed with status 409: This request is no longer open'))
+    await open()
+    fireEvent.press(screen.getByRole('button', { name: 'Decline' }))
+    fireEvent.changeText(screen.getByLabelText('Reason for declining'), 'Already given away')
+    fireEvent.press(screen.getByRole('button', { name: 'Send the decline' }))
+    expect(await screen.findByText('This request is no longer open')).toBeTruthy()
+    expect(screen.getByLabelText('Reason for declining').props.value).toBe('Already given away')
+  })
+
+  it('X15 shows the requester the owner’s reason on a declined request', async () => {
+    mockGet.mockResolvedValue(
+      detail({ status: 'rejected', owner_id: 'owner1', requester_id: 'viewer1', decline_reason: 'Already given away' })
+    )
+    await open()
+    expect(screen.getByText('This request was declined.')).toBeTruthy()
+    expect(screen.getByText('Reason: Already given away')).toBeTruthy()
+  })
+
+  it('X15 shows a plain declined line when an older request has no reason', async () => {
+    mockGet.mockResolvedValue(
+      detail({ status: 'rejected', owner_id: 'owner1', requester_id: 'viewer1', decline_reason: null })
+    )
+    await open()
+    expect(screen.getByText('This request was declined.')).toBeTruthy()
+    expect(screen.queryByText(/^Reason:/)).toBeNull()
   })
 
   it('surfaces an accept failure through the error row', async () => {
@@ -328,7 +371,7 @@ describe('ExchangeThreadScreen — an expired print request', () => {
 })
 
 describe('ExchangeThreadScreen — requested, requester side', () => {
-  it('offers Withdraw request and posts /withdraw, with no owner controls', async () => {
+  it('X06 offers Withdraw request and posts /withdraw, with no owner controls', async () => {
     mockGet.mockResolvedValue(detail({ owner_id: 'owner1', requester_id: 'viewer1' }))
     mockPost.mockResolvedValue(detail({ owner_id: 'owner1', requester_id: 'viewer1', status: 'withdrawn' }))
     await open()
@@ -398,7 +441,7 @@ describe('ExchangeThreadScreen — accepted exchange, both sides confirm', () =>
     expect(screen.getByRole('button', { name: 'Confirm handoff' })).toBeTruthy()
   })
 
-  it('confirms with the code the other side read out', async () => {
+  it('X07 confirms with the code the other side read out', async () => {
     mockGet.mockResolvedValue(accepted({ owner_code: '123456' }))
     mockPost.mockResolvedValue(accepted({ owner_code: '123456', owner_confirmed_at: '2026-08-30T02:00:00.000Z' }))
     await open()
@@ -487,7 +530,7 @@ describe('ExchangeThreadScreen — settled transactions are read-only', () => {
     expect(screen.queryByText(/12 Rose St/)).toBeNull()
   })
 
-  it('prompts the receiver to list a still-draft received toy, and navigates there', async () => {
+  it('X09 prompts the receiver to list a still-draft received toy, and navigates there', async () => {
     mockGet.mockResolvedValue(
       detail({
         status: 'completed',
@@ -596,8 +639,10 @@ describe('ExchangeThreadScreen — polling', () => {
       await act(async () => {
         jest.advanceTimersByTime(10_000)
       })
+      fireEvent.press(screen.getByRole('button', { name: 'Decline' }))
+      fireEvent.changeText(screen.getByLabelText('Reason for declining'), 'Already given away')
       await act(async () => {
-        fireEvent.press(screen.getByRole('button', { name: 'Decline' }))
+        fireEvent.press(screen.getByRole('button', { name: 'Send the decline' }))
       })
       expect(screen.getByText('Rejected')).toBeTruthy()
 
@@ -732,7 +777,7 @@ describe('handover code actions', () => {
     )
   })
 
-  it('copies the code and says so', async () => {
+  it('X08 copies the code and says so', async () => {
     mockCopy.mockResolvedValue(true)
     render(<ExchangeThreadScreen id="tx1" />)
     fireEvent.press(await screen.findByText('Copy'))
@@ -740,7 +785,7 @@ describe('handover code actions', () => {
     expect(await screen.findByText('Code 123456 copied')).toBeTruthy()
   })
 
-  it('swaps in a new code from the API and says the old one is dead', async () => {
+  it('X08 swaps in a new code from the API and says the old one is dead', async () => {
     mockPost.mockResolvedValue(accepted({ requester_code: '654321' }))
     render(<ExchangeThreadScreen id="tx1" />)
     fireEvent.press(await screen.findByText('New code'))

@@ -20,6 +20,10 @@
  */
 import { Hono } from 'hono'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
+import { notify } from '../notify.js'
+import { selectIn } from '../chunk.js'
+import { sendEmail } from '../mailer.js'
+import { orgName } from './organizations.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import type { AuthVariables } from '../middleware/auth.js'
 import type { OrgEventQuestion } from '@splat-connect/types'
@@ -115,28 +119,35 @@ events.get('/mine', async (c) => {
   // under 033/045's column grants — the parent query comes back empty with no
   // error, which is the silent failure documented on src/routes/public.ts.
   const admin = createAdminClient()
-  const [{ data: eventRows }, { data: prints }] = await Promise.all([
-    admin
-      .from('org_events')
-      .select(
-        'id, org_id, kind, title, starts_at, ends_at, format, location, suburb, state, status, cancelled_at, prints_parts',
-      )
-      .in('id', eventIds),
+  const [{ data: eventRows, error: eventsError }, { data: prints, error: printsError }] = await Promise.all([
+    selectIn(eventIds, (ids) =>
+      admin
+        .from('org_events')
+        .select(
+          'id, org_id, kind, title, starts_at, ends_at, format, location, suburb, state, status, cancelled_at, prints_parts',
+        )
+        .in('id', ids),
+    ),
     // The family's own part-print requests against these events. Scoped to
     // their own rows: this is the requester's view of the queue the leader
     // works through on /dashboard/org/events/[id].
-    supabase
-      .from('toy_transactions')
-      .select('id, event_id, status, part_sets, tutorial_id, decline_reason, created_at')
-      .in('event_id', eventIds)
-      .eq('requester_id', userId),
+    selectIn(eventIds, (ids) =>
+      supabase
+        .from('toy_transactions')
+        .select('id, event_id, status, part_sets, tutorial_id, decline_reason, created_at')
+        .in('event_id', ids)
+        .eq('requester_id', userId),
+    ),
   ])
 
-  const orgIds = [...new Set((eventRows ?? []).map((e) => e.org_id as string))]
-  const { data: orgs } = await admin.from('organizations').select('id, name').in('id', orgIds)
-  const orgName = new Map((orgs ?? []).map((o) => [o.id as string, o.name as string]))
-  const byEvent = new Map((eventRows ?? []).map((e) => [e.id as string, e]))
-  const printByEvent = new Map((prints ?? []).map((p) => [p.event_id as string, p]))
+  const orgIds = [...new Set(eventRows.map((e) => e.org_id as string))]
+  const { data: orgs, error: orgsError } = await selectIn(orgIds, (ids) =>
+    admin.from('organizations').select('id, name').in('id', ids),
+  )
+  if (eventsError || printsError || orgsError) return c.json({ error: "We couldn't load your events. Try again." }, 500)
+  const orgName = new Map(orgs.map((o) => [o.id as string, o.name as string]))
+  const byEvent = new Map(eventRows.map((e) => [e.id as string, e]))
+  const printByEvent = new Map(prints.map((p) => [p.event_id as string, p]))
 
   const out = rows
     .map((r) => {
@@ -177,7 +188,7 @@ events.post('/:id/registrations', async (c) => {
   const admin = createAdminClient()
   const { data: event, error: eventError } = await admin
     .from('org_events')
-    .select('id, status, cancelled_at, registrations_closed_at, capacity, starts_at, cost_cents')
+    .select('id, org_id, title, status, cancelled_at, registrations_closed_at, capacity, starts_at, cost_cents, format, online_url')
     .eq('id', eventId)
     .maybeSingle()
   if (eventError) {
@@ -197,11 +208,13 @@ events.post('/:id/registrations', async (c) => {
     return c.json({ error: 'Tick the box to say you have read what this event costs.' }, 400)
   }
 
-  const { data: questions } = await admin
+  const { data: questions, error: questionsError } = await admin
     .from('org_event_questions')
     .select('id, prompt, answer_type, required, options')
     .eq('event_id', eventId)
     .order('position')
+  // Fail closed: no questions read must not mean no questions asked.
+  if (questionsError) return c.json({ error: "We couldn't load this event's questions. Try again." }, 500)
 
   const checked = checkAnswers(
     (questions ?? []) as QuestionRow[],
@@ -222,29 +235,101 @@ events.post('/:id/registrations', async (c) => {
     }
   }
 
-  const { data, error } = await supabase
-    .from('org_event_registrations')
-    // Upsert, not insert: the unique key is (event_id, user_id), so somebody
-    // who cancelled and changed their mind is the same row coming back rather
-    // than a duplicate-key error they cannot act on.
-    .upsert(
-      {
-        event_id: eventId,
-        user_id: c.get('userId'),
-        name,
-        email,
-        answers: checked.answers,
-        cancelled_at: null,
-      },
-      { onConflict: 'event_id,user_id' },
-    )
-    .select(REGISTRATION_COLUMNS)
-    .maybeSingle()
+  // Somebody who cancelled and changed their mind is the same row coming back
+  // rather than a duplicate-key error they cannot act on, so the write is three
+  // conditional steps. A step that returns a row is the one that made the RSVP
+  // new (inserted, or revived from cancelled); only that step notifies, which
+  // keeps two simultaneous saves from sending it twice.
+  const userId = c.get('userId')
+  const fields = { name, email, answers: checked.answers, cancelled_at: null }
+  const attempt = async (step: 'insert' | 'revive' | 'save') => {
+    const table = supabase.from('org_event_registrations')
+    const query =
+      step === 'insert'
+        ? table.upsert({ event_id: eventId, user_id: userId, ...fields }, { onConflict: 'event_id,user_id', ignoreDuplicates: true })
+        : table.update(fields).eq('event_id', eventId).eq('user_id', userId)
+    return (step === 'revive' ? query.not('cancelled_at', 'is', null) : query)
+      .select(REGISTRATION_COLUMNS)
+      .maybeSingle()
+  }
+  let isNew = true
+  let { data, error } = await attempt('insert')
+  const inserted = !error && !!data
+  if (!error && !data) ({ data, error } = await attempt('revive'))
+  if (!error && !data) {
+    isNew = false
+    ;({ data, error } = await attempt('save'))
+  }
 
   if (error) return c.json({ error: error.message }, 500)
   // RLS returns no row rather than refusing, so an absent row IS the refusal.
   if (!data) return c.json({ error: 'That registration is not yours to make.' }, 403)
+  // 142. Saving the form again over a live registration is not a new RSVP.
+  if (isNew) {
+    await notify(
+      [
+        {
+          recipient_id: userId,
+          type: 'event_rsvp_received',
+          org_event_id: eventId,
+          tutorial_title: event.title,
+          actor_name: (await orgName(event.org_id)) ?? 'An organisation',
+        },
+      ],
+      'event_rsvp_received'
+    )
+    // The link is never on a public page; this email and the joining-link route are the two ways a registrant gets it.
+    // Only a first-ever registration, and only to the account's own address: the form's email is unverified, and a revive would let cancel and re-register repeat the mail.
+    const accountEmail = inserted && event.format === 'online' && event.online_url
+      ? (await createAdminClient().auth.admin.getUserById(userId)).data.user?.email
+      : null
+    if (accountEmail) {
+      await sendEmail(
+        accountEmail,
+        `You're going to ${event.title}`,
+        [
+          `You're registered for ${event.title}.`,
+          '',
+          `Join online: ${event.online_url}`,
+          '',
+          'You can also find the link on the event page while you are registered. Keep it to yourself: it is for the people who registered.',
+        ].join('\n')
+      )
+    }
+  }
   return c.json(data, 201)
+})
+
+/**
+ * An online event's joining link, for somebody who is registered for it. The
+ * registration is read with the user client, so 061's "you wrote it" policy is
+ * the check; the link itself comes from the admin client because the anon and
+ * authenticated roles cannot read online_url.
+ */
+events.get('/:id/joining-link', async (c) => {
+  const eventId = c.req.param('id')
+  const { data: event, error } = await createAdminClient()
+    .from('org_events')
+    .select('format, online_url, status, cancelled_at')
+    .eq('id', eventId)
+    .maybeSingle()
+  if (error) {
+    if (error.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'No such event.' }, 404)
+    return c.json({ error: error.message }, 500)
+  }
+  if (!event || event.status !== 'published') return c.json({ error: 'No such event.' }, 404)
+  if (event.cancelled_at) return c.json({ error: 'This event was cancelled.' }, 404)
+  if (event.format !== 'online' || !event.online_url) return c.json({ error: 'This event has no joining link.' }, 404)
+
+  const { data: mine } = await createUserClient(c.get('token'))
+    .from('org_event_registrations')
+    .select('id')
+    .eq('event_id', eventId)
+    .eq('user_id', c.get('userId'))
+    .is('cancelled_at', null)
+    .maybeSingle()
+  if (!mine) return c.json({ error: 'Register for this event to get the joining link.' }, 403)
+  return c.json({ online_url: event.online_url })
 })
 
 /**

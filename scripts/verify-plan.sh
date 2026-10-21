@@ -28,14 +28,25 @@ if [ $WEB = 1 ]; then F=$(files '^packages/web/' | sed 's#^packages/web/##' | tr
 if [ $API = 1 ]; then F=$(files '^packages/api/' | sed 's#^packages/api/##' | tr '\n' ' '); [ -n "$F" ] && add "cd packages/api && ./node_modules/.bin/vitest related --run $F"; fi
 [ $MOB = 1 ] && add "cd packages/mobile && npx jest"
 has '^supabase/migrations/' && { add "pnpm db:check"; add "pnpm db:guards"; }
+has '^scripts/journeys/|\.(test|spec)\.tsx?$|/tests?/' && add "pnpm test:journeys"
+has '^scripts/journeys/' && add "pnpm test:journeys:unit"
 has '^packages/(types/src/pending\.ts)|^docs/PENDING\.md' && add "node scripts/pending.mjs --check"
 
-# e2e: matched by name, not guessed. Mobile specs are prefixed by area (guides-*, challenges-*); web specs by route segment.
-for f in $(echo "$CHANGED" | grep -E '^packages/mobile/(components|app)/'); do
+# e2e: the journey map names the rows a route file or screen carries and the tests whose titles carry them. Files no row names
+# (components, lib/) fall back to name matching: mobile specs are prefixed by area (guides-*), web specs by route segment.
+JOURNEYS=$(echo "$CHANGED" | node scripts/journeys/for-files.mjs)
+ROWS=$(echo "$JOURNEYS" | grep -E '^(row|missing) ' | sed -E 's/^row /  /; s/^missing /  ! /')
+while read -r kind a b; do [ "$kind" = e2e ] && E2ES+=("$a $b"); done <<< "$JOURNEYS"
+JUNIT=$(echo "$JOURNEYS" | sed -n 's/^unit //p')
+WU=$(echo "$JUNIT" | grep '^packages/web/' | sed 's#^packages/web/##' | tr '\n' ' ')
+[ -n "$WU" ] && add "cd packages/web && ./node_modules/.bin/vitest run $WU"
+APIU=$(echo "$JUNIT" | grep '^packages/api/' | sed 's#^packages/api/##' | tr '\n' ' ')
+FALLBACK=$(echo "$JOURNEYS" | sed -n 's/^fallback //p')
+for f in $(echo "$FALLBACK" | grep -E '^packages/mobile/(components|app)/'); do
   a=$(echo "$f" | awk -F/ '{print $4}'); a=${a%.tsx}; a=${a%.ts}
   for s in packages/mobile/tests/e2e/"$a"*.spec.ts; do [ -f "$s" ] && E2ES+=("mobile ${s#packages/mobile/}"); done
 done
-for f in $(echo "$CHANGED" | grep -E '^packages/web/app/'); do
+for f in $(echo "$FALLBACK" | grep -E '^packages/web/app/'); do
   for seg in $(echo "$f" | sed 's#^packages/web/app/##; s#/[^/]*$##' | tr '/' ' ' | tr -d '[]()' ); do
     for s in $(grep -rlE "/$seg(['\"/?]|\b)" packages/web/tests/e2e --include='*.spec.ts' 2>/dev/null); do E2ES+=("web ${s#packages/web/}"); done
   done
@@ -44,6 +55,8 @@ E2ES=($(printf '%s\n' "${E2ES[@]:-}" | sort -u | sed 's/ /@/'))
 
 echo "changed: $(echo "$CHANGED" | wc -l | tr -d ' ') files vs $SINCE"
 echo "== fast checks"; for c in "${CMDS[@]:-}"; do [ -n "$c" ] && echo "  $c"; done
+[ -n "$ROWS" ] && { echo "== journey rows touched"; echo "$ROWS"; }
+[ -n "$APIU" ] && echo "== api journey tests (local Supabase): cd packages/api && ./node_modules/.bin/vitest run -c vitest.integration.config.ts $APIU"
 echo "== e2e (needs local Supabase; run web and mobile one after the other, never together)"
 if [ ${#E2ES[@]} -eq 0 ] || [ -z "${E2ES[0]}" ]; then echo "  none matched by name — check by hand or write a spec"; else
   for e in "${E2ES[@]}"; do e=${e/@/ }; echo "  scripts/e2e.sh ${e%% *} ${e#* }"; done; fi

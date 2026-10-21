@@ -1,10 +1,11 @@
 // packages/mobile/tests/unit/app/admin.test.tsx
-// journeys: Q17
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { Linking } from 'react-native'
 import MyAdmin from '../../../app/(my)/admin'
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
+const mockPush = jest.fn()
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }))
 const mockGet = jest.fn()
 jest.mock('../../../lib/api-client', () => ({ apiClient: { get: (...a: unknown[]) => mockGet(...a) } }))
 
@@ -28,26 +29,36 @@ describe('MyAdmin seat guard (S7)', () => {
 })
 
 describe('MyAdmin', () => {
-  it("shows the board's six counts, each opening its web queue", async () => {
+  it('Q17 opens the review queue on the phone, not the web', async () => {
+    const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(true)
+    render(<MyAdmin />)
+    fireEvent.press(await screen.findByRole('button', { name: 'Tutorials awaiting review, 7' }))
+    expect(mockPush).toHaveBeenCalledWith('/admin/review')
+    expect(open).not.toHaveBeenCalled()
+    open.mockRestore()
+  })
+
+  it("Q17 shows the board's six counts, each opening its queue on the phone", async () => {
     const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(true)
     render(<MyAdmin />)
     expect(await screen.findByText('57')).toBeTruthy()
-    for (const [label, count, path] of [
+    for (const [label, count, route] of [
       ['Tutorials awaiting review', '7', '/admin/review'],
       ['Reports from members', '2', '/admin/reports'],
       ['Ideas awaiting review', '3', '/admin/ideas'],
       ['Spot-check', '5', '/admin/spot-check'],
-      ['Accounts', '57', '/admin/contributors'],
-      ['Organisations', '14', '/admin/organizations'],
+      ['Accounts', '57', '/admin/accounts'],
+      ['Organisations', '14', '/admin/organisations'],
     ] as const) {
       expect(screen.getByText(count)).toBeTruthy()
       fireEvent.press(screen.getByRole('button', { name: `${label}, ${count}` }))
-      expect(open).toHaveBeenCalledWith(`${process.env.EXPO_PUBLIC_WEB_URL}${path}`)
+      expect(mockPush).toHaveBeenLastCalledWith(route)
     }
+    expect(open).not.toHaveBeenCalled()
     open.mockRestore()
   })
 
-  it('still lists the six queues, uncounted, when the counts fail', async () => {
+  it('Q17 still lists the six queues, uncounted, when the counts fail', async () => {
     mockGet.mockRejectedValue(new Error('500'))
     render(<MyAdmin />)
     expect(await screen.findByRole('button', { name: 'Reports from members' })).toBeTruthy()

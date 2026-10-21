@@ -60,6 +60,22 @@ function post(body: unknown) {
   })
 }
 
+// The viewer's own unresolved reports: .select().eq(idea).eq(reporter).is(resolved_at, null)
+function reportsFor(profileIds: string[], calls: Array<[string, unknown]> = []) {
+  return () => ({
+    select: () => ({
+      eq: (c1: string, v1: unknown) => ({
+        eq: (c2: string, v2: unknown) => ({
+          is: (c3: string, v3: unknown) => {
+            calls.push([c1, v1], [c2, v2], [c3, v3])
+            return Promise.resolve({ data: profileIds.map((id) => ({ reported_profile_id: id })), error: null })
+          },
+        }),
+      }),
+    }),
+  })
+}
+
 beforeEach(() => {
   mockFrom.mockReset()
   mockAdminFrom.mockReset()
@@ -357,11 +373,11 @@ describe('DELETE /ideas/:id/participants/:profileId', () => {
       expect.objectContaining({ body: 'Riley the removed was removed from this challenge' }),
     ])
     expect(adminInserts.notifications).toEqual([
-      expect.objectContaining({
+      [expect.objectContaining({
         recipient_id: 'user-2',
         type: 'challenge_removed',
         actor_name: 'Alex the author',
-      }),
+      })],
     ])
   })
 })
@@ -471,108 +487,22 @@ describe('POST /ideas/:id/reports', () => {
     expect(res.status).toBe(403)
   })
 
-  // Tests: reporting a fellow participant removes that participant, not the
-  //        reporter
-  // How:   target 'user-2' is not the idea's author; asserts the admin update
-  //        against toy_idea_participants filters on user-2's profile id
-  // Chain: this is the baseline the author-exception test below is compared
-  //        against — get this wrong and every report would misfire its removal
-  it('removes the reported participant when the target is not the author', async () => {
+  // Tests: filing a report writes the report and nothing else
+  // How:   reports a fellow participant and then the author; the admin mock
+  //        throws on any table, so a participant update, system message or
+  //        notification fails the request
+  // Chain: removal is now an admin decision (PATCH /admin/reports/:id); a
+  //        report that still evicted anyone would remove people unreviewed
+  it.each(['user-2', 'author-9'])('files the report for %s without removing anyone', async (target) => {
     mockIdea('author-9')
-    const updates: Array<{ payload: unknown; profileId: string }> = []
     mockAdminFrom.mockImplementation((table: string) => {
-      if (table === 'profiles') return defaultAdminFrom(table)
-      if (table === 'toy_idea_participants') {
-        return {
-          update: (payload: unknown) => ({
-            eq: () => ({
-              eq: (_col: string, val: string) => {
-                updates.push({ payload, profileId: val })
-                return Promise.resolve({ error: null })
-              },
-            }),
-          }),
-        }
-      }
-      return { insert: () => Promise.resolve({ data: null, error: null }) }
+      throw new Error(`report must not write ${table}`)
     })
 
-    const res = await postReport({ reported_profile_id: 'user-2', reason: 'Upsetting message' })
+    const res = await postReport({ reported_profile_id: target, reason: 'Upsetting message' })
 
     expect(res.status).toBe(201)
-    expect(updates).toEqual([
-      expect.objectContaining({ profileId: 'user-2', payload: expect.objectContaining({ removed_by: 'user-1' }) }),
-    ])
-  })
-
-  // Tests: reporting the idea's author removes the *reporter* instead — an
-  //        author cannot be evicted from their own idea
-  // How:   target equals the idea's own author_id; asserts the admin update
-  //        filters on the reporter's own id (user-1), never the author's
-  // Chain: the owner's explicit design — someone uncomfortable enough to
-  //        report should not be left sitting in the thread either, and an
-  //        admin decides what happens to the challenge from there
-  it('removes the reporter, not the author, when reporting the author', async () => {
-    mockIdea('author-9')
-    const updates: Array<{ profileId: string }> = []
-    mockAdminFrom.mockImplementation((table: string) => {
-      if (table === 'profiles') return defaultAdminFrom(table)
-      if (table === 'toy_idea_participants') {
-        return {
-          update: () => ({
-            eq: () => ({
-              eq: (_col: string, val: string) => {
-                updates.push({ profileId: val })
-                return Promise.resolve({ error: null })
-              },
-            }),
-          }),
-        }
-      }
-      return { insert: () => Promise.resolve({ data: null, error: null }) }
-    })
-
-    const res = await postReport({ reported_profile_id: 'author-9', reason: 'Upsetting message' })
-
-    expect(res.status).toBe(201)
-    expect(updates).toEqual([{ profileId: 'user-1' }])
-  })
-
-  // Tests: the report's reason text reaches neither the thread's system
-  //        message nor the removed person's notification — the single most
-  //        important property of this endpoint
-  // How:   posts a distinctive reason string; captures both the admin-client
-  //        message insert and the notification insert; asserts neither
-  //        payload's stringified form contains that reason anywhere
-  // Chain: 041 gives toy_idea_reports no select policy specifically to keep
-  //        this text away from the reported person — a leak here through the
-  //        system message or notification would defeat that entirely
-  it('keeps the report reason out of the system message and the notification', async () => {
-    mockIdea('author-9')
-    const reason = 'They said something that made my child very uncomfortable'
-    const adminInserts: Record<string, unknown[]> = { toy_idea_messages: [], notifications: [] }
-    mockAdminFrom.mockImplementation((table: string) => {
-      if (table === 'profiles') return defaultAdminFrom(table)
-      if (table === 'toy_idea_participants') {
-        return { update: () => ({ eq: () => ({ eq: () => Promise.resolve({ error: null }) }) }) }
-      }
-      return {
-        insert: (payload: unknown) => {
-          adminInserts[table]?.push(payload)
-          return Promise.resolve({ data: null, error: null })
-        },
-      }
-    })
-
-    const res = await postReport({ reported_profile_id: 'user-2', reason })
-
-    expect(res.status).toBe(201)
-    expect(adminInserts.toy_idea_messages).toHaveLength(1)
-    expect(adminInserts.notifications).toHaveLength(1)
-    expect(JSON.stringify(adminInserts.toy_idea_messages[0])).not.toContain(reason)
-    expect(JSON.stringify(adminInserts.notifications[0])).not.toContain(reason)
-    // The response the reporter themselves reads back must not echo it either.
-    expect(JSON.stringify(await res.json())).not.toContain(reason)
+    expect(await res.json()).toEqual({ reported: true })
   })
 
   // Tests: a target with no relationship to this idea (not the author, not a
@@ -608,37 +538,6 @@ describe('POST /ideas/:id/reports', () => {
     expect(adminInserts.toy_idea_messages).toHaveLength(0)
     expect(adminInserts.notifications).toHaveLength(0)
   })
-
-  // Tests: the removed person's notification names 'SPLAT' as the actor, not
-  //        the reporter
-  // How:   captures the notification insert and asserts actor_name directly
-  // Chain: the whole point of routing through a report rather than a direct
-  //        block is that the reporter is never named to the person they
-  //        reported — the reporter's own name here would render verbatim as
-  //        "{actor_name} removed you from a design challenge" to that person
-  it("names 'SPLAT', not the reporter, as the notification's actor", async () => {
-    mockIdea('author-9')
-    const adminInserts: Record<string, unknown[]> = { notifications: [] }
-    mockAdminFrom.mockImplementation((table: string) => {
-      if (table === 'profiles') return defaultAdminFrom(table)
-      if (table === 'toy_idea_participants') {
-        return { update: () => ({ eq: () => ({ eq: () => Promise.resolve({ error: null }) }) }) }
-      }
-      return {
-        insert: (payload: unknown) => {
-          adminInserts[table]?.push(payload)
-          return Promise.resolve({ data: null, error: null })
-        },
-      }
-    })
-
-    const res = await postReport({ reported_profile_id: 'user-2', reason: 'Upsetting message' })
-
-    expect(res.status).toBe(201)
-    expect(adminInserts.notifications).toEqual([
-      expect.objectContaining({ recipient_id: 'user-2', type: 'challenge_removed', actor_name: 'SPLAT' }),
-    ])
-  })
 })
 
 describe('GET /ideas/:id/messages', () => {
@@ -658,6 +557,8 @@ describe('GET /ideas/:id/messages', () => {
     const select = vi.fn().mockReturnValue({ eq })
     mockFrom.mockReturnValue({ select })
 
+    mockAdminFrom.mockImplementation(reportsFor([]))
+
     const res = await makeApp().request('/idea-1/messages')
 
     expect(res.status).toBe(200)
@@ -665,7 +566,31 @@ describe('GET /ideas/:id/messages', () => {
     expect(mockFrom).toHaveBeenCalledWith('toy_idea_messages')
     expect(eq).toHaveBeenCalledWith('idea_id', 'idea-1')
     expect(order).toHaveBeenCalledWith('created_at', { ascending: true })
-    expect(mockAdminFrom).not.toHaveBeenCalled()
+    expect(mockAdminFrom).not.toHaveBeenCalledWith('toy_idea_messages')
+  })
+
+  // Tests: messages from someone the viewer has an unresolved report against
+  //        are dropped, everyone else's stay
+  // How:   the viewer's open reports name 'user-2'; the thread has messages
+  //        from user-2 and author-9; the reports query must be scoped to the
+  //        viewer and to unresolved rows
+  // Chain: hide-until-reviewed is the only protection the reporter gets
+  //        before an admin decides
+  it('hides messages from a profile the viewer has an unresolved report against', async () => {
+    const thread = [
+      { id: 'm1', sender_id: 'user-2', body: 'hi' },
+      { id: 'm2', sender_id: 'author-9', body: 'hello' },
+    ]
+    mockFrom.mockReturnValue({
+      select: () => ({ eq: () => ({ order: () => Promise.resolve({ data: thread, error: null }) }) }),
+    })
+    const calls: Array<[string, unknown]> = []
+    mockAdminFrom.mockImplementation(reportsFor(['user-2'], calls))
+
+    const res = await makeApp().request('/idea-1/messages')
+
+    expect(await res.json()).toEqual([thread[1]])
+    expect(calls).toEqual([['idea_id', 'idea-1'], ['reported_by', 'user-1'], ['resolved_at', null]])
   })
 })
 

@@ -52,6 +52,7 @@ import type { ToyIdeaDetail, ContactPref } from '@splat-connect/types'
 import { daysSince } from '@/lib/relative-time'
 import { safePhotoSrc } from '@/lib/photo-src'
 import { initials, OUTCOME_STEPS, outcomeStates } from '@splat-connect/types'
+import { authUrl } from '@/lib/safe-next-path'
 
 const CONTACT_PREF_LABELS: Record<ContactPref, string> = {
   clarification: 'Clarification',
@@ -174,7 +175,7 @@ export default async function ChallengeDetailPage({
             </span>
           ) : (
             <Link
-              href={(viewerId ? `${base}?tab=thread` : `/login?next=${encodeURIComponent(`${base}?tab=thread`)}`) as Route}
+              href={(viewerId ? `${base}?tab=thread` : authUrl('login', `${base}?tab=thread`)) as Route}
               className="btn btn-primary min-h-12 px-[22px] text-[15px]"
               scroll={false}
             >

@@ -1,4 +1,3 @@
-// journeys: W03 W05
 import { CLEARANCE, scrollPaddings } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { ToySummaryScreen } from '../../../../components/my-toys/summary-screen'
@@ -117,7 +116,7 @@ describe('ToySummaryScreen', () => {
     expect(mockPush).toHaveBeenCalledWith('/exchanges/tx1?accept=1')
   })
 
-  it("accepts an organisation's request on the spot", async () => {
+  it("W03 accepts an organisation's request on the spot", async () => {
     mockUseCapabilities.mockReturnValue(caps([{ id: 'org1', name: 'Northside' }]))
     serve({
       mine: [],
@@ -140,7 +139,7 @@ describe('ToySummaryScreen', () => {
     expect(screen.queryByText('Requested this toy for donation.')).toBeNull()
   })
 
-  it("retires an organisation's toy with a reason", async () => {
+  it("W05 retires an organisation's toy with a reason", async () => {
     mockUseCapabilities.mockReturnValue(caps([{ id: 'org1', name: 'Northside' }]))
     serve({ mine: [], inventory: [toy({ owner_id: null, owner_org_id: 'org1' })] })
     mockPatch.mockResolvedValue(toy({ owner_id: null, owner_org_id: 'org1', retired_at: '2026-08-12T00:00:00Z', retired_note: 'Broken 12 Aug' }))
@@ -154,7 +153,7 @@ describe('ToySummaryScreen', () => {
     expect(screen.queryByText('Take requests again')).toBeNull()
   })
 
-  it('says why when the toy still has open requests', async () => {
+  it('W05 says why when the toy still has open requests', async () => {
     mockUseCapabilities.mockReturnValue(caps([{ id: 'org1', name: 'Northside' }]))
     serve({ mine: [], inventory: [toy({ owner_id: null, owner_org_id: 'org1' })] })
     mockPatch.mockRejectedValue(

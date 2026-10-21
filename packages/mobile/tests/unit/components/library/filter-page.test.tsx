@@ -1,7 +1,6 @@
 // The libraries' filter page, driven through both screens (spec
 // 2026-10-05-library-redesign): choices apply only on Show, Close discards,
 // Reset restores defaults, and the child questions keep only tagged items.
-// journeys: G03
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { LibraryScreen } from '../../../../components/home/library-screen'
 import { ToyLibraryScreen } from '../../../../components/toys/toy-library-screen'
@@ -68,7 +67,7 @@ describe('Guides filter page', () => {
     ]
   })
 
-  it('applies nothing until Show is pressed', async () => {
+  it('G03 applies nothing until Show is pressed', async () => {
     render(<LibraryScreen />)
     await screen.findByText('Easy one')
     await openFilters()
@@ -81,7 +80,7 @@ describe('Guides filter page', () => {
     expect(screen.getByText('Hard one')).toBeTruthy()
   })
 
-  it('shows the live count for the draft on the Show button, singular and plural', async () => {
+  it('G03 shows the live count for the draft on the Show button, singular and plural', async () => {
     render(<LibraryScreen />)
     await screen.findByText('Easy one')
     await openFilters()
@@ -95,7 +94,7 @@ describe('Guides filter page', () => {
     expect(screen.getByText('Show 3 guides')).toBeTruthy()
   })
 
-  it('discards the draft on Close', async () => {
+  it('G03 discards the draft on Close', async () => {
     render(<LibraryScreen />)
     await screen.findByText('Easy one')
     await openFilters()
@@ -110,7 +109,7 @@ describe('Guides filter page', () => {
     expect(screen.getByRole('button', { name: 'Hard', selected: false })).toBeTruthy()
   })
 
-  it('marks one-of groups as radios and many-of groups as selectable buttons', async () => {
+  it('G03 marks one-of groups as radios and many-of groups as selectable buttons', async () => {
     render(<LibraryScreen />)
     await screen.findByText('Easy one')
     await openFilters()
@@ -122,7 +121,7 @@ describe('Guides filter page', () => {
     expect(screen.getByRole('button', { name: 'Easy', selected: true })).toBeTruthy()
   })
 
-  it('returns the draft to the defaults on Reset, without applying', async () => {
+  it('G03 returns the draft to the defaults on Reset, without applying', async () => {
     render(<LibraryScreen />)
     await screen.findByText('Easy one')
     await openFilters()

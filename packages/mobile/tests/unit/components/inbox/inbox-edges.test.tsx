@@ -20,7 +20,11 @@ jest.mock('../../../../lib/api-client', () => ({
 }))
 
 const mockInvalidate = jest.fn()
-jest.mock('../../../../lib/capabilities', () => ({ invalidateCapabilities: () => mockInvalidate() }))
+let mockCaps: { isAdmin: boolean } | null = null
+jest.mock('../../../../lib/capabilities', () => ({
+  invalidateCapabilities: () => mockInvalidate(),
+  useCapabilities: () => ({ caps: mockCaps, loading: false }),
+}))
 
 const mockPush = jest.fn()
 jest.mock('expo-router', () => {

@@ -1,7 +1,6 @@
 // A challenge's detail across who is looking (signed out, stranger, maker,
 // author) and what state it is in (open, answered, written up, pending,
 // rejected), plus every write's failure path.
-// journeys: C04
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { ChallengeDetailScreen } from '../../../../components/challenges/detail-screen'
 import { NAMES } from '../../../special-strings'
@@ -136,7 +135,7 @@ describe('who is looking at an open challenge', () => {
     await waitFor(() => expect(screen.queryByText('Could not join this challenge. Please try again.')).toBeNull())
   })
 
-  it('says it could not leave when the delete fails, and stays joined', async () => {
+  it('C04 says it could not leave when the delete fails, and stays joined', async () => {
     respond(joinedDetail())
     mockDelete.mockRejectedValue(new Error('500'))
     mockConfirm.mockImplementation((_t, _m, _l, onConfirm: () => void) => onConfirm())
@@ -147,7 +146,7 @@ describe('who is looking at an open challenge', () => {
     expect(mockDelete).toHaveBeenCalledWith('/api/ideas/c1/participants/viewer1')
   })
 
-  it('does not leave until the confirmation is accepted', async () => {
+  it('C04 does not leave until the confirmation is accepted', async () => {
     respond(joinedDetail())
     render(<ChallengeDetailScreen id="c1" />)
     fireEvent.press(await screen.findByRole('button', { name: 'Leave' }))

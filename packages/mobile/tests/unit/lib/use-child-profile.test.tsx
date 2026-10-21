@@ -1,4 +1,3 @@
-// journeys: Z07
 import { renderHook, act, waitFor } from '@testing-library/react-native'
 import { useChildProfile } from '../../../lib/use-child-profile'
 
@@ -26,7 +25,7 @@ describe('useChildProfile', () => {
     expect(mockGet).toHaveBeenCalledWith('/api/child-profiles')
   })
 
-  it('save merges optimistically and debounces one PATCH', async () => {
+  it('Z07 save merges optimistically and debounces one PATCH', async () => {
     mockGet.mockResolvedValue([{ id: 'cp1', age: 1 }])
     mockPatch.mockResolvedValue({})
     const { result } = renderHook(() => useChildProfile())
@@ -54,7 +53,7 @@ describe('useChildProfile', () => {
   // Chain: the old PUT was an upsert, so a repeat save was harmless. POST is not
   //        idempotent — without the id from the first response, the second save
   //        would create a second child.
-  it('PATCHes the child the first save created rather than POSTing again', async () => {
+  it('Z07 PATCHes the child the first save created rather than POSTing again', async () => {
     mockGet.mockResolvedValue([])
     mockPost.mockResolvedValue({ id: 'new1', age: 7 })
     mockPatch.mockResolvedValue({})
@@ -232,7 +231,7 @@ describe('useChildProfile', () => {
       await waitFor(() => expect(result.current.profile?.age).toBe(9))
     })
 
-    it('PATCHes the pinned id and never creates, even when the load failed', async () => {
+    it('Z07 PATCHes the pinned id and never creates, even when the load failed', async () => {
       // The one behaviour that separates pinned from the no-arg form: a list
       // handed this id out, so the row exists — a failed PATCH must not fork
       // a second child the way the no-arg form's create chain would.

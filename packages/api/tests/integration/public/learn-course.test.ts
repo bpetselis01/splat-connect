@@ -5,7 +5,6 @@
  * row someone else changed since is refused (409), never laid over theirs.
  * Writes the real key, so it restores what was there.
  */
-// journeys: Q13 Q15
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -48,13 +47,13 @@ afterAll(async () => {
 })
 
 describe('GET /api/public/learn-course', () => {
-  it("serves the code's course when nothing is saved", async () => {
+  it("Q15 WE01 serves the code's course when nothing is saved", async () => {
     const c = await read()
     expect(c.units).toHaveLength(6)
     expect(c).toMatchObject({ title: null, outcome: null, shown_as: 'free' })
   })
 
-  it('serves a saved outline merged over the default', async () => {
+  it('Q15 WE02 serves a saved outline merged over the default', async () => {
     const res = await put(
       {
         title: 'Toy adaptation, start to finish',
@@ -87,7 +86,7 @@ describe('GET /api/public/learn-course', () => {
     expect((await read()).title).toBe('Toy adaptation, start to finish')
   })
 
-  it('serves no outline for a hidden course, while the admin read keeps it for the preview', async () => {
+  it('WE01 serves no outline for a hidden course, while the admin read keeps it for the preview', async () => {
     const v = await version()
     const res = await put({ title: 'Toy adaptation, start to finish', shown_as: 'hidden' }, v)
     expect(res.status).toBe(200)
@@ -121,7 +120,7 @@ describe('two admins editing the course', () => {
     expect(typeof row!.updated_at).toBe('string')
   })
 
-  it("refuses the second save over a version that changed, keeping the first admin's", async () => {
+  it("WM36 refuses the second save over a version that changed, keeping the first admin's", async () => {
     const loaded = await version()
     // Both opened the editor at `loaded`. The other admin saves first.
     const first = await put({ title: 'Saved by the other admin' }, loaded, other)

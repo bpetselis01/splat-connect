@@ -1,4 +1,3 @@
-// journeys: K03
 import { CLEARANCE, scrollPaddings } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { AskFirstScreen } from '../../../../components/builds/ask-first-screen'
@@ -36,7 +35,7 @@ beforeEach(() => {
 })
 
 describe('AskFirstScreen', () => {
-  it('shows the board’s stage card and lets the maker ask', async () => {
+  it('K03 shows the board’s stage card and lets the maker ask', async () => {
     render(<AskFirstScreen id="b1" />)
     expect(await screen.findByText('Not claimed yet')).toBeTruthy()
     expect(screen.getByText('Ask about the parts or the switch. Claiming is one tap when you are ready.')).toBeTruthy()
@@ -51,7 +50,7 @@ describe('AskFirstScreen', () => {
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/exchanges/build/b1'))
   })
 
-  it('lets the family pick which maker to answer, and offers them no claim', async () => {
+  it('K03 lets the family pick which maker to answer, and offers them no claim', async () => {
     mockCaps.mockReturnValue(as('fam'))
     mockGet.mockResolvedValue(
       questions({

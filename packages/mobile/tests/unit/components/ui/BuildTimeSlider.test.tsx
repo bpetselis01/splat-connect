@@ -1,4 +1,3 @@
-// journeys: T13
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { BUILD_TIME_OPTIONS } from '@splat-connect/types'
 import { indexForMinutes, minutesForIndex, BuildTimeSlider } from '../../../../components/ui/BuildTimeSlider'

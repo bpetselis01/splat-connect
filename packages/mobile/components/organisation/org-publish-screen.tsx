@@ -5,7 +5,8 @@
  * each takes effect on the public page at once, with no review.
  *
  * New ones are written on their own screens (organisation/events/new and
- * stories/new), linked from the top of the list.
+ * stories/new), linked from the top of the list; every row's Edit opens the
+ * same form at [id]/edit.
  */
 import { logFailure } from '../../lib/log'
 import { useCallback, useState } from 'react'
@@ -14,7 +15,7 @@ import { useFocusEffect, useRouter } from 'expo-router'
 import { apiMessage, EVENT_KIND_LABEL, isNetworkError, isPast, STORY_KIND_LABEL, type OrgEvent, type OrgStory } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { confirmDestructive } from '../../lib/confirm'
-import { useCapabilities } from '../../lib/capabilities'
+import { useActingOrg } from '../../lib/acting-org'
 import { theme } from '../../lib/theme'
 import { Screen } from '../ui/Screen'
 import { Card } from '../ui/Card'
@@ -31,8 +32,7 @@ const shortDate = (iso: string) => new Date(iso).toLocaleDateString('en-AU', { d
 
 export function OrgPublishScreen() {
   const router = useRouter()
-  const { caps } = useCapabilities()
-  const org = caps?.ledOrgs[0]
+  const { org } = useActingOrg()
   const [data, setData] = useState<{ events: OrgEvent[]; stories: OrgStory[] } | null>(null)
   const [tab, setTab] = useState<Kind>('events')
   const [busy, setBusy] = useState(false)
@@ -110,9 +110,9 @@ export function OrgPublishScreen() {
       ? data.events.map((e) => ({
           id: e.id,
           title: e.title,
-          meta: `${EVENT_KIND_LABEL[e.kind]} · ${e.format === 'online' ? 'Online' : e.suburb ?? 'In person'} · ${shortDate(e.starts_at)}`,
+          meta: `${EVENT_KIND_LABEL[e.kind]} · ${e.format === 'online' ? 'Online' : e.suburb ?? 'In person'} · ${e.starts_at ? shortDate(e.starts_at) : 'No date yet'}`,
           status: e.status,
-          shown: e.status === 'draft' ? 'Draft' : isPast(e.starts_at, e.ends_at) ? 'Past' : 'Published',
+          shown: e.status === 'draft' || !e.starts_at ? 'Draft' : isPast(e.starts_at, e.ends_at) ? 'Past' : 'Published',
         }))
       : data.stories.map((s) => ({
           id: s.id,
@@ -169,6 +169,20 @@ export function OrgPublishScreen() {
                 icon={r.shown === 'Draft' ? 'create-outline' : r.shown === 'Past' ? 'time-outline' : 'radio-outline'}
               />
               <View style={styles.actions}>
+                {tab === 'events' ? (
+                  <Button
+                    label="Registrations"
+                    variant="secondary"
+                    accessibilityLabel={`Registrations for ${r.title}`}
+                    onPress={() => router.push(`/organisation/events/${r.id}` as never)}
+                  />
+                ) : null}
+                <Button
+                  label="Edit"
+                  variant="secondary"
+                  accessibilityLabel={`Edit ${r.title}`}
+                  onPress={() => router.push(`/organisation/${tab}/${r.id}/edit` as never)}
+                />
                 <Button
                   label={r.status === 'published' ? 'Unpublish' : 'Publish'}
                   variant="secondary"
@@ -203,7 +217,7 @@ const styles = StyleSheet.create({
   row: { padding: 15, gap: 2, borderRadius: theme.radii.panel, ...theme.shadow(1) },
   title: { fontFamily: theme.fonts.black, fontSize: theme.type.body, lineHeight: 20, color: theme.colors.ink },
   meta: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, lineHeight: 18, color: theme.colors.muted, marginBottom: 5 },
-  actions: { flexDirection: 'row', justifyContent: 'space-between', gap: theme.spacing(2), marginTop: theme.spacing(2) },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: theme.spacing(2), marginTop: theme.spacing(2) },
   grow: { flex: 1, borderRadius: theme.radii.pill },
   foot: { fontFamily: theme.fonts.regular, fontSize: theme.type.caption, color: theme.colors.muted, lineHeight: 19, marginTop: theme.spacing(3) },
 })

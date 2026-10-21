@@ -4,7 +4,6 @@
  * public lists measure only for a signed-in caller, so an anonymous one cannot
  * narrow a radius until it has bisected somebody's postcode.
  */
-// journeys: Q13 R01 Y01
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createUserClient } from '../../../src/supabase/client.js'
@@ -68,7 +67,7 @@ afterAll(async () => {
 })
 
 describe('printers near a postcode', () => {
-  it('puts the nearest first, the unknown last, with km on each', async () => {
+  it('R01 puts the nearest first, the unknown last, with km on each', async () => {
     const rows = (await (await app.request('/api/printers?near=2000', authed(viewer))).json()) as Array<{ id: string; km: number | null }>
     const mine = rows.filter((r) => Object.values(printerIds).includes(r.id))
     expect(mine.map((r) => r.id).slice(0, 2)).toEqual([printerIds.near, printerIds.far])
@@ -90,7 +89,7 @@ describe('printers near a postcode', () => {
     const mine = (await (await app.request('/api/printers/mine', authed(near))).json()) as Array<Record<string, unknown>>
     expect(mine.find((r) => r.id === printerIds.near)!.postcode).toBe('2042')
   })
-  it('drops everything beyond the radius, and anything with no distance', async () => {
+  it('R01 drops everything beyond the radius, and anything with no distance', async () => {
     const rows = (await (await app.request('/api/printers?near=2000&within=10', authed(viewer))).json()) as Array<{ id: string }>
     const ids = rows.map((r) => r.id)
     expect(ids).toContain(printerIds.near)
@@ -132,7 +131,7 @@ describe('printers near a postcode', () => {
 })
 
 describe('the public lists', () => {
-  it('gives a toy its owner’s distance, never their postcode', async () => {
+  it('Y01 gives a toy its owner’s distance, never their postcode', async () => {
     const rows = (await (await app.request('/api/public/toys?near=2000&within=10', authed(viewer))).json()) as Array<Record<string, unknown>>
     const row = rows.find((r) => r.id === toyId)!
     expect(row.km).toBeLessThanOrEqual(6)

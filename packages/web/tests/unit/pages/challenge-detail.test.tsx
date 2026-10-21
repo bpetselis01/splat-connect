@@ -15,6 +15,8 @@ vi.mock('next/navigation', () => ({
     throw new Error('notFound')
   },
   useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
+  usePathname: () => '/get-involved/design-challenges/c1',
+  useSearchParams: () => new URLSearchParams(),
 }))
 vi.mock('next/link', () => ({
   default: ({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) => (
@@ -79,6 +81,15 @@ describe('ChallengeDetailPage', () => {
     expect(screen.getByText(/submitted anonymously/)).toBeInTheDocument()
     expect(screen.getByText('You have joined')).toBeInTheDocument()
     expect(apiClient.get).toHaveBeenCalledWith('/api/ideas/mine/c1')
+  })
+
+  it('WI22 sends a signed-out reader who presses Join to sign in, returning to the thread tab', async () => {
+    serve(brief())
+    await renderPage()
+    expect(screen.getByRole('link', { name: 'Join this challenge' })).toHaveAttribute(
+      'href',
+      '/login?next=%2Fget-involved%2Fdesign-challenges%2Fc1%3Ftab%3Dthread'
+    )
   })
 
   it('names who is writing a graduated challenge up', async () => {

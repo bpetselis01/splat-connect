@@ -1,4 +1,5 @@
 import type { createAdminClient } from './supabase/client.js'
+import { selectIn } from './chunk.js'
 
 type Client = ReturnType<typeof createAdminClient>
 
@@ -54,14 +55,11 @@ export async function atCapacityToyIds(
   hideOffered = false
 ): Promise<Set<string> | null> {
   if (toyIds?.length === 0) return new Set()
-  const accepted = admin
-    .from('toy_transactions')
-    .select('toy_id, offered_toy_id')
-    .eq('status', 'accepted')
-  const stock = admin.from('toys').select('id, quantity')
+  const accepted = () => admin.from('toy_transactions').select('toy_id, offered_toy_id').eq('status', 'accepted')
+  const stock = () => admin.from('toys').select('id, quantity')
   const [{ data: acceptedRows, error }, { data: toys, error: toysError }] = await Promise.all([
-    toyIds ? accepted.in('toy_id', toyIds) : accepted,
-    toyIds ? stock.in('id', toyIds) : stock.eq('status', 'published'),
+    toyIds ? selectIn(toyIds, (ids) => accepted().in('toy_id', ids)) : accepted(),
+    toyIds ? selectIn(toyIds, (ids) => stock().in('id', ids)) : stock().eq('status', 'published'),
   ])
   if (error || toysError) return null
 

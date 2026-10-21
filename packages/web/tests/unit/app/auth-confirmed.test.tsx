@@ -25,12 +25,19 @@ describe('email confirmed page', () => {
     expect(screen.getByText(/redirecting you to sign in/i)).toBeInTheDocument()
   })
 
-  it('offers an immediate manual sign-in link as a fallback', () => {
+  it('WA16 renders inside the auth stage, the same shell the sign-in page uses', () => {
+    const { container } = render(<EmailConfirmedPage />)
+    const card = container.querySelector('.auth-stage .auth-stage__column .auth-card')
+    expect(card).not.toBeNull()
+    expect(card!.querySelector('h1')).toHaveTextContent('Email confirmed')
+  })
+
+  it('WA16 offers an immediate manual sign-in link as a fallback', () => {
     render(<EmailConfirmedPage />)
     expect(screen.getByRole('link', { name: 'Continue' })).toHaveAttribute('href', '/login')
   })
 
-  it('redirects to /login once the countdown finishes', () => {
+  it('WA16 redirects to /login once the countdown finishes', () => {
     render(<EmailConfirmedPage />)
     expect(replace).not.toHaveBeenCalled()
 
@@ -57,7 +64,13 @@ describe('email confirmed page', () => {
    * and lands here — without carrying `next` on to /login they arrive nowhere
    * near the twelve search results they started from.
    */
-  it('hands ?next= on to /login, which already honours it', () => {
+  it('WA16 the Continue link carries ?next= too, so not waiting costs nothing', () => {
+    search = new URLSearchParams('next=%2Flibrary')
+    render(<EmailConfirmedPage />)
+    expect(screen.getByRole('link', { name: 'Continue' })).toHaveAttribute('href', '/login?next=%2Flibrary')
+  })
+
+  it('WA16 hands ?next= on to /login, which already honours it', () => {
     search = new URLSearchParams('next=%2Flibrary')
     render(<EmailConfirmedPage />)
     act(() => {

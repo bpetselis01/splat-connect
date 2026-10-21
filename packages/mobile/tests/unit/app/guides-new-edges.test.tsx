@@ -1,5 +1,4 @@
 // packages/mobile/tests/unit/app/guides-new.test.tsx
-// journeys: N02 N03
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import NewGuideRoute from '../../../app/(tabs)/guides/new'
 import { useAuth } from '../../../lib/auth-context'
@@ -192,7 +191,7 @@ describe('extras', () => {
     expect(await screen.findByText('Cover photo chosen')).toBeTruthy()
   })
 
-  it('uploads the cover under its fallback name and type when the picker gives none', async () => {
+  it('N03 uploads the cover under its fallback name and type when the picker gives none', async () => {
     mockLibrary.mockResolvedValueOnce({ canceled: false, assets: [{ uri: 'file://c.jpg' }] })
     render(<NewGuideRoute />)
     type('Cover')
@@ -237,7 +236,7 @@ describe('starting from a PDF', () => {
     expect(mockUpload).not.toHaveBeenCalled()
   })
 
-  it('accepts a PDF whose size the picker does not report', async () => {
+  it('N02 accepts a PDF whose size the picker does not report', async () => {
     mockPick.mockResolvedValue({ canceled: false, assets: [{ uri: asset.uri, name: asset.name }] })
     mockUpload.mockResolvedValue(draft)
     start()
@@ -246,7 +245,7 @@ describe('starting from a PDF', () => {
     expect(mockUpload.mock.calls[0][2].mimeType).toBe('application/pdf')
   })
 
-  it('leaves the title empty and Create off when the PDF has no recognisable title', async () => {
+  it('N02 leaves the title empty and Create off when the PDF has no recognisable title', async () => {
     mockPick.mockResolvedValue({ canceled: false, assets: [asset] })
     mockUpload.mockResolvedValue({ ...draft, title: null })
     start()
@@ -256,7 +255,7 @@ describe('starting from a PDF', () => {
     expect(screen.getByLabelText('Create draft').props.accessibilityState.disabled).toBe(true)
   })
 
-  it('shows what was found and lets the author correct the title before creating', async () => {
+  it('N02 shows what was found and lets the author correct the title before creating', async () => {
     mockPick.mockResolvedValue({ canceled: false, assets: [asset] })
     mockUpload.mockImplementation(async (p: string) => (p === '/api/tutorials/import-pdf' ? { ...draft, title: 'Read from PDF' } : { url: 'x/tutorial.pdf' }))
     start()

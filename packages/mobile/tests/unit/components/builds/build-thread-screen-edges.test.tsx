@@ -1,7 +1,6 @@
 // The build thread, from both sides and at every stage: who gets which button,
 // what each button sends, the working shot, the handover code, and what each
 // failure looks like.
-// journeys: K06 K07 K08 K09 K10 K11 K12 K13
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { BuildThreadScreen } from '../../../../components/builds/build-thread-screen'
 import { NAMES } from '../../../special-strings'
@@ -235,7 +234,7 @@ describe('an unclaimed request', () => {
     expect(screen.queryByLabelText('Message')).toBeNull()
   })
 
-  it('lets the family withdraw an unclaimed request, saying "the request"', async () => {
+  it('K12 lets the family withdraw an unclaimed request, saying "the request"', async () => {
     serve(build())
     render(<BuildThreadScreen id="b1" />)
     fireEvent.press(await screen.findByText('Withdraw the request'))
@@ -255,7 +254,7 @@ describe('an unclaimed request', () => {
     expect(mockNotify).not.toHaveBeenCalled()
   })
 
-  it('withdraws once on Proceed, then says the request was withdrawn', async () => {
+  it('K12 withdraws once on Proceed, then says the request was withdrawn', async () => {
     serve(build())
     mockPost.mockResolvedValue(build({ status: 'withdrawn' }))
     render(<BuildThreadScreen id="b1" />)
@@ -312,7 +311,7 @@ describe('a request addressed to a maker by name', () => {
     expect(screen.getByRole('button', { name: 'Take it on' })).toBeEnabled()
   })
 
-  it('accepts with the address, and closes the form', async () => {
+  it('K06 accepts with the address, and closes the form', async () => {
     serve(claimed())
     mockPost.mockResolvedValue(live())
     render(<BuildThreadScreen id="b1" />)
@@ -350,14 +349,30 @@ describe('a request addressed to a maker by name', () => {
     expect(mockPost).not.toHaveBeenCalled()
   })
 
-  it('declines in one tap', async () => {
+  it('K07 declines with a reason, trimmed, and not before one is typed', async () => {
     serve(claimed())
     render(<BuildThreadScreen id="b1" />)
     fireEvent.press(await screen.findByText('Decline'))
-    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions/b1/reject', {}))
+    expect(mockPost).not.toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: 'Send the decline' })).toBeDisabled()
+    fireEvent.changeText(screen.getByLabelText('Reason for declining'), '  No time this month ')
+    fireEvent.press(screen.getByRole('button', { name: 'Send the decline' }))
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions/b1/reject', { reason: 'No time this month' }))
   })
 
-  it('accepts for an organisation with no address, which the server fixes', async () => {
+  it('X15 K07 shows the family the maker’s reason on a declined build, and no reason line when there is none', async () => {
+    as('fam')
+    serve(claimed({ status: 'rejected', decline_reason: 'No time this month' }))
+    const { unmount } = render(<BuildThreadScreen id="b1" />)
+    expect(await screen.findByText('Reason: No time this month')).toBeTruthy()
+    unmount()
+    serve(claimed({ status: 'rejected', decline_reason: null }))
+    render(<BuildThreadScreen id="b1" />)
+    expect(await screen.findByText('This one did not go ahead')).toBeTruthy()
+    expect(screen.queryByText(/^Reason:/)).toBeNull()
+  })
+
+  it('K06 accepts for an organisation with no address, which the server fixes', async () => {
     as('leader', {}, [{ id: 'org' }])
     serve(build({ owner_org_id: 'org' }))
     render(<BuildThreadScreen id="b1" />)
@@ -389,7 +404,7 @@ describe('the working shot', () => {
     expect(mockUpload).not.toHaveBeenCalled()
   })
 
-  it('uploads the picked photo with no id field, and defaults an unnamed photo to working-shot.jpg', async () => {
+  it('K08 uploads the picked photo with no id field, and defaults an unnamed photo to working-shot.jpg', async () => {
     serve(live())
     mockLaunch.mockResolvedValue({ canceled: false, assets: [{ uri: 'file:///a' }] })
     mockUpload.mockResolvedValue(shot())
@@ -471,7 +486,7 @@ describe('the working shot', () => {
 })
 
 describe('approval and the handover code', () => {
-  it('approves the shot', async () => {
+  it('K09 approves the shot', async () => {
     serve(shot())
     mockPost.mockResolvedValue(approved())
     render(<BuildThreadScreen id="b1" />)
@@ -479,7 +494,7 @@ describe('approval and the handover code', () => {
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions/b1/approve-work', {}))
   })
 
-  it('starts the family’s request for a change in the message box, without overwriting something already typed', async () => {
+  it('K10 starts the family’s request for a change in the message box, without overwriting something already typed', async () => {
     serve(shot())
     render(<BuildThreadScreen id="b1" />)
     fireEvent.press(await screen.findByText('Ask for a change'))
@@ -515,7 +530,7 @@ describe('approval and the handover code', () => {
     expect(screen.queryByText('Your handover code')).toBeNull()
   })
 
-  it('sends the code without the space an autofill or paste leaves on the end', async () => {
+  it('K11 sends the code without the space an autofill or paste leaves on the end', async () => {
     serve(approved())
     render(<BuildThreadScreen id="b1" />)
     fireEvent.changeText(await screen.findByLabelText('Enter their code'), ' 111111 ')
@@ -633,7 +648,7 @@ describe('the thread and the cost panel', () => {
     expect(screen.queryByText('Withdraw the request')).toBeNull()
   })
 
-  it('offers the maker "Withdraw from this build"', async () => {
+  it('K12 offers the maker "Withdraw from this build"', async () => {
     as('maker')
     serve(live())
     render(<BuildThreadScreen id="b1" />)
@@ -651,7 +666,7 @@ describe('the thread and the cost panel', () => {
     expect(mockPost).not.toHaveBeenCalled()
   })
 
-  it('sends a message trimmed, shows it as the viewer’s own, and empties the box', async () => {
+  it('K13 sends a message trimmed, shows it as the viewer’s own, and empties the box', async () => {
     serve(live())
     mockPost.mockResolvedValue(msg('m1', 'Friday?', { sender_id: 'fam' }))
     render(<BuildThreadScreen id="b1" />)
@@ -662,7 +677,7 @@ describe('the thread and the cost panel', () => {
     expect(screen.getByLabelText('Message').props.value).toBe('')
   })
 
-  it.each(NAMES.filter((n) => n.value.trim() === n.value))('sends and shows a message with $label as typed', async ({ value }) => {
+  it.each(NAMES.filter((n) => n.value.trim() === n.value))('K13 sends and shows a message with $label as typed', async ({ value }) => {
     serve(live())
     mockPost.mockResolvedValue(msg('m1', value, { sender_id: 'fam' }))
     render(<BuildThreadScreen id="b1" />)

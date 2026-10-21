@@ -49,7 +49,6 @@ const MORE: Array<{ label: string; blurb: string; icon: typeof Buildings; href: 
     blurb: 'Where adapted toys have actually landed.',
     icon: MapTrifold,
     href: '/impact/map',
-    soon: true,
   },
   {
     label: 'All stories',
@@ -282,11 +281,6 @@ export default async function ImpactPage({
               <span className="min-w-0">
                 <span className="flex items-center gap-2 font-display text-[17px] font-extrabold">
                   {c.label}
-                  {c.soon && (
-                    <span className="rounded-pill border border-line bg-sunken px-2 py-0.5 font-sans text-[10px] font-extrabold tracking-[0.09em] text-muted">
-                      SOON
-                    </span>
-                  )}
                 </span>
                 <span className="block text-[13px] leading-[1.45] text-muted">{c.blurb}</span>
               </span>

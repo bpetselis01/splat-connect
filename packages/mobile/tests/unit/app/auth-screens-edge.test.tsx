@@ -1,7 +1,6 @@
 // Edge inputs and repeat taps on the sign-in flow's screens, against a mocked
 // auth context: the keyboard's return key, a second tap while a request is in
 // flight, a short or lettered code, resend throttling and network failures.
-// journeys: A04 A07 A08
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import CreateAccount from '../../../app/(auth)/create-account'
 import SignIn from '../../../app/(auth)/sign-in'
@@ -9,7 +8,7 @@ import CodeSignIn from '../../../app/(auth)/code-sign-in'
 import Verify from '../../../app/(auth)/verify'
 import ForgotPassword from '../../../app/(auth)/forgot-password'
 import ResetPassword from '../../../app/(auth)/reset-password'
-import { problem } from '../../../lib/auth-errors'
+import { problem } from '@splat-connect/types'
 
 const mockPush = jest.fn()
 const mockReplace = jest.fn()
@@ -90,7 +89,7 @@ describe('Create account, repeat and edge input', () => {
     expect(mockAuth.signUp).toHaveBeenCalledTimes(1)
   })
 
-  it('accepts a password of exactly six characters and refuses five', async () => {
+  it('A04 accepts a password of exactly six characters and refuses five', async () => {
     mockAuth.signUp.mockResolvedValue(ok)
     render(<CreateAccount />)
     fill('12345')
@@ -285,19 +284,19 @@ describe('Verify, the code and the resend', () => {
     expect(mockAuth.verifyCode).not.toHaveBeenCalled()
   })
 
-  it('letters between the digits are dropped, and the six digits are checked', async () => {
+  it('A07 letters between the digits are dropped, and the six digits are checked', async () => {
     render(<Verify />)
     type('1a2b3c4d5e6f')
     await waitFor(() => expect(mockAuth.verifyCode).toHaveBeenCalledWith('sam@example.com', '123456', 'signup'))
   })
 
-  it('a pasted code with spaces is checked as its six digits', async () => {
+  it('A07 a pasted code with spaces is checked as its six digits', async () => {
     render(<Verify />)
     type(' 123 456 ')
     await waitFor(() => expect(mockAuth.verifyCode).toHaveBeenCalledWith('sam@example.com', '123456', 'signup'))
   })
 
-  it('a pasted code longer than six keeps the first six, checked once', async () => {
+  it('A07 a pasted code longer than six keeps the first six, checked once', async () => {
     render(<Verify />)
     type('123456789')
     await waitFor(() => expect(mockAuth.verifyCode).toHaveBeenCalledTimes(1))
@@ -375,7 +374,7 @@ describe('Verify, the code and the resend', () => {
       expect(screen.getByText('Resend code in 0:09')).toBeTruthy()
     })
 
-    it('after a minute a sign-up code is resent as a sign-up code, and the minute starts over', async () => {
+    it('A08 after a minute a sign-up code is resent as a sign-up code, and the minute starts over', async () => {
       mockAuth.resendSignupCode.mockResolvedValue(ok)
       render(<Verify />)
       tick(60)
@@ -386,7 +385,7 @@ describe('Verify, the code and the resend', () => {
       expect(screen.queryByTestId('resend-code')).toBeNull()
     })
 
-    it('a sign-in code is resent as a sign-in code', async () => {
+    it('A08 a sign-in code is resent as a sign-in code', async () => {
       mockParams = { email: 'sam@example.com', type: 'email' }
       mockAuth.sendSignInCode.mockResolvedValue(ok)
       render(<Verify />)
@@ -507,7 +506,7 @@ describe('Reset password', () => {
     expect(mockAuth.resetPassword).not.toHaveBeenCalled()
   })
 
-  it('strips letters and spaces from a pasted code, then saves with its six digits', async () => {
+  it('A10 strips letters and spaces from a pasted code, then saves with its six digits', async () => {
     mockAuth.resetPassword.mockResolvedValue(ok)
     render(<ResetPassword />)
     fill('12 34-56', 'new secret!')

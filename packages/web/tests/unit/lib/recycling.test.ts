@@ -11,6 +11,16 @@ describe('intakeCredit', () => {
     expect(intakeCredit('2.6', null)).toEqual({ ok: true, weighed_grams: 2600, credit_grams: 1950, line: '1950 g credit' })
   })
 
+  it('rounds the weight to the nearest 0.1 kg and takes the credit from the rounded weight', () => {
+    expect(intakeCredit('2.14', null)).toEqual({ ok: true, weighed_grams: 2100, credit_grams: 1575, line: '1575 g credit' })
+    expect(intakeCredit('2.15', null)).toMatchObject({ ok: true, weighed_grams: 2200, credit_grams: 1650 })
+    expect(intakeCredit('1.96', null)).toMatchObject({ ok: true, weighed_grams: 2000 })
+    expect(intakeCredit('1.94', null)).toEqual({
+      ok: false,
+      line: 'Under the 2 kg minimum — log it as a donation or hand it back',
+    })
+  })
+
   it('keeps what the leader typed when the weight changes', () => {
     expect(intakeCredit('3', '2000')).toEqual({ ok: true, weighed_grams: 3000, credit_grams: 2000, line: '2000 g credit' })
     expect(intakeCredit('4', '2000')).toMatchObject({ ok: true, credit_grams: 2000 })

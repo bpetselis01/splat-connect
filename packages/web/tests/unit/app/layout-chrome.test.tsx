@@ -10,15 +10,13 @@ import { PublicFooter } from '@/components/public-footer'
 // under test.
 vi.mock('@/lib/api-client', () => ({ apiClient: { get: vi.fn() } }))
 
-// next/font/google's real export is transformed by Next's build-time SWC
-// loader; a raw Node/vitest import gets `{}`, so the module-level `Nunito(...)`
-// call in the layout throws "Nunito is not a function" before any test body
+// next/font/local's real export is transformed by Next's build-time SWC
+// loader; a raw Node/vitest import gets `{}`, so the module-level `localFont(...)`
+// call in the layout throws "default is not a function" before any test body
 // runs. Same category of test-environment plumbing as the mock above — no
 // change to the layout itself.
-vi.mock('next/font/google', () => ({
-  Nunito: () => ({ variable: '--font-nunito', className: '' }),
-  JetBrains_Mono: () => ({ variable: '--font-jetbrains', className: '' }),
-  Baloo_2: () => ({ variable: '--font-baloo', className: '' }),
+vi.mock('next/font/local', () => ({
+  default: ({ variable }: { variable: string }) => ({ variable, className: '' }),
 }))
 
 /**
@@ -33,9 +31,12 @@ vi.mock('next/font/google', () => ({
 import { isBare, isAccountRoute } from '@/app/layout'
 
 describe('layout chrome rules', () => {
-  it('treats the auth callbacks and onboarding gates as bare', () => {
-    expect(isBare('/auth/confirmed')).toBe(true)
+  it('WC10 treats the onboarding gates as bare', () => {
     expect(isBare('/onboarding/contributor-terms')).toBe(true)
+  })
+
+  it('WA16 gives the email-confirmed page the site header, so the sign-in page it lands on keeps it', () => {
+    expect(isBare('/auth/confirmed')).toBe(false)
   })
 
   // Chain: the board draws the site header on Sign in and Create account. Only

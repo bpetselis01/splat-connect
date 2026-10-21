@@ -60,7 +60,10 @@ export default defineConfig({
   // connection pool; it is covering an infrastructure limit, not a flaky app.
   retries: 1,
   reporter: 'line',
-  use: { baseURL: WEB_URL, trace: 'on-first-retry' },
+  // The site formats every date in Australia/Sydney (packages/types/src/dates.ts);
+  // a form's time input is read in the browser's zone. On a UTC runner "15:30"
+  // rendered as "2:30am".
+  use: { baseURL: WEB_URL, trace: 'on-first-retry', timezoneId: 'Australia/Sydney' },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] }, grepInvert: /@responsive/ },
     {

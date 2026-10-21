@@ -5,14 +5,17 @@
  * its tutorial_contributors row (JWT-context issues with the insert), so it
  * must set ownership itself.
  */
+import { selectAll } from '../chunk.js'
 import { singleRowStatus } from '../single-row.js'
 import { Hono } from 'hono'
 import { nameFormerContributors } from '../former-contributor.js'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { pickEditable } from './pick-editable.js'
 import { notifyTutorialSubmitted } from '../review-notifications.js'
-import { readSuits, realignCaptions, GUIDE_SUITS_FIELDS, fieldKey, customizationFieldsProblem } from '@splat-connect/types'
+import { notify } from '../notify.js'
+import { readSuits, realignCaptions, GUIDE_SUITS_FIELDS, fieldKey, customizationFieldsProblem, AGREEMENT_VERSIONS } from '@splat-connect/types'
 import { removeDroppedPhotos } from '../photo-storage.js'
+import { sendApprovedGuideBackToReview } from '../re-review.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
 const tutorials = new Hono<{ Variables: AuthVariables }>()
@@ -67,16 +70,21 @@ tutorials.get('/mine', async (c) => {
   // Did it fit? goes back to the guide's author (094). The prints are other
   // people's transactions, so RLS hides them from the caller; the rows above
   // are already narrowed to guides they wrote, and only counts leave.
-  const { data: answers, error: fitError } = await createAdminClient()
-    .from('toy_transactions')
-    .select('tutorial_id, print_fit')
-    .eq('type', 'print')
-    .in('tutorial_id', data.map((t) => t.id))
-    .not('print_fit', 'is', null)
+  const admin = createAdminClient()
+  const { data: answers, error: fitError } = await selectAll((from, to) =>
+    admin
+      .from('toy_transactions')
+      .select('tutorial_id, print_fit')
+      .eq('type', 'print')
+      .in('tutorial_id', data.map((t) => t.id))
+      .not('print_fit', 'is', null)
+      .order('id')
+      .range(from, to)
+  )
   if (fitError) return c.json({ error: fitError.message }, 500)
   return c.json(
     data.map((t) => {
-      const mine = (answers ?? []).filter((a) => a.tutorial_id === t.id)
+      const mine = answers.filter((a) => a.tutorial_id === t.id)
       return { ...t, print_fit_stats: { fitted: mine.filter((a) => a.print_fit === 'fitted').length, fit_answers: mine.length } }
     })
   )
@@ -195,12 +203,14 @@ tutorials.post('/', async (c) => {
 const EDITABLE = ['title', 'description', 'difficulty', 'kind', 'build_minutes', 'age_min', 'age_max', 'tutorial_pdf_url', 'photo_urls', 'photo_captions', 'prices_checked_on', 'layer_height_mm', 'infill_percent', 'material', 'print_minutes', 'toy_name', 'toy_brand', 'works_with', 'no_build_note', 'done_note', 'status', 'customization_fields', ...GUIDE_SUITS_FIELDS] as const
 const PROTECTED = ['reviewed_by', 'reviewed_for_org_id', 'reviewed_at', 'rejection_note']
 
+// PENDING(terms-gate-fails-open): the web gate now fails closed; this check moves to src/terms.ts and guards every gated write with 403 terms_required (PR 6, U9).
 async function hasAcceptedContributorTerms(token: string, userId: string) {
   const { data } = await createUserClient(token)
     .from('user_agreements')
     .select('id')
     .eq('user_id', userId)
     .eq('agreement_type', 'contributor_terms')
+    .eq('version', AGREEMENT_VERSIONS.contributor_terms)
     .limit(1)
   return (data ?? []).length > 0
 }
@@ -334,18 +344,31 @@ tutorials.patch('/:id', async (c) => {
     update.photo_captions = caps
   }
 
-  const submitting = body.status === 'pending'
   // Clearing the PDF needs the same read: whether the guide is live, and what it has left.
   const clearsPdf = 'tutorial_pdf_url' in update && !(update.tutorial_pdf_url as string | null)?.trim()
-  const current = submitting || clearsPdf
-    ? (
-        await supabase
-          .from('tutorials')
-          .select('status, safety_declared_at, build_minutes, tutorial_pdf_url')
-          .eq('id', c.req.param('id'))
-          .maybeSingle()
-      ).data
-    : null
+  // Always read: an approved guide is writable by its author only into pending
+  // (RLS), so what a save without a status may do depends on the current one.
+  const { data: current } = await supabase
+    .from('tutorials')
+    .select('status, safety_declared_at, build_minutes, tutorial_pdf_url')
+    .eq('id', c.req.param('id'))
+    .maybeSingle()
+  if (current?.status === 'approved' && body.status === 'draft') {
+    return c.json({ error: 'Guide is approved; submit for re-review' }, 409)
+  }
+  // The re-review rule: a save with no status that changes more than the prices
+  // date is a content edit, so it is a submission into pending. An admin's edit
+  // is a fix (src/re-review.ts).
+  const pricesOnly = Object.keys(update).every((k) => k === 'prices_checked_on')
+  const resubmitting = current?.status === 'approved' && !('status' in body) && !pricesOnly && c.get('role') !== 'admin'
+  if (resubmitting) {
+    if (!(await hasAcceptedContributorTerms(c.get('token'), c.get('userId')))) {
+      return c.json({ error: 'You must accept the contributor terms before submitting' }, 403)
+    }
+    update.status = 'pending'
+  }
+  const submitting = body.status === 'pending' || resubmitting
+  const checksLiveContent = submitting || clearsPdf
   // Any status but pending is a real hand-over: a draft, and a rejected or
   // approved guide the author edited and sent back (T22). Only pending ->
   // pending is the editor resending its whole form.
@@ -368,7 +391,7 @@ tutorials.patch('/:id', async (c) => {
   // Never leave a live guide empty: submitting, or clearing the PDF of a guide
   // that is already pending/approved, must leave it with steps or a PDF. This
   // PATCH is the only route to pending, so the submit check cannot be bypassed.
-  if (current && isLive(submitting ? 'pending' : (body.status ?? current.status))) {
+  if (checksLiveContent && current && isLive(submitting ? 'pending' : (body.status ?? current.status))) {
     const pdf = 'tutorial_pdf_url' in update ? (update.tutorial_pdf_url as string | null) : current.tutorial_pdf_url
     if (!pdf?.trim()) {
       const { count } = await supabase.from('tutorial_steps').select('id', { count: 'exact', head: true }).eq('tutorial_id', c.req.param('id'))
@@ -376,7 +399,17 @@ tutorials.patch('/:id', async (c) => {
     }
   }
 
-  const { data, error } = await supabase
+  // RLS refuses any write that leaves a row approved, so a prices-only save on
+  // an approved guide goes through the service role once the caller is shown to
+  // be one of its contributors. A resubmission writes pending as the user.
+  let writer = supabase
+  if (current?.status === 'approved' && !('status' in body) && !resubmitting) {
+    const { data: own } = await supabase.rpc('is_tutorial_contributor', { p_tutorial_id: c.req.param('id') })
+    // Not a contributor (an admin, or a leader the 007 policy lets edit): RLS
+    // decides, and zero rows answers 409 below.
+    if (own) writer = createAdminClient()
+  }
+  const { data, error } = await writer
     .from('tutorials')
     .update(update)
     .eq('id', c.req.param('id'))
@@ -455,16 +488,16 @@ tutorials.post('/:id/thanks', async (c) => {
   // No actor name, on purpose: who thanked which guide is the private half of
   // this feature (066's RLS), and a notification is the easiest place to leak
   // it. Logged, never thrown — the thank has already been counted.
-  const { error: notifyError } = await admin.from('notifications').insert(
+  await notify(
     ctx.credited.map((recipient_id) => ({
       recipient_id,
       type: 'tutorial_thanked',
       tutorial_id: id,
       tutorial_title: ctx.title,
       actor_name: 'A family',
-    }))
+    })),
+    'tutorials.thanks'
   )
-  if (notifyError) console.error('[thanks] notify failed:', notifyError.message)
 
   const { data } = await admin.from('tutorials').select('thanks_count').eq('id', id).single()
   return c.json({ thanks_count: (data as { thanks_count: number } | null)?.thanks_count ?? 0 }, 201)
@@ -482,16 +515,6 @@ tutorials.post('/:id/build', async (c) => {
   if (error && ['42501', '22P02', '23503'].includes(error.code)) return c.json({ error: 'Not found' }, 404)
   if (error) return c.json({ error: error.message }, 500)
   return c.json({ built: true }, 201)
-})
-
-tutorials.delete('/:id/build', async (c) => {
-  const { error } = await createUserClient(c.get('token'))
-    .from('tutorial_builds')
-    .delete()
-    .eq('tutorial_id', c.req.param('id'))
-    .eq('profile_id', c.get('userId'))
-  if (error) return c.json({ error: error.message }, 500)
-  return c.body(null, 204)
 })
 
 /**
@@ -576,6 +599,8 @@ tutorials.put('/:id/steps', async (c) => {
     (before ?? []).map((s) => s.photo_url).filter((u): u is string => !!u),
     rows.map((r) => r.photo_url).filter((u): u is string => !!u)
   )
+  const moveError = await sendApprovedGuideBackToReview(c.var, id)
+  if (moveError) return c.json({ error: moveError }, 500)
   return c.json((saved as { position: number }[]).sort((a, b) => a.position - b.position))
 })
 

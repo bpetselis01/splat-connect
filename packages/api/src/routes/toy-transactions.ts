@@ -1,7 +1,8 @@
-import { chunk } from '../chunk.js'
+import { chunk, selectIn } from '../chunk.js'
+import { notify } from '../notify.js'
 import { Hono, type Context } from 'hono'
 import { randomInt, randomUUID } from 'node:crypto'
-import { needsAction, isOwnerSide, answerBy, printRequestExpired, shortDate, customizationNotes, partsTotalCents, notificationBody } from '@splat-connect/types'
+import { DECLINE_REASON_MAX, needsAction, isOwnerSide, answerBy, printRequestExpired, shortDate, customizationNotes, partsTotalCents, notificationBody } from '@splat-connect/types'
 import type { CustomizationField, PrintJobFile, PrintSettings, BuildQuestion, BuildQuestions } from '@splat-connect/types'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
@@ -33,6 +34,22 @@ function sanitizeCodes<T extends Record<string, any>>(
     requester_code: isOwner ? null : row.requester_code,
   }
 }
+
+/**
+ * An admin who is neither the requester nor on the owner side. They can read
+ * and speak in the thread, but the lifecycle belongs to the parties; an admin
+ * who is a party acts as one.
+ */
+function isStrangerAdmin(
+  role: string,
+  tx: { requester_id: string; owner_id: string | null; owner_org_id: string | null },
+  userId: string,
+  ledOrgs: readonly string[]
+): boolean {
+  return role === 'admin' && tx.requester_id !== userId && !isOwnerSide(tx, userId, ledOrgs)
+}
+
+const ADMIN_CANNOT_ACT = { error: 'Admins can read this thread but cannot act on it.' } as const
 
 const PICKUP_FIELDS = ['pickup_line1', 'pickup_suburb', 'pickup_state', 'pickup_postcode'] as const
 
@@ -85,9 +102,7 @@ async function notifyOwnerSide(
       ? [tx.owner_id]
       : []
   if (recipients.length === 0) return
-  await admin
-    .from('notifications')
-    .insert(recipients.map((recipient_id) => ({ ...payload, recipient_id })))
+  await notify(recipients.map((recipient_id) => ({ ...payload, recipient_id })), String(payload.type))
 }
 
 /**
@@ -150,10 +165,12 @@ async function boardGuides(
   admin: ReturnType<typeof createAdminClient>,
   tutorialIds: string[]
 ): Promise<{ guides: Map<string, BoardGuide> } | { error: { message: string } }> {
-  const { data, error } = await admin
-    .from('tutorials')
-    .select('id, title, difficulty, status, build_minutes, parts(is_optional, price_cents)')
-    .in('id', tutorialIds)
+  const { data, error } = await selectIn([...new Set(tutorialIds)], (ids) =>
+    admin
+      .from('tutorials')
+      .select('id, title, difficulty, status, build_minutes, parts(is_optional, price_cents)')
+      .in('id', ids)
+  )
   if (error) return { error }
   type Row = Omit<BoardGuide, 'parts_total_cents'> & { parts: { is_optional: boolean; price_cents: number | null }[] | null }
   return {
@@ -366,6 +383,10 @@ function flattenPrintFiles(rows: PrintJobFileRow[] | null | undefined): PrintJob
 }
 
 toyTransactions.get('/', async (c) => {
+  const role = c.req.query('role')
+  if (role !== undefined && role !== 'owner' && role !== 'requester') {
+    return c.json({ error: "role must be 'owner' or 'requester'" }, 400)
+  }
   const supabase = createUserClient(c.get('token'))
   const { data, error } = await supabase
     .from('toy_transactions')
@@ -399,7 +420,11 @@ toyTransactions.get('/', async (c) => {
     // build request so they can claim it (064), and returning those here put a
     // stranger's request — name and id included, which GET /open-builds
     // deliberately withholds — on every maker's exchange list and inbox.
-    (r) => r.requester_id === userId || r.owner_id === userId || (!!r.owner_org_id && ledOrgs.includes(r.owner_org_id))
+    (r) => {
+      const giving = r.owner_id === userId || (!!r.owner_org_id && ledOrgs.includes(r.owner_org_id))
+      const asking = r.requester_id === userId
+      return role === 'owner' ? giving : role === 'requester' ? asking : giving || asking
+    }
   )
   // Advisory, and fail-open by design: a failed scan must not blank the list.
   const blockedToyIds =
@@ -420,8 +445,11 @@ toyTransactions.get('/', async (c) => {
   const groupIds = [...new Set(rows.map((r) => r.print_group_id as string | null).filter((g): g is string => !!g))]
   const groupSize = new Map<string, number>()
   if (groupIds.length) {
-    const { data: members } = await admin.from('toy_transactions').select('print_group_id').in('print_group_id', groupIds)
-    for (const m of members ?? []) groupSize.set(m.print_group_id, (groupSize.get(m.print_group_id) ?? 0) + 1)
+    const { data: members, error: membersError } = await selectIn(groupIds, (ids) =>
+      admin.from('toy_transactions').select('print_group_id').in('print_group_id', ids)
+    )
+    if (membersError) return c.json({ error: "We couldn't load your exchanges. Try again." }, 500)
+    for (const m of members) groupSize.set(m.print_group_id, (groupSize.get(m.print_group_id) ?? 0) + 1)
   }
   return c.json(
     rows.map((r) => ({
@@ -743,13 +771,32 @@ toyTransactions.post('/:id/messages', async (c) => {
     return c.json({ error: 'Message body is required' }, 400)
   }
 
-  const supabase = createUserClient(c.get('token'))
-  const { data, error } = await supabase
+  const id = c.req.param('id')
+  const userId = c.get('userId')
+  const admin = createAdminClient()
+  const { data: tx, error: txError } = await admin
+    .from('toy_transactions')
+    .select('owner_id, owner_org_id, requester_id, toy_id')
+    .eq('id', id)
+    .maybeSingle()
+  if (txError) {
+    return txError.code === INVALID_TEXT_REPRESENTATION
+      ? c.json({ error: 'Not found' }, 404)
+      : c.json({ error: txError.message }, 500)
+  }
+  if (!tx) return c.json({ error: 'Not found' }, 404)
+
+  const ledOrgs = await ledOrgIds(admin, userId)
+  const ownerSide = isOwnerSide(tx, userId, ledOrgs)
+  // An admin who is a party speaks as a member; one who is not speaks as SPLAT,
+  // through the admin client because the member policy admits only 'user'.
+  const asAdmin = isStrangerAdmin(c.get('role'), tx, userId, ledOrgs)
+  const { data, error } = await (asAdmin ? admin : createUserClient(c.get('token')))
     .from('toy_transaction_messages')
     .insert({
-      transaction_id: c.req.param('id'),
-      sender_id: c.get('userId'),
-      kind: 'user',
+      transaction_id: id,
+      sender_id: userId,
+      kind: asAdmin ? 'admin' : 'user',
       body: body.body,
     })
     .select()
@@ -761,32 +808,22 @@ toyTransactions.post('/:id/messages', async (c) => {
     return c.json({ error: error.message }, 500)
   }
 
-  const admin = createAdminClient()
-  const { data: tx } = await admin
-    .from('toy_transactions')
-    .select('owner_id, owner_org_id, requester_id, toy_id')
-    .eq('id', c.req.param('id'))
-    .single()
-  if (tx) {
-    const userId = c.get('userId')
-    const ledOrgs = await ledOrgIds(admin, userId)
-    const payload = {
-      type: 'toy_message',
-      toy_transaction_id: c.req.param('id'),
-      toy_name: await subjectName(admin, tx as any),
-      actor_name: await profileName(admin, userId, 'A contributor'),
-      // 119: the message itself. Every recipient below is a party to this
-      // transaction (the requester, or the owner side via notifyOwnerSide).
-      body: notificationBody(body.body),
-    }
-    // A leader posting notifies the family; the family posting notifies every
-    // leader, so whoever picks the thread up next has it in their inbox.
-    if (isOwnerSide(tx, userId, ledOrgs)) {
-      await admin.from('notifications').insert({ ...payload, recipient_id: tx.requester_id })
-    } else {
-      await notifyOwnerSide(admin, tx, payload)
-    }
+  const payload = {
+    type: 'toy_message',
+    toy_transaction_id: id,
+    toy_name: await subjectName(admin, tx as any),
+    actor_name: asAdmin ? 'SPLAT admin' : await profileName(admin, userId, 'A contributor'),
+    // 119: the message itself. Every recipient below is a party to this
+    // transaction (the requester, or the owner side via notifyOwnerSide).
+    body: notificationBody(body.body),
   }
+  // A leader posting notifies the family; the family posting notifies every
+  // leader, so whoever picks the thread up next has it in their inbox. An admin
+  // belongs to neither side, so both are told.
+  if (asAdmin || ownerSide) {
+    await notify([{ ...payload, recipient_id: tx.requester_id }], 'toy-transactions.:id/messages')
+  }
+  if (asAdmin || !ownerSide) await notifyOwnerSide(admin, tx, payload)
 
   return c.json(data, 201)
 })
@@ -798,6 +835,7 @@ toyTransactions.post('/:id/accept', async (c) => {
   const userId = c.get('userId')
   const admin = createAdminClient()
   const ledOrgs = await ledOrgIds(admin, userId)
+  if (isStrangerAdmin(c.get('role'), tx as any, userId, ledOrgs)) return c.json(ADMIN_CANNOT_ACT, 403)
   if (!isOwnerSide(tx as any, userId, ledOrgs)) {
     return c.json({ error: 'Only the owner may accept' }, 403)
   }
@@ -894,13 +932,13 @@ toyTransactions.post('/:id/accept', async (c) => {
     body: 'Request accepted. Pickup and handoff details are ready.',
   })
 
-  await admin.from('notifications').insert({
+  await notify([{
     recipient_id: tx.requester_id,
     type: 'toy_accepted',
     toy_transaction_id: tx.id,
     toy_name: await subjectName(admin, tx as any),
     actor_name: await ownerSideName(admin, tx as any, 'The owner'),
-  })
+  }], 'toy-transactions.:id/accept')
 
   // 114: the RPC spent the credit, or found the balance short and accepted
   // without it. Short is said in the thread, where both sides will see it.
@@ -923,10 +961,9 @@ toyTransactions.post('/:id/accept', async (c) => {
 })
 
 /*
- * Declining. A print job's refusal carries a reason, because the artboard
- * requires one and because a reason that lives only in the thread cannot be
- * rendered on the list row that needs it. It is optional on the other kinds,
- * where nothing asks for it.
+ * Declining. Every kind carries a reason: the other party has nothing to act on
+ * without one, and a reason that lives only in the thread cannot be rendered on
+ * the list row that needs it.
  */
 toyTransactions.post('/:id/reject', async (c) => {
   const loaded = await loadForParty(c)
@@ -935,6 +972,7 @@ toyTransactions.post('/:id/reject', async (c) => {
   const userId = c.get('userId')
   const admin = createAdminClient()
   const ledOrgs = await ledOrgIds(admin, userId)
+  if (isStrangerAdmin(c.get('role'), tx as any, userId, ledOrgs)) return c.json(ADMIN_CANNOT_ACT, 403)
   if (!isOwnerSide(tx as any, userId, ledOrgs)) {
     return c.json({ error: 'Only the owner may reject' }, 403)
   }
@@ -942,31 +980,29 @@ toyTransactions.post('/:id/reject', async (c) => {
 
   const body = (await c.req.json().catch(() => ({}))) as { reason?: unknown }
   const reason = typeof body.reason === 'string' ? body.reason.trim() : ''
-  if (reason.length > 500) return c.json({ error: 'The reason is longer than 500 characters.' }, 400)
-  // Required on a print job only. "Declining needs a reason" is the artboard's
-  // rule for the offer screen, and a printer who says no without one leaves a
-  // family with nothing to act on.
-  if (tx.type === 'print' && reason.length === 0) {
-    return c.json({ error: 'Say why you cannot take this job.' }, 400)
-  }
+  if (reason.length === 0) return c.json({ error: 'Say why you are declining.' }, 400)
+  if (reason.length > DECLINE_REASON_MAX) return c.json({ error: `Keep the reason under ${DECLINE_REASON_MAX} characters.` }, 400)
 
   const now = new Date().toISOString()
   const { data: updated, error } = await admin
     .from('toy_transactions')
-    .update({ status: 'rejected', decline_reason: reason || null, updated_at: now })
+    .update({ status: 'rejected', decline_reason: reason, updated_at: now })
     .eq('id', tx.id)
+    // The race guard: of two declines at once, only the first finds it open.
+    .eq('status', 'requested')
     .select()
-    .single()
+    .maybeSingle()
   if (error) return c.json({ error: error.message }, 500)
+  if (!updated) return c.json({ error: 'This request is no longer open' }, 409)
 
   await admin.from('toy_transaction_messages').insert({
     transaction_id: tx.id,
     sender_id: userId,
     kind: 'system',
-    body: reason ? `Request declined — ${reason}` : 'Request declined.',
+    body: `Request declined — ${reason}`,
   })
 
-  await admin.from('notifications').insert({
+  await notify([{
     recipient_id: tx.requester_id,
     type: 'toy_rejected',
     toy_transaction_id: tx.id,
@@ -974,7 +1010,7 @@ toyTransactions.post('/:id/reject', async (c) => {
     actor_name: await ownerSideName(admin, tx as any, 'The owner'),
     // 119: the decline reason, to the requester's row only.
     body: notificationBody(reason),
-  })
+  }], 'toy-transactions.:id/reject')
 
   return c.json(sanitizeCodes(updated, userId, ledOrgs))
 })
@@ -986,6 +1022,7 @@ toyTransactions.post('/:id/withdraw', async (c) => {
   const userId = c.get('userId')
   const admin = createAdminClient()
   const ledOrgs = await ledOrgIds(admin, userId)
+  if (isStrangerAdmin(c.get('role'), tx as any, userId, ledOrgs)) return c.json(ADMIN_CANNOT_ACT, 403)
   const fromOwnerSide = isOwnerSide(tx as any, userId, ledOrgs)
   if (!fromOwnerSide && userId !== tx.requester_id) return c.json({ error: 'Not found' }, 404)
   if (tx.status !== 'requested' && tx.status !== 'accepted') {
@@ -1044,7 +1081,7 @@ toyTransactions.post('/:id/withdraw', async (c) => {
       : await profileName(admin, userId, 'The other party'),
   }
   if (fromOwnerSide) {
-    await admin.from('notifications').insert({ ...payload, recipient_id: tx.requester_id })
+    await notify([{ ...payload, recipient_id: tx.requester_id }], 'toy-transactions.:id/withdraw')
   } else {
     await notifyOwnerSide(admin, tx as any, payload)
   }
@@ -1063,6 +1100,7 @@ toyTransactions.post('/:id/confirm', async (c) => {
   const userId = c.get('userId')
   const admin = createAdminClient()
   const ledOrgs = await ledOrgIds(admin, userId)
+  if (isStrangerAdmin(c.get('role'), tx as any, userId, ledOrgs)) return c.json(ADMIN_CANNOT_ACT, 403)
   const isOwner = isOwnerSide(tx as any, userId, ledOrgs)
   if (!isOwner && userId !== tx.requester_id) return c.json({ error: 'Not found' }, 404)
   if (tx.status !== 'accepted') return c.json({ error: 'This request is not ready to confirm' }, 409)
@@ -1090,18 +1128,42 @@ toyTransactions.post('/:id/confirm', async (c) => {
   const confirmField = isOwner ? 'owner_confirmed_at' : 'requester_confirmed_at'
   const now = new Date().toISOString()
 
-  const { data: updated, error } = await admin
+  // Only the write that moves the field from null counts as the first confirm,
+  // so two simultaneous confirms by one party notify once.
+  const { data: firstWrite, error } = await admin
     .from('toy_transactions')
     .update({ [confirmField]: now, updated_at: now })
     .eq('id', tx.id)
+    .is(confirmField, null)
     .select()
-    .single()
+    .maybeSingle()
   if (error) return c.json({ error: error.message }, 500)
+  const firstConfirm = firstWrite !== null
+  const { data: updated, error: readError } = firstWrite
+    ? { data: firstWrite, error: null }
+    : await admin.from('toy_transactions').select().eq('id', tx.id).single()
+  if (readError || !updated) return c.json({ error: readError?.message ?? 'Not found' }, 500)
 
   const bothConfirmed =
     tx.type === 'donation'
       ? updated.owner_confirmed_at !== null
       : updated.owner_confirmed_at !== null && updated.requester_confirmed_at !== null
+
+  // 142. The first confirm by a party tells the other one, unless it is the
+  // second of two, which completes the handover. A donation completes on the
+  // owner's confirm alone, so there the requester is told on completion too.
+  if (firstConfirm && (tx.type === 'donation' || !bothConfirmed)) {
+    const payload = {
+      type: 'handover_confirmed',
+      toy_transaction_id: tx.id,
+      toy_name: await subjectName(admin, tx as any),
+      actor_name: isOwner
+        ? await ownerSideName(admin, tx as any, 'The other party')
+        : await profileName(admin, userId, 'The other party'),
+    }
+    if (isOwner) await notify([{ ...payload, recipient_id: tx.requester_id }], 'handover_confirmed')
+    else await notifyOwnerSide(admin, tx as any, payload)
+  }
 
   /*
    * A build hands over an object that exists nowhere in `toys` — the maker made
@@ -1289,13 +1351,13 @@ toyTransactions.post('/:id/confirm', async (c) => {
           ? 'This toy is now out of stock, so this request was automatically declined.'
           : 'This toy was handed over to another request, so this one was automatically declined.',
       })
-      await admin.from('notifications').insert({
+      await notify([{
         recipient_id: rival.requester_id,
         type: 'toy_rejected',
         toy_transaction_id: rival.id,
         toy_name: toy?.name ?? 'a toy',
         actor_name: actorName,
-      })
+      }], 'toy-transactions.:id/confirm')
     }
   }
 
@@ -1540,6 +1602,7 @@ toyTransactions.post('/:id/claim', async (c) => {
     return c.json({ error: error.message }, 500)
   }
   if (!tx || tx.type !== 'build') return c.json({ error: 'Not found' }, 404)
+  if (isStrangerAdmin(c.get('role'), tx, userId, await ledOrgIds(admin, userId))) return c.json(ADMIN_CANNOT_ACT, 403)
   if (tx.owner_id || tx.owner_org_id || tx.status !== 'requested') {
     return c.json({ error: 'Somebody has already claimed this one.' }, 409)
   }
@@ -1592,13 +1655,13 @@ toyTransactions.post('/:id/claim', async (c) => {
     body: `${makerName} claimed this build.`,
   })
 
-  await admin.from('notifications').insert({
+  await notify([{
     recipient_id: tx.requester_id,
     type: 'toy_accepted',
     toy_transaction_id: tx.id,
     toy_name: tutorial?.title ?? 'your build request',
     actor_name: makerName,
-  })
+  }], 'toy-transactions.:id/claim')
 
   return c.json(sanitizeCodes(claimed, userId, []))
 })
@@ -1672,6 +1735,7 @@ toyTransactions.post('/:id/questions', async (c) => {
   if ('error' in loaded) return c.json({ error: loaded.error!.message }, 500)
   if ('missing' in loaded) return c.json({ error: 'Not found' }, 404)
   const { tx, open } = loaded
+  if (isStrangerAdmin(c.get('role'), tx, userId, await ledOrgIds(admin, userId))) return c.json(ADMIN_CANNOT_ACT, 403)
   if (!open) return c.json({ error: 'Somebody has already claimed this one.' }, 409)
 
   const family = tx.requester_id === userId
@@ -1697,14 +1761,14 @@ toyTransactions.post('/:id/questions', async (c) => {
   if (error?.code === RLS_VIOLATION) return c.json({ error: 'You cannot ask about this request.' }, 403)
   if (error) return c.json({ error: error.message }, 500)
 
-  await admin.from('notifications').insert({
+  await notify([{
     recipient_id: family ? makerId : tx.requester_id,
     type: 'build_question',
     toy_transaction_id: tx.id,
     toy_name: await subjectName(admin, tx as { type: string; toy_id: string | null; tutorial_id: string | null }),
     // The family is "Family in Newtown" to a maker until a claim, as on the card.
     actor_name: family ? `Family in ${tx.requester_suburb ?? 'your area'}` : await profileName(admin, userId, 'A maker'),
-  })
+  }], 'toy-transactions.:id/questions')
   return c.json(data, 201)
 })
 
@@ -1767,13 +1831,13 @@ toyTransactions.post('/:id/working-shot', async (c) => {
     kind: 'system',
     body: 'Posted a photo of the build working.',
   })
-  await admin.from('notifications').insert({
+  await notify([{
     recipient_id: tx.requester_id,
     type: 'build_shot_posted',
     toy_transaction_id: tx.id,
     toy_name: await subjectName(admin, tx as any),
     actor_name: await ownerSideName(admin, tx as any, 'The maker'),
-  })
+  }], 'toy-transactions.:id/working-shot')
 
   return c.json(sanitizeCodes(updated, userId, ledOrgs))
 })
@@ -2081,7 +2145,6 @@ toyTransactions.post('/print', async (c) => {
  * `owner_org_id` is the event's organisation, so isOwnerSide() already answers
  * "may this leader accept it" correctly with no new branch.
  */
-// PENDING(unused-api-routes): no screen calls print-at-event; wire one or delete.
 toyTransactions.post('/print-at-event', async (c) => {
   const body = await c.req.json().catch(() => null)
   if (body === null || typeof body !== 'object' || Array.isArray(body)) {
@@ -2253,13 +2316,13 @@ toyTransactions.post('/:id/print-started', async (c) => {
     kind: 'system',
     body: 'The job is on the bed.',
   })
-  await admin.from('notifications').insert({
+  await notify([{
     recipient_id: tx.requester_id,
     type: 'print_started',
     toy_transaction_id: tx.id,
     toy_name: await subjectName(admin, tx as any),
     actor_name: await ownerSideName(admin, tx as any, 'The printer'),
-  })
+  }], 'toy-transactions.:id/print-started')
 
   return c.json(sanitizeCodes(updated, userId, ledOrgs))
 })
@@ -2312,13 +2375,13 @@ toyTransactions.post('/:id/print-ready', async (c) => {
     kind: 'system',
     body: 'The parts are printed and ready to collect.',
   })
-  await admin.from('notifications').insert({
+  await notify([{
     recipient_id: tx.requester_id,
     type: 'print_ready',
     toy_transaction_id: tx.id,
     toy_name: await subjectName(admin, tx as any),
     actor_name: await ownerSideName(admin, tx as any, 'The printer'),
-  })
+  }], 'toy-transactions.:id/print-ready')
 
   return c.json(sanitizeCodes(updated, userId, ledOrgs))
 })

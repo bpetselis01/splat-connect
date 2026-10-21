@@ -1,4 +1,3 @@
-// journeys: Z07 Z09
 import { test, expect } from '@playwright/test'
 import { signUpNewAccount, uniqueSignupEmail, openChildProfile, selectPill } from './helpers'
 
@@ -6,7 +5,7 @@ import { signUpNewAccount, uniqueSignupEmail, openChildProfile, selectPill } fro
 // the four child questions (128) and the Good to know notes, autosaved. Replaces the
 // ability / everyday-needs / customisation specs, whose screens are gone.
 
-test('the four questions and the notes persist across a reload', async ({ page }) => {
+test('Z07 the four questions and the notes persist across a reload', async ({ page }) => {
   await signUpNewAccount(page, uniqueSignupEmail())
   await openChildProfile(page)
 
@@ -23,7 +22,7 @@ test('the four questions and the notes persist across a reload', async ({ page }
   }
 })
 
-test('pressing a chosen answer again clears it', async ({ page }) => {
+test('Z07 pressing a chosen answer again clears it', async ({ page }) => {
   await signUpNewAccount(page, uniqueSignupEmail())
   await openChildProfile(page)
 
@@ -36,7 +35,7 @@ test('pressing a chosen answer again clears it', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Eyes', exact: true })).toHaveAttribute('aria-selected', 'false')
 })
 
-test('the wizard skips to the guides without creating a profile', async ({ page }) => {
+test('Z09 the wizard skips to the guides without creating a profile', async ({ page }) => {
   await signUpNewAccount(page, uniqueSignupEmail())
   await page.goto('/child')
   for (let i = 0; i < 6; i++) await page.getByRole('button', { name: 'Skip', exact: true }).click()

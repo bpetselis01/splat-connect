@@ -31,7 +31,7 @@ describe('linkFor precedence and edges', () => {
     expect(linkFor(n({ org_conversation_id: 'c1', org_event_id: 'e1' }))).toBe('/messages/c1')
   })
   it('an org event and a story open their own news route', () => {
-    expect(linkFor(n({ org_event_id: 'e1' }))).toBe('/news/event/e1')
+    expect(linkFor(n({ org_event_id: 'e1' }))).toBe('/events/e1')
     expect(linkFor(n({ org_story_id: 's1' }))).toBe('/news/story/s1')
   })
   it('a challenge idea that graduated opens the brief; a rejected one goes to my list', () => {

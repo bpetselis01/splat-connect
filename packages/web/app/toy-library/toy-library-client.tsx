@@ -33,6 +33,7 @@ import { BrowseHero } from '@/components/browse-hero'
 import { SplatMascot } from '@/components/splat-mascot'
 import { SortControl, type SortDir, type SortOption } from '@/components/sort-control'
 import type { ToyWithOwner } from '@splat-connect/types'
+import { authUrl } from '@/lib/safe-next-path'
 
 type Icon = typeof Gift
 type FacetKey = 'offer' | 'holder'
@@ -130,7 +131,7 @@ export function ToyLibraryClient({
   // takes, for the same reason: signing up first, with the reason on screen,
   // beats /onboarding/child's bare redirect to /login.
   const wizardHref = (
-    signedIn ? '/onboarding/child' : '/signup?next=%2Fonboarding%2Fchild&reason=child'
+    signedIn ? '/onboarding/child' : authUrl('signup', '/onboarding/child', { reason: 'child' })
   ) as Route
 
   return (
@@ -146,7 +147,7 @@ export function ToyLibraryClient({
         }}
         secondary={{
           label: 'Pick for my child',
-          href: '/learn/choosing-a-toy',
+          href: wizardHref,
           icon: <Smiley size={20} weight="bold" className="text-brand-dark" aria-hidden="true" />,
         }}
         stats={[

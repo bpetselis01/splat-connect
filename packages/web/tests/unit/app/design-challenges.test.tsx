@@ -1,17 +1,12 @@
 import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { PUBLIC_NAV, SCAFFOLD_KEYS } from '@/lib/public-nav'
+import { PUBLIC_NAV } from '@/lib/public-nav'
 
 describe('design challenges nav state', () => {
   it('is live, so the section no longer advertises a placeholder', () => {
     const getInvolved = PUBLIC_NAV.find((s) => s.href === '/get-involved')!
     const challenges = getInvolved.children.find((c) => c.href === '/get-involved/design-challenges')!
     expect(challenges.state).toBe('live')
-    expect(challenges.featureKey).toBeUndefined()
-  })
-
-  it('drops design-challenges from the notify allowlist', () => {
-    expect(SCAFFOLD_KEYS).not.toContain('design-challenges')
   })
 })
 
@@ -62,7 +57,7 @@ describe('design challenges listing page', () => {
   beforeAll(() => import('@/app/get-involved/design-challenges/page'), 30_000)
   beforeEach(() => vi.clearAllMocks())
 
-  it('renders a card per challenge, with a maker chip on open ones and a write-up badge on graduated ones', async () => {
+  it('WI13 renders a card per challenge, with a maker chip on open ones and a write-up badge on graduated ones', async () => {
     fetchMock.mockResolvedValue(jsonResponse([idea('a', 'challenge'), idea('b', 'graduated')]))
     const { default: Page } = await import('@/app/get-involved/design-challenges/page')
     render(await Page())
@@ -85,6 +80,18 @@ describe('design challenges listing page', () => {
     )
   })
 
+  it('WI14 offers a signed-out visitor sign-in that returns to the challenges', async () => {
+    fetchMock.mockResolvedValue(jsonResponse([idea('a', 'challenge')]))
+    const { default: Page } = await import('@/app/get-involved/design-challenges/page')
+    render(await Page())
+
+    expect(screen.getByRole('link', { name: 'Sign in to join a challenge' })).toHaveAttribute(
+      'href',
+      '/login?next=%2Fget-involved%2Fdesign-challenges'
+    )
+    expect(screen.getByRole('link', { name: 'Submit an idea instead' })).toHaveAttribute('href', '/get-involved/submit-an-idea')
+  })
+
   it('renders an honest error state instead of throwing when the API 500s', async () => {
     fetchMock.mockResolvedValue({ ok: false, json: () => Promise.resolve({ error: 'boom' }) })
     const { default: Page } = await import('@/app/get-involved/design-challenges/page')
@@ -95,7 +102,7 @@ describe('design challenges listing page', () => {
   })
 
   // 078: the board's question card and its filter chips.
-  it('draws a question with its answered pill and answer count, and filters to questions', async () => {
+  it('WI13 draws a question with its answered pill and answer count, and filters to questions', async () => {
     fetchMock.mockResolvedValue(
       jsonResponse([
         { ...idea('a', 'challenge'), kind: 'challenge', maker_count: 2, answer_count: 0 },

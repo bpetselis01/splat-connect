@@ -786,7 +786,15 @@
   "group": "push",
   "boardRoute": "(my)/organisation",
   "route": "/organisation",
-  "role": "leader"
+  "role": "leader",
+  "explained": [
+   {
+    "type": "copy",
+    "match": "board paragraphs absent",
+    "why": "fixture",
+    "reason": "The parity leader now leads two organisations (switcher fixture), so the queue lede says your organisations; the board names its one org."
+   }
+  ]
  },
  {
   "id": "org_review",

@@ -76,7 +76,7 @@ export function AskFirstScreen({ id }: { id: string }) {
     : data.threads[0]
   // Whoever is not the viewer: the maker to the family, "Family in …" to a maker.
   const otherName = data.family ? thread?.maker_name ?? 'A maker' : `Family in ${data.requester_suburb ?? 'your area'}`
-  const canWrite = data.open && (!data.family || thread !== undefined)
+  const canWrite = data.open && !caps?.isAdmin && (!data.family || thread !== undefined)
 
   async function send() {
     const body = draft.trim()
@@ -152,7 +152,7 @@ export function AskFirstScreen({ id }: { id: string }) {
           </View>
         ) : null}
 
-        {data.open && !data.family ? (
+        {data.open && !data.family && !caps?.isAdmin ? (
           <Button label="I'll build this" loading={busy} onPress={() => void claim()} />
         ) : null}
       </ScrollView>

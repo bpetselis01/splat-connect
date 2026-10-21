@@ -1,6 +1,6 @@
 'use client'
 /**
- * Publish a story.
+ * Publish a story, or edit one already saved.
  *
  * The one control here that is not an ordinary field is the consent checkbox,
  * and it is the reason this screen exists at all. Publish stays disabled until
@@ -8,12 +8,16 @@
  * constraint, which refuses a published row without it by any route, including
  * one that never loads this page.
  *
+ * On an edit the box starts unticked whatever was saved: the edit may name
+ * somebody new, and the tick is a promise about everyone named now.
+ *
  * The live word count is not a vanity counter: it is the read time a reader
  * will be shown, computed by the same function (readMinutes), so what a leader
  * sees while writing is what appears on the card.
  *
  * Related files:
- * - packages/api/src/routes/organizations.ts: POST /:id/stories
+ * - packages/api/src/routes/organizations.ts: POST /:id/stories, PATCH
+ *   /:orgId/stories/:id
  * - supabase/migrations/062_stories.sql: the constraint, and the four kinds
  */
 import { useState } from 'react'
@@ -36,18 +40,29 @@ const KIND_ICON: Record<StoryKind, Icon> = {
   announcement: Megaphone,
 }
 
-export function StoryForm({ orgId, orgName }: { orgId: string; orgName: string }) {
+export function StoryForm({
+  orgId,
+  orgName,
+  story,
+}: {
+  orgId: string
+  orgName: string
+  /** Absent when publishing a new one. */
+  story?: OrgStory
+}) {
   const router = useRouter()
-  const [kind, setKind] = useState<StoryKind>('family')
-  const [title, setTitle] = useState('')
-  const [summary, setSummary] = useState('')
-  const [body, setBody] = useState('')
-  const [byline, setByline] = useState(orgName)
-  const [pullQuote, setPullQuote] = useState('')
-  const [pullQuoteBy, setPullQuoteBy] = useState('')
+  const [kind, setKind] = useState<StoryKind>(story?.kind ?? 'family')
+  const [title, setTitle] = useState(story?.title ?? '')
+  const [summary, setSummary] = useState(story?.summary ?? '')
+  const [body, setBody] = useState(story?.body ?? '')
+  const [byline, setByline] = useState(story?.byline ?? orgName)
+  const [pullQuote, setPullQuote] = useState(story?.pull_quote ?? '')
+  const [pullQuoteBy, setPullQuoteBy] = useState(story?.pull_quote_by ?? '')
   const [consent, setConsent] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState<'draft' | 'published' | null>(null)
+  // Same rule as the event form: a published story saves in place.
+  const live = story?.status === 'published'
 
   const words = body.trim() ? body.trim().split(/\s+/).filter(Boolean).length : 0
 
@@ -55,7 +70,7 @@ export function StoryForm({ orgId, orgName }: { orgId: string; orgName: string }
     setError(null)
     setSaving(status)
     try {
-      const story = await browserApiClient.post<OrgStory>(`/api/organizations/${orgId}/stories`, {
+      const fields = {
         kind,
         title: title.trim(),
         summary: summary.trim(),
@@ -65,12 +80,18 @@ export function StoryForm({ orgId, orgName }: { orgId: string; orgName: string }
         pull_quote_by: pullQuoteBy.trim() || null,
         consent_confirmed: consent,
         status,
-      })
+      }
+      const saved = story
+        ? await browserApiClient.patch<OrgStory>(
+            `/api/organizations/${orgId}/stories/${story.id}`,
+            fields,
+          )
+        : await browserApiClient.post<OrgStory>(`/api/organizations/${orgId}/stories`, fields)
       // Published goes to the public page so a leader reads what a family
       // reads; a draft goes back to the list, because there is nothing public
       // to look at yet. Same rule as the event form.
       router.push(
-        status === 'published' ? `/about/stories/${story.id}` : '/dashboard/organisation/publish',
+        status === 'published' ? `/about/stories/${saved.id}` : '/dashboard/organisation/publish',
       )
       router.refresh()
     } catch (e) {
@@ -246,23 +267,29 @@ export function StoryForm({ orgId, orgName }: { orgId: string; orgName: string }
           className="btn btn-primary px-[26px]"
         >
           <Newspaper weight="bold" aria-hidden="true" />
-          {saving === 'published' ? 'Publishing…' : 'Publish to Stories'}
+          {live
+            ? saving ? 'Saving…' : 'Save changes'
+            : saving === 'published' ? 'Publishing…' : 'Publish to Stories'}
         </button>
-        <button
-          type="button"
-          onClick={() => save('draft')}
-          disabled={saving !== null}
-          className="btn btn-quiet min-h-[52px]"
-        >
-          {saving === 'draft' ? 'Saving…' : 'Save as draft'}
-        </button>
+        {!live && (
+          <button
+            type="button"
+            onClick={() => save('draft')}
+            disabled={saving !== null}
+            className="btn btn-quiet min-h-[52px]"
+          >
+            {saving === 'draft' ? 'Saving…' : 'Save as draft'}
+          </button>
+        )}
         <span className="text-[13px] text-muted">
           Published as <strong className="text-ink">{orgName}</strong>
         </span>
       </div>
       {!consent && ready && (
         <p className="-mt-3 text-sm text-muted">
-          Publishing is held until consent is confirmed. Save it as a draft meanwhile.
+          {live
+            ? 'Saving is held until consent is confirmed for everyone named now.'
+            : 'Publishing is held until consent is confirmed. Save it as a draft meanwhile.'}
         </p>
       )}
     </form>

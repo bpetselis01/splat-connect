@@ -8,8 +8,10 @@ import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { deleteAccount } from '../account-deletion.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { notifyTutorialReviewed } from '../review-notifications.js'
-import { ORG_COLUMNS } from './organizations.js'
-import { systemMessage, withPhotoUrl } from './toy-ideas.js'
+import { notify } from '../notify.js'
+import { selectIn } from '../chunk.js'
+import { ORG_COLUMNS, orgName } from './organizations.js'
+import { removeParticipant, withPhotoUrl } from './toy-ideas.js'
 import type { AuthVariables } from '../middleware/auth.js'
 import { notificationBody, readLearnCourse, type AdminCounts, type TutorialStatus } from '@splat-connect/types'
 
@@ -40,6 +42,9 @@ admin.get('/tutorials', async (c) => {
 
 admin.patch('/tutorials/:id/status', async (c) => {
   const body = await c.req.json<{ status: TutorialStatus; rejection_note?: string }>()
+  if (body.status !== 'approved' && body.status !== 'rejected') {
+    return c.json({ error: "status must be 'approved' or 'rejected'" }, 400)
+  }
   const supabase = createAdminClient()
   const { data, error } = await supabase
     .from('tutorials')
@@ -200,6 +205,14 @@ admin.patch('/organizations/:id', async (c) => {
   return c.json(data[0])
 })
 
+/** Tell one person an admin made them, or stopped them being, a leader (142). */
+async function notifyLeader(type: 'leader_added' | 'leader_removed', orgId: string, userId: string) {
+  await notify(
+    [{ recipient_id: userId, type, org_id: orgId, actor_name: (await orgName(orgId)) ?? 'an organisation' }],
+    type
+  )
+}
+
 admin.post('/organizations/:orgId/leaders', async (c) => {
   const body = await c.req.json<{ user_id?: string }>()
   if (!body.user_id) return c.json({ error: 'user_id is required' }, 400)
@@ -220,6 +233,7 @@ admin.post('/organizations/:orgId/leaders', async (c) => {
     if (error.code === '23505') return c.json({ ok: true }, 200)
     return c.json({ error: error.message }, 500)
   }
+  await notifyLeader('leader_added', c.req.param('orgId'), body.user_id)
   return c.json(data, 201)
 })
 
@@ -233,6 +247,7 @@ admin.delete('/organizations/:orgId/leaders/:userId', async (c) => {
     .select('id')
   if (error) return c.json({ error: error.message }, 500)
   if (!data.length) return c.json({ error: 'not a leader of that organisation' }, 404)
+  await notifyLeader('leader_removed', c.req.param('orgId'), c.req.param('userId'))
   return c.body(null, 204)
 })
 
@@ -299,15 +314,14 @@ admin.patch('/ideas/:id/status', async (c) => {
   if (error) return c.json({ error: error.message }, 500)
   if (!data) return c.json({ error: 'No pending or published idea with that id' }, 404)
 
-  const { error: notifyError } = await client.from('notifications').insert({
+  await notify([{
     recipient_id: data.author_id,
     type: status === 'challenge' ? 'idea_approved' : 'idea_rejected',
     idea_id: data.id,
     actor_name: 'SPLAT',
     // 119: review_note is private to the author — their row alone carries it.
     body: status === 'challenge' ? null : notificationBody(reviewNote),
-  })
-  if (notifyError) console.error('[admin.ideas.status] notification insert failed:', notifyError.message)
+  }], 'admin.ideas.status')
 
   return c.json({ id: data.id, status })
 })
@@ -315,40 +329,12 @@ admin.patch('/ideas/:id/status', async (c) => {
 /**
  * POST /api/admin/ideas/:id/graduate
  *
- * Turns a challenge into a draft tutorial: one atomic status claim, one
- * tutorial insert, one tutorial_id link, one contributor copy, one
- * notification insert, one system message. No transaction spans these —
- * Supabase's JS client cannot open one across calls — so a failure partway
- * leaves a partial result behind. Every write below that can fail is checked
- * and reported as a 500 rather than swallowed, so a partial result is at
- * least a visible one.
- *
- * The status claim runs first and is a compare-and-swap
- * (`.eq('status', 'challenge')` on the update itself), not a read-then-act
- * check. Two concurrent POSTs — an admin double-clicking Graduate is a
- * mundane trigger — would otherwise both read 'challenge', both insert a
- * tutorial, and both attach a full contributor set: an orphan that IS
- * reachable through the normal pending → approved review path, which is
- * exactly the silent-duplicate outcome this endpoint exists to prevent.
- * With the claim as the first write, Postgres's own row-level locking makes
- * it exclusive: exactly one caller moves the row out of 'challenge', the
- * loser's update matches zero rows and gets 409 with no side effects at all.
- *
- * Everything after the claim is still sequential, unprotected writes — a
- * failure there is now an *incomplete* graduation, never a *duplicate* one.
- * The worst reachable state is idea 'graduated' with tutorial_id null (claim
- * succeeded, tutorial insert or the link-back failed) or graduated with a
- * tutorial that has no contributors (contributor insert failed). Both are
- * inert — tutorial_contributors gates who can even see or submit the draft,
- * so nothing here reaches the public library unattended — detectable by
- * query, and repairable by inserting the missing rows. A retry always 409s
- * rather than duplicating anything, because the claim already moved the row.
- *
- * ponytail: the claim is atomic (Postgres enforces it); the three writes
- * after it are not, since the Supabase JS client cannot open a transaction
- * across calls. That residual risk is bounded to "incomplete," not
- * "duplicated." If graduation ever needs full atomicity, move the whole
- * sequence into a plpgsql function and call it via .rpc().
+ * Turns a challenge into a draft guide. The whole graduation is one database
+ * transaction (graduate_idea, 143): the status claim, the draft, the link back,
+ * the contributor copy, the notifications and the thread message all land or
+ * none do. The claim is a compare-and-swap inside it, so of two concurrent
+ * calls exactly one graduates the idea and the other gets 409 with nothing
+ * written. The author is credited once, as primary, even if they also joined.
  */
 admin.post('/ideas/:id/graduate', async (c) => {
   const client = createAdminClient()
@@ -362,72 +348,11 @@ admin.post('/ideas/:id/graduate', async (c) => {
   // same of the rows; this is the readable refusal in front of it).
   if (exists.kind === 'question') return c.json({ error: 'A question cannot graduate' }, 409)
 
-  // Claim the graduation atomically. A read-then-act guard lets two concurrent
-  // calls both pass, both mint a tutorial, and both attach contributors — an
-  // orphan that IS reachable through pending->approved review. This conditional
-  // update is the compare-and-swap: exactly one caller can move the row out of
-  // 'challenge', and the loser claims no row.
-  const { data: claimed, error: claimError } = await client
-    .from('toy_ideas')
-    .update({ status: 'graduated', updated_at: new Date().toISOString() })
-    .eq('id', id)
-    .eq('status', 'challenge')
-    .select('id, author_id, title, summary')
-    .maybeSingle()
-  if (claimError) return c.json({ error: claimError.message }, 500)
-  // A challenge graduates once. A second call is a mistake, not an update —
-  // and here it also lost the compare-and-swap, so it changed nothing.
-  if (!claimed) return c.json({ error: 'Already graduated' }, 409)
-
-  const { data: tutorial, error: tutorialError } = await client
-    .from('tutorials')
-    // difficulty is NOT NULL on tutorials with a check constraint; an idea carries
-    // no difficulty, so a draft starts at 'medium' and its contributor corrects it
-    // before submitting. Do not relax the column to serve this one caller.
-    .insert({ title: claimed.title, description: claimed.summary, status: 'draft', difficulty: 'medium' })
-    .select('id')
-    .single()
-  if (tutorialError) return c.json({ error: tutorialError.message }, 500)
-
-  const { error: linkError } = await client
-    .from('toy_ideas').update({ tutorial_id: tutorial.id }).eq('id', id)
-  if (linkError) return c.json({ error: linkError.message }, 500)
-
-  // removed_at is null: someone excluded after a report must not be credited
-  // on the resulting guide, and tutorial_contributors is also the access
-  // gate for the draft — crediting them would hand back exactly the access
-  // their removal took away.
-  const { data: participants, error: participantsError } = await client
-    .from('toy_idea_participants').select('profile_id').eq('idea_id', id).is('removed_at', null)
-  if (participantsError) return c.json({ error: participantsError.message }, 500)
-
-  // The shape tutorial_contributors already stores, so this copy is free.
-  const { error: contributorsError } = await client.from('tutorial_contributors').insert([
-    { tutorial_id: tutorial.id, profile_id: claimed.author_id, role: 'primary' },
-    ...(participants ?? []).map((p: { profile_id: string }) => ({
-      tutorial_id: tutorial.id, profile_id: p.profile_id, role: 'collaborator',
-    })),
-  ])
-  if (contributorsError) return c.json({ error: contributorsError.message }, 500)
-
-  // Tell the author and every current participant a draft now exists —
-  // graduation was otherwise silent to everyone it happened to. Checked like
-  // every other write above, not swallowed: a failed notification insert is
-  // reported as a 500 rather than logged and ignored.
-  const { error: notifyError } = await client.from('notifications').insert([
-    { recipient_id: claimed.author_id, type: 'idea_graduated', idea_id: id, actor_name: 'SPLAT' },
-    ...(participants ?? []).map((p: { profile_id: string }) => ({
-      recipient_id: p.profile_id, type: 'idea_graduated', idea_id: id, actor_name: 'SPLAT',
-    })),
-  ])
-  if (notifyError) return c.json({ error: notifyError.message }, 500)
-
-  // Fire-and-forget, same as every other system message in this feature: the
-  // graduation has already succeeded by this point, so a failed thread post
-  // logs rather than fails the request.
-  await systemMessage(id, claimed.author_id, 'This challenge became a draft guide.')
-
-  return c.json({ tutorial_id: tutorial.id }, 201)
+  const { data: tutorialId, error } = await client.rpc('graduate_idea', { p_idea_id: id })
+  if (error) return c.json({ error: error.message }, 500)
+  // A challenge graduates once. A second call is a mistake, not an update.
+  if (!tutorialId) return c.json({ error: 'Already graduated' }, 409)
+  return c.json({ tutorial_id: tutorialId }, 201)
 })
 
 /** How many approved guides one spot-check draws (decision 14). */
@@ -480,6 +405,7 @@ admin.get('/spot-check', async (c) => {
     .eq('status', 'approved')
     .not('reviewed_by', 'is', null)
     .neq('reviewed_by', c.get('userId'))
+    .order('reviewed_at', { ascending: false, nullsFirst: false })
     .limit(limit)
   if (error) return c.json({ error: error.message }, 500)
   // PostgREST has no random ordering, and the sample is small enough that
@@ -500,9 +426,9 @@ admin.get('/spot-check', async (c) => {
  * this table's RLS ever lets read it (041's comment), so this is the only
  * response in the codebase where that column may appear.
  */
-// PENDING(unused-api-routes): nothing calls GET/PATCH /admin/reports or the participant reinstate route; wire a screen or delete.
 admin.get('/reports', async (c) => {
-  const { data, error } = await createAdminClient()
+  const sb = createAdminClient()
+  const { data, error } = await sb
     .from('toy_idea_reports')
     .select(
       'id, idea_id, reported_profile_id, reported_by, reason, created_at, resolved_at, resolved_by, resolution_note, ' +
@@ -513,37 +439,65 @@ admin.get('/reports', async (c) => {
     .order('resolved_at', { ascending: true, nullsFirst: true })
     .order('created_at', { ascending: true })
   if (error) return c.json({ error: error.message }, 500)
-  return c.json(data ?? [])
+  const rows = (data ?? []) as unknown as { idea_id: string; reported_profile_id: string }[]
+  // `removed` lets the screen offer Reinstate only to someone actually out of the challenge.
+  const { data: out, error: outError } = await selectIn([...new Set(rows.map((r) => r.idea_id))], (ids) =>
+    sb.from('toy_idea_participants').select('idea_id, profile_id').in('idea_id', ids).not('removed_at', 'is', null)
+  )
+  if (outError) return c.json({ error: "We couldn't load who was removed. Try again." }, 500)
+  const gone = new Set((out ?? []).map((p) => `${p.idea_id}:${p.profile_id}`))
+  return c.json(rows.map((r) => ({ ...r, removed: gone.has(`${r.idea_id}:${r.reported_profile_id}`) })))
 })
 
 /**
  * PATCH /api/admin/reports/:id
  *
- * Resolves a report with a note. `.is('resolved_at', null)` on the update
- * itself is the same compare-and-swap as graduate's status claim above: a
+ * Resolves a report with a note and an action. 'dismiss' just resolves it, which
+ * un-hides the reported person for the reporter; 'remove' also removes them from
+ * the challenge (system message and notification included).
+ * `.is('resolved_at', null)` on the update itself is the same compare-and-swap as graduate's status claim above: a
  * double-click resolves once, and the loser's update matches no row rather
  * than overwriting the first admin's resolved_by/resolution_note.
  */
 admin.patch('/reports/:id', async (c) => {
-  const body = await c.req.json<{ resolution_note?: string }>().catch(() => null)
+  const body = await c.req.json<{ resolution_note?: string; action?: string }>().catch(() => null)
   if (body?.resolution_note !== undefined && typeof body.resolution_note !== 'string') {
     return c.json({ error: 'resolution_note must be a string' }, 400)
   }
-  const resolutionNote = body?.resolution_note?.trim() || null
+  if (body?.action !== 'remove' && body?.action !== 'dismiss') {
+    return c.json({ error: "action must be 'remove' or 'dismiss'" }, 400)
+  }
+  const resolutionNote = body.resolution_note?.trim() || null
+  const sb = createAdminClient()
+  const id = c.req.param('id')
 
-  const { data, error } = await createAdminClient()
+  // An author cannot be removed from their own idea. Refused before the claim,
+  // so the report stays open for 'dismiss' or for a review of the idea itself.
+  if (body.action === 'remove') {
+    const { data: report } = await sb.from('toy_idea_reports').select('idea_id, reported_profile_id').eq('id', id).maybeSingle()
+    if (report) {
+      const { data: idea } = await sb.from('toy_ideas').select('author_id').eq('id', report.idea_id).maybeSingle()
+      if (idea?.author_id === report.reported_profile_id) {
+        return c.json({ error: "The reported person wrote this challenge and can't be removed. Dismiss the report instead." }, 409)
+      }
+    }
+  }
+
+  const { data, error } = await sb
     .from('toy_idea_reports')
     .update({
       resolved_at: new Date().toISOString(),
       resolved_by: c.get('userId'),
       resolution_note: resolutionNote,
     })
-    .eq('id', c.req.param('id'))
+    .eq('id', id)
     .is('resolved_at', null)
-    .select('id, idea_id, resolved_at, resolved_by, resolution_note')
+    .select('id, idea_id, reported_profile_id, resolved_at, resolved_by, resolution_note')
     .maybeSingle()
   if (error) return c.json({ error: error.message }, 500)
   if (!data) return c.json({ error: 'No unresolved report with that id' }, 404)
+
+  if (body.action === 'remove') await removeParticipant(data.idea_id, data.reported_profile_id, c.get('userId'))
   return c.json(data)
 })
 
@@ -613,9 +567,10 @@ admin.get('/organization-requests', async (c) => {
    */
   const rows = (data ?? []) as Array<Record<string, unknown> & { requester_id: string }>
   const ids = [...new Set(rows.map((r) => r.requester_id))]
-  const { data: people } = ids.length
-    ? await createAdminClient().from('profiles').select('id, name, email').in('id', ids)
-    : { data: [] }
+  const { data: people, error: peopleError } = await selectIn(ids, (part) =>
+    createAdminClient().from('profiles').select('id, name, email').in('id', part)
+  )
+  if (peopleError) return c.json({ error: "We couldn't load who is asking. Try again." }, 500)
   const byId = new Map(
     ((people ?? []) as Array<{ id: string; name: string; email: string }>).map((p) => [p.id, p])
   )
@@ -633,6 +588,14 @@ admin.post('/organization-requests/:id/approve', async (c) => {
   const body = (await c.req.json().catch(() => ({}))) as { note?: unknown }
   const note = typeof body.note === 'string' && body.note.trim() ? body.note.trim() : null
 
+  // The RPC does not return the requester, so read it first (142). A missing
+  // row (or a non-admin) falls through to the RPC's own outcome.
+  const { data: request } = await createAdminClient()
+    .from('organization_requests')
+    .select('requester_id, org_name')
+    .eq('id', c.req.param('id'))
+    .maybeSingle()
+
   const { data, error } = await supabase.rpc('approve_organization_request', {
     p_request_id: c.req.param('id'),
     p_note: note,
@@ -642,6 +605,22 @@ admin.post('/organization-requests/:id/approve', async (c) => {
   const result = data as { outcome: string; organization_id?: string; status?: string }
   if (result.outcome === 'forbidden') return c.json({ error: 'Admins only' }, 403)
   if (result.outcome === 'missing') return c.json({ error: 'Not found' }, 404)
+  // Only the call that approved it tells the requester; an 'already_reviewed'
+  // repeat sends nothing.
+  if (result.outcome === 'approved' && request) {
+    await notify(
+      [
+        {
+          recipient_id: request.requester_id,
+          type: 'org_request_approved',
+          org_id: result.organization_id,
+          actor_name: request.org_name,
+          body: notificationBody(note),
+        },
+      ],
+      'org_request_approved'
+    )
+  }
   // Idempotent rather than an error: a double-click must not mint two
   // organisations, and the first outcome is more useful than a 409.
   return c.json(result)
@@ -671,6 +650,17 @@ admin.post('/organization-requests/:id/decline', async (c) => {
     .maybeSingle()
   if (error) return c.json({ error: error.message }, 500)
   if (!data) return c.json({ error: 'That request is not open.' }, 404)
+  await notify(
+    [
+      {
+        recipient_id: data.requester_id,
+        type: 'org_request_declined',
+        actor_name: data.org_name,
+        body: notificationBody(note),
+      },
+    ],
+    'org_request_declined'
+  )
   return c.json(data)
 })
 
@@ -753,10 +743,11 @@ admin.get('/member-reports', async (c) => {
   const rows = data ?? []
   const names = new Map<string, string>()
   const ids = [...new Set(rows.map((r) => r.reporter_id as string))]
-  if (ids.length > 0) {
-    const { data: profiles } = await supabase.from('profiles').select('id, name').in('id', ids)
-    for (const p of profiles ?? []) names.set(p.id as string, p.name as string)
-  }
+  const { data: profiles, error: profilesError } = await selectIn(ids, (part) =>
+    supabase.from('profiles').select('id, name').in('id', part)
+  )
+  if (profilesError) return c.json({ error: "We couldn't load the reporters' names. Try again." }, 500)
+  for (const p of profiles) names.set(p.id as string, p.name as string)
 
   rows.sort((a, b) => {
     const safety = Number(b.category === 'safety') - Number(a.category === 'safety')
@@ -793,14 +784,18 @@ admin.patch('/member-reports/:id', async (c) => {
     patch.note_to_reporter = note || null
   }
 
-  const { data, error } = await createAdminClient()
-    .from('member_reports')
-    .update(patch)
-    .eq('id', c.req.param('id'))
-    .select(REPORT_COLUMNS)
-    .maybeSingle()
+  const sb = createAdminClient()
+  const id = c.req.param('id')
+  const { data: before } = await sb.from('member_reports').select('status').eq('id', id).maybeSingle()
+  const { data, error } = await sb.from('member_reports').update(patch).eq('id', id).select(REPORT_COLUMNS).maybeSingle()
   if (error) return c.json({ error: error.message }, 500)
   if (!data) return c.json({ error: 'No such report' }, 404)
+
+  // Only the move into 'resolved' tells the reporter; saving a note on an already
+  // resolved report must not. The answer is committed by now, so a failed insert is logged, never returned.
+  if (before && before.status !== 'resolved' && data.status === 'resolved') {
+    await notify([{ recipient_id: data.reporter_id, type: 'report_resolved', member_report_id: data.id, actor_name: 'SPLAT' }], 'admin.reports.resolved')
+  }
   return c.json(data)
 })
 
@@ -823,10 +818,10 @@ admin.get('/build-requests', async (c) => {
   if (error) return c.json({ error: error.message }, 500)
 
   const rows = data ?? []
-  const { data: guides } = await supabase
-    .from('tutorials')
-    .select('id, title')
-    .in('id', rows.map((r) => r.tutorial_id as string))
+  const { data: guides, error: guidesError } = await selectIn([...new Set(rows.map((r) => r.tutorial_id as string))], (ids) =>
+    supabase.from('tutorials').select('id, title').in('id', ids)
+  )
+  if (guidesError) return c.json({ error: "We couldn't load the guide titles. Try again." }, 500)
   const title = new Map((guides ?? []).map((g) => [g.id as string, g.title as string]))
 
   const now = Date.now()
@@ -869,13 +864,13 @@ admin.get('/print-jobs', async (c) => {
   if (error) return c.json({ error: error.message }, 500)
 
   const rows = data ?? []
-  const [{ data: guides }, { data: printers }] = await Promise.all([
-    supabase.from('tutorials').select('id, title').in('id', rows.map((r) => r.tutorial_id as string)),
-    supabase
-      .from('printers')
-      .select('id, name')
-      .in('id', rows.map((r) => r.printer_id).filter((id): id is string => !!id)),
+  const [{ data: guides, error: guidesError }, { data: printers, error: printersError }] = await Promise.all([
+    selectIn([...new Set(rows.map((r) => r.tutorial_id as string))], (ids) => supabase.from('tutorials').select('id, title').in('id', ids)),
+    selectIn([...new Set(rows.map((r) => r.printer_id).filter((id): id is string => !!id))], (ids) =>
+      supabase.from('printers').select('id, name').in('id', ids)
+    ),
   ])
+  if (guidesError || printersError) return c.json({ error: "We couldn't load the guide and printer names. Try again." }, 500)
   const title = new Map((guides ?? []).map((g) => [g.id as string, g.title as string]))
   const printerName = new Map((printers ?? []).map((p) => [p.id as string, p.name as string]))
 
@@ -911,18 +906,19 @@ admin.get('/test-prints', async (c) => {
   const rows = data ?? []
   if (rows.length === 0) return c.json([])
 
-  const { data: machines } = await supabase
-    .from('printers')
-    .select('id, name, owner_id, owner_org_id')
-    .in('id', [...new Set(rows.map((r) => r.printer_id as string))])
+  const { data: machines, error: machinesError } = await selectIn([...new Set(rows.map((r) => r.printer_id as string))], (ids) =>
+    supabase.from('printers').select('id, name, owner_id, owner_org_id').in('id', ids)
+  )
+  if (machinesError) return c.json({ error: "We couldn't load the printers. Try again." }, 500)
   const machine = new Map((machines ?? []).map((m) => [m.id as string, m]))
   const personIds = (machines ?? []).map((m) => m.owner_id).filter((id): id is string => !!id)
   const orgIds = (machines ?? []).map((m) => m.owner_org_id).filter((id): id is string => !!id)
-  const [{ data: people }, { data: orgs }, { data: signed, error: signError }] = await Promise.all([
-    personIds.length ? supabase.from('profiles').select('id, name').in('id', personIds) : Promise.resolve({ data: [] }),
-    orgIds.length ? supabase.from('organizations').select('id, name').in('id', orgIds) : Promise.resolve({ data: [] }),
+  const [{ data: people, error: peopleError }, { data: orgs, error: orgsError }, { data: signed, error: signError }] = await Promise.all([
+    selectIn(personIds, (ids) => supabase.from('profiles').select('id, name').in('id', ids)),
+    selectIn(orgIds, (ids) => supabase.from('organizations').select('id, name').in('id', ids)),
     supabase.storage.from('printer-test-prints').createSignedUrls(rows.map((r) => r.photo_path as string), 600),
   ])
+  if (peopleError || orgsError) return c.json({ error: "We couldn't load the owners' names. Try again." }, 500)
   if (signError) console.error('[admin/test-prints] signing photos failed:', signError.message)
   const nameOf = new Map(
     [...(people ?? []), ...(orgs ?? [])].map((x) => [(x as { id: string }).id, (x as { name: string }).name])
@@ -946,6 +942,34 @@ admin.get('/test-prints', async (c) => {
   return c.json(out)
 })
 
+/** The printer's owner, or every current leader of the owning organisation (142). */
+async function notifyTestPrintVerdict(print: { verdict: string; note: string | null; printer_id: string }) {
+  const sb = createAdminClient()
+  const { data: printer } = await sb
+    .from('printers')
+    .select('name, owner_id, owner_org_id')
+    .eq('id', print.printer_id)
+    .maybeSingle()
+  if (!printer) return
+  const recipients: string[] = printer.owner_org_id
+    ? ((await sb.from('org_leaders').select('user_id').eq('org_id', printer.owner_org_id)).data ?? []).map(
+        (r) => r.user_id as string
+      )
+    : printer.owner_id
+      ? [printer.owner_id as string]
+      : []
+  await notify(
+    recipients.map((recipient_id) => ({
+      recipient_id,
+      type: print.verdict === 'pass' ? 'test_print_passed' : 'test_print_failed',
+      ...(printer.owner_org_id ? { org_id: printer.owner_org_id } : {}),
+      actor_name: printer.name,
+      body: notificationBody(print.note),
+    })),
+    'test_print_verdict'
+  )
+}
+
 /**
  * PATCH /api/admin/test-prints/:id
  *
@@ -964,10 +988,14 @@ admin.patch('/test-prints/:id', async (c) => {
     // Decided once: verified() reads the latest reviewed_at, so re-deciding an
     // old print would override a newer verdict. Atomic, not read-then-write.
     .is('verdict', null)
-    .select('id, verdict, note')
+    .select('id, verdict, note, printer_id')
     .maybeSingle()
   if (error && error.code !== INVALID_TEXT_REPRESENTATION) return c.json({ error: error.message }, 500)
-  if (data) return c.json(data)
+  if (data) {
+    await notifyTestPrintVerdict(data)
+    const { printer_id: _printer, ...visible } = data
+    return c.json(visible)
+  }
   const { data: exists } = error
     ? { data: null }
     : await createAdminClient().from('printer_test_prints').select('id').eq('id', c.req.param('id')).maybeSingle()

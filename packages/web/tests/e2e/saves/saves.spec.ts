@@ -4,7 +4,9 @@ import {
   signIn,
   createContributor,
   createTutorial,
+  createPublishedToy,
   acceptTerms,
+  adminClient,
   deleteUser,
   uniqueTitle,
 } from '../helpers'
@@ -39,7 +41,7 @@ async function shot(page: Page, name: string) {
 }
 
 test.describe('saving things', () => {
-  test('a signed-out visitor is offered the island and sent to sign up', async ({ page }) => {
+  test('WG09 a signed-out visitor is offered the island and sent to sign up', async ({ page }) => {
     const contributor = await createContributor()
     const title = uniqueTitle('Saveable guide')
     await createTutorial(contributor.id, { title, status: 'approved' })
@@ -61,7 +63,33 @@ test.describe('saving things', () => {
     }
   })
 
-  test('a signed-in visitor saves from the library and finds it under Saved', async ({ page }) => {
+  test('WT41 a guest on a guide page is sent to sign up by Save, carrying the guide', async ({ page }) => {
+    const contributor = await createContributor()
+    const id = await createTutorial(contributor.id, { title: uniqueTitle('Guest guide'), status: 'approved' })
+    try {
+      await page.goto(`/tutorials/${id}`)
+      await page.getByRole('button', { name: 'Save' }).click()
+      await expect(page).toHaveURL(new RegExp(`/signup\\?next=%2Ftutorials%2F${id}&reason=save`))
+      await expect(page.getByText('You need an account to save things')).toBeVisible()
+    } finally {
+      await deleteUser(contributor.id)
+    }
+  })
+
+  test('WY25 a guest on a toy page is sent to sign up by Save, carrying the toy', async ({ page }) => {
+    const holder = await createContributor()
+    const toyId = await createPublishedToy(holder.id, { name: uniqueTitle('Guest bear') })
+    try {
+      await page.goto(`/toy-library/${toyId}`)
+      await page.getByRole('button', { name: 'Save' }).click()
+      await expect(page).toHaveURL(new RegExp(`/signup\\?next=%2Ftoy-library%2F${toyId}&reason=save`))
+      await expect(page.getByText('You need an account to save things')).toBeVisible()
+    } finally {
+      await deleteUser(holder.id)
+    }
+  })
+
+  test('WG08 a signed-in visitor saves from the library, finds it under Saved, and unsaves it', async ({ page }) => {
     const contributor = await createContributor()
     await acceptTerms(contributor.id)
     const title = uniqueTitle('Kept guide')
@@ -110,7 +138,48 @@ test.describe('saving things', () => {
     }
   })
 
-  test('the destination button skips the hub and lands on its own list', async ({ page }) => {
+  // Dashboard half only (the Saved hub and list); saving from the library is the guide rows' test above.
+  test('WD31 WD32 WD33 the Saved hub counts a kept guide, its list opens the guide, and the bookmark takes it off the list', async ({ page }) => {
+    const contributor = await createContributor()
+    await acceptTerms(contributor.id)
+    const title = uniqueTitle('Kept for later')
+    const otherTitle = uniqueTitle('Kept too')
+    const [kept, other] = [
+      await createTutorial(contributor.id, { title, status: 'approved' }),
+      await createTutorial(contributor.id, { title: otherTitle, status: 'approved' }),
+    ]
+    await adminClient()
+      .from('saves')
+      .insert([kept, other].map((id) => ({ profile_id: contributor.id, entity_type: 'tutorial', entity_id: id })))
+
+    try {
+      await signIn(page, contributor.email, contributor.password)
+      await page.goto('/dashboard/saved')
+      const card = page.getByRole('main').getByRole('link', { name: /^2\s*Tutorials/ })
+      await expect(card).toHaveAttribute('href', '/dashboard/saved/tutorials')
+      await card.click()
+      await expect(page).toHaveURL('/dashboard/saved/tutorials')
+
+      await page.locator('.save-host', { hasText: title }).getByRole('link').first().click()
+      await expect(page).toHaveURL(`/tutorials/${kept}`)
+
+      await page.goto('/dashboard/saved/tutorials')
+      await page.locator('.save-host', { hasText: title }).getByRole('button', { name: 'Saved' }).click()
+      await expect(page.getByText(title)).toHaveCount(0)
+      await expect(page.getByText(otherTitle)).toBeVisible()
+      await page.reload()
+      await expect(page.getByText(title)).toHaveCount(0)
+      const { data } = await adminClient().from('saves').select('entity_id').eq('profile_id', contributor.id)
+      expect(data).toEqual([{ entity_id: other }])
+
+      await page.goto('/dashboard/saved')
+      await expect(page.getByRole('main').getByRole('link', { name: /^1\s*Tutorials/ })).toBeVisible()
+    } finally {
+      await deleteUser(contributor.id)
+    }
+  })
+
+  test('WT38 the Saved tutorials button skips the hub and lands on its own list', async ({ page }) => {
     const contributor = await createContributor()
     await acceptTerms(contributor.id)
 

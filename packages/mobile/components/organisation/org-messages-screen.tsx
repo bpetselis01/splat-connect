@@ -9,10 +9,12 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import type { OrgConversationSummary } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
+import { logFailure } from '../../lib/log'
 import { useCapabilities } from '../../lib/capabilities'
 import { theme } from '../../lib/theme'
 import { Screen } from '../ui/Screen'
 import { Card } from '../ui/Card'
+import { Button } from '../ui/Button'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
@@ -23,6 +25,8 @@ export function OrgMessagesScreen() {
   const router = useRouter()
   const { caps, loading } = useCapabilities()
   const [rows, setRows] = useState<Row[] | null>(null)
+  const [failed, setFailed] = useState(false)
+  const [reloadKey, setReloadKey] = useState(0)
   const orgs = caps?.ledOrgs ?? []
 
   useFocusEffect(
@@ -33,21 +37,39 @@ export function OrgMessagesScreen() {
         return
       }
       let ignore = false
+      setFailed(false)
       Promise.all(
         caps.ledOrgs.map((org) =>
           apiClient
             .get<OrgConversationSummary[]>(`/api/organizations/${org.id}/conversations`)
             .then((list) => list.map((r) => ({ ...r, org_name: org.name })))
-            .catch(() => [] as Row[])
+            .catch((err) => {
+              logFailure('[OrgMessagesScreen] load failed:', err)
+              return null
+            })
         )
-      ).then((lists) => {
-        if (!ignore) setRows(lists.flat().sort((a, b) => (a.updated_at < b.updated_at ? 1 : -1)))
-      })
+      )
+        .then((lists) => {
+          if (ignore) return
+          // One organisation failing still lists the others; all failing is a failure.
+          if (lists.length > 0 && lists.every((l) => !l)) return setFailed(true)
+          setRows(lists.flatMap((l) => l ?? []).sort((a, b) => (a.updated_at < b.updated_at ? 1 : -1)))
+        })
       return () => {
         ignore = true
       }
-    }, [caps, loading])
+    }, [caps, loading, reloadKey])
   )
+
+  if (failed && !rows) {
+    return (
+      <Screen>
+        <EmptyState icon="cloud-offline-outline" title="Couldn't load your messages." hint="Check your connection and try again.">
+          <Button label="Try again" variant="secondary" onPress={() => setReloadKey((k) => k + 1)} />
+        </EmptyState>
+      </Screen>
+    )
+  }
 
   if (!rows) {
     return (

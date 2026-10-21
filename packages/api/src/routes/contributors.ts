@@ -11,6 +11,7 @@
 import { singleRowStatus } from '../single-row.js'
 import { Hono } from 'hono'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
+import { notify } from '../notify.js'
 import { pickEditable } from './pick-editable.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import type { AuthVariables } from '../middleware/auth.js'
@@ -190,20 +191,18 @@ contributors.post('/:id/thanks', async (c) => {
   }
   // Logged, never thrown: the thanks has committed. The byline if they gave
   // one, else nobody — 066's and 077's reticence.
-  const { error: notifyError } = await admin.from('notifications').insert({
+  await notify([{
     recipient_id: profileId,
     type: 'profile_thanked',
     ...(txId ? { toy_transaction_id: txId } : { profile_id: profileId }),
     actor_name: byline || 'A family',
-  })
-  if (notifyError) console.error('[contributors] thanks notify failed:', notifyError.message)
+  }], 'contributors.thanks')
 
   const { data } = await admin.from('profiles').select('profile_thanks_count').eq('id', profileId).single()
   return c.json({ thanks_count: (data as { profile_thanks_count: number } | null)?.profile_thanks_count ?? 0 }, 201)
 })
 
 /** The thanks you have been given, to read and hide. */
-// PENDING(profile-thanks-hide): nothing calls this route or the PATCH below; wire a screen or delete both.
 contributors.get('/me/thanks', async (c) => {
   const { data, error } = await createUserClient(c.get('token'))
     .from('profile_thanks')

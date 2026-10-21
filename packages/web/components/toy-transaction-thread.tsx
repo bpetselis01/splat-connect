@@ -26,8 +26,9 @@ import {
   XCircle,
 } from '@phosphor-icons/react/dist/ssr'
 import { safePhotoSrc } from '@/lib/photo-src'
-import { isOwnerSide, printRequestExpired } from '@splat-connect/types'
+import { isOwnerSide, printRequestExpired, DECLINE_REASON_MAX } from '@splat-connect/types'
 import type { PickupAddress, ToyTransactionDetail } from '@splat-connect/types'
+import type { ActionResult } from '@/app/dashboard/exchanges/actions'
 import { AcceptPickupDialog } from '@/components/accept-pickup-dialog'
 import { ExchangeChat } from '@/components/exchange-chat'
 import { Badge } from '@/components/badge'
@@ -58,15 +59,15 @@ export function ToyTransactionThread({
   ledOrgIds?: readonly string[]
   /** The viewer's saved profile address, seeded into the accept dialog. */
   viewerDefaultAddress?: PickupAddress | null
-  onSendMessage: (body: string) => Promise<void>
+  onSendMessage: (body: string) => Promise<ActionResult>
   /** Null when an organisation is accepting — its address is not the leader's
    *  to choose, and the server reads it from the org record. */
-  onAccept: (address: PickupAddress | null) => Promise<void>
+  onAccept: (address: PickupAddress | null) => Promise<ActionResult>
   /** The reason is required on a print job: "declining needs a reason" is the
    *  artboard's rule, and the API refuses one without it. */
-  onReject: (reason?: string) => Promise<void>
-  onWithdraw: () => Promise<void>
-  onConfirm: (code: string) => Promise<void>
+  onReject: (reason?: string) => Promise<ActionResult>
+  onWithdraw: () => Promise<ActionResult>
+  onConfirm: (code: string) => Promise<ActionResult>
   /** The tinted next-step card the canonical layout puts first in the sidebar.
    *  A build's is about its extra stage, which only the build page knows. */
   asideTop?: ReactNode
@@ -91,6 +92,9 @@ export function ToyTransactionThread({
 
   const tx = transaction
   const isOwner = isOwnerSide(tx, viewerId, ledOrgIds)
+  // An admin reading a member's thread can speak in it but not act on it; the
+  // API refuses it, so the controls are not offered.
+  const isParty = isOwner || viewerId === tx.requester_id
   // Keyed off the requester rather than the owner: an org handoff has no
   // owner_id, so every message a leader sent would otherwise be attributed to
   // the family. owner_name is the organisation's name in that case.
@@ -98,13 +102,19 @@ export function ToyTransactionThread({
     senderId === tx.requester_id ? tx.requester_name : tx.owner_name
   const otherPartyName = isOwner ? tx.requester_name : tx.owner_name
 
-  async function run(fn: () => Promise<void>) {
+  async function run(fn: () => Promise<void | ActionResult>): Promise<boolean> {
     setBusy(true)
     setError(null)
     try {
-      await fn()
+      const result = await fn()
+      if (result && !result.ok) {
+        setError(result.error)
+        return false
+      }
+      return true
     } catch {
       setError('Something went wrong. Please try again.')
+      return false
     } finally {
       setBusy(false)
     }
@@ -119,6 +129,7 @@ export function ToyTransactionThread({
    * before that would close a build the family has never seen (057).
    */
   const canConfirm =
+    isParty &&
     tx.status === 'accepted' &&
     (tx.type !== 'donation' || isOwner) &&
     (!isBuild || tx.work_approved_at !== null) &&
@@ -126,7 +137,7 @@ export function ToyTransactionThread({
     (tx.type !== 'print' || tx.ready_at !== null)
   const alreadyConfirmed = isOwner ? tx.owner_confirmed_at !== null : tx.requester_confirmed_at !== null
   const myCode = isOwner ? tx.owner_code : tx.requester_code
-  const showMyCode = tx.status === 'accepted' && (tx.type !== 'donation' || !isOwner)
+  const showMyCode = isParty && tx.status === 'accepted' && (tx.type !== 'donation' || !isOwner)
   // The same gate the list card's handoff panel uses: a build's handover waits
   // on the approved working shot, a print's on the parts being ready.
   const handoverOpen =
@@ -235,17 +246,14 @@ export function ToyTransactionThread({
               >
                 Accept
               </button>
-              {/* A print job's decline opens for a reason first. Everything
-                  else declines outright, because nothing asks for one. */}
+              {/* Every decline opens for a reason first; the other party reads it. */}
               <button
                 type="button"
                 disabled={busy}
-                onClick={() =>
-                  tx.type === 'print' ? setDeclineReason('') : run(() => onReject())
-                }
+                onClick={() => setDeclineReason('')}
                 className="btn btn-quiet"
               >
-                {tx.type === 'print' ? 'Decline' : 'Reject'}
+                Decline
               </button>
             </div>
             {declineReason !== null && (
@@ -255,8 +263,7 @@ export function ToyTransactionThread({
                   e.preventDefault()
                   const reason = declineReason.trim()
                   if (!reason) return
-                  setDeclineReason(null)
-                  await run(() => onReject(reason))
+                  if (await run(() => onReject(reason))) setDeclineReason(null)
                 }}
               >
                 <label htmlFor="decline-reason" className="field-label">
@@ -266,10 +273,10 @@ export function ToyTransactionThread({
                   id="decline-reason"
                   className="field"
                   rows={3}
-                  maxLength={500}
+                  maxLength={DECLINE_REASON_MAX}
                   value={declineReason}
                   onChange={(e) => setDeclineReason(e.target.value)}
-                  placeholder="Bed is too small for the base plate."
+                  placeholder="Already given away."
                 />
                 <div className="flex gap-2">
                   <button
@@ -310,7 +317,7 @@ export function ToyTransactionThread({
             working shot, so its code and its confirm box do not appear before
             then — showing a code for a meeting that cannot be arranged yet is
             the same class of mistake as a dead control. */}
-        {board && handoverOpen && (
+        {isParty && board && handoverOpen && (
           <div
             className="xthread-next"
             style={{ background: myMove ? 'var(--tamber)' : 'var(--surface)' }}
@@ -460,7 +467,7 @@ export function ToyTransactionThread({
 
         {/* self-start so it stays a button: stretched to the sidebar's full
             width it reads as another white card. */}
-        {open && !board && (
+        {isParty && open && !board && (
           <button
             type="button"
             disabled={busy}
@@ -511,7 +518,10 @@ export function ToyTransactionThread({
           </div>
         )}
         {tx.status === 'rejected' && (
-          <p className="card p-4 text-sm text-muted">This request was declined.</p>
+          <div className="card p-4 text-sm text-muted">
+            <p>This request was declined.</p>
+            {tx.decline_reason && <blockquote className="mt-2 text-ink">{tx.decline_reason}</blockquote>}
+          </div>
         )}
         {tx.status === 'withdrawn' && (
           <p className="card p-4 text-sm text-muted">This request was withdrawn.</p>
@@ -574,7 +584,7 @@ export function ToyTransactionThread({
           </div>
         )}
 
-        {board && open && (
+        {isParty && board && open && (
           <div className="flex justify-center">
             <button
               type="button"
@@ -597,7 +607,11 @@ export function ToyTransactionThread({
           nameFor={nameFor}
           canSend={open}
           busy={busy}
-          onSend={(body) => run(() => onSendMessage(body))}
+          onSend={async (body) => {
+            // ExchangeChat restores the draft when onSend throws.
+            if (!(await run(() => onSendMessage(body)))) throw new Error('Message not sent')
+          }}
+          draftKey={tx.id}
           variant={board ? 'board' : undefined}
           head={chatHead}
         />

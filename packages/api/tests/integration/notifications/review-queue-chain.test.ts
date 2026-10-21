@@ -1,4 +1,3 @@
-// journeys: T05 T18 T22
 /**
  * The review queue's inbox rows: an author asking an organisation to back a
  * guide (backing_requested -> its leaders), and an author handing a guide over
@@ -65,7 +64,7 @@ afterAll(async () => {
 })
 
 describe('asking an organisation to back a guide (T18)', () => {
-  it('tells its leader once, naming the guide and the author; asking again tells nobody', async () => {
+  it('T18 WT31 tells its leader once, naming the guide and the author; asking again tells nobody (backing_requested)', async () => {
     const id = await project('draft', false)
     const ask = () => app.request(`/api/tutorials/${id}/orgs`, authed(author.token, { method: 'POST', body: JSON.stringify({ org_id: orgId }) }))
     expect((await ask()).status).toBe(201)
@@ -79,7 +78,7 @@ describe('asking an organisation to back a guide (T18)', () => {
 })
 
 describe('handing a guide over for review (T05, T22)', () => {
-  it('a backed guide tells the backing organisation’s leader, not the admins', async () => {
+  it('T05 WT32 a backed guide tells the backing organisation’s leader, not the admins (tutorial_submitted)', async () => {
     const id = await project('draft', true)
     expect((await submit(id)).status).toBe(200)
     expect(await notesFor(leader.id, id, 'tutorial_submitted')).toEqual([
@@ -88,7 +87,7 @@ describe('handing a guide over for review (T05, T22)', () => {
     expect(await notesFor(admin.id, id, 'tutorial_submitted')).toEqual([])
   })
 
-  it('an unbacked guide tells every admin', async () => {
+  it('T05 WT32 an unbacked guide tells every admin', async () => {
     const id = await project('draft', false)
     expect((await submit(id)).status).toBe(200)
     expect(await notesFor(admin.id, id, 'tutorial_submitted')).toEqual([
@@ -104,7 +103,7 @@ describe('handing a guide over for review (T05, T22)', () => {
     expect(await notesFor(leader.id, id, 'tutorial_submitted')).toHaveLength(1)
   })
 
-  it.each(['rejected', 'approved'] as const)('resubmitting a %s guide tells the leader again (T22)', async (before) => {
+  it.each(['rejected', 'approved'] as const)('T22 WT18 resubmitting a %s guide tells the leader again (T22)', async (before) => {
     const id = await project(before, true)
     expect((await submit(id)).status).toBe(200)
     const { data } = await adminClient().from('tutorials').select('status').eq('id', id).single()

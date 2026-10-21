@@ -22,6 +22,8 @@ const ROUTES: Record<string, string> = {
   '/dashboard/organisation/profile': '/organisation/profile',
   '/dashboard/organisation/messages': '/organisation/messages',
   '/dashboard/saved': '/saved',
+  '/dashboard/thanks': '/thanks',
+  '/dashboard/reports': '/reports',
   '/notifications': '/notifications',
   '/dashboard/profile': '/account',
   '/admin': '/admin',

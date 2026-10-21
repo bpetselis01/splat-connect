@@ -1,5 +1,4 @@
 // packages/mobile/tests/unit/components/challenges/detail-screen.test.tsx
-// journeys: C02 C03 C05 C06 C07 C08 C10 C11
 import { CLEARANCE, paddingBottomOf } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { Alert } from 'react-native'
@@ -112,7 +111,31 @@ beforeEach(() => {
 })
 
 describe('ChallengeDetailScreen', () => {
-  it('renders the brief the public route returns', async () => {
+  it('offers Report on another maker but not on yourself', async () => {
+    respond(joinedDetail({ participants: [{ profile_id: 'viewer1', name: 'Viewer', joined_at: '2026-08-14T03:00:00Z' }, { profile_id: 'p1', name: 'Sam', joined_at: '2026-08-14T03:00:00Z' }] }))
+    render(<ChallengeDetailScreen id="c1" />)
+    fireEvent.press(await screen.findByRole('tab', { name: 'Makers' }))
+    expect(screen.getByRole('button', { name: 'Report Sam' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Report Viewer' })).toBeNull()
+  })
+
+  it('C16 drops a reported maker from the Makers tab once the refetch no longer lists them', async () => {
+    const withSam = joinedDetail({ maker_count: 2, participants: [{ profile_id: 'viewer1', name: 'Viewer', joined_at: '2026-08-14T03:00:00Z' }, { profile_id: 'p1', name: 'Sam', joined_at: '2026-08-14T03:00:00Z' }] })
+    respond(withSam)
+    mockPost.mockResolvedValue({ reported: true })
+    render(<ChallengeDetailScreen id="c1" />)
+    fireEvent.press(await screen.findByRole('tab', { name: 'Makers' }))
+    expect(screen.getByText('Sam')).toBeTruthy()
+    respond(joinedDetail({ maker_count: 1 }))
+    fireEvent.press(screen.getByRole('button', { name: 'Report Sam' }))
+    fireEvent.changeText(screen.getByLabelText('Why are you reporting them?'), 'Rude in the thread.')
+    fireEvent.press(screen.getByRole('button', { name: 'Send report' }))
+    await waitFor(() => expect(mockGet.mock.calls.filter(([p]) => p === '/api/public/challenges/c1')).toHaveLength(2))
+    await waitFor(() => expect(screen.queryByText('Sam')).toBeNull())
+    expect(screen.getByText('You')).toBeTruthy()
+  })
+
+  it('C02 renders the brief the public route returns', async () => {
     mockGet.mockResolvedValue(detail({ participants: [{ profile_id: 'p1', name: 'Sam' }] }))
     render(<ChallengeDetailScreen id="c1" />)
 
@@ -138,7 +161,7 @@ describe('ChallengeDetailScreen', () => {
     expect(screen.getByRole('button', { name: 'Join this challenge' })).toBeTruthy()
   })
 
-  it('joins, then reloads the brief so the new participant shows', async () => {
+  it('C03 joins, then reloads the brief so the new participant shows', async () => {
     // The brief changes because the join landed, which is the thing being
     // tested — a canned second response would pass even if nothing was posted.
     let brief: object = detail()
@@ -159,7 +182,7 @@ describe('ChallengeDetailScreen', () => {
     expect(await screen.findByText('✓ You joined')).toBeTruthy()
   })
 
-  it('keeps the brief on screen when the reload after a join fails', async () => {
+  it('C03 keeps the brief on screen when the reload after a join fails', async () => {
     mockPost.mockResolvedValue({ joined: true })
     mockGet.mockResolvedValueOnce(detail()).mockRejectedValueOnce(new Error('flaky'))
     render(<ChallengeDetailScreen id="c1" />)
@@ -173,7 +196,7 @@ describe('ChallengeDetailScreen', () => {
     expect(screen.queryByText("Couldn't load this challenge.")).toBeNull()
   })
 
-  it('says so when joining fails, and leaves the button usable', async () => {
+  it('C03 says so when joining fails, and leaves the button usable', async () => {
     mockPost.mockRejectedValue(new Error('nope'))
     render(<ChallengeDetailScreen id="c1" />)
 
@@ -184,7 +207,7 @@ describe('ChallengeDetailScreen', () => {
     })
   })
 
-  it('confirms before leaving, then deletes the viewer’s own participant row', async () => {
+  it('C04 confirms before leaving, then deletes the viewer’s own participant row', async () => {
     respond(joinedDetail())
     mockDelete.mockResolvedValue(null)
     const alertSpy = jest
@@ -233,7 +256,7 @@ describe('ChallengeDetailScreen', () => {
     expect(screen.queryByRole('button', { name: 'Join this challenge' })).toBeNull()
   })
 
-  it('offers to follow a graduated challenge’s write-up, and names who is writing it', async () => {
+  it('C10 offers to follow a graduated challenge’s write-up, and names who is writing it', async () => {
     mockGet.mockResolvedValue(
       detail({
         status: 'graduated',
@@ -256,13 +279,13 @@ describe('ChallengeDetailScreen', () => {
     expect(mockPush).toHaveBeenCalledWith('/guides/tut7')
   })
 
-  it('saves against the challenges slug', async () => {
+  it('C11 saves against the challenges slug', async () => {
     render(<ChallengeDetailScreen id="c1" />)
     fireEvent.press(await screen.findByRole('button', { name: 'Save' }))
     expect(mockToggle).toHaveBeenCalledWith('challenges', 'c1')
   })
 
-  it('refetches the brief after the heart so the saves tile is the server count', async () => {
+  it('C11 refetches the brief after the heart so the saves tile is the server count', async () => {
     mockGet.mockResolvedValueOnce(detail({ save_count: 0 })).mockResolvedValue(detail({ save_count: 1 }))
     render(<ChallengeDetailScreen id="c1" />)
     expect(await screen.findByText('saves')).toBeTruthy()
@@ -270,7 +293,7 @@ describe('ChallengeDetailScreen', () => {
     expect(await screen.findByText('save')).toBeTruthy()
   })
 
-  it("says it couldn't load rather than showing an empty brief", async () => {
+  it("C02 says it couldn't load rather than showing an empty brief", async () => {
     mockGet.mockRejectedValue(new Error('404'))
     render(<ChallengeDetailScreen id="c1" />)
     expect(await screen.findByText("Couldn't load this challenge.")).toBeTruthy()
@@ -331,7 +354,7 @@ describe('ChallengeDetailScreen', () => {
       expect(await screen.findByLabelText('You said: Thanks for looking.')).toBeTruthy()
     })
 
-    it('posts a message and shows it without waiting for the next poll', async () => {
+    it('C05 posts a message and shows it without waiting for the next poll', async () => {
       respond(joinedDetail(), [])
       mockPost.mockResolvedValue(message({ id: 'm9', sender_id: 'viewer1', body: 'On it.' }))
       render(<ChallengeDetailScreen id="c1" />)
@@ -359,7 +382,7 @@ describe('ChallengeDetailScreen', () => {
       expect(send.props.accessibilityState).toMatchObject({ disabled: true })
     })
 
-    it('keeps the draft when sending fails, and says so', async () => {
+    it('C05 keeps the draft when sending fails, and says so', async () => {
       respond(joinedDetail(), [])
       mockPost.mockRejectedValue(new Error('offline'))
       render(<ChallengeDetailScreen id="c1" />)
@@ -413,7 +436,7 @@ describe('ChallengeDetailScreen', () => {
   describe('a question', () => {
     const reply = message({ id: 'r1', sender_id: 'p1', body: 'A zip pocket.' })
 
-    it('lets the asker mark a reply as the answer, and reloads the brief', async () => {
+    it('C06 lets the asker mark a reply as the answer, and reloads the brief', async () => {
       mockUseCapabilities.mockReturnValue(viewer('author1'))
       let brief: object = detail({ kind: 'question', participants: [{ profile_id: 'p1', name: 'Mei' }] })
       mockGet.mockImplementation((path: string) => {
@@ -512,7 +535,7 @@ describe('ChallengeDetailScreen', () => {
       )
     }
 
-    it('reads a pending idea from the author’s own list and withdraws it', async () => {
+    it('C02 C08 reads a pending idea from the author’s own list and withdraws it', async () => {
       own('pending')
       mockDelete.mockResolvedValue(undefined)
       render(<ChallengeDetailScreen id="c1" />)
@@ -523,7 +546,7 @@ describe('ChallengeDetailScreen', () => {
       expect(await screen.findByText('Withdrawn — nothing was published')).toBeTruthy()
     })
 
-    it('says so when the withdraw fails, and keeps the idea on screen', async () => {
+    it('C08 says so when the withdraw fails, and keeps the idea on screen', async () => {
       own('pending')
       mockDelete.mockRejectedValue(new Error('409'))
       render(<ChallengeDetailScreen id="c1" />)
@@ -602,7 +625,7 @@ describe('ChallengeDetailScreen', () => {
     expect(mockGet).not.toHaveBeenCalledWith('/api/ideas/c1/messages')
   })
 
-  it('lists named constraints with a count, and lets a maker who joined add one', async () => {
+  it('C07 lists named constraints with a count, and lets a maker who joined add one', async () => {
     const k1 = { id: 'k1', label: 'Fluid and electronics share one enclosure', note: 'Anything you add sits above the waterline, or is sealed.' }
     let brief: object = joinedDetail({ constraints: [k1] })
     mockGet.mockImplementation((path: string) =>

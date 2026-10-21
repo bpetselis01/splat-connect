@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { browserApiClient } from '@/lib/browser-api-client'
 import { MakersWantedBoard, type OpenBuild } from '@/components/makers-wanted-board'
 
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }))
+const push = vi.fn()
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }))
 vi.mock('@/lib/browser-api-client', () => ({ browserApiClient: { post: vi.fn(), get: vi.fn() } }))
 
 export const build = (over: Partial<OpenBuild> = {}): OpenBuild => ({
@@ -28,8 +29,36 @@ describe('MakersWantedBoard', () => {
   })
 })
 
+describe('MakersWantedBoard claim and range', () => {
+  it('WI25 claims a request with POST claim and opens the build thread', async () => {
+    vi.mocked(browserApiClient.post).mockResolvedValue({})
+    render(<MakersWantedBoard builds={[build({ id: 'b9' })]} />)
+    fireEvent.click(screen.getByRole('button', { name: "I'll build this" }))
+    await waitFor(() => expect(browserApiClient.post).toHaveBeenCalledWith('/api/toy-transactions/b9/claim', {}))
+    expect(push).toHaveBeenCalledWith('/dashboard/exchanges/build/b9')
+  })
+
+  it('WI25 keeps the maker on the board with the server sentence when the claim loses the race', async () => {
+    vi.mocked(browserApiClient.post).mockRejectedValue(new Error('Somebody else got there first.'))
+    render(<MakersWantedBoard builds={[build({ id: 'b9' })]} />)
+    fireEvent.click(screen.getByRole('button', { name: "I'll build this" }))
+    expect(await screen.findByText('Somebody else got there first.')).toBeInTheDocument()
+    expect(push).not.toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: "I'll build this" })).toBeEnabled()
+  })
+
+  it('WI24 files a family\'s own request under Your requests, not Needs a maker', () => {
+    render(<MakersWantedBoard builds={[build({ id: 'm1', mine: true }), build({ id: 'o1', requester_suburb: 'Fitzroy' })]} />)
+    expect(screen.getAllByText(/Fitzroy/).length).toBeGreaterThan(0)
+    expect(screen.queryAllByText(/Newtown/)).toHaveLength(0)
+    fireEvent.mouseDown(screen.getByRole('tab', { name: /^Your requests/ }))
+    expect(screen.getAllByText(/Newtown/).length).toBeGreaterThan(0)
+    expect(screen.queryAllByText(/Fitzroy/)).toHaveLength(0)
+  })
+})
+
 describe('MakersWantedBoard Live and Handed over', () => {
-  it('fetches Live when its tab is picked and names who is building', async () => {
+  it('WI24 fetches Live when its tab is picked and names who is building', async () => {
     vi.mocked(browserApiClient.get).mockResolvedValue([{ ...build({ id: 'l1' }), maker_name: 'Tom Beattie', party: false }])
     render(<MakersWantedBoard builds={[build()]} />)
     fireEvent.mouseDown(screen.getByRole('tab', { name: /^Live/ }))
@@ -38,7 +67,7 @@ describe('MakersWantedBoard Live and Handed over', () => {
     expect(screen.getByRole('tab', { name: /^Handed over/ })).toBeInTheDocument()
   })
 
-  it('offers the thread to a party and names the maker on a handed-over row', async () => {
+  it('WI24 offers the thread to a party and names the maker on a handed-over row', async () => {
     vi.mocked(browserApiClient.get).mockResolvedValueOnce([{ ...build({ id: 'l1', mine: true }), maker_name: 'Tom Beattie', party: true }])
     render(<MakersWantedBoard builds={[]} />)
     fireEvent.mouseDown(screen.getByRole('tab', { name: /^Live/ }))

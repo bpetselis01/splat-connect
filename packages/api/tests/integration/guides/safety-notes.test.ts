@@ -1,4 +1,3 @@
-// journeys: T12
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -30,12 +29,14 @@ describe('090 tutorial_safety_notes', () => {
     expect((await adminClient().from('tutorial_safety_notes').select('id, position, title, detail').limit(1)).error).toBeNull()
   })
 
-  it('saves the list in order and serves it in both detail reads', async () => {
+  it('T12 WT19 saves the list in order and serves it in both detail reads', async () => {
     const res = await post(author.token, [
       { title: 'Fluid and electronics share the enclosure', detail: 'The relay must sit above the waterline.' },
       { title: 'Battery door must be screwed shut' },
     ])
     expect(res.status).toBe(201)
+    // The write sent the approved guide back to pending; the public read needs it live again.
+    await adminClient().from('tutorials').update({ status: 'approved' }).eq('id', guide)
     const pub = (await (await app.request(`/api/public/tutorials/${guide}`)).json()) as { safety_notes: { position: number; title: string }[] }
     expect(pub.safety_notes.map((n) => [n.position, n.title])).toEqual([
       [1, 'Fluid and electronics share the enclosure'],

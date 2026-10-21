@@ -26,7 +26,7 @@ import type {
 } from '@splat-connect/types'
 import { copyFor, isNetworkError, notificationBucket, notificationSecondLine, subjectName } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
-import { invalidateCapabilities } from '../../lib/capabilities'
+import { invalidateCapabilities, useCapabilities } from '../../lib/capabilities'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { theme } from '../../lib/theme'
 import { tabBarClearance } from '../../lib/tab-bar-layout'
@@ -65,6 +65,10 @@ const TYPE_TILE: Partial<Record<NotificationType, { icon: IconName; tint: string
   tutorial_rejected: { icon: 'return-up-back', tint: theme.colors.dangerSoft },
   tutorial_thanked: { icon: 'heart-outline', tint: theme.colors.apricotSoft },
   profile_thanked: { icon: 'heart-outline', tint: theme.colors.apricotSoft },
+  backing_accepted: { icon: 'checkmark-circle-outline', tint: theme.colors.successSoft },
+  backing_declined: { icon: 'return-up-back', tint: theme.colors.dangerSoft },
+  report_resolved: { icon: 'checkmark-circle-outline', tint: theme.colors.successSoft },
+  org_event_cancelled: { icon: 'close-circle-outline', tint: theme.colors.dangerSoft },
   tutorial_noted: { icon: 'chatbubbles-outline', tint: theme.colors.honeySoft },
 }
 const EXCHANGE_TINTS = [theme.colors.mintSoft, theme.colors.apricotSoft, theme.colors.violetSoft]
@@ -150,6 +154,7 @@ export function InboxScreen({
 }) {
   const insets = useSafeAreaInsets()
   const router = useRouter()
+  const { caps } = useCapabilities()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [transactions, setTransactions] = useState<ToyTransactionSummary[]>([])
   const [invites, setInvites] = useState<TutorialCollaboratorInvite[]>([])
@@ -258,7 +263,7 @@ export function InboxScreen({
   function open(n: Notification) {
     if (n.read_at === null) markRead([n.id])
     // '/inbox' is "nowhere better": already here, so there is nothing to push.
-    const href = linkFor(n)
+    const href = linkFor(n, caps?.isAdmin ?? false)
     if (href !== '/inbox') router.push(href)
   }
 

@@ -1,4 +1,3 @@
-// journeys: Q13
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { ExploreScreen } from '../../../../components/explore/explore-screen'
 import { NAMES } from '../../../special-strings'
@@ -26,46 +25,46 @@ beforeEach(() => {
 })
 
 describe('Explore search', () => {
-  it.each([['spaces', '    '], ['tabs and newlines', '\t\n ']])('whitespace-only (%s) searches for nothing', async (_l, q) => {
+  it.each([['spaces', '    '], ['tabs and newlines', '\t\n ']])('Q13 whitespace-only (%s) searches for nothing', async (_l, q) => {
     render(<ExploreScreen />); await ready()
     search(q)
     expect(screen.queryByText('Guides')).toBeNull()
     expect(screen.queryByText('Switch car')).toBeNull()
   })
 
-  it('matches case-insensitively and ignores leading and trailing spaces', async () => {
+  it('Q13 matches case-insensitively and ignores leading and trailing spaces', async () => {
     render(<ExploreScreen />); await ready()
     search('  SWITCH CAR ')
     expect(await screen.findByText('Switch car')).toBeTruthy()
   })
 
-  it('matches in the middle of a name', async () => {
+  it('Q13 matches in the middle of a name', async () => {
     render(<ExploreScreen />); await ready()
     search('ubble mac')
     expect(await screen.findByText('Bubble machine')).toBeTruthy()
   })
 
-  it.each([['.*'], ['('], ['['], ['\\'], ['^$'], ['a|b'], ['?']])('regex character %p is searched literally, not as a pattern', async (q) => {
+  it.each([['.*'], ['('], ['['], ['\\'], ['^$'], ['a|b'], ['?']])('Q13 regex character %p is searched literally, not as a pattern', async (q) => {
     render(<ExploreScreen />); await ready()
     search(q)
     expect(screen.queryByText('Switch car')).toBeNull()
     expect(screen.queryByText('Bubble machine')).toBeNull()
   })
 
-  it('a query with no match shows no groups at all, and the doors stay', async () => {
+  it('Q13 a query with no match shows no groups at all, and the doors stay', async () => {
     render(<ExploreScreen />); await ready()
     search('zzzz')
     expect(screen.queryByText('Guides')).toBeNull()
     expect(screen.getByText('Learn')).toBeTruthy()
   })
 
-  it('a 5,000-character query does not crash and matches nothing', async () => {
+  it('Q13 a 5,000-character query does not crash and matches nothing', async () => {
     render(<ExploreScreen />); await ready()
     search('x'.repeat(5000))
     expect(screen.queryByText('Switch car')).toBeNull()
   })
 
-  it('finds names with apostrophes, ampersands, emoji, RTL and angle brackets', async () => {
+  it('Q13 finds names with apostrophes, ampersands, emoji, RTL and angle brackets', async () => {
     const names = ["O'Brien's toys", 'Tom & Jerry', 'Sam 🧸', 'سارة', '<b>Bold</b>']
     serve({ toys: names.map((name, i) => ({ id: `t${i}`, name })) })
     render(<ExploreScreen />); await ready()
@@ -76,7 +75,7 @@ describe('Explore search', () => {
   })
 
   it.each(NAMES.filter((c) => c.label !== 'very long' && c.label !== 'leading/trailing spaces').map((c): [string, string] => [c.label, c.value]))(
-    'a search for a %s organisation name finds that organisation', async (_l, name) => {
+    'Q13 a search for a %s organisation name finds that organisation', async (_l, name) => {
       serve({ orgs: [{ id: 'o9', name }] })
       render(<ExploreScreen />); await ready()
       search(name)
@@ -84,7 +83,7 @@ describe('Explore search', () => {
       expect(mockPush).toHaveBeenCalledWith('/toy-library/organisation/o9')
     })
 
-  it('shows every match from 1,000 toys and each opens its own page', async () => {
+  it('Q13 shows every match from 1,000 toys and each opens its own page', async () => {
     serve({ toys: Array.from({ length: 1000 }, (_, i) => ({ id: `t${i}`, name: `Drum ${i}` })) })
     render(<ExploreScreen />); await ready()
     search('drum')
@@ -93,7 +92,7 @@ describe('Explore search', () => {
     expect(mockPush).toHaveBeenCalledWith('/toy-library/t500')
   })
 
-  it('two toys with the same name both appear and open different pages', async () => {
+  it('Q13 two toys with the same name both appear and open different pages', async () => {
     serve({ toys: [{ id: 'a', name: 'Drum' }, { id: 'b', name: 'Drum' }] })
     render(<ExploreScreen />); await ready()
     search('drum')
@@ -102,7 +101,7 @@ describe('Explore search', () => {
     expect(mockPush).toHaveBeenCalledWith('/toy-library/b')
   })
 
-  it('a record with a missing name or title is skipped, not a crash for everyone else', async () => {
+  it('Q13 a record with a missing name or title is skipped, not a crash for everyone else', async () => {
     serve({
       tutorials: [{ id: 'g0', title: null }, { id: 'g1', title: 'Bubble machine' }],
       toys: [{ id: 't0', name: null }, { id: 't1', name: 'Switch car' }],

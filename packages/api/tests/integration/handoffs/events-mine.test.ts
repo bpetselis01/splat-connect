@@ -1,4 +1,3 @@
-// journeys: V01
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -59,7 +58,7 @@ describe('My events after a web registration', () => {
     expect(await mine(family)).toEqual([])
   })
 
-  it('lists the event, with its organisation, for the person who registered and nobody else', async () => {
+  it('V01 lists the event, with its organisation, for the person who registered and nobody else', async () => {
     const res = await app.request(
       `/api/events/${eventId}/registrations`,
       authed(family, 'POST', { name: 'A Family', email: 'family@example.com', answers: {} })

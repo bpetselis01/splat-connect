@@ -1,4 +1,3 @@
-// journeys: T05 T22
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -35,6 +34,8 @@ beforeAll(async () => {
     `/api/contributors/me/tutorials/${tutorialId}`,
     authed(owner.token, { method: 'POST' })
   )
+  // Submitting needs steps or a PDF (3361fc2a).
+  await adminClient().from('tutorials').update({ tutorial_pdf_url: `${tutorialId}/fixture.pdf` }).eq('id', tutorialId)
 })
 
 afterAll(async () => {
@@ -44,7 +45,7 @@ afterAll(async () => {
 })
 
 describe('tutorial status flow', () => {
-  it('owner can submit draft -> pending', async () => {
+  it('T05 WT32 owner can submit draft -> pending', async () => {
     const { data: current } = await adminClient().from('tutorials').select('updated_at').eq('id', tutorialId).single()
     const res = await app.request(
       `/api/tutorials/${tutorialId}`,

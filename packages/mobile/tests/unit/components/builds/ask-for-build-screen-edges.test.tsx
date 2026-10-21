@@ -140,7 +140,7 @@ describe('picking the guide', () => {
   it('shows the guides could not load when the read fails, and the form still refuses to post', async () => {
     mockGet.mockRejectedValue(new Error('Network request failed'))
     render(<AskForBuildScreen />)
-    expect(await screen.findByText("Couldn't load the guides. Close this and try again.")).toBeTruthy()
+    expect(await screen.findByText("Couldn't load the guides.")).toBeTruthy()
     post()
     expect(screen.getByText('Pick the guide you want built.')).toBeTruthy()
   })

@@ -41,7 +41,7 @@ function asAdmin() {
 }
 
 describe('POST /api/admin/ideas/:id/graduate', () => {
-  it('creates a draft tutorial with the author primary and joiners as collaborators', async () => {
+  it('Q30 creates a draft tutorial with the author primary and joiners as collaborators', async () => {
     const res = await app.request(`/api/admin/ideas/${ideaId}/graduate`, asAdmin())
     expect(res.status).toBe(201)
     tutorialId = ((await res.json()) as { tutorial_id: string }).tutorial_id
@@ -174,7 +174,7 @@ describe('POST /api/admin/ideas/:id/graduate', () => {
   //        participant with idea_graduated, using the same removed_at is
   //        null filter as Fix 2 so a removed participant is not notified
   //        about the guide they were excluded from either.
-  it('notifies the author and current participants with idea_graduated, excluding a removed participant', async () => {
+  it('Q30 notifies the author and current participants with idea_graduated, excluding a removed participant', async () => {
     const { data: notifications } = await adminClient()
       .from('notifications')
       .select('recipient_id, type, idea_id')
@@ -184,5 +184,45 @@ describe('POST /api/admin/ideas/:id/graduate', () => {
     expect(recipients).toContain(author.id)
     expect(recipients).toContain(joiner.id)
     expect(recipients).not.toContain(removedJoiner.id)
+  })
+
+  it('credits an author who also took part once, as primary, and tells them once', async () => {
+    const author4 = await createTestUser('contributor')
+    let idea4Id: string | undefined
+    let tutorial4Id: string | undefined
+    try {
+      const { data: idea4 } = await adminClient().from('toy_ideas').insert({
+        author_id: author4.id, title: 'Quiet zipper pull', summary: 'S', description: 'D',
+        intended_use: 'U', primary_user: 'P', status: 'challenge',
+      }).select('id').single()
+      idea4Id = idea4!.id
+      await adminClient().from('toy_idea_participants').insert([
+        { idea_id: idea4Id, profile_id: author4.id },
+        { idea_id: idea4Id, profile_id: joiner.id },
+      ])
+
+      const res = await app.request(`/api/admin/ideas/${idea4Id}/graduate`, asAdmin())
+      expect(res.status).toBe(201)
+      tutorial4Id = ((await res.json()) as { tutorial_id: string }).tutorial_id
+
+      const { data: contributors } = await adminClient()
+        .from('tutorial_contributors').select('profile_id, role').eq('tutorial_id', tutorial4Id)
+      expect(contributors).toHaveLength(2)
+      expect(contributors).toEqual(expect.arrayContaining([
+        { profile_id: author4.id, role: 'primary' },
+        { profile_id: joiner.id, role: 'collaborator' },
+      ]))
+
+      const { data: notified } = await adminClient()
+        .from('notifications').select('recipient_id').eq('idea_id', idea4Id).eq('type', 'idea_graduated')
+      expect((notified ?? []).map((n) => n.recipient_id).sort()).toEqual([author4.id, joiner.id].sort())
+
+      const { data: idea } = await adminClient().from('toy_ideas').select('status, tutorial_id').eq('id', idea4Id).single()
+      expect(idea).toEqual({ status: 'graduated', tutorial_id: tutorial4Id })
+    } finally {
+      if (tutorial4Id) await adminClient().from('tutorials').delete().eq('id', tutorial4Id)
+      if (idea4Id) await adminClient().from('toy_ideas').delete().eq('id', idea4Id)
+      await deleteTestUser(author4.id)
+    }
   })
 })

@@ -1,6 +1,5 @@
 // The invitations read is a secondary lookup on Account: when it rejects offline
 // the card simply does not appear, and nothing reaches console.error.
-// journeys: L31
 import { render, screen, waitFor } from '@testing-library/react-native'
 import { OrgInvites } from '../../../../components/organisation/org-invites'
 

@@ -5,12 +5,14 @@
  */
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import type { Route } from 'next'
+import { authUrl } from '@/lib/safe-next-path'
 
 export const metadata: Metadata = { title: 'Delete your account · SPLAT Connect' }
 
 export default function DeleteAccountInfoPage() {
   return (
-    <main className="mx-auto max-w-[680px] px-4 py-12 sm:px-8">
+    <div className="mx-auto max-w-[680px] px-4 py-12 sm:px-8">
       <h1 className="title-hub">Delete your SPLAT Connect account</h1>
       <p className="mt-3 text-lg leading-relaxed text-muted">
         You can delete your account yourself, in the app or here. It takes effect straight away.
@@ -35,7 +37,7 @@ export default function DeleteAccountInfoPage() {
         Can&apos;t sign in? <Link href="/contact" className="font-extrabold text-[var(--b700)] underline">Contact us</Link> and
         we&apos;ll delete it for you.
       </p>
-      <Link href="/login?next=/dashboard/profile/delete" className="auth-submit mt-8 px-8">Sign in to delete</Link>
-    </main>
+      <Link href={authUrl('login', '/dashboard/profile/delete') as Route} className="auth-submit mt-8 px-8">Sign in to delete</Link>
+    </div>
   )
 }

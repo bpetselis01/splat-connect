@@ -14,14 +14,16 @@
  * Related files:
  * - app/organizations/[id]: the per-organisation page this generalises
  * - app/organizations/[id]/projects/[tutorialId]: the review screen rows link to
- * - lib/org-access.ts: the same "affordance, not control" rule this notFound() follows
+ * - lib/org-access.ts: the same "affordance, not control" rule requireOrgLeader() follows
  */
 import { notFound } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
-import { getCapabilities } from '@/lib/capabilities'
+import { requireOrgLeader } from '@/lib/org-access'
+import { ActingOrgSwitcher } from '@/components/acting-org-switcher'
+import { actingOrg } from '@/lib/acting-org'
 import { OrgReviewBanner } from '@/components/org-review-banner'
 import { BoundaryLink } from '@/components/boundary-link'
-import { shortDate } from '@splat-connect/types'
+import { shortDate, hasCurrentAgreement } from '@splat-connect/types'
 import {
   BookOpen,
   Check,
@@ -31,21 +33,23 @@ import {
   SealCheck,
   Tray,
 } from '@phosphor-icons/react/dist/ssr'
+import { MarkNotificationsRead } from '@/components/mark-notifications-read'
 import type { Tutorial, TutorialOrg, UserAgreement } from '@splat-connect/types'
+
 
 type Backed = Tutorial & { tutorial_orgs?: TutorialOrg[] }
 
 export default async function OrganisationTabPage() {
-  const caps = await getCapabilities()
   // The tab strip hides this for a non-leader, but the strip is an affordance —
   // the page is its own control (lib/org-access.ts states the same rule).
-  if (!caps || caps.ledOrgs.length === 0) notFound()
+  const caps = await requireOrgLeader('/dashboard/organisation')
 
   const [tutorials, agreements] = await Promise.all([
     apiClient.get<Backed[]>('/api/tutorials').catch(() => [] as Backed[]),
     apiClient.get<UserAgreement[]>('/api/agreements/me').catch(() => [] as UserAgreement[]),
   ])
-  const hasTerms = agreements.some((a) => a.agreement_type === 'org_leader_terms')
+  const hasTerms = hasCurrentAgreement(agreements, 'org_leader_terms')
+  const acting = await actingOrg(caps)
   const byId = new Map(caps.ledOrgs.map((o) => [o.id, o]))
 
   // Same rule as the per-organisation page, merged across every led organisation:
@@ -65,10 +69,13 @@ export default async function OrganisationTabPage() {
 
   // The board names the one organisation it is for; a leader of several gets
   // the plain version rather than a list of names.
-  const whose = caps.ledOrgs.length === 1 ? caps.ledOrgs[0].name : 'your organisations'
+  const [first] = caps.ledOrgs
+  const whose = caps.ledOrgs.length === 1 ? first.name : 'your organisations'
 
   return (
     <div className="max-w-[920px]">
+      <MarkNotificationsRead bucket="organisations" />
+      {caps.ledOrgs.length > 1 && <ActingOrgSwitcher orgs={caps.ledOrgs} currentId={acting.id} />}
       <div className="dash-head">
         <div>
           <h1 className="title-hub">Review queue</h1>

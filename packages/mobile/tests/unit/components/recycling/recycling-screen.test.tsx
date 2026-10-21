@@ -1,4 +1,3 @@
-// journeys: V04 V05 V06
 import { CLEARANCE, scrollPaddings } from '../../bottom-spacing'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { DECLARATION_VERSION, RECYCLING_DECLARATION } from '@splat-connect/types'
@@ -52,7 +51,7 @@ beforeEach(() => {
   mockPost.mockResolvedValue({})
 })
 
-it('lists only active organisations that take plastic, and your drop-offs', async () => {
+it('V04 lists only active organisations that take plastic, and your drop-offs', async () => {
   render(<RecyclingScreen />)
   expect(await screen.findByText('Northside Therapy')).toBeTruthy()
   expect(screen.queryByText('Takes Nothing')).toBeNull()
@@ -62,7 +61,7 @@ it('lists only active organisations that take plastic, and your drop-offs', asyn
   expect(screen.getByText('1,900 g of print credit unspent')).toBeTruthy()
 })
 
-it('still lists organisations and drop-offs when the credit read fails', async () => {
+it('V04 still lists organisations and drop-offs when the credit read fails', async () => {
   const ok = mockGet.getMockImplementation()!
   mockGet.mockImplementation((path: string) =>
     path === '/api/organizations/recycling/credit' ? Promise.reject(new Error('down')) : ok(path)
@@ -73,7 +72,7 @@ it('still lists organisations and drop-offs when the credit read fails', async (
   expect(screen.getByText('0 g of print credit unspent')).toBeTruthy()
 })
 
-it('books only after two kilos and all seven lines, sending the declaration version', async () => {
+it('V05 books only after two kilos and all seven lines, sending the declaration version', async () => {
   render(<RecyclingScreen />)
   fireEvent.press(await screen.findByLabelText('Book a drop-off at Northside Therapy'))
   expect(screen.getByText('Drop-off at Northside Therapy')).toBeTruthy()
@@ -100,7 +99,7 @@ it('books only after two kilos and all seven lines, sending the declaration vers
   expect(await screen.findByText('Booked — Northside Therapy expects about 2.5 kg.')).toBeTruthy()
 })
 
-it('cancels a booking that is still waiting, and only that one', async () => {
+it('V06 cancels a booking that is still waiting, and only that one', async () => {
   mockPost.mockResolvedValue({ status: 'cancelled' })
   render(<RecyclingScreen />)
   fireEvent.press(await screen.findByLabelText('Cancel the PLA drop-off'))
@@ -117,7 +116,7 @@ it('stops loading when signed out', async () => {
   await waitFor(() => expect(screen.queryByTestId('recycling-skeleton')).toBeNull())
 })
 
-it('uploads the photo of the sorted plastic and books with its path', async () => {
+it('V05 uploads the photo of the sorted plastic and books with its path', async () => {
   mockUpload.mockResolvedValue({ path: 'me/0b5e7c8a-1d2e-4f3a-9b8c-7d6e5f4a3b2c.jpg', url: 'https://signed' })
   render(<RecyclingScreen />)
   fireEvent.press(await screen.findByLabelText('Book a drop-off at Northside Therapy'))

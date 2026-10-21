@@ -25,6 +25,9 @@ const TABLE: Record<NotificationType, Row> = {
   tutorial_approved: { carries: GUIDE, copy: '"Bubble machine" was approved and is now published', link: '/tutorials/t1' },
   tutorial_rejected: { carries: GUIDE, copy: '"Bubble machine" was rejected', link: '/tutorials/t1' },
   tutorial_thanked: { carries: GUIDE, copy: 'A family said thanks for "Bubble machine"', link: '/guides/t1' },
+  backing_accepted: { carries: GUIDE, copy: 'Sam agreed to back "Bubble machine"', link: '/guides/t1' },
+  backing_declined: { carries: GUIDE, copy: 'Sam can\'t back "Bubble machine" right now', link: '/guides/t1' },
+  report_resolved: { carries: { member_report_id: 'r1' }, copy: 'Your report was looked at', link: '/reports' },
   tutorial_noted: { carries: GUIDE, copy: 'Sam added a note to "Bubble machine"', link: '/guides/t1' },
   challenge_guide_published: {
     carries: GUIDE,
@@ -64,7 +67,17 @@ const TABLE: Record<NotificationType, Row> = {
   org_event_published: {
     carries: { org_event_id: 'e1', tutorial_title: 'Open day' },
     copy: 'Sam published an event: Open day',
-    link: '/news/event/e1',
+    link: '/events/e1',
+  },
+  org_event_changed: {
+    carries: { org_event_id: 'e1', tutorial_title: 'Open day' },
+    copy: 'Sam changed the time or place of Open day',
+    link: '/events/e1',
+  },
+  org_event_cancelled: {
+    carries: { org_event_id: 'e1', tutorial_title: 'Open day' },
+    copy: 'Sam cancelled Open day',
+    link: '/events/e1',
   },
   org_story_published: {
     carries: { org_story_id: 's1', tutorial_title: 'A good year' },
@@ -72,6 +85,21 @@ const TABLE: Record<NotificationType, Row> = {
     link: '/news/story/s1',
   },
   org_thanked: { carries: { org_id: 'o1' }, copy: 'Sam said thanks to your organisation', link: '/organisation/profile' },
+  recycling_received: { carries: { org_id: 'o1' }, copy: 'Sam received your drop-off', link: '/explore/recycling' },
+  recycling_declined: { carries: { org_id: 'o1' }, copy: 'Sam couldn\'t take your drop-off', link: '/explore/recycling' },
+  org_request_approved: { carries: { org_id: 'o1' }, copy: 'Sam was approved and you now lead it', link: '/organisation' },
+  org_request_declined: { carries: {}, copy: 'Sam wasn\'t approved', link: '/inbox' },
+  test_print_passed: { carries: {}, copy: 'The test print for Sam passed', link: '/print-for-others' },
+  test_print_failed: { carries: { org_id: 'o1' }, copy: 'The test print for Sam didn\'t pass', link: '/print-for-others' },
+  handover_confirmed: { carries: TX, copy: 'Sam confirmed the handover of Switch car', link: '/exchanges/tx1' },
+  leader_added: { carries: { org_id: 'o1' }, copy: 'You now lead Sam', link: '/organisation' },
+  leader_removed: { carries: { org_id: 'o1' }, copy: 'You no longer lead Sam', link: '/toy-library/organisation/o1' },
+  org_event_deleted: { carries: { org_id: 'o1', body: 'Open day' }, copy: 'Sam deleted an event you registered for', link: '/toy-library/organisation/o1' },
+  event_rsvp_received: { carries: { org_event_id: 'e1', tutorial_title: 'Open day' }, copy: 'You\'re registered for Open day', link: '/events/e1' },
+  idea_received: { carries: IDEA, copy: 'We received your idea', link: '/challenges' },
+  report_received: { carries: { member_report_id: 'r1' }, copy: 'We received your report', link: '/inbox' },
+  drop_off_booked: { carries: { org_id: 'o1' }, copy: 'Your drop-off at Sam is booked', link: '/explore/recycling' },
+  contact_received: { carries: {}, copy: 'We received your message', link: '/inbox' },
 }
 
 const row = (type: NotificationType): Notification => ({
@@ -88,5 +116,12 @@ describe('every notification type', () => {
   it.each(Object.keys(TABLE) as NotificationType[])('%s reads and routes as the table says', (type) => {
     expect(copyFor(row(type))).toBe(TABLE[type].copy)
     expect(linkFor(row(type))).toBe(TABLE[type].link)
+  })
+
+  it('an admin is sent to the admin review screen for the two review-queue types, and nowhere else differs', () => {
+    for (const type of Object.keys(TABLE) as NotificationType[]) {
+      const admin = type === 'backing_requested' || type === 'tutorial_submitted' ? '/admin/review/t1' : TABLE[type].link
+      expect(linkFor(row(type), true)).toBe(admin)
+    }
   })
 })

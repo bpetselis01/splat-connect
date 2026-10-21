@@ -1,4 +1,3 @@
-// journeys: T10 T11
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -31,7 +30,7 @@ afterAll(async () => {
 })
 
 describe('PUT /api/tutorials/:id/steps', () => {
-  it('saves the steps in order, numbered 1..n', async () => {
+  it('T10 WT21 saves the steps in order, numbered 1..n', async () => {
     const res = await put(author.token, [{ title: 'Open it', body: 'Unscrew the back.' }, { body: '  Solder the leads.  ' }])
     expect(res.status).toBe(200)
     const steps = (await res.json()) as Array<{ position: number; title: string | null; body: string }>
@@ -50,6 +49,8 @@ describe('PUT /api/tutorials/:id/steps', () => {
 
   it('comes back ordered inside both detail responses', async () => {
     await put(author.token, [{ body: 'A' }, { body: 'B' }, { body: 'C' }])
+    // The write sent the approved guide back to pending; the public read needs it live again.
+    await adminClient().from('tutorials').update({ status: 'approved' }).eq('id', guide)
     const own = await app.request(`/api/tutorials/${guide}`, { headers: { Authorization: `Bearer ${author.token}` } })
     expect(((await own.json()) as { steps: { body: string }[] }).steps.map((s) => s.body)).toEqual(['A', 'B', 'C'])
     const pub = await app.request(`/api/public/tutorials/${guide}`)
@@ -75,7 +76,13 @@ describe('PUT /api/tutorials/:id/steps', () => {
     expect((await put(author.token, [{ body: 'ok', photo_url: elsewhere }])).status).toBe(400)
   })
 
-  it('clears every step with an empty list', async () => {
+  it('clears every step with an empty list, unless that leaves a live guide with nothing', async () => {
+    await adminClient().from('tutorials').update({ tutorial_pdf_url: null }).eq('id', guide)
+    const refused = await put(author.token, [])
+    expect(refused.status).toBe(400)
+    expect(((await refused.json()) as { error: string }).error).toMatch(/steps or a PDF/)
+
+    await adminClient().from('tutorials').update({ tutorial_pdf_url: `${guide}/fixture.pdf` }).eq('id', guide)
     const res = await put(author.token, [])
     expect(res.status).toBe(200)
     expect(await res.json()).toEqual([])
@@ -83,7 +90,7 @@ describe('PUT /api/tutorials/:id/steps', () => {
 })
 
 describe('POST /api/upload/step-photo', () => {
-  it('stores under <id>/steps/ without counting toward the five-photo gallery', async () => {
+  it('T11 WT22 stores under <id>/steps/ without counting toward the five-photo gallery', async () => {
     await adminClient()
       .from('tutorials')
       .update({ photo_urls: ['a', 'b', 'c', 'd', 'e'] })

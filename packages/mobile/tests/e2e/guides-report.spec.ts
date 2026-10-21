@@ -1,11 +1,10 @@
-// journeys: G10
 import { test, expect } from '@playwright/test'
 import { adminClient, createContributor, createTutorial, signInAsNewContributor, uniqueTitle } from './helpers'
 
 // Report a problem from the hero of a guide page: pick a reason, say what
 // happened, send, and the SPLAT queue (member_reports) holds the row.
 
-test('a reader reports a guide from its hero and the report lands in the queue', async ({ page }) => {
+test('G10 a reader reports a guide from its hero and the report lands in the queue', async ({ page }) => {
   const reader = await signInAsNewContributor(page)
   const author = await createContributor()
   const title = uniqueTitle('E2E Reported Guide')
@@ -52,7 +51,7 @@ test('a reader reports a guide from its hero and the report lands in the queue',
   ])
 })
 
-test('a safety report promises a same-day reply, and unticking OK to contact is recorded', async ({ page }) => {
+test('G10 a safety report promises a same-day reply, and unticking OK to contact is recorded', async ({ page }) => {
   const reader = await signInAsNewContributor(page)
   const author = await createContributor()
   const id = await createTutorial(author.id, { title: uniqueTitle('E2E Safety Report Guide') })

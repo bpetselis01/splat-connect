@@ -13,7 +13,7 @@
  * - supabase/migrations/058_printers_and_print_jobs.sql
  */
 import { notFound, redirect } from 'next/navigation'
-import { revalidatePath } from 'next/cache'
+import { sendMessage, accept, reject, withdraw, confirm } from '@/app/dashboard/exchanges/actions'
 import Link from 'next/link'
 import {
   BookOpen,
@@ -28,7 +28,6 @@ import { requireCapabilities } from '@/lib/require-capabilities'
 import { apiClient } from '@/lib/api-client'
 import { fitNotesLines, initials, isOwnerSide, pickupAddress, printRequestExpired } from '@splat-connect/types'
 import type {
-  PickupAddress,
   ToyTransactionDetail,
   ToyTransactionSummary,
 } from '@splat-connect/types'
@@ -62,34 +61,6 @@ export default async function PrintJobPage({ params }: { params: Promise<{ id: s
     redirect(
       tx.type === 'build' ? `/dashboard/exchanges/build/${id}` : `/dashboard/exchanges/${id}`
     )
-  }
-
-  async function sendMessage(body: string) {
-    'use server'
-    await apiClient.post(`/api/toy-transactions/${id}/messages`, { body })
-    revalidatePath(`/dashboard/print-requests/${id}`)
-  }
-  async function accept(address: PickupAddress | null) {
-    'use server'
-    await apiClient.post(`/api/toy-transactions/${id}/accept`, address ?? {})
-    revalidatePath(`/dashboard/print-requests/${id}`)
-  }
-  async function reject(reason?: string) {
-    'use server'
-    await apiClient.post(`/api/toy-transactions/${id}/reject`, { reason })
-    revalidatePath(`/dashboard/print-requests/${id}`)
-  }
-  // Withdrawing one job of a grouped request withdraws the whole request (the
-  // API sweeps the other printers' jobs, 074).
-  async function withdraw() {
-    'use server'
-    await apiClient.post(`/api/toy-transactions/${id}/withdraw`, {})
-    revalidatePath(`/dashboard/print-requests/${id}`)
-  }
-  async function confirm(code: string) {
-    'use server'
-    await apiClient.post(`/api/toy-transactions/${id}/confirm`, { code })
-    revalidatePath(`/dashboard/print-requests/${id}`)
   }
 
   const ledOrgIds = caps.ledOrgs.map((org) => org.id)
@@ -212,11 +183,11 @@ export default async function PrintJobPage({ params }: { params: Promise<{ id: s
         viewerId={caps.profile.id}
         ledOrgIds={ledOrgIds}
         viewerDefaultAddress={pickupAddress(caps.profile)}
-        onSendMessage={sendMessage}
-        onAccept={accept}
-        onReject={reject}
-        onWithdraw={withdraw}
-        onConfirm={confirm}
+        onSendMessage={sendMessage.bind(null, id, 'print')}
+        onAccept={accept.bind(null, id, 'print')}
+        onReject={reject.bind(null, id, 'print')}
+        onWithdraw={withdraw.bind(null, id, 'print')}
+        onConfirm={confirm.bind(null, id, 'print')}
         variant="board"
         chatHead={
           <ChatHead

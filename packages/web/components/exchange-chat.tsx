@@ -12,7 +12,7 @@
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react'
 import { CheckCircle, PaperPlaneRight } from '@phosphor-icons/react/dist/ssr'
 import type { ThreadMessage } from '@splat-connect/types'
-import { initials } from '@splat-connect/types'
+import { initials, isTermsRequired } from '@splat-connect/types'
 
 /*
  * ponytail: locale and timezone are pinned rather than read from the browser.
@@ -36,6 +36,8 @@ const dayFormat = new Intl.DateTimeFormat(LOCALE, {
   timeZone: TZ,
 })
 const dayKeyFormat = new Intl.DateTimeFormat('en-CA', { timeZone: TZ })
+
+const ADMIN_LABEL = 'SPLAT admin'
 
 type Group = {
   senderId: string
@@ -87,6 +89,7 @@ export function ExchangeChat({
   head,
   highlightId,
   afterMessage,
+  draftKey,
 }: {
   messages: ThreadMessage[]
   viewerId: string
@@ -95,6 +98,7 @@ export function ExchangeChat({
   nameFor: (senderId: string) => string
   canSend: boolean
   busy: boolean
+  /** Rejects when the send fails, so the composer can give the text back. */
   onSend: (body: string) => Promise<void>
   /**
    * 'board' is the Soft Pop exchange thread, value for value: a head row, a
@@ -111,9 +115,13 @@ export function ExchangeChat({
   /** A control under one message, e.g. the asker's "Mark as the answer".
    *  Default variant only, for the same reason. */
   afterMessage?: (m: ThreadMessage) => ReactNode
+  /** Keeps an unsent message across a navigation away mid-send (the contributor
+   *  terms screen), under `draft:<viewerId>:<draftKey>` in sessionStorage. */
+  draftKey?: string
 }) {
   const board = variant === 'board'
   const [draft, setDraft] = useState('')
+  const storageKey = `draft:${viewerId}:${draftKey}`
   const logRef = useRef<HTMLDivElement>(null)
 
   // A chat that opens at the top of the history shows the least useful message
@@ -123,11 +131,44 @@ export function ExchangeChat({
     if (log) log.scrollTop = log.scrollHeight
   }, [messages.length])
 
+  // Storage can be unavailable (private mode, blocked site data); the draft is then simply not kept.
+  useEffect(() => {
+    if (!draftKey) return
+    try {
+      const saved = sessionStorage.getItem(storageKey)
+      if (saved) {
+        setDraft(saved)
+        sessionStorage.removeItem(storageKey)
+      }
+    } catch {}
+  }, [draftKey, storageKey])
+
+  // A new message means the send worked, so the saved copy is spent. Dropping it
+  // on onSend returning instead would race a terms redirect that is still navigating.
+  useEffect(() => {
+    if (!draftKey) return
+    try {
+      sessionStorage.removeItem(storageKey)
+    } catch {}
+  }, [draftKey, storageKey, messages.length])
+
   async function send() {
     if (!draft.trim()) return
     const body = draft
     setDraft('')
-    await onSend(body)
+    try {
+      if (draftKey) sessionStorage.setItem(storageKey, body)
+    } catch {}
+    try {
+      await onSend(body)
+    } catch (err) {
+      // A terms refusal is navigating away and the saved copy is what survives it.
+      if (isTermsRequired(err)) return
+      setDraft((current) => current || body)
+      try {
+        sessionStorage.removeItem(storageKey)
+      } catch {}
+    }
   }
 
   const groups = groupMessages(messages)
@@ -164,8 +205,12 @@ export function ExchangeChat({
             )
           }
 
-          const mine = group.senderId === viewerId
-          const name = nameFor(group.senderId)
+          // An admin is SPLAT speaking, whoever is reading: never "You", and not a
+          // sender nameFor could resolve (it knows only the two parties).
+          const admin = group.kind === 'admin'
+          const mine = !admin && group.senderId === viewerId
+          const name = admin ? ADMIN_LABEL : nameFor(group.senderId)
+          const bubbleTone = mine ? 'chat-bubble-mine' : `chat-bubble-theirs${admin ? ' chat-bubble-admin' : ''}`
           const last = group.messages[group.messages.length - 1]
 
           if (board) {
@@ -185,7 +230,7 @@ export function ExchangeChat({
                         {mine ? 'You' : name} ·{' '}
                         <time dateTime={m.created_at}>{timeFormat.format(new Date(m.created_at))}</time>
                       </span>
-                      <p className={`chat-bubble ${mine ? 'chat-bubble-mine' : 'chat-bubble-theirs'}`}>
+                      <p className={`chat-bubble ${bubbleTone}`}>
                         {m.body}
                       </p>
                     </div>
@@ -215,7 +260,7 @@ export function ExchangeChat({
                   {group.messages.map((m) => (
                     <Fragment key={m.id}>
                       <p
-                        className={`chat-bubble ${mine ? 'chat-bubble-mine' : 'chat-bubble-theirs'}`}
+                        className={`chat-bubble ${bubbleTone}`}
                         style={m.id === highlightId ? { background: 'var(--tok)', color: 'var(--tink)' } : undefined}
                       >
                         {m.id === highlightId && <span className="sr-only">The answer: </span>}

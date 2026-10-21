@@ -1,4 +1,3 @@
-// journeys: R07 R08 R10 R15 R16 L11
 import { test, expect } from '@playwright/test'
 import { adminClient, createContributor, makeOrgLeader, signIn, signInAsNewContributor } from './helpers'
 import { partyPage, seedPrintJob, txRow } from './maker-fixtures'
@@ -17,7 +16,7 @@ import {
  * reached again by tabs, rows and back), and then reads the row from the database.
  */
 
-test('the printer starts and finishes the print and the family’s open job page follows each stage on its own', async ({ browser, baseURL }) => {
+test('R07 R08 the printer starts and finishes the print and the family’s open job page follows each stage on its own', async ({ browser, baseURL }) => {
   test.setTimeout(180_000)
   const job = await seedPrintJob('accepted')
   const printerPage = await partyPage(browser, baseURL, job.printer)
@@ -50,7 +49,7 @@ test('the printer starts and finishes the print and the family’s open job page
   }
 })
 
-test('an organisation’s print orders: Me counts the waiting order, the family’s fit answer reaches the machine card, accepting clears the count', async ({
+test('L11 R10 an organisation’s print orders: Me counts the waiting order, the family’s fit answer reaches the machine card, accepting clears the count', async ({
   page,
   browser,
   baseURL,
@@ -72,7 +71,7 @@ test('an organisation’s print orders: Me counts the waiting order, the family�
   const familyPage = await partyPage(browser, baseURL, family)
   try {
     // L11: one order waiting, so Me says 1 and the screen's Requests tab says 1.
-    await page.getByRole('tab', { name: 'Me', exact: true }).click()
+    await page.getByRole('tab', { name: /^Me(,|$)/ }).click()
     await expect(meRow).toHaveText(/Print orders1$/)
     await meRow.click()
     await expect(page.getByRole('tab', { name: 'Requests, 1' })).toBeVisible()
@@ -103,7 +102,7 @@ test('an organisation’s print orders: Me counts the waiting order, the family�
   }
 })
 
-test('Get verified posts the test print, and once an admin passes it the printer card shows the Verified shield', async ({ page }) => {
+test('R15 Get verified posts the test print, and once an admin passes it the printer card shows the Verified shield', async ({ page }) => {
   test.setTimeout(180_000)
   const owner = await signInAsNewContributor(page)
   const family = await createContributor()
@@ -111,7 +110,7 @@ test('Get verified posts the test print, and once an admin passes it the printer
   const machine = await seedPrinter({ profileId: owner.id })
   const admin = adminClient()
 
-  await page.getByRole('tab', { name: 'Me', exact: true }).click()
+  await page.getByRole('tab', { name: /^Me(,|$)/ }).click()
   await page.getByRole('button', { name: 'Print for others', exact: true }).click()
   await page.getByRole('tab', { name: 'My printers' }).click()
   const card = page.getByText(machine.name, { exact: true })
@@ -143,7 +142,7 @@ test('Get verified posts the test print, and once an admin passes it the printer
   await expect(page.getByRole('button', { name: 'Get verified' })).toBeHidden()
 })
 
-test('pausing a printer turns its Pick button off in the finder, and opening it turns it back on', async ({ page, browser, baseURL }) => {
+test('R16 pausing a printer turns its Pick button off in the finder, and opening it turns it back on', async ({ page, browser, baseURL }) => {
   test.setTimeout(180_000)
   const owner = await namedContributor('Counts Printer Owner')
   const guide = await seedPrintableGuide(owner.id)

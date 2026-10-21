@@ -4,9 +4,10 @@
  * words half of it: who you are, where, and how to reach you, plus the thanks
  * notes a leader can hide. Publishes on save, with no review.
  *
- * Pictures, doors, rate lines and the capability / material pickers stay on
- * web's form; PATCH /profile only writes the fields it is sent, so saving here
- * leaves those untouched.
+ * Pictures, doors, rate lines, payment methods, capabilities and recycling are
+ * here too (sections/). Saving is three writes like web's: the profile PATCH,
+ * then the doors and rate lines, each a full-replace PUT of the local list. A
+ * failure keeps every local edit on screen.
  */
 import { logFailure } from '../../lib/log'
 import { useCallback, useState } from 'react'
@@ -14,7 +15,7 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { useFocusEffect } from 'expo-router'
 import { apiMessage, AU_STATES, isNetworkError, type Organization, type OrgThanks } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
-import { useCapabilities } from '../../lib/capabilities'
+import { useActingOrg } from '../../lib/acting-org'
 import { theme } from '../../lib/theme'
 import { Screen } from '../ui/Screen'
 import { Card } from '../ui/Card'
@@ -25,6 +26,11 @@ import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { ListSection } from '../list/list-kit'
 import { OrgLeadersSection } from './org-leaders-section'
+import { OrgPictures } from './sections/org-pictures'
+import { OrgDoors } from './sections/org-doors'
+import { OrgRates } from './sections/org-rates'
+import { OrgOffers } from './sections/org-offers'
+import { readLists, type DoorDraft, type RateDraft } from '../../lib/org-lists'
 
 const FIELDS = [
   ['name', 'Organisation name', 120],
@@ -39,12 +45,21 @@ const FIELDS = [
   ['website_url', 'Website', 300],
 ] as const
 
-type Field = (typeof FIELDS)[number][0] | 'state'
+type Field = (typeof FIELDS)[number][0] | 'state' | 'rate_note' | 'recycling_note'
+const TEXT_KEYS: Field[] = [...FIELDS.map(([k]) => k), 'state', 'rate_note', 'recycling_note']
 
 export function OrgProfileEditScreen() {
-  const { caps, refresh } = useCapabilities()
-  const orgId = caps?.ledOrgs[0]?.id
+  const { org: acting, refresh } = useActingOrg()
+  const orgId = acting?.id
   const [form, setForm] = useState<Record<Field, string> | null>(null)
+  const [orig, setOrig] = useState<{ logo: string | null; cover: string | null }>({ logo: null, cover: null })
+  const [logo, setLogo] = useState<string | null>(null)
+  const [cover, setCover] = useState<string | null>(null)
+  const [doors, setDoors] = useState<DoorDraft[]>([])
+  const [lines, setLines] = useState<RateDraft[]>([])
+  const [payments, setPayments] = useState<string[]>([])
+  const [capabilities, setCapabilities] = useState<string[]>([])
+  const [materials, setMaterials] = useState<string[]>([])
   const [thanks, setThanks] = useState<OrgThanks[]>([])
   const [saving, setSaving] = useState(false)
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null)
@@ -56,13 +71,28 @@ export function OrgProfileEditScreen() {
       if (!orgId) return
       apiClient
         .get<Organization>(`/api/organizations/${orgId}`)
-        .then((org) =>
+        .then((org) => {
           setForm(
             Object.fromEntries(
-              [...FIELDS.map(([k]) => k), 'state'].map((k) => [k, String((org as unknown as Record<string, unknown>)[k] ?? '')])
+              TEXT_KEYS.map((k) => [k, String((org as unknown as Record<string, unknown>)[k] ?? '')])
             ) as Record<Field, string>
           )
-        )
+          setOrig({ logo: org.logo_url ?? null, cover: org.cover_url ?? null })
+          setLogo(org.logo_url ?? null)
+          setCover(org.cover_url ?? null)
+          setDoors((org.doors ?? []).map((d) => ({ key: d.id, title: d.title, body: d.body ?? '', target: d.target })))
+          setLines(
+            (org.rate_lines ?? []).map((l) => ({
+              key: l.id,
+              description: l.description,
+              amount: (l.amount_cents / 100).toFixed(2),
+              claiming: l.claiming,
+            }))
+          )
+          setPayments(org.payment_methods ?? [])
+          setCapabilities(org.capabilities ?? [])
+          setMaterials(org.recycling_materials ?? [])
+        })
         .catch((err) => {
           logFailure('[OrgProfileEditScreen] load failed:', err)
           setLoadFailed(isNetworkError(err) ? 'offline' : 'other')
@@ -73,10 +103,29 @@ export function OrgProfileEditScreen() {
 
   async function save() {
     if (!form || !orgId) return
+    const parsed = readLists(doors, lines, form.rate_note)
+    if ('error' in parsed) {
+      setNote({ ok: false, text: parsed.error })
+      return
+    }
     setSaving(true)
     setNote(null)
     try {
-      await apiClient.patch(`/api/organizations/${orgId}/profile`, { ...form, name: form.name.trim() })
+      await apiClient.patch(`/api/organizations/${orgId}/profile`, {
+        ...form,
+        name: form.name.trim(),
+        payment_methods: payments,
+        capabilities,
+        recycling_materials: materials,
+        // A picture is written by its upload; saving can only take one down.
+        ...(orig.logo && !logo ? { logo_url: null } : {}),
+        ...(orig.cover && !cover ? { cover_url: null } : {}),
+      })
+      await Promise.all([
+        apiClient.put(`/api/organizations/${orgId}/doors`, { doors: parsed.doors }),
+        apiClient.put(`/api/organizations/${orgId}/rate-lines`, { lines: parsed.lines }),
+      ])
+      setOrig({ logo, cover })
       setNote({ ok: true, text: 'Saved. It is on your public page now.' })
     } catch (err) {
       setNote({ ok: false, text: apiMessage(err, 'That did not save. Check your connection and try again.') })
@@ -131,8 +180,13 @@ export function OrgProfileEditScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <Text style={styles.lede}>
           This is the page a family lands on before they ask you for anything. It publishes the moment you save.
-          Pictures, doors and rates are edited on the web.
         </Text>
+        <OrgPictures
+          orgId={orgId!}
+          logo={logo}
+          cover={cover}
+          onChange={(slot, url) => (slot === 'logo' ? setLogo(url) : setCover(url))}
+        />
         {FIELDS.map(([key, label, max]) => (
           <TextField
             key={key}
@@ -151,6 +205,23 @@ export function OrgProfileEditScreen() {
             <Chip key={s} role="radio" label={s} active={form.state === s} onPress={() => setForm({ ...form, state: s })} />
           ))}
         </View>
+        <OrgOffers
+          capabilities={capabilities}
+          onCapabilities={setCapabilities}
+          materials={materials}
+          onMaterials={setMaterials}
+          recyclingNote={form.recycling_note}
+          onRecyclingNote={(v) => setForm({ ...form, recycling_note: v })}
+        />
+        <OrgDoors doors={doors} onChange={setDoors} />
+        <OrgRates
+          lines={lines}
+          onLines={setLines}
+          note={form.rate_note}
+          onNote={(v) => setForm({ ...form, rate_note: v })}
+          payments={payments}
+          onPayments={setPayments}
+        />
         {note ? <Text style={[styles.note, { color: note.ok ? theme.colors.success : theme.colors.danger }]}>{note.text}</Text> : null}
         <Button label="Save and publish" onPress={() => void save()} loading={saving} style={styles.primary} />
 

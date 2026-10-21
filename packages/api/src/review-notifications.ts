@@ -27,6 +27,7 @@
  */
 import { createAdminClient } from './supabase/client.js'
 import { notificationBody } from '@splat-connect/types'
+import { notify } from './notify.js'
 import { profileName } from './profile-name.js'
 
 type Admin = ReturnType<typeof createAdminClient>
@@ -65,15 +66,11 @@ async function adminIds(admin: Admin, exclude: string): Promise<string[]> {
 }
 
 async function insert(
-  admin: Admin,
   recipients: string[],
-  row: { type: 'backing_requested' | 'tutorial_submitted'; tutorial_id: string; tutorial_title: string; actor_name: string }
+  row: { type: 'backing_requested' | 'tutorial_submitted' | 'backing_accepted' | 'backing_declined'; tutorial_id: string; tutorial_title: string; actor_name: string }
 ) {
   if (!recipients.length) return
-  const { error } = await admin
-    .from('notifications')
-    .insert(recipients.map((recipient_id) => ({ recipient_id, ...row })))
-  if (error) console.error(`[review-notifications] ${row.type} insert failed:`, error.message)
+  await notify(recipients.map((recipient_id) => ({ recipient_id, ...row })), `review-notifications.${row.type}`)
 }
 
 /**
@@ -95,7 +92,7 @@ export async function notifyBackingRequested(opts: {
     .eq('id', opts.tutorialId)
     .maybeSingle()
   const recipients = await leaderIds(admin, [opts.orgId], opts.actorId)
-  await insert(admin, recipients, {
+  await insert(recipients, {
     type: 'backing_requested',
     tutorial_id: opts.tutorialId,
     tutorial_title: (tutorial?.title as string | undefined) ?? '',
@@ -135,7 +132,7 @@ export async function notifyTutorialSubmitted(opts: {
   const recipients = orgIds.length
     ? await leaderIds(admin, orgIds, opts.actorId)
     : await adminIds(admin, opts.actorId)
-  await insert(admin, recipients, {
+  await insert(recipients, {
     type: 'tutorial_submitted',
     tutorial_id: opts.tutorialId,
     tutorial_title: opts.tutorialTitle,
@@ -166,7 +163,7 @@ export async function notifyTutorialReviewed(opts: {
     return
   }
   if (!contributors?.length) return
-  const { error: insertError } = await admin.from('notifications').insert(
+  await notify(
     contributors.map((row: { profile_id: string }) => ({
       recipient_id: row.profile_id,
       type: opts.status === 'approved' ? 'tutorial_approved' : 'tutorial_rejected',
@@ -175,7 +172,37 @@ export async function notifyTutorialReviewed(opts: {
       actor_name: opts.actorName,
       // 119: the reason a guide came back, to its contributors only.
       body: opts.status === 'approved' ? null : notificationBody(opts.rejectionNote),
-    }))
+    })),
+    'review-notifications.reviewed'
   )
-  if (insertError) console.error(`[review-notifications] review insert failed:`, insertError.message)
+}
+
+/**
+ * A leader answered a backing request. Tell the guide's author (the primary
+ * contributor), naming the organisation. Called only when the answer changed
+ * the row's state, so answering twice never tells them twice.
+ */
+export async function notifyBacking(opts: {
+  tutorialId: string
+  orgId: string
+  status: 'accepted' | 'declined'
+}): Promise<void> {
+  const admin = createAdminClient()
+  const [{ data: tutorial }, { data: org }, { data: author }] = await Promise.all([
+    admin.from('tutorials').select('title').eq('id', opts.tutorialId).maybeSingle(),
+    admin.from('organizations').select('name').eq('id', opts.orgId).maybeSingle(),
+    admin
+      .from('tutorial_contributors')
+      .select('profile_id')
+      .eq('tutorial_id', opts.tutorialId)
+      .eq('role', 'primary')
+      .maybeSingle(),
+  ])
+  if (!author) return
+  await insert([author.profile_id as string], {
+    type: opts.status === 'accepted' ? 'backing_accepted' : 'backing_declined',
+    tutorial_id: opts.tutorialId,
+    tutorial_title: (tutorial?.title as string | undefined) ?? '',
+    actor_name: (org?.name as string | undefined) ?? 'An organisation',
+  })
 }

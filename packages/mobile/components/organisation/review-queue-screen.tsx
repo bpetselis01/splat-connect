@@ -10,13 +10,14 @@
 //
 // Title comes from the native header (app/(my)/_layout.tsx: "Review queue").
 import { logFailure } from '../../lib/log'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { View, ScrollView, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
-import type { Tutorial, TutorialOrg } from '@splat-connect/types'
+import { MARK_BUCKET_READ_PATH, type Tutorial, type TutorialOrg } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { useCapabilities } from '../../lib/capabilities'
+import { useActingOrg } from '../../lib/acting-org'
 import { Screen } from '../ui/Screen'
 import { Button } from '../ui/Button'
 import { EmptyState } from '../ui/EmptyState'
@@ -69,8 +70,9 @@ function Row({
 
 export function ReviewQueueScreen() {
   const router = useRouter()
-  const { caps, loading: capsLoading } = useCapabilities()
+  const { caps, loading: capsLoading, refresh } = useCapabilities()
   const ledOrgs = caps?.ledOrgs ?? []
+  const { org: actingOrg } = useActingOrg()
   const [tutorials, setTutorials] = useState<Backed[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
@@ -79,7 +81,6 @@ export function ReviewQueueScreen() {
   const isLeader = ledOrgs.length > 0
 
   useEffect(() => {
-    // PENDING(admin-guide-review-screen): a non-leader admin lands on this empty state; the review decision is web-only.
     if (!isLeader) {
       setLoading(false)
       return
@@ -112,6 +113,18 @@ export function ReviewQueueScreen() {
     }, [])
   )
 
+  // Opening the leader's hub is what clears the organisations badge, as on web.
+  // Once per mount: the unread count refetches after, so refocusing is a no-op.
+  const cleared = useRef(false)
+  useEffect(() => {
+    if (!isLeader || cleared.current) return
+    cleared.current = true
+    apiClient
+      .post(MARK_BUCKET_READ_PATH, { bucket: 'organisations' })
+      .then(() => refresh())
+      .catch((err) => logFailure('[ReviewQueueScreen] organisations mark-read failed:', err))
+  }, [isLeader, refresh])
+
   // While capabilities are in flight, ledOrgs is empty for everyone — showing
   // the not-a-leader copy in that window tells a real leader this isn't their
   // screen for as long as the fetch takes.
@@ -129,8 +142,16 @@ export function ReviewQueueScreen() {
         <EmptyState
           icon="business-outline"
           title="This screen belongs to organisation leaders."
-          hint="When an organisation makes you a leader, what is waiting on it shows up here."
-        />
+          hint={
+            caps?.isAdmin
+              ? 'As an admin you review submitted guides from the admin queue.'
+              : 'When an organisation makes you a leader, what is waiting on it shows up here.'
+          }
+        >
+          {caps?.isAdmin ? (
+            <Button label="Guides to review" variant="accent" onPress={() => router.push('/admin/review')} style={styles.retry} />
+          ) : null}
+        </EmptyState>
       </Screen>
     )
   }
@@ -159,8 +180,9 @@ export function ReviewQueueScreen() {
     <Screen>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <ListIntro
-          // PENDING(multi-org-leader-switch): ledOrgs[0], the first organisation, is used silently.
-          lead={`Guides waiting for ${ledOrgs.length === 1 ? ledOrgs[0].name : 'your organisations'}. Oldest first.`}
+          lead={`Guides waiting for ${ledOrgs.length === 1 && actingOrg ? actingOrg.name : 'your organisations'}. Oldest first.`}
+          cta={caps?.isAdmin ? 'Guides to review as admin' : undefined}
+          onCta={() => router.push('/admin/review')}
         />
         {loading ? (
           <View>

@@ -1,4 +1,3 @@
-// journeys: Z01 Z03
 import { test, expect } from '@playwright/test'
 import { adminClient, createContributor, createPublishedToy, pickFilter, renameProfile, setPickupAddress, signIn, uniqueTitle } from './helpers'
 
@@ -15,12 +14,12 @@ async function profileRow(id: string) {
   return data
 }
 
-test('renaming on Account changes the greeting on Me', async ({ page }) => {
+test('Z01 renaming on Account changes the greeting on Me', async ({ page }) => {
   const user = await createContributor()
   await renameProfile(user.id, 'Alba Quokka')
   await signIn(page, user.email, user.password)
   await expect(page).toHaveURL(/\/home$/)
-  await page.getByRole('tab', { name: 'Me', exact: true }).click()
+  await page.getByRole('tab', { name: /^Me(,|$)/ }).click()
   await expect(page.getByText('Hi, Alba', { exact: true })).toBeVisible()
 
   await page.getByRole('button', { name: 'Account', exact: true }).click()
@@ -36,7 +35,7 @@ test('renaming on Account changes the greeting on Me', async ({ page }) => {
   await expect(page.getByText('Hi, Alba', { exact: true })).toHaveCount(0)
 })
 
-test('a postcode on Account puts a distance on the toy card, and a new postcode changes it', async ({ page }) => {
+test('Z03 a postcode on Account puts a distance on the toy card, and a new postcode changes it', async ({ page }) => {
   const owner = await createContributor()
   await setPickupAddress(owner.id, { pickup_line1: '1 Test St', pickup_suburb: 'Melbourne', pickup_state: 'VIC', pickup_postcode: '3000' })
   const toy = uniqueTitle('E2E Distance Toy')
@@ -52,7 +51,7 @@ test('a postcode on Account puts a distance on the toy card, and a new postcode 
   await expect(card0.getByText(/ km$/)).toHaveCount(0)
 
   const setPostcode = async (postcode: string) => {
-    await page.getByRole('tab', { name: 'Me', exact: true }).click()
+    await page.getByRole('tab', { name: /^Me(,|$)/ }).click()
     await page.getByRole('button', { name: 'Account', exact: true }).click()
     await expect(page).toHaveURL(/\/account$/)
     const field = page.getByLabel('Postcode', { exact: true })

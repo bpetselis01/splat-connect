@@ -62,6 +62,7 @@ describe('buildControls', () => {
   it('lets anyone but the family claim an unclaimed request, and nobody claim a taken one', () => {
     expect(buildControls(open, STRANGER).canClaim).toBe(true)
     expect(buildControls(open, FAMILY).canClaim).toBe(false)
+    expect(buildControls(open, STRANGER, [], true).canClaim).toBe(false)
     expect(buildControls(tx({ status: 'requested' }), STRANGER).canClaim).toBe(false)
   })
 

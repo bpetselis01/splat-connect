@@ -1,4 +1,3 @@
-// journeys: L18 L20 L21 L22 L30
 /**
  * Stories, and the two things that keep a public reading page honest.
  *
@@ -70,7 +69,7 @@ describe('publishing a story', () => {
     expect(((await res.json()) as { error: string }).error).toMatch(/consent/i)
   })
 
-  it('saves a draft with no consent, because a draft is not published', async () => {
+  it('L20 WB25 saves a draft with no consent, because a draft is not published', async () => {
     const res = await app.request(
       `/api/organizations/${orgId}/stories`,
       json(leader.token, 'POST', story({ consent_confirmed: false }))
@@ -81,7 +80,7 @@ describe('publishing a story', () => {
     expect(row.published_at).toBeNull()
   })
 
-  it('stamps published_at on the way out, not from created_at', async () => {
+  it('L20 WB25 stamps published_at on the way out, not from created_at', async () => {
     const res = await app.request(
       `/api/organizations/${orgId}/stories`,
       json(leader.token, 'POST', story({ status: 'published' }))
@@ -117,7 +116,7 @@ describe('publishing a story', () => {
 })
 
 describe('the public list', () => {
-  it('shows the published one and never the draft', async () => {
+  it('WS09 shows the published one and never the draft', async () => {
     const res = await app.request('/api/public/stories')
     expect(res.status).toBe(200)
     const rows = (await res.json()) as Array<{ id: string; read_minutes: number }>
@@ -136,7 +135,7 @@ describe('the public list', () => {
     expect(res.status).toBe(404)
   })
 
-  it('clears published_at when a story is unpublished', async () => {
+  it('L21 WB26 clears published_at when a story is unpublished', async () => {
     const res = await app.request(
       `/api/organizations/${orgId}/stories/${publishedId}`,
       json(leader.token, 'PATCH', { status: 'draft' })
@@ -146,5 +145,78 @@ describe('the public list', () => {
 
     const list = (await (await app.request('/api/public/stories')).json()) as Array<{ id: string }>
     expect(list.map((r) => r.id)).not.toContain(publishedId)
+  })
+})
+
+describe('editing a story', () => {
+  let liveId: string
+  let liveAt: string
+
+  beforeAll(async () => {
+    const res = await app.request(
+      `/api/organizations/${orgId}/stories`,
+      json(leader.token, 'POST', story({ status: 'published' }))
+    )
+    const row = (await res.json()) as { id: string; published_at: string }
+    liveId = row.id
+    liveAt = row.published_at
+  })
+
+  it('WB26 rewrites a published story and keeps it published, under its first date', async () => {
+    const res = await app.request(
+      `/api/organizations/${orgId}/stories/${liveId}`,
+      json(leader.token, 'PATCH', story({ title: 'Fixed the typo', status: 'published' }))
+    )
+    expect(res.status).toBe(200)
+    const row = (await res.json()) as { title: string; status: string; published_at: string }
+    expect(row.title).toBe('Fixed the typo')
+    expect(row.status).toBe('published')
+    expect(row.published_at).toBe(liveAt)
+  })
+
+  // Chain: the status-only handler read a missing status as 'draft', so a
+  //        content save that forgot it took the story off the site.
+  it('leaves the status alone when the body does not send one', async () => {
+    const res = await app.request(
+      `/api/organizations/${orgId}/stories/${liveId}`,
+      json(leader.token, 'PATCH', story({ title: 'No status sent' }))
+    )
+    expect(res.status).toBe(200)
+    expect(((await res.json()) as { status: string }).status).toBe('published')
+  })
+
+  it('refuses an edit that drops consent on a published story', async () => {
+    const res = await app.request(
+      `/api/organizations/${orgId}/stories/${liveId}`,
+      json(leader.token, 'PATCH', story({ consent_confirmed: false, status: 'published' }))
+    )
+    expect(res.status).toBe(400)
+    expect(((await res.json()) as { error: string }).error).toMatch(/consent/i)
+  })
+
+  it('refuses the same things the first save refuses', async () => {
+    const quote = await app.request(
+      `/api/organizations/${orgId}/stories/${liveId}`,
+      json(leader.token, 'PATCH', story({ pull_quote: 'He looked at us.', pull_quote_by: '' }))
+    )
+    expect(quote.status).toBe(400)
+    const announcement = await app.request(
+      `/api/organizations/${orgId}/stories/${liveId}`,
+      json(leader.token, 'PATCH', story({ kind: 'announcement' }))
+    )
+    expect(announcement.status).toBe(400)
+  })
+
+  it('404s a story that is not theirs', async () => {
+    const outsider = await createTestUser('contributor')
+    try {
+      const res = await app.request(
+        `/api/organizations/${orgId}/stories/${liveId}`,
+        json(outsider.token, 'PATCH', story({ title: 'Hijacked' }))
+      )
+      expect(res.status).toBe(404)
+    } finally {
+      await deleteTestUser(outsider.id)
+    }
   })
 })

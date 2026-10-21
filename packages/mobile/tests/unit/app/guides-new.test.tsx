@@ -1,5 +1,4 @@
 // packages/mobile/tests/unit/app/guides-new.test.tsx
-// journeys: N01 N04 N05 N06
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import NewGuideRoute from '../../../app/(tabs)/guides/new'
 import { useAuth } from '../../../lib/auth-context'
@@ -53,7 +52,7 @@ describe('NewGuideRoute', () => {
     expect(screen.getByLabelText('Create draft').props.accessibilityState.disabled).toBe(false)
   })
 
-  it('posts the uuid, title and the default kind/difficulty, then replaces into the editor', async () => {
+  it('N06 posts the uuid, title and the default kind/difficulty, then replaces into the editor', async () => {
     mockPost.mockResolvedValue({ id: 'uuid-1' })
     render(<NewGuideRoute />)
     fireEvent.changeText(screen.getByPlaceholderText('Title'), 'Bubble machine')
@@ -79,7 +78,7 @@ describe('NewGuideRoute', () => {
     })
   })
 
-  it('posts the picked kind and difficulty when the chips are changed', async () => {
+  it('N04 posts the picked kind and difficulty when the chips are changed', async () => {
     mockPost.mockResolvedValue({ id: 'uuid-1' })
     render(<NewGuideRoute />)
     fireEvent.changeText(screen.getByPlaceholderText('Title'), 'Head switch arm')
@@ -96,7 +95,7 @@ describe('NewGuideRoute', () => {
     )
   })
 
-  it('reveals the terms gate on a 403, then accepts and retries the SAME id', async () => {
+  it('N05 reveals the terms gate on a 403, then accepts and retries the SAME id', async () => {
     mockPost
       .mockRejectedValueOnce(
         new Error(
@@ -135,7 +134,7 @@ describe('NewGuideRoute', () => {
     })
   })
 
-  it('sends the cover and age range once the draft exists', async () => {
+  it('N04 N06 sends the cover and age range once the draft exists', async () => {
     mockPost.mockResolvedValue({ id: 'uuid-1' })
     mockGet.mockResolvedValue({ updated_at: 'v1' })
     mockPatch.mockResolvedValue({})
@@ -221,7 +220,7 @@ describe('NewGuideRoute — Start from a PDF', () => {
     await screen.findByTestId('new-guide-pdf-found')
   }
 
-  it('shows what was found and prefills the title before saving anything', async () => {
+  it('N01 shows what was found and prefills the title before saving anything', async () => {
     await readPdf()
     expect(mockUpload).toHaveBeenCalledWith(
       '/api/tutorials/import-pdf',
@@ -236,7 +235,7 @@ describe('NewGuideRoute — Start from a PDF', () => {
     expect(mockPost).not.toHaveBeenCalled()
   })
 
-  it('creates the guide, stores the PDF, fills parts, tools and steps, and lands on the hub', async () => {
+  it('N06 creates the guide, stores the PDF, fills parts, tools and steps, and lands on the hub', async () => {
     await readPdf()
     fireEvent.press(screen.getByLabelText('Create draft'))
     await waitFor(() => expect(mockReplace).toHaveBeenCalled())

@@ -1,4 +1,3 @@
-// journeys: T20
 import { render, screen } from '@testing-library/react-native'
 import { SaveChip } from '../../../../components/my-tutorials/sections/save-chip'
 
@@ -28,7 +27,7 @@ it('says nothing at rest, so an untouched screen makes no claim', () => {
   expect(screen.queryByTestId('save-chip')).toBeNull()
 })
 
-it('leaves the error to the section’s own ErrorRow rather than saying it twice', () => {
+it('T20 leaves the error to the section’s own ErrorRow rather than saying it twice', () => {
   mockDraft.saveState = 'error'
   render(<SaveChip />)
   expect(screen.queryByTestId('save-chip')).toBeNull()

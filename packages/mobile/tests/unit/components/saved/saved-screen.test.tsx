@@ -1,5 +1,4 @@
 // packages/mobile/tests/unit/components/saved/saved-screen.test.tsx
-// journeys: V07
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { SavedScreen } from '../../../../components/saved/saved-screen'
 
@@ -23,7 +22,7 @@ beforeEach(() => {
 })
 
 describe('SavedScreen', () => {
-  it('counts each type on its tile', async () => {
+  it('V07 counts each type on its tile', async () => {
     mockGet.mockResolvedValue({ tutorials: ['t1', 't2'], toys: ['y1'], challenges: [], organisations: ['o1'], parts: ['f1'] })
     render(<SavedScreen />)
 
@@ -39,7 +38,7 @@ describe('SavedScreen', () => {
     expect(mockGet).toHaveBeenCalledWith('/api/saves/ids')
   })
 
-  it('opens each type list', async () => {
+  it('V07 opens each type list', async () => {
     render(<SavedScreen />)
     fireEvent.press(await screen.findByRole('button', { name: 'Guides' }))
     expect(mockPush).toHaveBeenCalledWith('/saved/tutorials')
@@ -51,7 +50,7 @@ describe('SavedScreen', () => {
     expect(mockPush).toHaveBeenCalledWith('/saved/organisations')
   })
 
-  it('offers a retry when the counts fail, and recovers on it', async () => {
+  it('V07 offers a retry when the counts fail, and recovers on it', async () => {
     mockGet.mockRejectedValue(new Error('down'))
     render(<SavedScreen />)
 

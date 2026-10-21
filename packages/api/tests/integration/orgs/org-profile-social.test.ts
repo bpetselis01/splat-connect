@@ -1,4 +1,3 @@
-// journeys: L23 L24 L28 L29 P02 P03 P04 P07 P10
 /**
  * The board's organisation profile (076) and its three buttons (077).
  *
@@ -64,7 +63,7 @@ afterAll(async () => {
 })
 
 describe('the profile, doors and breakdown', () => {
-  it('lets a leader write the 076 fields and shows them publicly', async () => {
+  it('L23 WB30 lets a leader write the 076 fields and shows them publicly', async () => {
     const res = await app.request(
       `/api/organizations/${orgId}/profile`,
       json(leader.token, 'PATCH', {
@@ -84,6 +83,30 @@ describe('the profile, doors and breakdown', () => {
       json(leader.token, 'PATCH', { payment_methods: ['bitcoin'] })
     )
     expect(bad.status).toBe(400)
+  })
+
+  it('stores only http(s) website URLs, so the public page never renders a javascript: href', async () => {
+    const patch = (website_url: string) =>
+      app.request(`/api/organizations/${orgId}/profile`, json(leader.token, 'PATCH', { website_url }))
+    const stored = async () =>
+      (await adminClient().from('organizations').select('website_url').eq('id', orgId).single()).data
+        ?.website_url
+
+    expect((await patch('https://example.org')).status).toBe(200)
+    expect(await stored()).toBe('https://example.org')
+
+    expect((await patch('HTTPS://EXAMPLE.ORG')).status).toBe(200)
+    expect(await stored()).toBe('HTTPS://EXAMPLE.ORG')
+
+    expect((await patch('')).status).toBe(200)
+    expect(await stored()).toBeNull()
+
+    const bad = await patch('javascript:alert(1)')
+    expect(bad.status).toBe(400)
+    expect(((await bad.json()) as { error: string }).error).toBe('website_url must start with http:// or https://')
+
+    expect((await patch('example.org')).status).toBe(400)
+    expect(await stored()).toBeNull()
   })
 
   it('never lets a leader set verified_at — only the admin route does', async () => {
@@ -112,7 +135,7 @@ describe('the profile, doors and breakdown', () => {
     expect(after!.verified_at).not.toBeNull()
   })
 
-  it('replaces doors and rate lines for a leader only, at most six doors', async () => {
+  it('L23 WB30 replaces doors and rate lines for a leader only, at most six doors', async () => {
     const doors = [
       { title: 'Borrow a toy', body: 'From the shelf.', target: 'toy_library' },
       { title: 'Have a part printed', target: 'print' },
@@ -144,7 +167,7 @@ describe('the profile, doors and breakdown', () => {
     expect(pub.kind).toBe('Paediatric OT service')
   })
 
-  it('uploads a logo for a leader only, and only an image', async () => {
+  it('WB31 uploads a logo for a leader only, and only an image', async () => {
     const send = (token: string, type = 'image/png') => {
       const fd = new FormData()
       fd.append('file', new File(['png-bytes'], 'logo.png', { type }))
@@ -164,7 +187,7 @@ describe('the profile, doors and breakdown', () => {
 })
 
 describe('say thanks', () => {
-  it('takes one thanks per person, and tells the leaders', async () => {
+  it('P04 WN09 takes one thanks per person, and tells the leaders (org_thanked)', async () => {
     const first = await app.request(
       `/api/organizations/${orgId}/thanks`,
       json(family.token, 'POST', { note: 'The switch clinic changed our Thursdays.', byline: 'Sam', show_note: true })
@@ -193,7 +216,7 @@ describe('say thanks', () => {
     expect(raw).not.toContain('Private word')
   })
 
-  it('lets a leader hide a note, and nobody else', async () => {
+  it('L24 WB32 lets a leader hide a note, and nobody else', async () => {
     const byOther = await app.request(
       `/api/organizations/${orgId}/thanks/${family.id}`,
       json(stranger.token, 'PATCH', { hidden: true })
@@ -219,7 +242,7 @@ describe('say thanks', () => {
 describe('message', () => {
   let conversationId: string
 
-  it('opens one conversation per person and tells every leader', async () => {
+  it('P10 WD35 WN12 opens one conversation per person and tells every leader (org_message)', async () => {
     const first = await app.request(
       `/api/organizations/${orgId}/conversations/mine/messages`,
       json(family.token, 'POST', { body: 'Can we come on Thursday?' })
@@ -237,7 +260,7 @@ describe('message', () => {
     expect(notes[0].org_conversation_id).toBe(conversationId)
   })
 
-  it('lets the leader read and reply, and tells the family', async () => {
+  it('L28 L29 WD35 WB36 lets the leader read and reply, and tells the family', async () => {
     const list = await app.request(`/api/organizations/${orgId}/conversations`, get(leader.token))
     const rows = (await list.json()) as Array<{ id: string; last_message: { body: string } }>
     expect(rows[0].id).toBe(conversationId)
@@ -256,7 +279,7 @@ describe('message', () => {
     expect(thread.messages.map((m) => m.from_org)).toEqual([false, false, true])
   })
 
-  it('keeps a third account out of it', async () => {
+  it('WD36 keeps a third account out of it', async () => {
     const read = await app.request(`/api/organizations/conversations/${conversationId}`, get(stranger.token))
     expect(read.status).toBe(404)
     const write = await app.request(
@@ -269,7 +292,7 @@ describe('message', () => {
 })
 
 describe('follow', () => {
-  it('tells followers once when the org publishes an event or a story', async () => {
+  it('P02 WB16 WB19 WB26 WN07 tells followers once when the org publishes an event or a story (org_event_published, org_story_published)', async () => {
     expect((await app.request(`/api/organizations/${orgId}/follow`, json(family.token, 'POST'))).status).toBe(200)
     const me = (await (await app.request(`/api/organizations/${orgId}/me`, get(family.token))).json()) as {
       following: boolean
@@ -331,5 +354,7 @@ describe('follow', () => {
     expect(pub.follower_count).toBe(1)
 
     expect((await app.request(`/api/organizations/${orgId}/follow`, json(family.token, 'DELETE'))).status).toBe(200)
+    const after = (await (await app.request(`/api/organizations/${orgId}/me`, get(family.token))).json()) as { following: boolean }
+    expect(after.following).toBe(false)
   })
 })

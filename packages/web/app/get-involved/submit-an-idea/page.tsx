@@ -11,6 +11,8 @@ import {
   SECONDARY_BTN,
   TintNote,
 } from '@/components/involved-page'
+import type { Route } from 'next'
+import { authUrl } from '@/lib/safe-next-path'
 
 export const metadata = {
   title: 'Submit an idea — SPLAT Connect',
@@ -90,7 +92,7 @@ export default async function SubmitAnIdea({ searchParams }: { searchParams: Pro
       </TintNote>
       <Exclusions />
       <div className="mt-7 flex flex-wrap items-center gap-3">
-        <Link href="/login?next=/get-involved/submit-an-idea" className="btn btn-primary px-[26px]">
+        <Link href={authUrl('login', '/get-involved/submit-an-idea') as Route} className="btn btn-primary px-[26px]">
           Sign in to submit an idea
         </Link>
         <Link href="/get-involved/design-challenges" className={SECONDARY_BTN}>

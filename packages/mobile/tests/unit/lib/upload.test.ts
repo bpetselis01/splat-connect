@@ -1,5 +1,4 @@
 // packages/mobile/tests/unit/lib/upload.test.ts
-// journeys: V05
 import { Platform } from 'react-native'
 
 const mockGetToken = jest.fn()
@@ -88,6 +87,15 @@ describe('uploadFile — native', () => {
     expect(parts.find(([name]) => name === 'tutorialId')?.[1]).toBe('t1')
 
     expect(result).toEqual({ url: 't1/photo.jpg' })
+  })
+
+  it('org-image sends orgId, slot and file', async () => {
+    fetchMock.mockResolvedValue(okResponse({ url: 'https://x/logo.jpg' }))
+    await uploadFile('/api/upload/org-image', 'o1', { uri: 'file:///tmp/l.jpg', name: 'l.jpg', mimeType: 'image/jpeg' }, 'orgId', { slot: 'logo' })
+    const parts = FakeFormData.instances[0].parts
+    expect(parts.find(([n]) => n === 'orgId')?.[1]).toBe('o1')
+    expect(parts.find(([n]) => n === 'slot')?.[1]).toBe('logo')
+    expect(parts.some(([n]) => n === 'file')).toBe(true)
   })
 
   it('defaults the mime type when none is given', async () => {

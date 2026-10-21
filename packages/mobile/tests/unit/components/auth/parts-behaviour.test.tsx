@@ -1,7 +1,6 @@
 // The shared auth controls' behaviour: which social buttons show and where
 // each goes, how the code boxes read what is typed, the password field's
 // "at least 6" hint, and the terms checkbox.
-// journeys: A03
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import { useState } from 'react'
 import { Platform } from 'react-native'
@@ -40,14 +39,14 @@ describe('SocialButtons', () => {
   const onApple = jest.fn()
   const onGoogle = jest.fn()
 
-  it('a build with no Google client id sends the Google button to Not built yet, and never signs in', () => {
+  it('A03 a build with no Google client id sends the Google button to Not built yet, and never signs in', () => {
     draw()
     fireEvent.press(screen.getByTestId('google-sign-in'))
     expect(onGoogle).not.toHaveBeenCalled()
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/not-built', params: { feature: 'google-sign-in' } })
   })
 
-  it('a build with Google configured signs in and does not open Not built yet', () => {
+  it('A03 a build with Google configured signs in and does not open Not built yet', () => {
     mockGoogle = true
     draw()
     fireEvent.press(screen.getByTestId('google-sign-in'))
@@ -55,7 +54,7 @@ describe('SocialButtons', () => {
     expect(mockPush).not.toHaveBeenCalled()
   })
 
-  it('on iOS without Apple switched on, a placeholder opens Not built yet and the native button is absent', async () => {
+  it('A03 on iOS without Apple switched on, a placeholder opens Not built yet and the native button is absent', async () => {
     draw()
     await act(async () => {})
     expect(screen.queryByTestId('native-apple')).toBeNull()
@@ -64,7 +63,7 @@ describe('SocialButtons', () => {
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/not-built', params: { feature: 'apple-sign-in' } })
   })
 
-  it('on iOS with Apple switched on, the native button replaces the placeholder and signs in', async () => {
+  it('A03 on iOS with Apple switched on, the native button replaces the placeholder and signs in', async () => {
     mockApple = true
     draw()
     fireEvent.press(await screen.findByTestId('native-apple'))

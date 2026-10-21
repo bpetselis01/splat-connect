@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { revalidatePath } from 'next/cache'
+import { sendMessage, accept, reject, withdraw, confirm } from '@/app/dashboard/exchanges/actions'
 import { requireCapabilities } from '@/lib/require-capabilities'
 import { apiClient } from '@/lib/api-client'
 import { LiveTransaction } from '@/components/live-transaction'
@@ -13,7 +13,6 @@ import { StageRailCard } from '@/components/stage-rail-card'
 import { ChatHead } from '@/components/exchange-chat'
 import { exchangeStages, stageFacts } from '@/lib/exchange-stages'
 import type {
-  PickupAddress,
   ToyTransactionDetail,
   ToyTransactionSummary,
 } from '@splat-connect/types'
@@ -30,34 +29,6 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
     // network) should hit the error boundary instead of a misleading page.
     if (err instanceof Error && /status 404/.test(err.message)) notFound()
     throw err
-  }
-
-  async function sendMessage(body: string) {
-    'use server'
-    await apiClient.post(`/api/toy-transactions/${id}/messages`, { body })
-    revalidatePath(`/dashboard/exchanges/${id}`)
-  }
-  async function accept(address: PickupAddress | null) {
-    'use server'
-    // An empty body for an organisation: the handler reads the fixed address
-    // from the org record and ignores whatever arrives here.
-    await apiClient.post(`/api/toy-transactions/${id}/accept`, address ?? {})
-    revalidatePath(`/dashboard/exchanges/${id}`)
-  }
-  async function reject() {
-    'use server'
-    await apiClient.post(`/api/toy-transactions/${id}/reject`, {})
-    revalidatePath(`/dashboard/exchanges/${id}`)
-  }
-  async function withdraw() {
-    'use server'
-    await apiClient.post(`/api/toy-transactions/${id}/withdraw`, {})
-    revalidatePath(`/dashboard/exchanges/${id}`)
-  }
-  async function confirm(code: string) {
-    'use server'
-    await apiClient.post(`/api/toy-transactions/${id}/confirm`, { code })
-    revalidatePath(`/dashboard/exchanges/${id}`)
   }
 
   const ledOrgIds = caps.ledOrgs.map((org) => org.id)
@@ -166,11 +137,11 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
         viewerId={caps.profile.id}
         ledOrgIds={ledOrgIds}
         viewerDefaultAddress={pickupAddress(caps.profile)}
-        onSendMessage={sendMessage}
-        onAccept={accept}
-        onReject={reject}
-        onWithdraw={withdraw}
-        onConfirm={confirm}
+        onSendMessage={sendMessage.bind(null, id, 'exchange')}
+        onAccept={accept.bind(null, id, 'exchange')}
+        onReject={reject.bind(null, id, 'exchange')}
+        onWithdraw={withdraw.bind(null, id, 'exchange')}
+        onConfirm={confirm.bind(null, id, 'exchange')}
         variant="board"
         toyPhotoUrl={toyPhotoUrl}
         chatHead={<ChatHead name={otherPartyName} />}

@@ -1,5 +1,4 @@
 // A failed page load says so, retries on Try again, and never hits console.error.
-// journeys: L23
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { OrgProfileEditScreen } from '../../../../components/organisation/org-profile-edit-screen'
 

@@ -39,7 +39,7 @@ function tutorial(overrides: Partial<Tutorial & { tutorial_orgs?: TutorialOrg[] 
 }
 
 describe('DashboardTutorialCard', () => {
-  it('links the whole card to the editor', () => {
+  it('WT39 links the whole card to the editor', () => {
     render(<DashboardTutorialCard tutorial={tutorial({ id: 'abc' })} />)
     expect(screen.getByTestId('tutorial-row')).toHaveAttribute('href', '/tutorials/abc/edit')
   })

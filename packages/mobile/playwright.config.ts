@@ -78,6 +78,9 @@ export default defineConfig({
         EXPO_PUBLIC_SUPABASE_URL: SUPABASE_URL,
         EXPO_PUBLIC_SUPABASE_ANON_KEY: ANON_KEY,
         EXPO_PUBLIC_API_URL: `http://localhost:${API_PORT}`,
+        // The Files tab's "on the web" links render only when this is set. A
+        // developer's .env.local set it, so local runs passed and CI did not.
+        EXPO_PUBLIC_WEB_URL: 'http://localhost:3100',
       },
     },
   ],

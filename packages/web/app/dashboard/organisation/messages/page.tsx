@@ -4,10 +4,9 @@
  * whichever leader is on shift — so there is no "assigned to" here.
  */
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
 import { ChatCircleText } from '@phosphor-icons/react/dist/ssr'
 import type { OrgConversationSummary } from '@splat-connect/types'
-import { getCapabilities } from '@/lib/capabilities'
+import { requireOrgLeader } from '@/lib/org-access'
 import { apiClient } from '@/lib/api-client'
 import { shortDate } from '@splat-connect/types'
 import { BackLink } from '@/components/back-link'
@@ -15,9 +14,8 @@ import { BackLink } from '@/components/back-link'
 export const metadata = { title: 'Messages — SPLAT Connect' }
 
 export default async function OrgMessagesPage() {
-  const caps = await getCapabilities()
   // The rail hides this for a non-leader, but the rail is an affordance.
-  if (!caps || caps.ledOrgs.length === 0) notFound()
+  const caps = await requireOrgLeader('/dashboard/organisation/messages')
 
   const lists = await Promise.all(
     caps.ledOrgs.map((org) =>
@@ -28,6 +26,7 @@ export default async function OrgMessagesPage() {
     )
   )
   const rows = lists.flat().sort((a, b) => (a.updated_at < b.updated_at ? 1 : -1))
+  const [first] = caps.ledOrgs
   const several = caps.ledOrgs.length > 1
 
   return (
@@ -35,7 +34,7 @@ export default async function OrgMessagesPage() {
       <BackLink href="/dashboard/organisation" label="Organisation" />
       <h1 className="title-hub">Messages</h1>
       <p className="dash-head__lede mb-6 max-w-[60ch]">
-        Families writing to {several ? 'your organisations' : caps.ledOrgs[0].name}. Every leader sees
+        Families writing to {several ? 'your organisations' : first.name}. Every leader sees
         these, and any of you can answer.
       </p>
 

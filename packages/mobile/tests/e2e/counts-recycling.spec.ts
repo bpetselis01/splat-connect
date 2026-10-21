@@ -1,4 +1,3 @@
-// journeys: V04 V05 L12 L13
 import { test, expect } from '@playwright/test'
 import { adminClient, createContributor, makeOrgLeader, renameProfile, signInAsNewContributor, uniqueTitle } from './helpers'
 import { partyPage } from './org-fixtures'
@@ -21,7 +20,7 @@ const DECLARATION = [
   'Photographed before drop-off',
 ]
 
-test('book with a photo -> intake count 1 -> weigh and credit -> intake count clears and the family credit appears', async ({
+test('V04 V05 L12 L13 book with a photo -> intake count 1 -> weigh and credit -> intake count clears and the family credit appears', async ({
   page,
   browser,
   baseURL,
@@ -42,13 +41,13 @@ test('book with a photo -> intake count 1 -> weigh and credit -> intake count cl
   const meRow = (p: typeof page, label: string) => p.getByRole('button', { name: label, exact: true })
 
   // The leader starts on Me with nothing waiting at intake.
-  await page.getByRole('tab', { name: 'Me', exact: true }).click()
+  await page.getByRole('tab', { name: /^Me(,|$)/ }).click()
   await expect(meRow(page, 'Recycling intake')).toHaveText(/Recycling intake$/)
 
   const familyPage = await partyPage(browser, baseURL, family)
   try {
     // V04: the family opens Recycling; no credit yet.
-    await familyPage.getByRole('tab', { name: 'Me', exact: true }).click()
+    await familyPage.getByRole('tab', { name: /^Me(,|$)/ }).click()
     await familyPage.getByRole('button', { name: 'Recycling', exact: true }).click()
     await expect(familyPage.getByText('0 g of print credit unspent')).toBeVisible()
 
@@ -78,7 +77,7 @@ test('book with a photo -> intake count 1 -> weigh and credit -> intake count cl
 
     // L12: the leader goes Me -> Home -> Me and the intake row now counts one.
     await page.getByRole('tab', { name: 'Home', exact: true }).click()
-    await page.getByRole('tab', { name: 'Me', exact: true }).click()
+    await page.getByRole('tab', { name: /^Me(,|$)/ }).click()
     await expect(meRow(page, 'Recycling intake')).toHaveText(/Recycling intake1$/)
     await meRow(page, 'Recycling intake').click()
     await expect(page.getByText('Booked in (1)')).toBeVisible()

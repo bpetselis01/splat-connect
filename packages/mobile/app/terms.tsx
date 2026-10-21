@@ -5,14 +5,14 @@
 // terms check does not guard.
 import { useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
-import { Redirect } from 'expo-router'
+import { Redirect, router, useLocalSearchParams } from 'expo-router'
 import { useAuth } from '../lib/auth-context'
 import { useAuthGate } from '../lib/use-auth-gate'
 import { theme } from '../lib/theme'
 import { Button } from '../components/ui/Button'
 import { TextField } from '../components/ui/TextField'
 import { AuthError, AuthStage, Heading, Lede, TextLink, pill } from '../components/auth/parts'
-import type { AuthProblem } from '../lib/auth-errors'
+import type { AuthProblem } from '@splat-connect/types'
 import { Ionicons } from '@expo/vector-icons'
 
 // The board's copy (SPLAT Connect - Web.dc.html, termsBlocks).
@@ -41,6 +41,8 @@ const TERMS = [
 
 export default function TermsGate() {
   const gate = useAuthGate(false)
+  // 'back': a write was refused for want of terms and this screen was pushed over it.
+  const { returnTo } = useLocalSearchParams<{ returnTo?: string }>()
   const { profile, pendingName, hasContributorTerms, acceptContributorTerms, setProfileName, signOut } = useAuth()
   const needsName = !profile?.name
   const [name, setName] = useState(pendingName ?? '')
@@ -48,9 +50,11 @@ export default function TermsGate() {
   const [error, setError] = useState<AuthProblem | null>(null)
   const [busy, setBusy] = useState(false)
 
+  const backs = returnTo === 'back'
   if (gate === 'loading') return null
   if (gate !== 'ok') return <Redirect href={gate} />
-  if (hasContributorTerms) return <Redirect href="/home" />
+  // hasContributorTerms is loaded once, so a lapsed acceptance leaves it stale-true; a pushed screen waits for its own accept.
+  if (hasContributorTerms && !backs) return <Redirect href="/home" />
 
   async function accept() {
     setError(null)
@@ -65,8 +69,9 @@ export default function TermsGate() {
     }
     const res = await acceptContributorTerms()
     setBusy(false)
-    // Success flips hasContributorTerms, and the redirect above takes over.
-    if (res.error) setError({ kind: 'other', message: res.error })
+    if (res.error) return setError({ kind: 'other', message: res.error })
+    // Otherwise the flag flips and the redirect above takes over.
+    if (backs) router.canGoBack() ? router.back() : router.replace('/home')
   }
 
   return (

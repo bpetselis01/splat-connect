@@ -1,6 +1,8 @@
 import { apiClient } from '@/lib/api-client'
 import { getCapabilities } from '@/lib/capabilities'
 import { revalidatePath } from 'next/cache'
+import { markAllRead } from '@/lib/mark-all-read'
+import { MarkAllReadButton } from '@/components/mark-all-read-button'
 import { NotificationsList } from '@/components/notifications-list'
 import type { Notification, TutorialCollaboratorInvite } from '@splat-connect/types'
 
@@ -22,16 +24,11 @@ export default async function NotificationsPage() {
     revalidatePath('/notifications')
   }
 
-  // No bulk endpoint exists, so this is one PATCH per unread row.
-  // ponytail: N requests; add a POST /me/read-all if inboxes grow long.
-  async function markAllRead() {
+  async function markAll() {
     'use server'
-    // Re-read rather than close over the page's list: a closure would be
-    // serialised into the form and could be stale by the time it is posted.
-    const rows = await apiClient.get<Notification[]>('/api/notifications/me')
-    const unread = rows.filter((n) => !n.read_at)
-    await Promise.all(unread.map((n) => apiClient.patch(`/api/notifications/${n.id}`, { read: true })))
+    const failed = await markAllRead()
     revalidatePath('/notifications')
+    return failed
   }
 
   async function acceptInvite(inviteId: string) {
@@ -54,11 +51,7 @@ export default async function NotificationsPage() {
           <p className="mt-2 text-[15px] text-muted">Everything SPLAT has told you.</p>
         </div>
         {notifications.some((n) => !n.read_at) && (
-          <form action={markAllRead}>
-            <button type="submit" className="btn btn-quiet">
-              Mark all read
-            </button>
-          </form>
+          <MarkAllReadButton action={markAll} />
         )}
       </div>
       <NotificationsList

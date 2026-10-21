@@ -9,6 +9,8 @@ import { Ionicons } from '@expo/vector-icons'
 import { BADGE_RULES, buildNav, formatCents, type IconName as NavIcon, type MeCounts, type MoneyMine, type MoneyThread, type ToyTransactionType } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { useCapabilities } from '../../lib/capabilities'
+import { useActingOrg } from '../../lib/acting-org'
+import { ActingOrgSwitcher } from '../../components/organisation/acting-org-switcher'
 import { threadHref } from '../../lib/builds'
 import { myRoute } from '../../lib/my-routes'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -218,6 +220,7 @@ export default function MeTab() {
     }, [refresh])
   )
 
+  const acting = useActingOrg()
   const waiting = caps?.exchangeActions ?? 0
   const leads = caps?.ledOrgs.map((o) => o.name).join(', ')
   const standing = leads
@@ -248,6 +251,7 @@ export default function MeTab() {
           {buildNav(caps, counts).map((group) => (
             <View key={group.heading} style={styles.group}>
               <Text style={styles.eyebrow}>{group.heading}</Text>
+              {group.heading === 'Organisation' ? <ActingOrgSwitcher orgs={caps?.ledOrgs ?? []} current={acting.org?.id} onPick={acting.setActingOrg} /> : null}
               {group.rows.map((row) => {
                 // A web row with no mobile screen yet is SOON here, not a tap
                 // that lands back on Me. my-routes.test fails the day one is.

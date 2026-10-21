@@ -63,6 +63,16 @@ describe('DeleteEntityButton', () => {
     expect(refresh).toHaveBeenCalled()
   })
 
+  it('WT34 deletes a draft guide and returns to My tutorials once the phrase is typed', async () => {
+    vi.mocked(browserApiClient.delete).mockResolvedValue(null)
+    openDialog('draft', '/api/tutorials/g1', '/dashboard/tutorials')
+    fireEvent.change(screen.getByLabelText(/to confirm/i), { target: { value: 'confirm_delete_draft' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
+
+    await waitFor(() => expect(browserApiClient.delete).toHaveBeenCalledWith('/api/tutorials/g1'))
+    expect(push).toHaveBeenCalledWith('/dashboard/tutorials')
+  })
+
   it('Cancel closes without deleting and clears the typed phrase', () => {
     const dialog = openDialog()
     fireEvent.change(screen.getByLabelText(/to confirm/i), { target: { value: 'confirm_delete_Child_1' } })
@@ -129,7 +139,7 @@ describe('DeleteEntityButton', () => {
     expect(push).not.toHaveBeenCalled()
   })
 
-  it('deletes a toy via its own endpoint and label', async () => {
+  it('WY24 WB12 deletes a toy via its own endpoint and label', async () => {
     vi.mocked(browserApiClient.delete).mockResolvedValue(null)
     openDialog('toy', '/api/toys/t1', '/dashboard/toys')
     fireEvent.change(screen.getByLabelText(/to confirm/i), { target: { value: 'confirm_delete_toy' } })

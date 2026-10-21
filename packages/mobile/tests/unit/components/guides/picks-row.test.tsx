@@ -1,4 +1,3 @@
-// journeys: G20
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { PicksRow } from '../../../../components/guides/picks-row'
 
@@ -16,7 +15,7 @@ const pick = (id: string, title: string) => ({
     status: 'approved' as const },
 })
 
-it('renders up to three titles and fires onOpen on press', () => {
+it('G20 renders up to three titles and fires onOpen on press', () => {
   const onOpen = jest.fn()
   const recs = [
     pick('1', 'Switch Car'),

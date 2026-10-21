@@ -15,7 +15,7 @@
 
 import { useEffect, useRef } from 'react'
 import { browserApiClient } from '@/lib/browser-api-client'
-import type { NotificationBucket } from '@splat-connect/types'
+import { MARK_BUCKET_READ_PATH, type NotificationBucket } from '@splat-connect/types'
 
 export function MarkNotificationsRead({ bucket }: { bucket: NotificationBucket }) {
   // Track which bucket we've already sent, not a boolean. StrictMode mounts twice
@@ -28,7 +28,7 @@ export function MarkNotificationsRead({ bucket }: { bucket: NotificationBucket }
     sent.current = bucket
     // Swallowed: the page loaded fine, and a badge that lingers one more visit
     // is not worth an error state.
-    browserApiClient.post('/api/notifications/me/read', { bucket }).catch(() => {})
+    browserApiClient.post(MARK_BUCKET_READ_PATH, { bucket }).catch(() => {})
   }, [bucket])
 
   return null

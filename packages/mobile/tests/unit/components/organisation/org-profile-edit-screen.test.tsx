@@ -1,12 +1,11 @@
-// journeys: L23 L24
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { TextInput } from 'react-native'
 import { OrgProfileEditScreen } from '../../../../components/organisation/org-profile-edit-screen'
 import { NAMES } from '../../../special-strings'
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }))
-const mockGet = jest.fn(); const mockPatch = jest.fn()
-jest.mock('../../../../lib/api-client', () => ({ apiClient: { get: (...a: unknown[]) => mockGet(...a), patch: (...a: unknown[]) => mockPatch(...a) } }))
+const mockGet = jest.fn(); const mockPatch = jest.fn(); const mockPut = jest.fn()
+jest.mock('../../../../lib/api-client', () => ({ apiClient: { get: (...a: unknown[]) => mockGet(...a), patch: (...a: unknown[]) => mockPatch(...a), put: (...a: unknown[]) => mockPut(...a) } }))
 jest.mock('expo-router', () => {
   const { useEffect } = jest.requireActual('react')
   return { useFocusEffect: (e: () => void) => useEffect(e, [e]) }
@@ -31,6 +30,7 @@ beforeEach(() => {
   jest.clearAllMocks()
   jest.spyOn(console, 'error').mockImplementation(() => {})
   mockPatch.mockResolvedValue({})
+  mockPut.mockResolvedValue([])
   serve(org())
 })
 
@@ -42,7 +42,7 @@ describe('OrgProfileEditScreen', () => {
     expect(input('contact_email').props.value).toBe('hi@n.org')
   })
 
-  it('selects the current state and changing it is what gets saved', async () => {
+  it('L23 selects the current state and changing it is what gets saved', async () => {
     render(<OrgProfileEditScreen />)
     await screen.findByDisplayValue('Northside')
     expect(screen.getByRole('radio', { name: 'VIC' }).props.accessibilityState.selected).toBe(true)
@@ -51,7 +51,7 @@ describe('OrgProfileEditScreen', () => {
     await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/api/organizations/o1/profile', expect.objectContaining({ state: 'QLD' })))
   })
 
-  it('saves every field, with the name trimmed, and says it is live', async () => {
+  it('L23 saves every field, with the name trimmed, and says it is live', async () => {
     render(<OrgProfileEditScreen />)
     await screen.findByDisplayValue('Northside')
     fireEvent.changeText(input('name'), '  Northside Therapy  ')
@@ -149,7 +149,7 @@ describe('OrgProfileEditScreen', () => {
       expect(screen.queryByRole('button', { name: /Hide|Show again/ })).toBeNull()
     })
 
-    it('Hide and Show again flip the same note through its own route and update the row', async () => {
+    it('L24 Hide and Show again flip the same note through its own route and update the row', async () => {
       serve(org(), [thanks()])
       mockPatch.mockResolvedValueOnce(thanks({ hidden_at: '2026-09-01T00:00:00Z' }))
       render(<OrgProfileEditScreen />)

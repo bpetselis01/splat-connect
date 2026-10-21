@@ -39,7 +39,7 @@ vi.mock('../../src/supabase/client.js', () => ({
   createAdminClient: () => ({ from: (table: string) => builder(table) }),
 }))
 
-const { notifyBackingRequested, notifyTutorialSubmitted } = await import(
+const { notifyBacking, notifyBackingRequested, notifyTutorialSubmitted } = await import(
   '../../src/review-notifications.js'
 )
 
@@ -158,6 +158,40 @@ describe('notifyBackingRequested', () => {
     tables.org_leaders = { list: [{ user_id: AUTHOR }] }
 
     await notifyBackingRequested({ tutorialId: 't1', orgId: 'org-a', actorId: AUTHOR })
+
+    expect(inserted).toEqual([])
+  })
+})
+
+describe('notifyBacking', () => {
+  beforeEach(() => {
+    tables.organizations = { single: { name: 'Riverside Therapy' } }
+    tables.tutorial_contributors = { single: { profile_id: AUTHOR } }
+  })
+
+  it('tells the primary author, naming the organisation, on accept', async () => {
+    await notifyBacking({ tutorialId: 't1', orgId: 'org-a', status: 'accepted' })
+
+    expect(inserted).toEqual([
+      {
+        recipient_id: AUTHOR,
+        type: 'backing_accepted',
+        tutorial_id: 't1',
+        tutorial_title: 'Spoon Holder',
+        actor_name: 'Riverside Therapy',
+      },
+    ])
+  })
+
+  it('uses backing_declined on decline', async () => {
+    await notifyBacking({ tutorialId: 't1', orgId: 'org-a', status: 'declined' })
+
+    expect(inserted[0]).toMatchObject({ type: 'backing_declined', recipient_id: AUTHOR })
+  })
+
+  it('sends nothing when the guide has no primary author', async () => {
+    tables.tutorial_contributors = {}
+    await notifyBacking({ tutorialId: 't1', orgId: 'org-a', status: 'accepted' })
 
     expect(inserted).toEqual([])
   })

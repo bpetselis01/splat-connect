@@ -1,7 +1,6 @@
 // The account page's editable fields at their edges: whitespace, markup and
 // emoji, clearing a field, a failed save, editing back to the old value, and
 // the identity card when the profile or email is missing.
-// journeys: Z01 Z02 Z03
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { ProfileScreen, signedInWith } from '../../../components/profile-screen'
 import { useAuth } from '../../../lib/auth-context'
@@ -47,7 +46,7 @@ describe('Display name', () => {
     ['Zoë 🧸 سارة', 'Zoë 🧸 سارة'],
     ['N'.repeat(500), 'N'.repeat(500)],
     ['  Pat  ', 'Pat'],
-  ])('saves %j as %j', async (typed, saved) => {
+  ])('Z01 saves %j as %j', async (typed, saved) => {
     render(<ProfileScreen />)
     await edit('Display name', typed)
     await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/api/contributors/me', { name: saved }))
@@ -59,7 +58,7 @@ describe('Display name', () => {
     expect(mockPatch).not.toHaveBeenCalled()
   })
 
-  it('says so, in words, when the save fails, and never says Saved', async () => {
+  it('Z01 says so, in words, when the save fails, and never says Saved', async () => {
     mockPatch.mockRejectedValue(new Error('500'))
     const spy = jest.spyOn(console, 'error').mockImplementation(() => {})
     render(<ProfileScreen />)
@@ -69,7 +68,7 @@ describe('Display name', () => {
     spy.mockRestore()
   })
 
-  it('a failed save, retried with the same name, goes out again and then says Saved', async () => {
+  it('Z01 a failed save, retried with the same name, goes out again and then says Saved', async () => {
     mockPatch.mockRejectedValueOnce(new Error('500')).mockResolvedValueOnce({})
     const spy = jest.spyOn(console, 'error').mockImplementation(() => {})
     render(<ProfileScreen />)
@@ -81,7 +80,7 @@ describe('Display name', () => {
     spy.mockRestore()
   })
 
-  it('editing back to the name the account had at launch still saves, because the server now holds the other', async () => {
+  it('Z01 editing back to the name the account had at launch still saves, because the server now holds the other', async () => {
     render(<ProfileScreen />)
     await edit('Display name', 'New')
     await waitFor(() => expect(mockPatch).toHaveBeenCalledTimes(1))
@@ -92,7 +91,7 @@ describe('Display name', () => {
 })
 
 describe('What you do', () => {
-  it('clearing it sends null, not an empty string', async () => {
+  it('Z02 clearing it sends null, not an empty string', async () => {
     as({ profile: { id: '2', name: 'Cory', occupation: 'Teacher' } })
     render(<ProfileScreen />)
     await edit('What you do', '   ')
@@ -105,7 +104,7 @@ describe('What you do', () => {
     expect(mockPatch).not.toHaveBeenCalled()
   })
 
-  it('editing back to the line the account launched with still saves', async () => {
+  it('Z02 editing back to the line the account launched with still saves', async () => {
     as({ profile: { id: '2', name: 'Cory', occupation: 'Teacher' } })
     render(<ProfileScreen />)
     await edit('What you do', 'Nurse')
@@ -119,7 +118,7 @@ describe('What you do', () => {
     expect((await screen.findByLabelText('What you do')).props.maxLength).toBe(60)
   })
 
-  it('shows the API\'s own words when it refuses, and none after the next save works', async () => {
+  it('Z02 shows the API\'s own words when it refuses, and none after the next save works', async () => {
     mockPatch.mockRejectedValueOnce({ status: 400, error: 'Too long' }).mockResolvedValueOnce({})
     const spy = jest.spyOn(console, 'error').mockImplementation(() => {})
     render(<ProfileScreen />)
@@ -132,27 +131,27 @@ describe('What you do', () => {
 })
 
 describe('Postcode', () => {
-  it.each(['1', '123', '12345', '20a0', '2 000', 'ABCD', '٢٠٠٠', '2000.', '-200', '🧸🧸🧸🧸'])('refuses %j inline and saves nothing', async (text) => {
+  it.each(['1', '123', '12345', '20a0', '2 000', 'ABCD', '٢٠٠٠', '2000.', '-200', '🧸🧸🧸🧸'])('Z03 refuses %j inline and saves nothing', async (text) => {
     render(<ProfileScreen />)
     await edit('Postcode', text)
     expect(await screen.findByText('A postcode is four digits.')).toBeTruthy()
     expect(mockPatch).not.toHaveBeenCalled()
   })
 
-  it.each([['2000', '2000'], [' 0800 ', '0800'], ['0000', '0000']])('saves %j as %j, leading zero kept', async (text, saved) => {
+  it.each([['2000', '2000'], [' 0800 ', '0800'], ['0000', '0000']])('Z03 saves %j as %j, leading zero kept', async (text, saved) => {
     render(<ProfileScreen />)
     await edit('Postcode', text)
     await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/api/contributors/me', { pickup_postcode: saved }))
   })
 
-  it('clearing it sends null', async () => {
+  it('Z03 clearing it sends null', async () => {
     as({ profile: { id: '2', name: 'Cory', pickup_postcode: '2000' } })
     render(<ProfileScreen />)
     await edit('Postcode', '')
     await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/api/contributors/me', { pickup_postcode: null }))
   })
 
-  it('a valid postcode after a refused one clears the complaint', async () => {
+  it('Z03 a valid postcode after a refused one clears the complaint', async () => {
     render(<ProfileScreen />)
     await edit('Postcode', '12')
     await screen.findByText('A postcode is four digits.')
@@ -160,7 +159,7 @@ describe('Postcode', () => {
     await waitFor(() => expect(screen.queryByText('A postcode is four digits.')).toBeNull())
   })
 
-  it('editing back to the postcode the account launched with still saves', async () => {
+  it('Z03 editing back to the postcode the account launched with still saves', async () => {
     as({ profile: { id: '2', name: 'Cory', pickup_postcode: '2000' } })
     render(<ProfileScreen />)
     await edit('Postcode', '3000')
@@ -176,7 +175,7 @@ describe('Postcode', () => {
     expect(field.props.inputMode).toBe('numeric')
   })
 
-  it('a failed save shows a sentence, not nothing', async () => {
+  it('Z03 a failed save shows a sentence, not nothing', async () => {
     mockPatch.mockRejectedValue(new Error('offline'))
     const spy = jest.spyOn(console, 'error').mockImplementation(() => {})
     render(<ProfileScreen />)
@@ -234,7 +233,7 @@ describe('Terms row and actions', () => {
     expect(screen.queryByText(/Contributor terms ·/)).toBeNull()
   })
 
-  it('Sign Out signs out, and Delete account opens the deletion screen', () => {
+  it('Z04 Sign Out signs out, and Delete account opens the deletion screen', () => {
     render(<ProfileScreen />)
     fireEvent.press(screen.getByText('Sign Out'))
     expect(mockSignOut).toHaveBeenCalledTimes(1)

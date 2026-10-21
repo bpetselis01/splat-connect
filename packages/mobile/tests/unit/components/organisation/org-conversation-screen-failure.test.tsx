@@ -1,5 +1,4 @@
 // A failed conversation load says so, retries on Try again, and never hits console.error.
-// journeys: L29
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { OrgConversationScreen } from '../../../../components/organisation/org-conversation-screen'
 

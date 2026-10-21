@@ -3,7 +3,6 @@
  * is one line of the spec's table: what goes, what is repointed to the
  * "Deleted member" placeholder, and what other people keep.
  */
-// journeys: Z05
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -76,7 +75,7 @@ describe('DELETE /api/me', () => {
     expect(res.status).toBe(400)
   })
 
-  it('previews what would happen', async () => {
+  it('Z05 WD21 previews what would happen', async () => {
     const res = await app.request('/api/me/deletion', { headers: { Authorization: `Bearer ${leaving.token}` } })
     const body = (await res.json()) as { open: unknown[]; childProfiles: number; publishedGuides: number }
     expect(body.open).toHaveLength(1)
@@ -94,7 +93,7 @@ describe('DELETE /api/me', () => {
     await admin.from('org_leaders').delete().eq('org_id', ids.org)
   })
 
-  it('deletes the person and keeps what other people rely on', async () => {
+  it('Z05 WD19 deletes the person and keeps what other people rely on', async () => {
     const res = await app.request('/api/me', del(leaving.token, { confirm: 'DELETE', keepCredit: true }))
     expect(res.status).toBe(200)
     expect(await res.json()).toEqual({ emailed: false }) // no RESEND_API_KEY locally

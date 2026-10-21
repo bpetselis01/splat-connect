@@ -9,13 +9,17 @@
 // with several backings on one project acts for the first pending/accepted one
 // — the same single-answer posture as web, where the URL had already chosen.
 //
+// `admin` swaps the actor: the same brief and checklist, but the actions come
+// from adminActions and land on PATCH /api/admin/tutorials/:id/status. The
+// server's is_admin guard is the only check; a 403 just shows "Admins only".
+//
 // Title comes from the native header (app/(my)/_layout.tsx).
 import { logFailure } from '../../lib/log'
 import { useCallback, useRef, useState } from 'react'
 import { View, Text, Image, ScrollView, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import type { TutorialWithDetails, TutorialOrg } from '@splat-connect/types'
-import { apiMessage, isNetworkError, leaderActions } from '@splat-connect/types'
+import { adminActions, apiMessage, isApiError, isNetworkError, leaderActions } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { supabase } from '../../lib/supabase'
 import { theme } from '../../lib/theme'
@@ -56,13 +60,14 @@ function CheckRow({
   )
 }
 
-export function ReviewDetailScreen({ tutorialId }: { tutorialId: string }) {
+export function ReviewDetailScreen({ tutorialId, admin = false }: { tutorialId: string; admin?: boolean }) {
   const router = useRouter()
   const { caps } = useCapabilities()
   const [tutorial, setTutorial] = useState<Detail | null>(null)
   const [backings, setBackings] = useState<TutorialOrg[]>([])
   const [loading, setLoading] = useState(true)
   const [offline, setOffline] = useState(false)
+  const [forbidden, setForbidden] = useState(false)
   const [busy, setBusy] = useState(false)
   const [note, setNote] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -80,7 +85,8 @@ export function ReviewDetailScreen({ tutorialId }: { tutorialId: string }) {
       // brief with nothing to do on it.
       const [fresh, orgs] = await Promise.all([
         apiClient.get<Detail>(`/api/tutorials/${tutorialId}`),
-        apiClient.get<TutorialOrg[]>(`/api/tutorials/${tutorialId}/orgs`),
+        // An admin acts for the platform, not for a backing.
+        admin ? Promise.resolve([] as TutorialOrg[]) : apiClient.get<TutorialOrg[]>(`/api/tutorials/${tutorialId}/orgs`),
       ])
       if (generation.current === at) {
         setOffline(false)
@@ -89,11 +95,12 @@ export function ReviewDetailScreen({ tutorialId }: { tutorialId: string }) {
       }
     } catch (err) {
       logFailure('[ReviewDetailScreen] tutorial fetch failed:', err)
+      setForbidden(isApiError(err) && err.status === 403)
       setOffline(isNetworkError(err))
     } finally {
       setLoading(false)
     }
-  }, [tutorialId])
+  }, [tutorialId, admin])
 
   useFocusEffect(
     useCallback(() => {
@@ -108,7 +115,11 @@ export function ReviewDetailScreen({ tutorialId }: { tutorialId: string }) {
   const backing =
     myRows.find((r) => r.status === 'pending') ?? myRows.find((r) => r.status === 'accepted') ?? myRows[0] ?? null
 
-  const actions = tutorial ? leaderActions(backing?.status ?? null, tutorial.status) : []
+  const actions: readonly string[] = !tutorial
+    ? []
+    : admin
+      ? adminActions(tutorial.status)
+      : leaderActions(backing?.status ?? null, tutorial.status)
 
   async function run(action: () => Promise<unknown>) {
     generation.current += 1
@@ -119,7 +130,11 @@ export function ReviewDetailScreen({ tutorialId }: { tutorialId: string }) {
       setNote('')
       await load()
     } catch (err) {
-      setError(apiMessage(err, 'Something went wrong. Please try again.'))
+      setError(
+        isApiError(err) && err.status === 403
+          ? 'Admins only.'
+          : apiMessage(err, 'Something went wrong. Please try again.')
+      )
     } finally {
       setBusy(false)
     }
@@ -133,13 +148,32 @@ export function ReviewDetailScreen({ tutorialId }: { tutorialId: string }) {
       setError('Say what needs to change — the note goes to the contributor.')
       return
     }
-    void run(() =>
-      apiClient.post(`/api/tutorials/${tutorialId}/review`, {
-        status: 'rejected',
+    void run(() => decide('rejected', body))
+  }
+
+  // Taking a live guide down: the note is the only explanation the contributor gets.
+  function unpublish() {
+    const body = note.trim()
+    if (!body) {
+      setError('Say why you are taking it down. The contributor sees this note.')
+      return
+    }
+    void run(() => decide('rejected', body))
+  }
+
+  /** The leader's review POST, or the admin's status PATCH. */
+  async function decide(status: 'approved' | 'rejected', rejection_note?: string) {
+    if (!admin) {
+      return apiClient.post(`/api/tutorials/${tutorialId}/review`, {
+        status,
         org_id: backing!.org_id,
-        rejection_note: body,
+        ...(rejection_note ? { rejection_note } : {}),
       })
-    )
+    }
+    await apiClient.patch(`/api/admin/tutorials/${tutorialId}/status`, { status, rejection_note })
+    // Decided, so the brief is no longer in the queue: go back to it.
+    if (router.canGoBack()) router.back()
+    else router.replace('/admin/review')
   }
 
   async function openPdf() {
@@ -160,6 +194,13 @@ export function ReviewDetailScreen({ tutorialId }: { tutorialId: string }) {
         <Skeleton width="70%" height={24} />
         <Skeleton width="100%" height={120} />
       </View>
+    )
+  }
+  if (forbidden) {
+    return (
+      <Screen>
+        <EmptyState icon="lock-closed-outline" title="Admins only" hint="This screen belongs to admins." />
+      </Screen>
     )
   }
   if (!tutorial) {
@@ -262,14 +303,7 @@ export function ReviewDetailScreen({ tutorialId }: { tutorialId: string }) {
                 variant="accent"
                 disabled={busy}
                 style={styles.rowButton}
-                onPress={() =>
-                  void run(() =>
-                    apiClient.post(`/api/tutorials/${tutorialId}/review`, {
-                      status: 'approved',
-                      org_id: backing!.org_id,
-                    })
-                  )
-                }
+                onPress={() => void run(() => decide('approved'))}
               />
               <Button
                 label="Request changes"
@@ -279,6 +313,22 @@ export function ReviewDetailScreen({ tutorialId }: { tutorialId: string }) {
                 onPress={requestChanges}
               />
             </View>
+          </View>
+        ) : actions.includes('unpublish') ? (
+          <View style={styles.actions}>
+            <Text style={styles.actionHint}>
+              It is live in the library now and a parent may be following it. Unpublishing removes it and shows your note to the
+              contributor, who can edit and resubmit.
+            </Text>
+            <TextField
+              label="Why are you taking it down?"
+              accessibilityLabel="Why are you taking it down?"
+              value={note}
+              onChangeText={setNote}
+              multiline
+              style={styles.noteInput}
+            />
+            <Button label="Unpublish" variant="danger" disabled={busy} onPress={unpublish} />
           </View>
         ) : null}
       </ScrollView>

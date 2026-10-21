@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation'
 import type { BuildQuestions } from '@splat-connect/types'
 import { browserApiClient } from '@/lib/browser-api-client'
 
-export function BuildQuestionsThread({ data, viewerId, makerId }: { data: BuildQuestions; viewerId: string; makerId: string | null }) {
+export function BuildQuestionsThread({ data, viewerId, makerId, isAdmin = false }: { data: BuildQuestions; viewerId: string; makerId: string | null; isAdmin?: boolean }) {
   const router = useRouter()
   const [draft, setDraft] = useState('')
   const [busy, setBusy] = useState(false)
@@ -88,7 +88,7 @@ export function BuildQuestionsThread({ data, viewerId, makerId }: { data: BuildQ
         </p>
       )}
 
-      {data.open && (!data.family || thread) && (
+      {data.open && !isAdmin && (!data.family || thread) && (
         <form onSubmit={send} className="flex items-start gap-2.5">
           <textarea aria-label="Message" placeholder="Message" rows={2} maxLength={1000} value={draft} onChange={(e) => setDraft(e.target.value)} className="field flex-1" />
           <button type="submit" disabled={busy || !draft.trim()} className="btn btn-primary min-h-11 px-[18px]">
@@ -96,7 +96,7 @@ export function BuildQuestionsThread({ data, viewerId, makerId }: { data: BuildQ
           </button>
         </form>
       )}
-      {data.open && !data.family && (
+      {data.open && !data.family && !isAdmin && (
         <button type="button" disabled={busy} onClick={claim} className="btn btn-primary min-h-12 self-start px-[22px]">
           I&apos;ll build this
         </button>

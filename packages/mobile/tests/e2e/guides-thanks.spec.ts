@@ -1,4 +1,3 @@
-// journeys: G09
 import { test, expect } from '@playwright/test'
 import { adminClient, createContributor, createTutorial, signIn, signInAsNewContributor, uniqueTitle } from './helpers'
 
@@ -8,7 +7,7 @@ import { adminClient, createContributor, createTutorial, signIn, signInAsNewCont
 /** A one-word first name only this spec's fixture answers to. */
 const firstName = () => `Wren${Date.now()}${Math.floor(Math.random() * 1e4)}`
 
-test('a reader thanks the author: toast, Thanked, and a reload keeps it', async ({ page }) => {
+test('G09 a reader thanks the author: toast, Thanked, and a reload keeps it', async ({ page }) => {
   const reader = await signInAsNewContributor(page)
   const author = await createContributor()
   const first = firstName()

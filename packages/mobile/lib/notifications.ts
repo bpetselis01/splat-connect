@@ -9,7 +9,7 @@ import type { Notification } from '@splat-connect/types'
  * Where a notification lands on mobile. Web's linkFor with its hrefs swapped
  * for these routes; every branch below is web's branch, in web's order.
  */
-export function linkFor(n: Notification): string {
+export function linkFor(n: Notification, isAdmin = false): string {
   // 111: a question before a claim opens Ask first, for the maker and the family alike.
   if (n.type === 'build_question' && n.toy_transaction_id) return `/exchanges/build/ask/${n.toy_transaction_id}`
   // A build has its own thread. Only these two types say so on the row; any
@@ -27,24 +27,33 @@ export function linkFor(n: Notification): string {
   if (n.toy_transaction_id) return `/exchanges/${n.toy_transaction_id}`
   // 077. A conversation opens by its own id, for either side. A thanks goes
   // to the organisation profile editor, where each note has Hide / Show again.
-  // A followed org's new event or story: mobile has no screen for either, so
-  // /news reads which organisation it belongs to and opens that profile.
+  // A followed org's new event opens the event; a story has no screen of its
+  // own, so /news reads which organisation it belongs to and opens that profile.
   if (n.org_conversation_id) return `/messages/${n.org_conversation_id}`
   if (n.type === 'org_thanked') return '/organisation/profile'
-  if (n.org_event_id) return `/news/event/${n.org_event_id}`
+  // 142: web's links for an organisation subject, or none. Mobile has no
+  // request form, so a declined request opens the inbox.
+  if (n.type === 'recycling_received' || n.type === 'recycling_declined' || n.type === 'drop_off_booked') return '/explore/recycling'
+  if (n.type === 'org_request_approved') return '/organisation'
+  if (n.type === 'leader_added') return '/organisation'
+  if ((n.type === 'leader_removed' || n.type === 'org_event_deleted') && n.org_id) return `/toy-library/organisation/${n.org_id}`
+  if (n.type === 'test_print_passed' || n.type === 'test_print_failed') return '/print-for-others'
+  if (n.org_event_id) return `/events/${n.org_event_id}`
   if (n.org_story_id) return `/news/story/${n.org_story_id}`
   // Answered BEFORE the tutorial_id branch, exactly as on web: the recipient
   // of these two is a reviewer, not the author, and /tutorials/:id is the
   // author's editor — a leader sent there lands on a screen they cannot save.
   //
-  // Web splits admin (/admin/review/:id) from leader (/dashboard/organisation)
-  // here. Mobile has no admin review screen at all, so both collapse to the
-  // organisation hub, which lists everything waiting on them either way.
-  if (n.type === 'backing_requested' || n.type === 'tutorial_submitted') return '/organisation'
+  // Web splits admin (/admin/review/:id) from leader (/dashboard/organisation);
+  // so does mobile. The row carries no org_id, so a leader gets the hub.
+  if (n.type === 'backing_requested' || n.type === 'tutorial_submitted') {
+    return isAdmin && n.tutorial_id ? `/admin/review/${n.tutorial_id}` : '/organisation'
+  }
   // Web's thanks branch: the published guide, not the editor.
   if (n.type === 'tutorial_thanked' && n.tutorial_id) return `/guides/${n.tutorial_id}`
   if (n.type === 'tutorial_noted' && n.tutorial_id) return `/guides/${n.tutorial_id}`
   if (n.type === 'challenge_guide_published' && n.tutorial_id) return `/guides/${n.tutorial_id}`
+  if ((n.type === 'backing_accepted' || n.type === 'backing_declined') && n.tutorial_id) return `/guides/${n.tutorial_id}`
   // The invitee is not on the guide yet, so its editor would 403 for them. The
   // inbox is where the invite's Accept / Decline live; the row opens nothing.
   if (n.type === 'collaborator_invited') return '/inbox'
@@ -54,10 +63,11 @@ export function linkFor(n: Notification): string {
   // its author goes to their own list instead. A graduated one needs no such
   // exception: it is still selectable, so the brief is a real page.
   if (n.idea_id) {
-    return n.type === 'idea_rejected' ? '/challenges' : `/explore/challenges/${n.idea_id}`
+    return n.type === 'idea_rejected' || n.type === 'idea_received' ? '/challenges' : `/explore/challenges/${n.idea_id}`
   }
   // 117: web's showcase-thanks branch. A transaction-tied one left above.
   if (n.type === 'profile_thanked' && n.profile_id) return `/guides/contributor/${n.profile_id}`
+  if (n.type === 'report_resolved') return '/reports'
   return '/inbox'
 }
 

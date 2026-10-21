@@ -19,6 +19,7 @@
  * - app/globals.css: .save-btn, and the lift that keeps it on its card
  * - lib/saves.ts: where `saved` and `signedIn` come from
  */
+import { authUrl } from '@/lib/safe-next-path'
 import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { SAVE_SLUGS, type SaveSlug } from '@splat-connect/types'
@@ -52,7 +53,7 @@ export function SaveButton({
 
   async function toggle() {
     if (!signedIn) {
-      router.push(`/signup?next=${encodeURIComponent(pathname)}&reason=save`)
+      router.push(authUrl('signup', pathname + window.location.search, { reason: 'save' }))
       return
     }
 

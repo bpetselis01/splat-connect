@@ -21,8 +21,9 @@
  */
 import { Hono } from 'hono'
 import { createUserClient } from '../supabase/client.js'
+import { notify } from '../notify.js'
 import type { AuthVariables } from '../middleware/auth.js'
-import { REPORT_SUBJECT_KINDS } from '@splat-connect/types'
+import { REPORT_SUBJECT_KINDS, notificationBody } from '@splat-connect/types'
 
 const reports = new Hono<{ Variables: AuthVariables }>()
 
@@ -33,7 +34,6 @@ const SUBJECT_KINDS = new Set<string>(REPORT_SUBJECT_KINDS)
 const CATEGORIES = new Set(['safety', 'no_show', 'arrived_broken', 'wrong_info', 'conduct', 'other'])
 
 /** What the reporter has filed, with any note that came back. */
-// PENDING(unused-api-routes): nothing calls this; a reporter never hears the outcome.
 reports.get('/', async (c) => {
   const { data, error } = await createUserClient(c.get('token'))
     .from('member_reports')
@@ -83,6 +83,18 @@ reports.post('/', async (c) => {
     .maybeSingle()
   if (error) return c.json({ error: error.message }, 500)
   if (!data) return c.json({ error: 'That report could not be filed.' }, 403)
+  await notify(
+    [
+      {
+        recipient_id: c.get('userId'),
+        type: 'report_received',
+        member_report_id: data.id,
+        actor_name: 'SPLAT',
+        body: notificationBody(label),
+      },
+    ],
+    'report_received'
+  )
   return c.json(data, 201)
 })
 

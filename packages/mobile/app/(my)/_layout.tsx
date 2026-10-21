@@ -50,6 +50,7 @@ export default function MyLayout() {
         name="saved/[slug]"
         options={({ route }) => ({ title: savedTitle((route.params as { slug?: string } | undefined)?.slug) })}
       />
+      <Stack.Screen name="thanks" options={{ title: 'Thank-you notes' }} />
       <Stack.Screen name="notifications" options={{ title: 'Notifications' }} />
       <Stack.Screen name="print-requests" options={{ title: 'My print requests' }} />
       <Stack.Screen name="print-for-others/index" options={{ title: 'Print for others' }} />
@@ -63,7 +64,10 @@ export default function MyLayout() {
       <Stack.Screen name="organisation/requests" options={{ title: 'Requests to you' }} />
       <Stack.Screen name="organisation/publish" options={{ title: 'Events and stories' }} />
       <Stack.Screen name="organisation/events/new" options={{ title: 'Publish an event' }} />
+      <Stack.Screen name="organisation/events/[id]" options={{ title: 'Manage event' }} />
+      <Stack.Screen name="organisation/events/[id]/edit" options={{ title: 'Edit an event' }} />
       <Stack.Screen name="organisation/stories/new" options={{ title: 'Publish a story' }} />
+      <Stack.Screen name="organisation/stories/[id]/edit" options={{ title: 'Edit a story' }} />
       <Stack.Screen name="organisation/profile"options={{ title: 'Organisation profile' }} />
       <Stack.Screen name="events" options={{ title: 'My events' }} />
       {/* 077: a conversation with an organisation, from either side. */}
@@ -71,6 +75,19 @@ export default function MyLayout() {
       <Stack.Screen name="messages/org/[orgId]" options={{ title: 'Message' }} />
       <Stack.Screen name="news/[kind]/[id]" options={{ title: '' }} />
       <Stack.Screen name="admin" options={{ title: 'Admin' }} />
+      <Stack.Screen name="admin/review/index" options={{ title: 'Guides to review' }} />
+      <Stack.Screen name="admin/review/[id]" options={{ title: 'Review' }} />
+      <Stack.Screen name="admin/reports/index" options={{ title: 'Reports from members' }} />
+      <Stack.Screen name="admin/reports/[id]" options={{ title: 'Report' }} />
+      <Stack.Screen name="admin/reports/idea/[id]" options={{ title: 'Idea report' }} />
+      <Stack.Screen name="reports" options={{ title: 'My reports' }} />
+      <Stack.Screen name="admin/ideas/index" options={{ title: 'Ideas to review' }} />
+      <Stack.Screen name="admin/ideas/[id]" options={{ title: 'Idea' }} />
+      <Stack.Screen name="admin/spot-check" options={{ title: 'Spot-check' }} />
+      <Stack.Screen name="admin/accounts" options={{ title: 'Accounts' }} />
+      <Stack.Screen name="admin/organisations/index" options={{ title: 'Organisations' }} />
+      <Stack.Screen name="admin/organisations/new" options={{ title: 'New organisation' }} />
+      <Stack.Screen name="admin/organisations/[id]" options={{ title: 'Organisation' }} />
     </Stack>
   )
 }

@@ -1,5 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
+import { AGREEMENT_VERSIONS } from '@splat-connect/types'
+import { authUrl } from '@/lib/safe-next-path'
+
 
 /**
  * The root layout decides whether to render the app shell, and a server layout
@@ -22,6 +25,8 @@ import { createServerClient } from '@supabase/ssr'
 function nextWithPathname(request: NextRequest) {
   const headers = new Headers(request.headers)
   headers.set('x-pathname', request.nextUrl.pathname)
+  // The query is what a signed-out redirect must not lose; x-pathname stays pathname-only for the layout.
+  headers.set('x-pathname-search', request.nextUrl.pathname + request.nextUrl.search)
   return NextResponse.next({ request: { headers } })
 }
 
@@ -53,7 +58,7 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  const { pathname } = request.nextUrl
+  const { pathname, search } = request.nextUrl
 
   // /notifications belongs here for the same reason /dashboard does: it is an
   // account page, it renders the rail, and both of its fetches swallow failure
@@ -68,7 +73,7 @@ export async function middleware(request: NextRequest) {
   const needsAdminAuth = adminRoutes.some((r) => pathname.startsWith(r))
 
   if ((needsSignedInAuth || needsAdminAuth) && !user) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    return NextResponse.redirect(new URL(authUrl('login', pathname + search), request.url))
   }
 
   if (needsAdminAuth && user) {
@@ -86,12 +91,14 @@ export async function middleware(request: NextRequest) {
   // Contributor terms gate. Only the account area — public browsing, /legal and the
   // auth pages stay reachable, and /admin is excluded because these terms govern
   // submitting work, not reviewing it.
-  const termsGatedPrefixes = ['/dashboard', '/upload', '/organizations']
+  const termsGatedPrefixes = ['/dashboard', '/upload']
   const needsTerms =
     user &&
     (termsGatedPrefixes.some((r) => pathname.startsWith(r)) ||
       // Pattern, not prefix: /tutorials/[id] is the public detail page.
-      /^\/tutorials\/[^/]+\/edit(\/|$)/.test(pathname))
+      /^\/tutorials\/[^/]+\/edit(\/|$)/.test(pathname) ||
+      // The organisation directory and profiles are public; the message form is member-only.
+      /^\/organizations\/[^/]+\/message(\/|$)/.test(pathname))
 
   if (needsTerms) {
     const { data: agreements, error } = await supabase
@@ -99,15 +106,15 @@ export async function middleware(request: NextRequest) {
       .select('id')
       .eq('user_id', user.id)
       .eq('agreement_type', 'contributor_terms')
+      .eq('version', AGREEMENT_VERSIONS.contributor_terms)
       .limit(1)
 
-    // Err open on failure. This gate is UX; packages/api/src/routes/tutorials.ts:132
-    // is the real enforcement, so a transient read error must not strand anyone.
-    if (error) {
-      console.error('[middleware] contributor_terms lookup failed:', error.message)
-    } else if (!agreements?.length) {
+    // Fail closed: an unreadable acceptance blocks, with a retry message on the terms page.
+    if (error || !agreements?.length) {
+      if (error) console.error('[middleware] contributor_terms lookup failed:', error.message)
       const url = new URL('/onboarding/contributor-terms', request.url)
-      url.searchParams.set('next', pathname)
+      url.searchParams.set('next', pathname + search)
+      if (error) url.searchParams.set('retry', '1')
       return NextResponse.redirect(url)
     }
   }

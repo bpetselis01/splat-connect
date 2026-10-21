@@ -1,4 +1,3 @@
-# journeys: Y03 Y04
 # The photo carousel on Hermes. Jest renders it with react-test-renderer, which
 # runs neither `pagingEnabled` (the platform's own paging — the whole reason
 # mobile needed no gesture library) nor the Reanimated worklet that drives the
@@ -10,6 +9,7 @@
 #
 # DEVICE_EMAIL / DEVICE_PASSWORD come from `maestro test --env` — see
 # sign-out-clears-session.yaml for why they carry no env: defaults here.
+name: "Y03 Y04 Open a toy from the library and page through its photos"
 appId: com.splatconnect.mobile
 ---
 - clearState

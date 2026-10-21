@@ -1,4 +1,9 @@
 import '@testing-library/jest-dom'
+import { vi } from 'vitest'
+
+// next/headers throws outside a request. Server code that reads a header
+// (lib/require-capabilities.ts) sees no headers here unless a test mocks the module itself.
+vi.mock('next/headers', async (orig) => ({ ...(await orig<object>()), headers: async () => new Headers() }))
 
 // This setup file also runs for route-handler tests that opt into the node
 // environment via a `// @vitest-environment node` pragma (e.g.

@@ -1,4 +1,3 @@
-// journeys: G06
 import { renderHook, act, waitFor } from '@testing-library/react-native'
 import { SAVE_SLUGS } from '@splat-connect/types'
 import { useSaves } from '../../../lib/saves'
@@ -24,7 +23,7 @@ it('shows nothing saved, and does not throw, when the ids request fails', async 
   expect(result.current.isSaved('tutorials', 't1')).toBe(false)
 })
 
-it('saves into the right bucket for every kind of thing', async () => {
+it('G06 saves into the right bucket for every kind of thing', async () => {
   const { result } = renderHook(() => useSaves())
   await waitFor(() => expect(mockGet).toHaveBeenCalled())
   for (const slug of Object.keys(SAVE_SLUGS) as (keyof typeof SAVE_SLUGS)[]) {
@@ -53,7 +52,7 @@ it('flips on screen before the request answers', async () => {
   expect(result.current.isSaved('toys', 'toy-1')).toBe(true)
 })
 
-it('puts an unsave back when the delete fails', async () => {
+it('G06 puts an unsave back when the delete fails', async () => {
   mockDelete.mockRejectedValue(new Error('500'))
   const { result } = renderHook(() => useSaves())
   await waitFor(() => expect(result.current.isSaved('tutorials', 't1')).toBe(true))

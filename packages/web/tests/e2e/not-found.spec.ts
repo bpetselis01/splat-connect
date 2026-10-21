@@ -9,11 +9,14 @@ import { signIn, createContributor, acceptTerms, deleteUser } from './helpers'
  */
 const MISSING = '00000000-0000-4000-8000-000000000000'
 
-test('a miss on a public route keeps the header', async ({ page }) => {
+test('a miss on a public route keeps the header and offers the way home', async ({ page }) => {
   const res = await page.goto('/definitely-not-a-real-page')
   expect(res?.status()).toBe(404)
   await expect(page.getByRole('heading', { name: /couldn't find that page/i })).toBeVisible()
   await expect(page.locator('header')).toBeVisible()
+
+  await page.getByRole('link', { name: 'Back to the home page' }).click()
+  await expect(page).toHaveURL(/localhost:\d+\/$/)
 })
 
 test('a miss inside the account section keeps the rail', async ({ page }) => {

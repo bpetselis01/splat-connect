@@ -1,7 +1,6 @@
 // The leader's weigh-in, where credit is minted. Every case here is a way the
 // number typed could be wrong, or a button pressed twice, before a credit
 // reaches a member's balance.
-// journeys: L13 L14
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { IntakeScreen } from '../../../../components/recycling/intake-screen'
 import { NAMES } from '../../../special-strings'
@@ -47,7 +46,7 @@ beforeEach(() => {
 })
 
 describe('the weight and credit boxes', () => {
-  it.each(['', '0', 'abc', '-3', '2,6', '1.999', '٣', '1e3'])('hold Weigh and credit for a weight of %j and send nothing', async (typed) => {
+  it.each(['', '0', 'abc', '-3', '2,6', '1.949', '٣', '1e3'])('hold Weigh and credit for a weight of %j and send nothing', async (typed) => {
     render(<IntakeScreen />)
     await screen.findByText('Tom Beattie')
     fireEvent.changeText(actual(), typed)
@@ -65,16 +64,16 @@ describe('the weight and credit boxes', () => {
     expect(weigh().props.accessibilityState.disabled).toBe(true)
   })
 
-  it('credits exactly the weight, and sends it as whole grams', async () => {
+  it('L13 credits exactly the rounded weight, and sends it as whole grams', async () => {
     render(<IntakeScreen />)
     await screen.findByText('Tom Beattie')
-    fireEvent.changeText(actual(), '3.001')
-    fireEvent.changeText(creditBox(), '3001')
+    fireEvent.changeText(actual(), '3.04')
+    fireEvent.changeText(creditBox(), '3000')
     fireEvent.press(weigh())
-    await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/api/organizations/org1/recycling/d1', { status: 'received', weighed_grams: 3001, credit_grams: 3001 }))
+    await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/api/organizations/org1/recycling/d1', { status: 'received', weighed_grams: 3000, credit_grams: 3000 }))
   })
 
-  it('credits nothing when the leader types zero, and sends that zero', async () => {
+  it('L13 credits nothing when the leader types zero, and sends that zero', async () => {
     render(<IntakeScreen />)
     await screen.findByText('Tom Beattie')
     fireEvent.changeText(actual(), '3')
@@ -83,7 +82,7 @@ describe('the weight and credit boxes', () => {
     await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/api/organizations/org1/recycling/d1', { status: 'received', weighed_grams: 3000, credit_grams: 0 }))
   })
 
-  it('refuses one gram more than the weight', async () => {
+  it('L13 refuses one gram more than the weight', async () => {
     render(<IntakeScreen />)
     await screen.findByText('Tom Beattie')
     fireEvent.changeText(actual(), '3')
@@ -105,7 +104,7 @@ describe('the weight and credit boxes', () => {
 })
 
 describe('deciding twice', () => {
-  it('sends one weigh-in when Weigh and credit is pressed twice before the answer', async () => {
+  it('L13 sends one weigh-in when Weigh and credit is pressed twice before the answer', async () => {
     mockPatch.mockReturnValue(new Promise(() => {}))
     render(<IntakeScreen />)
     await screen.findByText('Tom Beattie')
@@ -115,7 +114,7 @@ describe('deciding twice', () => {
     expect(mockPatch).toHaveBeenCalledTimes(1)
   })
 
-  it('sends one turn-away when Contaminated is pressed twice', async () => {
+  it('L14 sends one turn-away when Contaminated is pressed twice', async () => {
     mockPatch.mockReturnValue(new Promise(() => {}))
     render(<IntakeScreen />)
     await screen.findByText('Tom Beattie')
@@ -124,7 +123,7 @@ describe('deciding twice', () => {
     expect(mockPatch).toHaveBeenCalledTimes(1)
   })
 
-  it('does not send a weight with a turn-away even when one was typed', async () => {
+  it('L14 does not send a weight with a turn-away even when one was typed', async () => {
     render(<IntakeScreen />)
     await screen.findByText('Tom Beattie')
     fireEvent.changeText(actual(), '3')
@@ -132,7 +131,7 @@ describe('deciding twice', () => {
     await waitFor(() => expect(mockPatch).toHaveBeenCalledWith('/api/organizations/org1/recycling/d1', { status: 'declined' }))
   })
 
-  it('reloads the queue after a weigh-in so the row moves to Weighed in', async () => {
+  it('L13 reloads the queue after a weigh-in so the row moves to Weighed in', async () => {
     render(<IntakeScreen />)
     await screen.findByText('Tom Beattie')
     serve([drop({ status: 'received', weighed_grams: 3000, credit_grams: 2250 })])
@@ -144,7 +143,7 @@ describe('deciding twice', () => {
 })
 
 describe('a refused or lost weigh-in', () => {
-  it('shows the API reason, keeps the typed numbers and re-enables the button', async () => {
+  it('L13 shows the API reason, keeps the typed numbers and re-enables the button', async () => {
     mockPatch.mockRejectedValue(new Error('API PATCH /x failed with status 400: Credit cannot be more than what was weighed.'))
     render(<IntakeScreen />)
     await screen.findByText('Tom Beattie')

@@ -1,10 +1,10 @@
 // packages/mobile/app/(my)/admin.tsx
-// The board's Admin (MB is_admin): six count cards from one call. Review
-// tables don't fit a phone, so each card opens its queue on the web, where
-// the admin is signed in as themselves.
+// The board's Admin (MB is_admin): six count cards from one call, each opening
+// its queue on the phone.
 import { logFailure } from '../../lib/log'
 import { useEffect, useState } from 'react'
-import { View, Text, Linking, StyleSheet } from 'react-native'
+import { View, Text, StyleSheet } from 'react-native'
+import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import type { AdminCounts } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
@@ -15,14 +15,14 @@ import { useCapabilities } from '../../lib/capabilities'
 
 type Icon = React.ComponentProps<typeof Ionicons>['name']
 
-// MB:2953–2959, in its order and words; the paths are web's /admin cards.
-const CARDS: { key: keyof AdminCounts; label: string; path: string; icon: Icon; tint: string }[] = [
-  { key: 'tutorials', label: 'Tutorials awaiting review', path: '/admin/review', icon: 'clipboard-outline', tint: theme.colors.honeySoft },
-  { key: 'reports', label: 'Reports from members', path: '/admin/reports', icon: 'flag-outline', tint: theme.colors.apricotSoft },
-  { key: 'ideas', label: 'Ideas awaiting review', path: '/admin/ideas', icon: 'bulb-outline', tint: theme.colors.violetSoft },
-  { key: 'spotCheck', label: 'Spot-check', path: '/admin/spot-check', icon: 'search-outline', tint: theme.colors.accentLight },
-  { key: 'accounts', label: 'Accounts', path: '/admin/contributors', icon: 'people-outline', tint: theme.colors.mintSoft },
-  { key: 'organisations', label: 'Organisations', path: '/admin/organizations', icon: 'business-outline', tint: theme.colors.apricotSoft },
+// MB:2953–2959, in its order and words.
+const CARDS: { key: keyof AdminCounts; label: string; route: '/admin/review' | '/admin/reports' | '/admin/ideas' | '/admin/spot-check' | '/admin/accounts' | '/admin/organisations'; icon: Icon; tint: string }[] = [
+  { key: 'tutorials', label: 'Tutorials awaiting review', route: '/admin/review', icon: 'clipboard-outline', tint: theme.colors.honeySoft },
+  { key: 'reports', label: 'Reports from members', route: '/admin/reports', icon: 'flag-outline', tint: theme.colors.apricotSoft },
+  { key: 'ideas', label: 'Ideas awaiting review', route: '/admin/ideas', icon: 'bulb-outline', tint: theme.colors.violetSoft },
+  { key: 'spotCheck', label: 'Spot-check', route: '/admin/spot-check', icon: 'search-outline', tint: theme.colors.accentLight },
+  { key: 'accounts', label: 'Accounts', route: '/admin/accounts', icon: 'people-outline', tint: theme.colors.mintSoft },
+  { key: 'organisations', label: 'Organisations', route: '/admin/organisations', icon: 'business-outline', tint: theme.colors.apricotSoft },
 ]
 
 export default function MyAdmin() {
@@ -35,6 +35,7 @@ export default function MyAdmin() {
 }
 
 function AdminCards() {
+  const router = useRouter()
   const [counts, setCounts] = useState<AdminCounts | null>(null)
   useEffect(() => {
     let ignore = false
@@ -60,10 +61,9 @@ function AdminCards() {
           return (
             <AnimatedPressable
               key={card.key}
-              onPress={() => Linking.openURL(`${process.env.EXPO_PUBLIC_WEB_URL}${card.path}`)}
+              onPress={() => router.push(card.route)}
               accessibilityRole="button"
               accessibilityLabel={n === null ? card.label : `${card.label}, ${n}`}
-              accessibilityHint="Opens on the web."
               pressScale={0.98}
               style={styles.card}
             >

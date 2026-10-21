@@ -20,7 +20,7 @@ const PROFILE: Profile = {
 describe('ProfileForm', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('saves a changed name', async () => {
+  it('WD10 saves a changed name', async () => {
     patch.mockResolvedValue({ ...PROFILE, name: 'Ada Lovelace' })
     render(<ProfileForm profile={PROFILE} />)
 
@@ -53,7 +53,7 @@ describe('ProfileForm', () => {
 
   // 072: the public profile's About paragraph and featured guide ride the same
   // PATCH. The select only appears when there is a published guide to pick.
-  it('saves the bio and the featured guide', async () => {
+  it('WD10 WD11 saves the bio and the featured guide', async () => {
     patch.mockResolvedValue({ ...PROFILE, bio: 'Thursday switch clinic.', featured_tutorial_id: 't1' })
     render(<ProfileForm profile={PROFILE} publishedGuides={[{ id: 't1', title: 'Fairy lights' }]} />)
 
@@ -79,12 +79,12 @@ describe('ProfileForm', () => {
     )
   })
 
-  it('offers no featured pick without a published guide', () => {
+  it('WD11 offers no featured pick without a published guide', () => {
     render(<ProfileForm profile={PROFILE} />)
     expect(screen.queryByLabelText('Featured guide')).not.toBeInTheDocument()
   })
 
-  it('saves the pickup address fields', async () => {
+  it('WD10 saves the pickup address fields', async () => {
     patch.mockResolvedValue({ ...PROFILE, pickup_line1: '1 Test St', pickup_suburb: 'Testville', pickup_state: 'VIC', pickup_postcode: '3000' })
     render(<ProfileForm profile={PROFILE} />)
 

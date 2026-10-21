@@ -23,7 +23,7 @@ import { useFocusEffect } from 'expo-router'
 import type { Organization, RecyclingDropoff, RecyclingGives } from '@splat-connect/types'
 import { PRINT_MATERIALS, RECYCLING_FORMS, RECYCLING_MACHINES, apiMessage, initials, intakeCredit, weighedInLine } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
-import { useCapabilities } from '../../lib/capabilities'
+import { useActingOrg } from '../../lib/acting-org'
 import { theme } from '../../lib/theme'
 import { useBottomClearance } from '../../lib/bottom-clearance'
 import { DROPOFF_PILL, canDecide, kg } from '../../lib/recycling'
@@ -43,8 +43,8 @@ const date = (iso: string) => new Date(iso).toLocaleDateString('en-AU', { day: '
 
 export function IntakeScreen() {
   const bottom = useBottomClearance()
-  const { caps, loading: capsLoading } = useCapabilities()
-  const orgId = caps?.ledOrgs[0]?.id
+  const { org: acting, loading: capsLoading } = useActingOrg()
+  const orgId = acting?.id
   const [org, setOrg] = useState<Organization | null>(null)
   const [drops, setDrops] = useState<RecyclingDropoff[]>([])
   const [names, setNames] = useState<Record<string, string>>({})
@@ -175,7 +175,7 @@ export function IntakeScreen() {
               Contributors see this before they pack a box. Every unlisted item is one somebody
               picks out by hand.
             </Text>
-            {org ? <WhatYouTake org={org} /> : null}
+            {org ? <WhatYouTake key={org.id} org={org} /> : null}
           </>
         )}
       </ScrollView>

@@ -1,7 +1,6 @@
 // packages/mobile/tests/unit/app/auth-screens.test.tsx
 // The sign-in flow's screens against a mocked auth context
 // (docs/superpowers/specs/2026-09-30-mobile-sign-in-design.md).
-// journeys: A01 A02 A06 A09 A10
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import Welcome from '../../../app/(auth)/welcome'
 import CreateAccount from '../../../app/(auth)/create-account'
@@ -11,7 +10,7 @@ import Verify from '../../../app/(auth)/verify'
 import ForgotPassword from '../../../app/(auth)/forgot-password'
 import TermsGate from '../../../app/terms'
 import NotBuilt from '../../../app/not-built'
-import { toProblem } from '../../../lib/auth-errors'
+import { toProblem } from '@splat-connect/types'
 import { BLANK, EMAILS, NAMES, PASSWORDS } from '../../special-strings'
 
 const mockPush = jest.fn()
@@ -66,7 +65,7 @@ beforeEach(() => {
 })
 
 describe('Welcome', () => {
-  it('opens Create account and Sign in', () => {
+  it('A01 A02 opens Create account and Sign in', () => {
     render(<Welcome />)
     fireEvent.press(screen.getByTestId('welcome-get-started'))
     expect(mockPush).toHaveBeenCalledWith('/create-account')
@@ -272,7 +271,7 @@ describe('Code sign-in', () => {
     expect(screen.getByLabelText('Email').props.value).toBe('sam@example.com')
   })
 
-  it('sends the code and moves to the code screen', async () => {
+  it('A06 sends the code and moves to the code screen', async () => {
     mockAuth.sendSignInCode.mockResolvedValue(ok)
     render(<CodeSignIn />)
     type(' sam@example.com ')
@@ -283,7 +282,7 @@ describe('Code sign-in', () => {
     expect(mockAuth.sendSignInCode).toHaveBeenCalledWith('sam@example.com')
   })
 
-  it('sends from the keyboard return key too', async () => {
+  it('A06 sends from the keyboard return key too', async () => {
     mockAuth.sendSignInCode.mockResolvedValue(ok)
     render(<CodeSignIn />)
     type('sam@example.com')
@@ -384,7 +383,7 @@ describe('Verify', () => {
 })
 
 describe('Forgot password', () => {
-  it('moves on whether or not the account exists', async () => {
+  it('A09 moves on whether or not the account exists', async () => {
     mockAuth.sendPasswordReset.mockResolvedValue({ problem: { kind: 'other', message: 'User not found' } })
     mockParams = { email: 'who@example.com' }
     render(<ForgotPassword />)
@@ -431,7 +430,7 @@ describe('Terms gate', () => {
 })
 
 describe('Not built yet', () => {
-  it('names the pending feature and goes back', () => {
+  it('A13 names the pending feature and goes back', () => {
     mockParams = { feature: 'apple-sign-in' }
     render(<NotBuilt />)
     expect(screen.getByText('Not built yet')).toBeTruthy()

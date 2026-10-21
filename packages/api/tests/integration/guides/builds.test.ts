@@ -1,4 +1,3 @@
-// journeys: B03 Q01
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -24,7 +23,7 @@ afterAll(async () => {
 })
 
 describe('091 tutorial_builds', () => {
-  it('logs a build once, however many taps, and counts it without touching the guide', async () => {
+  it('B03 WT10 logs a build once, however many taps, and counts it without touching the guide', async () => {
     const before = await stamp()
     expect((await call('POST', `/api/tutorials/${guide}/build`, parent.token)).status).toBe(201)
     expect((await call('POST', `/api/tutorials/${guide}/build`, parent.token)).status).toBe(201)
@@ -32,7 +31,7 @@ describe('091 tutorial_builds', () => {
     expect(data).toEqual({ builds_count: 1, updated_at: before })
   })
 
-  it('tells the member their own count, and nobody else whose builds they are', async () => {
+  it('Q01 tells the member their own count, and nobody else whose builds they are', async () => {
     const mine = await call('GET', '/api/me/builds', parent.token)
     expect(await mine.json()).toEqual({ builds: 1 })
     expect(await (await call('GET', '/api/me/builds', author.token)).json()).toEqual({ builds: 0 })
@@ -42,8 +41,10 @@ describe('091 tutorial_builds', () => {
     expect((await call('POST', `/api/tutorials/${draft}/build`, parent.token)).status).toBe(404)
   })
 
-  it('takes a build back', async () => {
-    expect((await call('DELETE', `/api/tutorials/${guide}/build`, parent.token)).status).toBe(204)
-    expect(await (await call('GET', '/api/me/builds', parent.token)).json()).toEqual({ builds: 0 })
+  it('has no route to take a build back', async () => {
+    const res = await call('DELETE', `/api/tutorials/${guide}/build`, parent.token)
+    expect(res.status).toBe(404)
+    expect(await res.text()).toBe('404 Not Found')
+    expect(await (await call('GET', '/api/me/builds', parent.token)).json()).toEqual({ builds: 1 })
   })
 })

@@ -1,4 +1,3 @@
-// journeys: T12
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { SAFETY_CHECKLIST } from '@splat-connect/types'
 import { SafetySection } from '../../../../components/my-tutorials/sections/safety-section'
@@ -77,7 +76,7 @@ it('shows the declaration once made and offers no way to unmake it', () => {
   expect(screen.queryByTestId('safety-declare')).toBeNull()
 })
 
-it('adds a safety note and saves the list', () => {
+it('T12 adds a safety note and saves the list', () => {
   render(<SafetySection />)
   fireEvent.press(screen.getByText('+ Add a safety note'))
   fireEvent.changeText(screen.getByLabelText('Safety note 1 title'), 'Battery door must be screwed shut')

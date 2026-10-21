@@ -28,7 +28,7 @@ describe('NotificationsList', () => {
     vi.clearAllMocks()
   })
 
-  it('renders a notification and marks it read on click', async () => {
+  it('WD38 renders a notification, marks it read on click and then opens what it is about', async () => {
     const onMarkRead = vi.fn().mockResolvedValue(undefined)
     render(
       <NotificationsList
@@ -41,9 +41,11 @@ describe('NotificationsList', () => {
     )
     fireEvent.click(screen.getByRole('button', { name: /Spoon Holder/ }))
     await waitFor(() => expect(onMarkRead).toHaveBeenCalledWith('n1'))
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/tutorials/t1/edit'))
+    expect(onMarkRead.mock.invocationCallOrder[0]).toBeLessThan(mockPush.mock.invocationCallOrder[0])
   })
 
-  it('shows the reason as a second line (119)', () => {
+  it('WD37 shows the reason as a second line (119)', () => {
     render(
       <NotificationsList
         notifications={[baseNotif({ type: 'tutorial_rejected', body: 'Step 4 needs the wire named.' })]}
@@ -56,7 +58,7 @@ describe('NotificationsList', () => {
     expect(screen.getByText('Step 4 needs the wire named.')).toBeInTheDocument()
   })
 
-  it('renders Accept/Decline for a pending invite notification', async () => {
+  it('WD40 renders Accept/Decline for a pending invite notification', async () => {
     const inviteNotif = baseNotif({ id: 'n2', type: 'collaborator_invited' })
     const onAcceptInvite = vi.fn().mockResolvedValue(undefined)
     render(
@@ -92,7 +94,7 @@ describe('NotificationsList', () => {
     expect(screen.getByRole('button', { name: /fire truck/i })).toBeInTheDocument()
   })
 
-  it('navigates to the exchange thread when a toy notification is clicked', async () => {
+  it('WD38 navigates to the exchange thread when a toy notification is clicked', async () => {
     const onMarkRead = vi.fn().mockResolvedValue(undefined)
     render(<NotificationsList notifications={[baseNotif({ type: 'toy_accepted', tutorial_id: null, tutorial_title: null, toy_transaction_id: 'tx-1', toy_name: 'Fire truck' })]} pendingInvitesByTutorial={{}} onMarkRead={onMarkRead} onAcceptInvite={vi.fn()} onDeclineInvite={vi.fn()} />)
 
@@ -255,11 +257,31 @@ describe('NotificationsList', () => {
   // 077: the four organisation types, each routed by its own subject column.
   it.each([
     ['org_event_published', { org_event_id: 'e1', actor_name: 'Northbank', tutorial_title: 'Build day' }, 'Northbank published an event: Build day', '/get-involved/events/e1'],
+    ['org_event_changed', { org_event_id: 'e1', actor_name: 'Northbank', tutorial_title: 'Build day' }, 'Northbank changed the time or place of Build day', '/get-involved/events/e1'],
+    ['org_event_cancelled', { org_event_id: 'e1', actor_name: 'Northbank', tutorial_title: 'Build day' }, 'Northbank cancelled Build day', '/get-involved/events/e1'],
     ['org_story_published', { org_story_id: 's1', actor_name: 'Northbank', tutorial_title: 'Arlo' }, 'Northbank published a story: Arlo', '/about/stories/s1'],
     ['org_message', { org_conversation_id: 'c1', actor_name: 'Priya', tutorial_title: 'Northbank' }, 'Priya messaged Northbank', '/dashboard/messages/c1'],
     ['org_message', { org_conversation_id: 'c1', actor_name: 'Northbank', tutorial_title: 'Northbank' }, 'Northbank replied to your message', '/dashboard/messages/c1'],
     ['org_thanked', { org_id: 'o1', actor_name: 'Sam' }, 'Sam said thanks to your organisation', '/dashboard/organisation/profile#thanks'],
-  ] as const)('renders %s and routes it by its subject', async (type, fields, copy, href) => {
+    ['report_resolved', { member_report_id: 'r1', tutorial_id: null, actor_name: 'SPLAT' }, 'Your report was looked at', '/dashboard/reports'],
+    ['backing_accepted', { tutorial_id: 't9', tutorial_title: 'Spoon Holder', actor_name: 'Northbank' }, 'Northbank agreed to back "Spoon Holder"', '/tutorials/t9'],
+    ['backing_declined', { tutorial_id: 't9', tutorial_title: 'Spoon Holder', actor_name: 'Northbank' }, 'Northbank can\'t back "Spoon Holder" right now', '/tutorials/t9'],
+    ['recycling_received', { org_id: 'o1', actor_name: 'Northbank' }, 'Northbank received your drop-off', '/get-involved/recycling'],
+    ['recycling_declined', { org_id: 'o1', actor_name: 'Northbank' }, 'Northbank couldn\'t take your drop-off', '/get-involved/recycling'],
+    ['org_request_approved', { org_id: 'o1', actor_name: 'Northbank' }, 'Northbank was approved and you now lead it', '/dashboard/organisation'],
+    ['org_request_declined', { actor_name: 'Northbank' }, 'Northbank wasn\'t approved', '/get-involved/organisations/request'],
+    ['test_print_passed', { actor_name: 'Pixel' }, 'The test print for Pixel passed', '/dashboard/printers'],
+    ['test_print_failed', { org_id: 'o1', actor_name: 'Pixel' }, 'The test print for Pixel didn\'t pass', '/dashboard/printers'],
+    ['handover_confirmed', { toy_transaction_id: 'tx1', toy_name: 'Switch car', actor_name: 'Sam' }, 'Sam confirmed the handover of Switch car', '/dashboard/exchanges/tx1'],
+    ['leader_added', { org_id: 'o1', actor_name: 'Northbank' }, 'You now lead Northbank', '/dashboard/organisation'],
+    ['leader_removed', { org_id: 'o1', actor_name: 'Northbank' }, 'You no longer lead Northbank', '/organizations/o1/public'],
+    ['org_event_deleted', { org_id: 'o1', actor_name: 'Northbank', body: 'Build day' }, 'Northbank deleted an event you registered for', '/organizations/o1/public'],
+    ['event_rsvp_received', { org_event_id: 'e1', actor_name: 'Northbank', tutorial_title: 'Build day' }, 'You\'re registered for Build day', '/get-involved/events/e1'],
+    ['idea_received', { idea_id: 'i1', actor_name: 'SPLAT', body: 'Bubble machine' }, 'We received your idea', '/dashboard/challenges'],
+    ['report_received', { member_report_id: 'r1', actor_name: 'SPLAT', body: 'Spoon Holder' }, 'We received your report', '/notifications'],
+    ['drop_off_booked', { org_id: 'o1', actor_name: 'Northbank' }, 'Your drop-off at Northbank is booked', '/get-involved/recycling'],
+    ['contact_received', { actor_name: 'SPLAT', body: 'The battery pack gets warm' }, 'We received your message', '/notifications'],
+  ] as const)('WD38 renders %s and routes it by its subject', async (type, fields, copy, href) => {
     render(
       <NotificationsList
         notifications={[baseNotif({ type, tutorial_id: null, tutorial_title: null, ...fields })]}
@@ -271,5 +293,38 @@ describe('NotificationsList', () => {
     )
     fireEvent.click(screen.getByText(copy))
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith(href))
+  })
+
+  it('WD37 marks an unread row with the Unread dot and a read row without, and says "Nothing yet." for an empty list', () => {
+    const props = { pendingInvitesByTutorial: {}, onMarkRead: vi.fn(), onAcceptInvite: vi.fn(), onDeclineInvite: vi.fn() }
+    const { unmount } = render(
+      <NotificationsList
+        {...props}
+        notifications={[baseNotif({ id: 'a' }), baseNotif({ id: 'b', tutorial_title: 'Old guide', read_at: '2026-10-01T00:00:00Z' })]}
+      />
+    )
+    expect(screen.getAllByLabelText('Unread')).toHaveLength(1)
+    expect(screen.getByRole('button', { name: /Spoon Holder/ }).closest('li')).toContainElement(screen.getByLabelText('Unread'))
+    unmount()
+    render(<NotificationsList {...props} notifications={[]} />)
+    expect(screen.getByText('Nothing yet.')).toBeInTheDocument()
+  })
+
+  it('WD40 declines a pending invite by its id and leaves the row’s own link alone', async () => {
+    const onDeclineInvite = vi.fn().mockResolvedValue(undefined)
+    const onMarkRead = vi.fn()
+    render(
+      <NotificationsList
+        notifications={[baseNotif({ id: 'n2', type: 'collaborator_invited' })]}
+        pendingInvitesByTutorial={{ t1: 'invite-1' }}
+        onMarkRead={onMarkRead}
+        onAcceptInvite={vi.fn()}
+        onDeclineInvite={onDeclineInvite}
+      />
+    )
+    fireEvent.click(screen.getByText('Decline'))
+    await waitFor(() => expect(onDeclineInvite).toHaveBeenCalledWith('invite-1'))
+    expect(onMarkRead).not.toHaveBeenCalled()
+    expect(mockPush).not.toHaveBeenCalled()
   })
 })

@@ -1,4 +1,3 @@
-// journeys: G25 G26 G28
 import { Platform } from 'react-native'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native'
 import { CLEARANCE, paddingBottomOf } from '../../bottom-spacing'
@@ -29,7 +28,7 @@ const props = { tutorialId: 'g', guideTitle: 'Light Touch Switch', authorName: '
 beforeEach(() => jest.clearAllMocks())
 afterEach(() => jest.restoreAllMocks())
 
-it('lists fixes first, then the rest, with filter chips that count', () => {
+it('G25 lists fixes first, then the rest, with filter chips that count', () => {
   const notes = [note({ id: 'a', step_position: 3, pinned_at: 'x', pinned_by_name: 'Mei Tan', body: 'Tin both leads first.' }), note({ id: 'b', step_position: 4, author_name: 'Sam R', body: 'Cap was tight.' }), note({ id: 'c', step_position: null, body: 'Test before gluing.' })]
   render(<CommunityNotes {...props} notes={notes as never} />)
   expect(screen.getByTestId('feedback-filter-all')).toHaveTextContent('All 3')
@@ -45,7 +44,7 @@ it('lists fixes first, then the rest, with filter chips that count', () => {
   expect(screen.queryByText(/^Discussion/)).toBeNull()
 })
 
-it('filters by step, fixes and missing', () => {
+it('G25 filters by step, fixes and missing', () => {
   const notes = [note({ id: 'a', step_position: 3, pinned_at: 'x', pinned_by_name: 'Mei' }), note({ id: 'b', step_position: 4, body: 'Cap was tight.' }), note({ id: 'c', step_position: null, body: 'Test before gluing.' })]
   render(<CommunityNotes {...props} notes={notes as never} />)
   fireEvent.press(screen.getByTestId('feedback-filter-step-4'))
@@ -99,7 +98,7 @@ it('the ⋯ menu lists only what this viewer can do', () => {
   expect(screen.queryByText('Report this note')).toBeNull()
 })
 
-it('an author sees Pin as a fix, pins, and the flash says so', async () => {
+it('G26 an author sees Pin as a fix, pins, and the flash says so', async () => {
   render(<CommunityNotes {...props} canPin notes={[note({ id: 'b', step_position: 4 })] as never} />)
   fireEvent.press(screen.getByTestId('note-menu-b'))
   fireEvent.press(screen.getByText('Pin as a fix'))
@@ -108,7 +107,7 @@ it('an author sees Pin as a fix, pins, and the flash says so', async () => {
   expect(screen.getByText('Pinned as a fix — shows on its step in build mode')).toBeTruthy()
 })
 
-it('Delete removes your own note', async () => {
+it('G28 Delete removes your own note', async () => {
   render(<CommunityNotes {...props} notes={[note({ id: 'mine', author_id: 'me' })] as never} />)
   fireEvent.press(screen.getByTestId('note-menu-mine'))
   fireEvent.press(screen.getByText('Delete'))
@@ -116,7 +115,7 @@ it('Delete removes your own note', async () => {
   expect(screen.getByText('Note deleted')).toBeTruthy()
 })
 
-it('Report this note reports the note, not the guide', () => {
+it('G27 Report this note reports the note, not the guide', () => {
   jest.replaceProperty(Platform, 'OS', 'android') // iOS defers the report to the menu's onDismiss, which a closed jest Modal never fires
   render(<CommunityNotes {...props} notes={[note({ id: 'theirs', author_id: 'p', author_name: 'Sam R' })] as never} />)
   fireEvent.press(screen.getByTestId('note-menu-theirs'))

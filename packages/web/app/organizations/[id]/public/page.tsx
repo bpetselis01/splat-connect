@@ -40,6 +40,7 @@ import type { Icon } from '@phosphor-icons/react'
 import { ShelfToyCard } from '@/components/shelf-toy-card'
 import { tintFor } from '@/components/card-photo'
 import { OrgActions } from '@/components/org-actions'
+import { ToastProvider } from '@/components/toast'
 import { safePhotoSrc } from '@/lib/photo-src'
 import { firstName, initials, recyclingPerDrop, shortDate, type RecyclingGives } from '@splat-connect/types'
 import { getCapabilities } from '@/lib/capabilities'
@@ -151,6 +152,7 @@ export default async function OrgPublicProfilePage({
   const logo = safePhotoSrc(org.logo_url ?? null)
 
   return (
+    <ToastProvider>
     <div>
       <nav
         aria-label="Breadcrumb"
@@ -619,6 +621,7 @@ export default async function OrgPublicProfilePage({
         </aside>
       </div>
     </div>
+    </ToastProvider>
   )
 }
 

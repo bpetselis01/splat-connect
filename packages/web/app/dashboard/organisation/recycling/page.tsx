@@ -12,8 +12,8 @@
  * screen.
  */
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
-import { getCapabilities } from '@/lib/capabilities'
+import { actingOrg } from '@/lib/acting-org'
+import { requireOrgLeader } from '@/lib/org-access'
 import { apiClient } from '@/lib/api-client'
 import { CaretRight } from '@phosphor-icons/react/dist/ssr'
 import { RecyclingIntake } from '@/components/recycling-intake'
@@ -23,9 +23,8 @@ import type { Organization, RecyclingDropoff } from '@splat-connect/types'
 export const metadata = { title: 'Recycling intake — SPLAT Connect' }
 
 export default async function OrgRecyclingPage() {
-  const caps = await getCapabilities()
-  if (!caps || caps.ledOrgs.length === 0) notFound()
-  const orgId = caps.ledOrgs[0].id
+  const caps = await requireOrgLeader('/dashboard/organisation/recycling')
+  const orgId = (await actingOrg(caps)).id
 
   const [org, dropoffs] = await Promise.all([
     apiClient.get<Organization>(`/api/organizations/${orgId}`),

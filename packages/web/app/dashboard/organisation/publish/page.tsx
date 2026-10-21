@@ -5,8 +5,8 @@
  * organisation page immediately. No review, so the leader terms are restated at
  * the foot of the component this renders.
  */
-import { notFound } from 'next/navigation'
-import { getCapabilities } from '@/lib/capabilities'
+import { actingOrg } from '@/lib/acting-org'
+import { requireOrgLeader } from '@/lib/org-access'
 import { apiClient } from '@/lib/api-client'
 import Link from 'next/link'
 import { PencilSimpleLine, Plus } from '@phosphor-icons/react/dist/ssr'
@@ -21,9 +21,8 @@ import type {
 export const metadata = { title: 'Events and stories — SPLAT Connect' }
 
 export default async function OrgPublishPage() {
-  const caps = await getCapabilities()
-  if (!caps || caps.ledOrgs.length === 0) notFound()
-  const org = caps.ledOrgs[0]
+  const caps = await requireOrgLeader('/dashboard/organisation/publish')
+  const org = await actingOrg(caps)
 
   const [events, stories, inbox] = await Promise.all([
     apiClient.get<OrgEvent[]>(`/api/organizations/${org.id}/events`).catch(() => [] as OrgEvent[]),

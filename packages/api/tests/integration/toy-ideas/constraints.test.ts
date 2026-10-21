@@ -2,7 +2,6 @@
  * 110: constraints on a challenge — readable wherever the challenge is,
  * written by its author or a current maker, and nobody else.
  */
-// journeys: C07
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createClient } from '@supabase/supabase-js'
 import app from '../../../src/app.js'
@@ -34,7 +33,7 @@ afterAll(async () => {
 })
 
 describe('110 idea constraints', () => {
-  it('takes one from the author and one from a maker who joined', async () => {
+  it('C07 takes one from the author and one from a maker who joined', async () => {
     expect((await add(author, { label: 'Fluid and electronics share one enclosure', note: 'Anything you add sits above the waterline.' })).status).toBe(201)
     expect((await add(maker, { label: 'It has to survive a fall' })).status).toBe(201)
   })

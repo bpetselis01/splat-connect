@@ -21,6 +21,7 @@ import { getCapabilities } from '@/lib/capabilities'
 import { EventRegisterForm } from '@/components/event-register-form'
 import { dateBadge, formatTimeRange } from '@splat-connect/types'
 import type { EventListItem, OrgEventQuestion } from '@splat-connect/types'
+import { authUrl } from '@/lib/safe-next-path'
 
 export const metadata = { title: 'Register for an event — SPLAT Connect' }
 
@@ -33,7 +34,7 @@ export default async function EventRegisterPage({ params }: { params: Promise<{ 
   const { id } = await params
   const caps = await getCapabilities()
   if (!caps) {
-    redirect(`/login?next=${encodeURIComponent(`/get-involved/events/${id}/register`)}`)
+    redirect(authUrl('login', `/get-involved/events/${id}/register`))
   }
 
   const event = await apiClient.get<EventDetail>(`/api/public/events/${id}`).catch(() => null)
@@ -92,6 +93,7 @@ export default async function EventRegisterPage({ params }: { params: Promise<{ 
 
       <EventRegisterForm
         eventId={event.id}
+        orgId={event.org?.id ?? null}
         orgName={orgName}
         questions={event.questions}
         defaultName={caps.profile.name ?? ''}

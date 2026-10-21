@@ -1,9 +1,8 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
-import { AGREEMENT_VERSIONS, type Profile, type UserAgreement } from '@splat-connect/types'
+import { AGREEMENT_VERSIONS, hasCurrentAgreement, problem, toProblem, type AuthProblem, type Profile, type UserAgreement } from '@splat-connect/types'
 import { supabase } from './supabase'
 import { apiClient } from './api-client'
-import { problem, toProblem, type AuthProblem } from './auth-errors'
 import { appleCredential, googleIdToken, googleSavedIdToken, googleSignOut, type SocialResult } from './social-auth'
 import { setRecentsOwner } from './recents'
 import { setTicksOwner } from './guide-progress'
@@ -101,7 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     ]).then(([p, rows]) => {
       if (ignore) return
       setProfile(p)
-      setHasContributorTerms(rows ? rows.some((r) => r.agreement_type === 'contributor_terms') : null)
+      setHasContributorTerms(rows ? hasCurrentAgreement(rows, 'contributor_terms') : null)
     })
     return () => { ignore = true }
   }, [session?.user?.id])

@@ -27,7 +27,8 @@ import {
   DownloadSimple,
   Eye,
 } from '@phosphor-icons/react/dist/ssr'
-import { getCapabilities } from '@/lib/capabilities'
+import { actingOrg } from '@/lib/acting-org'
+import { requireOrgLeader } from '@/lib/org-access'
 import { apiClient } from '@/lib/api-client'
 import { longDate } from '@splat-connect/types'
 import { formatRelativeTime } from '@/lib/relative-time'
@@ -46,9 +47,8 @@ export const metadata = { title: 'Manage event — SPLAT Connect' }
 
 export default async function ManageEventPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const caps = await getCapabilities()
-  if (!caps || caps.ledOrgs.length === 0) notFound()
-  const org = caps.ledOrgs[0]
+  const caps = await requireOrgLeader(`/dashboard/org/events/${id}`)
+  const org = await actingOrg(caps)
 
   const [events, questions, registrations, inbox] = await Promise.all([
     apiClient.get<OrgEvent[]>(`/api/organizations/${org.id}/events`).catch(() => [] as OrgEvent[]),
@@ -121,7 +121,7 @@ export default async function ManageEventPage({ params }: { params: Promise<{ id
       <div className="flex flex-wrap items-end justify-between gap-5">
         <div>
           <p className="text-[13px] font-extrabold uppercase tracking-[.1em] text-muted">
-            {EVENT_KIND_LABEL[event.kind]} · {longDate(event.starts_at)}
+            {EVENT_KIND_LABEL[event.kind]} · {event.starts_at ? longDate(event.starts_at) : 'No date yet'}
           </p>
           <h1 className="title-hub mt-2">{event.title}</h1>
         </div>

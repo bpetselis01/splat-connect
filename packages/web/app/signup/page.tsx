@@ -138,6 +138,10 @@ function SignupForm() {
           </p>
         )}
 
+        {reason === 'follow' && <p className="alert bg-brand-tint text-ink">Sign up to follow this organisation</p>}
+        {reason === 'message' && <p className="alert bg-brand-tint text-ink">Sign up to message this organisation</p>}
+        {reason === 'build' && <p className="alert bg-brand-tint text-ink">Sign up to request a build</p>}
+
         <fieldset className="auth-field">
           <legend className="auth-label">I&apos;m mostly here to…</legend>
           <div className="grid grid-cols-2 gap-2.5">

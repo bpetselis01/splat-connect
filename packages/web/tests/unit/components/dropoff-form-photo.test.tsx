@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { RECYCLING_DECLARATION } from '@splat-connect/types'
+import { DECLARATION_VERSION, RECYCLING_DECLARATION } from '@splat-connect/types'
 import { DropoffForm } from '@/components/dropoff-form'
 import { browserApiClient } from '@/lib/browser-api-client'
 
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }) }))
+const push = vi.fn()
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push, refresh: vi.fn() }) }))
 vi.mock('@/lib/browser-api-client', () => ({ browserApiClient: { post: vi.fn(), postFormData: vi.fn() } }))
 
 const ORG = { id: 'north', name: 'Northside', suburb: null, state: null, recycling_materials: ['PLA'], recycling_note: null }
@@ -12,7 +13,7 @@ const ORG = { id: 'north', name: 'Northside', suburb: null, state: null, recycli
 describe('DropoffForm photo', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('uploads the photo and books with its path', async () => {
+  it('WI37 uploads the photo and books with its path', async () => {
     vi.mocked(browserApiClient.postFormData).mockResolvedValue({ path: 'me/a.jpg', url: 'https://signed/a.jpg' })
     vi.mocked(browserApiClient.post).mockResolvedValue({})
     render(<DropoffForm orgs={[ORG]} />)
@@ -30,6 +31,47 @@ describe('DropoffForm photo', () => {
         expect.objectContaining({ photo_url: 'me/a.jpg' })
       )
     )
+  })
+})
+
+describe('DropoffForm booking', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('WI37 books the weight, polymer, declaration version and note, then opens My SPLAT', async () => {
+    vi.mocked(browserApiClient.post).mockResolvedValue({})
+    render(<DropoffForm orgs={[ORG]} />)
+    fireEvent.change(screen.getByPlaceholderText('2.0'), { target: { value: '2.5' } })
+    for (const line of RECYCLING_DECLARATION) fireEvent.click(screen.getByLabelText(line))
+    fireEvent.click(screen.getByRole('button', { name: /Book the drop-off/ }))
+    await waitFor(() =>
+      expect(browserApiClient.post).toHaveBeenCalledWith('/api/organizations/north/recycling', {
+        material: 'PLA',
+        estimated_grams: 2500,
+        condition_declared: true,
+        declaration_version: DECLARATION_VERSION,
+        note: '',
+      })
+    )
+    expect(push).toHaveBeenCalledWith('/dashboard')
+  })
+
+  it('WI37 holds the booking until all seven declaration lines are ticked', () => {
+    render(<DropoffForm orgs={[ORG]} />)
+    fireEvent.change(screen.getByPlaceholderText('2.0'), { target: { value: '2.5' } })
+    for (const line of RECYCLING_DECLARATION.slice(0, 6)) fireEvent.click(screen.getByLabelText(line))
+    expect(screen.getByRole('button', { name: /Book the drop-off/ })).toBeDisabled()
+    fireEvent.click(screen.getByLabelText(RECYCLING_DECLARATION[6]))
+    expect(screen.getByRole('button', { name: /Book the drop-off/ })).toBeEnabled()
+  })
+
+  it('WI37 shows the server sentence and stays put when the booking is refused', async () => {
+    vi.mocked(browserApiClient.post).mockRejectedValue(new Error('That is under the two-kilo minimum.'))
+    render(<DropoffForm orgs={[ORG]} />)
+    fireEvent.change(screen.getByPlaceholderText('2.0'), { target: { value: '2.5' } })
+    for (const line of RECYCLING_DECLARATION) fireEvent.click(screen.getByLabelText(line))
+    fireEvent.click(screen.getByRole('button', { name: /Book the drop-off/ }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('That is under the two-kilo minimum.')
+    expect(push).not.toHaveBeenCalled()
   })
 })
 

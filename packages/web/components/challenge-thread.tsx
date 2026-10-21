@@ -7,9 +7,7 @@
  * never returns `messages` — the brief recruits, the conversation stays
  * private even on a public challenge — so this component fetches
  * GET /api/ideas/:id/messages itself, authenticated, through
- * lib/browser-api-client.ts (contrast components/notify-form.tsx, which posts
- * directly because its endpoint is deliberately unauthenticated; every other
- * call here needs the Supabase session token browser-api-client.ts attaches).
+ * lib/browser-api-client.ts, which attaches the Supabase session token.
  * RLS returns `[]` rather than 403 to a non-participant, which is why
  * `canRead` below is computed from the author/participants the public
  * endpoint already returned, not from whether the fetch came back empty — an
@@ -39,11 +37,13 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import type { Route } from 'next'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { browserApiClient } from '@/lib/browser-api-client'
-import { isApiError } from '@splat-connect/types'
+import { apiMessage, isApiError } from '@splat-connect/types'
 import { CheckCircle } from '@phosphor-icons/react/dist/ssr'
+import { authUrl } from '@/lib/safe-next-path'
 import { ExchangeChat } from '@/components/exchange-chat'
 import type { ToyIdeaMessage, ToyIdeaParticipant } from '@splat-connect/types'
 
@@ -70,11 +70,17 @@ export function ChallengeThread({
   answerMessageId?: string | null
 }) {
   const router = useRouter()
+  const pathname = usePathname()
+  const search = useSearchParams().toString()
   const [messages, setMessages] = useState<ToyIdeaMessage[]>([])
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [answerId, setAnswerId] = useState<string | null>(answerMessageId)
+  const [reporting, setReporting] = useState<{ id: string; name: string } | null>(null)
+  const [reason, setReason] = useState('')
+  // The public brief is anonymous, so it still lists someone the reporter has just hidden.
+  const [reported, setReported] = useState<string[]>([])
 
   const isAuthor = viewerId !== null && viewerId === authorId
   const isParticipant = viewerId !== null && participants.some((p) => p.profile_id === viewerId)
@@ -87,6 +93,12 @@ export function ChallengeThread({
     },
     [authorId, authorName, participants]
   )
+
+  // Everyone but the viewer, minus anyone the viewer has just reported.
+  const people = [
+    { id: authorId, name: authorName ?? 'Someone' },
+    ...participants.map((p) => ({ id: p.profile_id, name: p.name ?? 'Someone' })),
+  ].filter((p) => p.id !== viewerId && !reported.includes(p.id))
 
   const loadMessages = useCallback(async () => {
     try {
@@ -152,8 +164,9 @@ export function ChallengeThread({
     try {
       await browserApiClient.post(`/api/ideas/${ideaId}/messages`, { body })
       await loadMessages()
-    } catch {
+    } catch (err) {
       setError('Something went wrong. Please try again.')
+      throw err
     } finally {
       setBusy(false)
     }
@@ -175,6 +188,27 @@ export function ChallengeThread({
     }
   }
 
+  // The person drops out of the reporter's reads at once; an admin decides later.
+  async function sendReport() {
+    if (!reporting || !reason.trim()) return
+    setBusy(true)
+    setError(null)
+    try {
+      await browserApiClient.post(`/api/ideas/${ideaId}/reports`, {
+        reported_profile_id: reporting.id,
+        reason: reason.trim(),
+      })
+      setReported((r) => [...r, reporting.id])
+      setReporting(null)
+      setReason('')
+      await loadMessages()
+    } catch (err) {
+      setError(apiMessage(err, 'Something went wrong. Please try again.'))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function join() {
     setBusy(true)
     setError(null)
@@ -185,6 +219,9 @@ export function ChallengeThread({
       router.refresh()
     } catch {
       setError('Could not join this challenge. Please try again.')
+    } finally {
+      // Not only on failure: the refresh keeps this instance mounted, so a
+      // busy left set would disable Join after a Leave.
       setBusy(false)
     }
   }
@@ -208,6 +245,7 @@ export function ChallengeThread({
           ? 'That person is not part of this challenge.'
           : 'Something went wrong. Please try again.'
       )
+    } finally {
       setBusy(false)
     }
   }
@@ -215,7 +253,7 @@ export function ChallengeThread({
   if (viewerId === null) {
     return (
       <p className="text-sm text-muted">
-        <Link href="/login" className="font-semibold text-brand-dark underline">
+        <Link href={authUrl('login', search ? `${pathname}?${search}` : pathname) as Route} className="font-semibold text-brand-dark underline">
           Sign in
         </Link>{' '}
         to see the conversation and join this challenge.
@@ -281,24 +319,61 @@ export function ChallengeThread({
         </button>
       )}
 
-      {isAuthor && participants.length > 0 && (
+      {people.length > 0 && (
         <div className="mb-3 flex flex-col gap-1">
-          <p className="field-label">Participants</p>
+          <p className="field-label">People</p>
           <ul className="flex flex-col gap-1">
-            {participants.map((p) => (
-              <li key={p.profile_id} className="flex items-center justify-between gap-2 text-sm">
-                <span className="text-ink">{p.name ?? 'Someone'}</span>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => removeParticipant(p.profile_id)}
-                  className="text-xs font-semibold text-ink underline"
-                >
-                  Remove
-                </button>
+            {people.map((p) => (
+              <li key={p.id} className="flex items-center justify-between gap-2 text-sm">
+                <span className="text-ink">{p.name}</span>
+                <span className="flex gap-3">
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => {
+                      setReporting({ id: p.id, name: p.name })
+                      setReason('')
+                    }}
+                    aria-label={`Report ${p.name}`}
+                    className="text-xs font-semibold text-ink underline"
+                  >
+                    Report
+                  </button>
+                  {isAuthor && p.id !== authorId && (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => removeParticipant(p.id)}
+                      className="text-xs font-semibold text-ink underline"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </span>
               </li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {reporting && (
+        <div className="card mb-3 flex flex-col gap-3 p-4">
+          <p className="m-0 font-bold text-ink">Report {reporting.name}</p>
+          <p className="m-0 text-sm text-muted">
+            You won&apos;t see them here any more. SPLAT will look at it, and they won&apos;t see your name.
+          </p>
+          <label className="flex flex-col gap-1.5">
+            <span className="field-label">Why are you reporting them?</span>
+            <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={3} maxLength={2000} className="field" />
+          </label>
+          <div className="flex gap-2">
+            <button type="button" disabled={busy || !reason.trim()} onClick={sendReport} className="btn btn-danger btn-sm">
+              Send report
+            </button>
+            <button type="button" onClick={() => setReporting(null)} className="btn btn-quiet btn-sm">
+              Cancel
+            </button>
+          </div>
         </div>
       )}
 

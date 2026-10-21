@@ -1,4 +1,3 @@
-// journeys: R05 R07 R08 R09 R10 R11 R13
 import { test, expect } from '@playwright/test'
 import { adminClient, setPickupAddress } from './helpers'
 import { PICKUP, notificationsFor, partyPage, seedPrintJob, sent, txRow } from './maker-fixtures'
@@ -14,7 +13,7 @@ import { PICKUP, notificationsFor, partyPage, seedPrintJob, sent, txRow } from '
  */
 
 test.setTimeout(180_000)
-test('a printer accepts, starts, posts the ready photo and messages, and the family sees each step', async ({ browser, baseURL }) => {
+test('R05 R07 R08 R13 a printer accepts, starts, posts the ready photo and messages, and the family sees each step', async ({ browser, baseURL }) => {
   const job = await seedPrintJob('requested')
   await setPickupAddress(job.printer.id, PICKUP)
   const printerPage = await partyPage(browser, baseURL, job.printer)
@@ -70,7 +69,7 @@ test('a printer accepts, starts, posts the ready photo and messages, and the fam
   }
 })
 
-test('both sides confirm the handover with each other’s code, then the family says it fitted and thanks the printer', async ({ browser, baseURL }) => {
+test('R09 R10 R11 both sides confirm the handover with each other’s code, then the family says it fitted and thanks the printer', async ({ browser, baseURL }) => {
   const job = await seedPrintJob('ready')
   const printerPage = await partyPage(browser, baseURL, job.printer)
   const familyPage = await partyPage(browser, baseURL, job.requester)
@@ -102,6 +101,8 @@ test('both sides confirm the handover with each other’s code, then the family 
 
     // R11: thanks go to the printer's profile.
     await familyPage.getByRole('button', { name: 'Say thanks to the printer' }).click()
+    // Thanking a person opens the optional-note sheet first (74ac01f1).
+    await familyPage.getByRole('button', { name: 'Send thanks', exact: true }).click()
     await expect(familyPage.getByText('Thanks sent')).toBeVisible()
     const { data: thanks } = await adminClient().from('profile_thanks').select('thanker_id, transaction_id').eq('profile_id', job.printer.id)
     expect(thanks).toEqual([{ thanker_id: job.requester.id, transaction_id: job.id }])

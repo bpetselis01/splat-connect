@@ -21,7 +21,7 @@ describe('NewTutorialPage', () => {
     expect(screen.getByTestId('new-tutorial-form')).toHaveAttribute('data-kind', '')
   })
 
-  it('preselects a kind from ?kind so older links land on the right card', async () => {
+  it('WT13 preselects a kind from ?kind so older links land on the right card', async () => {
     await renderPage('assistive_tech')
     expect(screen.getByTestId('new-tutorial-form')).toHaveAttribute('data-kind', 'assistive_tech')
   })

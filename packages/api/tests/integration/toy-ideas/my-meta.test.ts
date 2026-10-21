@@ -1,5 +1,4 @@
 /** my-challenges-meta: your ideas and joined challenges carry maker and post counts, and when you joined. */
-// journeys: C15
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import app from '../../../src/app.js'
 import { createTestUser, deleteTestUser, adminClient, type TestUser } from '../../helpers/auth.js'
@@ -32,7 +31,7 @@ afterAll(async () => {
 const get = (path: string, token: string) => app.request(path, { headers: { Authorization: `Bearer ${token}` } })
 
 describe('my challenges meta', () => {
-  it("counts makers and the makers' posts on your own idea", async () => {
+  it("C15 counts makers and the makers' posts on your own idea", async () => {
     const rows = (await (await get('/api/ideas/mine', author.token)).json()) as Array<{ id: string; maker_count: number; answer_count: number }>
     expect(rows.find((r) => r.id === ideaId)).toMatchObject({ maker_count: 1, answer_count: 1 })
   })

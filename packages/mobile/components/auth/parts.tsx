@@ -25,8 +25,7 @@ import { Screen } from '../ui/Screen'
 import { TextField } from '../ui/TextField'
 import { useRouter } from 'expo-router'
 import { AppleButton, appleAvailable, googleAvailable } from '../../lib/social-auth'
-import type { PendingId } from '@splat-connect/types'
-import type { AuthProblem } from '../../lib/auth-errors'
+import type { AuthProblem, PendingId } from '@splat-connect/types'
 
 const CONTROL = 52
 

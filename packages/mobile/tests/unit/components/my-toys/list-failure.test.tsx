@@ -1,5 +1,4 @@
 // My toys when the shelf read fails: says so, Try again re-reads, nothing hits console.error.
-// journeys: W01
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { MyToysListScreen } from '../../../../components/my-toys/list-screen'
 
@@ -21,7 +20,7 @@ const toy = {
 
 afterEach(() => jest.restoreAllMocks())
 
-it('says the shelf did not load offline, and Try again loads it', async () => {
+it('W01 says the shelf did not load offline, and Try again loads it', async () => {
   const err = jest.spyOn(console, 'error')
   let offline = true
   mockGet.mockReset().mockImplementation((p: string) =>

@@ -48,6 +48,20 @@ describe('COPY', () => {
   })
 })
 
+// Types whose row is the whole message.
+const STAYS_IN_INBOX = new Set<NotificationType>(['collaborator_invited', 'org_request_declined', 'report_received', 'contact_received'])
+// Exchange-bucket types whose row names an organisation, a report or nothing rather than a transaction.
+const NO_TRANSACTION = new Set<NotificationType>([
+  'org_message', 'recycling_received', 'recycling_declined', 'drop_off_booked', 'test_print_passed', 'test_print_failed',
+  'report_received', 'contact_received',
+])
+
+// Types whose subject is an organisation (the rest of 142's carry none, or a transaction).
+const ORG_SUBJECT = new Set<NotificationType>([
+  'org_thanked', 'leader_added', 'leader_removed', 'org_event_deleted', 'recycling_received', 'recycling_declined',
+  'drop_off_booked', 'org_request_approved',
+])
+
 describe('linkFor', () => {
   it('opens Ask first for a question about an unclaimed build', () => {
     expect(linkFor(notification({ type: 'build_question', toy_transaction_id: 'b1' }))).toBe('/exchanges/build/ask/b1')
@@ -74,6 +88,14 @@ describe('linkFor', () => {
     expect(linkFor(notification({ type: 'toy_accepted', toy_transaction_id: 'tx1' }))).toBe('/exchanges/tx1')
   })
 
+  it("sends an admin's tutorial_submitted to the admin review screen, a leader's to the hub", () => {
+    const n = notification({ type: 'tutorial_submitted', tutorial_id: 't1' })
+    expect(linkFor(n, true)).toBe('/admin/review/t1')
+    expect(linkFor(n, false)).toBe('/organisation')
+    expect(linkFor(notification({ type: 'backing_requested', tutorial_id: 't1' }), true)).toBe('/admin/review/t1')
+    expect(linkFor(notification({ type: 'tutorial_submitted', tutorial_id: null }), true)).toBe('/organisation')
+  })
+
   it('sends both review-queue types to the organisation hub, ahead of the editor', () => {
     // Both carry a tutorial_id; the editor branch below must not claim them.
     for (const type of ['backing_requested', 'tutorial_submitted'] as const) {
@@ -91,13 +113,13 @@ describe('linkFor', () => {
     expect(COPY.org_message(notification({ type: 'org_message', actor_name: 'Northbank', tutorial_title: 'Northbank' })))
       .toBe('Northbank replied to your message')
     expect(linkFor(notification({ type: 'org_message', org_conversation_id: 'c1' }))).toBe('/messages/c1')
-    expect(notificationBucket('org_message')).toBe('exchanges')
+    expect(notificationBucket('org_message')).toBe('organisations')
     expect(linkFor(notification({ type: 'org_thanked', org_id: 'o1' }))).toBe('/organisation/profile')
     expect(notificationBucket('org_thanked')).toBe('organisations')
     // 117: a showcase thanks opens the showcase; one for an exchange opens it.
     expect(linkFor(notification({ type: 'profile_thanked', profile_id: 'p1' }))).toBe('/guides/contributor/p1')
     expect(linkFor(notification({ type: 'profile_thanked', toy_transaction_id: 'tx1' }))).toBe('/exchanges/tx1')
-    expect(linkFor(notification({ type: 'org_event_published', org_event_id: 'e1' }))).toBe('/news/event/e1')
+    expect(linkFor(notification({ type: 'org_event_published', org_event_id: 'e1' }))).toBe('/events/e1')
   })
 
   it('sends other tutorial news to that guide', () => {
@@ -131,16 +153,18 @@ describe('linkFor', () => {
       const n = notification({
         type,
         tutorial_id: bucket === 'tutorials' ? 't1' : null,
-        toy_transaction_id: bucket === 'exchanges' && type !== 'org_message' ? 'tx1' : null,
+        toy_transaction_id: bucket === 'exchanges' && !NO_TRANSACTION.has(type) ? 'tx1' : null,
         idea_id: bucket === 'challenges' ? 'i1' : null,
         // 077's four each carry their own subject.
         org_conversation_id: type === 'org_message' ? 'c1' : null,
-        org_event_id: type === 'org_event_published' ? 'e1' : null,
+        org_event_id: (type.startsWith('org_event_') && type !== 'org_event_deleted') || type === 'event_rsvp_received' ? 'e1' : null,
         org_story_id: type === 'org_story_published' ? 's1' : null,
-        org_id: type === 'org_thanked' ? 'o1' : null,
+        org_id: ORG_SUBJECT.has(type) ? 'o1' : null,
       })
       // An invite's destination is the inbox itself, where Accept / Decline live.
-      if (type === 'collaborator_invited') continue
+      // A declined organisation request has no mobile screen to open: the form
+      // is web-only, and the reason is the row's second line.
+      if (STAYS_IN_INBOX.has(type)) continue
       expect(linkFor(n)).not.toBe('/inbox')
     }
   })

@@ -1,6 +1,6 @@
 'use client'
 /**
- * Publish an event.
+ * Publish an event, or edit one already saved.
  *
  * Four required things — name, date and time, where, who for — and the artboard
  * is firm that those four are enough to publish. Everything below them is
@@ -21,7 +21,8 @@
  * Related files:
  * - packages/api/src/routes/organizations.ts: POST/PATCH the event, PUT the
  *   questions
- * - app/dashboard/organisation/events/new/page.tsx: what renders this
+ * - app/dashboard/organisation/events/new/page.tsx, events/[id]/edit/page.tsx:
+ *   what renders this
  */
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -159,6 +160,16 @@ const ANSWER_ICON: Record<AnswerType, Icon> = {
   boolean: ToggleLeft,
 }
 
+/** The host's own date and clock time for a stored instant, as the inputs take them. */
+export function localParts(iso: string): { date: string; time: string } {
+  const at = new Date(iso)
+  const two = (n: number) => String(n).padStart(2, '0')
+  return {
+    date: `${at.getFullYear()}-${two(at.getMonth() + 1)}-${two(at.getDate())}`,
+    time: `${two(at.getHours())}:${two(at.getMinutes())}`,
+  }
+}
+
 export function EventForm({
   orgId,
   orgName,
@@ -176,9 +187,11 @@ export function EventForm({
 
   const [title, setTitle] = useState(event?.title ?? '')
   const [kind, setKind] = useState<EventKind>(event?.kind ?? 'build_day')
-  const [date, setDate] = useState(event ? event.starts_at.slice(0, 10) : '')
-  const [starts, setStarts] = useState(event ? event.starts_at.slice(11, 16) : '')
-  const [ends, setEnds] = useState(event?.ends_at ? event.ends_at.slice(11, 16) : '')
+  // Read in the browser's zone: slicing the stored UTC string reopened a 6pm
+  // Sydney event at 07:00.
+  const [date, setDate] = useState(event?.starts_at ? localParts(event.starts_at).date : '')
+  const [starts, setStarts] = useState(event?.starts_at ? localParts(event.starts_at).time : '')
+  const [ends, setEnds] = useState(event?.ends_at ? localParts(event.ends_at).time : '')
   const [format, setFormat] = useState<'in_person' | 'online'>(event?.format ?? 'in_person')
   const [location, setLocation] = useState(event?.location ?? '')
   const [suburb, setSuburb] = useState(event?.suburb ?? '')
@@ -212,6 +225,9 @@ export function EventForm({
 
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState<'draft' | 'published' | null>(null)
+  // A published event saves in place; unpublishing is the list's button, so an
+  // edit cannot take it off the site by accident.
+  const live = event?.status === 'published'
 
   const toggleTool = (tool: string) =>
     setTools((prev) => (prev.includes(tool) ? prev.filter((t) => t !== tool) : [...prev, tool]))
@@ -780,24 +796,28 @@ export function EventForm({
           className="btn btn-primary px-[26px]"
         >
           <Megaphone weight="bold" aria-hidden="true" />
-          {saving === 'published' ? 'Publishing…' : 'Publish to Events'}
+          {live
+            ? saving ? 'Saving…' : 'Save changes'
+            : saving === 'published' ? 'Publishing…' : 'Publish to Events'}
         </button>
-        <button
-          type="button"
-          onClick={() => save('draft')}
-          disabled={saving !== null}
-          className="btn btn-quiet min-h-[52px]"
-        >
-          {saving === 'draft' ? 'Saving…' : 'Save as draft'}
-        </button>
+        {!live && (
+          <button
+            type="button"
+            onClick={() => save('draft')}
+            disabled={saving !== null}
+            className="btn btn-quiet min-h-[52px]"
+          >
+            {saving === 'draft' ? 'Saving…' : 'Save as draft'}
+          </button>
+        )}
         <span className="text-[13px] text-muted">
           Published as <strong className="text-ink">{orgName}</strong>
         </span>
       </div>
       {missing.length > 0 && (
         <p className="-mt-3 text-sm text-muted">
-          Still needs {missing.join(', ')} before it can be published. Save it as a draft
-          meanwhile.
+          Still needs {missing.join(', ')} before it can be {live ? 'saved' : 'published'}.
+          {!live && ' Save it as a draft meanwhile.'}
         </p>
       )}
     </form>

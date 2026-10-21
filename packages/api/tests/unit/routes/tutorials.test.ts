@@ -29,7 +29,9 @@ function withTerms(accepted: boolean, otherTables: unknown = {}) {
       ? {
           select: () => ({
             eq: () => ({
-              eq: () => ({ limit: () => ({ data: accepted ? [{ id: 'a' }] : [], error: null }) }),
+              eq: () => ({
+                eq: () => ({ limit: () => ({ data: accepted ? [{ id: 'a' }] : [], error: null }) }),
+              }),
             }),
           }),
         }
@@ -186,7 +188,11 @@ describe('GET /mine', () => {
       select: () => ({
         eq: () => ({
           in: () => ({
-            not: () => ({ data: [{ tutorial_id: '1', print_fit: 'fitted' }, { tutorial_id: '1', print_fit: 'tight' }], error: null }),
+            not: () => ({
+              order: () => ({
+                range: () => ({ data: [{ tutorial_id: '1', print_fit: 'fitted' }, { tutorial_id: '1', print_fit: 'tight' }], error: null }),
+              }),
+            }),
           }),
         }),
       }),
@@ -449,6 +455,7 @@ describe('a live guide is never left empty (T9)', () => {
         }
       return base(table)
     })
+    mockAdminClient.from.mockReturnValue({ update: () => ({ eq: () => ({ eq: () => ({ select: () => ({ data: [{ id: '1', title: 't' }], error: null }) }) }) }) })
     mockUserClient.rpc.mockResolvedValue({ data: true })
   }
   const patch = (body: Record<string, unknown>) =>
@@ -487,7 +494,8 @@ describe('a live guide is never left empty (T9)', () => {
     expect((await patch({ tutorial_pdf_url: null })).status).toBe(200)
     withGuide({ status: 'draft', pdf: 'g.pdf', steps: 0 })
     expect((await patch({ tutorial_pdf_url: null })).status).toBe(200)
-    expect(mockNotifySubmitted).not.toHaveBeenCalled()
+    // Only the approved guide's edit is a submission; the draft is not.
+    expect(mockNotifySubmitted).toHaveBeenCalledTimes(1)
   })
 
   it('refuses emptying the steps of an approved guide with no PDF; allows it with a PDF or on a draft', async () => {

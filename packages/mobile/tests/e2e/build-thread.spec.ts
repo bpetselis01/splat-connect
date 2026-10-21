@@ -1,4 +1,3 @@
-// journeys: K06 K08 K09 K10 K11 K13
 import { test, expect } from '@playwright/test'
 import { adminClient } from './helpers'
 import { PICKUP, notificationsFor, partyPage, seedBuild, sent, txRow } from './maker-fixtures'
@@ -11,7 +10,7 @@ import { PICKUP, notificationsFor, partyPage, seedBuild, sent, txRow } from './m
  */
 
 test.setTimeout(180_000)
-test('a maker takes on a request addressed to them, giving a pickup place, and the family is told', async ({ browser, baseURL }) => {
+test('K06 a maker takes on a request addressed to them, giving a pickup place, and the family is told', async ({ browser, baseURL }) => {
   const build = await seedBuild({ withMaker: true })
   const makerPage = await partyPage(browser, baseURL, build.maker)
   const familyPage = await partyPage(browser, baseURL, build.requester)
@@ -38,7 +37,7 @@ test('a maker takes on a request addressed to them, giving a pickup place, and t
   }
 })
 
-test('the working shot, a change request, approval and the handover codes run a build to done', async ({ browser, baseURL }) => {
+test('K08 K09 K10 K11 K13 the working shot, a change request, approval and the handover codes run a build to done', async ({ browser, baseURL }) => {
   const build = await seedBuild({ status: 'accepted' })
   const makerPage = await partyPage(browser, baseURL, build.maker)
   const familyPage = await partyPage(browser, baseURL, build.requester)

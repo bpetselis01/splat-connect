@@ -1,3 +1,4 @@
+import { AGREEMENT_VERSIONS } from '@splat-connect/types'
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 
@@ -11,6 +12,8 @@ vi.mock('@/lib/capabilities', () => ({
     ledOrgs: [ORG_A, ORG_B],
   }),
 }))
+
+vi.mock('next/headers', () => ({ cookies: async () => ({ get: () => undefined }) }))
 
 vi.mock('@/lib/api-client', () => ({
   apiClient: {
@@ -43,10 +46,14 @@ vi.mock('@/lib/api-client', () => ({
           },
         ]
       }
-      if (path === '/api/agreements/me') return [{ agreement_type: 'org_leader_terms' }]
+      if (path === '/api/agreements/me') return [{ agreement_type: 'org_leader_terms', version: AGREEMENT_VERSIONS.org_leader_terms }]
       throw new Error(`unexpected ${path}`)
     },
   },
+}))
+
+vi.mock('@/components/mark-notifications-read', () => ({
+  MarkNotificationsRead: ({ bucket }: { bucket: string }) => <div data-testid="mark-read" data-bucket={bucket} />,
 }))
 
 const Page = (await import('@/app/dashboard/organisation/page')).default
@@ -55,16 +62,28 @@ describe('Organisation tab', () => {
   // Chain: this is the assertion that pins the no-picker decision. A
   //        single-organisation fixture would pass whether or not the queue
   //        merges, so two are used deliberately.
-  it('merges the queue across every organisation the user leads', async () => {
+  it('WB02 merges the queue across every organisation the user leads', async () => {
     render(await Page())
     expect(screen.getByText('Older request')).toBeInTheDocument()
     expect(screen.getByText('Newer review')).toBeInTheDocument()
   })
 
+  it('clears the organisations bucket when the hub opens', async () => {
+    render(await Page())
+    expect(screen.getByTestId('mark-read')).toHaveAttribute('data-bucket', 'organisations')
+  })
+
   it('names the organisation each row belongs to', async () => {
     render(await Page())
-    expect(screen.getByText('Splat North')).toBeInTheDocument()
+    expect(screen.getAllByText('Splat North').length).toBeGreaterThan(0)
     expect(screen.getByText('Splat South')).toBeInTheDocument()
+  })
+
+  it('offers the acting-org switcher to a leader of two organisations', async () => {
+    render(await Page())
+    expect(
+      screen.getByRole('button', { name: 'Acting for Splat North. Change organisation.' }),
+    ).toBeInTheDocument()
   })
 
   it('excludes work offered to an organisation the user does not lead', async () => {
@@ -75,7 +94,7 @@ describe('Organisation tab', () => {
   // Carries forward the coverage lost when Task 3 removed "Organisations you
   // lead" from the dashboard: a leader must still be able to reach their
   // organisation's review screen from somewhere in the dashboard.
-  it('links a row to the existing review screen', async () => {
+  it('WB02 links a row to the existing review screen', async () => {
     render(await Page())
     const links = screen.getAllByRole('link', { name: /Read the guide/ })
     expect(links[0]).toHaveAttribute('href', '/organizations/oA/projects/t1')
@@ -92,7 +111,7 @@ describe('Organisation tab', () => {
   // The board's row names the next step for each kind of request: backing a
   // pending ask, reviewing an accepted one. Both land on the project page,
   // where leaderActions decides what may actually be done.
-  it('names the next step for each kind of request', async () => {
+  it('WB02 names the next step for each kind of request', async () => {
     render(await Page())
     expect(screen.getByRole('link', { name: /Back it/ })).toHaveAttribute(
       'href',

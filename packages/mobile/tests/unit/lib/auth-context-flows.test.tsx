@@ -1,7 +1,7 @@
+import { AGREEMENT_VERSIONS } from '@splat-connect/types'
 // The auth provider's session lifecycle and the less-travelled transactions:
 // expiry, a switch of account, a slow fetch landing after sign-out, reset's
 // "resetting" hold, social sign-in failures and a rejected save.
-// journeys: A05
 import { renderHook, act, waitFor } from '@testing-library/react-native'
 import type { ReactNode } from 'react'
 import { AuthProvider, useAuth } from '../../../lib/auth-context'
@@ -59,7 +59,7 @@ let emit: (event: string, session: unknown) => void
 
 function serve(profiles: Record<string, unknown>, accepted = true) {
   mockApiGet.mockImplementation((path: string) => {
-    if (path === '/api/agreements/me') return Promise.resolve(accepted ? [{ agreement_type: 'contributor_terms' }] : [])
+    if (path === '/api/agreements/me') return Promise.resolve(accepted ? [{ agreement_type: 'contributor_terms', version: AGREEMENT_VERSIONS.contributor_terms }] : [])
     if (path === '/api/contributors/me') return Promise.resolve(profiles.current)
     return Promise.reject(new Error(`unexpected ${path}`))
   })
@@ -119,7 +119,7 @@ describe('session lifecycle', () => {
     mockGetSession.mockResolvedValue({ data: { session: sessionFor('u1') } })
     let land!: (p: unknown) => void
     mockApiGet.mockImplementation((path: string) =>
-      path === '/api/agreements/me' ? Promise.resolve([{ agreement_type: 'contributor_terms' }]) : new Promise((r) => (land = r))
+      path === '/api/agreements/me' ? Promise.resolve([{ agreement_type: 'contributor_terms', version: AGREEMENT_VERSIONS.contributor_terms }]) : new Promise((r) => (land = r))
     )
     const { result } = renderHook(() => useAuth(), { wrapper })
     await waitFor(() => expect(mockApiGet).toHaveBeenCalledTimes(2))
@@ -156,7 +156,7 @@ describe('session lifecycle', () => {
   it('a profile fetch that fails while the agreements fetch works still records acceptance', async () => {
     mockGetSession.mockResolvedValue({ data: { session: sessionFor('u1') } })
     mockApiGet.mockImplementation((path: string) =>
-      path === '/api/agreements/me' ? Promise.resolve([{ agreement_type: 'contributor_terms' }]) : Promise.reject(new Error('500'))
+      path === '/api/agreements/me' ? Promise.resolve([{ agreement_type: 'contributor_terms', version: AGREEMENT_VERSIONS.contributor_terms }]) : Promise.reject(new Error('500'))
     )
     const { result } = renderHook(() => useAuth(), { wrapper })
     await waitFor(() => expect(result.current.hasContributorTerms).toBe(true))

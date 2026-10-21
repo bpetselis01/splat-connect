@@ -1,4 +1,3 @@
-// journeys: R03 R05 R06 R07 R08 R13 R14
 /**
  * The print job chain, one notification row per action: who is told, what type,
  * and which transaction it opens (toy_transaction_id is the link target; mobile
@@ -70,7 +69,7 @@ afterAll(async () => {
 })
 
 describe('asking a printer (R03)', () => {
-  it('tells the printer, naming the guide and the family', async () => {
+  it('R03 WR09 tells the printer, naming the guide and the family', async () => {
     const id = await ask()
     expect(await notesAbout(printer.id, id)).toEqual([
       { recipient_id: printer.id, type: 'toy_request', toy_transaction_id: id, toy_name: TITLE, actor_name: 'Fern Family', body: null },
@@ -81,7 +80,7 @@ describe('asking a printer (R03)', () => {
 })
 
 describe('the printer answering (R13, R14)', () => {
-  it('declining tells the family, with the reason as the body', async () => {
+  it('R14 WR14 WR26 declining tells the family, with the reason as the body', async () => {
     const id = await ask()
     expect((await post(`/${id}/reject`, printer.token, { reason: 'Machine is down this week' })).status).toBe(200)
     expect(await notesAbout(family.id, id)).toEqual([
@@ -89,7 +88,7 @@ describe('the printer answering (R13, R14)', () => {
     ])
   })
 
-  it('accepting tells the family, in the printer’s name', async () => {
+  it('R13 WR13 WR25 accepting tells the family, in the printer’s name', async () => {
     const id = await ask()
     expect((await post(`/${id}/accept`, printer.token, PICKUP)).status).toBe(200)
     expect(await notesAbout(family.id, id)).toEqual([
@@ -100,7 +99,7 @@ describe('the printer answering (R13, R14)', () => {
 })
 
 describe('the job under way (R05, R06, R07, R08)', () => {
-  it('started and ready tell the family; messages go both ways; the family withdrawing tells the printer', async () => {
+  it('R05 R06 R07 R08 WR12 WR15 WR17 WR18 started and ready tell the family; messages go both ways; the family withdrawing tells the printer (print_started, print_ready)', async () => {
     const id = await ask()
     await post(`/${id}/accept`, printer.token, PICKUP)
 

@@ -9,22 +9,21 @@
  *
  * Was a ComingSoon placeholder until 058.
  */
-import { notFound } from 'next/navigation'
-import { getCapabilities } from '@/lib/capabilities'
+import { actingOrg } from '@/lib/acting-org'
+import { requireOrgLeader } from '@/lib/org-access'
 import { PrintOfferScreen } from '@/app/dashboard/printers/page'
 
 export const metadata = { title: 'Print orders — SPLAT Connect' }
 
 export default async function OrgPrintOrdersPage() {
-  const caps = await getCapabilities()
   // The tab strip hides this for a non-leader, but the strip is an affordance —
   // the page is its own control (lib/org-access.ts states the same rule).
-  if (!caps || caps.ledOrgs.length === 0) notFound()
+  const caps = await requireOrgLeader('/dashboard/organisation/orders')
 
   // One organisation per leader is the shape everywhere else in this tab; a
   // leader of two sees the first, which is the same narrowing
   // /dashboard/organisation already makes.
-  const org = caps.ledOrgs[0]
+  const org = await actingOrg(caps)
 
   return (
     <PrintOfferScreen

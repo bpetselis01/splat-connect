@@ -1,5 +1,4 @@
 // packages/mobile/tests/unit/components/explore/article-screen.test.tsx
-// journeys: Q15
 import { CLEARANCE, paddingBottomOf } from '../../bottom-spacing'
 import { render, screen, fireEvent } from '@testing-library/react-native'
 import { ArticleScreen } from '../../../../components/explore/article-screen'
@@ -44,7 +43,7 @@ describe('ArticleScreen', () => {
     expect(screen.getByText('To be completed')).toBeTruthy()
   })
 
-  it('has the next article as its only footer action, and reaching it marks this one read', () => {
+  it('Q15 has the next article as its only footer action, and reaching it marks this one read', () => {
     render(<ArticleScreen slug="toy-adaptation-101" />)
 
     fireEvent.press(screen.getByRole('button', { name: 'Next: Switch types explained' }))

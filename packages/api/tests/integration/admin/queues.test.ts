@@ -1,4 +1,3 @@
-// journeys: G10 G27 P09 X14
 /**
  * The three 065 queues, and who may see what.
  *
@@ -105,7 +104,7 @@ describe('the contact form', () => {
     expect(ours[0].topic).toBe('safety')
   })
 
-  it('records who handled it, and clears that on reopen', async () => {
+  it('WM25 records who handled it, and clears that on reopen', async () => {
     const rows = (await (
       await app.request('/api/admin/inbox', authed(admin.token))
     ).json()) as Array<{ id: string; email: string }>
@@ -123,7 +122,7 @@ describe('the contact form', () => {
 })
 
 describe('member reports', () => {
-  it('files one as the caller, whatever the body claims', async () => {
+  it('G10 files one as the caller, whatever the body claims', async () => {
     const res = await app.request(
       '/api/reports',
       json(member.token, 'POST', {

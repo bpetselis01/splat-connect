@@ -22,6 +22,7 @@ import { theme } from '../../lib/theme'
 import { isLive, jobState, JOB_LABEL, JOB_TONE } from '../../lib/printing'
 import { Screen } from '../ui/Screen'
 import { Badge } from '../ui/Badge'
+import { Button } from '../ui/Button'
 import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
@@ -41,25 +42,26 @@ export function PrintRequestsScreen() {
   const [rows, setRows] = useState<ToyTransactionSummary[] | null>(null)
   const [error, setError] = useState(false)
 
-  useFocusEffect(
-    useCallback(() => {
-      apiClient
-        .get<ToyTransactionSummary[]>('/api/toy-transactions')
-        .then((all) => {
-          setRows(all)
-          setError(false)
-        })
-        .catch((err) => {
-          logFailure('[PrintRequestsScreen] fetch failed:', err)
-          setError(true)
-        })
-    }, [])
-  )
+  const load = useCallback(() => {
+    apiClient
+      .get<ToyTransactionSummary[]>('/api/toy-transactions')
+      .then((all) => {
+        setRows(all)
+        setError(false)
+      })
+      .catch((err) => {
+        logFailure('[PrintRequestsScreen] fetch failed:', err)
+        setError(true)
+      })
+  }, [])
+  useFocusEffect(load)
 
   if (error && !rows) {
     return (
       <Screen>
-        <EmptyState icon="cloud-offline-outline" title="Couldn't load your print requests." hint="Check your connection and try again." />
+        <EmptyState icon="cloud-offline-outline" title="Couldn't load your print requests." hint="Check your connection and try again.">
+          <Button label="Try again" variant="secondary" onPress={load} />
+        </EmptyState>
       </Screen>
     )
   }

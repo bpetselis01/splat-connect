@@ -1,8 +1,7 @@
-// journeys: G05 G12 G13 G16 G20 G29
 import { test, expect } from '@playwright/test'
 import { signInAsNewContributor, createTutorial, uniqueTitle, adminClient } from './helpers'
 
-test('tapping a tutorial navigates to its detail screen', async ({ page }) => {
+test('G05 tapping a tutorial navigates to its detail screen', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const title = uniqueTitle('E2E Mobile Detail')
   await createTutorial(contributor.id, { title, status: 'approved', difficulty: 'easy' })
@@ -25,7 +24,7 @@ test('tapping a tutorial navigates to its detail screen', async ({ page }) => {
   await expect(page.getByText('E2E tool')).toBeVisible()
 })
 
-test('tapping View on the Files tab navigates to the preview screen', async ({ page }) => {
+test('G16 tapping View on the Files tab navigates to the preview screen', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const title = uniqueTitle('E2E Mobile Preview')
   await createTutorial(contributor.id, { title, status: 'approved' })
@@ -94,7 +93,7 @@ test('the Files tab explains when a tutorial has no PDF', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'View', exact: true })).toHaveCount(0)
 })
 
-test('the byline names the primary contributor and opens their showcase', async ({ page }) => {
+test('G12 the byline names the primary contributor and opens their showcase', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const author = uniqueTitle('E2E Author')
   const id = await createTutorial(contributor.id, {
@@ -111,7 +110,7 @@ test('the byline names the primary contributor and opens their showcase', async 
   await expect(page).toHaveURL(new RegExp(`/guides/contributor/${contributor.id}$`))
 })
 
-test("a backed guide's chip opens the organisation's showcase", async ({ page }) => {
+test("G12 a backed guide's chip opens the organisation's showcase", async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const title = uniqueTitle('E2E Mobile Detail Backed')
   const org = uniqueTitle('E2E Detail Org')
@@ -139,7 +138,7 @@ test('an unbacked guide shows the fixed Reviewed by SPLAT chip instead', async (
 // "Find a printer" flow (5ada3f92); when that button shows is unit-tested in
 // tests/unit/components/home/detail-screen.test.tsx.
 
-test("the creator's picks row lists a recommendation and opens it", async ({ page }) => {
+test("G20 the creator's picks row lists a recommendation and opens it", async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const pickTitle = uniqueTitle('E2E Mobile Pick')
   const pickId = await createTutorial(contributor.id, { title: pickTitle, status: 'approved' })
@@ -165,7 +164,7 @@ test("the creator's picks row lists a recommendation and opens it", async ({ pag
   await expect(page).toHaveURL(new RegExp(`/guides/${pickId}$`))
 })
 
-test('What you’ll need rows open their tab, and the print row lands on Files with the print card in view', async ({ page }) => {
+test('G13 What you’ll need rows open their tab, and the print row lands on Files with the print card in view', async ({ page }) => {
   const contributor = await signInAsNewContributor(page)
   const id = await createTutorial(contributor.id, { title: uniqueTitle('E2E Need Rows'), status: 'approved' })
   const { error } = await adminClient().from('stl_files').insert({ tutorial_id: id, filename: 'base.stl', file_url: `${id}/base.stl`, print_minutes: 55, filament_grams: 14, material: 'PLA' })

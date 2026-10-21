@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { cleanup, render, screen } from '@testing-library/react'
 import GetInvolvedPage from '@/app/get-involved/page'
 import FamiliesPage from '@/app/get-involved/families/page'
 import ContributorsPage from '@/app/get-involved/contributors/page'
@@ -11,7 +11,7 @@ vi.mock('@/lib/capabilities', () => ({ getCapabilities: mockGetCapabilities }))
 beforeEach(() => mockGetCapabilities.mockResolvedValue(null))
 
 describe('Get Involved hub', () => {
-  it('leads with the three audience tracks, as the board draws them', async () => {
+  it('WI01 leads with the three audience tracks, and the families one opens the child profile', async () => {
     render(await GetInvolvedPage())
     for (const kicker of ['For families', 'For makers', 'For organisations']) {
       expect(screen.getByText(kicker)).toBeInTheDocument()
@@ -22,7 +22,7 @@ describe('Get Involved hub', () => {
     )
   })
 
-  it('sends a signed-out maker to sign up and a signed-in one to the editor', async () => {
+  it('WI02 sends a signed-out maker to sign up and a signed-in one to the editor', async () => {
     render(await GetInvolvedPage())
     expect(screen.getByRole('link', { name: /create an account to start writing/i })).toHaveAttribute(
       'href',
@@ -33,7 +33,19 @@ describe('Get Involved hub', () => {
     expect(screen.getByRole('link', { name: /write your first guide/i })).toHaveAttribute('href', '/upload')
   })
 
-  it('groups the specific things by need and offer', async () => {
+  it('WI03 sends a signed-out organisation to sign up and a signed-in one to the request', async () => {
+    render(await GetInvolvedPage())
+    expect(screen.getByRole('link', { name: /register an organisation/i })).toHaveAttribute('href', '/signup')
+    cleanup()
+    mockGetCapabilities.mockResolvedValue({ profile: { id: 'u1' } })
+    render(await GetInvolvedPage())
+    expect(screen.getByRole('link', { name: /request your organisation/i })).toHaveAttribute(
+      'href',
+      '/get-involved/organisations/request'
+    )
+  })
+
+  it('WI04 groups the specific things by need and offer, each card opening its page', async () => {
     render(await GetInvolvedPage())
     expect(screen.getByRole('heading', { name: /if you need something/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /if you have something to offer/i })).toBeInTheDocument()
@@ -45,6 +57,8 @@ describe('Get Involved hub', () => {
       'href',
       '/get-involved/recycling/drop-off'
     )
+    expect(screen.getAllByRole('link', { name: /makers wanted/i })[0]).toHaveAttribute('href', '/get-involved/makers-wanted')
+    expect(screen.getByRole('link', { name: /design challenges/i })).toHaveAttribute('href', '/get-involved/design-challenges')
   })
 })
 
@@ -59,14 +73,18 @@ describe('audience tracks', () => {
     expect(container.querySelectorAll('ol li').length).toBeGreaterThanOrEqual(3)
   })
 
-  it('sends a family to the Guides library', async () => {
+  it('WI05 sends a family to the Guides library', async () => {
     render(await FamiliesPage())
     expect(screen.getByRole('link', { name: /browse guides/i })).toHaveAttribute('href', '/library')
   })
 
-  it('sends a would-be contributor to sign up', async () => {
+  it('WI06 sends a would-be contributor to sign up, and a signed-in one to the editor', async () => {
     render(await ContributorsPage())
     expect(screen.getByRole('link', { name: /create an account/i })).toHaveAttribute('href', '/signup')
+    cleanup()
+    mockGetCapabilities.mockResolvedValue({ profile: { id: 'u1' } })
+    render(await ContributorsPage())
+    expect(screen.getByRole('link', { name: /start a guide/i })).toHaveAttribute('href', '/upload')
   })
 
   /*
@@ -74,7 +92,7 @@ describe('audience tracks', () => {
    * the organisation — and the request is the page's one door. Signed out, it
    * goes through sign-in first and comes back.
    */
-  it('sends an organisation to the request an admin reviews', async () => {
+  it('WI07 sends an organisation to the request an admin reviews', async () => {
     render(await OrganisationsPage())
     expect(screen.getByRole('link', { name: /sign in to continue/i })).toHaveAttribute(
       'href',

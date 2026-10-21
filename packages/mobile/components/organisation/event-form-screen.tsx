@@ -1,6 +1,8 @@
 // packages/mobile/components/organisation/event-form-screen.tsx
 /**
- * Publish an event — web's components/event-form.tsx on the phone.
+ * Publish an event, or edit one already saved — web's components/event-form.tsx
+ * on the phone. A published event saves in place with one Save changes button;
+ * unpublishing stays on the list, so an edit cannot take it off the site.
  *
  * Four things are enough to publish (name, when, where, who for); everything
  * else is optional and the form says so. Save as draft never validates. The
@@ -13,13 +15,14 @@
  *
  * Both buttons return to Events and stories — mobile has no public event page.
  */
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import {
   ANSWER_TYPES,
   apiMessage,
+  isNetworkError,
   AU_STATES,
   EVENT_KINDS,
   EVENT_KIND_LABEL,
@@ -28,9 +31,10 @@ import {
   type AnswerType,
   type EventKind,
   type OrgEvent,
+  type OrgEventQuestion,
 } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
-import { useCapabilities } from '../../lib/capabilities'
+import { useActingOrg } from '../../lib/acting-org'
 import { theme } from '../../lib/theme'
 import { useBottomClearance } from '../../lib/bottom-clearance'
 import { Screen } from '../ui/Screen'
@@ -39,9 +43,12 @@ import { Button } from '../ui/Button'
 import { TextField } from '../ui/TextField'
 import { DateTimeField } from '../ui/DateTimeField'
 import { SkeletonRow } from '../ui/Skeleton'
+import { EmptyState } from '../ui/EmptyState'
+import { logFailure } from '../../lib/log'
 import { ListSection } from '../list/list-kit'
 
-type DraftQuestion = { prompt: string; answer_type: AnswerType; required: boolean; options: string[] }
+// A kept question sends its id back, so answers already stored against it still resolve.
+type DraftQuestion = { id?: string; prompt: string; answer_type: AnswerType; required: boolean; options: string[] }
 
 // Web's one-tap starters: the useful questions free, rather than warnings against the rest.
 const COMMON_ASKS: Array<{ label: string; q: DraftQuestion }> = [
@@ -67,33 +74,110 @@ export function localDate(date: string, time: string): Date | null {
 /** A round hour today, where an empty time picker opens. */
 const hourToday = (hour: number) => new Date(new Date().setHours(hour, 0, 0, 0))
 
-export function EventFormScreen() {
+/** The host's own date and clock time for a stored instant, as the fields take them. */
+export function localParts(iso: string): { date: string; time: string } {
+  const at = new Date(iso)
+  const two = (n: number) => String(n).padStart(2, '0')
+  return {
+    date: `${at.getFullYear()}-${two(at.getMonth() + 1)}-${two(at.getDate())}`,
+    time: `${two(at.getHours())}:${two(at.getMinutes())}`,
+  }
+}
+
+/** Loads one of the acting organisation's events, then opens it in the form. */
+export function EditEventScreen({ eventId }: { eventId: string }) {
+  const { org } = useActingOrg()
+  const [loaded, setLoaded] = useState<{ event: OrgEvent; questions: OrgEventQuestion[] } | null>(null)
+  const [failed, setFailed] = useState<'offline' | 'other' | 'gone' | null>(null)
+  const [attempt, setAttempt] = useState(0)
+
+  useEffect(() => {
+    if (!org) return
+    let ignore = false
+    Promise.all([
+      apiClient.get<OrgEvent[]>(`/api/organizations/${org.id}/events`),
+      apiClient.get<OrgEventQuestion[]>(`/api/organizations/${org.id}/events/${eventId}/questions`),
+    ])
+      .then(([events, questions]) => {
+        if (ignore) return
+        const event = events.find((e) => e.id === eventId)
+        if (event) setLoaded({ event, questions })
+        else setFailed('gone')
+      })
+      .catch((e) => {
+        if (ignore) return
+        logFailure('[EditEventScreen] load failed:', e)
+        setFailed(isNetworkError(e) ? 'offline' : 'other')
+      })
+    return () => {
+      ignore = true
+    }
+  }, [org, eventId, attempt])
+
+  if (loaded) return <EventFormScreen event={loaded.event} questions={loaded.questions} />
+  if (failed === 'gone') {
+    return (
+      <Screen>
+        <EmptyState icon="calendar-outline" title="That event is not one of yours any more." />
+      </Screen>
+    )
+  }
+  if (failed) {
+    return (
+      <Screen>
+        <EmptyState
+          icon="cloud-offline-outline"
+          title={failed === 'offline' ? 'You seem to be offline.' : "Couldn't load that event."}
+          hint="Check your connection and try again."
+        >
+          <Button
+            label="Try again"
+            variant="secondary"
+            onPress={() => {
+              setFailed(null)
+              setAttempt((n) => n + 1)
+            }}
+          />
+        </EmptyState>
+      </Screen>
+    )
+  }
+  return (
+    <Screen>
+      <SkeletonRow />
+    </Screen>
+  )
+}
+
+export function EventFormScreen({ event, questions: saved = [] }: { event?: OrgEvent; questions?: OrgEventQuestion[] } = {}) {
   const bottom = useBottomClearance()
   const router = useRouter()
-  const { caps } = useCapabilities()
-  const org = caps?.ledOrgs[0]
+  const { org } = useActingOrg()
+  const live = event?.status === 'published'
 
-  const [title, setTitle] = useState('')
-  const [kind, setKind] = useState<EventKind>('build_day')
-  const [date, setDate] = useState('')
-  const [starts, setStarts] = useState('')
-  const [ends, setEnds] = useState('')
-  const [format, setFormat] = useState<'in_person' | 'online'>('in_person')
-  const [location, setLocation] = useState('')
-  const [suburb, setSuburb] = useState('')
-  const [state, setState] = useState<string>('NSW')
-  const [onlineUrl, setOnlineUrl] = useState('')
-  const [audience, setAudience] = useState('')
-  const [description, setDescription] = useState('')
-  const [whatToBring, setWhatToBring] = useState('')
-  const [capacity, setCapacity] = useState('')
-  const [printsParts, setPrintsParts] = useState(false)
-  const [partSetsMax, setPartSetsMax] = useState('6')
-  const [tools, setTools] = useState<string[]>([])
-  const [accessibility, setAccessibility] = useState('')
-  const [costDollars, setCostDollars] = useState('')
-  const [costNote, setCostNote] = useState('')
-  const [questions, setQuestions] = useState<DraftQuestion[]>([])
+  const [title, setTitle] = useState(event?.title ?? '')
+  const [kind, setKind] = useState<EventKind>(event?.kind ?? 'build_day')
+  const [date, setDate] = useState(event?.starts_at ? localParts(event.starts_at).date : '')
+  const [starts, setStarts] = useState(event?.starts_at ? localParts(event.starts_at).time : '')
+  const [ends, setEnds] = useState(event?.ends_at ? localParts(event.ends_at).time : '')
+  const [format, setFormat] = useState<'in_person' | 'online'>(event?.format ?? 'in_person')
+  const [location, setLocation] = useState(event?.location ?? '')
+  const [suburb, setSuburb] = useState(event?.suburb ?? '')
+  const [state, setState] = useState<string>(event?.state ?? 'NSW')
+  const [onlineUrl, setOnlineUrl] = useState(event?.online_url ?? '')
+  const [audience, setAudience] = useState(event?.audience ?? '')
+  const [description, setDescription] = useState(event?.description ?? '')
+  const [whatToBring, setWhatToBring] = useState(event?.what_to_bring ?? '')
+  const [capacity, setCapacity] = useState(event?.capacity ? String(event.capacity) : '')
+  const [printsParts, setPrintsParts] = useState(event?.prints_parts ?? false)
+  const [partSetsMax, setPartSetsMax] = useState(event?.part_sets_max ? String(event.part_sets_max) : '6')
+  const [tools, setTools] = useState<string[]>(event?.tools ?? [])
+  const [accessibility, setAccessibility] = useState(event?.accessibility_note ?? '')
+  const [costDollars, setCostDollars] = useState(event?.cost_cents ? (event.cost_cents / 100).toFixed(2) : '')
+  const [costNote, setCostNote] = useState(event?.cost_note ?? '')
+  const [questions, setQuestions] = useState<DraftQuestion[]>(
+    saved.map((q) => ({ id: q.id, prompt: q.prompt, answer_type: q.answer_type, required: q.required, options: q.options })),
+  )
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState<'draft' | 'published' | null>(null)
 
@@ -145,7 +229,7 @@ export function EventFormScreen() {
     setError(null)
     setSaving(status)
     try {
-      const saved = await apiClient.post<OrgEvent>(`/api/organizations/${org!.id}/events`, {
+      const fields = {
         title: title.trim(),
         kind,
         starts_at: startAt?.toISOString(),
@@ -166,7 +250,10 @@ export function EventFormScreen() {
         cost_cents: costCents ?? 0,
         cost_note: costNote.trim(),
         status,
-      })
+      }
+      const saved = event
+        ? await apiClient.patch<OrgEvent>(`/api/organizations/${org!.id}/events/${event.id}`, fields)
+        : await apiClient.post<OrgEvent>(`/api/organizations/${org!.id}/events`, fields)
       await apiClient.put(`/api/organizations/${org!.id}/events/${saved.id}/questions`, { questions })
       router.back()
     } catch (e) {
@@ -368,11 +455,15 @@ export function EventFormScreen() {
         />
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        <Button label="Publish to Events" onPress={() => void save('published')} disabled={saving !== null || missing.length > 0} loading={saving === 'published'} style={styles.primary} />
-        <Button label="Save as draft" variant="secondary" onPress={() => void save('draft')} disabled={saving !== null} loading={saving === 'draft'} style={styles.primary} />
+        <Button label={live ? 'Save changes' : 'Publish to Events'} onPress={() => void save('published')} disabled={saving !== null || missing.length > 0} loading={saving === 'published'} style={styles.primary} />
+        {!live && <Button label="Save as draft" variant="secondary" onPress={() => void save('draft')} disabled={saving !== null} loading={saving === 'draft'} style={styles.primary} />}
         <Text style={styles.help}>
           Published as {org.name}.
-          {missing.length > 0 ? ` Still needs ${missing.join(', ')} before it can be published. Save it as a draft meanwhile.` : ''}
+          {missing.length > 0
+            ? live
+              ? ` Still needs ${missing.join(', ')} before it can be saved.`
+              : ` Still needs ${missing.join(', ')} before it can be published. Save it as a draft meanwhile.`
+            : ''}
         </Text>
       </ScrollView>
     </Screen>

@@ -1,4 +1,3 @@
-// journeys: L28 L29
 import { test, expect } from '@playwright/test'
 import { adminClient, createContributor, makeOrgLeader, renameProfile, signInAsNewContributor, uniqueTitle } from './helpers'
 import { addOrgLeader, notificationsOf, partyPage } from './org-fixtures'
@@ -10,7 +9,7 @@ import { addOrgLeader, notificationsOf, partyPage } from './org-fixtures'
  * message leaves one org_message notification per recipient.
  */
 
-test('a family message reaches the org inbox of every leader, and a leader reply reaches the family', async ({
+test('L28 L29 P10 a family message reaches the org inbox of every leader, and a leader reply reaches the family', async ({
   page,
   browser,
   baseURL,

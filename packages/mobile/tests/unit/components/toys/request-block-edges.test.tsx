@@ -1,6 +1,5 @@
 // Asking for a toy: double taps, refused requests, and a toy list that changes
 // shape. The ordinary copy and offer_type gating live in request-block.test.tsx.
-// journeys: Y06
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native'
 import type { Toy, ToyWithOwner } from '@splat-connect/types'
 import { RequestBlock } from '../../../../components/toys/request-block'
@@ -81,7 +80,7 @@ describe('offering an exchange', () => {
     fireEvent.press(screen.getByRole('radio', { name }))
   }
 
-  it('sends one exchange when Start exchange is pressed twice before the answer', async () => {
+  it('Y06 sends one exchange when Start exchange is pressed twice before the answer', async () => {
     mockPost.mockReturnValue(new Promise(() => {}))
     render(block())
     await choose()
@@ -91,7 +90,7 @@ describe('offering an exchange', () => {
     expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions', { toy_id: 'toy1', type: 'exchange', offered_toy_id: 'm1' })
   })
 
-  it('offers the toy chosen last when the family changes their mind', async () => {
+  it('Y06 offers the toy chosen last when the family changes their mind', async () => {
     mockPost.mockResolvedValue({ id: 'tx9' })
     render(block({ myToys: [mine('m1', 'Switch car'), mine('m2', 'Drum')] }))
     await choose('Switch car')
@@ -100,7 +99,7 @@ describe('offering an exchange', () => {
     await waitFor(() => expect(mockPost.mock.calls[0][1].offered_toy_id).toBe('m2'))
   })
 
-  it('shows the API reason when the offered toy is refused, and keeps the choice', async () => {
+  it('Y06 shows the API reason when the offered toy is refused, and keeps the choice', async () => {
     mockPost.mockRejectedValue(new Error('API POST /x failed with status 400: Choose one of your own, active toys to offer'))
     render(block())
     await choose()

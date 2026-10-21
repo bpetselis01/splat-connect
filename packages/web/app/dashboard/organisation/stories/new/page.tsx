@@ -1,16 +1,15 @@
 /**
  * Publish a story. The leader check, and the form.
  */
-import { notFound } from 'next/navigation'
-import { getCapabilities } from '@/lib/capabilities'
+import { actingOrg } from '@/lib/acting-org'
+import { requireOrgLeader } from '@/lib/org-access'
 import { StoryForm } from '@/components/story-form'
 
 export const metadata = { title: 'Publish a story — SPLAT Connect' }
 
 export default async function PublishStoryPage() {
-  const caps = await getCapabilities()
-  if (!caps || caps.ledOrgs.length === 0) notFound()
-  const org = caps.ledOrgs[0]
+  const caps = await requireOrgLeader('/dashboard/organisation/stories/new')
+  const org = await actingOrg(caps)
 
   return (
     <div className="max-w-[760px]">
