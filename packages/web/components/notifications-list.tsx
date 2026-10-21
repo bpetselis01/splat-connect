@@ -64,6 +64,21 @@ const ICON: Record<NotificationType, [Glyph, string]> = {
   backing_accepted: [Check, 'var(--tok)'],
   backing_declined: [Undo, 'var(--tbad)'],
   report_resolved: [Check, 'var(--tok)'],
+  recycling_received: [Check, 'var(--tok)'],
+  recycling_declined: [Undo, 'var(--tbad)'],
+  org_request_approved: [Check, 'var(--tok)'],
+  org_request_declined: [Undo, 'var(--tbad)'],
+  test_print_passed: [Check, 'var(--tok)'],
+  test_print_failed: [Undo, 'var(--tbad)'],
+  handover_confirmed: [Handshake, 'var(--tmint)'],
+  leader_added: [Building, 'var(--tok)'],
+  leader_removed: [Building, 'var(--b100)'],
+  org_event_deleted: [Undo, 'var(--tbad)'],
+  event_rsvp_received: [Check, 'var(--tok)'],
+  idea_received: [Lightbulb, 'var(--tamber)'],
+  report_received: [Inbox, 'var(--b100)'],
+  drop_off_booked: [Box, 'var(--tcoral)'],
+  contact_received: [Inbox, 'var(--b100)'],
 }
 
 function linkFor(n: Notification, isAdmin: boolean): string {
@@ -84,6 +99,13 @@ function linkFor(n: Notification, isAdmin: boolean): string {
   if (n.org_event_id) return `/get-involved/events/${n.org_event_id}`
   if (n.org_story_id) return `/about/stories/${n.org_story_id}`
   if (n.type === 'org_thanked') return '/dashboard/organisation/profile#thanks'
+  // 142: subjects that are an organisation, or none at all.
+  if (n.type === 'recycling_received' || n.type === 'recycling_declined' || n.type === 'drop_off_booked') return '/get-involved/recycling'
+  if (n.type === 'org_request_approved') return '/dashboard/organisation'
+  if (n.type === 'org_request_declined') return '/get-involved/organisations/request'
+  if (n.type === 'leader_added') return '/dashboard/organisation'
+  if ((n.type === 'leader_removed' || n.type === 'org_event_deleted') && n.org_id) return `/organizations/${n.org_id}/public`
+  if (n.type === 'test_print_passed' || n.type === 'test_print_failed') return '/dashboard/printers'
   // The two review-queue types must be answered BEFORE the tutorial_id branch
   // below: their recipient is a reviewer, not a contributor, and
   // /tutorials/:id/edit is the author's editor — a leader following it lands on
@@ -121,7 +143,7 @@ function linkFor(n: Notification, isAdmin: boolean): string {
   // above already sends them to /tutorials/:id/edit instead, which is the
   // more useful landing spot when it's available.
   if (n.idea_id) {
-    return n.type === 'idea_rejected'
+    return n.type === 'idea_rejected' || n.type === 'idea_received'
       ? '/dashboard/challenges'
       : `/get-involved/design-challenges/${n.idea_id}`
   }

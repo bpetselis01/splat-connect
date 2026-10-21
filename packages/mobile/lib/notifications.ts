@@ -31,6 +31,13 @@ export function linkFor(n: Notification, isAdmin = false): string {
   // own, so /news reads which organisation it belongs to and opens that profile.
   if (n.org_conversation_id) return `/messages/${n.org_conversation_id}`
   if (n.type === 'org_thanked') return '/organisation/profile'
+  // 142: web's links for an organisation subject, or none. Mobile has no
+  // request form, so a declined request opens the inbox.
+  if (n.type === 'recycling_received' || n.type === 'recycling_declined' || n.type === 'drop_off_booked') return '/explore/recycling'
+  if (n.type === 'org_request_approved') return '/organisation'
+  if (n.type === 'leader_added') return '/organisation'
+  if ((n.type === 'leader_removed' || n.type === 'org_event_deleted') && n.org_id) return `/toy-library/organisation/${n.org_id}`
+  if (n.type === 'test_print_passed' || n.type === 'test_print_failed') return '/print-for-others'
   if (n.org_event_id) return `/events/${n.org_event_id}`
   if (n.org_story_id) return `/news/story/${n.org_story_id}`
   // Answered BEFORE the tutorial_id branch, exactly as on web: the recipient
@@ -56,7 +63,7 @@ export function linkFor(n: Notification, isAdmin = false): string {
   // its author goes to their own list instead. A graduated one needs no such
   // exception: it is still selectable, so the brief is a real page.
   if (n.idea_id) {
-    return n.type === 'idea_rejected' ? '/challenges' : `/explore/challenges/${n.idea_id}`
+    return n.type === 'idea_rejected' || n.type === 'idea_received' ? '/challenges' : `/explore/challenges/${n.idea_id}`
   }
   // 117: web's showcase-thanks branch. A transaction-tied one left above.
   if (n.type === 'profile_thanked' && n.profile_id) return `/guides/contributor/${n.profile_id}`

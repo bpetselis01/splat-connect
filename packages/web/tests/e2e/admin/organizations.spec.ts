@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
-import { addLeader, adminClient, createContributor, createOrg, deleteOrg, uniqueTitle } from '../helpers'
+import { addLeader, adminClient, createContributor, createOrg, deleteOrg, signIn, uniqueTitle } from '../helpers'
 import { expectCardMoved, signInAdmin } from './support'
 
 const orgIds: string[] = []
@@ -55,6 +55,12 @@ test('WM19 appointing a leader moves an organisation from No leader to Active an
   await expect(drawer.getByRole('listitem').filter({ hasText: leader.name })).toBeVisible()
   await page.goto('/admin/organizations')
   await expect(rowOf(page, name)).toContainText('Active')
+
+  // leader_added: the appointed person is told in their inbox.
+  await page.context().clearCookies()
+  await signIn(page, leader.email, leader.password)
+  await page.goto('/notifications')
+  await expect(page.getByText(`You now lead ${name}`)).toBeVisible()
 })
 
 test('WM20 removing the only leader leaves the organisation with No leader', async ({ page }) => {
@@ -73,6 +79,12 @@ test('WM20 removing the only leader leaves the organisation with No leader', asy
   await expect(drawer.getByRole('heading', { name: 'Leaders (0)' })).toBeVisible()
   await page.goto('/admin/organizations')
   await expect(rowOf(page, name)).toContainText('No leader')
+
+  // leader_removed: the removed person is told in their inbox.
+  await page.context().clearCookies()
+  await signIn(page, leader.email, leader.password)
+  await page.goto('/notifications')
+  await expect(page.getByText(`You no longer lead ${name}`)).toBeVisible()
 })
 
 test('WM21 Verify shows the seal and the verified date, and Unverify takes both away', async ({ page }) => {

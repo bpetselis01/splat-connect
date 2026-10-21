@@ -1,8 +1,9 @@
 import { Hono } from 'hono'
-import { CONTACT_PREFS, type ContactPref, type ToyIdeaKind } from '@splat-connect/types'
+import { CONTACT_PREFS, notificationBody, type ContactPref, type ToyIdeaKind } from '@splat-connect/types'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import type { AuthVariables } from '../middleware/auth.js'
 import { profileName } from '../profile-name.js'
+import { notify } from '../notify.js'
 import { toyPhotoUrl } from '../photo-storage.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { challengeCounts } from '../challenge-counts.js'
@@ -106,6 +107,10 @@ toyIdeas.post('/', async (c) => {
     .single()
 
   if (error) return c.json({ error: error.message }, 500)
+  await notify(
+    [{ recipient_id: author_id, type: 'idea_received', idea_id: data.id, actor_name: 'SPLAT', body: notificationBody(data.title) }],
+    'idea_received'
+  )
   return c.json(withPhotoUrl({ ...data, author_id }), 201)
 })
 

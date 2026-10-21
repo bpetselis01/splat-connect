@@ -10,10 +10,10 @@
 //
 // Title comes from the native header (app/(my)/_layout.tsx: "Review queue").
 import { logFailure } from '../../lib/log'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { View, ScrollView, StyleSheet } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
-import type { Tutorial, TutorialOrg } from '@splat-connect/types'
+import { MARK_BUCKET_READ_PATH, type Tutorial, type TutorialOrg } from '@splat-connect/types'
 import { apiClient } from '../../lib/api-client'
 import { theme } from '../../lib/theme'
 import { useCapabilities } from '../../lib/capabilities'
@@ -70,7 +70,7 @@ function Row({
 
 export function ReviewQueueScreen() {
   const router = useRouter()
-  const { caps, loading: capsLoading } = useCapabilities()
+  const { caps, loading: capsLoading, refresh } = useCapabilities()
   const ledOrgs = caps?.ledOrgs ?? []
   const { org: actingOrg } = useActingOrg()
   const [tutorials, setTutorials] = useState<Backed[]>([])
@@ -112,6 +112,18 @@ export function ReviewQueueScreen() {
       setReloadKey((k) => k + 1)
     }, [])
   )
+
+  // Opening the leader's hub is what clears the organisations badge, as on web.
+  // Once per mount: the unread count refetches after, so refocusing is a no-op.
+  const cleared = useRef(false)
+  useEffect(() => {
+    if (!isLeader || cleared.current) return
+    cleared.current = true
+    apiClient
+      .post(MARK_BUCKET_READ_PATH, { bucket: 'organisations' })
+      .then(() => refresh())
+      .catch((err) => logFailure('[ReviewQueueScreen] organisations mark-read failed:', err))
+  }, [isLeader, refresh])
 
   // While capabilities are in flight, ledOrgs is empty for everyone — showing
   // the not-a-leader copy in that window tells a real leader this isn't their

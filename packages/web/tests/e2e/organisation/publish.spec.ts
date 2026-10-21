@@ -111,7 +111,7 @@ test('WB16 publishing a draft story puts it on its public page and tells a follo
   await expect(page.getByText(`${leader.orgName} published a story: ${draftStory.title}`)).toBeVisible()
 })
 
-test('WB17 removing an event takes it off the page and tells its registrants nothing', async ({ page }) => {
+test('WB17 removing an event takes it off the page and tells its registrants it is gone', async ({ page }) => {
   const title = uniqueTitle('Gone day')
   const id = await createEvent(leader.orgId, leader.id, { title, status: 'published' })
   await adminClient().from('org_event_registrations').insert({ event_id: id, user_id: registrant.id, name: 'Reg One', email: 'one@example.com', answers: {} })
@@ -124,8 +124,8 @@ test('WB17 removing an event takes it off the page and tells its registrants not
 
   await signInAs(page, registrant)
   await page.goto('/notifications')
-  await expect(page.getByRole('heading', { name: 'Notifications' })).toBeVisible()
-  await expect(page.getByText('Nothing yet.')).toBeVisible()
+  await expect(page.getByText(`${leader.orgName} deleted an event you registered for`)).toBeVisible()
+  await expect(page.getByText(title)).toBeVisible()
 })
 
 test('WB17 removing a story takes it off the page', async ({ page }) => {

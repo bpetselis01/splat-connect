@@ -135,7 +135,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | C09 | nav | `(tabs)/explore/challenges/[id]` | P | "Submit a revised idea" | – | – | n/a | ✅ | ✅ | – | – |
 | C10 | nav | `(tabs)/explore/challenges/[id]` | P | "Read the guide" / "Follow the write-up" | – | – | web | ✅ | ✅ | – | – |
 | C11 | write | `(tabs)/explore/challenges/[id]` | P | Save heart | – | "N saves" tile | n/a | ✅ | ✅ | ✅ | – |
-| C12 | write | `(tabs)/explore/challenges/new` | P | "Submit idea" | idea_approved, idea_rejected | My challenges "Awaiting review" | web | ✅ | ✅ | ✅ | – |
+| C12 | write | `(tabs)/explore/challenges/new` | P | "Submit idea" | idea_approved, idea_rejected, idea_received | My challenges "Awaiting review" | web | ✅ | ✅ | ✅ | – |
 | C13 | write | `(tabs)/explore/challenges/new` | P | idea photo | – | – | n/a | ✅ | ✅ | ✅ | – |
 | C14 | write | `(tabs)/explore/challenges/new` | P | "Post anonymously" | – | – | n/a | ✅ | ✅ | ✅ | – |
 | C15 | write | `(my)/challenges/index` | P | My challenges list / stage filter | – | – | n/a | ✅ | ✅ | ✅ | – |
@@ -158,7 +158,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | G07 | nav | `(tabs)/guides/index` | P | "Add a guide" → /guides/new | – | – | n/a | ✅ | ✅ | – | – |
 | G08 | write | `(tabs)/guides/[id]/index` | P | detail Save (ItemActions) | – | saves | n/a | ✅ | ✅ | ✅ | – |
 | G09 | write | `(tabs)/guides/[id]/index` | P | detail Thank | tutorial_thanked | library-card thanks pill | n/a | ✅ | ✅ | ✅ | – |
-| G10 | write | `(tabs)/guides/[id]/index` | P | detail Report | – | admin Reports count | web | ✅ | ✅ | ✅ | – |
+| G10 | write | `(tabs)/guides/[id]/index` | P | detail Report | report_received | admin Reports count | web | ✅ | ✅ | ✅ | – |
 | G11 | nav | `(tabs)/guides/[id]/index` | P | hero photo → PhotoViewer | – | – | n/a | ✅ | ✅ | – | ✅ |
 | G12 | nav | `(tabs)/guides/[id]/index` | P | byline / org chip → showcase / org page | – | – | n/a | ✅ | ✅ | – | – |
 | G13 | nav | `(tabs)/guides/[id]/index` | P | "What you'll need" rows → tabs | – | – | n/a | ✅ | ✅ | – | – |
@@ -175,7 +175,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | G24 | write | `(tabs)/guides/[id]/index` | P | note "Add a photo" | – | – | n/a | ✅ | ✅ | ✅ | – |
 | G25 | nav | `(tabs)/guides/[id]/index` | P | note filter chips (All/Fixes/Step N/Missing) | – | chip counts | n/a | ✅ | ✅ | – | – |
 | G26 | write | `(tabs)/guides/[id]/index` | P | note menu Pin / Unpin | – | "Fixes N" chip | mobile | ✅ | ✅ | ✅ | – |
-| G27 | write | `(tabs)/guides/[id]/index` | P | note menu Report | – | – | web | ✅ | ✅ | ✅ | ✅ |
+| G27 | write | `(tabs)/guides/[id]/index` | P | note menu Report | report_received | – | web | ✅ | ✅ | ✅ | ✅ |
 | G28 | write | `(tabs)/guides/[id]/index` | P | note menu Delete (own) | – | – | n/a | ✅ | ✅ | ✅ | – |
 | G29 | nav | `(tabs)/guides/[id]/index` | P | detail "Try again" | – | – | n/a | ✅ | ✅ | – | – |
 
@@ -233,7 +233,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | K08 | write | `(my)/exchanges/build/[id]` | P | "Post the working shot" | build_shot_posted | – | mobile | ✅ | ✅ | ✅ | – |
 | K09 | write | `(my)/exchanges/build/[id]` | P | "Looks right — arrange pickup" | build_approved | – | mobile | ✅ | ✅ | ✅ | – |
 | K10 | nav | `(my)/exchanges/build/[id]` | P | "Ask for a change" | – | – | n/a | ✅ | ✅ | – | – |
-| K11 | write | `(my)/exchanges/build/[id]` | P | "Confirm handover" | – | – | mobile | ✅ | ✅ | ✅ | – |
+| K11 | write | `(my)/exchanges/build/[id]` | P | "Confirm handover" | handover_confirmed | – | mobile | ✅ | ✅ | ✅ | – |
 | K12 | write | `(my)/exchanges/build/[id]` | P | "Withdraw" | toy_withdrawn | – | n/a | ✅ | ✅ | ✅ | – |
 | K13 | write | `(my)/exchanges/build/[id]` | P | message Send | toy_message | – | n/a | ✅ | ✅ | ✅ | – |
 | K14 | nav | `(tabs)/explore/makers-wanted/index` | P | "Track" / "Thread" | – | – | n/a | ✅ | ✅ | – | – |
@@ -258,8 +258,8 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | L10 | nav | `(my)/organisation/toys` | L | inventory empty CTA → /toys/new?org= | – | – | n/a | ✅ | ✅ | – | – |
 | L11 | write | `(my)/organisation/orders` | L | Print orders (PrintForOthersScreen orgId) | – | Me "Print orders" | mobile | ✅ | ✅ | ✅ | – |
 | L12 | write | `(my)/organisation/recycling` | L | intake list | – | Me "Recycling intake" | n/a | ✅ | ✅ | ✅ | – |
-| L13 | write | `(my)/organisation/recycling` | L | "Weigh and credit" | – | family's credit | mobile | ✅ | ✅ | ✅ | – |
-| L14 | write | `(my)/organisation/recycling` | L | "Contaminated" | – | – | mobile | ✅ | ✅ | ✅ | – |
+| L13 | write | `(my)/organisation/recycling` | L | "Weigh and credit" | recycling_received | family's credit | mobile | ✅ | ✅ | ✅ | – |
+| L14 | write | `(my)/organisation/recycling` | L | "Contaminated" | recycling_declined | – | mobile | ✅ | ✅ | ✅ | – |
 | L15 | write | `(my)/organisation/recycling` | L | "Save what you take" | – | – | n/a | ✅ | ✅ | ✅ | – |
 | L16 | write | `(my)/organisation/requests` | L | requests tabs | – | Me "Requests to you" | n/a | ✅ | ✅ | ✅ | – |
 | L17 | nav | `(my)/organisation/requests` | L | request row → thread by type | – | – | n/a | ✅ | ✅ | – | – |
@@ -321,7 +321,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | P06 | nav | `(tabs)/toy-library/organisation/[id]` | P | "Book a drop-off" → /explore/recycling | – | – | n/a | ✅ | ✅ | – | – |
 | P07 | nav | `(tabs)/toy-library/organisation/[id]` | P | door rows | – | – | n/a | ✅ | ✅ | – | – |
 | P08 | nav | `(tabs)/toy-library/organisation/[id]` | P | guides / toys "See all", row taps | – | – | n/a | ✅ | ✅ | – | – |
-| P09 | write | `(tabs)/toy-library/organisation/[id]` | P | Report org | – | – | web | ✅ | ✅ | ✅ | – |
+| P09 | write | `(tabs)/toy-library/organisation/[id]` | P | Report org | report_received | – | web | ✅ | ✅ | ✅ | – |
 | P10 | write | `(my)/messages/org/[orgId]` | P | family conversation Send | org_message | Me "Messages" | n/a | ✅ | ✅ | ✅ | – |
 
 </details>
@@ -367,8 +367,8 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | Q33 | nav | `(my)/admin/organisations/index` | A | Organisations: "New organisation" → /admin/organisations/new; row → /admin/organisations/:id | – | – | n/a | ✅ | ✅ | – | – |
 | Q34 | write | `(my)/admin/organisations/new` | A | "Create organisation" (name, description, first leader from the account picker) | – | Admin "Organisations" card | n/a | ✅ | ✅ | ✅ | – |
 | Q35 | write | `(my)/admin/organisations/[id]` | A | "Save details" (name, description) | – | – | n/a | ✅ | ✅ | ✅ | – |
-| Q36 | write | `(my)/admin/organisations/[id]` | A | "Add a leader" from the account picker | – | – | n/a | ✅ | ✅ | ✅ | – |
-| Q37 | write | `(my)/admin/organisations/[id]` | A | leader "Remove" | – | – | n/a | ✅ | ✅ | ✅ | – |
+| Q36 | write | `(my)/admin/organisations/[id]` | A | "Add a leader" from the account picker | leader_added | – | n/a | ✅ | ✅ | ✅ | – |
+| Q37 | write | `(my)/admin/organisations/[id]` | A | leader "Remove" | leader_removed | – | n/a | ✅ | ✅ | ✅ | – |
 | Q38 | write | `(my)/admin/organisations/[id]` | A | "Suspend" / "Reactivate" → status | – | – | n/a | ✅ | ✅ | ✅ | – |
 | Q39 | write | `(my)/admin/organisations/[id]` | A | "Mark verified" / "Remove verified" | – | Verified pill | n/a | ✅ | ✅ | ✅ | – |
 | Q40 | write | `(my)/admin/reports/index` | A | Reports: member and idea report lists with status and kind segments | – | Admin "Reports from members" card | mobile | ✅ | ✅ | ✅ | – |
@@ -398,7 +398,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | R06 | write | `printing/jobs/[id]` | P | "Withdraw request" | toy_withdrawn | – | n/a | ✅ | ✅ | ✅ | – |
 | R07 | write | `printing/jobs/[id]` | P | "Started printing" | print_started | stage rail | mobile | ✅ | ✅ | ✅ | – |
 | R08 | write | `printing/jobs/[id]` | P | "Mark ready for pickup" (photo) | print_ready | stage rail | mobile | ✅ | ✅ | ✅ | – |
-| R09 | write | `printing/jobs/[id]` | P | printer "Confirm" code | – | – | n/a | ✅ | ✅ | ✅ | – |
+| R09 | write | `printing/jobs/[id]` | P | printer "Confirm" code | handover_confirmed | – | n/a | ✅ | ✅ | ✅ | – |
 | R10 | write | `printing/jobs/[id]` | P | "Fitted" / "Needs a reprint" | toy_message | printer stats | mobile | ✅ | ✅ | ✅ | – |
 | R11 | write | `printing/jobs/[id]` | P | "Say thanks to the printer" | profile_thanked | – | n/a | ✅ | ✅ | ✅ | – |
 | R12 | nav | `(my)/print-for-others/index` | P | offer tabs | – | tab counts | n/a | ✅ | ✅ | ✅ | – |
@@ -420,7 +420,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | S01 | write | `(tabs)/guides/contributor/[id]` | P | showcase load; guide card tap | – | – | n/a | ✅ | ✅ | ✅ | – |
 | S02 | write | `(tabs)/guides/contributor/[id]` | P | "Say thanks" (ThankButton): optional "Add a note?" sheet, note visible to the receiver only | profile_thanked | – | none | ✅ | ✅ | ✅ | – |
-| S03 | write | `(tabs)/guides/contributor/[id]` | P | Report person | – | – | web | ✅ | ✅ | ✅ | – |
+| S03 | write | `(tabs)/guides/contributor/[id]` | P | Report person | report_received | – | web | ✅ | ✅ | ✅ | – |
 | S04 | nav | `(tabs)/guides/contributor/[id]` | P | org chip → org page | – | – | n/a | ✅ | ✅ | – | – |
 
 </details>
@@ -469,18 +469,18 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | V02 | write | `(my)/events` | P | "Can't make it" | – | – | n/a | ✅ | ✅ | ✅ | – |
 | V03 | nav | `(my)/events` | P | "Pick a printer" → /printing | – | – | n/a | ✅ | ✅ | – | – |
 | V04 | write | `(tabs)/explore/recycling` | P | recycling load | – | credit | n/a | ✅ | ✅ | ✅ | – |
-| V05 | write | `(tabs)/explore/recycling` | P | "Book the drop-off" (+ photo) | – | leader intake count | mobile | ✅ | ✅ | ✅ | – |
+| V05 | write | `(tabs)/explore/recycling` | P | "Book the drop-off" (+ photo) | drop_off_booked | leader intake count | mobile | ✅ | ✅ | ✅ | – |
 | V06 | write | `(tabs)/explore/recycling` | P | "Cancel the drop-off" | – | – | n/a | ✅ | ✅ | ✅ | – |
 | V07 | write | `(my)/saved/index` | P | Saved hub tiles | – | counts | n/a | ✅ | ✅ | ✅ | – |
 | V08 | write | `(my)/saved/[slug]` | P | list heart unsave | – | list/hub count | n/a | ✅ | ✅ | ✅ | – |
 | V09 | nav | `(my)/saved/[slug]` | P | list row open | – | – | n/a | ✅ | ✅ | ✅ | – |
 | V10 | write | `events/[id]/index` | anon | event detail load: kind, when, where, cost, seats left / full / closed / cancelled / past, who is going | – | "N going", seats left | L | ✅ | ✅ | ✅ | – |
-| V11 | write | `events/[id]/index` | P | "I'm going" with nothing to ask (no questions, no cost, name and email on the profile) → POST registration with empty answers | – | "N going", My events | n/a | ✅ | ✅ | ✅ | – |
+| V11 | write | `events/[id]/index` | P | "I'm going" with nothing to ask (no questions, no cost, name and email on the profile) → POST registration with empty answers | event_rsvp_received | "N going", My events | n/a | ✅ | ✅ | ✅ | – |
 | V12 | nav | `events/[id]/index` | P | "I'm going" with questions, a cost or an incomplete profile → /events/:id/register; signed out → /sign-in (returns to the event) | – | – | n/a | ✅ | ✅ | – | – |
 | V13 | write | `events/[id]/index` | P | "Can't make it" → DELETE registration | – | "N going", My events | n/a | ✅ | ✅ | ✅ | – |
 | V14 | nav | `events/[id]/index` | anon | host chip "Hosted by <org>" → /toy-library/organisation/:id | – | – | n/a | ✅ | ✅ | – | – |
 | V15 | nav | `events/[id]/index` | P | "Print parts here" (host prints parts, signed in) → /events/:id/print | – | – | n/a | ✅ | ✅ | – | – |
-| V16 | write | `events/[id]/register` | P | "Confirm my spot" (name, email, organiser questions, cost acknowledgement) → POST registration, then /events; full or closed shows the server sentence | – | "N going", My events | n/a | ✅ | ✅ | ✅ | – |
+| V16 | write | `events/[id]/register` | P | "Confirm my spot" (name, email, organiser questions, cost acknowledgement) → POST registration, then /events; full or closed shows the server sentence | event_rsvp_received | "N going", My events | n/a | ✅ | ✅ | ✅ | – |
 | V17 | write | `events/[id]/print` | P | "Send request" (guide from saved, parts, sets, note) → POST print-at-event | toy_request | host "to answer" | n/a | ✅ | ✅ | ✅ | – |
 | V18 | nav | `events/[id]/print` | P | no saved guides: "Browse guides" → /guides | – | – | n/a | ✅ | ✅ | – | – |
 
@@ -510,7 +510,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | Y04 | write | `(tabs)/toy-library/[id]` | P | detail load, carousel | – | – | n/a | ✅ | ✅ | ✅ | ✅ |
 | Y05 | write | `(tabs)/toy-library/[id]` | P | "Ask to collect it" | toy_request | owner's "My exchanges" count | mobile | ✅ | ✅ | ✅ | – |
 | Y06 | write | `(tabs)/toy-library/[id]` | P | "Arrange exchange" (offer own toy) | toy_request | owner's "My exchanges" count | mobile | ✅ | ✅ | ✅ | – |
-| Y07 | write | `(tabs)/toy-library/[id]` | P | Save / Thank owner / Report | profile_thanked, org_thanked | – | web | ✅ | ✅ | ✅ | – |
+| Y07 | write | `(tabs)/toy-library/[id]` | P | Save / Thank owner / Report | profile_thanked, org_thanked, report_received | – | web | ✅ | ✅ | ✅ | – |
 | Y08 | nav | `(tabs)/toy-library/[id]` | P | org / guide / picks links | – | – | n/a | ✅ | ✅ | – | – |
 | Y09 | write | `(tabs)/toy-library/organisations` | P | Organisations list | – | – | n/a | ✅ | ✅ | ✅ | – |
 
@@ -528,14 +528,14 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | X04 | write | `(my)/exchanges/[id]` | P | "Accept" → "Accept request" (+ pickup) | toy_accepted | owner-action count | mobile | ✅ | ✅ | ✅ | – |
 | X05 | write | `(my)/exchanges/[id]` | P | "Decline with a reason" | toy_rejected | – | mobile | ✅ | ✅ | ✅ | – |
 | X06 | write | `(my)/exchanges/[id]` | P | "Withdraw" | toy_withdrawn | – | mobile | ✅ | ✅ | ✅ | – |
-| X07 | write | `(my)/exchanges/[id]` | P | "Confirm handoff" (code) | toy_rejected | counts | mobile | ✅ | ✅ | ✅ | – |
+| X07 | write | `(my)/exchanges/[id]` | P | "Confirm handoff" (code) | toy_rejected, handover_confirmed | counts | mobile | ✅ | ✅ | ✅ | – |
 | X08 | write | `(my)/exchanges/[id]` | P | "New code" / "Copy" | – | – | n/a | ✅ | ✅ | ✅ | – |
 | X09 | nav | `(my)/exchanges/[id]` | P | "Add to toy library" → /toys/:id/edit | – | – | n/a | ✅ | ✅ | – | – |
 | X10 | write | `(my)/exchanges/[id]` | P | cost "Add a line" | – | Me money panel | mobile | ✅ | ✅ | ✅ | – |
 | X11 | write | `(my)/exchanges/[id]` | P | cost "Remove" | – | money panel | n/a | ✅ | ✅ | ✅ | – |
 | X12 | write | `(my)/exchanges/[id]` | P | "Settled" toggle | – | "To settle / Settled", Me total | mobile | ✅ | ✅ | ✅ | – |
 | X13 | write | `(my)/exchanges/[id]` | P | Thank | profile_thanked | – | n/a | ✅ | ✅ | ✅ | – |
-| X14 | write | `(my)/exchanges/[id]` | P | Report | – | – | web | ✅ | ✅ | ✅ | – |
+| X14 | write | `(my)/exchanges/[id]` | P | Report | report_received | – | web | ✅ | ✅ | ✅ | – |
 | X15 | nav | `(my)/exchanges/[id]` | P | declined request: the requester reads the owner's reason | – | – | n/a | ✅ | ✅ | – | – |
 | X16 | nav | `(my)/exchanges/[id]` | P | admin message in the thread is labelled "SPLAT admin" | – | – | n/a | ✅ | ✅ | – | – |
 
@@ -649,7 +649,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | WB14 | nav | `/dashboard/organisation/orders` | L | print orders: the printer-offer screen scoped to the acting organisation (title, lead, tabs) | – | – | P | ✅ | ✅ | – | – |
 | WB15 | nav | `/dashboard/organisation/publish` | L | events and stories: the Events / Stories tabs with their counts and the four stat chips; empty-state calls to action | – | Upcoming events, People going, Stories live, Drafts | L | ✅ | ✅ | ✅ | – |
 | WB16 | write | `/dashboard/organisation/publish` | L | Publish / Unpublish on an event or story row → PATCH status | org_event_published, org_story_published | public Events list, followers' unread | L | ✅ | ✅ | ✅ | – |
-| WB17 | write | `/dashboard/organisation/publish` | L | remove (bin) on an event or story row → DELETE; registrants are not told | – | public lists | L | ✅ | ✅ | ✅ | – |
+| WB17 | write | `/dashboard/organisation/publish` | L | remove (bin) on an event or story row → DELETE; an event's registrants are told | org_event_deleted | public lists | L | ✅ | ✅ | ✅ | – |
 | WB18 | nav | `/dashboard/organisation/publish` | L | "New event", "New story", row Manage → /dashboard/org/events/:id (not drafts), View → the public page, Edit → the edit form | – | – | n/a | ✅ | ✅ | – | – |
 | WB19 | write | `/dashboard/organisation/events/new` | L | event form "Publish to Events" / "Save as draft" → POST the event, PUT its questions; publish goes to the public page | org_event_published | followers' unread, public Events list | n/a | ✅ | ✅ | ✅ | – |
 | WB20 | write | `/dashboard/organisation/events/[id]/edit` | L | event form "Save changes" (live) / "Publish to Events" → PATCH the event, PUT its questions | org_event_published, org_event_changed | registrants' unread | n/a | ✅ | ✅ | ✅ | – |
@@ -659,8 +659,8 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | WB24 | nav | `/dashboard/org/events/[id]` | L | registrations list with each answer, and Export CSV (data: URI built in the page); stat tiles Going, Part requests, To answer, Seats | – | Going, Part requests, To answer, Seats | P | ✅ | ✅ | ✅ | – |
 | WB25 | write | `/dashboard/organisation/stories/new` | L | story form "Publish to Stories" (consent ticked) / "Save as draft" → POST | org_story_published | followers' unread, public Stories list | n/a | ✅ | ✅ | ✅ | – |
 | WB26 | write | `/dashboard/organisation/stories/[id]/edit` | L | story form "Save changes" (consent ticked again) / "Publish to Stories" → PATCH | org_story_published | – | n/a | ✅ | ✅ | ✅ | – |
-| WB27 | write | `/dashboard/organisation/recycling` | L | intake "Weigh and credit" (actual kg, credit g) → PATCH received | – | contributor's credit balance, Booked in count | P | ✅ | ✅ | ✅ | – |
-| WB28 | write | `/dashboard/organisation/recycling` | L | intake "Contaminated" → PATCH declined | – | Booked in count | P | ✅ | ✅ | ✅ | – |
+| WB27 | write | `/dashboard/organisation/recycling` | L | intake "Weigh and credit" (actual kg, credit g) → PATCH received | recycling_received | contributor's credit balance, Booked in count | P | ✅ | ✅ | ✅ | – |
+| WB28 | write | `/dashboard/organisation/recycling` | L | intake "Contaminated" → PATCH declined | recycling_declined | Booked in count | P | ✅ | ✅ | ✅ | – |
 | WB29 | write | `/dashboard/organisation/recycling` | L | "What you can take" publish (materials, machines, forms, limits, how it is brought) → PATCH the profile | – | contributor's booking form | n/a | ✅ | ✅ | ✅ | – |
 | WB30 | write | `/dashboard/organisation/profile` | L | profile form "Save and publish" → PATCH profile, then PUT doors and rate lines | – | public organisation page | n/a | ✅ | ✅ | ✅ | – |
 | WB31 | write | `/dashboard/organisation/profile` | L | logo and cover pictures: choose a file → upload at once, remove applied on save | – | public organisation page | n/a | ✅ | ✅ | ✅ | – |
@@ -941,7 +941,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | WI10 | nav | `/get-involved/submit-an-idea` | anon | signed-out "Sign in to submit an idea" → /login?next=/get-involved/submit-an-idea | – | – | n/a | ✅ | ✅ | – | – |
-| WI11 | write | `/get-involved/submit-an-idea` | P | "Submit for review" (title, summary, why it matters, kind, contact prefs, anonymous) → POST idea, then My challenges as pending | – | admin idea queue | P | ✅ | ✅ | ✅ | – |
+| WI11 | write | `/get-involved/submit-an-idea` | P | "Submit for review" (title, summary, why it matters, kind, contact prefs, anonymous) → POST idea, then My challenges as pending | idea_received | admin idea queue | P | ✅ | ✅ | ✅ | – |
 | WI12 | write | `/get-involved/submit-an-idea` | P | idea photo "Drop a photo of the toy" → upload, preview, path sent with the idea | – | – | P | ✅ | ✅ | ✅ | – |
 
 </details>
@@ -1015,7 +1015,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| WI31 | write | `/get-involved/events/[id]` | P | "I'm going" with no questions → POST registration; the button reads "You're going" | – | going count, seats left | L | ✅ | ✅ | ✅ | – |
+| WI31 | write | `/get-involved/events/[id]` | P | "I'm going" with no questions → POST registration; the button reads "You're going" | event_rsvp_received | going count, seats left | L | ✅ | ✅ | ✅ | – |
 | WI32 | write | `/get-involved/events/[id]` | P | "You're going" → DELETE registration; the button reads "I'm going" again | – | going count, seats left | L | ✅ | ✅ | ✅ | – |
 | WI33 | nav | `/get-involved/events/[id]` | anon | signed-out "I'm going" → /login?next=the event; signed in with questions or a cost → the register form | – | – | L | ✅ | ✅ | – | – |
 | WI34 | write | `/get-involved/events/[id]` | P | print-at-event "Send request" (guide, parts, sets) → POST print-at-event | toy_request | – | L | ✅ | ✅ | ✅ | – |
@@ -1028,7 +1028,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| WI35 | write | `/get-involved/events/[id]/register` | P | "Confirm my spot" (name, email, answers, cost box) → POST registration, then the event page; a full event shows the server sentence | – | going count | L | ✅ | ✅ | ✅ | – |
+| WI35 | write | `/get-involved/events/[id]/register` | P | "Confirm my spot" (name, email, answers, cost box) → POST registration, then the event page; a full event shows the server sentence | event_rsvp_received | going count | L | ✅ | ✅ | ✅ | – |
 
 </details>
 
@@ -1039,7 +1039,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | WI36 | nav | `/get-involved/recycling` | anon | signed-out "Create an account" → /signup; signed in "Book a drop-off" → /get-involved/recycling/drop-off | – | – | n/a | ✅ | ✅ | – | – |
-| WI37 | write | `/get-involved/recycling/drop-off` | P | "Book the drop-off" (organisation, weight, polymer, declaration, photo, note) → POST recycling, then /dashboard | – | organisation drop-off queue | L | ✅ | ✅ | ✅ | – |
+| WI37 | write | `/get-involved/recycling/drop-off` | P | "Book the drop-off" (organisation, weight, polymer, declaration, photo, note) → POST recycling, then /dashboard | drop_off_booked | organisation drop-off queue | L | ✅ | ✅ | ✅ | – |
 | WI38 | nav | `/get-involved/recycling/drop-off` | anon | signed-out visit → /login?next=/get-involved/recycling/drop-off?org=<id> (the ?org= choice survives the way back) | – | – | n/a | ✅ | ✅ | – | – |
 
 </details>
@@ -1084,12 +1084,12 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | WM16 | nav | `/admin/contributors` | A | Filter chips (?cap=), search (?q=), Pager, leader capability from the organisations list | – | accounts | n/a | ✅ | ✅ | ✅ | – |
 | WM17 | write | `/admin/contributors` | A | Per-row "Remove" (no confirm step) → server action deleteContributor → account deleted; a sole leader is refused | – | accounts | n/a | ✅ | ✅ | ✅ | – |
 | WM18 | write | `/admin/organizations` | A | "New organisation" drawer (?new=1): name, description, first leader → server action createOrg, then back to the list | – | organisations | n/a | ✅ | ✅ | ✅ | – |
-| WM19 | write | `/admin/organizations` | A | Manage drawer (?manage=:id) "Appoint" a leader → server action addLeader | – | organisation leaders | n/a | ✅ | ✅ | ✅ | – |
-| WM20 | write | `/admin/organizations` | A | Manage drawer leader "Remove" → server action removeLeader | – | organisation leaders | n/a | ✅ | ✅ | ✅ | – |
+| WM19 | write | `/admin/organizations` | A | Manage drawer (?manage=:id) "Appoint" a leader → server action addLeader | leader_added | organisation leaders | n/a | ✅ | ✅ | ✅ | – |
+| WM20 | write | `/admin/organizations` | A | Manage drawer leader "Remove" → server action removeLeader | leader_removed | organisation leaders | n/a | ✅ | ✅ | ✅ | – |
 | WM21 | write | `/admin/organizations` | A | Manage drawer "Verify" / "Unverify" → server action setVerified | – | Verified seal | n/a | ✅ | ✅ | ✅ | – |
 | WM22 | write | `/admin/organizations` | A | Manage drawer "Suspend organisation" / "Reactivate organisation" → server action setStatus | – | organisation standing | n/a | ✅ | ✅ | ✅ | – |
-| WM23 | write | `/admin/organization-requests` | A | "Approve and create it" → organisation created with the requester as first leader in one transaction | – | pending organisation requests, organisations | P | ✅ | ✅ | ✅ | – |
-| WM24 | write | `/admin/organization-requests` | A | "Decline" with a required note → request declined with review_note | – | pending organisation requests | P | ✅ | ✅ | ✅ | – |
+| WM23 | write | `/admin/organization-requests` | A | "Approve and create it" → organisation created with the requester as first leader in one transaction | org_request_approved | pending organisation requests, organisations | P | ✅ | ✅ | ✅ | – |
+| WM24 | write | `/admin/organization-requests` | A | "Decline" with a required note → request declined with review_note | org_request_declined | pending organisation requests | P | ✅ | ✅ | ✅ | – |
 | WM25 | write | `/admin/inbox` | A | "Replied" / "Close" / "Reopen" → status of the contact message | – | open inbox messages | none | ✅ | ✅ | ✅ | – |
 | WM26 | nav | `/admin/reports` | A | Tab links Member reports / Idea reports (?tab=ideas) | – | – | n/a | ✅ | ✅ | – | – |
 | WM27 | write | `/admin/reports` | A | "Start looking" → status looking, report stays counted | – | reports not resolved | P | ✅ | ✅ | ✅ | – |
@@ -1099,7 +1099,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | WM31 | write | `/admin/reports` | A | Idea reports tab: "Reinstate" clears the removal | – | – | A | ✅ | ✅ | ✅ | – |
 | WM32 | nav | `/admin/build-requests` | A | Read-only table of requests unclaimed 14 days or claimed and silent; row → /dashboard/exchanges/build/:id | – | build requests needing a nudge | P | ✅ | ✅ | ✅ | – |
 | WM33 | nav | `/admin/print-jobs` | A | Filter links (?show=), table of print jobs; row → /dashboard/print-requests/:id | – | print jobs stalled | P | ✅ | ✅ | ✅ | – |
-| WM34 | write | `/admin/test-prints` | A | "Pass" / "Fail" with a note → verdict on the printer test print | – | test prints waiting, printer Verified shield | n/a | ✅ | ✅ | ✅ | – |
+| WM34 | write | `/admin/test-prints` | A | "Pass" / "Fail" with a note → verdict on the printer test print | test_print_passed, test_print_failed | test prints waiting, printer Verified shield | n/a | ✅ | ✅ | ✅ | – |
 | WM35 | write | `/admin/content` | A | Home page tab "Save changes" → three PUTs: home-hero, home-numbers, home-scenes | – | public home page | n/a | ✅ | ✅ | ✅ | – |
 | WM36 | write | `/admin/content` | A | Learn course tab "Save" (versioned by updated_at) → PUT learn-course; a stale version is refused with 409 | – | Learn course outline | n/a | ✅ | ✅ | ✅ | – |
 | WM37 | write | `/admin/build-requests` | A | row → "Open the thread" → member thread: composer sends a SPLAT admin message → POST /api/toy-transactions/:id/messages (both parties notified) | toy_message | – | P | ✅ | ✅ | ✅ | – |
@@ -1191,7 +1191,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | WR13 | write | `/dashboard/print-requests/[id]` | P | printer "Accept" (pickup dialog) → POST /api/toy-transactions/:id/accept | toy_accepted | requester's exchanges unread | P | ✅ | ✅ | ✅ | – |
 | WR14 | write | `/dashboard/print-requests/[id]` | P | printer "Decline" with a reason → POST /api/toy-transactions/:id/reject {reason} | toy_rejected | requester's exchanges unread | P | ✅ | ✅ | ✅ | – |
 | WR15 | write | `/dashboard/print-requests/[id]` | P | "Withdraw the request" → POST /api/toy-transactions/:id/withdraw | toy_withdrawn | printer's exchanges unread | P | ✅ | ✅ | ✅ | – |
-| WR16 | write | `/dashboard/print-requests/[id]` | P | handover code + "Confirm handoff" → POST /api/toy-transactions/:id/confirm (needs the parts ready) | – | exchangeActions | P | ✅ | ✅ | ✅ | – |
+| WR16 | write | `/dashboard/print-requests/[id]` | P | handover code + "Confirm handoff" → POST /api/toy-transactions/:id/confirm (needs the parts ready) | handover_confirmed | exchangeActions | P | ✅ | ✅ | ✅ | – |
 | WR17 | write | `/dashboard/print-requests/[id]` | P | PrintNextStep "It is on the bed" → POST /api/toy-transactions/:id/print-started | print_started | requester's exchanges unread | P | ✅ | ✅ | ✅ | – |
 | WR18 | write | `/dashboard/print-requests/[id]` | P | PrintNextStep "Mark it ready with a photo" → POST /api/toy-transactions/:id/print-ready | print_ready | requester's exchanges unread | P | ✅ | ✅ | ✅ | – |
 | WR19 | nav | `/dashboard/print-requests/[id]` | P | back link → /dashboard/printers (printer) or /dashboard/print-requests (family) | – | – | n/a | ✅ | ✅ | – | – |
@@ -1240,7 +1240,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| WS11 | write | `/contact` | anon | "Send message" (topic, name, email, message) → POST /api/public/contact → "Sent. Thank you."; staff are not notified | – | – | n/a | ✅ | ✅ | ✅ | – |
+| WS11 | write | `/contact` | anon | "Send message" (topic, name, email, message) → POST /api/public/contact → "Sent. Thank you."; staff are not notified | contact_received | – | n/a | ✅ | ✅ | ✅ | – |
 | WS12 | nav | `/contact` | anon | "Send message" with empty fields is blocked by the form: nothing is sent and the name field is flagged | – | – | n/a | ✅ | ✅ | – | – |
 | WS13 | static | `/contact` | anon | three routes in (guide, organisation, safety) and the email address; "To be completed" where organisation facts are missing | – | – | n/a | ✅ | – | – | – |
 
@@ -1345,7 +1345,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | WX06 | write | `/dashboard/exchanges/[id]` | P | "Accept" → pickup dialog "Accept request" → accept action → POST /api/toy-transactions/:id/accept | toy_accepted | owner's exchangeActions -1, requester's exchanges unread | P | ✅ | ✅ | ✅ | – |
 | WX07 | write | `/dashboard/exchanges/[id]` | P | "Decline" opens the reason form (required, 1–500) → reject action → POST /api/toy-transactions/:id/reject | toy_rejected | requester's exchanges unread | P | ✅ | ✅ | ✅ | – |
 | WX08 | write | `/dashboard/exchanges/[id]` | P | "Withdraw" → withdraw action → POST /api/toy-transactions/:id/withdraw | toy_withdrawn | other seat's exchanges unread | P | ✅ | ✅ | ✅ | – |
-| WX09 | write | `/dashboard/exchanges/[id]` | P | handover code + "Confirm handoff" → confirm action → POST /api/toy-transactions/:id/confirm; the second code closes it | toy_rejected | owner's exchangeActions, My toys Given away | P | ✅ | ✅ | ✅ | – |
+| WX09 | write | `/dashboard/exchanges/[id]` | P | handover code + "Confirm handoff" → confirm action → POST /api/toy-transactions/:id/confirm; the second code closes it | toy_rejected, handover_confirmed | owner's exchangeActions, My toys Given away | P | ✅ | ✅ | ✅ | – |
 | WX10 | write | `/dashboard/exchanges/[id]` | P | CostPanel "Add cost" → POST /api/exchange-costs/:txId | – | cost total | P | ✅ | ✅ | ✅ | – |
 | WX11 | write | `/dashboard/exchanges/[id]` | P | CostPanel "Remove <line>" → DELETE /api/exchange-costs/:id | – | cost total | P | ✅ | ✅ | ✅ | – |
 | WX12 | write | `/dashboard/exchanges/[id]` | P | CostPanel "Mark settled" → PATCH /api/exchange-costs/:id/settle | – | cost total | P | ✅ | ✅ | ✅ | – |
@@ -1365,7 +1365,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | WX16 | write | `/dashboard/exchanges/build/[id]` | P | maker "Accept" (pickup dialog) → POST /api/toy-transactions/:id/accept | toy_accepted | requester's exchanges unread | P | ✅ | ✅ | ✅ | – |
 | WX17 | write | `/dashboard/exchanges/build/[id]` | P | maker "Decline" with a reason → POST /api/toy-transactions/:id/reject | toy_rejected | requester's exchanges unread | P | ✅ | ✅ | ✅ | – |
 | WX18 | write | `/dashboard/exchanges/build/[id]` | P | "Withdraw the request" → POST /api/toy-transactions/:id/withdraw | toy_withdrawn | maker's exchanges unread | P | ✅ | ✅ | ✅ | – |
-| WX19 | write | `/dashboard/exchanges/build/[id]` | P | handover code + "Confirm handoff" → POST /api/toy-transactions/:id/confirm (needs the approved working shot) | – | exchangeActions | P | ✅ | ✅ | ✅ | – |
+| WX19 | write | `/dashboard/exchanges/build/[id]` | P | handover code + "Confirm handoff" → POST /api/toy-transactions/:id/confirm (needs the approved working shot) | handover_confirmed | exchangeActions | P | ✅ | ✅ | ✅ | – |
 | WX20 | write | `/dashboard/exchanges/build/[id]` | P | BuildNextStep "Post the working shot" (file) → POST /api/toy-transactions/:id/working-shot | build_shot_posted | requester's exchanges unread | P | ✅ | ✅ | ✅ | – |
 | WX21 | write | `/dashboard/exchanges/build/[id]` | P | BuildNextStep "Looks right — arrange the handover" → POST /api/toy-transactions/:id/approve-work | build_approved | maker's exchanges unread | P | ✅ | ✅ | ✅ | – |
 | WX22 | nav | `/dashboard/exchanges/build/[id]` | P | requester "Asking first" (open request, no maker yet) → /dashboard/exchanges/build/:id/ask | – | – | n/a | ✅ | ✅ | – | – |
@@ -1389,7 +1389,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | WY06 | nav | `/toy-library/[id]` | P | "Ask to collect it" / "Offer a swap" → /toy-library/:id/request?mode= | – | – | P | ✅ | ✅ | – | – |
 | WY07 | nav | `/toy-library/[id]` | anon | "Sign in to ask for it" → /login?next=/toy-library/:id/request?mode=<donation\|exchange>; a signed-out visit to the request page keeps a valid ?mode= through sign-in | – | – | n/a | ✅ | ✅ | – | – |
 | WY08 | write | `/toy-library/[id]` | P | Save (labelled) → POST/DELETE /api/saves | – | Saved count | P | ✅ | ✅ | ✅ | – |
-| WY09 | write | `/toy-library/[id]` | P | "Report this listing" dialog → POST /api/reports | – | – | P | ✅ | ✅ | ✅ | – |
+| WY09 | write | `/toy-library/[id]` | P | "Report this listing" dialog → POST /api/reports | report_received | – | P | ✅ | ✅ | ✅ | – |
 | WY10 | write | `/toy-library/[id]/request` | P | "Send the request" (gift or swap, note) → POST /api/toy-transactions → /dashboard/exchanges/:id | toy_request | holder's exchanges unread, holder's exchangeActions | P | ✅ | ✅ | ✅ | – |
 | WY11 | static | `/toy-library/[id]/request` | P | mode radios, offered-toy picker, note and chips, Cancel → /toy-library/:id | – | – | n/a | ✅ | – | – | – |
 | WY12 | nav | `/dashboard/toys` | P | StageFilter chips (All, Needs you, Live, Hidden) → ?stage= | – | counts per stage | n/a | ✅ | ✅ | – | – |
@@ -1452,6 +1452,21 @@ Generated by `scripts/journeys/notifications.mjs`. Every `NotificationType` need
 | `org_story_published` | `routes/organizations.ts` | `orgs/org-profile-social.test.ts` | `dashboard/edit-event-story.spec.ts`, `get-involved/organisations.spec.ts`, `organisation/publish.spec.ts`, `organisation/stories.spec.ts` | `org-event-manage.spec.ts`, `org-publish.spec.ts` |
 | `org_message` | `routes/organizations.ts` | `orgs/org-profile-social.test.ts` | `dashboard/messages.spec.ts`, `get-involved/organisations.spec.ts` | `counts-inbox-badges.spec.ts`, `org-messages.spec.ts` |
 | `org_thanked` | `routes/organizations.ts` | `orgs/org-profile-social.test.ts` | `get-involved/organisations.spec.ts` | `counts-thanks.spec.ts`, `notifications-chains.spec.ts`, `toy-detail-actions.spec.ts` |
+| `recycling_received` | `routes/organizations.ts` | `notifications/handoffs-exchange.test.ts` | `organisation/recycling.spec.ts` | `counts-recycling.spec.ts`, `org-recycling.spec.ts` |
+| `recycling_declined` | `routes/organizations.ts` | `notifications/handoffs-exchange.test.ts` | `organisation/recycling.spec.ts` | `org-recycling.spec.ts` |
+| `org_request_approved` | `routes/admin.ts` | `notifications/handoffs-exchange.test.ts` | `admin/organization-requests.spec.ts` | none |
+| `org_request_declined` | `routes/admin.ts` | `notifications/handoffs-exchange.test.ts` | `admin/organization-requests.spec.ts` | none |
+| `test_print_passed` | `routes/admin.ts` | `notifications/handoffs-exchange.test.ts` | `admin/test-prints.spec.ts` | none |
+| `test_print_failed` | `routes/admin.ts` | `notifications/handoffs-exchange.test.ts` | `admin/test-prints.spec.ts` | none |
+| `handover_confirmed` | `routes/toy-transactions.ts` | `notifications/handoffs-exchange.test.ts` | `exchanges/build.spec.ts`, `exchanges/gift.spec.ts`, `exchanges/print.spec.ts`, `exchanges/swap.spec.ts`, `toy-exchange.spec.ts` | `build-thread.spec.ts`, `exchanges.spec.ts`, `print-job-printer.spec.ts`, `toy-exchange-edges.spec.ts` |
+| `leader_added` | `routes/admin.ts` | `notifications/handoffs-leaders.test.ts` | `admin/organizations.spec.ts` | `admin-organisations.spec.ts` |
+| `leader_removed` | `routes/admin.ts` | `notifications/handoffs-leaders.test.ts` | `admin/organizations.spec.ts` | `admin-organisations.spec.ts` |
+| `org_event_deleted` | `routes/organizations.ts` | `events/leader-events.test.ts`, `notifications/handoffs-leaders.test.ts` | `organisation/publish.spec.ts` | none |
+| `event_rsvp_received` | `routes/events.ts` | `notifications/handoffs-acknowledged.test.ts` | `get-involved/events.spec.ts` | `events-journeys.spec.ts` |
+| `idea_received` | `routes/toy-ideas.ts` | `notifications/handoffs-acknowledged.test.ts` | `get-involved/ideas.spec.ts` | `challenges-edges.spec.ts`, `challenges.spec.ts` |
+| `report_received` | `routes/reports.ts` | `notifications/handoffs-acknowledged.test.ts` | `toys/toy-library.spec.ts` | `exchange-actions.spec.ts`, `guides-feedback.spec.ts`, `guides-report.spec.ts`, `org-public-actions.spec.ts`, `showcase.spec.ts`, `toy-detail-actions.spec.ts` |
+| `drop_off_booked` | `routes/organizations.ts` | `notifications/handoffs-acknowledged.test.ts` | `get-involved/recycling.spec.ts` | `counts-recycling.spec.ts` |
+| `contact_received` | `routes/public.ts` | `notifications/handoffs-acknowledged.test.ts` | `public/about.spec.ts` | none |
 
 | Count | Computed by | Asserted by |
 |---|---|---|

@@ -55,6 +55,11 @@ test('WB27 weighing a drop-off in credits the contributor and moves it to "Weigh
   const settled = page.locator('li', { hasText: '2.6 kg declared · PLA · weighed 2.6 kg, credited 1.9 kg' })
   await expect(settled).toContainText('RECEIVED')
   expect(await stored(dropIds.weigh)).toEqual({ status: 'received', weighed_grams: 2600, credit_grams: 1950 })
+
+  // recycling_received: the contributor is told in their inbox.
+  await signInAs(page, family)
+  await page.goto('/notifications')
+  await expect(page.getByText(`${leader.orgName} received your drop-off`)).toBeVisible()
 })
 
 test('WB28 "Contaminated" turns a drop-off away with no credit', async ({ page }) => {

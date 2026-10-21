@@ -8,7 +8,6 @@ export { autoPicks, initialPicks, MAX_PICKS, pickOptions, PICK_KIND_LABEL, sameP
 export type { PicksMode, ToyPick, ToyPickInput } from './toy-picks'
 import type { PicksMode, ToyPick } from './toy-picks'
 
-// PENDING(silent-handoffs): all three groups get notification types: exchange outcomes (recycling receive/decline, org-request approve/...
 export { contributorBadges, nextBadgeThreshold, nextBadgeLine, BADGE_RULES } from './contributor-badges'
 export { ABOUT_LEAD, ABOUT_PILLARS, ABOUT_TEAM_BLURB, CONTACT_TIMES } from './about'
 export {
@@ -1793,9 +1792,27 @@ export type NotificationType =
   | 'org_story_published'
   | 'org_message'
   | 'org_thanked'
+  | 'recycling_received'
+  | 'recycling_declined'
+  | 'org_request_approved'
+  | 'org_request_declined'
+  | 'test_print_passed'
+  | 'test_print_failed'
+  | 'handover_confirmed'
+  | 'leader_added'
+  | 'leader_removed'
+  | 'org_event_deleted'
+  | 'event_rsvp_received'
+  | 'idea_received'
+  | 'report_received'
+  | 'drop_off_booked'
+  | 'contact_received'
 
 /** Which My SPLAT card a notification's badge belongs to. */
 export type NotificationBucket = 'tutorials' | 'exchanges' | 'challenges' | 'organisations'
+
+/** The one request that marks a bucket read: POST with `{ bucket }`. Web, mobile and the counts test all send it. */
+export const MARK_BUCKET_READ_PATH = '/api/notifications/me/read'
 
 /**
  * Notification type → the hub card that counts it.
@@ -1817,11 +1834,10 @@ export type NotificationBucket = 'tutorials' | 'exchanges' | 'challenges' | 'org
  * transaction, not on a toy, so they all belong to My exchanges — a toy
  * sitting on a shelf generates nothing.
  *
- * 077's four: org_message is a conversation with an organisation, the same
- * kind of thing as toy_message, so it counts on My exchanges. The other three
- * are news about an organisation rather than a thing you are doing with one —
- * a followed org published, or a family thanked yours — and none of the three
- * existing cards is about that, so they get their own 'organisations' bucket.
+ * 077's four are news about an organisation rather than a thing you are doing
+ * with one: a followed org published, a family thanked yours, a family wrote
+ * to its leaders. None of the three existing cards is about that, so they get
+ * their own 'organisations' bucket, which the leader's org hub clears.
  * It has no hub card: it counts toward the inbox total and is a section there.
  */
 const NOTIFICATION_BUCKET = {
@@ -1857,12 +1873,27 @@ const NOTIFICATION_BUCKET = {
   challenge_joined: 'challenges',
   challenge_left: 'challenges',
   challenge_removed: 'challenges',
-  org_message: 'exchanges',
+  org_message: 'organisations',
   org_event_published: 'organisations',
   org_event_changed: 'organisations',
   org_event_cancelled: 'organisations',
   org_story_published: 'organisations',
   org_thanked: 'organisations',
+  recycling_received: 'exchanges',
+  recycling_declined: 'exchanges',
+  org_request_approved: 'organisations',
+  org_request_declined: 'organisations',
+  test_print_passed: 'exchanges',
+  test_print_failed: 'exchanges',
+  handover_confirmed: 'exchanges',
+  leader_added: 'organisations',
+  leader_removed: 'organisations',
+  org_event_deleted: 'organisations',
+  event_rsvp_received: 'organisations',
+  idea_received: 'challenges',
+  report_received: 'exchanges',
+  drop_off_booked: 'exchanges',
+  contact_received: 'exchanges',
 } satisfies Record<NotificationType, NotificationBucket>
 
 /** Every notification type, for iteration at runtime — the union alone is compile-time only. */
@@ -1946,6 +1977,26 @@ export const COPY: Record<NotificationType, (n: Notification) => string> = {
       : `${n.actor_name} messaged ${n.tutorial_title ?? 'your organisation'}`,
   // The byline the family typed, or "A family" when they gave none.
   org_thanked: (n) => `${n.actor_name} said thanks to your organisation`,
+  // 142. actor_name is the organisation (or printer) the decision came from;
+  // the leader's note or reason rides in body and shows as the second line.
+  recycling_received: (n) => `${n.actor_name} received your drop-off`,
+  recycling_declined: (n) => `${n.actor_name} couldn't take your drop-off`,
+  org_request_approved: (n) => `${n.actor_name} was approved and you now lead it`,
+  org_request_declined: (n) => `${n.actor_name} wasn't approved`,
+  test_print_passed: (n) => `The test print for ${n.actor_name} passed`,
+  test_print_failed: (n) => `The test print for ${n.actor_name} didn't pass`,
+  handover_confirmed: (n) => `${n.actor_name} confirmed the handover of ${toy(n)}`,
+  leader_added: (n) => `You now lead ${n.actor_name}`,
+  leader_removed: (n) => `You no longer lead ${n.actor_name}`,
+  // The title rides in body, which is the card's second line: the event row is gone.
+  org_event_deleted: (n) => `${n.actor_name} deleted an event you registered for`,
+  // Acknowledgements to the sender. actor_name is the organisation, or SPLAT
+  // when the platform took it; a title or the first words ride in body.
+  event_rsvp_received: (n) => `You're registered for ${n.tutorial_title ?? 'an event'}`,
+  idea_received: () => 'We received your idea',
+  report_received: () => 'We received your report',
+  drop_off_booked: (n) => `Your drop-off at ${n.actor_name} is booked`,
+  contact_received: () => 'We received your message',
 }
 
 // A type the database allows but this build has no line for — a newer API,

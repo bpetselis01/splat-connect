@@ -58,7 +58,7 @@ describe('the review of a submitted idea (C12)', () => {
   it('C12 publishing tells the author, in SPLAT’s name (idea_approved)', async () => {
     const id = await submitIdea()
     await publish(id)
-    expect(await notes(id)).toEqual([
+    expect((await notes(id)).filter((n) => n.type === 'idea_approved')).toEqual([
       { recipient_id: author.id, type: 'idea_approved', idea_id: id, actor_name: 'SPLAT', body: null },
     ])
   })
@@ -67,7 +67,7 @@ describe('the review of a submitted idea (C12)', () => {
     const id = await submitIdea()
     const res = await call(admin.token, 'PATCH', `/admin/ideas/${id}/status`, { status: 'rejected', review_note: 'Too close to one we have' })
     expect(res.status).toBe(200)
-    expect(await notes(id)).toEqual([
+    expect((await notes(id)).filter((n) => n.type === 'idea_rejected')).toEqual([
       { recipient_id: author.id, type: 'idea_rejected', idea_id: id, actor_name: 'SPLAT', body: 'Too close to one we have' },
     ])
   })

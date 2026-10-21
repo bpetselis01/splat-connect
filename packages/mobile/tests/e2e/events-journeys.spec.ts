@@ -93,6 +93,10 @@ test('V11 I\'m going with nothing to ask books the seat, shows You\'re going and
 
   await page.goto('/events')
   await expect(page.getByText(event.title, { exact: true })).toBeVisible()
+
+  // event_rsvp_received: the RSVP was acknowledged in the inbox.
+  await page.goto('/inbox')
+  await expect(page.getByText(`You're registered for ${event.title}`)).toBeVisible()
 })
 
 test('V12 I\'m going goes to the confirm form when there are questions or a cost, and to sign-in when signed out', async ({ page, browser, baseURL }) => {

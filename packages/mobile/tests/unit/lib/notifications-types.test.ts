@@ -85,6 +85,21 @@ const TABLE: Record<NotificationType, Row> = {
     link: '/news/story/s1',
   },
   org_thanked: { carries: { org_id: 'o1' }, copy: 'Sam said thanks to your organisation', link: '/organisation/profile' },
+  recycling_received: { carries: { org_id: 'o1' }, copy: 'Sam received your drop-off', link: '/explore/recycling' },
+  recycling_declined: { carries: { org_id: 'o1' }, copy: 'Sam couldn\'t take your drop-off', link: '/explore/recycling' },
+  org_request_approved: { carries: { org_id: 'o1' }, copy: 'Sam was approved and you now lead it', link: '/organisation' },
+  org_request_declined: { carries: {}, copy: 'Sam wasn\'t approved', link: '/inbox' },
+  test_print_passed: { carries: {}, copy: 'The test print for Sam passed', link: '/print-for-others' },
+  test_print_failed: { carries: { org_id: 'o1' }, copy: 'The test print for Sam didn\'t pass', link: '/print-for-others' },
+  handover_confirmed: { carries: TX, copy: 'Sam confirmed the handover of Switch car', link: '/exchanges/tx1' },
+  leader_added: { carries: { org_id: 'o1' }, copy: 'You now lead Sam', link: '/organisation' },
+  leader_removed: { carries: { org_id: 'o1' }, copy: 'You no longer lead Sam', link: '/toy-library/organisation/o1' },
+  org_event_deleted: { carries: { org_id: 'o1', body: 'Open day' }, copy: 'Sam deleted an event you registered for', link: '/toy-library/organisation/o1' },
+  event_rsvp_received: { carries: { org_event_id: 'e1', tutorial_title: 'Open day' }, copy: 'You\'re registered for Open day', link: '/events/e1' },
+  idea_received: { carries: IDEA, copy: 'We received your idea', link: '/challenges' },
+  report_received: { carries: { member_report_id: 'r1' }, copy: 'We received your report', link: '/inbox' },
+  drop_off_booked: { carries: { org_id: 'o1' }, copy: 'Your drop-off at Sam is booked', link: '/explore/recycling' },
+  contact_received: { carries: {}, copy: 'We received your message', link: '/inbox' },
 }
 
 const row = (type: NotificationType): Notification => ({

@@ -13,7 +13,7 @@ describe('notificationBucket', () => {
    * compile error; this makes a *wrong* value a test failure.
    */
   it('gives every notification type a bucket', () => {
-    expect(NOTIFICATION_TYPES.length).toBe(38)
+    expect(NOTIFICATION_TYPES.length).toBe(53)
     for (const type of NOTIFICATION_TYPES) {
       expect(['tutorials', 'exchanges', 'challenges', 'organisations']).toContain(notificationBucket(type))
     }
@@ -37,11 +37,18 @@ describe('notificationBucket', () => {
       'build_approved',
       'build_question',
       'build_shot_posted',
-      'org_message',
+      'contact_received',
+      'drop_off_booked',
+      'handover_confirmed',
       'print_ready',
       'print_started',
       'profile_thanked',
+      'recycling_declined',
+      'recycling_received',
+      'report_received',
       'report_resolved',
+      'test_print_failed',
+      'test_print_passed',
       'toy_accepted',
       'toy_message',
       'toy_rejected',
@@ -50,14 +57,20 @@ describe('notificationBucket', () => {
     ])
   })
 
-  /* A message to or from an organisation is a conversation, like toy_message;
-     a followed org publishing, or your org being thanked, is news about an
-     organisation and counts nowhere else. */
+  /* A message to or from an organisation, a followed org publishing and your
+     org being thanked are all news about an organisation; the org hub clears them. */
   it('buckets organisation news to organisations', () => {
     expect(typesInBucket('organisations').sort()).toEqual([
+      'event_rsvp_received',
+      'leader_added',
+      'leader_removed',
       'org_event_cancelled',
       'org_event_changed',
+      'org_event_deleted',
       'org_event_published',
+      'org_message',
+      'org_request_approved',
+      'org_request_declined',
       'org_story_published',
       'org_thanked',
     ])

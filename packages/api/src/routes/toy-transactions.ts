@@ -1,4 +1,5 @@
 import { chunk } from '../chunk.js'
+import { notify } from '../notify.js'
 import { Hono, type Context } from 'hono'
 import { randomInt, randomUUID } from 'node:crypto'
 import { DECLINE_REASON_MAX, needsAction, isOwnerSide, answerBy, printRequestExpired, shortDate, customizationNotes, partsTotalCents, notificationBody } from '@splat-connect/types'
@@ -103,9 +104,7 @@ async function notifyOwnerSide(
       ? [tx.owner_id]
       : []
   if (recipients.length === 0) return
-  await admin
-    .from('notifications')
-    .insert(recipients.map((recipient_id) => ({ ...payload, recipient_id })))
+  await notify(recipients.map((recipient_id) => ({ ...payload, recipient_id })), String(payload.type))
 }
 
 /**
@@ -1118,18 +1117,42 @@ toyTransactions.post('/:id/confirm', async (c) => {
   const confirmField = isOwner ? 'owner_confirmed_at' : 'requester_confirmed_at'
   const now = new Date().toISOString()
 
-  const { data: updated, error } = await admin
+  // Only the write that moves the field from null counts as the first confirm,
+  // so two simultaneous confirms by one party notify once.
+  const { data: firstWrite, error } = await admin
     .from('toy_transactions')
     .update({ [confirmField]: now, updated_at: now })
     .eq('id', tx.id)
+    .is(confirmField, null)
     .select()
-    .single()
+    .maybeSingle()
   if (error) return c.json({ error: error.message }, 500)
+  const firstConfirm = firstWrite !== null
+  const { data: updated, error: readError } = firstWrite
+    ? { data: firstWrite, error: null }
+    : await admin.from('toy_transactions').select().eq('id', tx.id).single()
+  if (readError || !updated) return c.json({ error: readError?.message ?? 'Not found' }, 500)
 
   const bothConfirmed =
     tx.type === 'donation'
       ? updated.owner_confirmed_at !== null
       : updated.owner_confirmed_at !== null && updated.requester_confirmed_at !== null
+
+  // 142. The first confirm by a party tells the other one, unless it is the
+  // second of two, which completes the handover. A donation completes on the
+  // owner's confirm alone, so there the requester is told on completion too.
+  if (firstConfirm && (tx.type === 'donation' || !bothConfirmed)) {
+    const payload = {
+      type: 'handover_confirmed',
+      toy_transaction_id: tx.id,
+      toy_name: await subjectName(admin, tx as any),
+      actor_name: isOwner
+        ? await ownerSideName(admin, tx as any, 'The other party')
+        : await profileName(admin, userId, 'The other party'),
+    }
+    if (isOwner) await notify([{ ...payload, recipient_id: tx.requester_id }], 'handover_confirmed')
+    else await notifyOwnerSide(admin, tx as any, payload)
+  }
 
   /*
    * A build hands over an object that exists nowhere in `toys` — the maker made
