@@ -313,15 +313,14 @@ admin.patch('/ideas/:id/status', async (c) => {
   if (error) return c.json({ error: error.message }, 500)
   if (!data) return c.json({ error: 'No pending or published idea with that id' }, 404)
 
-  const { error: notifyError } = await client.from('notifications').insert({
+  await notify([{
     recipient_id: data.author_id,
     type: status === 'challenge' ? 'idea_approved' : 'idea_rejected',
     idea_id: data.id,
     actor_name: 'SPLAT',
     // 119: review_note is private to the author — their row alone carries it.
     body: status === 'challenge' ? null : notificationBody(reviewNote),
-  })
-  if (notifyError) console.error('[admin.ideas.status] notification insert failed:', notifyError.message)
+  }], 'admin.ideas.status')
 
   return c.json({ id: data.id, status })
 })
@@ -791,10 +790,7 @@ admin.patch('/member-reports/:id', async (c) => {
   // Only the move into 'resolved' tells the reporter; saving a note on an already
   // resolved report must not. The answer is committed by now, so a failed insert is logged, never returned.
   if (before && before.status !== 'resolved' && data.status === 'resolved') {
-    const { error: notifyError } = await sb
-      .from('notifications')
-      .insert({ recipient_id: data.reporter_id, type: 'report_resolved', member_report_id: data.id, actor_name: 'SPLAT' })
-    if (notifyError) console.error('[admin] report_resolved insert failed:', notifyError.message)
+    await notify([{ recipient_id: data.reporter_id, type: 'report_resolved', member_report_id: data.id, actor_name: 'SPLAT' }], 'admin.reports.resolved')
   }
   return c.json(data)
 })
