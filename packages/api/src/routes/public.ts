@@ -1444,11 +1444,12 @@ publicRoutes.get('/events.ics', async (c) => {
 
   const events = rows ?? []
   // Names through the admin client, never an embed — see GET /events.
-  const { data: orgs } = await createAdminClient()
-    .from('organizations')
-    .select('id, name')
-    .in('id', [...new Set(events.map((e) => e.org_id as string))])
-  const orgName = new Map((orgs ?? []).map((o) => [o.id as string, o.name as string]))
+  const admin = createAdminClient()
+  const orgs = await selectIn([...new Set(events.map((e) => e.org_id as string))], (ids) =>
+    admin.from('organizations').select('id, name').in('id', ids),
+  )
+  if (orgs.error) return c.json({ error: 'The calendar could not be loaded. Please try again.' }, 500)
+  const orgName = new Map(orgs.data.map((o) => [o.id as string, o.name as string]))
 
   const body = buildCalendar(
     events.map((e) => {

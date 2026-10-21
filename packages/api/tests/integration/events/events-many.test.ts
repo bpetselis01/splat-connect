@@ -69,4 +69,12 @@ describe('more than 300 published events', () => {
     expect(last.has_questions).toBe(false)
     expect(last.org_name).toBe(`${tag} ${COUNT - 1}`)
   })
+
+  it('names the host of every calendar entry', async () => {
+    const res = await app.request('/api/public/events.ics')
+    expect(res.status).toBe(200)
+    const ics = (await res.text()).replace(/\r\n /g, '')
+    expect(ics).toContain(`DESCRIPTION:Hosted by ${tag} 0.`)
+    expect(ics).toContain(`DESCRIPTION:Hosted by ${tag} ${COUNT - 1}.`)
+  })
 })
