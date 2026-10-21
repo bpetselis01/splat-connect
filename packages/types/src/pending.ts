@@ -270,6 +270,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["api"],
     needs: "Decided 2026-10-20: validate to approved|rejected, 400 otherwise; schema line plus a test. Whether to validate the status to `approved` and `rejected`.",
+    shipped: true,
   },
   'terms-gate-fails-open': {
     title: "Terms gate when the check fails",

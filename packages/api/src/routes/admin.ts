@@ -14,8 +14,6 @@ import { systemMessage, removeParticipant, withPhotoUrl } from './toy-ideas.js'
 import type { AuthVariables } from '../middleware/auth.js'
 import { notificationBody, readLearnCourse, type AdminCounts, type TutorialStatus } from '@splat-connect/types'
 
-// PENDING(admin-status-validation): validate to approved|rejected, 400 otherwise; schema line plus a test. Whether to validate the status to `a...
-
 const admin = new Hono<{ Variables: AuthVariables }>()
 
 admin.use('*', async (c, next) => {
@@ -43,6 +41,9 @@ admin.get('/tutorials', async (c) => {
 
 admin.patch('/tutorials/:id/status', async (c) => {
   const body = await c.req.json<{ status: TutorialStatus; rejection_note?: string }>()
+  if (body.status !== 'approved' && body.status !== 'rejected') {
+    return c.json({ error: "status must be 'approved' or 'rejected'" }, 400)
+  }
   const supabase = createAdminClient()
   const { data, error } = await supabase
     .from('tutorials')
