@@ -188,7 +188,11 @@ describe('GET /mine', () => {
       select: () => ({
         eq: () => ({
           in: () => ({
-            not: () => ({ data: [{ tutorial_id: '1', print_fit: 'fitted' }, { tutorial_id: '1', print_fit: 'tight' }], error: null }),
+            not: () => ({
+              order: () => ({
+                range: () => ({ data: [{ tutorial_id: '1', print_fit: 'fitted' }, { tutorial_id: '1', print_fit: 'tight' }], error: null }),
+              }),
+            }),
           }),
         }),
       }),

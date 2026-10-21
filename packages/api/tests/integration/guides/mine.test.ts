@@ -59,4 +59,24 @@ describe('GET /api/tutorials/mine', () => {
     expect(rows.find((r) => r.id === printed)!.print_fit_stats).toEqual({ fitted: 2, fit_answers: 3 })
     expect(rows.find((r) => r.id === guide)!.print_fit_stats).toEqual({ fitted: 0, fit_answers: 0 })
   })
+
+  it('counts every fit answer on a guide past the 1000-row cap', async () => {
+    const admin = adminClient()
+    const popular = await createProject({ authorId: author.id, status: 'approved', title: 'Popular Fixture' })
+    const job = () => ({
+      type: 'print', status: 'completed', tutorial_id: popular, printer_id: printerId, requester_id: author.id,
+      owner_id: family.id, print_group_id: crypto.randomUUID(), print_fit: 'fitted', print_fit_at: new Date().toISOString(),
+    })
+    try {
+      const rows = Array.from({ length: 1001 }, job)
+      for (let i = 0; i < rows.length; i += 500) {
+        const { error } = await admin.from('toy_transactions').insert(rows.slice(i, i + 500))
+        if (error) throw error
+      }
+      expect((await mine()).find((r) => r.id === popular)!.print_fit_stats).toEqual({ fitted: 1001, fit_answers: 1001 })
+    } finally {
+      await admin.from('toy_transactions').delete().eq('tutorial_id', popular)
+      await admin.from('tutorials').delete().eq('id', popular)
+    }
+  })
 })
