@@ -63,6 +63,11 @@ describe('thread actions', () => {
     expect(revalidate).not.toHaveBeenCalled()
   })
 
+  it('lets a terms redirect through instead of reporting it as a failed decline', async () => {
+    vi.mocked(apiClient.post).mockRejectedValue(Object.assign(new Error('NEXT_REDIRECT'), { digest: 'NEXT_REDIRECT;replace;/onboarding/contributor-terms;307;' }))
+    await expect(reject('t1', 'exchange', 'Already given away')).rejects.toThrow('NEXT_REDIRECT')
+  })
+
   it('returns ok when a decline goes through', async () => {
     expect(await reject('t1', 'exchange', 'Already given away')).toEqual({ ok: true })
   })

@@ -1,5 +1,6 @@
 'use server'
 import { revalidatePath } from 'next/cache'
+import { unstable_rethrow } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
 import { apiMessage, type PickupAddress } from '@splat-connect/types'
 
@@ -38,6 +39,7 @@ export async function reject(id: string, kind: ThreadKind, reason?: string): Pro
     await post(id, kind, 'reject', { reason })
     return { ok: true }
   } catch (e) {
+    unstable_rethrow(e)
     return { ok: false, error: apiMessage(e, 'Could not send the decline. Please try again.') }
   }
 }
