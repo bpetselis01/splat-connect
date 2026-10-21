@@ -52,6 +52,7 @@ describe('thread actions', () => {
   })
 
   it.each([
+    ['withdraw', (): Promise<unknown> => withdraw('t1', 'exchange'), 'Could not withdraw. Please try again.'],
     ['accept', (): Promise<unknown> => accept('t1', 'exchange'), 'Could not accept. Please try again.'],
   ])('returns the API sentence when %s is refused, so production does not mask it', async (_name, run, fallback) => {
     vi.mocked(apiClient.post).mockRejectedValue(new Error('API POST /x failed with status 409: This request is no longer open'))

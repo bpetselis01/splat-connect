@@ -52,8 +52,14 @@ export async function reject(id: string, kind: ThreadKind, reason?: string): Pro
 
 // Withdrawing one job of a grouped print request withdraws the whole request
 // (the API sweeps the other printers' jobs, 074).
-export async function withdraw(id: string, kind: ThreadKind) {
-  await post(id, kind, 'withdraw', {})
+export async function withdraw(id: string, kind: ThreadKind): Promise<ActionResult> {
+  try {
+    await post(id, kind, 'withdraw', {})
+    return { ok: true }
+  } catch (e) {
+    unstable_rethrow(e)
+    return { ok: false, error: apiMessage(e, 'Could not withdraw. Please try again.') }
+  }
 }
 
 export async function confirm(id: string, kind: ThreadKind, code: string) {

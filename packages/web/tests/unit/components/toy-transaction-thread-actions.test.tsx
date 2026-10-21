@@ -229,4 +229,11 @@ describe('ToyTransactionThread shows the API sentence when an action is refused'
     fireEvent.click(screen.getByRole('button', { name: 'Accept request' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('This request is no longer open.')
   })
+
+  it('withdraw', async () => {
+    const h = mount(detail(), 'requester-1')
+    h.onWithdraw.mockResolvedValue(REFUSED)
+    fireEvent.click(screen.getByRole('button', { name: 'Withdraw the request' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('This request is no longer open.')
+  })
 })

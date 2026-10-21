@@ -66,7 +66,7 @@ export function ToyTransactionThread({
   /** The reason is required on a print job: "declining needs a reason" is the
    *  artboard's rule, and the API refuses one without it. */
   onReject: (reason?: string) => Promise<ActionResult>
-  onWithdraw: () => Promise<void>
+  onWithdraw: () => Promise<ActionResult>
   onConfirm: (code: string) => Promise<void>
   /** The tinted next-step card the canonical layout puts first in the sidebar.
    *  A build's is about its extra stage, which only the build page knows. */
