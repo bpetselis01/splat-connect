@@ -72,6 +72,8 @@ function BlankTutorialForm({ kind: initialKind = 'toy_adaptation' }: { kind?: Tu
   const [title, setTitle] = useState('')
   const [difficulty, setDifficulty] = useState<Difficulty>('easy')
   const [cover, setCover] = useState<File | null>(null)
+  // One id per form, so a retry after a failed cover upload re-posts the same (retry-safe) draft.
+  const [id] = useState(() => crypto.randomUUID())
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const preview = useMemo(() => (cover ? URL.createObjectURL(cover) : null), [cover])
@@ -83,7 +85,6 @@ function BlankTutorialForm({ kind: initialKind = 'toy_adaptation' }: { kind?: Tu
     e.preventDefault()
     setBusy(true)
     setError(null)
-    const id = crypto.randomUUID()
     try {
       await browserApiClient.post('/api/tutorials', {
         id,
@@ -101,8 +102,7 @@ function BlankTutorialForm({ kind: initialKind = 'toy_adaptation' }: { kind?: Tu
 
     // The photo route checks the caller is a contributor on the tutorial, so it
     // can only run once the row and the link exist. A failed photo does not
-    // undo the draft: the editor opens on the step where photos are added, and
-    // the missing cover is visible there.
+    // undo the draft; the form stays so the member can retry the same draft.
     if (cover) {
       try {
         const fd = new FormData()
@@ -115,7 +115,9 @@ function BlankTutorialForm({ kind: initialKind = 'toy_adaptation' }: { kind?: Tu
           updated_at: current.updated_at,
         })
       } catch {
-        // ponytail: silent — the Files step shows no photo; surface a toast if people miss it.
+        setError('Your draft was saved, but the cover photo did not upload. Try again, or choose a different photo.')
+        setBusy(false)
+        return
       }
     }
 
