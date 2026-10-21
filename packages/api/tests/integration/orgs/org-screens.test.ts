@@ -121,13 +121,14 @@ describe('events and stories', () => {
     expect(raw).not.toContain('secret-room')
   })
 
-  it('refuses an in-person event with nowhere to be', async () => {
+  it('refuses to publish an in-person event with nowhere to be', async () => {
     const res = await app.request(
       `/api/organizations/${orgId}/events`,
       json(leader.token, 'POST', {
         title: 'Somewhere',
         starts_at: new Date(Date.now() + 86400000).toISOString(),
         format: 'in_person',
+        status: 'published',
       })
     )
     expect(res.status).toBe(400)

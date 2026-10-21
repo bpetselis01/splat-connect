@@ -334,6 +334,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: a draft needs only a title; every other rule applies at publish; form copy stays as is. Whether drafts skip validation as the form says, or the form copy changes.",
+    shipped: true,
   },
   'recycling-credit-rounding': {
     title: "Recycling credit rounding",

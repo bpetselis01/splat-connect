@@ -122,7 +122,7 @@ export default async function ManageEventPage({ params }: { params: Promise<{ id
       <div className="flex flex-wrap items-end justify-between gap-5">
         <div>
           <p className="text-[13px] font-extrabold uppercase tracking-[.1em] text-muted">
-            {EVENT_KIND_LABEL[event.kind]} · {longDate(event.starts_at)}
+            {EVENT_KIND_LABEL[event.kind]} · {event.starts_at ? longDate(event.starts_at) : 'No date yet'}
           </p>
           <h1 className="title-hub mt-2">{event.title}</h1>
         </div>
