@@ -1028,7 +1028,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| WI35 | write | `/get-involved/events/[id]/register` | P | "Confirm my spot" (name, email, answers, cost box) → POST registration, then the event page; a full event shows the server sentence | event_rsvp_received | going count | L | ✅ | ✅ | ✅ | – |
+| WI35 | write | `/get-involved/events/[id]/register` | P | "Confirm my spot" (name, email, answers, cost box) → POST registration, then the event page; a full event shows the full-event copy with the host contact and hides the button; any other refusal shows a retry sentence | event_rsvp_received | going count | L | ✅ | ✅ | ✅ | – |
 
 </details>
 

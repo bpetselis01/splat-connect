@@ -14,6 +14,7 @@ const mockPost = vi.mocked(browserApiClient.post)
 
 const base = {
   eventId: 'ev-1',
+  orgId: 'org-9',
   orgName: 'Northside Therapy',
   questions: [],
   defaultName: 'Hana Kelly',
@@ -77,12 +78,32 @@ describe('EventRegisterForm and what the event costs (069)', () => {
     expect(push).toHaveBeenCalledWith('/get-involved/events/ev-1')
   })
 
-  it('WI35 shows the server sentence and stays on the form when the event is full', async () => {
-    mockPost.mockRejectedValue(new Error('This one is full. The host may open more seats.'))
+  const conflict = (message: string) =>
+    Object.assign(new Error(`API POST /api/events/ev-1/registrations failed with status 409: ${message}`), {
+      status: 409,
+      code: message,
+    })
+
+  it('WI35 a full event shows the full copy with the host contact and no submit', async () => {
+    mockPost.mockRejectedValue(conflict('This one is full. The host may open more seats.'))
     render(<EventRegisterForm {...base} />)
     fireEvent.click(screen.getByRole('button', { name: /^confirm my spot$/i }))
-    expect(await screen.findByRole('alert')).toHaveTextContent('This one is full. The host may open more seats.')
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('This event is full. Contact Northside Therapy to ask about more seats.')
+    expect(screen.getByRole('link', { name: /contact northside therapy/i })).toHaveAttribute(
+      'href',
+      '/organizations/org-9/public',
+    )
+    expect(alert).not.toHaveTextContent(/API POST/)
+    expect(screen.queryByRole('button', { name: /confirm my spot/i })).not.toBeInTheDocument()
     expect(push).not.toHaveBeenCalled()
+  })
+
+  it('WI35 any other 409 shows a generic retry message and keeps the form', async () => {
+    mockPost.mockRejectedValue(conflict('This event has been cancelled.'))
+    render(<EventRegisterForm {...base} />)
+    fireEvent.click(screen.getByRole('button', { name: /^confirm my spot$/i }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('That did not save. Try once more.')
     expect(screen.getByRole('button', { name: /^confirm my spot$/i })).toBeEnabled()
   })
 

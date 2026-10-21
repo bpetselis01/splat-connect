@@ -355,6 +355,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: show the full-event copy only, with the leader contact, and hide submit; other 409s keep a generic retry message. Whether to show only the full-event copy.",
+    shipped: true,
   },
   'public-org-toasts-missing': {
     title: "Toasts on the public organisation page",
