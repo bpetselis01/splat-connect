@@ -700,7 +700,8 @@ publicRoutes.get('/organizations', async (c) => {
   const near = await publicNear(c)
   if (typeof near === 'string') return c.json({ error: near }, 400)
   const supabase = createAnonClient()
-  const { data, error } = await supabase
+  const { data, error } = await selectAll((from, to) =>
+    supabase
     .from('organizations')
     // The recycling columns join the list because /get-involved/recycling and
     // its booking form both filter on "who can take what" — the alternative was
@@ -712,6 +713,9 @@ publicRoutes.get('/organizations', async (c) => {
       'id, name, description, status, suburb, state, logo_url, verified_at, recycling_materials, recycling_note, recycling_machines, recycling_forms, recycling_min_kg, recycling_max_kg, recycling_turnaround, recycling_gives, recycling_hours, recycling_door'
     )
     .order('name')
+    .order('id')
+    .range(from, to)
+  )
 
   if (error) {
     console.error('[public/organizations] read failed:', error.message)
@@ -721,16 +725,20 @@ publicRoutes.get('/organizations', async (c) => {
   // holds only named columns of organizations — so they come through the admin
   // client, three numbers per id and nothing else. A failed count read leaves
   // the directory up with zeros rather than empty.
-  const { data: countRows, error: countError } = await createAdminClient()
-    .from('organizations')
-    .select('id, org_backed_count, org_toy_count, org_has_printer')
+  const { data: countRows, error: countError } = await selectAll((from, to) =>
+    createAdminClient()
+      .from('organizations')
+      .select('id, org_backed_count, org_toy_count, org_has_printer')
+      .order('id')
+      .range(from, to)
+  )
   if (countError) console.error('[public/organizations] counts failed:', countError.message)
   const counts = new Map(
     ((countRows ?? []) as Array<{ id: string; org_backed_count: number; org_toy_count: number; org_has_printer: boolean }>).map(
       (r) => [r.id, r]
     )
   )
-  const orgs = (data ?? []).map((o) => ({
+  const orgs = data.map((o) => ({
     ...o,
     backed_count: counts.get(o.id)?.org_backed_count ?? 0,
     toy_count: counts.get(o.id)?.org_toy_count ?? 0,
