@@ -1328,7 +1328,8 @@ export interface OrgEvent {
   kind: EventKind
   title: string
   summary: string | null
-  starts_at: string
+  /** Null on a draft that has no date yet (144); never on a published event. */
+  starts_at: string | null
   ends_at: string | null
   format: 'in_person' | 'online'
   /** Venue and street, as the publish form labels it. Set on an in-person
@@ -1415,7 +1416,8 @@ export interface OrgEventRegistration {
 }
 
 /** One row on /get-involved/events, with the numbers the card shows. */
-export interface EventListItem extends OrgEvent {
+export interface EventListItem extends Omit<OrgEvent, 'starts_at'> {
+  starts_at: string
   org_name: string
   going_count: number
   /** Null when the event has no capacity. */
@@ -1569,14 +1571,17 @@ export function estimatedCreditGrams(grams: number): number {
  * The intake row (decided 2026-09-30): one weight box, and the credit
  * prefilled at the estimate for the leader to change. `credit` is the credit
  * box's text, or null while they have not touched it — then it follows the
- * weight. The ledger stores what the leader sends, never a yield. `line` is
+ * weight. The weight is rounded to the nearest 0.1 kg first. The ledger stores what the leader sends, never a yield. `line` is
  * what the row says under the boxes, in the board's words where it has them.
  */
 export function intakeCredit(
   weighedKg: string,
   credit: string | null
 ): { ok: true; weighed_grams: number; credit_grams: number; line: string } | { ok: false; line: string } {
-  const weighed = kgToGrams(weighedKg)
+  const typed = kgToGrams(weighedKg)
+  // Nearest 0.1 kg (decided 2026-10-20), so the kilos the screens show and the
+  // credit taken from them agree.
+  const weighed = typed === null ? null : Math.round(typed / 100) * 100
   if (!weighed) return { ok: false, line: 'Weigh it to see the credit' }
   if (weighed < MIN_DROPOFF_GRAMS) {
     return { ok: false, line: `Under the ${MIN_DROPOFF_GRAMS / 1000} kg minimum — log it as a donation or hand it back` }
@@ -2470,8 +2475,8 @@ export interface OrgPublicProfile {
   events?: Array<
     Pick<
       OrgEvent,
-      'id' | 'org_id' | 'title' | 'summary' | 'starts_at' | 'ends_at' | 'format' | 'location' | 'audience' | 'status'
-    >
+      'id' | 'org_id' | 'title' | 'summary' | 'ends_at' | 'format' | 'location' | 'audience' | 'status'
+    > & { starts_at: string }
   >
   stories?: Array<
     Pick<OrgStory, 'id' | 'org_id' | 'kind' | 'title' | 'summary' | 'byline' | 'status' | 'created_at'>

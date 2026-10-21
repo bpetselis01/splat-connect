@@ -34,6 +34,22 @@ describe('RecyclingIntake', () => {
     expect(await screen.findByText('Weighed at 2.6 kg — 1950 g credit issued to Tom Beattie')).toBeInTheDocument()
   })
 
+  it('WB27 rounds 2.14 kg to 2.1 kg and sends the credit taken from the rounded weight', async () => {
+    vi.mocked(browserApiClient.patch).mockResolvedValue({})
+    render(<RecyclingIntake orgId="org1" dropoffs={[DROP]} names={{ tom: 'Tom Beattie' }} />)
+    fireEvent.change(screen.getByLabelText('Actual, in kilograms'), { target: { value: '2.14' } })
+    expect(screen.getByLabelText('Credit, in grams')).toHaveValue('1575')
+    fireEvent.click(screen.getByRole('button', { name: /Weigh and credit/ }))
+    await waitFor(() =>
+      expect(browserApiClient.patch).toHaveBeenCalledWith('/api/organizations/org1/recycling/d1', {
+        status: 'received',
+        weighed_grams: 2100,
+        credit_grams: 1575,
+      })
+    )
+    expect(await screen.findByText('Weighed at 2.1 kg — 1575 g credit issued to Tom Beattie')).toBeInTheDocument()
+  })
+
   it('holds the button under two kilos, in the board’s words', () => {
     render(<RecyclingIntake orgId="org1" dropoffs={[DROP]} names={{ tom: 'Tom Beattie' }} />)
     fireEvent.change(screen.getByLabelText('Actual, in kilograms'), { target: { value: '1.5' } })

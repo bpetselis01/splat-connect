@@ -35,6 +35,8 @@ describe('090 tutorial_safety_notes', () => {
       { title: 'Battery door must be screwed shut' },
     ])
     expect(res.status).toBe(201)
+    // The write sent the approved guide back to pending; the public read needs it live again.
+    await adminClient().from('tutorials').update({ status: 'approved' }).eq('id', guide)
     const pub = (await (await app.request(`/api/public/tutorials/${guide}`)).json()) as { safety_notes: { position: number; title: string }[] }
     expect(pub.safety_notes.map((n) => [n.position, n.title])).toEqual([
       [1, 'Fluid and electronics share the enclosure'],

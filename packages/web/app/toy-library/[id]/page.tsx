@@ -196,12 +196,10 @@ export default async function ToyLibraryDetailPage({
               itself: asking has three parts — how, what you offer, and a
               paragraph about a child — and the board draws that on its own
               screen. */}
-          <ToyTransactionRequest toy={toy} viewerId={caps?.profile.id ?? null} myToys={myToys} />
-          {saved && (
-            <div className="rail-actions">
-              <SaveButton slug="toys" id={toy.id} saved={saved.toys.includes(toy.id)} signedIn withLabel />
-            </div>
-          )}
+          <ToyTransactionRequest toy={toy} viewerId={caps?.profile.id ?? null} ledOrgIds={caps?.ledOrgs.map((o) => o.id)} myToys={myToys} />
+          <div className="rail-actions">
+            <SaveButton slug="toys" id={toy.id} saved={saved?.toys.includes(toy.id) ?? false} signedIn={saved !== null} withLabel />
+          </div>
         </div>
 
         {holder && (

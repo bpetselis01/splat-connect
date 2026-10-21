@@ -26,7 +26,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | web | Sign in and sign up | 24 | 0 | 0 |
 | web | Gates and onboarding | 7 | 0 | 2 |
 | web | Route protection (middleware) | 7 | 0 | 0 |
-| web | Organisation leader (web) | 36 | 0 | 0 |
+| web | Organisation leader (web) | 37 | 0 | 0 |
 | web | Header, footer and dock | 14 | 0 | 0 |
 | web | My SPLAT hub | 6 | 0 | 0 |
 | web | Account | 8 | 0 | 0 |
@@ -51,7 +51,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | web | Makers wanted | 4 | 0 | 0 |
 | web | Adaptation requests | 2 | 0 | 0 |
 | web | Events | 2 | 0 | 0 |
-| web | Event detail | 4 | 0 | 0 |
+| web | Event detail | 5 | 0 | 0 |
 | web | Event register | 1 | 0 | 0 |
 | web | Recycling | 3 | 0 | 0 |
 | web | Legal and static pages | 7 | 0 | 0 |
@@ -65,14 +65,14 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | web | Impact | 4 | 0 | 0 |
 | web | About | 6 | 0 | 0 |
 | web | Contact | 3 | 0 | 0 |
-| web | Guide detail | 12 | 0 | 0 |
+| web | Guide detail | 13 | 0 | 0 |
 | web | New guide (upload) | 5 | 0 | 0 |
 | web | Guide editor | 18 | 0 | 0 |
 | web | My guides | 4 | 0 | 0 |
 | web | Submit a guide | 1 | 0 | 0 |
 | web | Exchanges | 15 | 0 | 0 |
 | web | Makers wanted and builds | 11 | 0 | 0 |
-| web | Toy library and my toys | 24 | 0 | 0 |
+| web | Toy library and my toys | 25 | 0 | 0 |
 | mobile | Exchanges | 16 | 0 | 0 |
 | mobile | Account | 10 | 0 | 0 |
 
@@ -580,7 +580,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | WA10 | nav | `/signup` | anon | contributor-terms row opens the terms dialog; Accept ticks it, Reject / Escape / backdrop close it unticked; typed fields survive | – | – | n/a | ✅ | ✅ | – | – |
 | WA11 | nav | `/signup` | anon | password under six characters or a mismatched confirmation is refused before any account is made | – | – | n/a | ✅ | ✅ | – | – |
 | WA12 | nav | `/signup` | anon | an email that already has an account → the error shows, no "Check your email" | – | – | n/a | ✅ | ✅ | ✅ | – |
-| WA13 | nav | `/signup` | anon | "?reason=" banner: save, thanks, child and download have copy; follow and message show none | – | – | n/a | ✅ | ✅ | – | – |
+| WA13 | nav | `/signup` | anon | "?reason=" banner: save, thanks, child, download, follow, message and build each have copy | – | – | n/a | ✅ | ✅ | – | – |
 | WA14 | nav | `/signup` | anon | "Back to sign in" on "Check your email" → /login | – | – | n/a | ✅ | ✅ | – | – |
 | WA15 | nav | `/signup` | anon | "Sign in" / "Create account" tabs switch screens, keeping the query | – | – | n/a | ✅ | ✅ | – | – |
 | WA16 | nav | `/auth/confirmed` | anon | "Continue" and the 3 s countdown → /login?next=; confirming does not sign the user in | – | – | n/a | ✅ | ✅ | – | – |
@@ -627,9 +627,9 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 
 </details>
 
-### Organisation leader (web) — 36 rows · 0 gaps · 0 waived
+### Organisation leader (web) — 37 rows · 0 gaps · 0 waived
 
-<details><summary>36 rows, no gaps</summary>
+<details><summary>37 rows, no gaps</summary>
 
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
@@ -659,7 +659,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | WB24 | nav | `/dashboard/org/events/[id]` | L | registrations list with each answer, and Export CSV (data: URI built in the page); stat tiles Going, Part requests, To answer, Seats | – | Going, Part requests, To answer, Seats | P | ✅ | ✅ | ✅ | – |
 | WB25 | write | `/dashboard/organisation/stories/new` | L | story form "Publish to Stories" (consent ticked) / "Save as draft" → POST | org_story_published | followers' unread, public Stories list | n/a | ✅ | ✅ | ✅ | – |
 | WB26 | write | `/dashboard/organisation/stories/[id]/edit` | L | story form "Save changes" (consent ticked again) / "Publish to Stories" → PATCH | org_story_published | – | n/a | ✅ | ✅ | ✅ | – |
-| WB27 | write | `/dashboard/organisation/recycling` | L | intake "Weigh and credit" (actual kg, credit g) → PATCH received | recycling_received | contributor's credit balance, Booked in count | P | ✅ | ✅ | ✅ | – |
+| WB27 | write | `/dashboard/organisation/recycling` | L | intake "Weigh and credit" (actual kg rounded to 0.1, credit g from the rounded weight) → PATCH received | recycling_received | contributor's credit balance, Booked in count | P | ✅ | ✅ | ✅ | – |
 | WB28 | write | `/dashboard/organisation/recycling` | L | intake "Contaminated" → PATCH declined | recycling_declined | Booked in count | P | ✅ | ✅ | ✅ | – |
 | WB29 | write | `/dashboard/organisation/recycling` | L | "What you can take" publish (materials, machines, forms, limits, how it is brought) → PATCH the profile | – | contributor's booking form | n/a | ✅ | ✅ | ✅ | – |
 | WB30 | write | `/dashboard/organisation/profile` | L | profile form "Save and publish" → PATCH profile, then PUT doors and rate lines | – | public organisation page | n/a | ✅ | ✅ | ✅ | – |
@@ -669,6 +669,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | WB34 | write | `/dashboard/organisation/profile` | L | Leaders: "Cancel invitation" → DELETE | – | – | L | ✅ | ✅ | ✅ | – |
 | WB35 | write | `/dashboard/organisation/profile` | L | Leaders: "Step down as leader" (two or more leaders) → DELETE, then /dashboard | – | leader seat | L | ✅ | ✅ | ✅ | – |
 | WB36 | nav | `/dashboard/organisation/messages` | L | conversation list per led organisation, newest first, each row → /dashboard/messages/:id | – | – | P | ✅ | ✅ | ✅ | – |
+| WB37 | nav | `/dashboard/organisation` | P | an organisation page opened by a member who leads nothing → /dashboard with the note 'That page is for organisation leaders.'; signed out → /login with next | – | – | n/a | ✅ | ✅ | – | – |
 
 </details>
 
@@ -829,7 +830,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | WD37 | write | `/notifications` | P | list of every notification, newest first, unread dot | – | header badge | P | ✅ | ✅ | ✅ | – |
 | WD38 | write | `/notifications` | P | row click → mark read, then go to the thing it is about | – | header badge | n/a | ✅ | ✅ | ✅ | – |
-| WD39 | write | `/notifications` | P | "Mark all read" → one PATCH per unread row | – | header badge | n/a | ✅ | ✅ | ✅ | – |
+| WD39 | write | `/notifications` | P | "Mark all read" → one PATCH per unread row; failed rows are counted in an alert | – | header badge | n/a | ✅ | ✅ | ✅ | – |
 | WD40 | write | `/notifications` | P | collaborator invitation "Accept" / "Decline" on the row | collaborator_accepted, collaborator_declined | invitee list | P | ✅ | ✅ | ✅ | – |
 
 </details>
@@ -1009,9 +1010,9 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 
 </details>
 
-### Event detail — 4 rows · 0 gaps · 0 waived
+### Event detail — 5 rows · 0 gaps · 0 waived
 
-<details><summary>4 rows, no gaps</summary>
+<details><summary>5 rows, no gaps</summary>
 
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
@@ -1019,6 +1020,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | WI32 | write | `/get-involved/events/[id]` | P | "You're going" → DELETE registration; the button reads "I'm going" again | – | going count, seats left | L | ✅ | ✅ | ✅ | – |
 | WI33 | nav | `/get-involved/events/[id]` | anon | signed-out "I'm going" → /login?next=the event; signed in with questions or a cost → the register form | – | – | L | ✅ | ✅ | – | – |
 | WI34 | write | `/get-involved/events/[id]` | P | print-at-event "Send request" (guide, parts, sets) → POST print-at-event | toy_request | – | L | ✅ | ✅ | ✅ | – |
+| WI39 | write | `/get-involved/events/[id]` | P | online event, registered: "Join online" → the joining link from GET joining-link (registrants only), also in the confirmation email | confirmation email | – | L | ✅ | ✅ | ✅ | – |
 
 </details>
 
@@ -1028,7 +1030,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| WI35 | write | `/get-involved/events/[id]/register` | P | "Confirm my spot" (name, email, answers, cost box) → POST registration, then the event page; a full event shows the server sentence | event_rsvp_received | going count | L | ✅ | ✅ | ✅ | – |
+| WI35 | write | `/get-involved/events/[id]/register` | P | "Confirm my spot" (name, email, answers, cost box) → POST registration, then the event page; a full event shows the full-event copy with the host contact and hides the button; any other refusal shows a retry sentence | event_rsvp_received | going count | L | ✅ | ✅ | ✅ | – |
 
 </details>
 
@@ -1082,7 +1084,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | WM14 | write | `/admin/ideas/[id]` | A | "Graduate to draft guide" (live challenge only) → draft guide for the participants | idea_graduated | participants challenges unread | P | ✅ | ✅ | ✅ | – |
 | WM15 | nav | `/admin/ideas/[id]` | A | "view the draft guide" link on a graduated idea → /admin/review/:tutorialId | – | – | n/a | ✅ | ✅ | – | – |
 | WM16 | nav | `/admin/contributors` | A | Filter chips (?cap=), search (?q=), Pager, leader capability from the organisations list | – | accounts | n/a | ✅ | ✅ | ✅ | – |
-| WM17 | write | `/admin/contributors` | A | Per-row "Remove" (no confirm step) → server action deleteContributor → account deleted; a sole leader is refused | – | accounts | n/a | ✅ | ✅ | ✅ | – |
+| WM17 | write | `/admin/contributors` | A | Per-row "Delete account" → typed-phrase dialog → DELETE /api/admin/contributors/:id → account deleted; a sole leader is refused | – | accounts | n/a | ✅ | ✅ | ✅ | – |
 | WM18 | write | `/admin/organizations` | A | "New organisation" drawer (?new=1): name, description, first leader → server action createOrg, then back to the list | – | organisations | n/a | ✅ | ✅ | ✅ | – |
 | WM19 | write | `/admin/organizations` | A | Manage drawer (?manage=:id) "Appoint" a leader → server action addLeader | leader_added | organisation leaders | n/a | ✅ | ✅ | ✅ | – |
 | WM20 | write | `/admin/organizations` | A | Manage drawer leader "Remove" → server action removeLeader | leader_removed | organisation leaders | n/a | ✅ | ✅ | ✅ | – |
@@ -1137,9 +1139,9 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | WN06 | nav | `/organizations/[id]/public` | anon | profile render: about, doors, rate lines, recycling card, events, stories, guides | – | – | L | ✅ | ✅ | ✅ | – |
-| WN07 | write | `/organizations/[id]/public` | P | Follow / Following → POST or DELETE follow, (signed out → /signup; the toast it calls is a no-op here, no ToastProvider) | org_event_published, org_story_published | – | P | ✅ | ✅ | ✅ | – |
+| WN07 | write | `/organizations/[id]/public` | P | Follow / Following → POST or DELETE follow, confirming with the toast 'Following {org}'; signed out → /signup | org_event_published, org_story_published | – | P | ✅ | ✅ | ✅ | – |
 | WN08 | nav | `/organizations/[id]/public` | anon | "Message" → /organizations/:id/message; signed out → /signup?next&reason=message | – | – | n/a | ✅ | ✅ | – | – |
-| WN09 | write | `/organizations/[id]/public` | P | "Say thanks" → note, byline, show-on-page → POST thanks; the button reads "Thanked" | org_thanked | – | P | ✅ | ✅ | ✅ | – |
+| WN09 | write | `/organizations/[id]/public` | P | "Say thanks" → note, byline, show-on-page → POST thanks; the toast reads "Thanks sent" and the button reads "Thanked" | org_thanked | – | P | ✅ | ✅ | ✅ | – |
 | WN10 | nav | `/organizations/[id]/public` | L | a leader of this organisation sees "Edit your page" → /dashboard/organisation/profile instead of the three buttons | – | – | L | ✅ | ✅ | – | – |
 | WN11 | nav | `/organizations/[id]/public` | anon | recycling card: signed in "Book a drop-off" → drop-off?org=; signed out "How recycling works" → /get-involved/recycling | – | – | n/a | ✅ | ✅ | – | – |
 
@@ -1246,9 +1248,9 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 
 </details>
 
-### Guide detail — 12 rows · 0 gaps · 0 waived
+### Guide detail — 13 rows · 0 gaps · 0 waived
 
-<details><summary>12 rows, no gaps</summary>
+<details><summary>13 rows, no gaps</summary>
 
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
@@ -1258,12 +1260,13 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | WT04 | nav | `/tutorials/[id]` | anon | STL download: signed out → /signup?reason=download; signed in → /files/stl-files (signed URL, 60 s) | – | – | n/a | ✅ | ✅ | – | – |
 | WT05 | nav | `/tutorials/[id]` | anon | guide PDF: signed out "Sign in to download" → /signup?reason=download; signed in "Download guide (PDF)" serves the file | – | – | n/a | ✅ | ✅ | – | – |
 | WT06 | nav | `/tutorials/[id]` | anon | "Request a print" → /printing/requests?guide=; "Get help with this build" → /get-involved/requests/new?guide=; "Toy library"; recommendation cards → /tutorials/:id | – | – | n/a | ✅ | ✅ | – | – |
-| WT07 | nav | `/tutorials/[id]` | anon | Share: the platform share sheet, or the address copied to the clipboard (the "Link copied" toast has no host on this page) | – | – | n/a | ✅ | ✅ | – | – |
+| WT07 | nav | `/tutorials/[id]` | anon | Share: the platform share sheet, or the address copied to the clipboard (the "Link copied" toast shows only for the copy) | – | – | n/a | ✅ | ✅ | – | – |
 | WT08 | write | `/tutorials/[id]` | P | rail Save: save and unsave the guide (labelled heart) | – | Saved hub count | n/a | ✅ | ✅ | ✅ | – |
 | WT09 | write | `/tutorials/[id]` | P | "Say thanks": one per person, count shows, a repeat (409) reads as already thanked | tutorial_thanked | library-card thanks pill, author inbox | P | ✅ | ✅ | ✅ | – |
 | WT10 | write | `/tutorials/[id]` | P | "Mark this build done" → "Build logged" | – | My SPLAT builds | n/a | ✅ | ✅ | ✅ | – |
 | WT11 | write | `/tutorials/[id]` | P | Pin as revision / Unpin a community note (guide author or admin) | – | pinned revisions banner | mobile | ✅ | ✅ | ✅ | – |
 | WT12 | static | `/tutorials/[id]` | anon | community notes, the pinned-revisions banner and (signed in) the "how this fits your child" line | – | pinned revisions | mobile | ✅ | – | – | – |
+| WT41 | nav | `/tutorials/[id]` | anon | rail Save signed out → /signup?reason=save, carrying the guide page | – | – | n/a | ✅ | ✅ | – | – |
 
 </details>
 
@@ -1288,16 +1291,16 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | WT18 | write | `/tutorials/[id]/edit` | P | Details save (title, description, difficulty, build time, ages, safety declaration, works with); on an approved or rejected guide it also sets pending | tutorial_submitted | leaders' review queue | n/a | ✅ | ✅ | ✅ | – |
-| WT19 | write | `/tutorials/[id]/edit` | P | Safety notes save (does not change status) | – | – | n/a | ✅ | ✅ | ✅ | – |
+| WT19 | write | `/tutorials/[id]/edit` | P | Safety notes save (an approved guide goes back to pending) | – | – | n/a | ✅ | ✅ | ✅ | – |
 | WT20 | write | `/tutorials/[id]/edit` | P | Suits: child and device-type tags (read then PATCH with updated_at) | – | – | n/a | ✅ | ✅ | ✅ | – |
-| WT21 | write | `/tutorials/[id]/edit` | P | Steps: add, reorder, edit, delete (does not change status) | – | – | n/a | ✅ | ✅ | ✅ | – |
+| WT21 | write | `/tutorials/[id]/edit` | P | Steps: add, reorder, edit, delete (an approved guide goes back to pending) | – | – | n/a | ✅ | ✅ | ✅ | – |
 | WT22 | write | `/tutorials/[id]/edit` | P | step photo | – | – | n/a | ✅ | ✅ | ✅ | – |
 | WT23 | write | `/tutorials/[id]/edit` | P | Files: add, reorder, caption and remove photos (on an approved or rejected guide it sets pending) | tutorial_submitted | – | n/a | ✅ | ✅ | ✅ | – |
 | WT24 | write | `/tutorials/[id]/edit` | P | Files: guide PDF upload and replace (on an approved or rejected guide it sets pending) | tutorial_submitted | – | n/a | ✅ | ✅ | ✅ | – |
-| WT25 | write | `/tutorials/[id]/edit` | P | Parts: add, edit, delete (quantity, optional, buy links, price); prices-checked date sets pending on an approved guide | – | – | n/a | ✅ | ✅ | ✅ | – |
-| WT26 | write | `/tutorials/[id]/edit` | P | Tools: add, edit, delete (does not change status) | – | – | n/a | ✅ | ✅ | ✅ | – |
-| WT27 | write | `/tutorials/[id]/edit` | P | STL: upload an STL file and add its record (assistive-tech guides) | – | – | n/a | ✅ | ✅ | ✅ | – |
-| WT28 | write | `/tutorials/[id]/edit` | P | STL print settings and customisation questions (the questions set pending on an approved guide) | – | – | n/a | ✅ | ✅ | ✅ | – |
+| WT25 | write | `/tutorials/[id]/edit` | P | Parts: add, edit, delete (quantity, optional, buy links, price); an approved guide goes back to pending; the prices-checked date leaves it approved | – | – | n/a | ✅ | ✅ | ✅ | – |
+| WT26 | write | `/tutorials/[id]/edit` | P | Tools: add, edit, delete (an approved guide goes back to pending) | – | – | n/a | ✅ | ✅ | ✅ | – |
+| WT27 | write | `/tutorials/[id]/edit` | P | STL: upload an STL file and add its record (assistive-tech guides; an approved guide goes back to pending) | – | – | n/a | ✅ | ✅ | ✅ | – |
+| WT28 | write | `/tutorials/[id]/edit` | P | STL print settings and customisation questions (the questions and the print settings set pending on an approved guide) | – | – | n/a | ✅ | ✅ | ✅ | – |
 | WT29 | write | `/tutorials/[id]/edit` | P | Picks ("Also worth a look"): add, mark required first, remove | – | – | n/a | ✅ | ✅ | ✅ | – |
 | WT30 | write | `/tutorials/[id]/edit` | P | Team: invite a collaborator by email; remove one; leave | collaborator_invited, collaborator_removed, collaborator_left | invitee inbox | n/a | ✅ | ✅ | ✅ | – |
 | WT31 | write | `/tutorials/[id]/edit` | P | Backing: ask an organisation; withdraw the request | backing_requested | leaders' review count | n/a | ✅ | ✅ | ✅ | – |
@@ -1375,16 +1378,16 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 
 </details>
 
-### Toy library and my toys — 24 rows · 0 gaps · 0 waived
+### Toy library and my toys — 25 rows · 0 gaps · 0 waived
 
-<details><summary>24 rows, no gaps</summary>
+<details><summary>25 rows, no gaps</summary>
 
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | WY01 | nav | `/toy-library` | anon | facet buttons (How it is offered, Who is holding it), sort control and filter chips narrow the grid; Clear resets | – | – | n/a | ✅ | ✅ | – | – |
 | WY02 | nav | `/toy-library` | anon | toy card → /toy-library/:id | – | – | n/a | ✅ | ✅ | – | – |
 | WY03 | write | `/toy-library` | P | card heart → POST/DELETE /api/saves (signed out: sent to sign up) | – | Saved count | P | ✅ | ✅ | ✅ | – |
-| WY04 | static | `/toy-library` | anon | hero "Browse the toys" → #toy-grid, "Pick for my child" → /learn/choosing-a-toy, "Give a toy" → /dashboard/toys/new | – | – | n/a | ✅ | – | – | – |
+| WY04 | static | `/toy-library` | anon | hero "Browse the toys" → #toy-grid, "Pick for my child" → the child wizard (sign up first when signed out), "Give a toy" → /dashboard/toys/new | – | – | n/a | ✅ | – | – | – |
 | WY05 | static | `/toy-library/[id]` | anon | detail: photos, facts, holder card, picks, sign-in gate | – | – | n/a | ✅ | – | – | – |
 | WY06 | nav | `/toy-library/[id]` | P | "Ask to collect it" / "Offer a swap" → /toy-library/:id/request?mode= | – | – | P | ✅ | ✅ | – | – |
 | WY07 | nav | `/toy-library/[id]` | anon | "Sign in to ask for it" → /login?next=/toy-library/:id/request?mode=<donation\|exchange>; a signed-out visit to the request page keeps a valid ?mode= through sign-in | – | – | n/a | ✅ | ✅ | – | – |
@@ -1405,6 +1408,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | WY22 | write | `/dashboard/toys/[id]` | P | pause / take requests again → PATCH paused_at | – | public library visibility | n/a | ✅ | ✅ | ✅ | – |
 | WY23 | write | `/dashboard/toys/[id]` | P | "Also worth a look" picks mode and Save picks → PATCH /api/toys/:id, PUT /api/toys/:id/picks | – | – | n/a | ✅ | ✅ | ✅ | – |
 | WY24 | write | `/dashboard/toys/[id]` | P | "Delete toy" (typed phrase) → DELETE /api/toys/:id → /dashboard/toys | – | My toys count | n/a | ✅ | ✅ | ✅ | – |
+| WY25 | nav | `/toy-library/[id]` | anon | rail Save signed out → /signup?reason=save, carrying the toy page | – | – | n/a | ✅ | ✅ | – | – |
 
 </details>
 
@@ -1433,7 +1437,7 @@ Generated by `scripts/journeys/notifications.mjs`. Every `NotificationType` need
 | `challenge_joined` | `routes/toy-ideas.ts` | `notifications/ideas-chain.test.ts` | `public/design-challenges.spec.ts` | `challenges.spec.ts` |
 | `challenge_left` | `routes/toy-ideas.ts` | `notifications/ideas-chain.test.ts` | `public/design-challenges.spec.ts` | `challenges-actions.spec.ts` |
 | `challenge_removed` | `routes/toy-ideas.ts` | `notifications/ideas-chain.test.ts` | `admin/reports.spec.ts`, `public/design-challenges.spec.ts` | `admin-idea-reports.spec.ts`, `challenges-actions.spec.ts` |
-| `idea_graduated` | `routes/admin.ts` | `toy-ideas/graduation.test.ts` | `admin/ideas.spec.ts` | `admin-ideas.spec.ts` |
+| `idea_graduated` | `143_graduate_idea.sql` | `toy-ideas/graduation.test.ts` | `admin/ideas.spec.ts` | `admin-ideas.spec.ts` |
 | `challenge_guide_published` | `109_challenge_guide_published.sql` | `toy-ideas/writeup.test.ts` | `public/design-challenges.spec.ts` | none |
 | `tutorial_thanked` | `routes/tutorials.ts` | `tutorials/thanks.test.ts` | `public/tutorial-actions.spec.ts` | `guides-thanks.spec.ts` |
 | `tutorial_noted` | `routes/tutorial-notes.ts` | `guides/notes.test.ts` | none | `guides-build-mode.spec.ts`, `guides-feedback.spec.ts`, `guides-new-and-reader.spec.ts`, `guides-reader-journeys.spec.ts`, `guides-step-picker.spec.ts` |

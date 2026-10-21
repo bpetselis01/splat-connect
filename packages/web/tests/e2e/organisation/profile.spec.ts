@@ -120,7 +120,7 @@ test('WB33 an email no SPLAT account uses is refused in words', async ({ page })
   await expect(page.getByRole('alert').filter({ hasText: 'No SPLAT account uses that email. Ask them to sign up first.' })).toBeVisible()
 })
 
-test('WB35 a leader with a colleague can step down, lands on the dashboard and no longer leads the organisation', async ({ page }) => {
+test('WB35 a leader with a colleague can step down, lands on the dashboard and is sent back there with a note when opening the organisation page', async ({ page }) => {
   const seat = await createLeaderSeat(`Stepdown Org ${Date.now()}`)
   const second = await createContributor()
   await makeLeader(second.id, undefined, seat.orgId)
@@ -129,8 +129,9 @@ test('WB35 a leader with a colleague can step down, lands on the dashboard and n
     await page.goto('/dashboard/organisation/profile')
     await page.getByRole('button', { name: 'Step down as leader' }).click()
     await expect(page).toHaveURL('/dashboard')
-    const res = await page.goto('/dashboard/organisation/profile')
-    expect(res?.status()).toBe(404)
+    await page.goto('/dashboard/organisation/profile')
+    await expect(page).toHaveURL('/dashboard?notice=org-leaders-only')
+    await expect(page.getByText('That page is for organisation leaders.')).toBeVisible()
     const { data } = await adminClient().from('org_leaders').select('user_id').eq('org_id', seat.orgId)
     expect(data).toEqual([{ user_id: second.id }])
   } finally {

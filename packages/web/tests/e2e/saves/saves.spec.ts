@@ -4,6 +4,7 @@ import {
   signIn,
   createContributor,
   createTutorial,
+  createPublishedToy,
   acceptTerms,
   adminClient,
   deleteUser,
@@ -59,6 +60,32 @@ test.describe('saving things', () => {
       await shot(page, 'signup-save-notice')
     } finally {
       await deleteUser(contributor.id)
+    }
+  })
+
+  test('WT41 a guest on a guide page is sent to sign up by Save, carrying the guide', async ({ page }) => {
+    const contributor = await createContributor()
+    const id = await createTutorial(contributor.id, { title: uniqueTitle('Guest guide'), status: 'approved' })
+    try {
+      await page.goto(`/tutorials/${id}`)
+      await page.getByRole('button', { name: 'Save' }).click()
+      await expect(page).toHaveURL(new RegExp(`/signup\\?next=%2Ftutorials%2F${id}&reason=save`))
+      await expect(page.getByText('You need an account to save things')).toBeVisible()
+    } finally {
+      await deleteUser(contributor.id)
+    }
+  })
+
+  test('WY25 a guest on a toy page is sent to sign up by Save, carrying the toy', async ({ page }) => {
+    const holder = await createContributor()
+    const toyId = await createPublishedToy(holder.id, { name: uniqueTitle('Guest bear') })
+    try {
+      await page.goto(`/toy-library/${toyId}`)
+      await page.getByRole('button', { name: 'Save' }).click()
+      await expect(page).toHaveURL(new RegExp(`/signup\\?next=%2Ftoy-library%2F${toyId}&reason=save`))
+      await expect(page.getByText('You need an account to save things')).toBeVisible()
+    } finally {
+      await deleteUser(holder.id)
     }
   })
 

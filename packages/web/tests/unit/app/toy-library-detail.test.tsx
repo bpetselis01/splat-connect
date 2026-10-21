@@ -34,14 +34,14 @@ describe('/toy-library/[id]', () => {
     serve(toy)
   })
 
-  it('WY05 shows the toy, its holder, the notes and the sign-in gate to a guest', async () => {
+  it('WY05 WY25 shows the toy, its holder, the notes, the sign-in gate and a Save to a guest', async () => {
     await page()
     expect(screen.getByRole('heading', { level: 1, name: 'Fire truck' })).toBeInTheDocument()
     expect(screen.getByText('Held by Dana')).toBeInTheDocument()
     expect(screen.getByText('Siren works with one press.')).toBeInTheDocument()
     expect(screen.getByText('3 toys given · 1 toy listed · a family')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Sign in to unlock' })).toHaveAttribute('href', '/login?next=%2Ftoy-library%2Ftoy-1')
-    expect(screen.queryByRole('button', { name: /Save/ })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Save' })).toHaveAttribute('aria-pressed', 'false')
   })
 
   it('WY05 is not found for a toy the API does not serve', async () => {

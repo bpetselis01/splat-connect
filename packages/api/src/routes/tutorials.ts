@@ -13,10 +13,8 @@ import { pickEditable } from './pick-editable.js'
 import { notifyTutorialSubmitted } from '../review-notifications.js'
 import { readSuits, realignCaptions, GUIDE_SUITS_FIELDS, fieldKey, customizationFieldsProblem, AGREEMENT_VERSIONS } from '@splat-connect/types'
 import { removeDroppedPhotos } from '../photo-storage.js'
+import { sendApprovedGuideBackToReview } from '../re-review.js'
 import type { AuthVariables } from '../middleware/auth.js'
-
-// PENDING(guide-rereview-rule): content changes re-review (steps, safety, parts, tools, STL, PDF, photos, details go back to pending); pric...
-// PENDING(guide-patch-without-status-500): a no-status edit saves the fields and answers 200 with the guide, status untouched; only a forbidden status...
 
 const tutorials = new Hono<{ Variables: AuthVariables }>()
 
@@ -339,18 +337,31 @@ tutorials.patch('/:id', async (c) => {
     update.photo_captions = caps
   }
 
-  const submitting = body.status === 'pending'
   // Clearing the PDF needs the same read: whether the guide is live, and what it has left.
   const clearsPdf = 'tutorial_pdf_url' in update && !(update.tutorial_pdf_url as string | null)?.trim()
-  const current = submitting || clearsPdf
-    ? (
-        await supabase
-          .from('tutorials')
-          .select('status, safety_declared_at, build_minutes, tutorial_pdf_url')
-          .eq('id', c.req.param('id'))
-          .maybeSingle()
-      ).data
-    : null
+  // Always read: an approved guide is writable by its author only into pending
+  // (RLS), so what a save without a status may do depends on the current one.
+  const { data: current } = await supabase
+    .from('tutorials')
+    .select('status, safety_declared_at, build_minutes, tutorial_pdf_url')
+    .eq('id', c.req.param('id'))
+    .maybeSingle()
+  if (current?.status === 'approved' && body.status === 'draft') {
+    return c.json({ error: 'Guide is approved; submit for re-review' }, 409)
+  }
+  // The re-review rule: a save with no status that changes more than the prices
+  // date is a content edit, so it is a submission into pending. An admin's edit
+  // is a fix (src/re-review.ts).
+  const pricesOnly = Object.keys(update).every((k) => k === 'prices_checked_on')
+  const resubmitting = current?.status === 'approved' && !('status' in body) && !pricesOnly && c.get('role') !== 'admin'
+  if (resubmitting) {
+    if (!(await hasAcceptedContributorTerms(c.get('token'), c.get('userId')))) {
+      return c.json({ error: 'You must accept the contributor terms before submitting' }, 403)
+    }
+    update.status = 'pending'
+  }
+  const submitting = body.status === 'pending' || resubmitting
+  const checksLiveContent = submitting || clearsPdf
   // Any status but pending is a real hand-over: a draft, and a rejected or
   // approved guide the author edited and sent back (T22). Only pending ->
   // pending is the editor resending its whole form.
@@ -373,7 +384,7 @@ tutorials.patch('/:id', async (c) => {
   // Never leave a live guide empty: submitting, or clearing the PDF of a guide
   // that is already pending/approved, must leave it with steps or a PDF. This
   // PATCH is the only route to pending, so the submit check cannot be bypassed.
-  if (current && isLive(submitting ? 'pending' : (body.status ?? current.status))) {
+  if (checksLiveContent && current && isLive(submitting ? 'pending' : (body.status ?? current.status))) {
     const pdf = 'tutorial_pdf_url' in update ? (update.tutorial_pdf_url as string | null) : current.tutorial_pdf_url
     if (!pdf?.trim()) {
       const { count } = await supabase.from('tutorial_steps').select('id', { count: 'exact', head: true }).eq('tutorial_id', c.req.param('id'))
@@ -381,7 +392,17 @@ tutorials.patch('/:id', async (c) => {
     }
   }
 
-  const { data, error } = await supabase
+  // RLS refuses any write that leaves a row approved, so a prices-only save on
+  // an approved guide goes through the service role once the caller is shown to
+  // be one of its contributors. A resubmission writes pending as the user.
+  let writer = supabase
+  if (current?.status === 'approved' && !('status' in body) && !resubmitting) {
+    const { data: own } = await supabase.rpc('is_tutorial_contributor', { p_tutorial_id: c.req.param('id') })
+    // Not a contributor (an admin, or a leader the 007 policy lets edit): RLS
+    // decides, and zero rows answers 409 below.
+    if (own) writer = createAdminClient()
+  }
+  const { data, error } = await writer
     .from('tutorials')
     .update(update)
     .eq('id', c.req.param('id'))
@@ -571,6 +592,8 @@ tutorials.put('/:id/steps', async (c) => {
     (before ?? []).map((s) => s.photo_url).filter((u): u is string => !!u),
     rows.map((r) => r.photo_url).filter((u): u is string => !!u)
   )
+  const moveError = await sendApprovedGuideBackToReview(c.var, id)
+  if (moveError) return c.json({ error: moveError }, 500)
   return c.json((saved as { position: number }[]).sort((a, b) => a.position - b.position))
 })
 

@@ -110,9 +110,9 @@ export function OrgPublishScreen() {
       ? data.events.map((e) => ({
           id: e.id,
           title: e.title,
-          meta: `${EVENT_KIND_LABEL[e.kind]} · ${e.format === 'online' ? 'Online' : e.suburb ?? 'In person'} · ${shortDate(e.starts_at)}`,
+          meta: `${EVENT_KIND_LABEL[e.kind]} · ${e.format === 'online' ? 'Online' : e.suburb ?? 'In person'} · ${e.starts_at ? shortDate(e.starts_at) : 'No date yet'}`,
           status: e.status,
-          shown: e.status === 'draft' ? 'Draft' : isPast(e.starts_at, e.ends_at) ? 'Past' : 'Published',
+          shown: e.status === 'draft' || !e.starts_at ? 'Draft' : isPast(e.starts_at, e.ends_at) ? 'Past' : 'Published',
         }))
       : data.stories.map((s) => ({
           id: s.id,

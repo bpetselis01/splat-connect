@@ -11,6 +11,7 @@ export default subResourceRoutes<RecommendationInput>({
   path: 'recommendations',
   table: 'tutorial_recommendations',
   bodyKey: 'recommendations',
+  keepsApproval: true,
   mapRow: (r, tutorialId, index) => ({
     tutorial_id: tutorialId,
     recommended_id: r.recommended_id,

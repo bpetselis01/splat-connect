@@ -87,6 +87,29 @@ describe('NewTutorialForm', () => {
     })
   })
 
+  it('WT15 a failed cover upload shows the error, keeps the form and retries with the same draft id', async () => {
+    vi.mocked(browserApiClient.postFormData).mockRejectedValueOnce(new Error('boom')).mockResolvedValue({ url: 'https://x/cover.jpg' })
+    vi.mocked(browserApiClient.get).mockResolvedValue({ updated_at: 'T1' })
+    vi.mocked(browserApiClient.patch).mockResolvedValue({})
+    render(<NewTutorialForm kind="toy_adaptation" />)
+    globalThis.URL.createObjectURL ??= () => 'blob:x'
+    globalThis.URL.revokeObjectURL ??= () => {}
+    fireEvent.change(screen.getByLabelText('Cover photo'), { target: { files: [new File(['x'], 'toy.jpg', { type: 'image/jpeg' })] } })
+    fillAndSubmit()
+
+    expect((await screen.findByRole('alert')).textContent).toBe(
+      'Your draft was saved, but the cover photo did not upload. Try again, or choose a different photo.'
+    )
+    expect(push).not.toHaveBeenCalled()
+    expect(screen.getByLabelText('Title')).toHaveValue('Sensory light box')
+
+    fireEvent.click(screen.getByRole('button', { name: /Create draft/ }))
+    await waitFor(() => expect(push).toHaveBeenCalled())
+    const ids = mockPost.mock.calls.filter(([p]) => p === '/api/tutorials').map(([, b]) => (b as { id: string }).id)
+    expect(ids).toHaveLength(2)
+    expect(ids[1]).toBe(ids[0])
+  })
+
   it('WT13 the start cards switch between a blank form and the PDF import, which has no title field until a PDF is read', () => {
     render(<NewTutorialForm />)
     expect(screen.getByRole('radio', { name: /Start blank/ })).toHaveAttribute('aria-checked', 'true')

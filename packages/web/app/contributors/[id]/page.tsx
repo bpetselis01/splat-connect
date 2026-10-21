@@ -96,7 +96,7 @@ export default async function ContributorPage({
   const askHref = (
     signedIn
       ? `/get-involved/requests/new?maker=${id}`
-      : authUrl('signup', `/get-involved/requests/new?maker=${id}`)
+      : authUrl('signup', `/get-involved/requests/new?maker=${id}`, { reason: 'build' })
   ) as Route
 
   return (
@@ -149,12 +149,14 @@ export default async function ContributorPage({
             )}
           </div>
           <div className="ml-auto flex flex-wrap items-center justify-end gap-2.5 pt-[18px]">
-            <Link href={askHref} className="btn btn-primary no-underline">
-              <Hammer size={18} weight="bold" aria-hidden="true" />
-              Ask {first} to build a guide
-            </Link>
             {caps?.profile.id !== contributor.id && (
-              <PersonThanksButton profileId={contributor.id} name={first} signedIn={signedIn} />
+              <>
+                <Link href={askHref} className="btn btn-primary no-underline">
+                  <Hammer size={18} weight="bold" aria-hidden="true" />
+                  Ask {first} to build a guide
+                </Link>
+                <PersonThanksButton profileId={contributor.id} name={first} signedIn={signedIn} />
+              </>
             )}
           </div>
         </div>

@@ -23,8 +23,6 @@ import { dateBadge, formatTimeRange } from '@splat-connect/types'
 import type { EventListItem, OrgEventQuestion } from '@splat-connect/types'
 import { authUrl } from '@/lib/safe-next-path'
 
-// PENDING(event-register-raw-409): show the full-event copy only, with the leader contact, and hide submit; other 409s keep a generic retry me...
-
 export const metadata = { title: 'Register for an event — SPLAT Connect' }
 
 type EventDetail = EventListItem & {
@@ -95,6 +93,7 @@ export default async function EventRegisterPage({ params }: { params: Promise<{ 
 
       <EventRegisterForm
         eventId={event.id}
+        orgId={event.org?.id ?? null}
         orgName={orgName}
         questions={event.questions}
         defaultName={caps.profile.name ?? ''}

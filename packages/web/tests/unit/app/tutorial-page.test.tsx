@@ -16,6 +16,8 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/tutorials/t1',
   useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
 }))
+const requestHeaders = vi.hoisted(() => ({ 'user-agent': 'Mozilla/5.0 TestBrowser' }))
+vi.mock('next/headers', () => ({ headers: async () => new Headers(requestHeaders) }))
 vi.mock('next/link', () => ({
   default: ({ href, children, ...props }: { href: string; children: React.ReactNode; [key: string]: unknown }) => (
     <a href={href} {...props}>{children}</a>
@@ -27,7 +29,7 @@ vi.mock('@/lib/capabilities', () => ({ getCapabilities }))
 vi.mock('@/lib/my-children', () => ({ getMyChildren }))
 vi.mock('@/lib/api-client', () => ({ apiClient: { get: apiGet } }))
 vi.mock('@/lib/browser-api-client', () => ({ browserApiClient: { post: vi.fn(), delete: vi.fn() } }))
-vi.mock('@/components/toast', () => ({ useToast: () => vi.fn() }))
+vi.mock('@/components/toast', () => ({ useToast: () => vi.fn(), ToastProvider: ({ children }: { children: React.ReactNode }) => <>{children}</> }))
 
 const guide = {
   id: 't1', title: 'Bubble Machine', description: 'Blows bubbles on a press.', difficulty: 'easy', kind: 'toy_adaptation',
@@ -60,6 +62,14 @@ afterEach(() => {
 })
 
 describe('guide page', () => {
+  it('WT01 forwards the visitor\'s User-Agent so the API can skip crawlers when counting views', async () => {
+    await mount()
+    expect(vi.mocked(fetch)).toHaveBeenCalledWith(expect.stringContaining('/api/public/tutorials/t1'), {
+      cache: 'no-store',
+      headers: { 'user-agent': 'Mozilla/5.0 TestBrowser' },
+    })
+  })
+
   it('WT01 renders the published guide, and answers an unpublished or unknown id with the 404 page', async () => {
     await mount()
     expect(screen.getByRole('heading', { name: 'Bubble Machine' })).toBeInTheDocument()
@@ -78,10 +88,10 @@ describe('guide page', () => {
     expect(trail.querySelector('[aria-current="page"]')).toHaveTextContent('Bubble Machine')
   })
 
-  it('a signed-out visitor gets Share alone: no Save, no Say thanks, no Mark this build done', async () => {
+  it('WT41 a signed-out visitor gets Share and a Save that leads to sign up, but no Say thanks or Mark this build done', async () => {
     await mount()
     expect(screen.getByRole('button', { name: 'Share' })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /Save/ })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Save' })).toHaveAttribute('aria-pressed', 'false')
     expect(screen.queryByRole('button', { name: /Say thanks/ })).toBeNull()
     expect(screen.queryByRole('button', { name: /build done/ })).toBeNull()
     expect(apiGet).not.toHaveBeenCalled()

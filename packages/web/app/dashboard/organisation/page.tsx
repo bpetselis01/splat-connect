@@ -14,11 +14,11 @@
  * Related files:
  * - app/organizations/[id]: the per-organisation page this generalises
  * - app/organizations/[id]/projects/[tutorialId]: the review screen rows link to
- * - lib/org-access.ts: the same "affordance, not control" rule this notFound() follows
+ * - lib/org-access.ts: the same "affordance, not control" rule requireOrgLeader() follows
  */
 import { notFound } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
-import { getCapabilities } from '@/lib/capabilities'
+import { requireOrgLeader } from '@/lib/org-access'
 import { ActingOrgSwitcher } from '@/components/acting-org-switcher'
 import { actingOrg } from '@/lib/acting-org'
 import { OrgReviewBanner } from '@/components/org-review-banner'
@@ -36,15 +36,13 @@ import {
 import { MarkNotificationsRead } from '@/components/mark-notifications-read'
 import type { Tutorial, TutorialOrg, UserAgreement } from '@splat-connect/types'
 
-// PENDING(org-pages-404-for-non-leader): signed-in non-leaders are redirected to /dashboard with a note that the page is for organisation leaders; a...
 
 type Backed = Tutorial & { tutorial_orgs?: TutorialOrg[] }
 
 export default async function OrganisationTabPage() {
-  const caps = await getCapabilities()
   // The tab strip hides this for a non-leader, but the strip is an affordance —
   // the page is its own control (lib/org-access.ts states the same rule).
-  if (!caps || caps.ledOrgs.length === 0) notFound()
+  const caps = await requireOrgLeader('/dashboard/organisation')
 
   const [tutorials, agreements] = await Promise.all([
     apiClient.get<Backed[]>('/api/tutorials').catch(() => [] as Backed[]),

@@ -161,7 +161,7 @@ export function EventRegistrationsScreen({ eventId }: { eventId: string }) {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View>
           <Text style={styles.kicker}>
-            {EVENT_KIND_LABEL[event.kind]} · {longDate(event.starts_at)}
+            {EVENT_KIND_LABEL[event.kind]} · {event.starts_at ? longDate(event.starts_at) : 'No date yet'}
           </Text>
           <Text style={styles.title} accessibilityRole="header">
             {event.title}

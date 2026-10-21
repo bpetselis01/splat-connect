@@ -46,4 +46,14 @@ describe('signup copy', () => {
       screen.getByText("You need an account to download tutorial files. Create one and we'll take you back.")
     ).toBeInTheDocument()
   })
+
+  it.each([
+    ['follow', 'Sign up to follow this organisation'],
+    ['message', 'Sign up to message this organisation'],
+    ['build', 'Sign up to request a build'],
+  ])('WA13 explains the %s detour with action-first copy', (reason, copy) => {
+    search = `reason=${reason}`
+    render(<SignupPage />)
+    expect(screen.getByText(copy)).toBeInTheDocument()
+  })
 })

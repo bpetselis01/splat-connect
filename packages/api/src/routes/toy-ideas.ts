@@ -8,8 +8,6 @@ import { toyPhotoUrl } from '../photo-storage.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import { challengeCounts } from '../challenge-counts.js'
 
-// PENDING(idea-graduate-duplicate-contributor): the author appears once with the author role; graduation runs as a single transaction. Whether graduation d...
-
 const toyIdeas = new Hono<{ Variables: AuthVariables }>()
 
 const RLS_VIOLATION = '42501'

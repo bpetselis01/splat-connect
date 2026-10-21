@@ -110,4 +110,5 @@ test('WT07 Share copies the guide address to the clipboard', async ({ page, cont
   await page.getByRole('button', { name: 'Share' }).click()
 
   await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe(page.url())
+  await expect(page.getByRole('status')).toHaveText('Link copied')
 })

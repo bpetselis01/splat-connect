@@ -16,7 +16,7 @@ import { chunk } from '../chunk.js'
 import { notify } from '../notify.js'
 import { ledOrgIds } from '../toy-access.js'
 import { profileName } from '../profile-name.js'
-import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
+import { CHECK_VIOLATION, INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import {
   EVENT_KINDS,
   EVENT_TOOLS,
@@ -34,8 +34,6 @@ import {
 } from '@splat-connect/types'
 import type { AuthVariables } from '../middleware/auth.js'
 import { sendEmail } from '../mailer.js'
-
-// PENDING(online-event-link): build the authenticated joining-link route and send the link in the registration confirmation email. Build...
 
 const organizations = new Hono<{ Variables: AuthVariables }>()
 
@@ -1116,6 +1114,14 @@ function costShape(body: Record<string, unknown>): { cost_cents: number | null; 
   return { cost_cents: cents, cost_note: cents && note ? note : null }
 }
 
+function whereGap(format: string, location: string, onlineUrl: string): string | null {
+  if (format === 'in_person' && !location) return 'Say where it is.'
+  if (format === 'online' && !onlineUrl) return 'Give the joining link.'
+  return null
+}
+
+const EVENT_PUBLISH_GAP = 'Finish the event before publishing it: it needs a date and a place.'
+
 organizations.get('/:id/events', async (c) => {
   const supabase = createUserClient(c.get('token'))
   const { data, error } = await supabase
@@ -1136,10 +1142,11 @@ organizations.post('/:id/events', async (c) => {
   const title = typeof body.title === 'string' ? body.title.trim() : ''
   if (!title || title.length > 160) return c.json({ error: 'Give the event a name.' }, 400)
 
+  // A draft needs only a title (144); the rest is asked at publish.
+  const status = body.status === 'published' ? 'published' : 'draft'
   const startsAt = typeof body.starts_at === 'string' ? body.starts_at : ''
-  if (!startsAt || Number.isNaN(Date.parse(startsAt))) {
-    return c.json({ error: 'Say when it starts.' }, 400)
-  }
+  const startsValid = !!startsAt && !Number.isNaN(Date.parse(startsAt))
+  if (status === 'published' && !startsValid) return c.json({ error: 'Say when it starts.' }, 400)
 
   const format = body.format === 'online' ? 'online' : 'in_person'
   const location = typeof body.location === 'string' ? body.location.trim() : ''
@@ -1147,15 +1154,16 @@ organizations.post('/:id/events', async (c) => {
   // "Where" is one of the four things the artboard says a family decides on, so
   // it is required in whichever form the event takes. 059's constraint says the
   // same thing; this says it in a sentence.
-  if (format === 'in_person' && !location) return c.json({ error: 'Say where it is.' }, 400)
-  if (format === 'online' && !onlineUrl) return c.json({ error: 'Give the joining link.' }, 400)
+  if (status === 'published') {
+    const gap = whereGap(format, location, onlineUrl)
+    if (gap) return c.json({ error: gap }, 400)
+  }
 
   // The rest of the form — place, kind, bench, seats, cost — read the same way
   // the PATCH below reads it. Without this a published in-person event failed
   // 061's suburb-and-state check and a draft dropped everything past "who for".
   const shape = eventShape(body, format)
   if ('error' in shape) return c.json({ error: shape.error }, 400)
-  const status = body.status === 'published' ? 'published' : 'draft'
   if (status === 'published' && format === 'in_person' && (!shape.suburb || !shape.state)) {
     return c.json({ error: 'A published event needs a suburb and a state.' }, 400)
   }
@@ -1167,11 +1175,11 @@ organizations.post('/:id/events', async (c) => {
       org_id: orgId,
       title,
       summary: typeof body.summary === 'string' && body.summary.trim() ? body.summary.trim() : null,
-      starts_at: startsAt,
+      starts_at: startsValid ? startsAt : null,
       ends_at: typeof body.ends_at === 'string' && body.ends_at ? body.ends_at : null,
       format,
-      location: format === 'in_person' ? location : null,
-      online_url: format === 'online' ? onlineUrl : null,
+      location: format === 'in_person' ? location || null : null,
+      online_url: format === 'online' ? onlineUrl || null : null,
       audience:
         typeof body.audience === 'string' && body.audience.trim() ? body.audience.trim() : null,
       status,
@@ -1223,8 +1231,10 @@ organizations.patch('/:orgId/events/:id', async (c) => {
     const format = body.format === 'online' ? 'online' : 'in_person'
     const location = typeof body.location === 'string' ? body.location.trim() : ''
     const onlineUrl = typeof body.online_url === 'string' ? body.online_url.trim() : ''
-    if (format === 'in_person' && !location) return c.json({ error: 'Say where it is.' }, 400)
-    if (format === 'online' && !onlineUrl) return c.json({ error: 'Give the joining link.' }, 400)
+    const publishing = (patch.status ?? (await statusBefore('org_events', c.req.param('id')))) === 'published'
+    const startsValid = typeof body.starts_at === 'string' && !Number.isNaN(Date.parse(body.starts_at))
+    const gap = publishing ? whereGap(format, location, onlineUrl) : null
+    if (gap) return c.json({ error: gap }, 400)
 
     const shape = eventShape(body, format)
     if ('error' in shape) return c.json({ error: shape.error }, 400)
@@ -1236,14 +1246,12 @@ organizations.patch('/:orgId/events/:id', async (c) => {
       title,
       summary: typeof body.summary === 'string' && body.summary.trim() ? body.summary.trim() : null,
       format,
-      location: format === 'in_person' ? location : null,
-      online_url: format === 'online' ? onlineUrl : null,
+      location: format === 'in_person' ? location || null : null,
+      online_url: format === 'online' ? onlineUrl || null : null,
       audience:
         typeof body.audience === 'string' && body.audience.trim() ? body.audience.trim() : null,
     })
-    if (typeof body.starts_at === 'string' && !Number.isNaN(Date.parse(body.starts_at))) {
-      patch.starts_at = body.starts_at
-    }
+    if (startsValid) patch.starts_at = body.starts_at
     patch.ends_at = typeof body.ends_at === 'string' && body.ends_at ? body.ends_at : null
   }
 
@@ -1260,7 +1268,11 @@ organizations.patch('/:orgId/events/:id', async (c) => {
     .eq('org_id', c.req.param('orgId'))
     .select(EVENT_COLUMNS)
     .maybeSingle()
-  if (error) return c.json({ error: error.message }, 500)
+  if (error) {
+    // A draft published by status alone, missing what 144 asks at publish.
+    const incomplete = error.code === CHECK_VIOLATION && /org_events_(where|published_has_a_date|in_person_has_a_place)/.test(error.message)
+    return c.json({ error: incomplete ? EVENT_PUBLISH_GAP : error.message }, incomplete ? 400 : 500)
+  }
   if (!data) return c.json({ error: 'No such event of yours.' }, 404)
   const was = before as (EventWhenWhere & { status: string; cancelled_at: string | null }) | null
   if (was?.status === 'draft' && data.status === 'published') {
@@ -1440,7 +1452,9 @@ organizations.get('/:id/stories', async (c) => {
  * The content of a story, read and refused the same way by the first save and
  * every edit after it.
  */
-function storyShape(body: Record<string, unknown>) {
+const STORY_GAP = 'A story needs a title, a one-sentence summary, a body and a byline.'
+
+function storyShape(body: Record<string, unknown>, status: 'draft' | 'published') {
   const read = (field: string, max: number) => {
     const value = typeof body[field] === 'string' ? (body[field] as string).trim() : ''
     return value && value.length <= max ? value : null
@@ -1449,8 +1463,9 @@ function storyShape(body: Record<string, unknown>) {
   const summary = read('summary', 300)
   const storyBody = read('body', 20000)
   const byline = read('byline', 120)
-  if (!title || !summary || !storyBody || !byline) {
-    return { error: 'A story needs a title, a one-sentence summary, a body and a byline.' }
+  // A draft needs only a title (144) and stores the rest as ''.
+  if (!title || (status === 'published' && (!summary || !storyBody || !byline))) {
+    return { error: STORY_GAP }
   }
 
   const kind =
@@ -1468,9 +1483,9 @@ function storyShape(body: Record<string, unknown>) {
   return {
     kind,
     title,
-    summary,
-    body: storyBody,
-    byline,
+    summary: summary ?? '',
+    body: storyBody ?? '',
+    byline: byline ?? '',
     consent_confirmed: body.consent_confirmed === true,
     pull_quote: pullQuote,
     pull_quote_by: pullQuote ? pullQuoteBy : null,
@@ -1485,9 +1500,9 @@ organizations.post('/:id/stories', async (c) => {
   const body = (await c.req.json().catch(() => null)) as Record<string, unknown> | null
   if (!body) return c.json({ error: 'Body must be an object' }, 400)
 
-  const shape = storyShape(body)
-  if ('error' in shape) return c.json({ error: shape.error }, 400)
   const status = body.status === 'published' ? 'published' : 'draft'
+  const shape = storyShape(body, status)
+  if ('error' in shape) return c.json({ error: shape.error }, 400)
   // 059 refuses this with a check constraint; saying it here makes the refusal
   // a sentence rather than a constraint violation.
   if (status === 'published' && !shape.consent_confirmed) {
@@ -1530,13 +1545,14 @@ organizations.patch('/:orgId/stories/:id', async (c) => {
   const now = new Date().toISOString()
   const patch: Record<string, unknown> = { updated_at: now }
 
+  const before = await statusBefore('org_stories', c.req.param('id'))
   if (typeof body.title === 'string') {
-    const shape = storyShape(body)
+    const status = 'status' in body ? (body.status === 'published' ? 'published' : 'draft') : before
+    const shape = storyShape(body, status === 'published' ? 'published' : 'draft')
     if ('error' in shape) return c.json({ error: shape.error }, 400)
     Object.assign(patch, shape)
   }
 
-  const before = await statusBefore('org_stories', c.req.param('id'))
   if ('status' in body) {
     const status = body.status === 'published' ? 'published' : 'draft'
     patch.status = status
@@ -1556,8 +1572,10 @@ organizations.patch('/:orgId/stories/:id', async (c) => {
     .select(STORY_COLUMNS)
     .maybeSingle()
   if (error) {
-    // The one constraint a save can trip: a published row without consent.
-    return c.json({ error: CONSENT_REFUSAL }, 400)
+    // Two constraints a save can trip: a published row without consent, or one
+    // that 144 lets a draft be without.
+    const incomplete = error.code === CHECK_VIOLATION && error.message.includes('org_stories_published_is_complete')
+    return c.json({ error: incomplete ? STORY_GAP : CONSENT_REFUSAL }, 400)
   }
   if (!data) return c.json({ error: 'No such story of yours.' }, 404)
   if (before === 'draft' && data.status === 'published') {

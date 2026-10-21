@@ -80,7 +80,7 @@ describe('contributor profile page', () => {
     await mount()
     expect(screen.getByRole('link', { name: 'Ask Priya to build a guide' })).toHaveAttribute(
       'href',
-      '/signup?next=%2Fget-involved%2Frequests%2Fnew%3Fmaker%3Dc1'
+      '/signup?next=%2Fget-involved%2Frequests%2Fnew%3Fmaker%3Dc1&reason=build'
     )
   })
 
@@ -93,5 +93,6 @@ describe('contributor profile page', () => {
     getCapabilities.mockResolvedValue({ profile: { id: 'c1' } })
     await mount()
     expect(screen.queryByRole('button', { name: /Say thanks/ })).toBeNull()
+    expect(screen.queryByRole('link', { name: /to build a guide/ })).toBeNull()
   })
 })

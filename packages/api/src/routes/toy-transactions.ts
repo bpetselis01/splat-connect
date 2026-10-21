@@ -11,8 +11,6 @@ import { profileName } from '../profile-name.js'
 import { readNear, byDistance, pickupPostcodes } from '../distance.js'
 import type { AuthVariables } from '../middleware/auth.js'
 
-// PENDING(toy-transactions-role-filter-ignored): the route honours the role filter on the server and the browser stops re-filtering. Whether the route honou...
-
 const toyTransactions = new Hono<{ Variables: AuthVariables }>()
 
 const RLS_VIOLATION = '42501'
@@ -383,6 +381,10 @@ function flattenPrintFiles(rows: PrintJobFileRow[] | null | undefined): PrintJob
 }
 
 toyTransactions.get('/', async (c) => {
+  const role = c.req.query('role')
+  if (role !== undefined && role !== 'owner' && role !== 'requester') {
+    return c.json({ error: "role must be 'owner' or 'requester'" }, 400)
+  }
   const supabase = createUserClient(c.get('token'))
   const { data, error } = await supabase
     .from('toy_transactions')
@@ -416,7 +418,11 @@ toyTransactions.get('/', async (c) => {
     // build request so they can claim it (064), and returning those here put a
     // stranger's request — name and id included, which GET /open-builds
     // deliberately withholds — on every maker's exchange list and inbox.
-    (r) => r.requester_id === userId || r.owner_id === userId || (!!r.owner_org_id && ledOrgs.includes(r.owner_org_id))
+    (r) => {
+      const giving = r.owner_id === userId || (!!r.owner_org_id && ledOrgs.includes(r.owner_org_id))
+      const asking = r.requester_id === userId
+      return role === 'owner' ? giving : role === 'requester' ? asking : giving || asking
+    }
   )
   // Advisory, and fail-open by design: a failed scan must not blank the list.
   const blockedToyIds =

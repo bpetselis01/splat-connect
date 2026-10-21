@@ -42,16 +42,8 @@ import { CountUp } from '@/components/count-up'
 import { heroHeadline, homeHero, homeNumbers, type HomeNumberKey } from '@/lib/home-content'
 import type { Tutorial, ImpactSummary, ToyWithOwner } from '@splat-connect/types'
 
-const EMPTY_TOTALS: ImpactSummary['totals'] = {
-  tutorials: 0,
-  toysShared: 0,
-  toysDelivered: 0,
-  contributors: 0,
-  organisations: 0,
-}
-
-/** An unreachable API degrades to zeros and an empty row, never a 500. */
-async function getJson<T>(path: string, fallback: T): Promise<T> {
+/** An unreachable API gives the fallback, never a 500. */
+async function getJson<T, F = T>(path: string, fallback: F): Promise<T | F> {
   try {
     const res = await fetch(`${process.env.API_URL}${path}`, { cache: 'no-store' })
     return res.ok ? ((await res.json()) as T) : fallback
@@ -61,16 +53,10 @@ async function getJson<T>(path: string, fallback: T): Promise<T> {
 }
 
 export default async function HomePage() {
-  const [tutorials, toys, impact, content] = await Promise.all([
-    getJson<Tutorial[]>('/api/public/tutorials', []),
-    getJson<ToyWithOwner[]>('/api/public/toys', []),
-    getJson<ImpactSummary>('/api/public/impact', {
-      totals: EMPTY_TOTALS,
-      recent: [],
-      contributors: [],
-      organisations: [],
-      deliveriesByMonth: [],
-    }),
+  const [tutorialsOrNull, toysOrNull, impact, content] = await Promise.all([
+    getJson<Tutorial[], null>('/api/public/tutorials', null),
+    getJson<ToyWithOwner[], null>('/api/public/toys', null),
+    getJson<ImpactSummary, null>('/api/public/impact', null),
     // What an admin saved in Site content; each blank field keeps the copy in
     // lib/home-content.
     getJson<{ hero: unknown; numbers: unknown; scenes: unknown }>('/api/public/content/home', {
@@ -79,7 +65,10 @@ export default async function HomePage() {
       scenes: null,
     }),
   ])
-  const { totals } = impact
+  const loadFailed = !tutorialsOrNull || !toysOrNull || !impact
+  const tutorials = tutorialsOrNull ?? []
+  const toys = toysOrNull ?? []
+  const totals = impact?.totals
   const hero = homeHero(content.hero)
   const headline = heroHeadline(hero.headline)
 
@@ -89,9 +78,9 @@ export default async function HomePage() {
     toys: { icon: Gift, tint: 'var(--color-mint-soft)' },
   }
   const stats = homeNumbers(content.numbers, {
-    guides: totals.tutorials,
-    organisations: totals.organisations,
-    toys: totals.toysDelivered,
+    guides: totals?.tutorials ?? 0,
+    organisations: totals?.organisations ?? 0,
+    toys: totals?.toysDelivered ?? 0,
   }).map(({ key, label, value }) => ({ ...look[key], label, value }))
 
   const doors = [
@@ -99,7 +88,7 @@ export default async function HomePage() {
       icon: MagnifyingGlass,
       title: 'I’m looking for a guide',
       body: 'Filter by what your child can do, not by what they can’t. Every guide is free to read; the parts list and its costs are inside.',
-      cta: `Browse ${tutorials.length} guide${tutorials.length === 1 ? '' : 's'}`,
+      cta: loadFailed ? 'Browse guides' : `Browse ${tutorials.length} guide${tutorials.length === 1 ? '' : 's'}`,
       href: '/library' as Route,
       tint: 'var(--color-brand-soft)',
     },
@@ -107,7 +96,7 @@ export default async function HomePage() {
       icon: Gift,
       title: 'I’d like a ready-made toy',
       body: 'Families and organisations give away toys they’ve already adapted. Request one near you.',
-      cta: `See ${toys.length} toy${toys.length === 1 ? '' : 's'} available`,
+      cta: loadFailed ? 'See toys available' : `See ${toys.length} toy${toys.length === 1 ? '' : 's'} available`,
       href: '/toy-library' as Route,
       tint: 'var(--color-apricot-soft)',
     },
@@ -161,14 +150,20 @@ export default async function HomePage() {
               {hero.secondary_label}
             </Link>
           </div>
-          <StatChips
-            stats={stats.map(({ icon: Icon, value, label, tint }) => ({
-              label,
-              value: <CountUp to={value}>{value.toLocaleString()}</CountUp>,
-              icon: <Icon weight="duotone" className="h-[22px] w-[22px]" />,
-              tint,
-            }))}
-          />
+          {loadFailed ? (
+            <p role="alert" className="text-sm text-muted">
+              We could not load the latest numbers. Refresh the page to try again.
+            </p>
+          ) : (
+            <StatChips
+              stats={stats.map(({ icon: Icon, value, label, tint }) => ({
+                label,
+                value: <CountUp to={value}>{value.toLocaleString()}</CountUp>,
+                icon: <Icon weight="duotone" className="h-[22px] w-[22px]" />,
+                tint,
+              }))}
+            />
+          )}
         </div>
 
         <div className="hero__mascot">

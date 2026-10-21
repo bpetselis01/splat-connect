@@ -117,6 +117,18 @@ test('WN04 a non-leader is sent to the public profile and a leader gets the work
   }
 })
 
+test('WB37 a member who leads nothing is sent to the dashboard with a note', async ({ page }) => {
+  const family = await named('Priya Nair')
+  try {
+    await signIn(page, family.email, family.password)
+    await page.goto('/dashboard/organisation/publish')
+    await expect(page).toHaveURL(/\/dashboard\?notice=org-leaders-only$/)
+    await expect(page.getByRole('status')).toHaveText('That page is for organisation leaders.')
+  } finally {
+    await tidy([], [family])
+  }
+})
+
 test('WN05 a leader who has not accepted the leader terms accepts them from the banner', async ({ page }) => {
   const orgId = await publicOrg(uniqueTitle('Northbank Therapy'))
   const leader = await named('Rachel Leader')

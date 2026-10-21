@@ -14,8 +14,9 @@ test('WM17 an admin deletes a contributor account and the Accounts card drops', 
   await expect(page.getByText(victim.email)).toBeVisible()
 
   const row = page.getByTestId('contributor-row').filter({ hasText: victim.email })
-  // No confirm step: Remove deletes on the first click (audit finding Q7, recorded not fixed).
-  await row.getByRole('button', { name: 'Remove' }).click()
+  await row.getByRole('button', { name: 'Delete account' }).click()
+  await row.getByLabel(/to confirm/i).fill('confirm_delete_account')
+  await row.getByRole('button', { name: 'Delete', exact: true }).click()
   await page.waitForLoadState('networkidle')
 
   await expect(page.getByText(victim.email)).toHaveCount(0)
@@ -32,7 +33,9 @@ test('WM17 removing the sole leader of an organisation changes nothing', async (
     await page.waitForURL('**/admin')
     await page.goto(`/admin/contributors?q=${encodeURIComponent(leader.email)}`)
     const row = page.getByTestId('contributor-row').filter({ hasText: leader.email })
-    await row.getByRole('button', { name: 'Remove' }).click()
+    await row.getByRole('button', { name: 'Delete account' }).click()
+    await row.getByLabel(/to confirm/i).fill('confirm_delete_account')
+    await row.getByRole('button', { name: 'Delete', exact: true }).click()
     await page.waitForLoadState('networkidle')
 
     // The API answers 409; the account is still listed after a reload.

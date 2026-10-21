@@ -152,6 +152,7 @@ test('WB22 saving the cost shows it on the public page, and clearing it makes th
   await page.getByLabel('Amount, in dollars').fill('')
   await page.getByLabel('Breakdown, in your words').fill('')
   await page.getByRole('button', { name: 'Save cost' }).click()
+  await expect(page.getByRole('button', { name: 'Save cost' })).toBeDisabled()
   await page.goto(`/get-involved/events/${id}`)
   await expect(page.getByText('Free to attend').first()).toBeVisible()
 })

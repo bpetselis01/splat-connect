@@ -100,7 +100,7 @@ export function OrgPublishing({
     run(() => browserApiClient.delete(`/api/organizations/${orgId}/${kind}/${id}`))
 
   const shownOf = (e: OrgEvent): Shown =>
-    e.status === 'draft' ? 'draft' : isPast(e.starts_at, e.ends_at) ? 'past' : 'published'
+    e.status === 'draft' || !e.starts_at ? 'draft' : isPast(e.starts_at, e.ends_at) ? 'past' : 'published'
 
   const stats = [
     { k: 'Upcoming events', v: events.filter((e) => shownOf(e) === 'published').length },
@@ -281,11 +281,11 @@ export function OrgPublishing({
                 kind="events"
                 id={event.id}
                 title={event.title}
-                meta={`${EVENT_KIND_LABEL[event.kind]} · ${place} · ${shortDate(event.starts_at)} · ${formatTimeRange(
-                  event.starts_at,
-                  null,
-                  event.format,
-                )} · ${going[event.id] ?? 0} going${
+                meta={`${EVENT_KIND_LABEL[event.kind]} · ${place} · ${
+                  event.starts_at
+                    ? `${shortDate(event.starts_at)} · ${formatTimeRange(event.starts_at, null, event.format)}`
+                    : 'No date yet'
+                } · ${going[event.id] ?? 0} going${
                   toAnswer[event.id] ? ` · ${toAnswer[event.id]} to answer` : ''
                 }`}
                 status={event.status}

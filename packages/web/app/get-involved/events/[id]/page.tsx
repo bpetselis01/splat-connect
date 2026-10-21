@@ -9,7 +9,8 @@
  * Two things are never on this page, whoever is reading it:
  *
  * - An online event's joining link. The API strips it (`online_url: null`), and
- *   a registrant is given it after they confirm. A link on a public page is a
+ *   a registrant is given it after they confirm, by EventJoiningLink and the
+ *   confirmation email. A link on a public page is a
  *   link in a search index.
  * - Anything a registrant answered. "Who is going" is initials and a count, so
  *   the page can say the room will be busy without telling a reader which
@@ -40,6 +41,7 @@ import { apiClient } from '@/lib/api-client'
 import { getCapabilities } from '@/lib/capabilities'
 import { safePhotoSrc } from '@/lib/photo-src'
 import { EventRsvpButton } from '@/components/event-rsvp-button'
+import { EventJoiningLink } from '@/components/event-joining-link'
 import { EventCostPanel } from '@/components/event-cost-panel'
 import { PrintAtEventForm } from '@/components/print-at-event-form'
 import { KIND_TINT } from '@/components/event-card'
@@ -206,9 +208,16 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                 <span className="block text-base font-extrabold">{online ? 'Online' : event.location}</span>
                 <span className="block text-sm text-muted">
                   {online
-                    ? 'The joining link is sent to you once you say you are coming.'
+                    ? event.viewer_going
+                      ? 'You are registered. The joining link is below and in your confirmation email.'
+                      : 'The joining link is sent to you once you say you are coming.'
                     : `${where} · ${costLine}`}
                 </span>
+                {online && event.viewer_going && !cancelled && (
+                  <span className="mt-2.5 block">
+                    <EventJoiningLink eventId={event.id} />
+                  </span>
+                )}
               </span>
             </div>
           </div>

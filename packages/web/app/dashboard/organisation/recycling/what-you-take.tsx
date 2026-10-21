@@ -16,8 +16,6 @@ import type { Organization, RecyclingGives } from '@splat-connect/types'
 import { PRINT_MATERIALS, RECYCLING_FORMS, RECYCLING_MACHINES } from '@splat-connect/types'
 import { browserApiClient } from '@/lib/browser-api-client'
 
-// PENDING(recycling-credit-rounding): nearest 0.1 kg, and the credit is computed from the rounded weight so display and credit agree. Which round...
-
 const GIVES: Array<[RecyclingGives, string, typeof Coins]> = [
   ['credit', 'Print credit', Coins],
   ['spool', 'A spool back', Package],

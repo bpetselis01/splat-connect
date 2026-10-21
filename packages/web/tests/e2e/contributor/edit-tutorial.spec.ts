@@ -318,7 +318,7 @@ test('WT18 saving a change to a rejected tutorial sends it back to pending', asy
   await expect(page.getByTestId('tutorial-row').filter({ hasText: 'E2E Editor' }).getByText('Waiting', { exact: true })).toBeVisible()
 })
 
-test('WT19 safety notes save and reload, and leave an approved guide approved', async ({ page }) => {
+test('WT19 safety notes save and reload, and send an approved guide back to pending', async ({ page }) => {
   const { id } = await editorAs(page, { status: 'approved' })
   await page.goto(`/tutorials/${id}/edit?step=details`)
   const details = page.getByRole('tabpanel')
@@ -333,7 +333,7 @@ test('WT19 safety notes save and reload, and leave an approved guide approved', 
   await page.reload()
   await expect(page.getByLabel('Safety note 1 title')).toHaveValue('Screw the battery door shut')
   await expect(page.getByLabel('Safety note 1 detail')).toHaveValue('The clip alone lets small hands in.')
-  expect(await statusOf(id)).toBe('approved')
+  expect(await statusOf(id)).toBe('pending')
 })
 
 test('WT20 the "who it is for" chips save and reload', async ({ page }) => {
@@ -351,7 +351,7 @@ test('WT20 the "who it is for" chips save and reload', async ({ page }) => {
   expect(data?.device_types).toEqual(['adapted_toy'])
 })
 
-test('WT21 WT22 steps and a step photo save and reload, and leave an approved guide approved', async ({ page }) => {
+test('WT21 WT22 steps and a step photo save and reload, and send an approved guide back to pending', async ({ page }) => {
   const { id } = await editorAs(page, { status: 'approved' })
   await page.goto(`/tutorials/${id}/edit?step=steps`)
   const steps = page.getByRole('tabpanel')
@@ -366,7 +366,7 @@ test('WT21 WT22 steps and a step photo save and reload, and leave an approved gu
   await expect(page.getByPlaceholder('What to do in this step')).toHaveValue('Open the battery cover.')
   const { data } = await adminClient().from('tutorial_steps').select('body, photo_url').eq('tutorial_id', id)
   expect(data).toEqual([{ body: 'Open the battery cover.', photo_url: expect.stringContaining(`${id}/steps/`) }])
-  expect(await statusOf(id)).toBe('approved')
+  expect(await statusOf(id)).toBe('pending')
 })
 
 test('WT28 STL print settings save and reload', async ({ page }) => {

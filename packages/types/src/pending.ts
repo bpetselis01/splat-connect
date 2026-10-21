@@ -186,6 +186,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web","api"],
     needs: "Decided 2026-10-20: build the authenticated joining-link route and send the link in the registration confirmation email. Build the authenticated joining-link route and email, or drop the promise from the page.",
+    shipped: true,
   },
   'web-auth-recovery': {
     title: "Web sign-in recovery",
@@ -233,6 +234,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: typed-phrase confirm, the same component as member self-deletion. Whether admin removal gets the typed-phrase confirm.",
+    shipped: true,
   },
   'guide-rereview-rule': {
     title: "When an edited guide goes back to review",
@@ -240,6 +242,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web","api"],
     needs: "Decided 2026-10-20: content changes re-review (steps, safety, parts, tools, STL, PDF, photos, details go back to pending); prices and recommendations stay approved. Which edits send an approved guide back to review.",
+    shipped: true,
   },
   'org-leader-terms-stub': {
     title: "Organisation leader terms",
@@ -270,6 +273,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["api"],
     needs: "Decided 2026-10-20: validate to approved|rejected, 400 otherwise; schema line plus a test. Whether to validate the status to `approved` and `rejected`.",
+    shipped: true,
   },
   'terms-gate-fails-open': {
     title: "Terms gate when the check fails",
@@ -284,6 +288,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: surface all three: cover upload shows the error and keeps the form, Mark all read is one request or reports partial failure, home shows a could-not-load state instead of zeros. Whether to surface these three failures, and how.",
+    shipped: true,
   },
   'duplicated-thread-actions': {
     title: "Thread actions copied three times",
@@ -299,11 +304,13 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: fix all six, each with a test: one destination for Pick for my child, Save prompts signup everywhere, hide self-actions (own org toy, own profile), skip bots in tutorial_view, one <main> on /delete-account. Which of the six to fix.",
+    shipped: true,
   },
   'makers-tab-reported-person': {
     title: "Reported people on the Makers tab",
     blurb: "Whether a reported person should leave the Makers tab, as the report sheet promises. Details are in docs/plans/journey-coverage-requirements.md and the run notes.",
     kind: "build",
+    shipped: true,
     platforms: ["mobile"],
     needs: "Decided 2026-10-20: a person you reported disappears from your own Makers tab and search until an admin resolves the report; others still see them. Whether to hide a reported person from the Makers tab, or change the sheet copy.",
   },
@@ -313,6 +320,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["api"],
     needs: "Decided 2026-10-20: the author appears once with the author role; graduation runs as a single transaction. Whether graduation de-duplicates the author, and whether it runs in one transaction.",
+    shipped: true,
   },
   'org-pages-404-for-non-leader': {
     title: "Organisation pages for a non-leader",
@@ -320,6 +328,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: signed-in non-leaders are redirected to /dashboard with a note that the page is for organisation leaders; anonymous visitors go to sign in with next. Whether a non-leader is redirected (and where) or keeps the 404.",
+    shipped: true,
   },
   'toy-transactions-role-filter-ignored': {
     title: "Role filter on the Exchange list",
@@ -327,6 +336,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["api"],
     needs: "Decided 2026-10-20: the route honours the role filter on the server and the browser stops re-filtering. Whether the route honours the role filter or the parameter is removed.",
+    shipped: true,
   },
   'draft-event-story-validation': {
     title: "Validation on drafts",
@@ -334,6 +344,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: a draft needs only a title; every other rule applies at publish; form copy stays as is. Whether drafts skip validation as the form says, or the form copy changes.",
+    shipped: true,
   },
   'recycling-credit-rounding': {
     title: "Recycling credit rounding",
@@ -341,6 +352,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: nearest 0.1 kg, and the credit is computed from the rounded weight so display and credit agree. Which rounding the credit uses.",
+    shipped: true,
   },
   'challenge-join-busy-stuck': {
     title: "Join after Leave on a challenge",
@@ -348,6 +360,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: fix it: Join resets after Leave. Nothing to decide beyond scheduling the fix.",
+    shipped: true,
   },
   'event-register-raw-409': {
     title: "Event registration error copy",
@@ -355,6 +368,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: show the full-event copy only, with the leader contact, and hide submit; other 409s keep a generic retry message. Whether to show only the full-event copy.",
+    shipped: true,
   },
   'public-org-toasts-missing': {
     title: "Toasts on the public organisation page",
@@ -362,6 +376,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: the public organisation page gets the ToastProvider; Follow confirms 'Following {org}', Say thanks confirms 'Thanks sent'. Whether the public page gets a ToastProvider.",
+    shipped: true,
   },
   'guide-share-no-toast': {
     title: "Share on a Guide page",
@@ -369,6 +384,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: Share confirms with the shared 'Link copied' toast; no toast where a native share sheet opens. Whether Share confirms with a toast.",
+    shipped: true,
   },
   'guide-patch-without-status-500': {
     title: "Guide PATCH without status",
@@ -376,6 +392,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["api"],
     needs: "Decided 2026-10-20: a no-status edit saves the fields and answers 200 with the guide, status untouched; only a forbidden status transition answers 409 'Guide is approved; submit for re-review'. Which 4xx and message a rejected edit returns.",
+    shipped: true,
   },
   'hub-exchange-count-plural': {
     title: "Hub Exchange count grammar",
@@ -383,6 +400,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: fix it: '1 exchange', '2 exchanges'. Nothing to decide beyond scheduling the fix.",
+    shipped: true,
   },
   'impact-map-soon-pill': {
     title: "Deliveries map card",
@@ -390,6 +408,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: drop the SOON pill and link the card to the map. Whether to drop the pill and link the card to the map.",
+    shipped: true,
   },
   'confirmed-page-bare-layout': {
     title: "Bare layout after email confirm",
@@ -405,11 +424,13 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: both reasons get a banner with action-first copy: 'Sign up to save toys' and 'Sign up to request a build'. Whether the two reasons get a banner, and the copy.",
+    shipped: true,
   },
   'event-detail-ready-marker': {
     title: "I'm going before the profile loads",
     blurb: "Whether the event page should expose a ready state before I'm going can be tapped. Details are in docs/plans/journey-coverage-requirements.md and the run notes.",
     kind: "build",
+    shipped: true,
     platforms: ["mobile"],
     needs: "Decided 2026-10-20: the button is disabled with a subtle spinner until the viewer profile and capabilities have loaded; the e2e waits on that ready state. Whether the button waits for the profile (disabled or a ready marker).",
   },

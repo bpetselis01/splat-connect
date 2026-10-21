@@ -32,6 +32,8 @@ import type {
   LearnCourse,
 } from '@splat-connect/types'
 
+const BOT_UA = /bot|crawl|spider|slurp|preview|headless|facebookexternalhit|curl|wget/i
+
 const publicRoutes = new Hono()
 
 publicRoutes.get('/tutorials', async (c) => {
@@ -116,11 +118,14 @@ publicRoutes.get('/tutorials/:id', async (c) => {
   if (error) return c.json({ error: error.message }, singleRowStatus(error))
   // 092. Counted, never awaited into a failure: a view that cannot be counted
   // is not a reason to refuse the guide.
-  try {
-    const { error: viewError } = await createAdminClient().rpc('bump_tutorial_view', { p_tutorial_id: c.req.param('id') })
-    if (viewError) console.error('[public guide] view not counted:', viewError.message)
-  } catch (err) {
-    console.error('[public guide] view not counted:', err)
+  // The web app forwards the visitor's User-Agent; crawlers are not readers.
+  if (!BOT_UA.test(c.req.header('user-agent') ?? '')) {
+    try {
+      const { error: viewError } = await createAdminClient().rpc('bump_tutorial_view', { p_tutorial_id: c.req.param('id') })
+      if (viewError) console.error('[public guide] view not counted:', viewError.message)
+    } catch (err) {
+      console.error('[public guide] view not counted:', err)
+    }
   }
   // Filter the embed here rather than in the select: PostgREST cannot constrain an
   // embedded relation's rows from the parent query, and an organisation's mark must
@@ -1227,6 +1232,23 @@ publicRoutes.get('/challenges/:id', async (c) => {
     .is('removed_at', null)
   if (participantsError) return c.json({ error: participantsError.message }, 500)
 
+  // A person the viewer reported leaves their Makers list until an admin
+  // resolves it; everyone else still sees them. toy_idea_reports has no select
+  // policy for authenticated (041), so the admin client reads it, scoped to the viewer.
+  const viewer = await signedIn(c)
+  const reportedByViewer = new Set<string>()
+  if (viewer) {
+    const { data: reports, error: reportsError } = await admin
+      .from('toy_idea_reports')
+      .select('reported_profile_id')
+      .eq('idea_id', idea.id)
+      .eq('reported_by', viewer)
+      .is('resolved_at', null)
+    if (reportsError) return c.json({ error: reportsError.message }, 500)
+    for (const r of reports ?? []) reportedByViewer.add(r.reported_profile_id as string)
+  }
+  const visible = (participants ?? []).filter((p: any) => !reportedByViewer.has(p.profile_id))
+
   // 110. Never added_by: on an anonymous challenge that is the author's id.
   const { data: constraints, error: constraintsError } = await admin
     .from('toy_idea_constraints')
@@ -1242,11 +1264,12 @@ publicRoutes.get('/challenges/:id', async (c) => {
   return c.json({
     ...withPhotoUrl(rest),
     ...counts.get(idea.id),
+    maker_count: (counts.get(idea.id)?.maker_count ?? 0) - (participants ?? []).length + visible.length,
     // 108: no name and no id for an anonymous author — the id is a name one
     // call away. The author recognises their own through /api/ideas/mine/:id.
     author_id: hidden ? null : rest.author_id,
     author_name: hidden ? null : profiles?.name ?? null,
-    participants: (participants ?? []).map((p: any) => ({
+    participants: visible.map((p: any) => ({
       idea_id: p.idea_id, profile_id: p.profile_id, joined_at: p.joined_at,
       name: p.profiles?.name ?? null,
       role: p.profiles?.role ?? 'contributor',
