@@ -25,7 +25,8 @@ vi.mock('@/lib/browser-api-client', () => ({
     delete: (...args: unknown[]) => del(...args),
   },
 }))
-vi.mock('@/components/toast', () => ({ useToast: () => vi.fn() }))
+const showToast = vi.hoisted(() => vi.fn())
+vi.mock('@/components/toast', () => ({ useToast: () => showToast }))
 
 // jsdom has no <dialog> methods.
 HTMLDialogElement.prototype.showModal = function (this: HTMLDialogElement) {
@@ -50,6 +51,7 @@ const me = (over: Partial<OrgRelationship> = {}): OrgRelationship => ({
 
 beforeEach(() => {
   push.mockReset()
+  showToast.mockReset()
   post.mockReset().mockResolvedValue({ thanks_count: 1 })
   del.mockReset().mockResolvedValue({ following: false })
 })
@@ -111,6 +113,7 @@ describe('OrgActions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Follow' }))
     await waitFor(() => expect(screen.getByRole('button', { name: 'Following' })).toBeInTheDocument())
     expect(post).toHaveBeenCalledWith('/api/organizations/o1/follow', {})
+    expect(showToast).toHaveBeenCalledWith('Following Northbank')
     fireEvent.click(screen.getByRole('button', { name: 'Following' }))
     await waitFor(() => expect(del).toHaveBeenCalledWith('/api/organizations/o1/follow'))
   })
@@ -129,6 +132,7 @@ describe('OrgActions', () => {
       })
     )
     await waitFor(() => expect(screen.getByRole('button', { name: 'Thanked' })).toBeDisabled())
+    expect(showToast).toHaveBeenCalledWith('Thanks sent')
   })
 
   it('WN09 opens an already-thanked org with the button spent', () => {

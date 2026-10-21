@@ -40,6 +40,7 @@ import type { Icon } from '@phosphor-icons/react'
 import { ShelfToyCard } from '@/components/shelf-toy-card'
 import { tintFor } from '@/components/card-photo'
 import { OrgActions } from '@/components/org-actions'
+import { ToastProvider } from '@/components/toast'
 import { safePhotoSrc } from '@/lib/photo-src'
 import { firstName, initials, recyclingPerDrop, shortDate, type RecyclingGives } from '@splat-connect/types'
 import { getCapabilities } from '@/lib/capabilities'
@@ -55,8 +56,6 @@ import {
   type OrgRelationship,
   type Tutorial,
 } from '@splat-connect/types'
-
-// PENDING(public-org-toasts-missing): the public organisation page gets the ToastProvider; Follow confirms 'Following {org}', Say thanks confirms...
 
 const CHIP_TINTS = ['var(--tok)', 'var(--b100)', 'var(--tamber)', 'var(--tcoral)', 'var(--tviolet)', 'var(--tmint)']
 const QUOTE_TINTS = ['var(--tmint)', 'var(--tamber)', 'var(--tviolet)', 'var(--b100)']
@@ -153,6 +152,7 @@ export default async function OrgPublicProfilePage({
   const logo = safePhotoSrc(org.logo_url ?? null)
 
   return (
+    <ToastProvider>
     <div>
       <nav
         aria-label="Breadcrumb"
@@ -621,6 +621,7 @@ export default async function OrgPublicProfilePage({
         </aside>
       </div>
     </div>
+    </ToastProvider>
   )
 }
 

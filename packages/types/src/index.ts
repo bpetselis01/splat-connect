@@ -1328,7 +1328,8 @@ export interface OrgEvent {
   kind: EventKind
   title: string
   summary: string | null
-  starts_at: string
+  /** Null on a draft that has no date yet (144); never on a published event. */
+  starts_at: string | null
   ends_at: string | null
   format: 'in_person' | 'online'
   /** Venue and street, as the publish form labels it. Set on an in-person
@@ -1415,7 +1416,8 @@ export interface OrgEventRegistration {
 }
 
 /** One row on /get-involved/events, with the numbers the card shows. */
-export interface EventListItem extends OrgEvent {
+export interface EventListItem extends Omit<OrgEvent, 'starts_at'> {
+  starts_at: string
   org_name: string
   going_count: number
   /** Null when the event has no capacity. */
@@ -2473,8 +2475,8 @@ export interface OrgPublicProfile {
   events?: Array<
     Pick<
       OrgEvent,
-      'id' | 'org_id' | 'title' | 'summary' | 'starts_at' | 'ends_at' | 'format' | 'location' | 'audience' | 'status'
-    >
+      'id' | 'org_id' | 'title' | 'summary' | 'ends_at' | 'format' | 'location' | 'audience' | 'status'
+    > & { starts_at: string }
   >
   stories?: Array<
     Pick<OrgStory, 'id' | 'org_id' | 'kind' | 'title' | 'summary' | 'byline' | 'status' | 'created_at'>

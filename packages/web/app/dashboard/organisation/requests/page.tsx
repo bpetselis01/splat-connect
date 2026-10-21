@@ -19,10 +19,9 @@
  * here that skipped them would be the fast path to a wrong answer.
  */
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
 import { Gift, Hammer, Cube, BookOpenText } from '@phosphor-icons/react/dist/ssr'
 import { actingOrg } from '@/lib/acting-org'
-import { getCapabilities } from '@/lib/capabilities'
+import { requireOrgLeader } from '@/lib/org-access'
 import { apiClient } from '@/lib/api-client'
 import { Badge } from '@/components/badge'
 import { formatRelativeTime } from '@/lib/relative-time'
@@ -70,8 +69,7 @@ export default async function OrgRequestsPage({
 }: {
   searchParams: Promise<{ tab?: string }>
 }) {
-  const caps = await getCapabilities()
-  if (!caps || caps.ledOrgs.length === 0) notFound()
+  const caps = await requireOrgLeader('/dashboard/organisation/requests')
   const org = await actingOrg(caps)
   const { tab } = await searchParams
 

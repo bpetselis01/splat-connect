@@ -157,8 +157,8 @@ export function EventFormScreen({ event, questions: saved = [] }: { event?: OrgE
 
   const [title, setTitle] = useState(event?.title ?? '')
   const [kind, setKind] = useState<EventKind>(event?.kind ?? 'build_day')
-  const [date, setDate] = useState(event ? localParts(event.starts_at).date : '')
-  const [starts, setStarts] = useState(event ? localParts(event.starts_at).time : '')
+  const [date, setDate] = useState(event?.starts_at ? localParts(event.starts_at).date : '')
+  const [starts, setStarts] = useState(event?.starts_at ? localParts(event.starts_at).time : '')
   const [ends, setEnds] = useState(event?.ends_at ? localParts(event.ends_at).time : '')
   const [format, setFormat] = useState<'in_person' | 'online'>(event?.format ?? 'in_person')
   const [location, setLocation] = useState(event?.location ?? '')

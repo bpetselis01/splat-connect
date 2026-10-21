@@ -13,13 +13,13 @@
  * Related files:
  * - app/dashboard/organisation: the review queue this sits beside
  * - components/org-pickup-form: the address without which nothing can be accepted
- * - lib/org-access.ts: the same "affordance, not control" rule this notFound() follows
+ * - lib/org-access.ts: the same "affordance, not control" rule requireOrgLeader() follows
  */
 import Link from 'next/link'
 import type { Route } from 'next'
 import { notFound } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
-import { getCapabilities } from '@/lib/capabilities'
+import { requireOrgLeader } from '@/lib/org-access'
 import { Archive, Package, Plus, Tag, PencilSimple, Gift } from '@phosphor-icons/react/dist/ssr'
 import { OrgPickupForm, type OrgPickup } from '@/components/org-pickup-form'
 import { DeleteEntityButton } from '@/components/delete-entity-button'
@@ -31,10 +31,9 @@ import type { Toy, ToyTransactionSummary } from '@splat-connect/types'
 type OrgToy = Toy & { organizations: { name: string } | null; has_history?: boolean }
 
 export default async function OrgInventoryPage() {
-  const caps = await getCapabilities()
   // The rail hides this row for a non-leader, but the rail is an affordance —
   // the page is its own control.
-  if (!caps || caps.ledOrgs.length === 0) notFound()
+  const caps = await requireOrgLeader('/dashboard/organisation/toys')
 
   const [toys, handoffs, pickups] = await Promise.all([
     apiClient.get<OrgToy[]>('/api/toys/inventory').catch(() => [] as OrgToy[]),

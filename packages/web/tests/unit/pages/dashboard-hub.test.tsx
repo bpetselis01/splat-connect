@@ -96,6 +96,16 @@ describe('DashboardHub', () => {
   // Chain: the hub is the account section's landing page the way /get-involved is
   //        its section's; a destination missing here is reachable only from the
   //        rail, which is absent on public routes
+  it('WB37 shows the leaders-only note when a non-leader was sent here from an organisation page', async () => {
+    render(await DashboardHub({ searchParams: Promise.resolve({ notice: 'org-leaders-only' }) }))
+    expect(screen.getByRole('status')).toHaveTextContent('That page is for organisation leaders.')
+  })
+
+  it('shows no note on a plain visit', async () => {
+    render(await DashboardHub())
+    expect(screen.queryByText('That page is for organisation leaders.')).not.toBeInTheDocument()
+  })
+
   it('renders a tile per account destination', async () => {
     const ui = await DashboardHub()
     render(ui)

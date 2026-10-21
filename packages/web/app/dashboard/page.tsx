@@ -13,6 +13,7 @@
  * - @splat-connect/types nav-model.ts: the destination list, shared with the rail
  * - components/hub-grid.tsx: the grid, shared with every public hub
  */
+import { LEADERS_ONLY_NOTE, LEADERS_ONLY_NOTICE } from '@/lib/org-access'
 import { requireCapabilities } from '@/lib/require-capabilities'
 import { buildNav } from '@splat-connect/types'
 import { HubGrid } from '@/components/hub-grid'
@@ -86,8 +87,13 @@ function waitingSentence(n: number): string {
   return `${NUMBER_WORDS[n] ?? n} thing${n === 1 ? ' is' : 's are'} waiting.`
 }
 
-export default async function DashboardHub() {
+export default async function DashboardHub({
+  searchParams,
+}: {
+  searchParams?: Promise<{ notice?: string }>
+} = {}) {
   const caps = await requireCapabilities()
+  const notice = (await searchParams)?.notice
 
   /*
    * What is behind each card, rather than a sentence about the card.
@@ -234,6 +240,11 @@ export default async function DashboardHub() {
 
   return (
     <div>
+      {notice === LEADERS_ONLY_NOTICE && (
+        <p role="status" className="alert alert-warning mb-6">
+          {LEADERS_ONLY_NOTE}
+        </p>
+      )}
       <section className="dash-hero">
         <div aria-hidden="true" className="dash-hero__blob" />
         <div className="relative flex flex-wrap items-center gap-7">

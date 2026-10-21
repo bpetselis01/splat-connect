@@ -186,6 +186,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web","api"],
     needs: "Decided 2026-10-20: build the authenticated joining-link route and send the link in the registration confirmation email. Build the authenticated joining-link route and email, or drop the promise from the page.",
+    shipped: true,
   },
   'web-auth-recovery': {
     title: "Web sign-in recovery",
@@ -324,6 +325,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: signed-in non-leaders are redirected to /dashboard with a note that the page is for organisation leaders; anonymous visitors go to sign in with next. Whether a non-leader is redirected (and where) or keeps the 404.",
+    shipped: true,
   },
   'toy-transactions-role-filter-ignored': {
     title: "Role filter on the Exchange list",
@@ -338,6 +340,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: a draft needs only a title; every other rule applies at publish; form copy stays as is. Whether drafts skip validation as the form says, or the form copy changes.",
+    shipped: true,
   },
   'recycling-credit-rounding': {
     title: "Recycling credit rounding",
@@ -353,6 +356,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: fix it: Join resets after Leave. Nothing to decide beyond scheduling the fix.",
+    shipped: true,
   },
   'event-register-raw-409': {
     title: "Event registration error copy",
@@ -360,6 +364,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: show the full-event copy only, with the leader contact, and hide submit; other 409s keep a generic retry message. Whether to show only the full-event copy.",
+    shipped: true,
   },
   'public-org-toasts-missing': {
     title: "Toasts on the public organisation page",
@@ -367,6 +372,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: the public organisation page gets the ToastProvider; Follow confirms 'Following {org}', Say thanks confirms 'Thanks sent'. Whether the public page gets a ToastProvider.",
+    shipped: true,
   },
   'guide-share-no-toast': {
     title: "Share on a Guide page",

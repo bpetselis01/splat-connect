@@ -165,6 +165,20 @@ describe('ChallengeThread', () => {
     await waitFor(() => expect(mockRefresh).toHaveBeenCalled())
   })
 
+  it('WI19 offers a working Join button again once the participant has left', async () => {
+    vi.spyOn(browserApiClient, 'get').mockResolvedValue([])
+    vi.spyOn(browserApiClient, 'delete').mockResolvedValue(undefined)
+
+    const { rerender } = render(<ChallengeThread {...baseProps({ viewerId: 'p1' })} />)
+    await waitFor(() => expect(screen.getByRole('button', { name: /leave this challenge/i })).toBeInTheDocument())
+    fireEvent.click(screen.getByRole('button', { name: /leave this challenge/i }))
+    await waitFor(() => expect(mockRefresh).toHaveBeenCalled())
+
+    // router.refresh() re-renders the same instance with the server's new participants.
+    rerender(<ChallengeThread {...baseProps({ viewerId: 'p1', participants: [PARTICIPANTS[1]] })} />)
+    expect(screen.getByRole('button', { name: 'Join this challenge' })).toBeEnabled()
+  })
+
   // Tests: the author sees every participant with a Remove control, and
   //        Remove targets that participant's id, not the author's own
   // How:   viewer is authorId; asserts both participant names render with a

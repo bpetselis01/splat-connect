@@ -79,6 +79,26 @@ test('WI30 a card opens its event, and Register your organisation or Host an eve
   }
 })
 
+test('WI39 a registrant of an online event sees Join online; an anonymous visitor sees no link', async ({ page }) => {
+  const { leader, family, orgId } = await world()
+  const id = await createEvent(orgId, leader.id, {
+    status: 'published', format: 'online', online_url: 'https://meet.example/room-4417', location: null, suburb: null, state: null,
+  })
+  try {
+    await page.goto(`/get-involved/events/${id}`)
+    await expect(page.getByRole('link', { name: 'Join online' })).toHaveCount(0)
+
+    await signIn(page, family.email, family.password)
+    await page.goto(`/get-involved/events/${id}`)
+    await page.getByRole('button', { name: "I'm going" }).click()
+    await expect(page.getByRole('button', { name: "You're going" })).toBeVisible()
+    await page.reload()
+    await expect(page.getByRole('link', { name: 'Join online' })).toHaveAttribute('href', 'https://meet.example/room-4417')
+  } finally {
+    await cleanup(orgId, [leader, family])
+  }
+})
+
 test('WI31 WI32 a member says they are going to an event with nothing to ask, then cancels', async ({ page }) => {
   const { leader, family, orgId } = await world()
   const id = await createEvent(orgId, leader.id, { status: 'published', capacity: 5 })

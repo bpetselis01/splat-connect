@@ -5,9 +5,8 @@
  * renders. There is no review — it publishes on save — which is why the form
  * restates the leader terms at its foot.
  */
-import { notFound } from 'next/navigation'
 import { actingOrg } from '@/lib/acting-org'
-import { getCapabilities } from '@/lib/capabilities'
+import { requireOrgLeader } from '@/lib/org-access'
 import { apiClient } from '@/lib/api-client'
 import { OrgProfileForm } from '@/components/org-profile-form'
 import { OrgThanksNotes } from '@/components/org-thanks-notes'
@@ -17,10 +16,9 @@ import type { Organization, OrgThanks } from '@splat-connect/types'
 export const metadata = { title: 'Organisation profile — SPLAT Connect' }
 
 export default async function OrgProfilePage() {
-  const caps = await getCapabilities()
   // The tab strip hides this for a non-leader, but the strip is an affordance —
   // the page is its own control (lib/org-access.ts states the same rule).
-  if (!caps || caps.ledOrgs.length === 0) notFound()
+  const caps = await requireOrgLeader('/dashboard/organisation/profile')
 
   const orgId = (await actingOrg(caps)).id
   const [org, thanks] = await Promise.all([

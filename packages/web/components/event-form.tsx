@@ -74,8 +74,6 @@ import {
   type OrgEventQuestion,
 } from '@splat-connect/types'
 
-// PENDING(draft-event-story-validation): a draft needs only a title; every other rule applies at publish; form copy stays as is. Whether drafts skip...
-
 /** A question being edited. `id` is absent until it has been saved once. */
 type DraftQuestion = {
   id?: string
@@ -191,8 +189,8 @@ export function EventForm({
   const [kind, setKind] = useState<EventKind>(event?.kind ?? 'build_day')
   // Read in the browser's zone: slicing the stored UTC string reopened a 6pm
   // Sydney event at 07:00.
-  const [date, setDate] = useState(event ? localParts(event.starts_at).date : '')
-  const [starts, setStarts] = useState(event ? localParts(event.starts_at).time : '')
+  const [date, setDate] = useState(event?.starts_at ? localParts(event.starts_at).date : '')
+  const [starts, setStarts] = useState(event?.starts_at ? localParts(event.starts_at).time : '')
   const [ends, setEnds] = useState(event?.ends_at ? localParts(event.ends_at).time : '')
   const [format, setFormat] = useState<'in_person' | 'online'>(event?.format ?? 'in_person')
   const [location, setLocation] = useState(event?.location ?? '')

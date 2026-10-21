@@ -54,8 +54,6 @@ import { safePhotoSrc } from '@/lib/photo-src'
 import { initials, OUTCOME_STEPS, outcomeStates } from '@splat-connect/types'
 import { authUrl } from '@/lib/safe-next-path'
 
-// PENDING(challenge-join-busy-stuck): fix it: Join resets after Leave. Nothing to decide beyond scheduling the fix.
-
 const CONTACT_PREF_LABELS: Record<ContactPref, string> = {
   clarification: 'Clarification',
   co_design: 'Co-design',

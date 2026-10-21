@@ -21,6 +21,7 @@
 import { Hono } from 'hono'
 import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { notify } from '../notify.js'
+import { sendEmail } from '../mailer.js'
 import { orgName } from './organizations.js'
 import { INVALID_TEXT_REPRESENTATION } from '../supabase/pg-errors.js'
 import type { AuthVariables } from '../middleware/auth.js'
@@ -179,7 +180,7 @@ events.post('/:id/registrations', async (c) => {
   const admin = createAdminClient()
   const { data: event, error: eventError } = await admin
     .from('org_events')
-    .select('id, org_id, title, status, cancelled_at, registrations_closed_at, capacity, starts_at, cost_cents')
+    .select('id, org_id, title, status, cancelled_at, registrations_closed_at, capacity, starts_at, cost_cents, format, online_url')
     .eq('id', eventId)
     .maybeSingle()
   if (eventError) {
@@ -243,6 +244,7 @@ events.post('/:id/registrations', async (c) => {
   }
   let isNew = true
   let { data, error } = await attempt('insert')
+  const inserted = !error && !!data
   if (!error && !data) ({ data, error } = await attempt('revive'))
   if (!error && !data) {
     isNew = false
@@ -266,8 +268,57 @@ events.post('/:id/registrations', async (c) => {
       ],
       'event_rsvp_received'
     )
+    // The link is never on a public page; this email and the joining-link route are the two ways a registrant gets it.
+    // Only a first-ever registration, and only to the account's own address: the form's email is unverified, and a revive would let cancel and re-register repeat the mail.
+    const accountEmail = inserted && event.format === 'online' && event.online_url
+      ? (await createAdminClient().auth.admin.getUserById(userId)).data.user?.email
+      : null
+    if (accountEmail) {
+      await sendEmail(
+        accountEmail,
+        `You're going to ${event.title}`,
+        [
+          `You're registered for ${event.title}.`,
+          '',
+          `Join online: ${event.online_url}`,
+          '',
+          'You can also find the link on the event page while you are registered. Keep it to yourself: it is for the people who registered.',
+        ].join('\n')
+      )
+    }
   }
   return c.json(data, 201)
+})
+
+/**
+ * An online event's joining link, for somebody who is registered for it. The
+ * registration is read with the user client, so 061's "you wrote it" policy is
+ * the check; the link itself comes from the admin client because the anon and
+ * authenticated roles cannot read online_url.
+ */
+events.get('/:id/joining-link', async (c) => {
+  const eventId = c.req.param('id')
+  const { data: event, error } = await createAdminClient()
+    .from('org_events')
+    .select('format, online_url, status, cancelled_at')
+    .eq('id', eventId)
+    .maybeSingle()
+  if (error) {
+    if (error.code === INVALID_TEXT_REPRESENTATION) return c.json({ error: 'No such event.' }, 404)
+    return c.json({ error: error.message }, 500)
+  }
+  if (!event || event.status !== 'published') return c.json({ error: 'No such event.' }, 404)
+  if (event.format !== 'online' || !event.online_url) return c.json({ error: 'This event has no joining link.' }, 404)
+
+  const { data: mine } = await createUserClient(c.get('token'))
+    .from('org_event_registrations')
+    .select('id')
+    .eq('event_id', eventId)
+    .eq('user_id', c.get('userId'))
+    .is('cancelled_at', null)
+    .maybeSingle()
+  if (!mine) return c.json({ error: 'Register for this event to get the joining link.' }, 403)
+  return c.json({ online_url: event.online_url })
 })
 
 /**

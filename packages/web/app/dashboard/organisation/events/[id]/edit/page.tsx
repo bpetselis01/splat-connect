@@ -3,7 +3,7 @@
  */
 import { notFound } from 'next/navigation'
 import { actingOrg } from '@/lib/acting-org'
-import { getCapabilities } from '@/lib/capabilities'
+import { requireOrgLeader } from '@/lib/org-access'
 import { apiClient } from '@/lib/api-client'
 import { EventForm } from '@/components/event-form'
 import type { OrgEvent, OrgEventQuestion } from '@splat-connect/types'
@@ -12,8 +12,7 @@ export const metadata = { title: 'Edit an event — SPLAT Connect' }
 
 export default async function EditEventPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const caps = await getCapabilities()
-  if (!caps || caps.ledOrgs.length === 0) notFound()
+  const caps = await requireOrgLeader(`/dashboard/organisation/events/${id}/edit`)
   const org = await actingOrg(caps)
 
   const [events, questions] = await Promise.all([

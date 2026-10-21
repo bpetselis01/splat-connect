@@ -26,7 +26,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | web | Sign in and sign up | 24 | 0 | 0 |
 | web | Gates and onboarding | 7 | 0 | 2 |
 | web | Route protection (middleware) | 7 | 0 | 0 |
-| web | Organisation leader (web) | 36 | 0 | 0 |
+| web | Organisation leader (web) | 37 | 0 | 0 |
 | web | Header, footer and dock | 14 | 0 | 0 |
 | web | My SPLAT hub | 6 | 0 | 0 |
 | web | Account | 8 | 0 | 0 |
@@ -51,7 +51,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | web | Makers wanted | 4 | 0 | 0 |
 | web | Adaptation requests | 2 | 0 | 0 |
 | web | Events | 2 | 0 | 0 |
-| web | Event detail | 4 | 0 | 0 |
+| web | Event detail | 5 | 0 | 0 |
 | web | Event register | 1 | 0 | 0 |
 | web | Recycling | 3 | 0 | 0 |
 | web | Legal and static pages | 7 | 0 | 0 |
@@ -627,9 +627,9 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 
 </details>
 
-### Organisation leader (web) — 36 rows · 0 gaps · 0 waived
+### Organisation leader (web) — 37 rows · 0 gaps · 0 waived
 
-<details><summary>36 rows, no gaps</summary>
+<details><summary>37 rows, no gaps</summary>
 
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
@@ -669,6 +669,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | WB34 | write | `/dashboard/organisation/profile` | L | Leaders: "Cancel invitation" → DELETE | – | – | L | ✅ | ✅ | ✅ | – |
 | WB35 | write | `/dashboard/organisation/profile` | L | Leaders: "Step down as leader" (two or more leaders) → DELETE, then /dashboard | – | leader seat | L | ✅ | ✅ | ✅ | – |
 | WB36 | nav | `/dashboard/organisation/messages` | L | conversation list per led organisation, newest first, each row → /dashboard/messages/:id | – | – | P | ✅ | ✅ | ✅ | – |
+| WB37 | nav | `/dashboard/organisation` | P | an organisation page opened by a member who leads nothing → /dashboard with the note 'That page is for organisation leaders.'; signed out → /login with next | – | – | n/a | ✅ | ✅ | – | – |
 
 </details>
 
@@ -1009,9 +1010,9 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 
 </details>
 
-### Event detail — 4 rows · 0 gaps · 0 waived
+### Event detail — 5 rows · 0 gaps · 0 waived
 
-<details><summary>4 rows, no gaps</summary>
+<details><summary>5 rows, no gaps</summary>
 
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
@@ -1019,6 +1020,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | WI32 | write | `/get-involved/events/[id]` | P | "You're going" → DELETE registration; the button reads "I'm going" again | – | going count, seats left | L | ✅ | ✅ | ✅ | – |
 | WI33 | nav | `/get-involved/events/[id]` | anon | signed-out "I'm going" → /login?next=the event; signed in with questions or a cost → the register form | – | – | L | ✅ | ✅ | – | – |
 | WI34 | write | `/get-involved/events/[id]` | P | print-at-event "Send request" (guide, parts, sets) → POST print-at-event | toy_request | – | L | ✅ | ✅ | ✅ | – |
+| WI39 | write | `/get-involved/events/[id]` | P | online event, registered: "Join online" → the joining link from GET joining-link (registrants only), also in the confirmation email | confirmation email | – | L | ✅ | ✅ | ✅ | – |
 
 </details>
 
@@ -1028,7 +1030,7 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| WI35 | write | `/get-involved/events/[id]/register` | P | "Confirm my spot" (name, email, answers, cost box) → POST registration, then the event page; a full event shows the server sentence | event_rsvp_received | going count | L | ✅ | ✅ | ✅ | – |
+| WI35 | write | `/get-involved/events/[id]/register` | P | "Confirm my spot" (name, email, answers, cost box) → POST registration, then the event page; a full event shows the full-event copy with the host contact and hides the button; any other refusal shows a retry sentence | event_rsvp_received | going count | L | ✅ | ✅ | ✅ | – |
 
 </details>
 
@@ -1137,9 +1139,9 @@ Gaps: 0 · Waived: 5 · Routes without rows: 5
 | ID | Kind | Route | Seat | Element | Notifies | Counts | Setter | web-unit | web-e2e | api | device |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | WN06 | nav | `/organizations/[id]/public` | anon | profile render: about, doors, rate lines, recycling card, events, stories, guides | – | – | L | ✅ | ✅ | ✅ | – |
-| WN07 | write | `/organizations/[id]/public` | P | Follow / Following → POST or DELETE follow, (signed out → /signup; the toast it calls is a no-op here, no ToastProvider) | org_event_published, org_story_published | – | P | ✅ | ✅ | ✅ | – |
+| WN07 | write | `/organizations/[id]/public` | P | Follow / Following → POST or DELETE follow, confirming with the toast 'Following {org}'; signed out → /signup | org_event_published, org_story_published | – | P | ✅ | ✅ | ✅ | – |
 | WN08 | nav | `/organizations/[id]/public` | anon | "Message" → /organizations/:id/message; signed out → /signup?next&reason=message | – | – | n/a | ✅ | ✅ | – | – |
-| WN09 | write | `/organizations/[id]/public` | P | "Say thanks" → note, byline, show-on-page → POST thanks; the button reads "Thanked" | org_thanked | – | P | ✅ | ✅ | ✅ | – |
+| WN09 | write | `/organizations/[id]/public` | P | "Say thanks" → note, byline, show-on-page → POST thanks; the toast reads "Thanks sent" and the button reads "Thanked" | org_thanked | – | P | ✅ | ✅ | ✅ | – |
 | WN10 | nav | `/organizations/[id]/public` | L | a leader of this organisation sees "Edit your page" → /dashboard/organisation/profile instead of the three buttons | – | – | L | ✅ | ✅ | – | – |
 | WN11 | nav | `/organizations/[id]/public` | anon | recycling card: signed in "Book a drop-off" → drop-off?org=; signed out "How recycling works" → /get-involved/recycling | – | – | n/a | ✅ | ✅ | – | – |
 
