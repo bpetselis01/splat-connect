@@ -119,6 +119,22 @@ describe('ChallengeDetailScreen', () => {
     expect(screen.queryByRole('button', { name: 'Report Viewer' })).toBeNull()
   })
 
+  it('C16 drops a reported maker from the Makers tab once the refetch no longer lists them', async () => {
+    const withSam = joinedDetail({ maker_count: 2, participants: [{ profile_id: 'viewer1', name: 'Viewer', joined_at: '2026-08-14T03:00:00Z' }, { profile_id: 'p1', name: 'Sam', joined_at: '2026-08-14T03:00:00Z' }] })
+    respond(withSam)
+    mockPost.mockResolvedValue({ reported: true })
+    render(<ChallengeDetailScreen id="c1" />)
+    fireEvent.press(await screen.findByRole('tab', { name: 'Makers' }))
+    expect(screen.getByText('Sam')).toBeTruthy()
+    respond(joinedDetail({ maker_count: 1 }))
+    fireEvent.press(screen.getByRole('button', { name: 'Report Sam' }))
+    fireEvent.changeText(screen.getByLabelText('Why are you reporting them?'), 'Rude in the thread.')
+    fireEvent.press(screen.getByRole('button', { name: 'Send report' }))
+    await waitFor(() => expect(mockGet.mock.calls.filter(([p]) => p === '/api/public/challenges/c1')).toHaveLength(2))
+    await waitFor(() => expect(screen.queryByText('Sam')).toBeNull())
+    expect(screen.getByText('You')).toBeTruthy()
+  })
+
   it('C02 renders the brief the public route returns', async () => {
     mockGet.mockResolvedValue(detail({ participants: [{ profile_id: 'p1', name: 'Sam' }] }))
     render(<ChallengeDetailScreen id="c1" />)
