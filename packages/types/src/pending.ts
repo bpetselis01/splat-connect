@@ -260,6 +260,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: admins can open any thread and post an admin-labelled message, but cannot accept, reject, confirm or withdraw for a member. Whether to hide the party buttons from admins and exempt admins from the terms gate.",
+    shipped: true,
   },
   'admin-status-validation': {
     title: "Guide status from the admin route",
@@ -288,6 +289,7 @@ export const PENDING = {
     kind: "build",
     platforms: ["web"],
     needs: "Decided 2026-10-20: hoist sendMessage/accept/reject/withdraw/confirm into one module of plain functions taking args; every decline carries a reason the other party sees. Whether to hoist the actions into one place and send the decline reason from every thread page.",
+    shipped: true,
   },
   'small-inconsistencies': {
     title: "Smaller inconsistencies",

@@ -170,7 +170,9 @@ test('WX17 WX18 a maker can decline a Build request, and the family can withdraw
   try {
     const declined = await askedMaker(family, maker, tutorialId)
     await maker.page.goto(declined)
-    await maker.page.getByRole('button', { name: 'Reject' }).click()
+    await maker.page.getByRole('button', { name: 'Decline' }).click()
+    await maker.page.getByLabel('Why you cannot take it').fill('No time this month')
+    await maker.page.getByRole('button', { name: 'Send the decline' }).click()
     await expect(maker.page.getByText('This request was declined.')).toBeVisible()
     await expect(maker.page.getByText('Nobody took it on')).toBeVisible()
     await unreadIs(family.page, 1)

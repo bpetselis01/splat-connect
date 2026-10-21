@@ -47,7 +47,7 @@ import { SkeletonRow } from '../ui/Skeleton'
 import { EmptyState } from '../ui/EmptyState'
 import { MessageBubble } from '../ui/MessageBubble'
 import { ErrorRow } from '../ui/ErrorRow'
-import { apiMessage } from '@splat-connect/types'
+import { apiMessage, DECLINE_REASON_MAX } from '@splat-connect/types'
 import { ReportProblem } from '../reports/report-problem'
 import { ThankButton } from '../people/thank-button'
 import { CostPanel } from '../exchanges/cost-panel'
@@ -81,6 +81,7 @@ export function BuildThreadScreen({ id }: { id: string }) {
   const [draft, setDraft] = useState('')
   const [code, setCode] = useState('')
   const [pickup, setPickup] = useState<PickupDraft | null>(null)
+  const [reason, setReason] = useState<string | null>(null)
   const [shotUrl, setShotUrl] = useState<string | null>(null)
   const logRef = useRef<ScrollView>(null)
   // Same guard as the exchange thread: a poll in flight when someone acted
@@ -231,9 +232,9 @@ export function BuildThreadScreen({ id }: { id: string }) {
     )
   }
 
-  const c = buildControls(tx, viewerId, ledOrgIds)
+  const c = buildControls(tx, viewerId, ledOrgIds, caps?.isAdmin)
   const otherName = c.isMaker ? tx.requester_name : tx.owner_name
-  const card = buildCard(tx, viewerId, otherName, ledOrgIds)
+  const card = buildCard(tx, viewerId, otherName, ledOrgIds, caps?.isAdmin)
   const rail = buildRail(tx)
   const myCode = c.isMaker ? tx.owner_code : tx.requester_code
   const nameFor = (senderId: string) => (senderId === tx.requester_id ? tx.requester_name : tx.owner_name)
@@ -305,6 +306,9 @@ export function BuildThreadScreen({ id }: { id: string }) {
             </View>
             <Text style={styles.nextTitle}>{card.title}</Text>
             <Text style={styles.nextBody}>{card.body}</Text>
+            {tx.status === 'rejected' && tx.decline_reason ? (
+              <Text style={styles.nextBody}>Reason: {tx.decline_reason}</Text>
+            ) : null}
 
             {c.canClaim ? (
               <Button label="I'll build this" disabled={busy} onPress={() => post('claim')} style={styles.nextButton} />
@@ -333,6 +337,26 @@ export function BuildThreadScreen({ id }: { id: string }) {
                   />
                   <Button label="Cancel" variant="ghost" onPress={() => setPickup(null)} />
                 </View>
+              ) : reason !== null ? (
+                <View style={styles.nextStack}>
+                  <Text style={styles.nextBody}>Why are you declining? The family reads this.</Text>
+                  <TextField
+                    label="Reason"
+                    accessibilityLabel="Reason for declining"
+                    multiline
+                    maxLength={DECLINE_REASON_MAX}
+                    value={reason}
+                    onChangeText={setReason}
+                  />
+                  <Button
+                    label="Send the decline"
+                    disabled={busy || !reason.trim()}
+                    onPress={async () => {
+                      if (await post('reject', { reason: reason.trim() })) setReason(null)
+                    }}
+                  />
+                  <Button label="Cancel" variant="ghost" onPress={() => setReason(null)} />
+                </View>
               ) : (
                 <View style={styles.buttonRow}>
                   <Button
@@ -352,7 +376,7 @@ export function BuildThreadScreen({ id }: { id: string }) {
                           })
                     }
                   />
-                  <Button label="Decline" variant="secondary" disabled={busy} style={styles.rowButton} onPress={() => post('reject')} />
+                  <Button label="Decline" variant="secondary" disabled={busy} style={styles.rowButton} onPress={() => setReason('')} />
                 </View>
               )
             ) : null}

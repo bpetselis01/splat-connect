@@ -349,11 +349,27 @@ describe('a request addressed to a maker by name', () => {
     expect(mockPost).not.toHaveBeenCalled()
   })
 
-  it('K07 declines in one tap', async () => {
+  it('K07 declines with a reason, trimmed, and not before one is typed', async () => {
     serve(claimed())
     render(<BuildThreadScreen id="b1" />)
     fireEvent.press(await screen.findByText('Decline'))
-    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions/b1/reject', {}))
+    expect(mockPost).not.toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: 'Send the decline' })).toBeDisabled()
+    fireEvent.changeText(screen.getByLabelText('Reason for declining'), '  No time this month ')
+    fireEvent.press(screen.getByRole('button', { name: 'Send the decline' }))
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/toy-transactions/b1/reject', { reason: 'No time this month' }))
+  })
+
+  it('X15 K07 shows the family the maker’s reason on a declined build, and no reason line when there is none', async () => {
+    as('fam')
+    serve(claimed({ status: 'rejected', decline_reason: 'No time this month' }))
+    const { unmount } = render(<BuildThreadScreen id="b1" />)
+    expect(await screen.findByText('Reason: No time this month')).toBeTruthy()
+    unmount()
+    serve(claimed({ status: 'rejected', decline_reason: null }))
+    render(<BuildThreadScreen id="b1" />)
+    expect(await screen.findByText('This one did not go ahead')).toBeTruthy()
+    expect(screen.queryByText(/^Reason:/)).toBeNull()
   })
 
   it('K06 accepts for an organisation with no address, which the server fixes', async () => {

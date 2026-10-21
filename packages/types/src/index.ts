@@ -612,6 +612,9 @@ export function buildStep(
   return 'handover'
 }
 
+/** The longest reason a decline may carry; the API refuses more and the forms stop at it. */
+export const DECLINE_REASON_MAX = 500
+
 /**
  * Whether the viewer is the giving side of a transaction.
  *
@@ -892,7 +895,8 @@ export function givenAway(
   return rows.sort((a, b) => b.at.localeCompare(a.at))
 }
 
-export type ToyTransactionMessageKind = 'system' | 'user'
+/** 'admin' is a SPLAT admin speaking in a member thread (140). */
+export type ToyTransactionMessageKind = 'system' | 'user' | 'admin'
 
 export interface ToyTransactionMessage {
   id: string
@@ -1074,7 +1078,7 @@ export interface ToyIdeaDetail extends Omit<ToyIdea, 'author_id'>, Partial<Chall
 export interface ThreadMessage {
   id: string
   sender_id: string
-  kind: 'system' | 'user'
+  kind: ToyTransactionMessageKind
   body: string
   created_at: string
 }

@@ -250,7 +250,9 @@ describe('actions that can be tapped twice', () => {
     mockPost.mockReturnValue(new Promise(() => {}))
     await open()
     fireEvent.press(screen.getByRole('button', { name: 'Decline' }))
-    fireEvent.press(screen.getByRole('button', { name: 'Decline' }))
+    fireEvent.changeText(screen.getByLabelText('Reason for declining'), 'Already given away')
+    fireEvent.press(screen.getByRole('button', { name: 'Send the decline' }))
+    fireEvent.press(screen.getByRole('button', { name: 'Send the decline' }))
     expect(mockPost).toHaveBeenCalledTimes(1)
   })
 
@@ -263,12 +265,14 @@ describe('actions that can be tapped twice', () => {
     expect(mockPost).toHaveBeenCalledTimes(1)
   })
 
-  it('shows the API reason and keeps the Decline button when declining fails', async () => {
+  it('shows the API reason and keeps the decline form enabled when declining fails', async () => {
     mockPost.mockRejectedValue(new Error('API POST /x failed with status 409: Already answered'))
     await open()
     fireEvent.press(screen.getByRole('button', { name: 'Decline' }))
+    fireEvent.changeText(screen.getByLabelText('Reason for declining'), 'Already given away')
+    fireEvent.press(screen.getByRole('button', { name: 'Send the decline' }))
     expect(await screen.findByText('Already answered')).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Decline' }).props.accessibilityState.disabled).toBeFalsy()
+    expect(screen.getByRole('button', { name: 'Send the decline' }).props.accessibilityState.disabled).toBeFalsy()
   })
 })
 

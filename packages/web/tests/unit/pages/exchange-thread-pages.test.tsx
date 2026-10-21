@@ -15,7 +15,9 @@ type ThreadProps = {
 }
 const thread = vi.hoisted(() => ({ props: null as unknown }))
 const viewer = vi.hoisted(() => ({ id: 'owner-1' }))
-const revalidate = vi.hoisted(() => vi.fn())
+const actions = vi.hoisted(() => ({
+  sendMessage: vi.fn(), accept: vi.fn(), reject: vi.fn(), withdraw: vi.fn(), confirm: vi.fn(),
+}))
 
 vi.mock('@/components/toy-transaction-thread', () => ({
   ToyTransactionThread: (props: unknown) => {
@@ -31,7 +33,7 @@ vi.mock('@/lib/require-capabilities', () => ({
   }),
 }))
 vi.mock('@/lib/api-client', () => ({ apiClient: { get: vi.fn(), post: vi.fn() } }))
-vi.mock('next/cache', () => ({ revalidatePath: revalidate }))
+vi.mock('@/app/dashboard/exchanges/actions', () => actions)
 vi.mock('next/navigation', () => ({
   redirect: (to: string) => { throw new Error(`REDIRECT ${to}`) },
   notFound: () => { throw new Error('NEXT_NOT_FOUND') },
@@ -69,37 +71,33 @@ describe('/dashboard/exchanges/[id]', () => {
   it('WX05 posts the message body and refreshes this thread', async () => {
     await mount()
     await props().onSendMessage('Is it still free?')
-    expect(apiClient.post).toHaveBeenCalledWith('/api/toy-transactions/tx-1/messages', { body: 'Is it still free?' })
-    expect(revalidate).toHaveBeenCalledWith('/dashboard/exchanges/tx-1')
+    expect(actions.sendMessage).toHaveBeenCalledWith('tx-1', 'exchange', 'Is it still free?')
   })
 
   it('WX06 accepts with the address the owner typed, and with an empty body for an organisation', async () => {
     await mount()
     await props().onAccept(ADDRESS)
-    expect(apiClient.post).toHaveBeenLastCalledWith('/api/toy-transactions/tx-1/accept', ADDRESS)
+    expect(actions.accept).toHaveBeenLastCalledWith('tx-1', 'exchange', ADDRESS)
     await props().onAccept(null)
-    expect(apiClient.post).toHaveBeenLastCalledWith('/api/toy-transactions/tx-1/accept', {})
-    expect(revalidate).toHaveBeenCalledWith('/dashboard/exchanges/tx-1')
+    expect(actions.accept).toHaveBeenLastCalledWith('tx-1', 'exchange', null)
   })
 
-  it('WX07 rejects without a reason, even when the thread hands one over', async () => {
+  it('WX07 rejects with the reason the thread hands over', async () => {
     await mount()
     await props().onReject('Bed too small')
-    expect(apiClient.post).toHaveBeenCalledWith('/api/toy-transactions/tx-1/reject', {})
+    expect(actions.reject).toHaveBeenCalledWith('tx-1', 'exchange', 'Bed too small')
   })
 
   it('WX08 withdraws the request', async () => {
     await mount()
     await props().onWithdraw()
-    expect(apiClient.post).toHaveBeenCalledWith('/api/toy-transactions/tx-1/withdraw', {})
-    expect(revalidate).toHaveBeenCalledWith('/dashboard/exchanges/tx-1')
+    expect(actions.withdraw).toHaveBeenCalledWith('tx-1', 'exchange')
   })
 
   it('WX09 confirms with the code the other party read out', async () => {
     await mount()
     await props().onConfirm('482913')
-    expect(apiClient.post).toHaveBeenCalledWith('/api/toy-transactions/tx-1/confirm', { code: '482913' })
-    expect(revalidate).toHaveBeenCalledWith('/dashboard/exchanges/tx-1')
+    expect(actions.confirm).toHaveBeenCalledWith('tx-1', 'exchange', '482913')
   })
 
   it('WX13 links the header to the toy listing', async () => {
@@ -123,36 +121,33 @@ describe('/dashboard/exchanges/build/[id]', () => {
   it('WX15 posts the message body and refreshes the build thread', async () => {
     await mount()
     await props().onSendMessage('Which switch?')
-    expect(apiClient.post).toHaveBeenCalledWith('/api/toy-transactions/tx-1/messages', { body: 'Which switch?' })
-    expect(revalidate).toHaveBeenCalledWith('/dashboard/exchanges/build/tx-1')
+    expect(actions.sendMessage).toHaveBeenCalledWith('tx-1', 'build', 'Which switch?')
   })
 
   it('WX16 accepts with the maker’s address, or an empty body for an organisation', async () => {
     await mount()
     await props().onAccept(ADDRESS)
-    expect(apiClient.post).toHaveBeenLastCalledWith('/api/toy-transactions/tx-1/accept', ADDRESS)
+    expect(actions.accept).toHaveBeenLastCalledWith('tx-1', 'build', ADDRESS)
     await props().onAccept(null)
-    expect(apiClient.post).toHaveBeenLastCalledWith('/api/toy-transactions/tx-1/accept', {})
-    expect(revalidate).toHaveBeenCalledWith('/dashboard/exchanges/build/tx-1')
+    expect(actions.accept).toHaveBeenLastCalledWith('tx-1', 'build', null)
   })
 
-  it('WX17 rejects without a reason', async () => {
+  it('WX17 rejects with the reason the thread hands over', async () => {
     await mount()
     await props().onReject('Too far')
-    expect(apiClient.post).toHaveBeenCalledWith('/api/toy-transactions/tx-1/reject', {})
+    expect(actions.reject).toHaveBeenCalledWith('tx-1', 'build', 'Too far')
   })
 
   it('WX18 withdraws the request', async () => {
     await mount()
     await props().onWithdraw()
-    expect(apiClient.post).toHaveBeenCalledWith('/api/toy-transactions/tx-1/withdraw', {})
-    expect(revalidate).toHaveBeenCalledWith('/dashboard/exchanges/build/tx-1')
+    expect(actions.withdraw).toHaveBeenCalledWith('tx-1', 'build')
   })
 
   it('WX19 confirms with the other party’s code', async () => {
     await mount()
     await props().onConfirm('654321')
-    expect(apiClient.post).toHaveBeenCalledWith('/api/toy-transactions/tx-1/confirm', { code: '654321' })
+    expect(actions.confirm).toHaveBeenCalledWith('tx-1', 'build', '654321')
   })
 
   it('WX22 offers the requester Asking first only while nobody has claimed it', async () => {
@@ -188,34 +183,31 @@ describe('/dashboard/print-requests/[id]', () => {
   it('WR12 posts the message body and refreshes the print thread', async () => {
     await mount()
     await props().onSendMessage('Is PETG fine?')
-    expect(apiClient.post).toHaveBeenCalledWith('/api/toy-transactions/tx-1/messages', { body: 'Is PETG fine?' })
-    expect(revalidate).toHaveBeenCalledWith('/dashboard/print-requests/tx-1')
+    expect(actions.sendMessage).toHaveBeenCalledWith('tx-1', 'print', 'Is PETG fine?')
   })
 
   it('WR13 accepts with the printer’s address', async () => {
     await mount()
     await props().onAccept(ADDRESS)
-    expect(apiClient.post).toHaveBeenCalledWith('/api/toy-transactions/tx-1/accept', ADDRESS)
-    expect(revalidate).toHaveBeenCalledWith('/dashboard/print-requests/tx-1')
+    expect(actions.accept).toHaveBeenCalledWith('tx-1', 'print', ADDRESS)
   })
 
   it('WR14 declines with the reason the printer wrote', async () => {
     await mount()
     await props().onReject('Bed is too small for the base plate.')
-    expect(apiClient.post).toHaveBeenCalledWith('/api/toy-transactions/tx-1/reject', { reason: 'Bed is too small for the base plate.' })
+    expect(actions.reject).toHaveBeenCalledWith('tx-1', 'print', 'Bed is too small for the base plate.')
   })
 
   it('WR15 withdraws the request', async () => {
     await mount()
     await props().onWithdraw()
-    expect(apiClient.post).toHaveBeenCalledWith('/api/toy-transactions/tx-1/withdraw', {})
-    expect(revalidate).toHaveBeenCalledWith('/dashboard/print-requests/tx-1')
+    expect(actions.withdraw).toHaveBeenCalledWith('tx-1', 'print')
   })
 
   it('WR16 confirms with the other party’s code', async () => {
     await mount()
     await props().onConfirm('111222')
-    expect(apiClient.post).toHaveBeenCalledWith('/api/toy-transactions/tx-1/confirm', { code: '111222' })
+    expect(actions.confirm).toHaveBeenCalledWith('tx-1', 'print', '111222')
   })
 
   it('WR19 leads the printer back to Print for others and the family to All print requests', async () => {

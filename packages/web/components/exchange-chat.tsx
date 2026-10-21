@@ -37,6 +37,8 @@ const dayFormat = new Intl.DateTimeFormat(LOCALE, {
 })
 const dayKeyFormat = new Intl.DateTimeFormat('en-CA', { timeZone: TZ })
 
+const ADMIN_LABEL = 'SPLAT admin'
+
 type Group = {
   senderId: string
   kind: ThreadMessage['kind']
@@ -203,8 +205,12 @@ export function ExchangeChat({
             )
           }
 
-          const mine = group.senderId === viewerId
-          const name = nameFor(group.senderId)
+          // An admin is SPLAT speaking, whoever is reading: never "You", and not a
+          // sender nameFor could resolve (it knows only the two parties).
+          const admin = group.kind === 'admin'
+          const mine = !admin && group.senderId === viewerId
+          const name = admin ? ADMIN_LABEL : nameFor(group.senderId)
+          const bubbleTone = mine ? 'chat-bubble-mine' : `chat-bubble-theirs${admin ? ' chat-bubble-admin' : ''}`
           const last = group.messages[group.messages.length - 1]
 
           if (board) {
@@ -224,7 +230,7 @@ export function ExchangeChat({
                         {mine ? 'You' : name} ·{' '}
                         <time dateTime={m.created_at}>{timeFormat.format(new Date(m.created_at))}</time>
                       </span>
-                      <p className={`chat-bubble ${mine ? 'chat-bubble-mine' : 'chat-bubble-theirs'}`}>
+                      <p className={`chat-bubble ${bubbleTone}`}>
                         {m.body}
                       </p>
                     </div>
@@ -254,7 +260,7 @@ export function ExchangeChat({
                   {group.messages.map((m) => (
                     <Fragment key={m.id}>
                       <p
-                        className={`chat-bubble ${mine ? 'chat-bubble-mine' : 'chat-bubble-theirs'}`}
+                        className={`chat-bubble ${bubbleTone}`}
                         style={m.id === highlightId ? { background: 'var(--tok)', color: 'var(--tink)' } : undefined}
                       >
                         {m.id === highlightId && <span className="sr-only">The answer: </span>}

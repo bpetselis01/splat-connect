@@ -82,7 +82,7 @@ type ActRow = Pick<
  * (packages/api/src/routes/toy-transactions.ts) — a button the server would
  * refuse is worse than no button.
  */
-export function buildControls(tx: ActRow, viewerId: string, ledOrgIds: readonly string[] = []) {
+export function buildControls(tx: ActRow, viewerId: string, ledOrgIds: readonly string[] = [], isAdmin = false) {
   const isMaker = isOwnerSide(tx, viewerId, ledOrgIds)
   const isFamily = tx.requester_id === viewerId
   const live = tx.status === 'requested' || tx.status === 'accepted'
@@ -91,8 +91,8 @@ export function buildControls(tx: ActRow, viewerId: string, ledOrgIds: readonly 
   return {
     isMaker,
     isFamily,
-    // Anybody but the family, on a request nobody has taken (POST /:id/claim).
-    canClaim: unclaimed && !isFamily,
+    // Anybody but the family or an admin, on a request nobody has taken (POST /:id/claim).
+    canClaim: unclaimed && !isFamily && !isAdmin,
     // A request addressed to this maker by name: accept or decline, as any toy.
     canAnswer: tx.status === 'requested' && isMaker,
     // Reposting is allowed until the family approves; the API resets the
@@ -133,9 +133,10 @@ export function buildCard(
   tx: ActRow & Pick<ToyTransaction, 'travel_km'>,
   viewerId: string,
   otherName: string,
-  ledOrgIds: readonly string[] = []
+  ledOrgIds: readonly string[] = [],
+  isAdmin = false
 ): BuildCard {
-  const c = buildControls(tx, viewerId, ledOrgIds)
+  const c = buildControls(tx, viewerId, ledOrgIds, isAdmin)
 
   if (tx.status === 'requested') {
     if (c.canClaim) {

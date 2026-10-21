@@ -90,6 +90,8 @@ test('L16: declining a request moves the requests tab, then the Me waiting count
   await page.getByRole('button', { name: new RegExp(`^${nameA}, `) }).click()
   await page.waitForURL(new RegExp(`/exchanges/${txA}$`))
   await page.getByRole('button', { name: 'Decline', exact: true }).click()
+  await page.getByLabel('Reason for declining').fill('Already promised')
+  await page.getByRole('button', { name: 'Send the decline' }).click()
   await expect
     .poll(async () => (await adminClient().from('toy_transactions').select('status').eq('id', txA).single()).data?.status)
     .toBe('rejected')

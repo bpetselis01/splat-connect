@@ -125,7 +125,7 @@ export default async function MakersWantedPage() {
 
       <div className="mt-8 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0">
-          <MakersWantedBoard builds={builds} />
+          <MakersWantedBoard builds={builds} isAdmin={caps.isAdmin} />
         </div>
 
         <aside className="flex min-w-0 flex-col gap-3.5 lg:sticky lg:top-[94px]">

@@ -52,4 +52,10 @@ describe('BuildQuestionsThread', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Send' }))
     await waitFor(() => expect(browserApiClient.post).toHaveBeenCalledWith('/api/toy-transactions/b1/questions', { body: 'Two AAs.', maker_id: 'm1' }))
   })
+
+  it('WM38 offers an admin no claim button', () => {
+    render(<BuildQuestionsThread data={data} viewerId="admin1" makerId={null} isAdmin />)
+    expect(screen.queryByRole('button', { name: /I.ll build this/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('textbox', { name: 'Message' })).not.toBeInTheDocument()
+  })
 })

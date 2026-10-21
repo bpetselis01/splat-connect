@@ -737,7 +737,23 @@ select * from (values
   ('139 has_accepted compares the current agreement version',
    (select count(*) = 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
       where n.nspname = 'public' and p.proname = 'has_accepted'
-        and p.prosrc like '%current_agreement_version%'))
+        and p.prosrc like '%current_agreement_version%')),
+
+  -- 141. Without the CHECK every admin message fails the insert. Without
+  -- `kind = 'user'` in the member policy a party can forge a SPLAT admin or
+  -- system message through PostgREST with their own JWT.
+  ('141 toy_transaction_messages permits kind admin',
+   (select pg_get_constraintdef(oid) like '%admin%'
+      from pg_constraint
+     where conname = 'toy_transaction_messages_kind_check'
+       and conrelid = 'public.toy_transaction_messages'::regclass)),
+
+  ('141 members can insert only kind user into a thread',
+   (select count(*) = 1 from pg_policies
+      where schemaname = 'public' and tablename = 'toy_transaction_messages'
+        and cmd = 'INSERT'
+        and policyname = 'Parties can message while a toy transaction is open'
+        and with_check like '%kind = ''user''%'))
 ) as t(guard, ok)
 where not ok;
 EOSQL

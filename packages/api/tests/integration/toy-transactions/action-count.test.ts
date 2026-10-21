@@ -97,7 +97,7 @@ describe('GET /api/toy-transactions/action-count', () => {
     const txId = ((await created.json()) as { id: string }).id
     const before = await actionCount(owner.token)
 
-    await txReq(`/${txId}/reject`, owner.token, { method: 'POST' })
+    await txReq(`/${txId}/reject`, owner.token, { method: 'POST', body: JSON.stringify({ reason: 'Already promised' }) })
     expect(await actionCount(owner.token)).toBe(before - 1)
   })
 })
