@@ -45,23 +45,13 @@ describe('the thread composer draft', () => {
     expect(sessionStorage.getItem('draft:u1:tx1')).toBeNull()
   })
 
-  it('restores the text to the box and drops the saved copy when the send fails', async () => {
-    const send = vi.fn().mockRejectedValue(new Error('boom'))
+  it('WA30 gives the text back and keeps the saved copy when the send fails, as a terms redirect from a server action does', async () => {
+    const send = vi.fn().mockRejectedValue(new Error('Message not sent'))
     render(<ExchangeChat {...props(send)} />)
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Lost?' } })
     fireEvent.click(screen.getByRole('button', { name: /send/i }))
     await waitFor(() => expect(screen.getByRole('textbox')).toHaveValue('Lost?'))
-    expect(sessionStorage.getItem('draft:u1:tx1')).toBeNull()
-  })
-
-  it('keeps the saved copy and leaves the box empty when the send is refused for terms', async () => {
-    const send = vi.fn().mockRejectedValue(Object.assign(new Error('terms'), { status: 403, code: 'terms_required' }))
-    render(<ExchangeChat {...props(send)} />)
-    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Hello' } })
-    fireEvent.click(screen.getByRole('button', { name: /send/i }))
-    await waitFor(() => expect(send).toHaveBeenCalled())
-    expect(screen.getByRole('textbox')).toHaveValue('')
-    expect(sessionStorage.getItem('draft:u1:tx1')).toBe('Hello')
+    expect(sessionStorage.getItem('draft:u1:tx1')).toBe('Lost?')
   })
 
   it('keeps one draft per thread', async () => {

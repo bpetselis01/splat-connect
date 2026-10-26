@@ -12,7 +12,7 @@
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react'
 import { CheckCircle, PaperPlaneRight } from '@phosphor-icons/react/dist/ssr'
 import type { ThreadMessage } from '@splat-connect/types'
-import { initials, isTermsRequired } from '@splat-connect/types'
+import { initials } from '@splat-connect/types'
 
 /*
  * ponytail: locale and timezone are pinned rather than read from the browser.
@@ -161,13 +161,11 @@ export function ExchangeChat({
     } catch {}
     try {
       await onSend(body)
-    } catch (err) {
-      // A terms refusal is navigating away and the saved copy is what survives it.
-      if (isTermsRequired(err)) return
+    } catch {
+      // The saved copy stays: a send the API refused for terms reaches here as a
+      // plain failure (a server action carries no error code) while the page is
+      // already navigating to the terms, and the copy is what survives the trip.
       setDraft((current) => current || body)
-      try {
-        sessionStorage.removeItem(storageKey)
-      } catch {}
     }
   }
 
