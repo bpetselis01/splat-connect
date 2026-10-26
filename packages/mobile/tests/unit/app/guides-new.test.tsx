@@ -95,6 +95,27 @@ describe('NewGuideRoute', () => {
     )
   })
 
+  it('leaves a terms_required refusal to the terms screen, and Create draft again reuses the SAME id', async () => {
+    const refused = Object.assign(new Error('API POST /api/tutorials failed with status 403: terms_required'), {
+      status: 403,
+      code: 'terms_required',
+    })
+    mockPost.mockRejectedValueOnce(refused).mockResolvedValue({ id: 'uuid-1' })
+
+    render(<NewGuideRoute />)
+    fireEvent.changeText(screen.getByPlaceholderText('Title'), 'Bubble machine')
+    fireEvent.press(screen.getByLabelText('Create draft'))
+    await waitFor(() => expect(mockPost).toHaveBeenCalledTimes(1))
+
+    expect(screen.queryByText('You must accept the contributor terms before contributing.')).toBeNull()
+    expect(screen.queryByText('Could not create this guide. Please try again.')).toBeNull()
+
+    fireEvent.press(screen.getByLabelText('Create draft'))
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith({ pathname: '/tutorials/[id]', params: { id: 'uuid-1', justCreated: '1' } }))
+    const creates = mockPost.mock.calls.filter((call) => call[0] === '/api/tutorials')
+    expect(creates.map((call) => call[1].id)).toEqual(['uuid-1', 'uuid-1'])
+  })
+
   it('N05 reveals the terms gate on a 403, then accepts and retries the SAME id', async () => {
     mockPost
       .mockRejectedValueOnce(
