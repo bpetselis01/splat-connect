@@ -26,6 +26,8 @@ async function tidy(orgIds: string[], members: Member[]) {
 
 test('WI08 a member asks for an organisation and the page reads "Sent for verification"', async ({ page }) => {
   const member = await createContributor()
+  // Asking for an organisation is a gated write (packages/api/src/terms.ts).
+  await acceptTerms(member.id)
   const orgName = uniqueTitle('Eastside Therapy')
   try {
     await signIn(page, member.email, member.password)

@@ -186,6 +186,8 @@ test('WI34 a member asks the host to print a saved guide\'s parts before the day
   const guide = uniqueTitle('Light-up penguin')
   const tutorialId = await createTutorial(leader.id, { title: guide, status: 'approved' })
   await adminClient().from('saves').insert({ profile_id: family.id, entity_type: 'tutorial', entity_id: tutorialId })
+  // Asking for prints is a gated write (packages/api/src/terms.ts).
+  await acceptTerms(family.id)
   try {
     await signIn(page, family.email, family.password)
     await page.goto(`/get-involved/events/${id}`)
