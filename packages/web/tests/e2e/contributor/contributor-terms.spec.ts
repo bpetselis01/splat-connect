@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { adminClient, signIn, createContributor, createPublishedToy, createTutorial, deleteUser, uniqueTitle, fillDetail } from '../helpers'
-import { seat } from '../exchanges/support'
+import { seat, fillPickup } from '../exchanges/support'
 
 // No acceptTerms() anywhere in this file, deliberately. Seeding acceptance in setup
 // is what kept the contributor-terms 403 invisible to the suite.
@@ -119,8 +119,7 @@ test('WA17 accepting returns the user to where they were blocked and unblocks ed
   )
 })
 
-// Skipped until PR 6 (U9) ships the API gate: nothing answers terms_required before then.
-test.skip('WA30 a member whose terms lapsed sends an exchange message, is sent to the terms, accepts, and the message is sent', async ({ browser, baseURL }) => {
+test('WA30 a member whose terms lapsed sends an exchange message, is sent to the terms, accepts, and the message is sent', async ({ browser, baseURL }) => {
   const holder = await seat(browser, baseURL, 'Holly Holder')
   const family = await seat(browser, baseURL, 'Fiona Family')
   const toyId = await createPublishedToy(holder.id, { name: uniqueTitle('Terms drum'), offer_type: 'donation' })
@@ -132,7 +131,9 @@ test.skip('WA30 a member whose terms lapsed sends an exchange message, is sent t
     const thread = family.page.url()
     await holder.page.goto(thread)
     await holder.page.getByRole('button', { name: 'Accept', exact: true }).click()
+    await fillPickup(holder.page, '1 Terms St')
     await holder.page.getByRole('button', { name: 'Accept request' }).click()
+    await expect(holder.page.getByText('They said yes')).toBeVisible()
     await family.page.goto(thread)
 
     // The terms lapse after the page loaded, so the middleware let the member in.

@@ -13,7 +13,7 @@ const send = (method: string, path: string, body: unknown) =>
   })
 
 beforeAll(async () => {
-  user = await createTestUser()
+  user = await createTestUser('contributor', { terms: false })
 })
 afterAll(async () => {
   await deleteTestUser(user.id)

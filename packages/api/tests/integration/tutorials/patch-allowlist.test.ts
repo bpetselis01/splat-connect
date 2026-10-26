@@ -17,7 +17,7 @@ const authed = (token: string, init: RequestInit = {}) => ({
 
 beforeAll(async () => {
   author = await createTestUser('contributor')
-  untermedAuthor = await createTestUser('contributor')
+  untermedAuthor = await createTestUser('contributor', { terms: false })
   leader = await createTestUser('contributor')
   await acceptTerms(author.id, 'contributor_terms')
   await acceptTerms(leader.id, 'org_leader_terms')
@@ -124,6 +124,7 @@ describe('PATCH /api/tutorials/:id', () => {
       body: JSON.stringify({ status: 'pending' }),
     }))
     expect(res.status).toBe(403)
+    expect(await res.json()).toMatchObject({ error: 'terms_required' })
 
     await acceptTerms(untermedAuthor.id, 'contributor_terms')
     const { data: current } = await adminClient().from('tutorials').select('updated_at').eq('id', backed).single()
@@ -137,12 +138,13 @@ describe('PATCH /api/tutorials/:id', () => {
 
 describe('POST /api/tutorials', () => {
   it('403s with no accepted contributor terms', async () => {
-    const fresh = await createTestUser('contributor')
+    const fresh = await createTestUser('contributor', { terms: false })
     const res = await app.request('/api/tutorials', authed(fresh.token, {
       method: 'POST',
       body: JSON.stringify({ id: crypto.randomUUID(), title: 'Gated', difficulty: 'easy' }),
     }))
     expect(res.status).toBe(403)
+    expect(await res.json()).toMatchObject({ error: 'terms_required' })
     await deleteTestUser(fresh.id)
   })
 })

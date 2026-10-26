@@ -13,7 +13,8 @@ import { createUserClient, createAdminClient } from '../supabase/client.js'
 import { pickEditable } from './pick-editable.js'
 import { notifyTutorialSubmitted } from '../review-notifications.js'
 import { notify } from '../notify.js'
-import { readSuits, realignCaptions, GUIDE_SUITS_FIELDS, fieldKey, customizationFieldsProblem, AGREEMENT_VERSIONS } from '@splat-connect/types'
+import { readSuits, realignCaptions, GUIDE_SUITS_FIELDS, fieldKey, customizationFieldsProblem } from '@splat-connect/types'
+import { hasAcceptedContributorTerms, termsRequired } from '../terms.js'
 import { removeDroppedPhotos } from '../photo-storage.js'
 import { sendApprovedGuideBackToReview } from '../re-review.js'
 import type { AuthVariables } from '../middleware/auth.js'
@@ -162,9 +163,6 @@ reviewer:reviewed_by(name), reviewed_for:reviewed_for_org_id(name)'
 tutorials.post('/', async (c) => {
   const body = await c.req.json()
   if (typeof body.title !== 'string' || !body.title.trim()) return c.json({ error: 'Give the guide a title.' }, 400)
-  if (!(await hasAcceptedContributorTerms(c.get('token'), c.get('userId')))) {
-    return c.json({ error: 'You must accept the contributor terms before contributing' }, 403)
-  }
   // WHY: Uses the admin client (bypasses RLS) because RLS policies rely on
   //      auth.uid() from a JWT context that inserts through this route don't have.
   const supabase = createAdminClient()
@@ -202,18 +200,6 @@ tutorials.post('/', async (c) => {
  *  wonders. */
 const EDITABLE = ['title', 'description', 'difficulty', 'kind', 'build_minutes', 'age_min', 'age_max', 'tutorial_pdf_url', 'photo_urls', 'photo_captions', 'prices_checked_on', 'layer_height_mm', 'infill_percent', 'material', 'print_minutes', 'toy_name', 'toy_brand', 'works_with', 'no_build_note', 'done_note', 'status', 'customization_fields', ...GUIDE_SUITS_FIELDS] as const
 const PROTECTED = ['reviewed_by', 'reviewed_for_org_id', 'reviewed_at', 'rejection_note']
-
-// PENDING(terms-gate-fails-open): the web gate now fails closed; this check moves to src/terms.ts and guards every gated write with 403 terms_required (PR 6, U9).
-async function hasAcceptedContributorTerms(token: string, userId: string) {
-  const { data } = await createUserClient(token)
-    .from('user_agreements')
-    .select('id')
-    .eq('user_id', userId)
-    .eq('agreement_type', 'contributor_terms')
-    .eq('version', AGREEMENT_VERSIONS.contributor_terms)
-    .limit(1)
-  return (data ?? []).length > 0
-}
 
 /**
  * The limits on the newer guide fields, as sentences (the CHECKs in 086+
@@ -284,9 +270,7 @@ tutorials.patch('/:id', async (c) => {
   // creation alone would let drafts that predate the terms sail through while
   // blocking their authors from touching them. draft -> pending is the moment work
   // is actually offered to the platform.
-  if (body.status === 'pending' && !(await hasAcceptedContributorTerms(c.get('token'), c.get('userId')))) {
-    return c.json({ error: 'You must accept the contributor terms before submitting' }, 403)
-  }
+  if (body.status === 'pending' && !(await hasAcceptedContributorTerms(c))) return termsRequired(c)
 
   if (typeof body.updated_at !== 'string') {
     return c.json({ error: 'updated_at is required' }, 400)
@@ -362,9 +346,7 @@ tutorials.patch('/:id', async (c) => {
   const pricesOnly = Object.keys(update).every((k) => k === 'prices_checked_on')
   const resubmitting = current?.status === 'approved' && !('status' in body) && !pricesOnly && c.get('role') !== 'admin'
   if (resubmitting) {
-    if (!(await hasAcceptedContributorTerms(c.get('token'), c.get('userId')))) {
-      return c.json({ error: 'You must accept the contributor terms before submitting' }, 403)
-    }
+    if (!(await hasAcceptedContributorTerms(c))) return termsRequired(c)
     update.status = 'pending'
   }
   const submitting = body.status === 'pending' || resubmitting

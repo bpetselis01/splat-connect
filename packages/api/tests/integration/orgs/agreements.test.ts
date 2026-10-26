@@ -13,8 +13,8 @@ const authed = (token: string, init: RequestInit = {}) => ({
 })
 
 beforeAll(async () => {
-  user = await createTestUser('contributor')
-  other = await createTestUser('contributor')
+  user = await createTestUser('contributor', { terms: false })
+  other = await createTestUser('contributor', { terms: false })
 })
 
 afterAll(async () => {
