@@ -136,7 +136,8 @@ describe('writes that leave an approved guide approved', () => {
         headers: { Authorization: `Bearer ${stranger.token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: 'Hijacked', updated_at: await updatedAt(id) }),
       })
-      expect(res.status).toBe(403)
+      // The write runs as the caller and RLS matches no row, which this route answers as a conflict.
+      expect(res.status).toBe(409)
       expect((await adminClient().from('tutorials').select('title').eq('id', id).single()).data).toEqual({ title: 'Backing Fixture' })
     } finally {
       await deleteTestUser(stranger.id)

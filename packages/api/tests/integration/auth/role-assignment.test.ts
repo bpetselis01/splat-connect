@@ -7,7 +7,7 @@ let contributor: TestUser
 let adminUser: TestUser
 
 beforeAll(async () => {
-  contributor = await createTestUser('contributor')
+  contributor = await createTestUser('contributor', { terms: false })
   adminUser = await createTestUser('admin')
 })
 

@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { AGREEMENT_VERSIONS } from '@splat-connect/types'
 
 const supabaseUrl = process.env.SUPABASE_URL ?? 'http://localhost:54321'
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
@@ -14,8 +15,14 @@ export function adminClient() {
   return createClient(supabaseUrl, serviceKey)
 }
 
+/**
+ * Accepts the current contributor terms unless told not to, as an active member
+ * has: most writes refuse without them (src/terms.ts). Pass `{ terms: false }`
+ * for a member who has not accepted.
+ */
 export async function createTestUser(
-  role: 'contributor' | 'admin' = 'contributor'
+  role: 'contributor' | 'admin' = 'contributor',
+  { terms = true }: { terms?: boolean } = {}
 ): Promise<TestUser> {
   const admin = adminClient()
   const email = `test-${crypto.randomUUID()}@splat-test.local`
@@ -34,6 +41,13 @@ export async function createTestUser(
     .upsert({ id: signUpData.user.id, role })
   if (profileError)
     throw new Error(`Failed to set test user profile: ${profileError.message}`)
+
+  if (terms) {
+    const { error } = await admin
+      .from('user_agreements')
+      .insert({ user_id: signUpData.user.id, agreement_type: 'contributor_terms', version: AGREEMENT_VERSIONS.contributor_terms })
+    if (error) throw new Error(`Failed to accept terms for test user: ${error.message}`)
+  }
 
   const anonClient = createClient(supabaseUrl, process.env.SUPABASE_ANON_KEY ?? '')
   const { data: sessionData, error: sessionError } = await anonClient.auth.signInWithPassword({

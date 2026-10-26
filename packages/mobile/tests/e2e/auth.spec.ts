@@ -2,12 +2,16 @@ import { test, expect } from '@playwright/test'
 import {
   adminClient,
   createContributor,
+  createPublishedToy,
   enterEmailedCode,
   latestCode,
   signIn,
+  signInAsNewContributor,
   signUpNewAccount,
   uniqueSignupEmail,
+  uniqueTitle,
 } from './helpers'
+import { seedDonation } from './family-toys-fixtures'
 
 // The sign-in flow of docs/superpowers/specs/2026-09-30-mobile-sign-in-design.md,
 // against local Supabase. Codes are read out of Mailpit, not faked.
@@ -145,17 +149,25 @@ test('A03 A13 a sign-in provider that is not switched on opens Not built yet', a
   await expect(page.getByText('Welcome back')).toBeVisible()
 })
 
-// Skipped until PR 6 (U9) ships the API gate: nothing answers terms_required before then.
-test.skip('A15 a write refused for want of terms opens the terms screen and returns to the same screen', async ({ page }) => {
-  const { id, email, password } = await createContributor()
-  await signIn(page, email, password)
-  await expect(page).toHaveURL(/\/home$/)
+test('A15 a write refused for want of terms opens the terms screen and returns to the same screen', async ({ page }) => {
+  const owner = await signInAsNewContributor(page)
+  const requester = await createContributor()
+  const toyId = await createPublishedToy(owner.id, { name: uniqueTitle('E2E Terms Toy'), offer_type: 'donation' })
+  const txId = await seedDonation(owner.id, requester.id, toyId, 'requested')
+  await page.goto(`/exchanges/${txId}`)
+  const box = page.getByRole('textbox', { name: /^Message / })
+  await expect(box).toBeVisible()
 
-  await adminClient().from('user_agreements').delete().eq('user_id', id)
-  await page.goto('/exchanges')
-  await page.getByTestId('exchange-send').click()
-  await expect(page).toHaveURL(/\/terms$/)
+  // The terms lapse after the thread opened, so only the write can notice.
+  await adminClient().from('user_agreements').delete().eq('user_id', owner.id)
+  await box.fill('Is Saturday good?')
+  await page.getByRole('button', { name: 'Send', exact: true }).click()
+  await expect(page).toHaveURL(/\/terms/)
   await page.getByTestId('accept-contributor-terms').click()
   await page.getByTestId('accept-terms').click()
-  await expect(page).toHaveURL(/\/exchanges$/)
+
+  await expect(page).toHaveURL(new RegExp(`/exchanges/${txId}$`))
+  await expect(box).toHaveValue('Is Saturday good?')
+  await page.getByRole('button', { name: 'Send', exact: true }).click()
+  await expect(page.getByRole('list', { name: 'Conversation' })).toContainText('Is Saturday good?')
 })

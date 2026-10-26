@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router'
 import { randomUUID } from 'expo-crypto'
 import * as DocumentPicker from 'expo-document-picker'
 import type { Difficulty, PdfImportDraft, TutorialKind } from '@splat-connect/types'
-import { apiMessage, KIND_LABEL, createGuideFromPdfDraft, pdfDraftChecklist, PDF_IMPORT_MAX_BYTES, PDF_IMPORT_MAX_LABEL } from '@splat-connect/types'
+import { apiMessage, isTermsRequired, KIND_LABEL, createGuideFromPdfDraft, pdfDraftChecklist, PDF_IMPORT_MAX_BYTES, PDF_IMPORT_MAX_LABEL } from '@splat-connect/types'
 import { apiClient } from '../../../lib/api-client'
 import { uploadFile } from '../../../lib/upload'
 import { pickPreviewedPhoto } from '../../../lib/pick-photo'
@@ -150,6 +150,8 @@ export default function NewGuideRoute() {
     try {
       await createDraft(id)
     } catch (err) {
+      // The API client has already opened the terms screen; this screen keeps its state for when the member comes back.
+      if (isTermsRequired(err)) return
       const message = err instanceof Error ? err.message : ''
       if (/403/.test(message)) {
         setNeedsTerms(true)

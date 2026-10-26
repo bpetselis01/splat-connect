@@ -281,6 +281,8 @@ export const PENDING = {
     kind: "build",
     platforms: ["web","api"],
     needs: "Decided 2026-10-20: fail closed with a retry message; the API re-checks acceptance on the writes the gate protects (guide submit, exchange requests, org actions), not on reads. Whether the middleware fails closed, and whether toy, exchange and printer writes check terms in the API.",
+
+    shipped: true,
   },
   'swallowed-failures': {
     title: "Failures that look like success",
